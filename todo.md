@@ -1679,3 +1679,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Prévenir les doubles soumissions sans masquer les messages d’erreur
 - [x] Tester la soumission, les erreurs et le rendu mobile, puis publier
 - [x] Masquer les widgets flottants sur les parcours de connexion et d’inscription mobile afin de libérer tous les champs
+
+## Inscription conditionnelle et évaluation par destination
+- [x] Auditer le choix « évaluation déjà effectuée », les redirections et les configurations pays existantes
+- [x] Orienter les candidats sans évaluation vers le formulaire complet après activation du compte
+- [x] Orienter les candidats avec évaluation déclarée vers leur espace sans re-soumission
+- [x] Renforcer les questionnaires par pays avec les éléments administratifs pertinents et sources officielles
+- [x] Tester les deux parcours, les préremplissages pays et les limites de confidentialité, puis publier
+- [x] Masquer les widgets flottants sur l’évaluation mobile afin de dégager tous les champs du formulaire

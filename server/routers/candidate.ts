@@ -105,6 +105,19 @@ function resolveTrustedClientOrigin(origin: string): string {
   return requested.origin;
 }
 
+function activationCandidatePayload(candidate: Candidate) {
+  return {
+    id: candidate.id,
+    fullName: candidate.fullName,
+    email: candidate.email,
+    destination: candidate.destination,
+    dossierStatus: candidate.dossierStatus,
+    avatarUrl: candidate.avatarUrl,
+    avatarVerificationStatus: candidate.avatarVerificationStatus,
+    evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
+  };
+}
+
 // ─── Middleware : extraire le candidat depuis le header Authorization ─────────
 async function getCandidateFromHeader(authHeader: string | undefined) {
   if (!authHeader?.startsWith("Bearer ")) {
@@ -988,7 +1001,7 @@ export const candidateRouter = router({
       const candidate = rows[0];
       if (candidate.emailVerified) {
         const token = signCandidateToken(candidate.id);
-        return { success: true, token, message: "Email déjà vérifié." };
+        return { success: true, token, candidate: activationCandidatePayload(candidate), message: "Email déjà vérifié." };
       }
       if (!candidate.verificationExpiresAt || new Date() > candidate.verificationExpiresAt) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez créer un nouveau compte." });
@@ -1002,7 +1015,7 @@ export const candidateRouter = router({
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
       const token = signCandidateToken(candidate.id);
-      return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
+      return { success: true, token, candidate: activationCandidatePayload(candidate), message: "Email vérifié avec succès. Bienvenue !" };
     }),
 
   verifyEmail: publicProcedure

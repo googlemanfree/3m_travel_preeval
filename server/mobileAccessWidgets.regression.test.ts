@@ -8,7 +8,7 @@ describe("widgets flottants et accès client mobile", () => {
   it("les désactive sur les routes d’accès pour éviter de recouvrir les actions de connexion", () => {
     expect(appSource).toContain("const isAccessRoute");
     expect(appSource).toContain("const normalizedLocation = location.replace");
-    for (const route of ["/login", "/register", "/signup", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"]) {
+    for (const route of ["/login", "/register", "/signup", "/evaluation", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"]) {
       expect(appSource).toContain(`"${route}"`);
     }
     expect(appSource).toContain("&& !isAccessRoute");

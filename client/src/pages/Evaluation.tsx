@@ -12,6 +12,7 @@ import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
+import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -69,9 +70,11 @@ function ProjectDetailsSection({ projectType, values, onChange, countryFields, p
 }
 
 export default function Evaluation() {
+  const { candidate } = useCandidateAuth();
   const projectFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('project');
+  const onboardingFromRegistration = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('onboarding') === 'registration';
   const initialProject = isEvaluationProjectType(projectFromUrl) ? projectFromUrl : initialForm.projectType;
-  const initialProjectForm = { ...initialForm, projectType: initialProject, visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType };
+  const initialProjectForm = { ...initialForm, fullName: candidate?.fullName ?? '', email: candidate?.email ?? '', projectType: initialProject, visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType };
   const [form, setForm] = useState<FormState>(initialProjectForm);
   const formRef = useRef<FormState>(initialProjectForm);
   const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -446,6 +449,7 @@ export default function Evaluation() {
 
         <Card className="p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {onboardingFromRegistration && <div role="status" aria-live="polite" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Votre compte est activé.</strong> Complétez votre évaluation préparatoire en sélectionnant votre projet, votre pays et la procédure concernée. Les critères et pièces définitifs seront confirmés par un conseiller à partir des sources institutionnelles.</div>}
             <SectionTitle>État civil & famille</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div><Label>Nom complet *</Label><Input value={form.fullName} onChange={(e) => update('fullName', e.target.value)} className="mt-1" /></div>

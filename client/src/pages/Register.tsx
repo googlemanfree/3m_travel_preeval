@@ -94,6 +94,7 @@ export default function Register() {
       // Conserver uniquement le nécessaire pour terminer le profil sécurisé.
       localStorage.setItem("registrationEmail", form.email);
       localStorage.setItem("candidateId", String(data.candidateId));
+      localStorage.setItem("registrationEvaluationDeclaration", form.evaluationAlreadyCompleted);
       // Aucun JWT candidat n’est créé avant la validation du lien d’activation.
       sessionStorage.removeItem("3m_candidate_token");
       // Attendre 2 secondes avant d’afficher l’écran d’activation
@@ -397,7 +398,7 @@ export default function Register() {
               <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M Travel par e-mail ou directement en agence ?</p>
               <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Évaluation déjà effectuée">
                 {([
-                  ["yes", "Oui, reçue"],
+                  ["yes", "Oui, reçue par e-mail ou en agence"],
                   ["no", "Non, à effectuer"],
                 ] as const).map(([value, label]) => {
                   const selected = form.evaluationAlreadyCompleted === value;
@@ -416,7 +417,7 @@ export default function Register() {
                   );
                 })}
               </div>
-              {form.evaluationAlreadyCompleted === "yes" && <p className="mt-3 text-xs font-medium text-amber-800">Votre évaluation sera déclarée dans votre espace, puis vérifiée manuellement par notre équipe avant toute mise à jour officielle du dossier.</p>}
+              {form.evaluationAlreadyCompleted === "yes" ? <p className="mt-3 text-xs font-medium text-amber-800">Votre évaluation sera déclarée dans votre espace, puis vérifiée manuellement par notre équipe avant toute mise à jour officielle du dossier.</p> : <p className="mt-3 text-xs font-medium text-blue-900">Après l’activation de votre compte, l’évaluation guidée correspondant à votre projet s’ouvrira directement.</p>}
             </fieldset>
 
             {/* Portrait humain obligatoire */}

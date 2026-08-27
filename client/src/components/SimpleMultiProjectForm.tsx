@@ -115,10 +115,11 @@ export function visaTypeFor(project: ProjectType, country: string): string {
 
 export function SimpleMultiProjectForm() {
   const [location, setLocation] = useLocation();
-  const { isAuthenticated } = useCandidateAuth();
+  const { isAuthenticated, candidate } = useCandidateAuth();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const projectParam = searchParams.get("project") as ProjectType | null;
   const destinationParam = searchParams.get("destination") || "";
+  const isPostRegistrationOnboarding = searchParams.get("onboarding") === "evaluation";
   const initialProject = projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail";
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -135,12 +136,23 @@ export function SimpleMultiProjectForm() {
   const emailError = contactTouched.email && formData.email.length > 0 && !isEmailValid(formData.email);
   const whatsappError = contactTouched.whatsappPhone && formData.whatsappPhone.length > 0 && !isWhatsappValid(formData.whatsappPhone);
   const requirements = formData.destinationCountry ? getEvaluationDocumentRequirements(formData.destinationCountry, formData.projectType) : [];
+  const officialSourceKey = formData.destinationCountry ? OFFICIAL_SOURCE_KEY_BY_COUNTRY[formData.destinationCountry] : undefined;
+  const officialPortal = officialSourceKey ? OFFICIAL_CONSULAR_PORTALS[officialSourceKey] : undefined;
   const progress = Math.round(((currentStep + 1) / STEPS.length) * 100);
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
     if (destinationParam) setFormData((prev) => ({ ...prev, destinationCountry: destinationParam }));
   }, [destinationParam, projectParam]);
+
+  React.useEffect(() => {
+    if (!isPostRegistrationOnboarding || !candidate) return;
+    setFormData((previous) => ({
+      ...previous,
+      fullName: previous.fullName || candidate.fullName,
+      email: previous.email || candidate.email,
+    }));
+  }, [candidate?.email, candidate?.fullName, isPostRegistrationOnboarding]);
 
   const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error(error.message || "Erreur lors de la soumission") });
   const uploadSupportingDocument = trpc.evaluation.uploadSupportingDocument.useMutation();
@@ -242,6 +254,7 @@ export function SimpleMultiProjectForm() {
       <Card className="border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-7">
           <div className="flex items-end justify-between gap-3"><div><h2 className="text-2xl font-black text-slate-950">Évaluation guidée</h2><p className="mt-1 text-sm text-slate-600">Un parcours adapté à votre pays et à votre projet.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
+          {isPostRegistrationOnboarding && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950" role="status"><strong>Votre compte est activé.</strong> Complétez maintenant cette évaluation préparatoire ; elle organise les informations utiles, mais ne remplace pas un formulaire consulaire officiel ni une décision.</div>}
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de l’évaluation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
             <motion.div className="h-full rounded-full bg-gradient-to-r from-[#0B2A52] via-blue-700 to-[#D8A928]" initial={false} animate={{ width: `${progress}%` }} transition={{ duration: 0.32, ease: "easeOut" }} />
           </div>
@@ -268,6 +281,7 @@ export function SimpleMultiProjectForm() {
                   <Field label="Type de projet *"><Select value={formData.projectType} onValueChange={(value) => setFormData((prev) => ({ ...prev, projectType: value as ProjectType, destinationCountry: "" }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="travail">Travail / professionnel</SelectItem><SelectItem value="etudes">Études</SelectItem><SelectItem value="tourisme">Tourisme / visite</SelectItem></SelectContent></Select></Field>
                   <Field label="Pays de destination *"><Select value={formData.destinationCountry} onValueChange={(value) => update("destinationCountry", value)}><SelectTrigger><SelectValue placeholder="Sélectionner un pays" /></SelectTrigger><SelectContent>{COUNTRIES_BY_PROJECT[formData.projectType].map((country) => <SelectItem key={country.value} value={country.value}>{country.flag} {country.label} — {country.hint}</SelectItem>)}</SelectContent></Select></Field>
                   {formData.destinationCountry && <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>Repère pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry]}</div>}
+                  {officialPortal && <a href={officialPortal.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-900 underline underline-offset-2 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Consulter le portail institutionnel : {officialPortal.label} ↗</a>}
                 </div>}
                 {currentStep === 2 && <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {formData.projectType === "travail" && <><Field label="Secteur ou métier visé"><Input name="sector" value={formData.sector || ""} onChange={onTextChange} placeholder="Ex. logistique, soins, informatique" /></Field><Field label="Années d’expérience"><Input name="yearsOfExperience" type="number" min="0" value={formData.yearsOfExperience || ""} onChange={onTextChange} placeholder="Ex. 5" /></Field><Field label="Niveaux de langue" full><Input name="languages" value={formData.languages || ""} onChange={onTextChange} placeholder="Français, anglais, test déjà passé…" /></Field></>}

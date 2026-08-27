@@ -25,6 +25,8 @@ export default function VerifyEmailLink() {
   const [countdown, setCountdown] = useState(4);
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
+  const [nextPath, setNextPath] = useState(redirect === "/dashboard" ? "/mon-espace" : redirect);
+  const [requiresEvaluation, setRequiresEvaluation] = useState(false);
 
   // Compte à rebours avant redirection
   useEffect(() => {
@@ -32,21 +34,33 @@ export default function VerifyEmailLink() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (status === "success" && countdown === 0) {
-      toast.info("Redirection vers la page de connexion…", {
+      toast.info(requiresEvaluation ? "Redirection vers votre évaluation…" : "Redirection vers votre espace candidat…", {
         duration: 1200,
-        description: "Votre compte est activé. Connectez-vous avec vos identifiants.",
+        description: requiresEvaluation ? "Complétez les informations adaptées à votre destination." : "Votre évaluation déclarée restera soumise à vérification humaine.",
       });
-      navigate("/login");
+      navigate(nextPath);
     }
-  }, [status, countdown, redirect, navigate]);
+  }, [status, countdown, nextPath, requiresEvaluation, navigate]);
 
   const verifyMutation = trpc.candidate.verifyEmailLink.useMutation({
     onSuccess: (data) => {
+      const candidate = data.candidate;
+      const needsEvaluation = candidate?.evaluationDeclarationStatus === "not_declared";
+      const destination = needsEvaluation ? "/evaluation?onboarding=registration" : "/mon-espace";
+      if (candidate && data.token) {
+        const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem("3m_candidate_token", data.token);
+        localStorage.setItem("3m_candidate_session_expires_at", String(sessionExpiresAt));
+        localStorage.setItem("3m_candidate_info", JSON.stringify({ id: candidate.id, fullName: candidate.fullName, email: candidate.email, destination: candidate.destination, dossierStatus: candidate.dossierStatus, emailVerified: true }));
+        login(data.token, { id: candidate.id, fullName: candidate.fullName, email: candidate.email, destination: candidate.destination, dossierStatus: candidate.dossierStatus, emailVerified: true });
+      }
       setStatus("success");
       setMessage("Email vérifié avec succès !");
       setCandidateData(data);
+      setRequiresEvaluation(needsEvaluation);
+      setNextPath(destination);
       toast.success("E-mail vérifié avec succès", {
-        description: "Votre compte est activé. La connexion sera proposée automatiquement.",
+        description: needsEvaluation ? "Votre compte est activé. L’évaluation guidée va s’ouvrir." : "Votre compte est activé. Votre espace va s’ouvrir.",
         duration: 3000,
       });
     },
@@ -241,7 +255,7 @@ export default function VerifyEmailLink() {
                   transition={{ delay: 0.8 }}
                   className="text-center mb-8"
                 >
-                  <p className="text-gray-600 mb-3">Redirection automatique vers la connexion dans</p>
+                  <p className="text-gray-600 mb-3">{requiresEvaluation ? "Redirection automatique vers votre évaluation dans" : "Redirection automatique vers votre espace dans"}</p>
                   <div className="h-2 w-full max-w-xs mx-auto mb-4 overflow-hidden rounded-full bg-gray-100" aria-label={`Redirection dans ${countdown} secondes`}>
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
@@ -269,10 +283,10 @@ export default function VerifyEmailLink() {
                   transition={{ delay: 0.9 }}
                 >
                   <Button
-                    onClick={() => navigate(decodeURIComponent(redirect))}
+                    onClick={() => navigate(nextPath)}
                     className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all duration-200 hover:shadow-xl flex items-center justify-center gap-3 text-lg"
                   >
-                    Accéder à Mon Tableau de Bord
+                    {requiresEvaluation ? "Commencer mon évaluation" : "Accéder à mon espace candidat"}
                     <ArrowRight className="w-6 h-6" />
                   </Button>
                 </motion.div>

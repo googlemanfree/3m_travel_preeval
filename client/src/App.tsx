@@ -488,7 +488,7 @@ function AppShell() {
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
-  const isAccessRoute = ["/login", "/register", "/signup", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"].some(
+  const isAccessRoute = ["/login", "/register", "/signup", "/evaluation", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"].some(
     (path) => normalizedLocation === path,
   );
   const showFloatingTools = widgetsVisible && location !== "/contact" && !isAccessRoute;

@@ -13,6 +13,7 @@ export default function VerifyEmailSent() {
   const searchParams = new URLSearchParams(window.location.search);
   const email = searchParams.get("email") || localStorage.getItem("registrationEmail") || "";
   const from = searchParams.get("from");
+  const requiresEvaluation = localStorage.getItem("registrationEvaluationDeclaration") !== "yes";
   const loginPath = `/login${from ? `?redirect=1&from=${encodeURIComponent(from)}` : ""}`;
 
   const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
@@ -96,8 +97,8 @@ export default function VerifyEmailSent() {
                 </div>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Connectez-vous</p>
-                <p className="text-sm text-gray-600">Accédez à votre espace candidat</p>
+                <p className="font-semibold text-gray-900">{requiresEvaluation ? "Commencez votre évaluation" : "Accédez à votre espace"}</p>
+                <p className="text-sm text-gray-600">{requiresEvaluation ? "Le formulaire guidé adapté à votre projet s’ouvrira après l’activation." : "Votre déclaration d’évaluation sera visible puis vérifiée par l’équipe."}</p>
               </div>
             </div>
           </div>
@@ -132,7 +133,7 @@ export default function VerifyEmailSent() {
               onClick={() => setLocation(loginPath)}
               className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
             >
-              Aller à la connexion
+              Accéder à la connexion
               <ArrowRight className="w-4 h-4" />
             </motion.button>
           </div>
