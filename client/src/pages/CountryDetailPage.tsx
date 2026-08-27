@@ -85,6 +85,9 @@ export default function CountryDetailPage() {
     ? publicPortal
     : destinationDetail?.consular;
   const institutionalSource = getInstitutionalProcedureSource(country.id);
+  const sourceVerifiedAt = institutionalSource
+    ? new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })
+    : null;
   const evaluationUrl = `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
@@ -158,6 +161,15 @@ export default function CountryDetailPage() {
                   </Badge>
                   {destinationDetail && isDestinationRecentlyUpdated(destinationDetail) && (
                     <Badge className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 text-xs font-bold">Mis à jour</Badge>
+                  )}
+                  {sourceVerifiedAt && (
+                    <Badge
+                      className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-50 text-xs font-bold"
+                      role="status"
+                      aria-label={`Dernière vérification de la source institutionnelle : ${sourceVerifiedAt}`}
+                    >
+                      <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Vérifié le {sourceVerifiedAt}
+                    </Badge>
                   )}
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{country.name}</h1>
@@ -354,7 +366,7 @@ export default function CountryDetailPage() {
                     <ExternalLink className="w-4 h-4 mr-2" /> Consulter : {institutionalSource.sourceTitle}
                   </Button>
                 </a>
-                <p className="text-xs text-slate-500">Source consultée le {new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })}.</p>
+                <p className="text-xs text-slate-500" role="status">Dernière vérification de la source : {sourceVerifiedAt}.</p>
               </Card>
             ) : null}
 

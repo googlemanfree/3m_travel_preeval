@@ -57,6 +57,7 @@ describe("couverture publique des 107 fiches de procédure", () => {
       expect(rendered.html).toContain("Étapes de préparation");
       expect(rendered.html).toContain("Documents à préparer");
       expect(rendered.html).toContain("Repères institutionnels");
+      expect(rendered.html).toContain("Dernière vérification de la source");
       expect(rendered.html).toContain("Informations vérifiables avant toute démarche");
     }
   });

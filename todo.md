@@ -1763,3 +1763,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir un format éditorial sourcé indiquant clairement les informations à confirmer par l’autorité compétente.
 - [x] Collecter et intégrer des contenus institutionnels vérifiables pour chaque procédure publiée.
 - [x] Vérifier les liens, dates de consultation, contenus et rendus des fiches enrichies avant publication.
+
+## Badge de vérification des procédures
+- [x] Auditer la date de source disponible et les emplacements d’affichage de chaque fiche.
+- [x] Ajouter un badge accessible de dernière vérification dans la fiche et le pré-rendu de procédure.
+- [x] Tester les 107 dates, les badges et l’absence de message de garantie avant publication.
+
+## Revue éditoriale des indicateurs de procédure
+- [ ] Auditer les champs de coûts, délais, salaires et budgets affichés sur les fiches afin de retirer ou sourcer les données volatiles.
