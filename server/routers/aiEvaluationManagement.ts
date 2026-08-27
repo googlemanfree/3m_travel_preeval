@@ -23,6 +23,8 @@ import {
 } from "../../drizzle/schema";
 import { requireValidAdminSession } from "./adminAuth";
 import { sendValidatedEvaluationResponseEmail } from "../emailService";
+import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "../services/evaluationResponseTemplates";
+import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
 
 type Priority = "haute" | "moyenne" | "basse";
 type EvaluationType = "evaluation" | "luxembourg" | "etudes" | "consultation";
@@ -40,6 +42,7 @@ interface UnifiedItem {
   suggestedAction: string;
   destinationCategory?: string | null;
   destinationCountry?: string | null;
+  projectType?: string | null;
   nationality?: string | null;
   educationLevel?: string | null;
   employmentStatus?: string | null;
@@ -62,6 +65,11 @@ interface UnifiedItem {
     gapsToClarify: string[];
     documentPriorities: string[];
     advisorQuestions: string[];
+  } | null;
+  luxembourgReview?: {
+    state: "ready_to_verify" | "needs_human_review" | "missing_information";
+    label: string;
+    detail: string;
   } | null;
 }
 
@@ -86,6 +94,29 @@ function parsePreparationDraft(value: string | null): UnifiedItem["preparationDr
   } catch {
     return null;
   }
+}
+
+function normalizeComparableText(value: string | null | undefined) {
+  return (value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function internalLuxembourgReview(evaluation: typeof evaluations.$inferSelect): UnifiedItem["luxembourgReview"] {
+  if (evaluation.destinationCountry !== "Luxembourg") return null;
+  const details = parseProjectDetails(evaluation.projectDetailsJson);
+  const education = normalizeComparableText(evaluation.educationLevel ?? textDetail(details.educationLevel, 120) ?? textDetail(details.diplomaLevel, 120));
+  const years = typeof details.yearsOfExperience === "number" ? details.yearsOfExperience : Number(evaluation.yearsOfExperience);
+  const hasRecognizedLevel = /\b(bts|hnd|licence|license|bachelor|master)\b|diplome professionnel superieur/.test(education);
+  const hasLowerLevel = /\b(bac|baccalaureat|bepc|cap|cep)\b/.test(education);
+
+  if (!education || !Number.isFinite(years)) {
+    return { state: "missing_information", label: "Grille Luxembourg à compléter", detail: "Le niveau de diplôme déclaré et la durée d’expérience doivent être confirmés par un conseiller avant toute orientation." };
+  }
+  if (hasRecognizedLevel && years >= 2) {
+    return { state: "ready_to_verify", label: "Pré-requis internes déclarés à vérifier", detail: "Diplôme déclaré au niveau BTS/HND/Licence/Master ou professionnel supérieur et au moins 2 ans d’expérience déclarés. Cette indication ne confirme ni un canal, ni une autorisation, ni une admissibilité." };
+  }
+  const educationDetail = hasLowerLevel ? "niveau déclaré inférieur au BTS" : "niveau de diplôme à confirmer";
+  const experienceDetail = years < 2 ? "moins de 2 ans d’expérience déclarés" : "expérience à confirmer";
+  return { state: "needs_human_review", label: "Analyse humaine requise avant orientation", detail: `Grille interne : ${educationDetail} et/ou ${experienceDetail}. Le conseiller examine les possibilités au cas par cas ; aucune exclusion ni réorientation n’est automatique.` };
 }
 
 function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
@@ -118,6 +149,79 @@ const reviewDraftInput = z.object({
   reason: z.string().trim().min(8, "Indiquez le motif de la modification.").max(800),
 });
 
+const preparationRetryInput = z.object({
+  sessionToken: z.string().min(1),
+  evaluationId: z.number().int().positive(),
+  reason: z.string().trim().min(8, "Indiquez le motif de la relance.").max(800),
+});
+
+const responseTemplateInput = z.object({
+  sessionToken: z.string().min(1),
+  evaluationId: z.number().int().positive(),
+  templateKey: z.enum(["travail", "etudes", "tourisme"]),
+});
+
+const PREPARATION_DETAIL_KEYS = [
+  "canadaLanguageTest", "canadaStudyPlan", "luxEmployerStatus", "luxAademStatus", "franceProjectStatus",
+  "belgiumRegion", "germanyLanguageLevel", "germanyRecognitionStatus",
+] as const;
+
+const PREPARATION_ALTERNATIVES: Record<string, string[]> = {
+  Canada: ["France", "Belgique", "Allemagne", "Luxembourg", "Royaume-Uni"],
+  Luxembourg: ["France", "Belgique", "Allemagne", "Canada"],
+  France: ["Belgique", "Allemagne", "Luxembourg", "Canada"],
+  Belgique: ["France", "Allemagne", "Luxembourg", "Canada"],
+  Allemagne: ["France", "Belgique", "Luxembourg", "Canada"],
+  "Royaume-Uni": ["Canada", "France", "Belgique", "Allemagne"],
+};
+
+function parseProjectDetails(value: string | null): Record<string, unknown> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function textDetail(value: unknown, maximum = 1000): string | undefined {
+  return typeof value === "string" ? value.trim().slice(0, maximum) || undefined : undefined;
+}
+
+function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): GeminiEvaluationDraftInput | null {
+  const projectType = evaluation.projectType;
+  if (projectType !== "travail" && projectType !== "etudes" && projectType !== "tourisme") return null;
+  const details = parseProjectDetails(evaluation.projectDetailsJson);
+  if (details.preparatoryAnalysisConsent !== true) return null;
+  const countryDetails: Record<string, string | number | boolean | undefined> = {};
+  for (const key of PREPARATION_DETAIL_KEYS) countryDetails[key] = textDetail(details[key]);
+  if (Array.isArray(details.dynamicResponses)) {
+    details.dynamicResponses.slice(0, 5).forEach((item, index) => {
+      if (!item || typeof item !== "object") return;
+      const response = item as Record<string, unknown>;
+      const question = textDetail(response.question, 260);
+      const answer = textDetail(response.answer, 1000);
+      if (question) countryDetails[`question_complementaire_${index + 1}`] = question;
+      if (answer) countryDetails[`reponse_complementaire_${index + 1}`] = answer;
+    });
+  }
+  const destinationCountry = evaluation.destinationCountry?.trim();
+  if (!destinationCountry) return null;
+  return {
+    destinationCountry,
+    projectType,
+    nationality: evaluation.nationality ?? undefined,
+    sector: textDetail(details.sector, 300) ?? evaluation.industrySector ?? undefined,
+    yearsOfExperience: typeof details.yearsOfExperience === "number" ? details.yearsOfExperience : Number(evaluation.yearsOfExperience) || undefined,
+    educationLevel: evaluation.educationLevel ?? textDetail(details.diplomaLevel, 120),
+    languages: textDetail(details.languages, 500),
+    financialGuarantee: textDetail(details.financialGuarantee, 500),
+    countryDetails,
+    alternativeCountries: (PREPARATION_ALTERNATIVES[destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry),
+  };
+}
+
 export const aiEvaluationManagementRouter = router({
   getUnifiedDashboard: publicProcedure
     .input(z.object({ sessionToken: z.string(), limit: z.number().min(1).max(1000).default(500) }))
@@ -143,17 +247,19 @@ export const aiEvaluationManagementRouter = router({
         const hasConverted = convertedEmails.has(e.email.toLowerCase());
         const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
         const preparationDraft = parsePreparationDraft(e.aiReportContent);
+        const luxembourgReview = internalLuxembourgReview(e);
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
-          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, nationality: e.nationality,
+          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, projectType: e.projectType, nationality: e.nationality,
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
           referenceCode: e.referenceCode, reviewDeadline: e.reviewDeadline, reviewDraft: e.reviewDraft, reviewedAt: e.reviewedAt, finalResponseSentAt: e.finalResponseSentAt,
           preparationState: preparationDraft ? "ready" : e.aiProcessingError ? "unavailable" : "not_requested",
           preparationDraft,
+          luxembourgReview,
         });
       }
 
@@ -187,7 +293,30 @@ export const aiEvaluationManagementRouter = router({
         converted: items.filter((i) => i.hasConverted).length,
       };
 
-      return { items: items.slice(0, input.limit), summary };
+      const reviewedEvaluations = genEvals.filter((evaluation) => Boolean(evaluation.reviewedAt));
+      const reviewedWithinTarget = reviewedEvaluations.filter((evaluation) => Boolean(evaluation.reviewDeadline && evaluation.reviewedAt && new Date(evaluation.reviewedAt).getTime() <= new Date(evaluation.reviewDeadline).getTime())).length;
+      const reviewHours = reviewedEvaluations.map((evaluation) => (new Date(evaluation.reviewedAt!).getTime() - new Date(evaluation.createdAt).getTime()) / (1000 * 60 * 60)).filter((hours) => Number.isFinite(hours) && hours >= 0);
+      const days = Array.from({ length: 7 }, (_, index) => {
+        const day = new Date(now - (6 - index) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        return {
+          day,
+          received: genEvals.filter((evaluation) => new Date(evaluation.createdAt).toISOString().slice(0, 10) === day).length,
+          reviewed: genEvals.filter((evaluation) => evaluation.reviewedAt && new Date(evaluation.reviewedAt).toISOString().slice(0, 10) === day).length,
+        };
+      });
+      const reviewSla = {
+        targetHours: 24,
+        received: genEvals.length,
+        pending: genEvals.filter((evaluation) => !evaluation.reviewedAt).length,
+        overdue: genEvals.filter((evaluation) => !evaluation.reviewedAt && evaluation.reviewDeadline && new Date(evaluation.reviewDeadline).getTime() <= now).length,
+        reviewedWithinTarget,
+        reviewedLate: reviewedEvaluations.length - reviewedWithinTarget,
+        onTimeRate: reviewedEvaluations.length ? Math.round((reviewedWithinTarget / reviewedEvaluations.length) * 100) : null,
+        averageReviewHours: reviewHours.length ? Math.round((reviewHours.reduce((total, hours) => total + hours, 0) / reviewHours.length) * 10) / 10 : null,
+        days,
+      };
+
+      return { items: items.slice(0, input.limit), summary, reviewSla };
     }),
 
   updateEvaluationStatus: publicProcedure
@@ -250,6 +379,51 @@ export const aiEvaluationManagementRouter = router({
           await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
         }
         return { success: true, delivered };
+      }),
+
+    getResponseTemplates: publicProcedure
+      .input(z.object({ sessionToken: z.string().min(1) }))
+      .query(async ({ input }) => {
+        await requireValidAdminSession(input.sessionToken);
+        return { templates: getEvaluationResponseTemplates() };
+      }),
+
+    applyResponseTemplate: publicProcedure
+      .input(responseTemplateInput)
+      .mutation(async ({ input }) => {
+        await requireValidAdminSession(input.sessionToken);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+        const [evaluation] = await db.select({ id: evaluations.id, fullName: evaluations.fullName, destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, reviewedAt: evaluations.reviewedAt }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
+        if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée et ne peut plus être remplacée." });
+        if (evaluation.projectType !== input.templateKey) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce modèle ne correspond pas au type de projet de l’évaluation." });
+        const draft = buildEvaluationResponseTemplate(input.templateKey, evaluation);
+        if (!draft) throw new TRPCError({ code: "BAD_REQUEST", message: "Modèle de réponse indisponible." });
+        return { draft };
+      }),
+
+    retryEvaluationPreparation: publicProcedure
+      .input(preparationRetryInput)
+      .mutation(async ({ input }) => {
+        const admin = await requireValidAdminSession(input.sessionToken);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+        const [evaluation] = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
+        if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation est déjà validée ; aucune relance de brouillon n’est autorisée." });
+        const preparedInput = retryInputFromEvaluation(evaluation);
+        if (!preparedInput) throw new TRPCError({ code: "BAD_REQUEST", message: "La relance requiert un consentement enregistré et des réponses déclarées exploitables." });
+        try {
+          const draft = await generateGeminiEvaluationDraft(preparedInput);
+          await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluation.id));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "preparation_restarted", note: input.reason });
+          return { success: true };
+        } catch {
+          await db.update(evaluations).set({ aiProcessingError: "Brouillon préparatoire indisponible ; revue manuelle requise." }).where(eq(evaluations.id, evaluation.id));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "preparation_retry_unavailable", note: input.reason });
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le brouillon n’a pas pu être préparé. La revue manuelle reste disponible." });
+        }
       }),
 
     recordExport: publicProcedure

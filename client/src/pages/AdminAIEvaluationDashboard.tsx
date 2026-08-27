@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import Navbar from "@/components/Navbar";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +56,7 @@ type DashboardItem = {
   suggestedAction: string;
   destinationCategory?: string | null;
   destinationCountry?: string | null;
+  projectType?: string | null;
   nationality?: string | null;
   educationLevel?: string | null;
   employmentStatus?: string | null;
@@ -74,6 +74,11 @@ type DashboardItem = {
     gapsToClarify: string[];
     documentPriorities: string[];
     advisorQuestions: string[];
+  } | null;
+  luxembourgReview?: {
+    state: "ready_to_verify" | "needs_human_review" | "missing_information";
+    label: string;
+    detail: string;
   } | null;
   priorVisaRefusal?: boolean | null;
   criminalRecord?: boolean | null;
@@ -243,6 +248,10 @@ export default function AdminAIEvaluationDashboard() {
     { sessionToken, limit: 30 },
     { enabled: !!sessionToken, refetchInterval: false },
   );
+  const responseTemplatesQuery = trpc.aiEvaluationManagement.getResponseTemplates.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken, refetchInterval: false },
+  );
   const updateStatus = trpc.aiEvaluationManagement.updateEvaluationStatus.useMutation({
     onSuccess: async () => {
       await refetch();
@@ -256,9 +265,13 @@ export default function AdminAIEvaluationDashboard() {
   });
   const saveReviewDraft = trpc.aiEvaluationManagement.saveEvaluationReviewDraft.useMutation({ onSuccess: async () => { await refetch(); } });
   const validateAndSend = trpc.aiEvaluationManagement.validateAndSendEvaluationResponse.useMutation({ onSuccess: async () => { await refetch(); } });
+  const retryPreparation = trpc.aiEvaluationManagement.retryEvaluationPreparation.useMutation({ onSuccess: async () => { await refetch(); } });
+  const applyResponseTemplate = trpc.aiEvaluationManagement.applyResponseTemplate.useMutation();
 
   const items = (data?.items ?? []) as DashboardItem[];
   const summary = data?.summary;
+  const reviewSla = data?.reviewSla;
+  const reviewSlaMaximum = Math.max(1, ...(reviewSla?.days.flatMap((day) => [day.received, day.reviewed]) ?? [1]));
   const history = (historyQuery.data ?? []) as ActivityLog[];
   const [search, setSearch] = useState("");
   const [scoreSort, setScoreSort] = useState<"default" | "desc" | "asc">("default");
@@ -274,6 +287,8 @@ export default function AdminAIEvaluationDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [reviewDraft, setReviewDraft] = useState("");
   const [reviewReason, setReviewReason] = useState("");
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<"travail" | "etudes" | "tourisme" | "">("");
+  const [preparationNotice, setPreparationNotice] = useState<{ itemId: string; message: string } | null>(null);
   const [deliveryNotice, setDeliveryNotice] = useState<string | null>(null);
   const pageSize = 15;
 
@@ -358,6 +373,8 @@ export default function AdminAIEvaluationDashboard() {
     setEditingId(item.id);
     setReviewDraft(initialReviewDraft(item));
     setReviewReason("");
+    setSelectedTemplateKey(item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : "");
+    setPreparationNotice(null);
     setDeliveryNotice(null);
   };
 
@@ -375,9 +392,35 @@ export default function AdminAIEvaluationDashboard() {
     validateAndSend.mutate({ sessionToken, evaluationId, validationNote: reviewReason }, { onSuccess: (result) => setDeliveryNotice(result.delivered ? "Réponse validée et envoyée au candidat." : "Réponse validée, mais l’e-mail n’a pas été envoyé. Réessayez depuis cette fiche."), onError: (error) => setDeliveryNotice(error.message) });
   };
 
+  const loadResponseTemplate = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    if (!Number.isInteger(evaluationId) || !selectedTemplateKey) return;
+    if (reviewDraft.trim() && !window.confirm("Remplacer le projet de réponse affiché par ce modèle ? Les modifications non enregistrées seront perdues.")) return;
+    applyResponseTemplate.mutate({ sessionToken, evaluationId, templateKey: selectedTemplateKey }, { onSuccess: (result) => { setReviewDraft(result.draft); setDeliveryNotice("Modèle chargé. Relisez-le, adaptez-le puis enregistrez avec un motif."); }, onError: (error) => setDeliveryNotice(error.message) });
+  };
+
+  const restartPreparation = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    if (!Number.isInteger(evaluationId) || reviewReason.trim().length < 8 || !window.confirm("Relancer la préparation interne à partir des réponses déclarées ? Aucun élément ne sera envoyé au candidat.")) return;
+    retryPreparation.mutate({ sessionToken, evaluationId, reason: reviewReason }, { onSuccess: () => setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }), onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
+  };
+
+  const loadProjectTemplate = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    const templateKey = item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : null;
+    if (!Number.isInteger(evaluationId) || !templateKey || !window.confirm("Charger le modèle correspondant au projet ? Il restera entièrement modifiable avant enregistrement.")) return;
+    applyResponseTemplate.mutate({ sessionToken, evaluationId, templateKey }, { onSuccess: (result) => { setEditingId(item.id); setReviewDraft(result.draft); setReviewReason(""); setSelectedTemplateKey(templateKey); setDeliveryNotice("Modèle chargé. Relisez-le, adaptez-le puis enregistrez avec un motif."); }, onError: (error) => setDeliveryNotice(error.message) });
+  };
+
+  const requestPreparationRestart = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    const reason = window.prompt("Indiquez le motif de la relance (8 caractères minimum) :")?.trim() ?? "";
+    if (!Number.isInteger(evaluationId) || reason.length < 8 || !window.confirm("Relancer la préparation interne à partir des réponses déclarées ? Aucun élément ne sera envoyé au candidat.")) return;
+    retryPreparation.mutate({ sessionToken, evaluationId, reason }, { onSuccess: () => setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }), onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
-      <div className="print:hidden"><Navbar /></div>
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
@@ -411,6 +454,8 @@ export default function AdminAIEvaluationDashboard() {
 
         {summary && <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-5 print:grid-cols-5"><Card className="p-4"><p className="text-xs text-gray-500">Total</p><p className="text-2xl font-bold text-gray-900">{summary.total}</p></Card><Card className="border-l-4 border-red-500 p-4"><p className="flex items-center gap-1 text-xs text-gray-500"><AlertTriangle className="h-3 w-3" /> Priorité haute</p><p className="text-2xl font-bold text-red-600">{summary.haute}</p></Card><Card className="border-l-4 border-amber-400 p-4"><p className="text-xs text-gray-500">Priorité moyenne</p><p className="text-2xl font-bold text-amber-600">{summary.moyenne}</p></Card><Card className="p-4"><p className="text-xs text-gray-500">Priorité basse</p><p className="text-2xl font-bold text-gray-500">{summary.basse}</p></Card><Card className="border-l-4 border-green-500 p-4"><p className="flex items-center gap-1 text-xs text-gray-500"><CheckCircle2 className="h-3 w-3" /> Convertis</p><p className="text-2xl font-bold text-green-600">{summary.converted}</p></Card></div>}
 
+        {reviewSla && <Card className="mb-8 border-t-4 border-[#C8A451] bg-gradient-to-br from-white to-amber-50/50 p-5 print:hidden"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-800">Pilotage interne</p><h2 className="mt-1 text-xl font-black text-[#0B2A52]">Délais de revue — objectif {reviewSla.targetHours} h</h2><p className="mt-1 text-sm text-slate-600">Indicateurs calculés sur les pré-évaluations ; aucune donnée individuelle n’est affichée ici.</p></div><Badge className={reviewSla.overdue ? "w-fit bg-red-100 text-red-800" : "w-fit bg-emerald-100 text-emerald-800"}>{reviewSla.overdue ? `${reviewSla.overdue} échéance(s) dépassée(s)` : "Aucune échéance dépassée"}</Badge></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"><div className="border-b-2 border-slate-200 pb-2"><p className="text-xs text-slate-500">Reçues</p><p className="mt-1 text-2xl font-black text-slate-900">{reviewSla.received}</p></div><div className="border-b-2 border-amber-300 pb-2"><p className="text-xs text-slate-500">En attente</p><p className="mt-1 text-2xl font-black text-amber-700">{reviewSla.pending}</p></div><div className="border-b-2 border-red-300 pb-2"><p className="text-xs text-slate-500">Dépassées</p><p className="mt-1 text-2xl font-black text-red-700">{reviewSla.overdue}</p></div><div className="border-b-2 border-emerald-300 pb-2"><p className="text-xs text-slate-500">Revues ≤ 24 h</p><p className="mt-1 text-2xl font-black text-emerald-700">{reviewSla.reviewedWithinTarget}</p></div><div className="border-b-2 border-slate-300 pb-2"><p className="text-xs text-slate-500">Taux dans l’objectif</p><p className="mt-1 text-2xl font-black text-[#0B2A52]">{reviewSla.onTimeRate === null ? "—" : `${reviewSla.onTimeRate}%`}</p></div><div className="border-b-2 border-slate-300 pb-2"><p className="text-xs text-slate-500">Délai moyen</p><p className="mt-1 text-2xl font-black text-[#0B2A52]">{reviewSla.averageReviewHours === null ? "—" : `${reviewSla.averageReviewHours} h`}</p></div></div><div className="mt-6"><div className="mb-2 flex items-center justify-between text-xs text-slate-500"><span>Tendance sur 7 jours (UTC)</span><span>Bleu : reçues · Or : revues</span></div><div className="grid h-32 grid-cols-7 items-end gap-2 border-b border-slate-200 px-1">{reviewSla.days.map((day) => <div key={day.day} className="flex h-full min-w-0 flex-col items-center justify-end gap-1"><div className="flex h-24 items-end gap-1"><span title={`${day.received} reçue(s)`} className="w-3 rounded-t bg-[#0B2A52]" style={{ height: `${Math.max(day.received ? 7 : 0, (day.received / reviewSlaMaximum) * 100)}%` }} /><span title={`${day.reviewed} revue(s)`} className="w-3 rounded-t bg-[#C8A451]" style={{ height: `${Math.max(day.reviewed ? 7 : 0, (day.reviewed / reviewSlaMaximum) * 100)}%` }} /></div><span className="text-[10px] text-slate-500">{new Date(`${day.day}T00:00:00Z`).toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")}</span></div>)}</div></div></Card>}
+
         {isLoading ? <div className="flex justify-center py-16"><Loader className="h-6 w-6 animate-spin text-blue-600" /></div> : pagedItems.length === 0 ? <p className="py-16 text-center text-gray-500">Aucune évaluation correspondant à ces critères.</p> : <div className="space-y-3">{pagedItems.map((item) => {
           const priorityStyle = PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES.basse;
           const statusOptions = statusOptionsFor(item);
@@ -422,9 +467,11 @@ export default function AdminAIEvaluationDashboard() {
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
               {item.type === "evaluation" && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => loadProjectTemplate(item)} disabled={Boolean(item.reviewedAt) || !item.projectType || applyResponseTemplate.isPending}>Charger un modèle</Button><Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => requestPreparationRestart(item)} disabled={Boolean(item.reviewedAt) || retryPreparation.isPending}><RefreshCw className={`h-3.5 w-3.5 ${retryPreparation.isPending ? "animate-spin" : ""}`} /> Relancer le brouillon</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div></div>
                 {item.preparationState === "ready" && item.preparationDraft && <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-700"><p className="font-semibold text-slate-950">Contexte préparatoire interne</p><p className="mt-1 leading-5">{item.preparationDraft.summary}</p>{item.preparationDraft.gapsToClarify.length > 0 && <p className="mt-2 leading-5"><strong>À vérifier :</strong> {item.preparationDraft.gapsToClarify.join(" · ")}</p>}{item.preparationDraft.advisorQuestions.length > 0 && <p className="mt-2 leading-5"><strong>Questions préparées :</strong> {item.preparationDraft.advisorQuestions.join(" · ")}</p>}</div>}
+                {item.luxembourgReview && <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"><p className="font-semibold">Luxembourg — {item.luxembourgReview.label}</p><p className="mt-1 leading-5">{item.luxembourgReview.detail}</p><a href="https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html" target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">Vérifier la procédure officielle Guichet.lu ↗</a></div>}
                 {item.preparationState === "unavailable" && <p className="mt-2 text-xs text-amber-800">Le contexte préparatoire n’est pas disponible. La revue manuelle reste possible.</p>}
+                {preparationNotice?.itemId === item.id && <p role="status" className="mt-2 text-xs text-slate-700">{preparationNotice.message}</p>}
                 {item.reviewDeadline && !item.reviewedAt && <p className="mt-1 text-xs text-indigo-800">Échéance interne : {new Date(item.reviewDeadline).toLocaleString("fr-FR")}</p>}
                 {item.reviewedAt && <p className="mt-1 text-xs text-emerald-800">Validation enregistrée le {new Date(item.reviewedAt).toLocaleString("fr-FR")}{item.finalResponseSentAt ? " — e-mail envoyé" : " — diffusion à vérifier"}.</p>}
                 {editingId === item.id && <div className="mt-3 space-y-2"><label className="block text-xs font-medium text-slate-700">Projet de réponse<textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value)} rows={6} maxLength={8000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Rédigez une réponse factuelle, sans promesse de visa, emploi, admission ou délai garanti." /></label><label className="block text-xs font-medium text-slate-700">Motif de modification / validation<input value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. informations relues avec le candidat" /></label><div className="flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => saveDraft(item)} disabled={saveReviewDraft.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}>Enregistrer le brouillon</Button><Button type="button" size="sm" className="gap-1 bg-emerald-700 hover:bg-emerald-800" onClick={() => validateResponse(item)} disabled={validateAndSend.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}><Send className="h-3.5 w-3.5" /> Valider puis envoyer</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Annuler</Button></div>{deliveryNotice && <p role="status" className="text-xs text-slate-700">{deliveryNotice}</p>}</div>}

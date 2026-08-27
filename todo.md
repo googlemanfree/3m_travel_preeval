@@ -1708,3 +1708,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Fiabilité des références d’évaluation
 - [x] Éliminer les collisions de références lors de soumissions simultanées ou multi-processus, puis couvrir le comportement par un test.
+
+## Pilotage dynamique des évaluations 2026
+- [x] Étendre la compétence réutilisable de pilotage admin-candidat avec les brouillons structurés, modèles de réponse, relances et indicateurs SLA.
+- [x] Ajouter une relance manuelle administrateur du brouillon préparatoire avec session, motif, journal et sans diffusion candidate.
+- [x] Intégrer des modèles de réponses internes par type de projet, toujours éditables avant validation humaine.
+- [x] Ajouter un tableau de bord analytique interne des délais de revue, centré sur l’objectif opérationnel de 24 heures.
+- [x] Ajouter la grille Luxembourg comme indicateur interne de préparation vérifiable, sans inéligibilité ou réorientation automatiques.
+- [x] Tester droits, audits, modèles, relances, indicateurs SLA et garde-fous Luxembourg avant publication.
+- [x] Corriger le doublon de navigation constaté sur la vue administrateur d’évaluations, sans modifier les parcours publics.
