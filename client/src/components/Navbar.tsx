@@ -51,7 +51,7 @@ const NAV_COPY = {
   empty: { fr: "vide", en: "empty" },
   item: { fr: "élément", en: "item" },
   items: { fr: "éléments", en: "items" },
-  account: { fr: "Accès Client", en: "Client access" },
+  account: { fr: "Se connecter", en: "Sign in" },
   register: { fr: "Inscription", en: "Sign up" },
   accountSpace: { fr: "Espace Candidat", en: "Candidate space" },
   accountDashboard: { fr: "Tableau de bord / Dossier", en: "Dashboard / Case" },

@@ -1666,3 +1666,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Retirer les CTA publics de suivi confirmés et renforcer la navigation interne de l’espace client
 - [x] Agrandir la typographie principale du hero et vérifier son contraste responsive
 - [x] Tester les parcours connecté, public, clavier et mobile, puis publier
+
+## Accès client et inscription
+- [x] Auditer le libellé « Accès client » et la route d’inscription qui affiche un message de maintenance
+- [x] Renommer l’accès client en « Se connecter » dans les interfaces publiques
+- [x] Corriger la route ou le chargement d’inscription sans supprimer le parcours existant
+- [x] Tester connexion, inscription, erreurs et accessibilité mobile, puis publier

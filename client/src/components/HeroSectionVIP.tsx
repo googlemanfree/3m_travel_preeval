@@ -230,7 +230,7 @@ export default function HeroSectionVIP({
             variant="outline"
             className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-blue-300/70 px-6 py-4 text-center font-semibold text-blue-100 shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-blue-500/20 hover:border-blue-200 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
-            <a href="/login">🔑 Accès Client</a>
+            <a href="/login">🔑 Se connecter</a>
           </Button>
           <Button
             asChild

@@ -13,7 +13,7 @@ import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
 const Flights = lazyWithTimeout(() => import("./pages/Flights"));
-const Register = lazyWithTimeout(() => import("./pages/Register"));
+import Register from "./pages/Register";
 const Login = lazyWithTimeout(() => import("./pages/Login"));
 const VerifyEmail = lazyWithTimeout(() => import("./pages/VerifyEmail"));
 const VerifyEmailLink = lazyWithTimeout(() => import("./pages/VerifyEmailLink"));
