@@ -82,7 +82,7 @@ export default function CountryDetailPage() {
   const portal = publicPortal?.hasOverride
     ? publicPortal
     : destinationDetail?.consular;
-  const evaluationUrl = `/evaluation?destination=${encodeURIComponent(country.name)}&procedure=${encodeURIComponent(country.visaType)}`;
+  const evaluationUrl = `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
     : destinationDetail?.lastUpdatedAt;
@@ -135,8 +135,8 @@ export default function CountryDetailPage() {
           <div className="absolute -right-10 -top-8 text-[9rem] leading-none opacity-[0.08] grayscale pointer-events-none">{regionBadge}</div>
           <div className="absolute right-8 bottom-5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-md">{regionLabel}</div>
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full">
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full md:w-auto md:flex-1">
               <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-3 text-6xl shadow-inner backdrop-blur-md sm:h-28 sm:w-28 sm:text-7xl">
                 {destinationMedia?.flagUrl ? (
                   <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} loading="lazy" decoding="async" className="h-full w-full object-contain" />
@@ -157,7 +157,7 @@ export default function CountryDetailPage() {
                     <Badge className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 text-xs font-bold">Mis à jour</Badge>
                   )}
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{country.name}</h1>
+                <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{country.name}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
                   <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel — {country.visaType}
                 </p>
@@ -167,7 +167,7 @@ export default function CountryDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto md:shrink-0 items-center">
               <Button
                 onClick={toggleFavorite}
                 variant="outline"

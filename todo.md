@@ -1572,3 +1572,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Optimiser les zones de clic et les libellés CTA sur tablette
 - [x] Ajouter des tests navigateur spécifiques au format tablette
 - [x] Tester les contrôles admin, les routes et les régressions, puis publier
+
+## Procédures pays : routes fiables et contenus documentés
+- [x] Recenser les PDF fournis et les routes de détail de procédures actuellement accessibles
+- [x] Corriger les pages blanches et fournir un fallback utile pour toute destination non encore enrichie
+- [x] Extraire et vérifier les étapes, documents et sources de procédure depuis les PDF disponibles
+- [x] Construire des pages pays avec emblème, visuel, étapes et liens officiels sans inventer de conditions
+- [x] Relier chaque sélection ou bouton Détails à une route canonique fonctionnelle
+- [x] Tester les pages, liens et CTA sur mobile/tablette/desktop, puis publier

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { composePublicPrerender } from "./publicPrerender";
+import { PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 
 const template = "<!doctype html><html lang=\"fr\"><head><title>Ancien titre</title><meta name=\"description\" content=\"ancienne description\" /><link rel=\"canonical\" href=\"https://www.3mtravelagency.com/\" /></head><body><div id=\"root\"><!--prerender-app--></div><script type=\"module\" src=\"/src/main.tsx\"></script></body></html>";
 
@@ -52,8 +53,19 @@ describe("pré-rendu public indexable", () => {
 
   it("préserve des CTA Canada exploitables dans le fallback public", () => {
     const rendered = composePublicPrerender(template, "/canada");
-    expect(rendered.html).toContain('/evaluation?destination=canada');
+    expect(rendered.html).toContain('/?project=travail&amp;destination=canada#evaluation-multi');
     expect(rendered.html).toContain("Consulter les programmes IRCC");
+  });
+
+  it("pré-rend une fiche utile pour chaque destination du catalogue public", () => {
+    expect(PUBLIC_DESTINATION_DETAILS.length).toBeGreaterThanOrEqual(107);
+    for (const destination of PUBLIC_DESTINATION_DETAILS) {
+      const path = `/procedures/${destination.procedure.id}`;
+      const rendered = composePublicPrerender(template, path);
+      expect(rendered.status, path).toBe(200);
+      expect(rendered.html, path).toContain(`Procédure ${destination.procedure.name}`);
+      expect(rendered.html, path).toContain("Commencer l’évaluation protégée");
+    }
   });
 
   it("garde toutes les routes de l’incident en shell 200 non indexable", () => {

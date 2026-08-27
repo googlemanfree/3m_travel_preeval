@@ -1,5 +1,6 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
+import { getPublicDestinationDetail } from "../client/src/lib/publicDestinationCatalog";
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
@@ -14,6 +15,30 @@ type PublicMeta = {
   lead: string;
   keywords?: string[];
   noindex?: boolean;
+};
+
+const procedureMetaForPath = (path: string): PublicMeta | undefined => {
+  const match = path.match(/^\/(?:procedures|destinations)\/([^/]+)$/);
+  if (!match) return undefined;
+
+  let requestedId = match[1];
+  try {
+    requestedId = decodeURIComponent(requestedId);
+  } catch {
+    // Une URL mal encodée retombe sur le comportement de page introuvable.
+  }
+
+  const procedure = getPublicDestinationDetail(requestedId)?.procedure;
+  if (!procedure) return undefined;
+
+  const projectLabel = procedure.visaType === "etudes" ? "études" : procedure.visaType === "visiteur" ? "visiteur" : "travail";
+  return {
+    title: `Procédure ${procedure.name} | ${SITE}`,
+    description: `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, à vérifier auprès des autorités compétentes.`,
+    heading: `Procédure ${procedure.name}`,
+    lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}.`,
+    keywords: [`visa ${procedure.name}`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "3M Travel"],
+  };
 };
 
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
@@ -68,7 +93,8 @@ export function getIndexablePublicPaths() {
 export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
-  const meta = PUBLIC_PAGES[path] ?? blogArticle;
+  const procedurePage = procedureMetaForPath(path);
+  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
   const privatePath = /^\/(admin|mon-espace|mon-dossier|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
@@ -133,8 +159,9 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
     structuredDataTag,
   ].join("\n");
-  const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/evaluation?destination=canada">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
-  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
+  const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
+  const procedureFallback = procedurePage ? `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier</h2><p>Le guide détaillé, les pièces demandées et les conditions applicables sont présentés dans la fiche complète après chargement. Créez un compte pour enregistrer votre projet et obtenir une checklist adaptée.</p><p><a href="/?project=${encodeURIComponent(procedurePage.keywords?.[2] === "études" ? "etudes" : procedurePage.keywords?.[2] === "visiteur" ? "tourisme" : "travail")}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
+  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}${procedureFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<meta\s+name="description"[^>]*>\s*/i, "")

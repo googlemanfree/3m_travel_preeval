@@ -13,8 +13,14 @@ export type PublicDestinationDetail = {
   >;
 };
 
-const normalizeDestination = (value: string) =>
-  value
+const normalizeDestination = (value: string) => {
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    // La valeur de route peut ne pas être encodée : poursuivre avec sa forme reçue.
+  }
+  return decoded
     .trim()
     .toLocaleLowerCase("fr")
     .normalize("NFD")
@@ -23,6 +29,7 @@ const normalizeDestination = (value: string) =>
     .replace(/rep-?tcheque/g, "republique-tcheque")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+};
 
 const categoryToVisaType = {
   travail: "travail",
@@ -121,8 +128,27 @@ export const PUBLIC_DESTINATION_DETAILS: PublicDestinationDetail[] = [
 
 export const PUBLIC_DESTINATION_PAGE_COUNT = PUBLIC_DESTINATION_DETAILS.length;
 
-export const getPublicDestinationDetail = (id?: string) =>
-  PUBLIC_DESTINATION_DETAILS.find((detail) => detail.procedure.id === id);
+/**
+ * Résout les identifiants canoniques, les anciennes URL à base de nom de pays
+ * et les variantes encodées. La page de détail ne doit jamais dépendre d'une
+ * correspondance littérale fragile provenant d'un ancien bouton ou d'une URL
+ * enregistrée dans les favoris.
+ */
+export const getPublicDestinationDetail = (id?: string) => {
+  if (!id) return undefined;
+  const normalizedId = normalizeDestination(id);
+
+  return (
+    PUBLIC_DESTINATION_DETAILS.find((detail) => detail.procedure.id === id) ??
+    PUBLIC_DESTINATION_DETAILS.find((detail) => normalizeDestination(detail.procedure.id) === normalizedId) ??
+    PUBLIC_DESTINATION_DETAILS.find((detail) => normalizeDestination(detail.procedure.name) === normalizedId)
+  );
+};
+
+export const getPublicDestinationPath = (idOrName: string) => {
+  const detail = getPublicDestinationDetail(idOrName);
+  return detail ? `/procedures/${detail.procedure.id}` : "/procedures";
+};
 
 export const getDestinationDetailForResource = (resource: { country: string; category: string }) => {
   const countryKey = normalizeDestination(resource.country);

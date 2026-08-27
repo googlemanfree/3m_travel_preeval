@@ -11,6 +11,7 @@ import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
+import { getPublicDestinationPath } from '@/lib/publicDestinationCatalog';
 import { trpc } from '@/lib/trpc';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
@@ -142,7 +143,7 @@ export default function ProceduresAdvanced() {
   };
 
   const getEvaluationHref = (country: typeof procedures107Complete[0]) =>
-    `/evaluation-primaire?destination=${encodeURIComponent(country.id)}&project=${encodeURIComponent(country.visaType)}`;
+    `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 py-12 px-4">
@@ -597,7 +598,7 @@ export default function ProceduresAdvanced() {
                       </picture>
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-800/90 via-blue-700/75 to-blue-600/50" />
                       <div className="relative z-10 flex items-center justify-between mb-3">
-                        <Link href={`/procedures/${country.id}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-700">
+                        <Link href={getPublicDestinationPath(country.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-700">
                           <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-4xl">
                             {destinationMedia?.flagUrl ? <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} loading="lazy" decoding="async" className="h-full w-full object-contain" /> : country.flag}
                           </span>
@@ -670,7 +671,7 @@ export default function ProceduresAdvanced() {
 
                       {/* Buttons Container */}
                       <div className="space-y-2 pt-2">
-                        <Link href={`/procedures/${country.id}`} className="block">
+                        <Link href={getPublicDestinationPath(country.id)} className="block">
                           <Button
                             variant="outline"
                             className="w-full border-blue-600 text-blue-700 hover:bg-blue-50 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all text-xs"

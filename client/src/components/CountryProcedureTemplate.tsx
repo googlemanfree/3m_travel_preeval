@@ -24,7 +24,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
       <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-5xl">{data.flag}</span>
-          <h1 className="text-2xl md:text-4xl font-extrabold mt-4">{data.title}</h1>
+          <h1 className="text-2xl md:text-4xl font-extrabold !text-white mt-4">{data.title}</h1>
           <p className="text-blue-200 mt-2">{data.subtitle} — édition {data.editionYear}</p>
           <p className="text-sm text-blue-300 mt-4 italic">« Votre mobilité, notre expertise. Votre réussite, notre mission. »</p>
           <div className="max-w-sm mx-auto mt-6">
