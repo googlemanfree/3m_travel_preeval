@@ -216,27 +216,27 @@ export default function CountryDetailPage() {
         {/* Indicateurs clés */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Délai de traitement</p>
-            <p className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" /> {country.processingTime}
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Étapes de traitement</p>
+            <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 shrink-0 text-blue-600" /> À confirmer auprès de l’autorité
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Coût estimé</p>
-            <p className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-emerald-600" /> {country.cost}
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Frais officiels</p>
+            <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 shrink-0 text-emerald-600" /> Variables selon la procédure
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Salaire minimum indicatif</p>
-            <p className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-indigo-600" /> {country.minSalary || 'Variable'}
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Conditions de projet</p>
+            <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Briefcase className="w-5 h-5 shrink-0 text-indigo-600" /> Dépendent de votre situation
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Budget global agence</p>
-            <p className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-600" /> {country.totalCost || 'Sur devis'}
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Accompagnement 3M</p>
+            <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 shrink-0 text-amber-600" /> Informations sur demande
             </p>
           </Card>
         </div>

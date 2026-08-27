@@ -1770,4 +1770,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les 107 dates, les badges et l’absence de message de garantie avant publication.
 
 ## Revue éditoriale des indicateurs de procédure
-- [ ] Auditer les champs de coûts, délais, salaires et budgets affichés sur les fiches afin de retirer ou sourcer les données volatiles.
+- [x] Auditer les champs de coûts, délais, salaires et budgets affichés sur les fiches afin de retirer ou sourcer les données volatiles.
