@@ -65,6 +65,11 @@ export default function EvaluationSpace() {
     retry: 3,
     retryDelay: 1000,
   });
+  const { data: caseTrackingData, refetch: refetchCaseTracking } = trpc.caseTracking.getMyCases.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
   const sessionConfirmedInvalid = isError && /non authentifi|expir|invalid/i.test(error instanceof Error ? error.message : "");
   const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
 
@@ -79,8 +84,8 @@ export default function EvaluationSpace() {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    const result = await refetch();
-    if (!result.error) setLastSyncedAt(Date.now());
+    const [result, caseResult] = await Promise.all([refetch(), refetchCaseTracking()]);
+    if (!result.error && !caseResult.error) setLastSyncedAt(Date.now());
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -168,6 +173,10 @@ export default function EvaluationSpace() {
     status: document.status,
   }));
   const latestEvaluation = evaluations[0] as any;
+  const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
+  const customRequirements = (caseTrackingData?.cases ?? [])
+    .filter((item: any) => item.caseNumber === evaluationCaseNumber)
+    .flatMap((item: any) => item.requirements ?? []);
   const evaluationStatusLabel = cProfile.evaluationDeclarationStatus === "validated"
     ? "Évaluation validée"
     : !latestEvaluation
@@ -418,7 +427,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} onOpenDocuments={() => switchToSection("documents")} />
+                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -958,7 +967,7 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "documents" && (
             <div className="space-y-6">
-              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} onOpenDocuments={() => switchToSection("documents")} />
+              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}

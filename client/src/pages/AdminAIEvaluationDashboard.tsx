@@ -110,6 +110,15 @@ type ManagedResponseTemplate = {
   updatedAt: Date | string;
 };
 
+type EvaluationDocumentRequirement = {
+  id: number;
+  documentType: string;
+  status: "pending" | "received" | "approved" | "rejected" | "waived";
+  dueAt: Date | string | null;
+  requestedAt: Date | string;
+  adminComment: string | null;
+};
+
 function csvCell(value: unknown) {
   const text = value === null || value === undefined ? "" : String(value);
   return `"${text.replace(/"/g, '""')}"`;
@@ -284,6 +293,14 @@ export default function AdminAIEvaluationDashboard() {
   const createManagedTemplate = trpc.richTextTemplates.create.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
   const updateManagedTemplate = trpc.richTextTemplates.update.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
   const deleteManagedTemplate = trpc.richTextTemplates.delete.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
+  const [documentRequirementEvaluationId, setDocumentRequirementEvaluationId] = useState<number | null>(null);
+  const documentRequirementsQuery = trpc.aiEvaluationManagement.listEvaluationDocumentRequirements.useQuery(
+    { sessionToken, evaluationId: documentRequirementEvaluationId ?? 1 },
+    { enabled: !!sessionToken && documentRequirementEvaluationId !== null, refetchOnWindowFocus: false },
+  );
+  const createDocumentRequirement = trpc.aiEvaluationManagement.createEvaluationDocumentRequirement.useMutation({ onSuccess: async () => { await documentRequirementsQuery.refetch(); } });
+  const updateDocumentRequirement = trpc.aiEvaluationManagement.updateEvaluationDocumentRequirement.useMutation({ onSuccess: async () => { await documentRequirementsQuery.refetch(); } });
+  const withdrawDocumentRequirement = trpc.aiEvaluationManagement.withdrawEvaluationDocumentRequirement.useMutation({ onSuccess: async () => { await documentRequirementsQuery.refetch(); } });
 
   const items = (data?.items ?? []) as DashboardItem[];
   const summary = data?.summary;
@@ -315,6 +332,11 @@ export default function AdminAIEvaluationDashboard() {
   const [managedTemplateContent, setManagedTemplateContent] = useState("");
   const [managedTemplateReason, setManagedTemplateReason] = useState("");
   const [managedTemplateNotice, setManagedTemplateNotice] = useState<string | null>(null);
+  const [requestedDocumentLabel, setRequestedDocumentLabel] = useState("");
+  const [requestedDocumentComment, setRequestedDocumentComment] = useState("");
+  const [requestedDocumentDueAt, setRequestedDocumentDueAt] = useState("");
+  const [requestedDocumentReason, setRequestedDocumentReason] = useState("");
+  const [documentRequirementNotice, setDocumentRequirementNotice] = useState<string | null>(null);
   const pageSize = 15;
 
   const options = useMemo(() => ({
@@ -401,9 +423,40 @@ export default function AdminAIEvaluationDashboard() {
     setSelectedTemplateKey(item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : "");
     setPreparationNotice(null);
     setDeliveryNotice(null);
+    setDocumentRequirementEvaluationId(evaluationNumericId(item));
+    setDocumentRequirementNotice(null);
   };
 
   const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
+
+  const createSpecificDocumentRequirement = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    if (!Number.isInteger(evaluationId) || requestedDocumentLabel.trim().length < 3 || requestedDocumentComment.trim().length < 3 || requestedDocumentReason.trim().length < 8) {
+      setDocumentRequirementNotice("Indiquez la pièce, une consigne claire et un motif d’au moins 8 caractères.");
+      return;
+    }
+    if (!window.confirm("Ajouter cette pièce à la checklist du candidat ? Elle restera modifiable et ne déclenche aucun envoi automatique.")) return;
+    createDocumentRequirement.mutate({ sessionToken, evaluationId, documentType: requestedDocumentLabel.trim(), candidateComment: requestedDocumentComment.trim(), dueAt: requestedDocumentDueAt ? new Date(`${requestedDocumentDueAt}T23:59:59.999Z`).toISOString() : undefined, reason: requestedDocumentReason.trim() }, {
+      onSuccess: () => { setRequestedDocumentLabel(""); setRequestedDocumentComment(""); setRequestedDocumentDueAt(""); setRequestedDocumentReason(""); setDocumentRequirementNotice("Pièce ajoutée à la checklist du candidat et journalisée."); },
+      onError: (error) => setDocumentRequirementNotice(error.message),
+    });
+  };
+
+  const editSpecificDocumentRequirement = (item: DashboardItem, requirement: EvaluationDocumentRequirement) => {
+    const label = window.prompt("Libellé de la pièce demandée :", requirement.documentType)?.trim();
+    const comment = window.prompt("Consigne visible par le candidat :", requirement.adminComment ?? "")?.trim();
+    const reason = window.prompt("Motif de modification (8 caractères minimum) :")?.trim();
+    const evaluationId = evaluationNumericId(item);
+    if (!label || !comment || !reason || reason.length < 8 || !Number.isInteger(evaluationId) || !window.confirm("Enregistrer cette modification dans la checklist du candidat ?")) return;
+    updateDocumentRequirement.mutate({ sessionToken, evaluationId, requirementId: requirement.id, documentType: label, candidateComment: comment, dueAt: requirement.dueAt ? new Date(requirement.dueAt).toISOString() : undefined, reason }, { onSuccess: () => setDocumentRequirementNotice("Demande de pièce modifiée et journalisée."), onError: (error) => setDocumentRequirementNotice(error.message) });
+  };
+
+  const withdrawSpecificDocumentRequirement = (item: DashboardItem, requirement: EvaluationDocumentRequirement) => {
+    const reason = window.prompt(`Motif du retrait de « ${requirement.documentType} » (8 caractères minimum) :`)?.trim();
+    const evaluationId = evaluationNumericId(item);
+    if (!reason || reason.length < 8 || !Number.isInteger(evaluationId) || !window.confirm("Retirer cette demande de la checklist du candidat ?")) return;
+    withdrawDocumentRequirement.mutate({ sessionToken, evaluationId, requirementId: requirement.id, reason }, { onSuccess: () => setDocumentRequirementNotice("Demande retirée de la checklist et journalisée."), onError: (error) => setDocumentRequirementNotice(error.message) });
+  };
 
   const saveDraft = (item: DashboardItem) => {
     const evaluationId = evaluationNumericId(item);
@@ -558,14 +611,14 @@ export default function AdminAIEvaluationDashboard() {
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
               {item.type === "evaluation" && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => loadProjectTemplate(item)} disabled={Boolean(item.reviewedAt) || !item.projectType || applyResponseTemplate.isPending}>Charger un modèle</Button><Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => requestPreparationRestart(item)} disabled={Boolean(item.reviewedAt) || retryPreparation.isPending}><RefreshCw className={`h-3.5 w-3.5 ${retryPreparation.isPending ? "animate-spin" : ""}`} /> Relancer le brouillon</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div></div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => loadProjectTemplate(item)} disabled={Boolean(item.reviewedAt) || !item.projectType || applyResponseTemplate.isPending}>Charger un modèle</Button><Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => requestPreparationRestart(item)} disabled={Boolean(item.reviewedAt) || retryPreparation.isPending}><RefreshCw className={`h-3.5 w-3.5 ${retryPreparation.isPending ? "animate-spin" : ""}`} /> Relancer le brouillon</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)}>Gérer les pièces</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div></div>
                 {item.preparationState === "ready" && item.preparationDraft && <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-700"><p className="font-semibold text-slate-950">Contexte préparatoire interne</p><p className="mt-1 leading-5">{item.preparationDraft.summary}</p>{item.preparationDraft.gapsToClarify.length > 0 && <p className="mt-2 leading-5"><strong>À vérifier :</strong> {item.preparationDraft.gapsToClarify.join(" · ")}</p>}{item.preparationDraft.advisorQuestions.length > 0 && <p className="mt-2 leading-5"><strong>Questions préparées :</strong> {item.preparationDraft.advisorQuestions.join(" · ")}</p>}</div>}
                 {item.luxembourgReview && <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"><p className="font-semibold">Luxembourg — {item.luxembourgReview.label}</p><p className="mt-1 leading-5">{item.luxembourgReview.detail}</p><a href="https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html" target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">Vérifier la procédure officielle Guichet.lu ↗</a></div>}
                 {item.preparationState === "unavailable" && <p className="mt-2 text-xs text-amber-800">Le contexte préparatoire n’est pas disponible. La revue manuelle reste possible.</p>}
                 {preparationNotice?.itemId === item.id && <p role="status" className="mt-2 text-xs text-slate-700">{preparationNotice.message}</p>}
                 {item.reviewDeadline && !item.reviewedAt && <p className="mt-1 text-xs text-indigo-800">Échéance interne : {new Date(item.reviewDeadline).toLocaleString("fr-FR")}</p>}
                 {item.reviewedAt && <p className="mt-1 text-xs text-emerald-800">Validation enregistrée le {new Date(item.reviewedAt).toLocaleString("fr-FR")}{item.finalResponseSentAt ? " — e-mail envoyé" : " — diffusion à vérifier"}.</p>}
-                {editingId === item.id && <div className="mt-3 space-y-2"><label className="block text-xs font-medium text-slate-700">Projet de réponse<textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value)} rows={6} maxLength={8000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Rédigez une réponse factuelle, sans promesse de visa, emploi, admission ou délai garanti." /></label><label className="block text-xs font-medium text-slate-700">Motif de modification / validation<input value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. informations relues avec le candidat" /></label><div className="flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => saveDraft(item)} disabled={saveReviewDraft.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}>Enregistrer le brouillon</Button><Button type="button" size="sm" className="gap-1 bg-emerald-700 hover:bg-emerald-800" onClick={() => validateResponse(item)} disabled={validateAndSend.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}><Send className="h-3.5 w-3.5" /> Valider puis envoyer</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Annuler</Button></div>{deliveryNotice && <p role="status" className="text-xs text-slate-700">{deliveryNotice}</p>}</div>}
+                {editingId === item.id && <div className="mt-3 space-y-4"><div className="space-y-2"><label className="block text-xs font-medium text-slate-700">Projet de réponse<textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value)} rows={6} maxLength={8000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Rédigez une réponse factuelle, sans promesse de visa, emploi, admission ou délai garanti." /></label><label className="block text-xs font-medium text-slate-700">Motif de modification / validation<input value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. informations relues avec le candidat" /></label><div className="flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => saveDraft(item)} disabled={saveReviewDraft.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}>Enregistrer le brouillon</Button><Button type="button" size="sm" className="gap-1 bg-emerald-700 hover:bg-emerald-800" onClick={() => validateResponse(item)} disabled={validateAndSend.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}><Send className="h-3.5 w-3.5" /> Valider puis envoyer</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Annuler</Button></div>{deliveryNotice && <p role="status" className="text-xs text-slate-700">{deliveryNotice}</p>}</div><div className="border-t border-indigo-100 pt-4"><div><p className="text-xs font-bold uppercase tracking-[0.12em] text-indigo-800">Checklist du client</p><h4 className="mt-1 text-sm font-bold text-slate-950">Demander une pièce spécifique</h4><p className="mt-1 text-xs text-slate-600">La demande sera visible dans l’espace candidat. Elle n’envoie aucun e-mail ni aucune décision automatiquement.</p></div><div className="mt-3 grid gap-2 md:grid-cols-2"><label className="text-xs font-medium text-slate-700">Pièce demandée<input value={requestedDocumentLabel} onChange={(event) => setRequestedDocumentLabel(event.target.value)} maxLength={100} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. attestation employeur récente" /></label><label className="text-xs font-medium text-slate-700">Échéance facultative<input type="date" value={requestedDocumentDueAt} onChange={(event) => setRequestedDocumentDueAt(event.target.value)} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" /></label><label className="text-xs font-medium text-slate-700 md:col-span-2">Consigne visible par le candidat<textarea value={requestedDocumentComment} onChange={(event) => setRequestedDocumentComment(event.target.value)} maxLength={1000} rows={2} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Précisez ce qui est utile pour ce dossier, sans information interne." /></label><label className="text-xs font-medium text-slate-700 md:col-span-2">Motif interne de la demande<input value={requestedDocumentReason} onChange={(event) => setRequestedDocumentReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. pièce nécessaire après la revue du dossier" /></label></div><div className="mt-3 flex flex-wrap items-center gap-2"><Button type="button" size="sm" onClick={() => createSpecificDocumentRequirement(item)} disabled={createDocumentRequirement.isPending}>Ajouter à la checklist</Button>{documentRequirementNotice && <p role="status" className="text-xs text-slate-700">{documentRequirementNotice}</p>}</div>{documentRequirementsQuery.isLoading ? <p className="mt-3 text-xs text-slate-500">Chargement des pièces spécifiques…</p> : <div className="mt-3 space-y-2">{((documentRequirementsQuery.data ?? []) as EvaluationDocumentRequirement[]).filter((requirement) => requirement.status !== "waived").map((requirement) => <div key={requirement.id} className="flex flex-col gap-2 rounded-md border border-slate-200 bg-white p-3 text-xs sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-900">{requirement.documentType}</p><p className="mt-1 text-slate-600">{requirement.adminComment || "Sans consigne supplémentaire."} · {requirement.status}</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => editSpecificDocumentRequirement(item, requirement)} disabled={updateDocumentRequirement.isPending}>Modifier</Button><Button type="button" size="sm" variant="outline" className="text-rose-700 hover:text-rose-800" onClick={() => withdrawSpecificDocumentRequirement(item, requirement)} disabled={withdrawDocumentRequirement.isPending}>Retirer</Button></div></div>)}</div>}</div></div>}
               </div>}
               {statusOptions.length > 0 ? <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-slate-600">Action rapide<select aria-label={`Modifier le statut de ${item.fullName}`} value={item.status ?? ""} onChange={(event) => changeStatus(item, event.target.value)} disabled={updateStatus.isPending} className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800"><option value="" disabled>Choisir</option>{statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}</select></label> : <span className="mt-3 inline-block text-xs text-slate-500">Statut géré par le moteur de scoring</span>}
             </div>

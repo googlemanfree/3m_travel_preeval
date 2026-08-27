@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
@@ -25,6 +25,7 @@ import { requireValidAdminSession } from "./adminAuth";
 import { sendValidatedEvaluationResponseEmail } from "../emailService";
 import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "../services/evaluationResponseTemplates";
 import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
+import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 
 type Priority = "haute" | "moyenne" | "basse";
 type EvaluationType = "evaluation" | "luxembourg" | "etudes" | "consultation";
@@ -161,6 +162,24 @@ const responseTemplateInput = z.object({
   templateKey: z.enum(["travail", "etudes", "tourisme"]),
 });
 
+const documentRequirementInput = z.object({
+  sessionToken: z.string().min(1),
+  evaluationId: z.number().int().positive(),
+  documentType: z.string().trim().min(3, "Indiquez la pièce demandée.").max(100),
+  candidateComment: z.string().trim().min(3, "Ajoutez une indication utile pour le candidat.").max(1000),
+  dueAt: z.string().datetime().optional(),
+  reason: z.string().trim().min(8, "Indiquez le motif de la demande.").max(800),
+});
+
+const documentRequirementUpdateInput = documentRequirementInput.extend({ requirementId: z.number().int().positive() });
+
+const documentRequirementWithdrawalInput = z.object({
+  sessionToken: z.string().min(1),
+  evaluationId: z.number().int().positive(),
+  requirementId: z.number().int().positive(),
+  reason: z.string().trim().min(8, "Indiquez le motif du retrait.").max(800),
+});
+
 const PREPARATION_DETAIL_KEYS = [
   "canadaLanguageTest", "canadaStudyPlan", "luxEmployerStatus", "luxAademStatus", "franceProjectStatus",
   "belgiumRegion", "germanyLanguageLevel", "germanyRecognitionStatus",
@@ -187,6 +206,38 @@ function parseProjectDetails(value: string | null): Record<string, unknown> {
 
 function textDetail(value: unknown, maximum = 1000): string | undefined {
   return typeof value === "string" ? value.trim().slice(0, maximum) || undefined : undefined;
+}
+
+async function requireEvaluationCandidate(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluationId: number) {
+  const [evaluation] = await db.select({
+    id: evaluations.id,
+    candidateId: evaluations.candidateId,
+    referenceCode: evaluations.referenceCode,
+    destinationCountry: evaluations.destinationCountry,
+    projectType: evaluations.projectType,
+    createdAt: evaluations.createdAt,
+  }).from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1);
+  if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+  if (!evaluation.candidateId) throw new TRPCError({ code: "BAD_REQUEST", message: "Le candidat doit d’abord disposer d’un compte rattaché à cette évaluation." });
+  return evaluation;
+}
+
+async function ensureEvaluationCase(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluation: Awaited<ReturnType<typeof requireEvaluationCandidate>>) {
+  const caseNumber = evaluation.referenceCode || `EVAL-${evaluation.id}`;
+  const [existing] = await db.select().from(cases).where(eq(cases.caseNumber, caseNumber)).limit(1);
+  if (existing) return existing;
+  await db.insert(cases).values({
+    caseNumber,
+    candidateId: evaluation.candidateId,
+    sourceChannel: "online",
+    countryTarget: evaluation.destinationCountry ?? null,
+    caseType: evaluation.projectType ?? "evaluation",
+    currentStatus: "documents_review",
+    openedAt: evaluation.createdAt,
+  });
+  const [created] = await db.select().from(cases).where(eq(cases.caseNumber, caseNumber)).limit(1);
+  if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible de préparer le dossier documentaire." });
+  return created;
 }
 
 function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): GeminiEvaluationDraftInput | null {
@@ -223,6 +274,65 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
 }
 
 export const aiEvaluationManagementRouter = router({
+  listEvaluationDocumentRequirements: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), evaluationId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
+      const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `EVAL-${evaluation.id}`)).limit(1);
+      if (!operationalCase) return [];
+      return db.select({ id: documentRequirements.id, documentType: documentRequirements.documentType, status: documentRequirements.status, dueAt: documentRequirements.dueAt, requestedAt: documentRequirements.requestedAt, adminComment: documentRequirements.adminComment })
+        .from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt));
+    }),
+
+  createEvaluationDocumentRequirement: publicProcedure
+    .input(documentRequirementInput)
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
+      const operationalCase = await ensureEvaluationCase(db, evaluation);
+      const [duplicate] = await db.select({ id: documentRequirements.id }).from(documentRequirements)
+        .where(and(eq(documentRequirements.caseId, operationalCase.id), eq(documentRequirements.documentType, input.documentType))).limit(1);
+      if (duplicate) throw new TRPCError({ code: "CONFLICT", message: "Cette pièce est déjà demandée pour ce dossier." });
+      const result = await db.insert(documentRequirements).values({ caseId: operationalCase.id, documentType: input.documentType, isRequired: true, status: "pending", dueAt: input.dueAt ? new Date(input.dueAt) : null, adminComment: input.candidateComment });
+      const requirementId = Number((result as any)[0]?.insertId || 0);
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_requirement_created", entityType: "document_requirement", entityId: requirementId ? String(requirementId) : null, description: `Pièce demandée : ${input.documentType}. Motif : ${input.reason}` });
+      return { success: true, requirementId };
+    }),
+
+  updateEvaluationDocumentRequirement: publicProcedure
+    .input(documentRequirementUpdateInput)
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
+      const operationalCase = await ensureEvaluationCase(db, evaluation);
+      const [requirement] = await db.select({ id: documentRequirements.id, status: documentRequirements.status }).from(documentRequirements).where(and(eq(documentRequirements.id, input.requirementId), eq(documentRequirements.caseId, operationalCase.id))).limit(1);
+      if (!requirement || requirement.status === "waived") throw new TRPCError({ code: "NOT_FOUND", message: "Demande de pièce introuvable ou déjà retirée." });
+      await db.update(documentRequirements).set({ documentType: input.documentType, adminComment: input.candidateComment, dueAt: input.dueAt ? new Date(input.dueAt) : null }).where(eq(documentRequirements.id, requirement.id));
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_requirement_updated", entityType: "document_requirement", entityId: String(requirement.id), description: `Demande modifiée : ${input.documentType}. Motif : ${input.reason}` });
+      return { success: true };
+    }),
+
+  withdrawEvaluationDocumentRequirement: publicProcedure
+    .input(documentRequirementWithdrawalInput)
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
+      const operationalCase = await ensureEvaluationCase(db, evaluation);
+      const [requirement] = await db.select({ id: documentRequirements.id }).from(documentRequirements).where(and(eq(documentRequirements.id, input.requirementId), eq(documentRequirements.caseId, operationalCase.id))).limit(1);
+      if (!requirement) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de pièce introuvable." });
+      await db.update(documentRequirements).set({ status: "waived" }).where(eq(documentRequirements.id, requirement.id));
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_requirement_withdrawn", entityType: "document_requirement", entityId: String(requirement.id), description: `Demande retirée. Motif : ${input.reason}` });
+      return { success: true };
+    }),
   getUnifiedDashboard: publicProcedure
     .input(z.object({ sessionToken: z.string(), limit: z.number().min(1).max(1000).default(500) }))
     .query(async ({ input }) => {

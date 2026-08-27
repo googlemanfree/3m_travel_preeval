@@ -12,6 +12,13 @@ type ChecklistDocument = {
 };
 
 type Requirement = { category: string; label: string; detail?: string; priority?: string };
+type CustomRequirement = {
+  id: number;
+  documentType: string;
+  status: "pending" | "received" | "approved" | "rejected" | "waived";
+  dueAt?: Date | string | null;
+  adminComment?: string | null;
+};
 
 const FALLBACK_REQUIREMENTS: Requirement[] = [
   { category: "Identité", label: "Passeport valide" },
@@ -86,7 +93,14 @@ function documentState(requirement: Requirement, documents: ChecklistDocument[])
 }
 
 export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[]) {
-  return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents) }));
+  return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
+}
+
+function customRequirementState(requirement: CustomRequirement, documents: ChecklistDocument[]) {
+  if (requirement.status === "approved") return { kind: "verified" as const, label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 };
+  if (requirement.status === "rejected") return { kind: "replace" as const, label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle };
+  if (requirement.status === "received" || documentsForRequirement({ category: "Demande de votre conseiller", label: requirement.documentType }, documents).length) return { kind: "received" as const, label: "Reçu — vérification en cours", tone: "border-blue-200 bg-blue-50", Icon: Clock3 };
+  return { kind: "missing" as const, label: "À fournir", tone: "border-amber-200 bg-amber-50", Icon: Circle };
 }
 
 export default function DossierDocumentChecklist({
@@ -94,17 +108,21 @@ export default function DossierDocumentChecklist({
   documents,
   projectType,
   onOpenDocuments,
+  customRequirements = [],
 }: {
   destination?: string | null;
   documents: ChecklistDocument[];
   projectType?: string | null;
   onOpenDocuments?: () => void;
+  customRequirements?: CustomRequirement[];
 }) {
   const requirements = getRequirements(destination, projectType);
   const states = deriveChecklistStates(destination, projectType, documents);
-  const receivedCount = states.filter(({ state }) => state.kind === "received" || state.kind === "verified").length;
-  const verifiedCount = states.filter(({ state }) => state.kind === "verified").length;
-  const pendingCount = states.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
+  const manualStates = customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType, detail: requirement.adminComment ?? undefined }, state: customRequirementState(requirement, documents), dueAt: requirement.dueAt }));
+  const allStates = [...states, ...manualStates];
+  const receivedCount = allStates.filter(({ state }) => state.kind === "received" || state.kind === "verified").length;
+  const verifiedCount = allStates.filter(({ state }) => state.kind === "verified").length;
+  const pendingCount = allStates.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
   const destinationLabel = resolveProcedure(destination)?.name ?? destination ?? "votre destination";
 
   return (
@@ -120,12 +138,12 @@ export default function DossierDocumentChecklist({
           </p>
         </div>
         <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-          {receivedCount}/{requirements.length} reçue{receivedCount > 1 ? "s" : ""}
+          {receivedCount}/{allStates.length} reçue{receivedCount > 1 ? "s" : ""}
         </span>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 h-2 overflow-hidden rounded-full bg-indigo-100" role="progressbar" aria-valuemin={0} aria-valuemax={requirements.length} aria-valuenow={receivedCount}>
-          <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${requirements.length ? (receivedCount / requirements.length) * 100 : 0}%` }} />
+        <div className="mb-4 h-2 overflow-hidden rounded-full bg-indigo-100" role="progressbar" aria-valuemin={0} aria-valuemax={allStates.length} aria-valuenow={receivedCount}>
+          <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${allStates.length ? (receivedCount / allStates.length) * 100 : 0}%` }} />
         </div>
         <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold" aria-live="polite">
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800">{verifiedCount} validée{verifiedCount > 1 ? "s" : ""}</span>
@@ -133,7 +151,7 @@ export default function DossierDocumentChecklist({
           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-900">{pendingCount} à compléter</span>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          {states.map(({ requirement, state }, index) => {
+          {allStates.map(({ requirement, state, dueAt }, index) => {
             const StateIcon = state.Icon;
             return (
               <div key={`${requirement.category}-${requirement.label}-${index}`} className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${state.tone}`}>
@@ -142,6 +160,7 @@ export default function DossierDocumentChecklist({
                   <span className="block font-semibold text-gray-900">{requirement.label}</span>
                   <span className="text-xs text-gray-600">{requirement.category} · {state.label}</span>
                   {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
+                  {dueAt && <span className="mt-1 block text-xs font-medium text-slate-700">À déposer avant le {new Date(dueAt).toLocaleDateString("fr-FR")}</span>}
                   {(state.kind === "missing" || state.kind === "replace") && onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>}
                 </div>
               </div>

@@ -1742,3 +1742,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Calculer les pièces requises, déposées, à compléter et à revoir à partir des données accessibles au candidat, sans exposer de données internes.
 - [x] Afficher la checklist dynamique et ses raccourcis de dépôt dans l’espace candidat.
 - [x] Tester les statuts de pièces, les raccourcis et l’accès candidat avant publication.
+
+## Demandes de pièces spécifiques par conseiller
+- [x] Auditer les droits administratifs, le dossier client et la checklist documentaire.
+- [x] Réutiliser le registre audité de demandes de pièces propres à un candidat.
+- [x] Permettre au conseiller de créer, modifier ou retirer une demande depuis l’administration.
+- [x] Afficher les demandes actives dans la checklist candidate avec un raccourci de dépôt.
+- [x] Tester les autorisations, l’audit, les statuts et la confidentialité avant publication.
