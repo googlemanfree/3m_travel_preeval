@@ -1771,3 +1771,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Revue éditoriale des indicateurs de procédure
 - [x] Auditer les champs de coûts, délais, salaires et budgets affichés sur les fiches afin de retirer ou sourcer les données volatiles.
+
+## Suivi administratif de révision des procédures
+- [x] Auditer les sources, les dates et les interfaces administratives existantes.
+- [x] Définir des états de révision explicites et leurs seuils de priorité.
+- [x] Ajouter une vue ou un indicateur filtrable des procédures à réviser, avec accès direct au contrôle de la fiche.
+- [x] Tester les calculs de dates, les filtres et les droits administratifs avant publication.
