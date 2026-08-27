@@ -1,0 +1,1399 @@
+{
+  "summary": {
+    "total": 107,
+    "verified": 107,
+    "requiringManualReview": 89,
+    "duplicateIds": []
+  },
+  "entries": [
+    {
+      "input": "allemagne-travail|Allemagne|travail",
+      "procedureId": "allemagne-travail",
+      "officialUrl": "https://www.make-it-in-germany.com/fr/visa-sejour/types/travailleurs-qualifies",
+      "sourceTitle": "Visa de travail pour travailleurs qualifiés - Make it in Germany",
+      "status": "verifie",
+      "preparationPoints": "Obtention d'une reconnaissance d'équivalence pour les diplômes étrangers | Présentation d'une offre d'emploi concrète pour un poste qualifié | Approbation préalable de l'Agence fédérale pour l'emploi (BA)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "australie-travail|Australie|travail",
+      "procedureId": "australie-travail",
+      "officialUrl": "https://immi.homeaffairs.gov.au/visas/working-in-australia",
+      "sourceTitle": "Working in Australia - Department of Home Affairs",
+      "status": "verifie",
+      "preparationPoints": "Identifier le visa adapté au projet professionnel | Vérifier l'éligibilité du métier sur la liste des professions qualifiées | Préparer un passeport valide et les preuves de compétences",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "canada-travail|Canada|travail",
+      "procedureId": "canada-travail",
+      "officialUrl": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada/permis-exterieur.html",
+      "sourceTitle": "Permis de travail : Présentation d’une demande à l’extérieur du Canada",
+      "status": "verifie",
+      "preparationPoints": "Vérifier l’admissibilité selon le type de permis (lié à un employeur ou ouvert) | Préparer les formulaires et documents requis par le bureau des visas local | Payer les frais de traitement et fournir les données biométriques",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les critères spécifiques doivent être confirmés directement auprès de l’autorité compétente (IRCC) avant toute démarche.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "france-travail|France|travail",
+      "procedureId": "france-travail",
+      "officialUrl": "https://www.service-public.gouv.fr/particuliers/vosdroits/R49998",
+      "sourceTitle": "S'inscrire à France Travail (anciennement Pôle emploi)",
+      "status": "verifie",
+      "preparationPoints": "Création d'un espace personnel en ligne avec une adresse mail valide | Préparation des pièces justificatives (identité, sécurité sociale, titre de séjour) | Renseignement du parcours professionnel et du projet de recherche d'emploi",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "luxembourg-travail|Luxembourg|travail",
+      "procedureId": "luxembourg-travail",
+      "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html",
+      "sourceTitle": "Séjourner au Luxembourg en tant que salarié ressortissant de pays tiers",
+      "status": "verifie",
+      "preparationPoints": "Déclaration préalable du poste à l’ADEM par l’employeur | Demande d’autorisation de séjour temporaire avant l’entrée sur le territoire | Justification des qualifications et du contrat de travail signé",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "suisse-travail|Suisse|travail",
+      "procedureId": "suisse-travail",
+      "officialUrl": "https://www.sem.admin.ch/sem/fr/home/overview-arbeit.html",
+      "sourceTitle": "Travailler en Suisse - Secrétariat d’État aux migrations",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail valide requis | Annonce obligatoire auprès de la commune de domicile sous 14 jours | Conditions spécifiques selon la nationalité (UE/AELE vs États tiers)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "royaume-uni-travail|Royaume-Uni|travail",
+      "procedureId": "royaume-uni-travail",
+      "officialUrl": "https://www.gov.uk/skilled-worker-visa",
+      "sourceTitle": "Skilled Worker visa: Overview",
+      "status": "verifie",
+      "preparationPoints": "Offre d'emploi d'un employeur approuvé | Certificat de parrainage (CoS) | Preuve de maîtrise de l'anglais",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "etats-unis-travail|États-Unis|travail",
+      "procedureId": "etats-unis-travail",
+      "officialUrl": "https://www.uscis.gov/working-in-the-united-states",
+      "sourceTitle": "Working in the United States | USCIS",
+      "status": "verifie",
+      "preparationPoints": "Identification de la classification de visa (temporaire ou permanent) | Dépôt d'une pétition par l'employeur auprès de l'USCIS | Demande de visa auprès du Département d'État pour les résidents hors USA",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "bulgarie-travail|Bulgarie|travail",
+      "procedureId": "bulgarie-travail",
+      "officialUrl": "https://www.az.government.bg/pages/au-predostaviane-na-razreshenie-za-dostup-do-pazara-na-truda-na-na-rabotnici-gravdani-ot-treti-durvavi/",
+      "sourceTitle": "Permis de travail pour les ressortissants de pays tiers - Agence pour l'emploi",
+      "status": "verifie",
+      "preparationPoints": "Demande de permis de travail par l'employeur bulgare | Sollicitation d'un visa de type D au consulat | Preuves de ressources, logement et assurance santé",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "chypre-travail|Chypre|travail",
+      "procedureId": "chypre-travail",
+      "officialUrl": "https://www.gov.cy/mip-md/en/documents/remunerated-employment-single-permit-gen-3/",
+      "sourceTitle": "Migration Department - Remunerated employment (single permit – GEN)",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail validé par le Département du Travail | Certificat de casier judiciaire et examens médicaux (tests sanguins et radio) | Passeport en cours de validité et assurance santé locale",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente chypriote avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "croatie-travail|Croatie|travail",
+      "procedureId": "croatie-travail",
+      "officialUrl": "https://mup.gov.hr/aliens-281621/stay-and-work/work-of-third-country-nationals/281663",
+      "sourceTitle": "Travail des ressortissants de pays tiers en Croatie",
+      "status": "verifie",
+      "preparationPoints": "Permis de séjour et de travail unique requis | Test du marché du travail préalable par l'employeur | Travail limité au poste et à l'employeur spécifiés",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "estonie-travail|Estonie|travail",
+      "procedureId": "estonie-travail",
+      "officialUrl": "https://www.politsei.ee/en/instructions/residence-permit-for-employment",
+      "sourceTitle": "Residence permit for employment",
+      "status": "verifie",
+      "preparationPoints": "Justifier des compétences et de l'expérience professionnelle adaptées au poste | Vérifier que l'employeur est enregistré en Estonie et dispose de l'autorisation de recrutement | S'assurer que la rémunération proposée respecte les critères du salaire moyen estonien",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au permis de séjour doivent impérativement être confirmées auprès de l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "hongrie-travail|Hongrie|travail",
+      "procedureId": "hongrie-travail",
+      "officialUrl": "https://oif.gov.hu/factsheets/residence-permit-for-the-purpose-of-employment",
+      "sourceTitle": "Residence permit for the purpose of employment",
+      "status": "verifie",
+      "preparationPoints": "L'objet du séjour doit être l'exercice d'une activité professionnelle réelle pour le compte d'autrui contre rémunération | La demande peut être déposée par voie électronique via la plateforme Enter Hungary ou en personne auprès d'une direction régionale | Un document de voyage valide et une preuve de relation d'emploi (contrat ou offre d'emploi) sont requis",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "irlande-travail|Irlande|travail",
+      "procedureId": "irlande-travail",
+      "officialUrl": "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/",
+      "sourceTitle": "Employment permits - DETE",
+      "status": "verifie",
+      "preparationPoints": "Soumission d'un contrat de travail signé par les deux parties | Dépôt de la demande au moins 12 semaines avant le début prévu | Vérification de la nécessité d'un test du marché du travail (annonce EURES)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "islande-travail|Islande|travail",
+      "procedureId": "islande-travail",
+      "officialUrl": "https://island.is/en/permit-based-on-work",
+      "sourceTitle": "Residence permit based on work | Ísland.is",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail et preuve de qualification | Paiement des frais de traitement (80 000 ISK) par virement | Confirmation d'assurance maladie pour les 6 premiers mois",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les conditions spécifiques doivent être impérativement confirmées auprès de la Direction de l'Immigration d'Islande.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "italie-travail|Italie|travail",
+      "procedureId": "italie-travail",
+      "officialUrl": "https://www.interno.gov.it/it/temi/immigrazione-e-asilo/modalita-dingresso/visto-e-permesso-soggiorno",
+      "sourceTitle": "Visto e permesso di soggiorno - Ministero dell'Interno",
+      "status": "verifie",
+      "preparationPoints": "Obtention préalable d'un \"nulla osta\" au travail par l'employeur auprès du Sportello Unico per l'Immigrazione | Demande de permis de séjour obligatoire dans les 8 jours ouvrables suivant l'entrée en Italie | Renouvellement du permis de séjour à demander au moins 60 jours avant la date d'expiration",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "kenya-travail|Kenya|travail",
+      "procedureId": "kenya-travail",
+      "officialUrl": "https://immigration.go.ke/work-permits-and-passes/",
+      "sourceTitle": "Work Permits and Passes - Department of Immigration Services",
+      "status": "verifie",
+      "preparationPoints": "Soumission des demandes exclusivement en ligne via le portail eFNS | Téléchargement des documents justificatifs requis lors de la procédure numérique | Impression et présentation du permis aux services d'immigration pour endossement final",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "lettonie-travail|Lettonie|travail",
+      "procedureId": "lettonie-travail",
+      "officialUrl": "https://www.pmlp.gov.lv/en/employment-foreigners",
+      "sourceTitle": "Employment of foreigners",
+      "status": "verifie",
+      "preparationPoints": "Enregistrement de la vacance auprès de l'Agence nationale pour l'emploi | Demande de parrainage soumise par l'employeur à l'OCMA | Dépôt du dossier de permis de séjour en mission diplomatique",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "liechtenstein-travail|Liechtenstein|travail",
+      "procedureId": "liechtenstein-travail",
+      "officialUrl": "https://www.llv.li/en/national-administration/migration-and-passport-office/residence-in-liechtenstein-for-employment-purposes",
+      "sourceTitle": "Residence in Liechtenstein for gainful employment",
+      "status": "verifie",
+      "preparationPoints": "Justification des qualifications professionnelles | Système de quotas et tirage au sort | Responsabilité de l'employeur pour le dépôt de la demande",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": []
+    },
+    {
+      "input": "lituanie-travail|Lituanie|travail",
+      "procedureId": "lituanie-travail",
+      "officialUrl": "https://www.migracija.lt/service/uzsienieciams?lang=en",
+      "sourceTitle": "Migration Department of the Republic of Lithuania (MIGRIS)",
+      "status": "verifie",
+      "preparationPoints": "Lettre de médiation soumise par l'employeur via MIGRIS | Contrat de travail ou engagement d'embauche valide | Assurance santé couvrant la durée du séjour en Lituanie",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les documents spécifiques doivent être confirmées par l'autorité compétente avant toute démarche.",
+      "flags": []
+    },
+    {
+      "input": "malaisie-travail|Malaisie|travail",
+      "procedureId": "malaisie-travail",
+      "officialUrl": "https://rai.malaysia.gov.my/work",
+      "sourceTitle": "Work - MyGovernment Portal for Non-Citizen",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 12 mois | Diplômes traduits en anglais ou malais par une autorité agréée | Enregistrement préalable de l'employeur auprès de l'Expatriate Services Division (ESD)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "malte-travail|Malte|travail",
+      "procedureId": "malte-travail",
+      "officialUrl": "https://identita.gov.mt/expatriates-unit-main-page/noneu-nationals/employment-related-permits/single-permit/",
+      "sourceTitle": "Expatriates Unit Non-EU Nationals - Single permit - Identità",
+      "status": "verifie",
+      "preparationPoints": "La procédure de permis unique regroupe l'autorisation de travail et le permis de séjour en un seul document | Une police d'assurance maladie avec une couverture minimale de 100 000 € est généralement requise | L'autorisation est strictement liée à un employeur spécifique et à une activité professionnelle désignée",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": []
+    },
+    {
+      "input": "maurice-travail|Maurice|travail",
+      "procedureId": "maurice-travail",
+      "officialUrl": "https://residency.mu/work/professional-employed-in-mauritius-by-a-multinational-or-a-local-company/",
+      "sourceTitle": "Professional - Residency by Profession",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail avec salaire mensuel minimum (50 000 MUR) | Diplômes et qualifications professionnelles certifiés | Certificat médical de moins de six mois",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "norvege-travail|Norvège|travail",
+      "procedureId": "norvege-travail",
+      "officialUrl": "https://www.udi.no/en/want-to-apply/work-immigration/skilled-workers/",
+      "sourceTitle": "Want to apply: Skilled workers - UDI",
+      "status": "verifie",
+      "preparationPoints": "Offre d'emploi concrète d'un employeur norvégien | Justification de qualifications académiques ou professionnelles | Paiement des frais de traitement de la demande",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente (UDI).",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "nouvelle-zelande-travail|Nouvelle-Zélande|travail",
+      "procedureId": "nouvelle-zelande-travail",
+      "officialUrl": "https://www.immigration.govt.nz/work/visas-for-working-in-new-zealand/",
+      "sourceTitle": "Visas for working in New Zealand",
+      "status": "verifie",
+      "preparationPoints": "Déterminer si une offre d'emploi préalable est requise pour le type de visa sélectionné | Vérifier les conditions d'âge et de nationalité pour les programmes spécifiques comme le visa vacances-travail | Consulter les exigences relatives aux conditions de travail et à la rémunération minimale applicable",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives aux visas de travail doivent être impérativement confirmées auprès des autorités d'Immigration New Zealand.",
+      "flags": []
+    },
+    {
+      "input": "pologne-travail|Pologne|travail",
+      "procedureId": "pologne-travail",
+      "officialUrl": "https://mos.cudzoziemcy.gov.pl/en/categories-information/doing-the-job/principles-general/",
+      "sourceTitle": "Règles générales pour l'exercice d'un travail par des étrangers",
+      "status": "verifie",
+      "preparationPoints": "Posséder un titre de séjour légal (visa ou permis) autorisant explicitement le travail | Obtenir une autorisation de travail (permis de travail via l'employeur ou permis unique de séjour et de travail) | Exercer l'activité pour l'employeur et au poste spécifiés dans l'autorisation",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "portugal-travail|Portugal|travail",
+      "procedureId": "portugal-travail",
+      "officialUrl": "https://vistos.mne.gov.pt/en/national-visas/necessary-documentation/residency",
+      "sourceTitle": "Residency - Necessary Documentation - National Visas",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail ou promesse d'embauche valide | Justificatif de ressources financières suffisantes | Certificat de casier judiciaire apostillé ou légalisé",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "qatar-travail|Qatar|travail",
+      "procedureId": "qatar-travail",
+      "officialUrl": "https://hukoomi.gov.qa/en/articles/residence-and-work-permits",
+      "sourceTitle": "Residence and Work Permits in Qatar",
+      "status": "verifie",
+      "preparationPoints": "Parrainage par un employeur qatari requis | Délai de conversion de 2 à 4 semaines sans sortie du territoire | Documents d'état civil authentifiés pour le parrainage familial",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "roumanie-travail|Roumanie|travail",
+      "procedureId": "roumanie-travail",
+      "officialUrl": "https://workinromania.gov.ro/workinro/default/angajati",
+      "sourceTitle": "Informații pentru lucrătorii străini - Work in Romania",
+      "status": "verifie",
+      "preparationPoints": "Identification d'un employeur en Roumanie | Obtention d'un visa de long séjour D/AM via la plateforme WorkinRomania | Présentation d'un contrat de travail individuel enregistré",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "senegal-travail|Sénégal|travail",
+      "procedureId": "senegal-travail",
+      "officialUrl": "https://www.interieur.gouv.sn/services/services-aux-usagers/carte-d-identite-d-etranger",
+      "sourceTitle": "Carte d'identité d'étranger - Ministère de l'Intérieur",
+      "status": "verifie",
+      "preparationPoints": "Demande manuscrite adressée au Ministre de l'Intérieur | Casier judiciaire du pays d'origine et certificat médical | Justification de ressources ou contrat de travail visé",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente, notamment le Ministère de l’Intérieur du Sénégal.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovaquie-travail|Slovaquie|travail",
+      "procedureId": "slovaquie-travail",
+      "officialUrl": "https://www.mzv.sk/en/web/en/visa-and-services/national-visa",
+      "sourceTitle": "National visa - Ministry of Foreign and European Affairs of the Slovak Republic",
+      "status": "verifie",
+      "preparationPoints": "Formulaire de demande complété, passeport valide et photo aux normes OACI | Justificatif du but du séjour comme un contrat de travail ou une promesse d'embauche | Preuve d'assurance maladie et de moyens de subsistance suffisants (56 EUR par jour)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les procédures spécifiques doivent être impérativement confirmées auprès de l'autorité compétente avant le dépôt du dossier.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovenie-travail|Slovénie|travail",
+      "procedureId": "slovenie-travail",
+      "officialUrl": "https://www.gov.si/en/topics/employment-and-work-of-foreign-nationals/",
+      "sourceTitle": "Employment and work of foreign nationals",
+      "status": "verifie",
+      "preparationPoints": "Obtention d'un permis unique combinant séjour et travail | Dépôt possible via l'employeur ou une représentation diplomatique | Vérification de la conformité fiscale et légale de l'employeur",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "republique-tcheque-travail|République tchèque|travail",
+      "procedureId": "republique-tcheque-travail",
+      "officialUrl": "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/",
+      "sourceTitle": "Employee Card - Information Portal for Foreigners",
+      "status": "verifie",
+      "preparationPoints": "La carte d'employé regroupe en un seul titre le permis de séjour et le permis de travail pour une durée supérieure à trois mois. | La demande peut être déposée auprès d'une mission diplomatique tchèque à l'étranger pour les ressortissants de pays tiers. | La durée de validité est généralement fixée selon le contrat de travail pour un maximum de deux ans renouvelables.",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au séjour et au travail doivent impérativement être confirmées par les autorités compétentes de la République tchèque.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "gabon-travail|Gabon|travail",
+      "procedureId": "gabon-travail",
+      "officialUrl": "https://fonction-publique.gouv.ga/149-services-aux-usagers/1758-demande-d-autorisation-et-de-renouvellement-d-emploi/1759-demande-d-autorisation-et-de-renouvellement-d-emploi/",
+      "sourceTitle": "Demande d'autorisation et de renouvellement d'emploi",
+      "status": "verifie",
+      "preparationPoints": "Lettre de demande motivée adressée au Ministre | CV, copies des diplômes et du passeport du travailleur | Dossier juridique de l'entreprise employeuse (fiche circuit, statuts, CNSS)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "suede-travail|Suède|travail",
+      "procedureId": "suede-travail",
+      "officialUrl": "https://www.migrationsverket.se/en/you-want-to-apply/work/employee-or-self-employed/employees.html",
+      "sourceTitle": "Apply for a work permit in Sweden - Migrationsverket",
+      "status": "verifie",
+      "preparationPoints": "Détenir un passeport valide et un contrat de travail signé par l'employeur et l'employé | Justifier d'un salaire mensuel brut d'au moins 34 470 SEK conforme aux seuils légaux | S'assurer que l'employeur a souscrit les assurances obligatoires (santé, vie, accidents et retraite)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les conditions spécifiques à chaque dossier doivent impérativement être confirmées par l'autorité suédoise compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "danemark-travail|Danemark|travail",
+      "procedureId": "danemark-travail",
+      "officialUrl": "https://nyidanmark.dk/en-GB/You-want-to-apply/Work",
+      "sourceTitle": "Portail officiel New to Denmark - Permis de travail",
+      "status": "verifie",
+      "preparationPoints": "Obtention préalable d'une offre d'emploi au Danemark | Identification du programme de permis adapté au profil (Pay Limit, Positive List) | Demande conjointe de permis de séjour et de travail auprès de SIRI",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité.",
+      "flags": []
+    },
+    {
+      "input": "autriche-travail|Autriche|travail",
+      "procedureId": "autriche-travail",
+      "officialUrl": "https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/",
+      "sourceTitle": "Permanent Immigration - Austria Migration Platform",
+      "status": "verifie",
+      "preparationPoints": "Obtention de la Carte Rouge-Blanc-Rouge pour travailleurs qualifiés | Justification de ressources financières mensuelles suffisantes | Preuve d'une couverture d'assurance maladie complète en Autriche",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "finlande-travail|Finlande|travail",
+      "procedureId": "finlande-travail",
+      "officialUrl": "https://migri.fi/en/residence-permit-for-an-employed-person",
+      "sourceTitle": "Residence permit for an employed person (TTOL) - Maahanmuuttovirasto",
+      "status": "verifie",
+      "preparationPoints": "Emploi confirmé requis avant le dépôt de la demande | Salaire mensuel brut minimum de 1 600 EUR pour 2026 | Dépôt de la première demande de permis de séjour depuis l'étranger",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "espagne-travail|Espagne|travail",
+      "procedureId": "espagne-travail",
+      "officialUrl": "https://www.inclusion.gob.es/web/migraciones/w/autorizacion-inicial-de-residencia-temporal-y-trabajo-por-cuenta-ajena-hi-16-",
+      "sourceTitle": "Autorisation de résidence et travail salarié - Ministère de l'Inclusion",
+      "status": "verifie",
+      "preparationPoints": "Contrat de travail signé garantissant une activité continue | Absence d'antécédents pénaux sur les cinq dernières années | Vérification de la situation nationale de l'emploi",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "grece-travail|Grèce|travail",
+      "procedureId": "grece-travail",
+      "officialUrl": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en",
+      "sourceTitle": "Employed worker in Greece - European Commission",
+      "status": "verifie",
+      "preparationPoints": "Obtention d'un visa national (type D) pour emploi salarié avant le départ | Demande de permis de séjour auprès de l'Administration Décentralisée dès l'arrivée | Présentation d'un contrat de travail d'au moins un an et d'une assurance santé complète",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "pays-bas-travail|Pays-Bas|travail",
+      "procedureId": "pays-bas-travail",
+      "officialUrl": "https://ind.nl/en/residence-permits/work",
+      "sourceTitle": "Work - Immigration and Naturalisation Service (IND)",
+      "status": "verifie",
+      "preparationPoints": "Disposer d'un contrat de travail valide avec un employeur établi aux Pays-Bas | Vérifier les seuils de revenus minimums applicables selon la catégorie d'emploi | S'assurer que l'employeur est enregistré comme sponsor reconnu par l'IND si requis par la procédure",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au permis de travail doivent être impérativement confirmées par l'autorité compétente des Pays-Bas.",
+      "flags": []
+    },
+    {
+      "input": "belgique-etudes|Belgique|études",
+      "procedureId": "belgique-etudes",
+      "officialUrl": "https://diplomatie.belgium.be/fr/venir-en-belgique/etudier-en-belgique",
+      "sourceTitle": "Etudier en Belgique | SPF Affaires étrangères",
+      "status": "verifie",
+      "preparationPoints": "Déterminer la nécessité d'un visa auprès de l'ambassade ou du consulat | Consulter les portails officiels Study in Belgium ou Study in Flanders | Vérifier l'équivalence des diplômes étrangers auprès des Communautés",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "france-etudes|France|études",
+      "procedureId": "france-etudes",
+      "officialUrl": "https://france-visas.gouv.fr/etudiant",
+      "sourceTitle": "France-Visas - Étudiant",
+      "status": "verifie",
+      "preparationPoints": "Inscription préalable dans un établissement d'enseignement supérieur | Vérification de l'éligibilité à la procédure Études en France (EEF) | Numérisation des pièces justificatives pour la demande en ligne",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "allemagne-etudes|Allemagne|études",
+      "procedureId": "allemagne-etudes",
+      "officialUrl": "https://www.auswaertiges-amt.de/fr/02-entree-sejour/02-etudier-en-allemagne-seite-1281874",
+      "sourceTitle": "FAQ : Etudier en Allemagne - Ministère fédéral des Affaires étrangères",
+      "status": "verifie",
+      "preparationPoints": "Justification de l'admission ou inscription universitaire | Preuve de financement garanti des études | Vérification de la reconnaissance des diplômes étrangers via anabin",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "canada-etudes|Canada|études",
+      "procedureId": "canada-etudes",
+      "officialUrl": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/etudier-canada/permis-etudes.html",
+      "sourceTitle": "Permis d'études : À propos du processus",
+      "status": "verifie",
+      "preparationPoints": "Inscription dans un établissement d'enseignement désigné (EED) | Preuve de ressources financières suffisantes | Obtention d'une lettre d'acceptation officielle",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les conditions spécifiques doivent être confirmées directement auprès de l'autorité compétente (IRCC).",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "australie-etudes|Australie|études",
+      "procedureId": "australie-etudes",
+      "officialUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500",
+      "sourceTitle": "Subclass 500 Student visa",
+      "status": "verifie",
+      "preparationPoints": "Inscription préalable et obtention d'une Confirmation of Enrolment (CoE) | Souscription à une couverture santé pour étudiants étrangers (OSHC) | Soumission de la demande en ligne via ImmiAccount",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "royaume-uni-etudes|Royaume-Uni|études",
+      "procedureId": "royaume-uni-etudes",
+      "officialUrl": "https://www.gov.uk/student-visa",
+      "sourceTitle": "Student visa : Overview - GOV.UK",
+      "status": "verifie",
+      "preparationPoints": "Obtention d'une Confirmation d'Acceptation d'Études (CAS) auprès d'un établissement agréé | Justification de ressources financières suffisantes pour les frais de scolarité et la subsistance | Preuve de maîtrise de la langue anglaise et paiement de la surtaxe santé (IHS)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les conditions spécifiques de visa doivent être impérativement confirmées auprès de l'autorité compétente (UK Visas and Immigration).",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "suisse-etudes|Suisse|études",
+      "procedureId": "suisse-etudes",
+      "officialUrl": "https://www.ch.ch/fr/ecole-et-formation/sejourner-en-suisse-sans-travailler/",
+      "sourceTitle": "Séjourner en Suisse sans travailler - ch.ch",
+      "status": "verifie",
+      "preparationPoints": "Preuve d'admission dans un établissement reconnu | Justificatif de ressources financières suffisantes | Plan d'études et engagement de départ après la formation",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "pays-bas-etudes|Pays-Bas|études",
+      "procedureId": "pays-bas-etudes",
+      "officialUrl": "https://ind.nl/en/residence-permits/study/student-residence-permit-for-university-or-higher-professional-education",
+      "sourceTitle": "Student residence permit for university or higher professional education",
+      "status": "verifie",
+      "preparationPoints": "Inscription auprès d'un établissement d'enseignement supérieur agréé | Justification de ressources financières suffisantes pour 12 mois | Test de tuberculose (TB) à effectuer après l'arrivée",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "suede-etudes|Suède|études",
+      "procedureId": "suede-etudes",
+      "officialUrl": "https://www.migrationsverket.se/en/you-want-to-apply/study/higher-education.html",
+      "sourceTitle": "Permis de séjour pour études supérieures - Migrationsverket",
+      "status": "verifie",
+      "preparationPoints": "Admission définitive à des études à temps plein en présentiel | Justification de ressources financières suffisantes pour la durée du séjour | Détention d'une assurance maladie complète pour les programmes de moins d'un an",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au permis de séjour pour études doivent être impérativement confirmées auprès de l'Office suédois des migrations (Migrationsverket).",
+      "flags": []
+    },
+    {
+      "input": "danemark-etudes|Danemark|études",
+      "procedureId": "danemark-etudes",
+      "officialUrl": "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study/Higher-Education",
+      "sourceTitle": "Higher educational programmes",
+      "status": "verifie",
+      "preparationPoints": "Admission dans un programme d'enseignement supérieur | Preuve de compétences linguistiques | Capacité financière à subvenir à ses besoins",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": []
+    },
+    {
+      "input": "finlande-etudes|Finlande|études",
+      "procedureId": "finlande-etudes",
+      "officialUrl": "https://migri.fi/en/studying-in-finland",
+      "sourceTitle": "Studying in Finland - Finnish Immigration Service",
+      "status": "verifie",
+      "preparationPoints": "Acceptation préalable dans un établissement d'enseignement supérieur ou professionnel finlandais | Démonstration de ressources financières suffisantes pour couvrir les frais de subsistance | Souscription à une assurance maladie privée couvrant les frais médicaux et pharmaceutiques",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les modalités spécifiques doivent être confirmées auprès de l'Office national de l'immigration (Migri) ou de la représentation diplomatique finlandaise compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "espagne-etudes|Espagne|études",
+      "procedureId": "espagne-etudes",
+      "officialUrl": "https://www.inclusion.gob.es/web/migraciones/w/estancia-por-estudios",
+      "sourceTitle": "Autorisation de séjour pour études en Espagne",
+      "status": "verifie",
+      "preparationPoints": "Admission dans un établissement d'enseignement agréé | Justification de ressources financières (100 % de l'IPREM mensuel) | Assurance maladie auprès d'un assureur autorisé en Espagne",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "italie-etudes|Italie|études",
+      "procedureId": "italie-etudes",
+      "officialUrl": "https://www.universitaly.it/",
+      "sourceTitle": "Universitaly - Portail officiel du Ministère de l'Université et de la Recherche",
+      "status": "verifie",
+      "preparationPoints": "Pré-inscription obligatoire sur le portail Universitaly pour obtenir la lettre d'éligibilité | Demande de visa d'études national (type D) auprès de la représentation diplomatique italienne | Demande de permis de séjour (Permesso di soggiorno) dans les 8 jours suivant l'arrivée en Italie",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles, les justificatifs financiers et les délais spécifiques doivent être confirmés par l'autorité consulaire compétente ou l'établissement d'accueil.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "autriche-etudes|Autriche|études",
+      "procedureId": "autriche-etudes",
+      "officialUrl": "https://oead.at/en/to-austria/entry-and-residence/residence-permit-student-no-mobility-programme",
+      "sourceTitle": "Residence permit – student no mobility programme",
+      "status": "verifie",
+      "preparationPoints": "Admission : Obtention d'une notification d'admission (Zulassungsbescheid) d'un établissement d'enseignement supérieur autrichien. | Moyens financiers : Justification de ressources pour 12 mois (en 2026 : 722,58 €/mois pour les moins de 24 ans, 1 308,39 €/mois dès 24 ans). | Logement et Santé : Preuve d'un hébergement adéquat et d'une assurance maladie couvrant tous les risques en Autriche.",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "pologne-etudes|Pologne|études",
+      "procedureId": "pologne-etudes",
+      "officialUrl": "https://study.gov.pl/visa-application",
+      "sourceTitle": "VISA & APPLICATION | study.gov.pl",
+      "status": "verifie",
+      "preparationPoints": "Inscription sur le portail e-Consulat | Justificatifs de ressources et assurance santé | Demande de permis de séjour temporaire",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "republique-tcheque-etudes|République tchèque|études",
+      "procedureId": "republique-tcheque-etudes",
+      "officialUrl": "https://mzv.gov.cz/jnp/en/information_for_aliens/long_stay_visa/study_long_term.html",
+      "sourceTitle": "Study | Ministry of Foreign Affairs of the Czech Republic",
+      "status": "verifie",
+      "preparationPoints": "Présentation en personne de la demande avec passeport, photos et preuve d'admission | Justificatif de ressources financières suffisantes et preuve d'hébergement | Traduction officielle en tchèque et légalisation des documents publics étrangers",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "hongrie-etudes|Hongrie|études",
+      "procedureId": "hongrie-etudes",
+      "officialUrl": "https://oif.gov.hu/factsheets/residence-of-the-student-pupil",
+      "sourceTitle": "Permis de séjour pour études - OIF Hongrie",
+      "status": "verifie",
+      "preparationPoints": "Certificat d'admission d'un établissement d'enseignement supérieur | Justificatif de ressources financières suffisantes | Preuve d'assurance maladie complète",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "roumanie-etudes|Roumanie|études",
+      "procedureId": "roumanie-etudes",
+      "officialUrl": "https://studyinromania.gov.ro/visa",
+      "sourceTitle": "Visa rules and procedures - Study in Romania",
+      "status": "verifie",
+      "preparationPoints": "Acceptation préalable par un établissement d'enseignement roumain accrédité | Dépôt de la demande de visa de long séjour (Type D) via le portail officiel e-VISA | Justification de ressources financières suffisantes et d'une assurance médicale valide",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences spécifiques et les documents requis doivent être impérativement confirmés auprès de l'ambassade de Roumanie ou de l'Inspectorat Général pour l'Immigration.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovaquie-etudes|Slovaquie|études",
+      "procedureId": "slovaquie-etudes",
+      "officialUrl": "https://www.mzv.sk/en/web/en/visa-and-services/foreign-students-in-slovakia",
+      "sourceTitle": "Foreign students in Slovakia - Ministry of Foreign and European Affairs",
+      "status": "verifie",
+      "preparationPoints": "Demande de permis de séjour temporaire pour études auprès de l'ambassade ou de la police des étrangers | Présentation d'un justificatif d'admission scolaire, d'un extrait de casier judiciaire et de preuves de ressources financières | Obligation de souscrire une assurance santé et de fournir un certificat médical après l'obtention du permis",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les documents spécifiques doivent être impérativement confirmés auprès des autorités consulaires ou de la police des étrangers de Slovaquie.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovenie-etudes|Slovénie|études",
+      "procedureId": "slovenie-etudes",
+      "officialUrl": "https://studyinslovenia.si/live/visa-and-residence-permit/temporary-residence-permit-for-studies/",
+      "sourceTitle": "TEMPORARY RESIDENCE PERMIT FOR STUDIES - Study in Slovenia",
+      "status": "verifie",
+      "preparationPoints": "Dépôt de la demande de permis de séjour temporaire auprès de l'unité administrative locale ou de l'ambassade | Preuve d'inscription, assurance santé et casier judiciaire de moins de trois mois requis | Justification de moyens financiers suffisants d'environ 484,88 EUR par mois",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au séjour pour études en Slovénie doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "italie-visiteur|Italie|visiteur",
+      "procedureId": "italie-visiteur",
+      "officialUrl": "https://consparigi.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/residenza-elettiva-elective-residency/",
+      "sourceTitle": "Residenza elettiva – Elective residency – Consolato Generale d'Italia a Parigi",
+      "status": "verifie",
+      "preparationPoints": "Justification de ressources financières passives substantielles et régulières | Preuve d'hébergement en Italie via un titre de propriété ou un contrat de location enregistré | Assurance médicale internationale avec couverture complète des risques",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité consulaire compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "france-visiteur|France|visiteur",
+      "procedureId": "france-visiteur",
+      "officialUrl": "https://france-visas.gouv.fr/web/france-visas/sejour-touristique-de-plus-de-3-mois",
+      "sourceTitle": "Séjour touristique de plus de 3 mois - France-Visas",
+      "status": "verifie",
+      "preparationPoints": "Engagement formel à n'exercer aucune activité professionnelle en France | Justification de ressources financières suffisantes et de la situation socio-économique | Preuve d'hébergement et d'une couverture médicale couvrant le séjour",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": []
+    },
+    {
+      "input": "espagne-visiteur|Espagne|visiteur",
+      "procedureId": "espagne-visiteur",
+      "officialUrl": "https://www.inclusion.gob.es/web/migraciones/w/autorizacion-inicial-de-residencia-temporal-no-lucrativa",
+      "sourceTitle": "Hoja 6 - Autorización inicial de residencia temporal no lucrativa",
+      "status": "verifie",
+      "preparationPoints": "Justification de moyens financiers suffisants (400% de l'IPREM mensuel pour le demandeur) | Souscription à une assurance maladie complète auprès d'un assureur agréé en Espagne | Présentation d'un certificat d'antécédents pénaux et d'un certificat médical officiel.",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et la liste précise des pièces justificatives doivent être confirmées auprès de l'autorité consulaire ou migratoire compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "allemagne-visiteur|Allemagne|visiteur",
+      "procedureId": "allemagne-visiteur",
+      "officialUrl": "https://www.auswaertiges-amt.de/fr/02-entree-sejour/01-visabestimmungen-1361042",
+      "sourceTitle": "Visas pour l’Allemagne - Ministère fédéral des Affaires étrangères",
+      "status": "verifie",
+      "preparationPoints": "Compléter le formulaire de demande en ligne via le portail Videx et prendre rendez-vous consulaire | Présenter un passeport valide et des justificatifs relatifs à l'objet et aux conditions du séjour | Justifier de moyens de subsistance suffisants ou d'une déclaration d'engagement de l'hôte et d'une assurance voyage",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives à cette procédure doivent impérativement être confirmées auprès de l’autorité institutionnelle compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "royaume-uni-visiteur|Royaume-Uni|visiteur",
+      "procedureId": "royaume-uni-visiteur",
+      "officialUrl": "https://www.gov.uk/standard-visitor",
+      "sourceTitle": "Visit the UK as a Standard Visitor",
+      "status": "verifie",
+      "preparationPoints": "Vérifier la nécessité d'un visa ou d'une autorisation ETA selon la nationalité | Détenir un passeport valide pour la durée totale du séjour | Justifier de ressources financières suffisantes pour le séjour et le retour",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles et les pièces justificatives spécifiques doivent être impérativement confirmées auprès de l'autorité gouvernementale compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "grece-visiteur|Grèce|visiteur",
+      "procedureId": "grece-visiteur",
+      "officialUrl": "https://www.mfa.gr/usa/en/services/visas/",
+      "sourceTitle": "Visas - Greece in the USA",
+      "status": "verifie",
+      "preparationPoints": "Preuve de ressources financières suffisantes et stables | Certificats de santé et de moralité | Assurance médicale de voyage",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "portugal-visiteur|Portugal|visiteur",
+      "procedureId": "portugal-visiteur",
+      "officialUrl": "https://vistos.mne.gov.pt/en/short-stay-visas-schengen/required-documentation/short-stay-visa",
+      "sourceTitle": "Short Stay Visa - Portal Diplomático",
+      "status": "verifie",
+      "preparationPoints": "Formulaire de demande dûment rempli et signé avec photographie d'identité | Passeport valide et assurance médicale de voyage couvrant toute la durée du séjour | Preuves de moyens de subsistance et justificatif d'hébergement ou attestation d'accueil",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "suisse-visiteur|Suisse|visiteur",
+      "procedureId": "suisse-visiteur",
+      "officialUrl": "https://www.sem.admin.ch/sem/fr/home/themen/einreise.html",
+      "sourceTitle": "Entrée - Secrétariat d’État aux migrations SEM",
+      "status": "verifie",
+      "preparationPoints": "Posséder un document de voyage reconnu et valide | Justifier l'objet et les conditions du séjour | Présenter des moyens financiers suffisants ou une assurance-voyage",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": []
+    },
+    {
+      "input": "pays-bas-visiteur|Pays-Bas|visiteur",
+      "procedureId": "pays-bas-visiteur",
+      "officialUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/checklist-schengen-visa-tourism/fr",
+      "sourceTitle": "Liste de contrôle - Demande de visa Schengen de tourisme",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après la fin du séjour | Assurance médicale de voyage couvrant 30 000 € minimum | Justificatifs de moyens financiers suffisants",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente avant toute démarche.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "autriche-visiteur|Autriche|visiteur",
+      "procedureId": "autriche-visiteur",
+      "officialUrl": "https://www.bmeia.gv.at/fr/ambassade-dautriche-a-paris/voyages-en-autriche/entree-et-sejour/visa",
+      "sourceTitle": "Visa – Ministère fédéral des Affaires étrangères d'Autriche",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après le séjour avec deux pages vierges | Assurance médicale de voyage couvrant au minimum 30 000 euros | Justificatifs de ressources financières suffisantes ou déclaration de prise en charge électronique",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives au visa doivent être impérativement confirmées par l’autorité consulaire autrichienne compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "suede-visiteur|Suède|visiteur",
+      "procedureId": "suede-visiteur",
+      "officialUrl": "https://www.migrationsverket.se/en/you-want-to-apply/visiting-sweden/visiting-sweden-for-up-to-90-days-entry-visa.html",
+      "sourceTitle": "Visa Schengen (court séjour) - Agence suédoise des migrations",
+      "status": "verifie",
+      "preparationPoints": "Justifier de ressources financières de 700 SEK par jour de séjour | Présenter un passeport valide au moins trois mois après l'expiration du visa | Détenir une assurance médicale de voyage couvrant un minimum de 30 000 EUR",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "danemark-visiteur|Danemark|visiteur",
+      "procedureId": "danemark-visiteur",
+      "officialUrl": "https://nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa/Private-visits-and-tourist-visits-",
+      "sourceTitle": "Apply for a short term visa to private visits and tourist visits",
+      "status": "verifie",
+      "preparationPoints": "Justifier de l'intention de retour avant l'expiration du visa | Vérifier les conditions spécifiques selon le groupe de pays du demandeur | Présenter des preuves de l'objet du séjour privé ou touristique",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": []
+    },
+    {
+      "input": "finlande-visiteur|Finlande|visiteur",
+      "procedureId": "finlande-visiteur",
+      "officialUrl": "https://um.fi/visa-to-visit-finland",
+      "sourceTitle": "A visa to visit Finland - Ministry for Foreign Affairs",
+      "status": "verifie",
+      "preparationPoints": "Validité du passeport (3 mois après le séjour) | Assurance voyage (min. 30 000 EUR) | Preuve de fonds suffisants (min. 50 EUR par jour)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "norvege-visiteur|Norvège|visiteur",
+      "procedureId": "norvege-visiteur",
+      "officialUrl": "https://www.udi.no/en/want-to-apply/visit-and-holiday/visitors-visa-to-norway/",
+      "sourceTitle": "Want to apply: Visitor visas for Norway - UDI",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins trois mois après la fin du séjour | Assurance médicale de voyage valide | Preuve de moyens financiers suffisants pour la durée du séjour",
+      "consultedOn": "2026-08-27",
+      "caveat": "L’avertissement rappelant que les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "islande-visiteur|Islande|visiteur",
+      "procedureId": "islande-visiteur",
+      "officialUrl": "https://island.is/en/get-a-visa/supporting-documents",
+      "sourceTitle": "Documents justificatifs pour un visa pour l'Islande",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide (3 mois au-delà du séjour, 2 pages vierges) | Justificatifs de moyens financiers suffisants ou garantie de l'hôte | Assurance médicale de voyage (couverture minimale de 30 000 €)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles relatives à cette procédure doivent impérativement être confirmées par l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "malte-visiteur|Malte|visiteur",
+      "procedureId": "malte-visiteur",
+      "officialUrl": "https://identita.gov.mt/expatriates-unit-main-page/noneu-nationals/non-employment-permits/economic-self-sufficient/",
+      "sourceTitle": "Expatriates Unit Non-Employment Permits - Economic Self-Sufficient - Identità",
+      "status": "verifie",
+      "preparationPoints": "Titulaire d'une autorisation de séjour ou visa valide | Soumission en ligne via le portail Expatriates Unit | Passeport valide au moins 8 mois après le dépôt",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir"
+      ]
+    },
+    {
+      "input": "chypre-visiteur|Chypre|visiteur",
+      "procedureId": "chypre-visiteur",
+      "officialUrl": "https://www.gov.cy/mip-md/en/documents/visitors-and-family-members/",
+      "sourceTitle": "Visitors and family members - Migration Department",
+      "status": "verifie",
+      "preparationPoints": "Soumission du formulaire MVIS8 avec documents justificatifs traduits et certifiés | Entrée légale avec visa et document de voyage valides via les points officiels | Capture des données biométriques et paiement des frais lors du dépôt",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente chypriote.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "croatie-visiteur|Croatie|visiteur",
+      "procedureId": "croatie-visiteur",
+      "officialUrl": "https://mvep.gov.hr/services-for-citizens/consular-information-22802/visas-22807/issuance-procedure/enclosed-documents/22821",
+      "sourceTitle": "Documents justificatifs pour visa Schengen",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après le séjour prévu | Assurance médicale de voyage couvrant 30 000 € minimum | Formulaire de demande complété et signé avec photo aux normes ICAO",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovenie-visiteur|Slovénie|visiteur",
+      "procedureId": "slovenie-visiteur",
+      "officialUrl": "https://www.gov.si/en/topics/entry-and-residence/",
+      "sourceTitle": "Entry and residence | GOV.SI",
+      "status": "verifie",
+      "preparationPoints": "Document de voyage valide et formulaire de demande de visa Schengen (Type C) | Lettre de garantie (Garantno pismo) ou d'invitation pour les visites privées | Justification de moyens financiers et assurance médicale de voyage",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "republique-tcheque-visiteur|République tchèque|visiteur",
+      "procedureId": "republique-tcheque-visiteur",
+      "officialUrl": "https://mzv.gov.cz/jnp/en/information_for_aliens/short_stay_visa/visa_for_a_stay_up_to_90_days_for_the.html",
+      "sourceTitle": "Tourism - Ministry of Foreign Affairs of the Czech Republic",
+      "status": "verifie",
+      "preparationPoints": "Passeport, formulaire et photo | Hébergement, moyens financiers et transport | Assurance médicale et biométrie",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "hongrie-visiteur|Hongrie|visiteur",
+      "procedureId": "hongrie-visiteur",
+      "officialUrl": "https://konzinfo.mfa.gov.hu/en/short-term-stay",
+      "sourceTitle": "Short Term Stay - Visiting friends, acquaintances",
+      "status": "verifie",
+      "preparationPoints": "Lettre d'invitation notariée ou déclaration signée | Justificatifs de ressources financières suffisantes | Assurance médicale de voyage (min. 30 000 EUR)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "pologne-visiteur|Pologne|visiteur",
+      "procedureId": "pologne-visiteur",
+      "officialUrl": "https://www.gov.pl/web/diplomacy/visas",
+      "sourceTitle": "VISAS - Ministry of Foreign Affairs Republic of Poland",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après le séjour avec 2 pages vierges | Assurance médicale de voyage d'une couverture minimale de 30 000 EUR | Justificatifs de l'objet du voyage, de l'hébergement et des ressources financières",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "roumanie-visiteur|Roumanie|visiteur",
+      "procedureId": "roumanie-visiteur",
+      "officialUrl": "https://eviza.mae.ro/SupportingDocuments",
+      "sourceTitle": "Documents justificatifs pour le visa - Ministère des Affaires Étrangères de Roumanie",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après la date de sortie prévue | Justificatif de moyens de subsistance financiers pour le séjour | Assurance médicale de voyage valide avec couverture minimale de 30 000 EUR",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité consulaire ou gouvernementale compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "slovaquie-visiteur|Slovaquie|visiteur",
+      "procedureId": "slovaquie-visiteur",
+      "officialUrl": "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr",
+      "sourceTitle": "Visa for foreigners to enter the Slovak Republic",
+      "status": "verifie",
+      "preparationPoints": "Formulaire de demande dûment rempli et signé | Document de voyage valide au moins trois mois après le départ prévu | Assurance médicale de voyage avec une couverture minimale de 30 000 EUR",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "lettonie-visiteur|Lettonie|visiteur",
+      "procedureId": "lettonie-visiteur",
+      "officialUrl": "https://www.mfa.gov.lv/en/documents-required-apply-visa",
+      "sourceTitle": "Documents required to apply for a visa",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 3 mois après le séjour prévu avec 2 pages vierges | Justification de ressources financières suffisantes (14 €/jour ou 780 €/mois selon la durée) | Assurance médicale de voyage couvrant toute la zone Schengen",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "lituanie-visiteur|Lituanie|visiteur",
+      "procedureId": "lituanie-visiteur",
+      "officialUrl": "https://in.mfa.lt/en/coming-to-lithuania/visas/documents-to-be-submitted-by-all-applicants-for-short-stay-visa-c-schengen-visa/116",
+      "sourceTitle": "Documents to be submitted by all applicants for short-stay visa (C) (Schengen visa)",
+      "status": "verifie",
+      "preparationPoints": "Formulaire de demande en ligne via le système MIGRIS et passeport valide (3 mois après le séjour, 2 pages vierges) | Assurance médicale de voyage avec une couverture minimale de 30 000 EUR pour toute la durée du séjour | Preuves de moyens financiers (relevés bancaires récents) et justificatifs d'hébergement ou lettre d'invitation",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "estonie-visiteur|Estonie|visiteur",
+      "procedureId": "estonie-visiteur",
+      "officialUrl": "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa",
+      "sourceTitle": "Application for a Schengen visa",
+      "status": "verifie",
+      "preparationPoints": "Remplir le formulaire de demande de visa Schengen en ligne, l'imprimer et le signer | Disposer d'un passeport valide au moins trois mois après le départ prévu avec deux pages vierges | Souscrire une assurance médicale de voyage couvrant au moins 30 000 euros pour tout l'espace Schengen",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "belgique-visiteur|Belgique|visiteur",
+      "procedureId": "belgique-visiteur",
+      "officialUrl": "https://dofi.ibz.be/fr/themes/third-country-nationals/court-sejour",
+      "sourceTitle": "Court séjour - Office des Étrangers",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide (validité > 3 mois après le séjour) | Moyens financiers suffisants (95€/jour à l'hôtel, 45€/jour chez l'habitant) | Assurance médicale de voyage (couverture min. 30 000€)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "luxembourg-visiteur|Luxembourg|visiteur",
+      "procedureId": "luxembourg-visiteur",
+      "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html",
+      "sourceTitle": "Demander un visa pour l’entrée au Luxembourg en tant que ressortissant de pays tiers",
+      "status": "verifie",
+      "preparationPoints": "Possession d'un titre de voyage en cours de validité | Demande auprès du consulat luxembourgeois ou de la mission représentative | Traduction conforme des documents par un traducteur assermenté",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "liechtenstein-visiteur|Liechtenstein|visiteur",
+      "procedureId": "liechtenstein-visiteur",
+      "officialUrl": "https://www.llv.li/en/national-administration/migration-and-passport-office/visa",
+      "sourceTitle": "Visa - Migration and Passport Office - National Administration",
+      "status": "verifie",
+      "preparationPoints": "Soumission de la demande auprès de la représentation suisse locale | Réglementations d'entrée alignées sur celles de la Suisse | Vérification de l'obligation de visa via le portail du SEM suisse",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": []
+    },
+    {
+      "input": "egypte-evisa|Égypte|evisa visiteur",
+      "procedureId": "egypte-evisa",
+      "officialUrl": "https://visa2egypt.gov.eg/",
+      "sourceTitle": "Egypt e-Visa Portal",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois à compter de la date d'arrivée | Demande en ligne à effectuer au moins 7 jours avant le départ | Paiement des frais par carte bancaire lors de la demande.",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "tanzanie-evisa|Tanzanie|evisa visiteur",
+      "procedureId": "tanzanie-evisa",
+      "officialUrl": "https://visa.immigration.go.tz/",
+      "sourceTitle": "Tanzania Electronic Visa Application System",
+      "status": "verifie",
+      "preparationPoints": "Copie de la page biométrique du passeport | Billet de retour ou de continuation | Photo d'identité couleur sur fond uni (JPEG)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "maroc-evisa|Maroc|evisa visiteur",
+      "procedureId": "maroc-evisa",
+      "officialUrl": "https://www.acces-maroc.ma/",
+      "sourceTitle": "Accès Maroc - Portail e-Visa",
+      "status": "verifie",
+      "preparationPoints": "Dépôt de la demande via le portail officiel Accès Maroc | Passeport en cours de validité couvrant la durée du séjour | Copie numérique de la page d'identité du passeport",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant le départ.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "ethiopie-evisa|Éthiopie|evisa visiteur",
+      "procedureId": "ethiopie-evisa",
+      "officialUrl": "https://www.evisa.gov.et/",
+      "sourceTitle": "Tourist Visa-VT - Ethiopia eVisa",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois | Photo récente format passeport | Demande au moins 3 jours avant le départ",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "ouganda-evisa|Ouganda|evisa visiteur",
+      "procedureId": "ouganda-evisa",
+      "officialUrl": "https://visas.immigration.go.ug/",
+      "sourceTitle": "Uganda Electronic Visa/Permit Application System",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois | Photo d'identité récente | Certificat de vaccination contre la fièvre jaune",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "rwanda-evisa|Rwanda|evisa visiteur",
+      "procedureId": "rwanda-evisa",
+      "officialUrl": "https://www.migration.gov.rw/visa/visitors-visa",
+      "sourceTitle": "Visitors Visa - Rwanda Directorate General of Immigration and Emigration",
+      "status": "verifie",
+      "preparationPoints": "Document de voyage valide au moins 6 mois | Frais de 50 USD pour une entrée unique (30 jours) | Demande possible en ligne via le portail Irembo ou à l'arrivée",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant tout voyage.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "djibouti-evisa|Djibouti|evisa visiteur",
+      "procedureId": "djibouti-evisa",
+      "officialUrl": "https://www.evisa.gouv.dj/",
+      "sourceTitle": "Djibouti electronic visa platform",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois | Réservation de vol et adresse d'hébergement | Lettre d'invitation (organisation ou hôte)",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "dubai-evisa|Émirats arabes unis|evisa visiteur",
+      "procedureId": "dubai-evisa",
+      "officialUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id/tourist-visa",
+      "sourceTitle": "Visa touristique - Portail officiel du gouvernement des Émirats arabes unis",
+      "status": "verifie",
+      "preparationPoints": "Demande via un sponsor agréé (compagnie aérienne, hôtel ou agence) | Passeport valide et photographie en couleur | Assurance médicale couvrant le séjour aux Émirats",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "turquie-evisa|Turquie|evisa visiteur",
+      "procedureId": "turquie-evisa",
+      "officialUrl": "https://www.evisa.gov.tr/fr/",
+      "sourceTitle": "République de Türkiye Système de Demande de Visa Électronique",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois à la date d'entrée | Paiement par carte bancaire (Visa, Mastercard ou UnionPay) avec 3D Secure | Usage limité aux séjours touristiques ou commerciaux uniquement",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche ou départ.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "inde-evisa|Inde|evisa visiteur",
+      "procedureId": "inde-evisa",
+      "officialUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+      "sourceTitle": "e-Visa - Government of India",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins six mois | Photographie récente sur fond blanc et scan du passeport | Billet de retour ou de continuation et fonds suffisants",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "vietnam-evisa|Vietnam|evisa visiteur",
+      "procedureId": "vietnam-evisa",
+      "officialUrl": "https://evisa.gov.vn/",
+      "sourceTitle": "Vietnam National Electronic Visa system",
+      "status": "verifie",
+      "preparationPoints": "Détention d'un passeport valide et non suspendu d'entrée | Paiement des frais en ligne non remboursables | Saisie précise des informations en anglais sur le portail officiel",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "cambodge-evisa|Cambodge|evisa visiteur",
+      "procedureId": "cambodge-evisa",
+      "officialUrl": "https://www.evisa.gov.kh/",
+      "sourceTitle": "eVisa Kingdom of Cambodia (Official Government Website)",
+      "status": "verifie",
+      "preparationPoints": "Remplissage du formulaire de demande en ligne avec les détails du passeport | Paiement sécurisé des frais de visa sur le portail officiel | Soumission de la carte Cambodia e-Arrival dans les 7 jours précédant l'arrivée",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "srilanka-evisa|Sri Lanka|evisa visiteur",
+      "procedureId": "srilanka-evisa",
+      "officialUrl": "https://www.eta.gov.lk/",
+      "sourceTitle": "Electronic Travel Authorization (ETA) - Official Website",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois à compter de la date d'arrivée | Billet de retour ou de continuation confirmé | Preuve de fonds suffisants pour couvrir les dépenses durant le séjour",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité d'immigration avant tout projet de voyage.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "albanie-evisa|Albanie|evisa visiteur",
+      "procedureId": "albanie-evisa",
+      "officialUrl": "https://e-visa.al/",
+      "sourceTitle": "Système d'application e-Visa - République d'Albanie",
+      "status": "verifie",
+      "preparationPoints": "Documents traduits en albanais ou anglais et scannés en format PDF | Demande en ligne soumise hors du territoire au moins 15 jours ouvrables avant le départ | Justificatifs incluant une photo aux normes, la réservation du vol retour et une preuve d'hébergement",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l’autorité compétente avant toute démarche.",
+      "flags": [
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "bahrein-evisa|Bahreïn|evisa visiteur",
+      "procedureId": "bahrein-evisa",
+      "officialUrl": "https://www.evisa.gov.bh/",
+      "sourceTitle": "Bahrain Electronic Visa Service",
+      "status": "verifie",
+      "preparationPoints": "Copie du passeport valide au moins 6 mois | Billet d'avion retour et preuve d'hébergement à Bahreïn | Relevé bancaire récent au nom du demandeur",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente avant toute démarche.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    },
+    {
+      "input": "oman-evisa|Oman|evisa visiteur",
+      "procedureId": "oman-evisa",
+      "officialUrl": "https://evisa.rop.gov.om/",
+      "sourceTitle": "Portail e-Visa - Police Royale d'Oman",
+      "status": "verifie",
+      "preparationPoints": "Passeport valide au moins 6 mois | Réservation d'hôtel confirmée | Billet de retour et assurance santé",
+      "consultedOn": "2026-08-27",
+      "caveat": "Les exigences individuelles doivent être confirmées par l'autorité compétente avant tout déplacement.",
+      "flags": [
+        "contenu_volatile_a_revoir",
+        "hote_a_valider"
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton'
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
+import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
 import { trpc } from '@/lib/trpc';
 
 import { useState, useEffect } from 'react';
@@ -83,6 +84,7 @@ export default function CountryDetailPage() {
   const portal = publicPortal?.hasOverride
     ? publicPortal
     : destinationDetail?.consular;
+  const institutionalSource = getInstitutionalProcedureSource(country.id);
   const evaluationUrl = `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
@@ -322,6 +324,39 @@ export default function CountryDetailPage() {
             <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl">
               <DestinationComparisonDialog current={destinationDetail} />
             </Card>
+
+            {institutionalSource ? (
+              <Card className="p-6 border-sky-100 bg-sky-50/40 shadow-sm rounded-3xl space-y-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="w-6 h-6 text-sky-700 shrink-0" />
+                  <div>
+                    <h3 className="font-bold text-slate-900">Repères institutionnels</h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Synthèse de préparation issue de la source indiquée ci-dessous.
+                    </p>
+                  </div>
+                </div>
+                {institutionalSource.preparationPoints.length ? (
+                  <ul className="space-y-2" aria-label="Points de préparation à confirmer">
+                    {institutionalSource.preparationPoints.map((point) => (
+                      <li key={point} className="flex gap-2 text-sm leading-relaxed text-slate-700">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="rounded-xl border border-sky-100 bg-white/80 p-3 text-xs leading-relaxed text-slate-600">
+                  {institutionalSource.caveat}
+                </p>
+                <a href={institutionalSource.officialUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button variant="outline" className="w-full border-sky-200 bg-white text-sky-800 hover:bg-sky-50 font-bold">
+                    <ExternalLink className="w-4 h-4 mr-2" /> Consulter : {institutionalSource.sourceTitle}
+                  </Button>
+                </a>
+                <p className="text-xs text-slate-500">Source consultée le {new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })}.</p>
+              </Card>
+            ) : null}
 
             <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
               <div className="flex items-start gap-3">

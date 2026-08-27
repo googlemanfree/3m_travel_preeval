@@ -5,6 +5,7 @@ import {
   PUBLIC_DESTINATION_DETAILS,
   PUBLIC_DESTINATION_PAGE_COUNT,
 } from "../client/src/lib/publicDestinationCatalog";
+import { INSTITUTIONAL_PROCEDURE_SOURCES } from "../client/src/data/institutionalProcedureSources";
 import { composePublicPrerender } from "./publicPrerender";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -16,6 +17,16 @@ describe("couverture publique des 107 fiches de procédure", () => {
     expect(PUBLIC_DESTINATION_PAGE_COUNT).toBe(107);
     expect(PUBLIC_DESTINATION_DETAILS).toHaveLength(107);
     expect(new Set(PUBLIC_DESTINATION_DETAILS.map((detail) => detail.procedure.id)).size).toBe(107);
+  });
+
+  it("associe une référence institutionnelle assainie et traçable à chacune des 107 procédures", () => {
+    expect(INSTITUTIONAL_PROCEDURE_SOURCES).toHaveLength(PUBLIC_DESTINATION_PAGE_COUNT);
+    expect(new Set(INSTITUTIONAL_PROCEDURE_SOURCES.map((source) => source.procedureId)).size).toBe(PUBLIC_DESTINATION_PAGE_COUNT);
+    for (const source of INSTITUTIONAL_PROCEDURE_SOURCES) {
+      expect(source.officialUrl).toMatch(/^https:\/\//);
+      expect(source.consultedOn).toBe("2026-08-27");
+      expect(source.caveat).toContain("autorité compétente");
+    }
   });
 
   it("fournit à chaque destination un contenu de préparation exploitable et une route canonique", () => {
@@ -45,6 +56,7 @@ describe("couverture publique des 107 fiches de procédure", () => {
       expect(rendered.html).toContain(`<meta property="og:url" content="https://www.3mtravelagency.com${path}" />`);
       expect(rendered.html).toContain("Étapes de préparation");
       expect(rendered.html).toContain("Documents à préparer");
+      expect(rendered.html).toContain("Repères institutionnels");
       expect(rendered.html).toContain("Informations vérifiables avant toute démarche");
     }
   });

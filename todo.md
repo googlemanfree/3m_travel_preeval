@@ -1757,3 +1757,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Enrichir les fiches de procédure sans inventer de règles ni présenter de décision ou de garantie.
 - [x] Vérifier les 107 routes, les rendus publics et les documents SEO avant publication.
 - [x] Éliminer l’écran de chargement transitoire des fiches pays publiques afin que leur contenu s’affiche immédiatement.
+
+## Enrichissement institutionnel des procédures
+- [x] Cartographier les 107 fiches, leurs portails institutionnels et le statut de vérification des sources.
+- [x] Définir un format éditorial sourcé indiquant clairement les informations à confirmer par l’autorité compétente.
+- [x] Collecter et intégrer des contenus institutionnels vérifiables pour chaque procédure publiée.
+- [x] Vérifier les liens, dates de consultation, contenus et rendus des fiches enrichies avant publication.
