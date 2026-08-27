@@ -73,11 +73,28 @@ const consularForCountry = (countryName: string) => {
   );
 };
 
+const guideMatchesProcedure = (
+  procedure: Pick<CountryProcedureComplete, "visaType">,
+  resource: { category: string; title: string },
+) => {
+  if (resource.category === procedure.visaType) return true;
+  if (resource.category !== "guide") return false;
+
+  const title = normalizeDestination(resource.title);
+  const hints = procedure.visaType === "travail"
+    ? ["travail", "emploi", "contrat"]
+    : procedure.visaType === "etudes"
+      ? ["etudes", "formation", "universite"]
+      : ["visiteur", "tourisme", "evisa", "voyage"];
+  return hints.some((hint) => title.includes(hint));
+};
+
 const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestinationDetail => {
   const consular = consularForCountry(procedure.name);
+  const sources = (consular?.resources ?? []).filter((resource) => guideMatchesProcedure(procedure, resource));
   return {
     procedure,
-    sources: consular?.resources ?? [],
+    sources,
     lastUpdatedAt: consular?.officialVerifiedAt ?? "19 août 2026",
     lastUpdatedIso: "2026-08-19",
     consular: {
@@ -86,7 +103,9 @@ const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestina
       officialPortalLabel: consular?.officialPortalLabel,
       officialVerifiedAt: consular?.officialVerifiedAt,
       verificationStatus: consular?.verificationStatus ?? "a_completer",
-      sourceSummary: consular?.sourceSummary ?? "Guide 3M associé à la procédure",
+      sourceSummary: sources.length
+        ? `${sources.length} guide${sources.length > 1 ? "s" : ""} 3M associé${sources.length > 1 ? "s" : ""} à cette procédure`
+        : "Guide 3M en cours de consolidation pour cette procédure",
     },
   };
 };

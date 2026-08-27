@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getPublicDestinationDetail,
   getPublicDestinationPath,
   PUBLIC_DESTINATION_DETAILS,
   PUBLIC_DESTINATION_PAGE_COUNT,
@@ -28,6 +29,12 @@ describe("couverture publique des 107 fiches de procédure", () => {
     }
   });
 
+  it("n’associe aux fiches que des guides correspondant au type de projet", () => {
+    const canadaTravail = getPublicDestinationDetail("canada-travail");
+    expect(canadaTravail?.sources.some((source) => source.category === "travail")).toBe(true);
+    expect(canadaTravail?.sources.some((source) => source.category === "etudes")).toBe(false);
+  });
+
   it("pré-rend les 107 routes avec un canonical .com, une description et un avertissement de vérification", () => {
     for (const detail of PUBLIC_DESTINATION_DETAILS) {
       const path = `/procedures/${detail.procedure.id}`;
@@ -36,6 +43,8 @@ describe("couverture publique des 107 fiches de procédure", () => {
       expect(rendered.noindex).toBe(false);
       expect(rendered.html).toContain(`<link rel="canonical" href="https://www.3mtravelagency.com${path}" />`);
       expect(rendered.html).toContain(`<meta property="og:url" content="https://www.3mtravelagency.com${path}" />`);
+      expect(rendered.html).toContain("Étapes de préparation");
+      expect(rendered.html).toContain("Documents à préparer");
       expect(rendered.html).toContain("Informations vérifiables avant toute démarche");
     }
   });

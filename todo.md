@@ -1754,6 +1754,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer les redirections, canoniques, métadonnées, sitemap et références résiduelles au domaine .click.
 - [x] Renforcer les signaux techniques qui désignent exclusivement www.3mtravelagency.com comme domaine canonique.
 - [x] Inventorier les ressources disponibles des 107 destinations et relier chaque fiche à son contenu vérifiable.
-- [ ] Enrichir les fiches de procédure sans inventer de règles ni présenter de décision ou de garantie.
-- [ ] Vérifier les 107 routes, les rendus publics et les documents SEO avant publication.
+- [x] Enrichir les fiches de procédure sans inventer de règles ni présenter de décision ou de garantie.
+- [x] Vérifier les 107 routes, les rendus publics et les documents SEO avant publication.
 - [x] Éliminer l’écran de chargement transitoire des fiches pays publiques afin que leur contenu s’affiche immédiatement.

@@ -107,6 +107,7 @@ export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
   const procedurePage = procedureMetaForPath(path);
+  const procedureDetail = procedurePage ? getPublicDestinationDetail(path.replace(/^\/(?:procedures|destinations)\//, "")) : undefined;
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
@@ -173,7 +174,20 @@ export function composePublicPrerender(template: string, url: string) {
     structuredDataTag,
   ].join("\n");
   const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
-  const procedureFallback = procedurePage ? `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier</h2><p>Le guide détaillé, les pièces demandées et les conditions applicables sont présentés dans la fiche complète après chargement. Créez un compte pour enregistrer votre projet et obtenir une checklist adaptée.</p><p><a href="/?project=${encodeURIComponent(procedurePage.keywords?.[2] === "études" ? "etudes" : procedurePage.keywords?.[2] === "visiteur" ? "tourisme" : "travail")}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
+  const procedureFallback = procedurePage && procedureDetail ? (() => {
+    const { procedure, sources, consular } = procedureDetail;
+    const projectQuery = procedure.visaType === "etudes" ? "etudes" : procedure.visaType === "visiteur" ? "tourisme" : "travail";
+    const steps = procedure.steps.map((step) => `<li>${esc(step)}</li>`).join("");
+    const documents = procedure.requiredDocuments.map((category) => `<li><strong>${esc(category.category)} :</strong> ${category.documents.map(esc).join(", ")}</li>`).join("");
+    const guides = sources.map((source) => `<li><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a></li>`).join("");
+    const primaryGuide = procedure.pdfUrl && !sources.some((source) => source.url === procedure.pdfUrl)
+      ? `<li><a href="${esc(procedure.pdfUrl)}" target="_blank" rel="noopener noreferrer">Guide de préparation associé</a></li>`
+      : "";
+    const officialPortal = consular.officialPortalUrl && consular.verificationStatus === "verifie"
+      ? `<p><a href="${esc(consular.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(consular.officialPortalLabel || "Consulter le portail institutionnel")}</a></p>`
+      : `<p>Le portail institutionnel associé est en cours de vérification. Ne transmettez aucun paiement ou document à un tiers sans contrôle préalable.</p>`;
+    return `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier pour ${esc(procedure.name)}</h2><p>${esc(procedure.detailedDescription)}</p><h2>Étapes de préparation</h2><ol>${steps}</ol><h2>Documents à préparer</h2><ul>${documents}</ul><h2>Guides et sources associés</h2>${guides || primaryGuide ? `<ul>${primaryGuide}${guides}</ul>` : "<p>Le guide détaillé est en cours de consolidation ; consultez le portail institutionnel lorsqu’il est vérifié.</p>"}${officialPortal}<p>Les exigences applicables, les délais et les décisions relèvent des autorités et partenaires compétents ; ils sont à confirmer avant toute démarche.</p><p><a href="/?project=${projectQuery}&amp;destination=${encodeURIComponent(procedure.id)}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>`;
+  })() : "";
   const procedureFaqFallback = path === "/procedures" ? `<section aria-labelledby="seo-procedures-faq"><h2 id="seo-procedures-faq">Questions fréquentes</h2><dl>${PUBLIC_FAQ_ITEMS.map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section>` : "";
   const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}${procedureFallback}${procedureFaqFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template

@@ -21,10 +21,13 @@ describe("lazy page timeout recovery contracts", () => {
     const lazyImports = app.match(/lazyWithTimeout\(\(\) => import\(/g) ?? [];
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
-    // Le nettoyage des chemins morts reste préservé ; les pages de service
-    // et les articles d’études sont chargés à la demande. Les nouvelles routes
-    // autorisées doivent également conserver leur chargement différé.
-    expect(lazyImports.length).toBeGreaterThanOrEqual(97);
+    // Les pages de service et les articles d’études sont chargés à la demande.
+    // La fiche publique de procédure reste une exception volontaire : elle est
+    // chargée directement afin de ne pas exposer les 107 destinations à un
+    // écran blanc en cas de délai de récupération d’un module.
+    expect(lazyImports.length).toBeGreaterThanOrEqual(96);
+    expect(app).toContain('import CountryDetailPage from "./pages/CountryDetailPage"');
+    expect(app).not.toContain('const CountryDetailPage = lazyWithTimeout');
     for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {
       expect(app).not.toContain(`import(\"./pages/${removedPage}\")`);
     }
