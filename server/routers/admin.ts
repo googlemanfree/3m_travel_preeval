@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationRequests } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -2942,7 +2942,7 @@ export const adminRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
-      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, advisors, requestHistory, latestEvaluations] = await Promise.all([
+      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, advisors, requestHistory, latestEvaluations] = await Promise.all([
         db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
         db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
         db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, email)).orderBy(desc(clientDocuments.uploadedAt)).limit(100),
@@ -2952,6 +2952,7 @@ export const adminRouter = router({
         db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)),
         candidateRecord ? db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30) : Promise.resolve([]),
         candidateRecord ? db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
+        candidateRecord ? db.select().from(documentClarificationRequests).where(eq(documentClarificationRequests.candidateId, candidateRecord.id)).orderBy(desc(documentClarificationRequests.createdAt)).limit(30) : Promise.resolve([]),
         db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)),
         db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30),
         db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1),
@@ -2998,7 +2999,7 @@ export const adminRouter = router({
         statusHistory,
         timeline: buildCandidate360Timeline({ statusHistory, activity: activityLogs, requestHistory }),
         activity: [...activityLogs.map((item) => ({ type: item.actionType, description: item.description, createdAt: item.createdAt, actor: item.actorRole })), ...requestHistory.map((item) => ({ type: item.actionType, description: item.comment, createdAt: item.createdAt, actor: "admin" }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 50),
-        communications: { notifications, messages },
+        communications: { notifications, messages, documentClarifications },
         evaluationVersions,
         evaluationContext: latestEvaluation ? {
           projectType: latestEvaluation.projectType ?? null,
@@ -3245,6 +3246,7 @@ export const adminRouter = router({
       attachmentName: z.string().optional(),
       attachmentMimeType: z.string().optional(),
       attachmentSizeBytes: z.number().int().optional(),
+      clarificationRequestId: z.number().int().positive().optional(),
       evisaSnapshots: z.array(z.object({
         destinationId: z.string().trim().min(1).max(80),
         country: z.string().trim().min(1).max(160),
@@ -3277,20 +3279,28 @@ export const adminRouter = router({
         ? createEvisaCommunicationSnapshot(input.evisaSnapshots, messageBody, admin.id)
         : null;
       const candidateRecord = (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
+      const clarification = input.clarificationRequestId
+        ? (await db.select().from(documentClarificationRequests).where(and(eq(documentClarificationRequests.id, input.clarificationRequestId), eq(documentClarificationRequests.status, "pending"))).limit(1))[0]
+        : null;
+      if (input.clarificationRequestId && !clarification) throw new TRPCError({ code: "NOT_FOUND", message: "Cette demande de clarification n’est plus en attente." });
+      if (clarification && clarification.candidateId !== candidateRecord?.id) throw new TRPCError({ code: "FORBIDDEN", message: "Cette demande ne correspond pas au candidat sélectionné." });
+
+      let notificationId: number | null = null;
+      let advisorMessageId: number | null = null;
       if (candidateRecord) {
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateRecord.id,
           caseId: operationalCase.id,
-          type: "admin_message",
-          title: "Nouveau message de Prime Travel Service",
-          body: messageBody,
-          actionUrl: "/mon-espace",
+          type: clarification ? "document_clarification_answered" : "admin_message",
+          title: clarification ? "Réponse à votre demande de précision" : "Nouveau message de 3M Travel Agency",
+          body: clarification ? `Une réponse est disponible pour la pièce « ${clarification.documentLabel} » dans votre espace.` : messageBody,
+          actionUrl: clarification ? "/mon-espace?section=documents" : "/mon-espace",
           isRead: false,
         });
-        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
-        await db.insert(candidateMessages).values({
+        notificationId = Number((notificationResult as any)[0]?.insertId || 0) || null;
+        const advisorMessageResult = await db.insert(candidateMessages).values({
           candidateId: candidateRecord.id,
-          notificationId: notificationId || null,
+          notificationId,
           senderRole: "advisor",
           content: messageBody,
           attachmentUrl: input.attachmentUrl || null,
@@ -3300,6 +3310,17 @@ export const adminRouter = router({
           evisaSnapshotJson,
           isRead: false,
         });
+        advisorMessageId = Number((advisorMessageResult as any)[0]?.insertId || 0) || null;
+      }
+      if (clarification) {
+        await db.update(documentClarificationRequests).set({
+          status: "answered",
+          responseMessage: messageBody,
+          answeredByAdminId: admin.id,
+          advisorMessageId,
+          notificationId,
+          answeredAt: new Date(),
+        }).where(eq(documentClarificationRequests.id, clarification.id));
       }
 
       let emailSent = false;
@@ -3309,7 +3330,7 @@ export const adminRouter = router({
           : "";
         await sendGenericEmail({
           to: sourceRecord.email,
-          subject: "Nouveau message concernant votre dossier 3M Travel",
+        subject: clarification ? "Réponse à votre demande concernant une pièce justificative" : "Nouveau message concernant votre dossier 3M Travel",
           html: `<p>Bonjour ${sourceRecord.fullName},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
         });
         emailSent = true;
@@ -3324,9 +3345,9 @@ export const adminRouter = router({
         actionType: "candidate_message_sent",
         entityType: "communication",
         entityId: String(candidateRecord?.id ?? "email"),
-        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${messageHtml !== messageBody ? " avec mise en forme enrichie" : ""}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
+        description: `${clarification ? `Clarification répondue pour « ${clarification.documentLabel} »` : "Message envoyé au candidat"}${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${messageHtml !== messageBody ? " avec mise en forme enrichie" : ""}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
       });
-      return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord) };
+      return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord), clarificationRequestId: clarification?.id ?? null };
     }),
 
   recordCandidate360CommunicationExport: publicProcedure

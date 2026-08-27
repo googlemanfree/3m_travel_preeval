@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,6 @@ import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
 import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
-import { buildDocumentClarificationMessage } from "@/components/DossierDocumentChecklist";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -57,6 +56,7 @@ export default function EvaluationSpace() {
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "history" | "documents" | "profile" | "messages" | "testimonials">("overview");
   const [clarificationDocument, setClarificationDocument] = useState<string | null>(null);
   const [clarificationDetails, setClarificationDetails] = useState("");
+  const seenAnsweredClarificationIds = useRef<Set<number> | null>(null);
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -76,12 +76,20 @@ export default function EvaluationSpace() {
     refetchOnWindowFocus: false,
     retry: 2,
   });
-  const clarificationMutation = trpc.candidate.sendMessage.useMutation({
+  const { data: documentClarifications = [] } = trpc.candidate.getDocumentClarifications.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    refetchInterval: 30_000,
+  });
+  const clarificationMutation = trpc.candidate.requestDocumentClarification.useMutation({
     onSuccess: () => {
       toast.success("Votre demande de clarification a été transmise à l’agence.");
       setClarificationDocument(null);
       setClarificationDetails("");
-      void trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      void Promise.all([
+        trpcUtils.candidate.getClientDashboardSummary.invalidate(),
+        trpcUtils.candidate.getDocumentClarifications.invalidate(),
+      ]);
     },
     onError: (requestError) => {
       toast.error(requestError.message || "Votre demande n’a pas pu être envoyée. Réessayez dans quelques instants.");
@@ -89,6 +97,23 @@ export default function EvaluationSpace() {
   });
   const sessionConfirmedInvalid = isError && /non authentifi|expir|invalid/i.test(error instanceof Error ? error.message : "");
   const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
+
+  useEffect(() => {
+    const answered = documentClarifications.filter((item) => item.status === "answered" && typeof item.id === "number" && item.documentLabel?.trim());
+    const currentIds = new Set(answered.map((item) => item.id as number));
+    if (!seenAnsweredClarificationIds.current) {
+      seenAnsweredClarificationIds.current = currentIds;
+      return;
+    }
+    const freshAnswer = answered.find((item) => !seenAnsweredClarificationIds.current?.has(item.id as number));
+    if (freshAnswer) {
+      toast.info("Réponse reçue pour une pièce justificative", {
+        description: `Une réponse est disponible pour « ${freshAnswer.documentLabel} » dans votre checklist.`,
+        duration: 8_000,
+      });
+    }
+    seenAnsweredClarificationIds.current = currentIds;
+  }, [documentClarifications]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -227,7 +252,7 @@ export default function EvaluationSpace() {
   };
   const submitDocumentClarification = () => {
     if (!clarificationDocument) return;
-    clarificationMutation.mutate({ content: buildDocumentClarificationMessage(clarificationDocument, clarificationDetails) });
+    clarificationMutation.mutate({ documentLabel: clarificationDocument, details: clarificationDetails.trim() || undefined });
   };
 
   return (
@@ -452,7 +477,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
+                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -992,7 +1017,7 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "documents" && (
             <div className="space-y-6">
-              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
+              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}

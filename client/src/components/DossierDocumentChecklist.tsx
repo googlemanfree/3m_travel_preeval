@@ -19,6 +19,14 @@ type CustomRequirement = {
   dueAt?: Date | string | null;
   adminComment?: string | null;
 };
+type DocumentClarification = {
+  id?: number;
+  documentLabel?: string;
+  status?: "pending" | "answered" | "closed";
+  responseMessage?: string | null;
+  createdAt?: Date | string | null;
+  answeredAt?: Date | string | null;
+};
 
 const FALLBACK_REQUIREMENTS: Requirement[] = [
   { category: "Identité", label: "Passeport valide" },
@@ -129,6 +137,7 @@ export default function DossierDocumentChecklist({
   onOpenDocuments,
   onRequestClarification,
   customRequirements = [],
+  clarifications = [],
 }: {
   destination?: string | null;
   documents: ChecklistDocument[];
@@ -136,6 +145,7 @@ export default function DossierDocumentChecklist({
   onOpenDocuments?: () => void;
   onRequestClarification?: (documentLabel: string) => void;
   customRequirements?: CustomRequirement[];
+  clarifications?: DocumentClarification[];
 }) {
   const requirements = getRequirements(destination, projectType);
   const states = deriveChecklistStates(destination, projectType, documents);
@@ -145,6 +155,7 @@ export default function DossierDocumentChecklist({
   const receivedCount = progress.completed;
   const verifiedCount = allStates.filter(({ state }) => state.kind === "verified").length;
   const pendingCount = allStates.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
+  const pendingClarificationCount = clarifications.filter((item) => item.status === "pending" && item.documentLabel?.trim()).length;
   const destinationLabel = resolveProcedure(destination)?.name ?? destination ?? "votre destination";
 
   return (
@@ -175,10 +186,14 @@ export default function DossierDocumentChecklist({
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800">{verifiedCount} validée{verifiedCount > 1 ? "s" : ""}</span>
           <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-800">{receivedCount - verifiedCount} en vérification</span>
           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-900">{pendingCount} à compléter</span>
+          {pendingClarificationCount > 0 && <span className="rounded-full bg-violet-50 px-2.5 py-1 text-violet-900">{pendingClarificationCount} précision{pendingClarificationCount > 1 ? "s" : ""} en attente</span>}
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {allStates.map(({ requirement, state, dueAt }, index) => {
             const StateIcon = state.Icon;
+            const matchingClarifications = clarifications.filter((item) => item.documentLabel && normalize(item.documentLabel) === normalize(requirement.label));
+            const pendingClarification = matchingClarifications.find((item) => item.status === "pending");
+            const answeredClarification = matchingClarifications.find((item) => item.status === "answered" && item.responseMessage?.trim());
             return (
               <div key={`${requirement.category}-${requirement.label}-${index}`} className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${state.tone}`}>
                 <StateIcon className="mt-0.5 h-4 w-4 shrink-0 text-current" aria-hidden="true" />
@@ -187,8 +202,10 @@ export default function DossierDocumentChecklist({
                   <span className="text-xs text-gray-600">{requirement.category} · {state.label}</span>
                   {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
                   {dueAt && <span className="mt-1 block text-xs font-medium text-slate-700">À déposer avant le {new Date(dueAt).toLocaleDateString("fr-FR")}</span>}
+                  {pendingClarification && <span className="mt-2 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">En attente de réponse</span>}
+                  {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}</div>}
                   {(state.kind === "missing" || state.kind === "replace") && onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>}
-                  {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" onClick={() => onRequestClarification(requirement.label)} aria-label={`Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Demander une précision</Button>}
+                  {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" disabled={Boolean(pendingClarification)} onClick={() => onRequestClarification(requirement.label)} aria-label={pendingClarification ? `Une clarification est en attente pour ${requirement.label}` : `Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />{pendingClarification ? "Précision demandée" : "Demander une précision"}</Button>}
                 </div>
               </div>
             );

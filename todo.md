@@ -1790,3 +1790,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une action de clarification accessible dans la checklist et un suivi de traitement côté client.
 - [x] Diriger la demande vers l’équipe autorisée sans divulguer de notes internes.
 - [x] Tester les autorisations, les réponses non divulguantes et le parcours complet avant publication.
+
+## Suivi des clarifications documentaires
+- [x] Auditer les messages, notifications et modèles administratifs utilisés par les clarifications.
+- [x] Ajouter l’état client « en attente de réponse » pour une pièce faisant l’objet d’une clarification.
+- [x] Ajouter des réponses rapides administrables et applicables par les conseillers aux clarifications documentaires.
+- [x] Notifier visuellement le candidat lorsque l’agence répond à une clarification.
+- [x] Tester les autorisations, les statuts, les notifications et la confidentialité avant publication.
+- [x] Étendre et valider une compétence réutilisable pour ce cycle de clarification documentaire.
+
+## Accessibilité SEO de l’accueil
+- [x] Identifier l’image publique de l’accueil sans texte alternatif et lui attribuer une alternative descriptive adaptée.
+- [x] Vérifier que les images informatives de l’accueil possèdent une alternative et que les images décoratives restent correctement masquées.

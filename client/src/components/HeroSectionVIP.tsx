@@ -89,7 +89,7 @@ export default function HeroSectionVIP({
     >
         {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <picture className="absolute inset-0 block" aria-hidden="true">
+        <picture className="absolute inset-0 block">
           <source
             media="(max-width: 767px)"
             srcSet="/manus-storage/3m-hero-real-woman-man-mobile_335e606e.webp"
@@ -101,7 +101,7 @@ export default function HeroSectionVIP({
           />
           <img
             src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-            alt=""
+            alt="Voyageurs préparant un projet de mobilité internationale avec 3M Travel Agency"
             ref={backgroundRef}
             loading="eager"
             decoding="async"

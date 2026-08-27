@@ -350,6 +350,28 @@ export const candidateMessages = mysqlTable("candidate_messages", {
 export type CandidateMessage = typeof candidateMessages.$inferSelect;
 export type InsertCandidateMessage = typeof candidateMessages.$inferInsert;
 
+/** Demandes de clarification d’une pièce, visibles seulement au candidat concerné et à l’équipe habilitée. */
+export const documentClarificationRequests = mysqlTable("document_clarification_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  documentLabel: varchar("documentLabel", { length: 180 }).notNull(),
+  requestMessage: text("requestMessage").notNull(),
+  status: mysqlEnum("status", ["pending", "answered", "closed"]).notNull().default("pending"),
+  responseMessage: text("responseMessage"),
+  answeredByAdminId: int("answeredByAdminId"),
+  candidateMessageId: int("candidateMessageId"),
+  advisorMessageId: int("advisorMessageId"),
+  notificationId: int("notificationId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  answeredAt: timestamp("answeredAt"),
+  closedAt: timestamp("closedAt"),
+}, (table) => ({
+  candidateStatusIdx: index("idx_document_clarifications_candidate_status").on(table.candidateId, table.status, table.createdAt),
+  statusCreatedIdx: index("idx_document_clarifications_status_created").on(table.status, table.createdAt),
+}));
+
+export type DocumentClarificationRequest = typeof documentClarificationRequests.$inferSelect;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DOSSIERS D'IMMIGRATION (APPLICATIONS)
 // ─────────────────────────────────────────────────────────────────────────────

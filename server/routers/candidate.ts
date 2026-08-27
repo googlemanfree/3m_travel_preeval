@@ -15,6 +15,7 @@ import {
   CandidateMessage,
   candidateFiles,
   candidateMessages,
+  documentClarificationRequests,
   candidates,
   applicationStatusHistory,
   clientDocuments,
@@ -910,6 +911,53 @@ export const candidateRouter = router({
   }),
 
   // ── Messagerie : lire les messages ────────────────────────────────────────
+  getDocumentClarifications: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const requests = await db.select({
+      id: documentClarificationRequests.id,
+      documentLabel: documentClarificationRequests.documentLabel,
+      status: documentClarificationRequests.status,
+      responseMessage: documentClarificationRequests.responseMessage,
+      createdAt: documentClarificationRequests.createdAt,
+      answeredAt: documentClarificationRequests.answeredAt,
+    }).from(documentClarificationRequests)
+      .where(eq(documentClarificationRequests.candidateId, ctx.candidate.id))
+      .orderBy(desc(documentClarificationRequests.createdAt));
+    return requests;
+  }),
+
+  requestDocumentClarification: candidateProcedure
+    .input(z.object({
+      documentLabel: z.string().trim().min(2).max(180),
+      details: z.string().trim().max(1_500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const documentLabel = input.documentLabel.replace(/\s+/g, " ").trim();
+      const details = input.details?.replace(/\s+/g, " ").trim();
+      const requestMessage = details || "Pouvez-vous préciser ce qui est attendu pour cette pièce ?";
+      const [created] = await db.insert(documentClarificationRequests).values({
+        candidateId: ctx.candidate.id,
+        documentLabel,
+        requestMessage,
+        status: "pending",
+      });
+      const requestId = Number((created as any).insertId || 0);
+      const [message] = await db.insert(candidateMessages).values({
+        candidateId: ctx.candidate.id,
+        senderRole: "candidate",
+        content: `Clarification demandée — pièce : ${documentLabel}\n\n${requestMessage}`,
+        isRead: false,
+      });
+      const candidateMessageId = Number((message as any).insertId || 0);
+      if (requestId && candidateMessageId) {
+        await db.update(documentClarificationRequests).set({ candidateMessageId }).where(eq(documentClarificationRequests.id, requestId));
+      }
+      return { success: true, requestId: requestId || null };
+    }),
+
   getMessages: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
