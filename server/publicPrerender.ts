@@ -1,6 +1,6 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
-import { getPublicDestinationDetail } from "../client/src/lib/publicDestinationCatalog";
+import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
@@ -87,7 +87,11 @@ export function isPublicIndexablePath(url: string) {
 }
 
 export function getIndexablePublicPaths() {
-  return Object.entries(PUBLIC_PAGES).filter(([, meta]) => !meta.noindex).map(([path]) => path);
+  const staticPaths = Object.entries(PUBLIC_PAGES)
+    .filter(([, meta]) => !meta.noindex)
+    .map(([path]) => path);
+  const destinationPaths = PUBLIC_DESTINATION_DETAILS.map((detail) => `/procedures/${detail.procedure.id}`);
+  return staticPaths.concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1));
 }
 
 export function composePublicPrerender(template: string, url: string) {
@@ -126,7 +130,7 @@ export function composePublicPrerender(template: string, url: string) {
   } : null;
   const structuredData = path === "/"
     ? { "@context": "https://schema.org", "@graph": [
-        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
+        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm"] },
         { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
       ] }
     : path === "/procedures"
@@ -161,7 +165,8 @@ export function composePublicPrerender(template: string, url: string) {
   ].join("\n");
   const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
   const procedureFallback = procedurePage ? `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier</h2><p>Le guide détaillé, les pièces demandées et les conditions applicables sont présentés dans la fiche complète après chargement. Créez un compte pour enregistrer votre projet et obtenir une checklist adaptée.</p><p><a href="/?project=${encodeURIComponent(procedurePage.keywords?.[2] === "études" ? "etudes" : procedurePage.keywords?.[2] === "visiteur" ? "tourisme" : "travail")}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
-  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}${procedureFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
+  const procedureFaqFallback = path === "/procedures" ? `<section aria-labelledby="seo-procedures-faq"><h2 id="seo-procedures-faq">Questions fréquentes</h2><dl>${PUBLIC_FAQ_ITEMS.map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section>` : "";
+  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}${procedureFallback}${procedureFaqFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<meta\s+name="description"[^>]*>\s*/i, "")

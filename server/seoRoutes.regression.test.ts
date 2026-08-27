@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderOgImageSvg } from "./seoAssets";
 import { buildShareUrls } from "@/components/SocialShareButtons";
 import { renderRobotsTxt, renderSitemapXml } from "./seoRoutes";
-import { composePublicPrerender } from "./publicPrerender";
+import { composePublicPrerender, getIndexablePublicPaths } from "./publicPrerender";
 
 const template = "<!doctype html><html><head><title>old</title><meta name=\"description\" content=\"old\" /></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
 
@@ -19,6 +19,8 @@ describe("SEO dynamique", () => {
     const sitemap = renderSitemapXml();
     expect(sitemap).toContain("https://www.3mtravelagency.com/");
     expect(sitemap).toContain("https://www.3mtravelagency.com/procedures");
+    expect(sitemap).toContain("https://www.3mtravelagency.com/procedures/allemagne-travail");
+    expect(getIndexablePublicPaths().filter((path) => path.startsWith("/procedures/")).length).toBeGreaterThanOrEqual(107);
     expect(sitemap).not.toContain("/admin");
     expect(renderRobotsTxt()).toContain("Sitemap: https://www.3mtravelagency.com/sitemap.xml");
     expect(renderRobotsTxt()).toContain("Disallow: /admin");
@@ -52,5 +54,7 @@ describe("SEO dynamique", () => {
     expect(html).toContain('"@type":"BreadcrumbList"');
     expect(html).toContain('"@type":"Question"');
     expect(html).toContain("L’évaluation gratuite engage-t-elle une procédure ?");
+    expect(html).toContain("Questions fréquentes");
+    expect(html).toContain("Oui. Créez d’abord votre compte");
   });
 });

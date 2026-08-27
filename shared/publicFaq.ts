@@ -5,7 +5,7 @@ export const PUBLIC_FAQ_ITEMS = [
   },
   {
     question: "Faut-il créer un compte avant de commencer ?",
-    answer: "Non. Le formulaire gratuit est accessible directement. Un compte peut ensuite être proposé lorsque le suivi de votre dossier l’exige.",
+    answer: "Oui. Créez d’abord votre compte, puis déposez votre CV afin que l’équipe puisse examiner votre projet. Les autres documents peuvent être demandés progressivement selon votre destination.",
   },
   {
     question: "Quels documents dois-je préparer ?",

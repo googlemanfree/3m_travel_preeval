@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
+import { AlertCircle, Facebook, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
@@ -36,9 +36,6 @@ const footerCopy = {
 
 const SOCIAL_LINKS: SocialLink[] = [
   { key: "facebook", icon: Facebook, href: "https://www.facebook.com/3mtravelcm", label: { fr: "Facebook officiel", en: "Official Facebook" }, description: { fr: "Ouvrir la page Facebook officielle dans un nouvel onglet.", en: "Open the official Facebook page in a new tab." }, color: "hover:text-blue-300" },
-  { key: "instagram", icon: Instagram, href: "https://instagram.com/3mtravelagency", label: { fr: "Instagram", en: "Instagram" }, description: { fr: "Ouvrir le compte Instagram dans un nouvel onglet.", en: "Open the Instagram account in a new tab." }, color: "hover:text-pink-300" },
-  { key: "linkedin", icon: Linkedin, href: "https://linkedin.com/company/3mtravelagency", label: { fr: "LinkedIn", en: "LinkedIn" }, description: { fr: "Ouvrir la page LinkedIn dans un nouvel onglet.", en: "Open the LinkedIn page in a new tab." }, color: "hover:text-blue-300" },
-  { key: "x", icon: Twitter, href: "https://twitter.com/3mtravelagency", label: { fr: "X", en: "X" }, description: { fr: "Ouvrir le compte X dans un nouvel onglet.", en: "Open the X account in a new tab." }, color: "hover:text-slate-100" },
 ];
 
 const USEFUL_LINKS: FooterLink[] = [
@@ -53,7 +50,7 @@ const USEFUL_LINKS: FooterLink[] = [
 ];
 
 const MINI_SITE_MAP: FooterLink[] = [
-  { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Démarrer une orientation gratuite sans créer de compte.", en: "Start free guidance without creating an account." } },
+  { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Découvrir l’évaluation gratuite, puis créer un compte et déposer un CV avant la soumission.", en: "Explore the free assessment, then create an account and submit a CV before sending it." } },
   { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/billets", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
   { key: "mini_procedures", label: { fr: "Procédures", en: "Procedures" }, href: "/procedures", description: { fr: "Comparer les démarches et destinations proposées.", en: "Compare available procedures and destinations." } },
   { key: "mini_evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique adaptée.", en: "Prepare a suitable electronic visa application." } },

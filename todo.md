@@ -1593,6 +1593,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer les JSON-LD et balises sémantiques pour les moteurs de recherche et conversationnels
 - [x] Définir un plan d’optimisation Google Business Profile et annuaires professionnels de confiance
 - [x] Documenter les mesures, responsabilités et priorités sans publier de profil externe sans confirmation
-- [ ] Après validation, inclure les fiches destination canoniques dans le sitemap public
-- [ ] Après confirmation des réseaux officiels, retirer ou corriger les liens sociaux non vérifiés dans le footer et les données structurées
-- [ ] Après validation du parcours client, harmoniser les FAQ publiques et les données structurées avec la règle compte/CV obligatoire
+- [x] Inclure les fiches destination canoniques dans le sitemap public
+- [x] Retirer les liens sociaux non vérifiés dans le footer et les données structurées, en conservant uniquement la page Facebook confirmée
+- [x] Harmoniser les FAQ publiques et les données structurées avec la règle compte/CV obligatoire
+- [x] Harmoniser le libellé du raccourci d’évaluation du footer avec la règle compte/CV obligatoire
