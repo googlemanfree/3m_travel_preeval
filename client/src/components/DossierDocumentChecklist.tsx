@@ -96,6 +96,16 @@ export function deriveChecklistStates(destination: string | null | undefined, pr
   return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
 }
 
+export function calculateChecklistProgress(states: Array<{ state: { kind: string } }>) {
+  const total = states.length;
+  const completed = states.filter(({ state }) => state.kind === "received" || state.kind === "verified").length;
+  return {
+    total,
+    completed,
+    percentage: total ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
 function customRequirementState(requirement: CustomRequirement, documents: ChecklistDocument[]) {
   if (requirement.status === "approved") return { kind: "verified" as const, label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 };
   if (requirement.status === "rejected") return { kind: "replace" as const, label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle };
@@ -120,7 +130,8 @@ export default function DossierDocumentChecklist({
   const states = deriveChecklistStates(destination, projectType, documents);
   const manualStates = customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType, detail: requirement.adminComment ?? undefined }, state: customRequirementState(requirement, documents), dueAt: requirement.dueAt }));
   const allStates = [...states, ...manualStates];
-  const receivedCount = allStates.filter(({ state }) => state.kind === "received" || state.kind === "verified").length;
+  const progress = calculateChecklistProgress(allStates);
+  const receivedCount = progress.completed;
   const verifiedCount = allStates.filter(({ state }) => state.kind === "verified").length;
   const pendingCount = allStates.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
   const destinationLabel = resolveProcedure(destination)?.name ?? destination ?? "votre destination";
@@ -137,13 +148,17 @@ export default function DossierDocumentChecklist({
             Pièces à préparer pour <strong>{destinationLabel}</strong>. Cette liste s’adapte à votre projet et se met à jour après chaque dépôt ou vérification.
           </p>
         </div>
-        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
-          {receivedCount}/{allStates.length} reçue{receivedCount > 1 ? "s" : ""}
+        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold tabular-nums text-indigo-700" aria-label={`${progress.percentage}% de la checklist documentaire est prête`}>
+          {progress.percentage}% prêt
         </span>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 h-2 overflow-hidden rounded-full bg-indigo-100" role="progressbar" aria-valuemin={0} aria-valuemax={allStates.length} aria-valuenow={receivedCount}>
-          <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${allStates.length ? (receivedCount / allStates.length) * 100 : 0}%` }} />
+        <div className="mb-2 flex items-baseline justify-between gap-3 text-sm" aria-live="polite">
+          <p className="font-semibold text-slate-900"><span className="text-2xl tabular-nums text-indigo-700">{progress.percentage}%</span> de votre checklist est prête</p>
+          <p className="shrink-0 text-xs text-slate-600">{receivedCount}/{progress.total} pièce{progress.total > 1 ? "s" : ""} reçue{receivedCount > 1 ? "s" : ""}</p>
+        </div>
+        <div className="mb-4 h-3 overflow-hidden rounded-full bg-indigo-100" role="progressbar" aria-label="Avancement de la checklist documentaire" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.completed} aria-valuetext={`${progress.percentage}% de la checklist documentaire est prête : ${receivedCount} pièce${receivedCount > 1 ? "s" : ""} reçue${receivedCount > 1 ? "s" : ""} sur ${progress.total}`}>
+          <div className="h-full rounded-full bg-gradient-to-r from-indigo-700 via-blue-600 to-sky-500" style={{ width: `${progress.percentage}%` }} />
         </div>
         <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold" aria-live="polite">
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800">{verifiedCount} validée{verifiedCount > 1 ? "s" : ""}</span>

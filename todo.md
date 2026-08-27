@@ -1777,3 +1777,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir des états de révision explicites et leurs seuils de priorité.
 - [x] Ajouter une vue ou un indicateur filtrable des procédures à réviser, avec accès direct au contrôle de la fiche.
 - [x] Tester les calculs de dates, les filtres et les droits administratifs avant publication.
+
+## Progression de la checklist documentaire
+- [x] Auditer les statuts documentaires et le composant de checklist candidat.
+- [x] Calculer un pourcentage de progression uniquement à partir des pièces réellement requises et de leurs statuts.
+- [x] Afficher une barre de progression accessible dans l’espace client avec un libellé explicite.
+- [x] Tester les cas vide, en cours, complet et les états à remplacer avant publication.
