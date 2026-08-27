@@ -80,6 +80,7 @@ import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
 import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 import { accessRecoveryRouter } from "./routers/accessRecovery";
+import { dossierVerificationRouter } from "./routers/dossierVerification";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -125,6 +126,7 @@ export const appRouter = router({
   tourism: tourismRouter,
   candidate: candidateRouter,
   accessRecovery: accessRecoveryRouter,
+  dossierVerification: dossierVerificationRouter,
   candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,
   heartbeat: heartbeatRouter,

@@ -7,6 +7,7 @@ const appSource = readFileSync(resolve(import.meta.dirname, "../client/src/App.t
 describe("widgets flottants et accès client mobile", () => {
   it("les désactive sur les routes d’accès pour éviter de recouvrir les actions de connexion", () => {
     expect(appSource).toContain("const isAccessRoute");
+    expect(appSource).toContain("const normalizedLocation = location.replace");
     for (const route of ["/login", "/signup", "/mon-espace", "/mon-dossier", "/document-upload"]) {
       expect(appSource).toContain(`"${route}"`);
     }

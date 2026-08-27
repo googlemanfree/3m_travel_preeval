@@ -1650,3 +1650,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre la demande visible et actionnable dans la file administrative existante avec audit
 - [x] Tester les autorisations, les validations, les états de confirmation et publier
 - [x] Corriger le chevauchement des widgets flottants avec les actions d’accès client sur mobile
+
+## Vérification des références et suivi de dossier
+- [x] Auditer les références de dossiers, les e-mails associés et les recherches client existantes
+- [x] Créer une interface administrateur de vérification de référence avec statut et diagnostic limité
+- [x] Corriger les règles de résolution du suivi client sans révéler l’existence d’un dossier à un tiers
+- [x] Ajouter des repères de pilotage administrateur pour les références non résolues ou non rattachées
+- [x] Tester les cas de dossier, les autorisations, les erreurs génériques et publier
+- [x] Rendre le formulaire numéro + e-mail réellement accessible sans compte, tout en conservant le contrôle serveur
+- [x] Fiabiliser la détection des routes d’accès afin que les widgets flottants restent masqués sur mobile
+
+## Simplification de l’accès au dossier et hero
+- [x] Identifier les CTA publics « Suivre mon dossier » du header et du hero sans supprimer la route de suivi
+- [x] Conserver un accès direct au dossier dans l’espace client connecté sans redemande d’identifiants
+- [x] Retirer les CTA publics de suivi confirmés et renforcer la navigation interne de l’espace client
+- [x] Agrandir la typographie principale du hero et vérifier son contraste responsive
+- [x] Tester les parcours connecté, public, clavier et mobile, puis publier

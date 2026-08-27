@@ -31,7 +31,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type DossierStatus = "nouveau" | "paye" | "en_cours" | "documents_requis" | "soumis" | "approuve" | "refuse";
+type DossierStatus = "nouveau" | "paye" | "en_cours" | "documents_requis" | "en_attente_documents" | "recherche_employeur" | "validation_adem" | "en_cours_recrutement" | "soumis" | "soumis_agences" | "approuve" | "visa_approuve" | "refuse";
 
 interface DossierData {
   id: number;
@@ -114,8 +114,14 @@ function getStatusConfig(status: DossierStatus) {
     paye: { label: "Payé", color: "text-green-600", bgColor: "bg-green-50 border-green-200", icon: CreditCard },
     en_cours: { label: "En cours", color: "text-orange-600", bgColor: "bg-orange-50 border-orange-200", icon: Clock },
     documents_requis: { label: "Documents requis", color: "text-yellow-600", bgColor: "bg-yellow-50 border-yellow-200", icon: AlertCircle },
+    en_attente_documents: { label: "Documents requis", color: "text-yellow-600", bgColor: "bg-yellow-50 border-yellow-200", icon: AlertCircle },
+    recherche_employeur: { label: "Recherche d’employeur", color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200", icon: Clock },
+    validation_adem: { label: "Validation ADEM", color: "text-indigo-700", bgColor: "bg-indigo-50 border-indigo-200", icon: Clock },
+    en_cours_recrutement: { label: "Recherche d’employeur", color: "text-blue-700", bgColor: "bg-blue-50 border-blue-200", icon: Clock },
     soumis: { label: "Soumis", color: "text-purple-600", bgColor: "bg-purple-50 border-purple-200", icon: CheckCircle2 },
+    soumis_agences: { label: "Soumis aux agences", color: "text-purple-600", bgColor: "bg-purple-50 border-purple-200", icon: CheckCircle2 },
     approuve: { label: "Approuvé ✓", color: "text-emerald-600", bgColor: "bg-emerald-50 border-emerald-200", icon: Star },
+    visa_approuve: { label: "Décision communiquée", color: "text-emerald-600", bgColor: "bg-emerald-50 border-emerald-200", icon: Star },
     refuse: { label: "Refusé", color: "text-red-600", bgColor: "bg-red-50 border-red-200", icon: AlertCircle },
   };
   return configs[status] || configs.nouveau;

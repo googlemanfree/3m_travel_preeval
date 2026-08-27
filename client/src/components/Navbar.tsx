@@ -39,7 +39,6 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/ressources", label: { fr: "Ressources", en: "Resources" }, icon: Globe2 },
   { href: "/guide-procedures", label: { fr: "Guide PDF", en: "PDF guide" }, icon: FileText },
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
-  { href: "/mon-espace", label: { fr: "Suivi de dossier", en: "Case tracking" }, icon: FolderKanban },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
   { href: "/3m-digital", label: { fr: "3M Digital", en: "3M Digital" }, icon: UsersRound },
 ];

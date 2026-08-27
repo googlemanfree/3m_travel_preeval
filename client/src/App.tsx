@@ -33,6 +33,7 @@ const SuperAdminDashboard = lazyWithTimeout(() => import("./pages/SuperAdminDash
 const CandidatesManager = lazyWithTimeout(() => import("./pages/CandidatesManager"));
 const AdminAccompagnement = lazyWithTimeout(() => import("./pages/AdminAccompagnement"));
 const AdminAgencyDossiers = lazyWithTimeout(() => import("./pages/AdminAgencyDossiers"));
+const AdminDossierVerification = lazyWithTimeout(() => import("./pages/AdminDossierVerification"));
 const AdminUsersManagement = lazyWithTimeout(() => import("./pages/AdminUsersManagement"));
 const AdminAddDossier = lazyWithTimeout(() => import("./pages/AdminAddDossier"));
 import { AdminDocumentVerification } from "./pages/AdminDocumentVerification";
@@ -204,11 +205,7 @@ function Router() {
       <Route path={"/dossier-confirmation"} component={DossierConfirmation} />
 
       {/* Suivi de dossier candidat */}
-      <Route path={"/mon-dossier"}>
-        <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
-          <MonDossier />
-        </AuthGuard>
-      </Route>
+      <Route path={"/mon-dossier"} component={MonDossier} />
       <Route path={"/suivi-client"} component={ClientCaseTracking} />
 
       {/* Mon Espace Candidat — aliases historiques vers l’espace client unique. */}
@@ -454,6 +451,11 @@ function Router() {
           <AdminAgencyDossiers />
         </AdminGuard>
       </Route>
+      <Route path={"/admin/verifier-dossier"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDossierVerification />
+        </AdminGuard>
+      </Route>
 
       {/* Ancien tableau de bord : redirection conservant les liens partagés. */}
       <Route path="/client-dashboard">{() => <Redirect to="/mon-espace" />}</Route>
@@ -485,8 +487,9 @@ function AppShell() {
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
+  const normalizedLocation = location.replace(/\/+$/, "") || "/";
   const isAccessRoute = ["/login", "/signup", "/mon-espace", "/mon-dossier", "/document-upload"].some(
-    (path) => location === path || location.startsWith(`${path}?`),
+    (path) => normalizedLocation === path,
   );
   const showFloatingTools = widgetsVisible && location !== "/contact" && !isAccessRoute;
   const showPublicFooter = !location.startsWith("/admin");

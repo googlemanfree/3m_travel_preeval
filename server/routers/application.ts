@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, aiReportHistory, candidateFiles, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, paymentAuditLogs } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -16,6 +16,7 @@ import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationS
 import { randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1012,14 +1013,36 @@ export const applicationRouter = router({
       const [app] = await db
         .select()
         .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .where(inArray(applications.dossierNumber, dossierReferenceCandidates(input.dossierNumber)))
         .limit(1);
-      if (!app) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
-      }
+      const agencyId = app ? null : parseAgencyDossierReference(input.dossierNumber);
+      const [agencyDossier] = agencyId
+        ? await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, agencyId)).limit(1)
+        : [undefined];
+      if (!app && !agencyDossier) throw new TRPCError({ code: 'NOT_FOUND', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
       // Vérification email pour sécuriser l'accès
-      if (app.email.toLowerCase() !== input.email.toLowerCase()) {
+      const matchedEmail = (app ?? agencyDossier)!.email.trim().toLowerCase() === input.email.trim().toLowerCase();
+      if (!matchedEmail) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
+      }
+      if (!app && agencyDossier) {
+        return {
+          id: agencyDossier.id,
+          dossierNumber: `3M-AGN-${agencyDossier.id.toString().padStart(4, "0")}`,
+          fullName: agencyDossier.fullName,
+          destination: agencyDossier.destination,
+          visaType: agencyDossier.visaType,
+          formulaChosen: "Accompagnement agence",
+          dossierStatus: agencyDossier.status,
+          paymentStatus: "NON_APPLICABLE",
+          paymentDate: null,
+          emailVerified: false,
+          agreementSigned: false,
+          agreementSignedAt: null,
+          procedureTracking: null,
+          createdAt: agencyDossier.createdAt,
+          updatedAt: agencyDossier.updatedAt,
+        };
       }
       const [caseRecord] = await db
         .select({
@@ -1031,7 +1054,7 @@ export const applicationRouter = router({
           dueAt: cases.dueAt,
         })
         .from(cases)
-        .where(eq(cases.legacyApplicationId, app.id))
+        .where(eq(cases.legacyApplicationId, app!.id))
         .limit(1);
 
       const procedureTracking = caseRecord
@@ -1048,8 +1071,8 @@ export const applicationRouter = router({
           const completed = required.filter((requirement) => requirement.status === "approved").length;
           const nextRequirement = required.find((requirement) => ["pending", "rejected"].includes(requirement.status));
           return {
-            destination: caseRecord.countryTarget ?? app.destination,
-            procedure: caseRecord.visaType ?? caseRecord.caseType ?? app.visaType ?? null,
+            destination: caseRecord.countryTarget ?? app!.destination,
+            procedure: caseRecord.visaType ?? caseRecord.caseType ?? app!.visaType ?? null,
             status: caseRecord.currentStatus,
             dueAt: caseRecord.dueAt,
             documents: requirements,
@@ -1069,21 +1092,21 @@ export const applicationRouter = router({
       // Vue de suivi : aucun lien de document privé, note interne, score ou
       // autre donnée sensible ne doit être remis par ce point d'accès.
       return {
-        id: app.id,
-        dossierNumber: app.dossierNumber,
-        fullName: app.fullName,
-        destination: app.destination,
-        visaType: app.visaType,
-        formulaChosen: app.formulaChosen,
-        dossierStatus: app.dossierStatus,
-        paymentStatus: app.paymentStatus,
-        paymentDate: app.paymentDate,
-        emailVerified: app.emailVerified,
-        agreementSigned: app.agreementSigned,
-        agreementSignedAt: app.agreementSignedAt,
+        id: app!.id,
+        dossierNumber: app!.dossierNumber,
+        fullName: app!.fullName,
+        destination: app!.destination,
+        visaType: app!.visaType,
+        formulaChosen: app!.formulaChosen,
+        dossierStatus: app!.dossierStatus,
+        paymentStatus: app!.paymentStatus,
+        paymentDate: app!.paymentDate,
+        emailVerified: app!.emailVerified,
+        agreementSigned: app!.agreementSigned,
+        agreementSignedAt: app!.agreementSignedAt,
         procedureTracking,
-        createdAt: app.createdAt,
-        updatedAt: app.updatedAt,
+        createdAt: app!.createdAt,
+        updatedAt: app!.updatedAt,
       };
     }),
 

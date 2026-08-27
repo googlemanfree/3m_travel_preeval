@@ -156,7 +156,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-5 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
           3M Travel Agency
         </motion.h1>
@@ -167,7 +167,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={3}
-          className="text-2xl md:text-3xl text-blue-100 font-semibold mb-6"
+          className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-7"
         >
           Votre Avenir Commence Ici — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Voyages & Immigrations d'Exception</span>
         </motion.h2>
@@ -178,7 +178,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={4}
-          className="text-slate-100 text-lg md:text-xl max-w-4xl mx-auto mb-8 leading-relaxed font-normal"
+          className="text-slate-100 text-xl md:text-2xl max-w-4xl mx-auto mb-9 leading-relaxed font-normal"
         >
           Spécialistes de la mobilité internationale vers le <strong className="text-white font-semibold">Canada</strong>, l'<strong className="text-white font-semibold">Europe Schengen</strong> et les <strong className="text-white font-semibold">États-Unis</strong>. Nous transformons vos projets d'études, de carrière ou d'installation en réalité grâce à un accompagnement sur-mesure et une expertise reconnue.
         </motion.p>

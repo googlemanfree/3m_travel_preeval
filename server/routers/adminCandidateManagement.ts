@@ -486,7 +486,7 @@ export const adminCandidateManagementRouter = router({
         candidateNameForNotification = record.fullName;
         const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
         candidateIdForMessage = linkedCandidate?.id ?? null;
-        dossierNumberForMessage = `3M-AG-${id}`;
+        dossierNumberForMessage = `3M-AGN-${id.toString().padStart(4, "0")}`;
         const result = await db.update(agencyDossiers).set({
           status: input.status as any,
           ...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}),

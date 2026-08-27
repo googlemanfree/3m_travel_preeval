@@ -1172,6 +1172,14 @@ export default function AdminDashboard() {
               >
                 <ShieldAlert className="w-4 h-4" /> Récupération accès
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/verifier-dossier")}
+                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+              >
+                <Search className="w-4 h-4" /> Vérifier un dossier
+              </Button>
             </div>
             <nav aria-label="Fil d’Ariane du pilotage admin" className="flex w-full items-center gap-2 border-t border-white/15 pt-3 text-sm text-blue-100">
               <button type="button" onClick={() => setActiveAdminTab("pilotage")} className="rounded px-1 font-semibold underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Administration</button>

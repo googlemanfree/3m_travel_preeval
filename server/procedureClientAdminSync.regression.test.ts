@@ -13,7 +13,8 @@ describe("suivi Procédures client-administration", () => {
     const endpointEnd = applicationRouterSource.indexOf("sendCandidateMessage: publicProcedure");
     const endpoint = applicationRouterSource.slice(endpointStart, endpointEnd);
 
-    expect(endpoint).toContain("app.email.toLowerCase() !== input.email.toLowerCase()");
+    expect(endpoint).toContain("const matchedEmail");
+    expect(endpoint).toContain("input.email.trim().toLowerCase()");
     expect(endpoint).toContain("documentRequirements");
     expect(endpoint).toContain("procedureTracking");
     expect(endpoint).toContain("nextAction");

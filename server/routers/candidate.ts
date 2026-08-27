@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
@@ -33,6 +33,7 @@ import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, send
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
+import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
 
@@ -1398,22 +1399,23 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { applications } = await import("../../drizzle/schema");
+      const normalizedReference = normalizeDossierReference(input.dossierNumber);
       const [application] = await db
         .select()
         .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .where(inArray(applications.dossierNumber, dossierReferenceCandidates(input.dossierNumber)))
         .limit(1);
 
       if (application && (application.candidateId === ctx.candidate.id || application.email.toLowerCase() === ctx.candidate.email.toLowerCase())) {
         return { success: true, source: "online" as const, application };
       }
 
-      const agencyId = /^3M-AG-(\d+)$/i.exec(input.dossierNumber)?.[1];
+      const agencyId = parseAgencyDossierReference(input.dossierNumber);
       if (agencyId) {
         const [agencyDossier] = await db
           .select()
           .from(agencyDossiers)
-          .where(eq(agencyDossiers.id, Number(agencyId)))
+          .where(eq(agencyDossiers.id, agencyId))
           .limit(1);
         if (agencyDossier && agencyDossier.email.toLowerCase() === ctx.candidate.email.toLowerCase()) {
           return {
@@ -1421,7 +1423,7 @@ export const candidateRouter = router({
             source: "agency" as const,
             application: {
               id: agencyDossier.id,
-              dossierNumber: `3M-AG-${agencyDossier.id}`,
+              dossierNumber: `3M-AGN-${agencyDossier.id.toString().padStart(4, "0")}`,
               fullName: agencyDossier.fullName,
               email: agencyDossier.email,
               destination: agencyDossier.destination,
