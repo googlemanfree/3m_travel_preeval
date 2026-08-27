@@ -1619,3 +1619,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des raccourcis internes accessibles dans les espaces client et administrateur
 - [x] Configurer ou confirmer la persistance de session à 24 heures avec déconnexion manuelle immédiate
 - [x] Tester les autorisations, la navigation, l’expiration et la déconnexion, puis publier
+
+## Changement d’adresse e-mail sécurisé
+- [x] Auditer les identités candidat, les données liées et les vérifications existantes
+- [x] Ajouter une demande de changement d’e-mail liée à la session candidat et au nouvel e-mail
+- [x] Envoyer une confirmation à durée limitée vers la nouvelle adresse, sans révéler d’informations sensibles
+- [x] Mettre à jour l’identité, les dossiers liés et l’audit uniquement après validation du lien
+- [x] Ajouter les contrôles d’interface du profil, l’annulation et les messages de sécurité
+- [x] Tester les autorisations, le doublon, l’expiration, la confirmation et publier

@@ -18,6 +18,7 @@ const Login = lazyWithTimeout(() => import("./pages/Login"));
 const VerifyEmail = lazyWithTimeout(() => import("./pages/VerifyEmail"));
 const VerifyEmailLink = lazyWithTimeout(() => import("./pages/VerifyEmailLink"));
 const VerifyEmailSent = lazyWithTimeout(() => import("./pages/VerifyEmailSent"));
+const ConfirmEmailChange = lazyWithTimeout(() => import("./pages/ConfirmEmailChange"));
 const CompleteProfile = lazyWithTimeout(() => import("./pages/CompleteProfile"));
 const ForgotPassword = lazyWithTimeout(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazyWithTimeout(() => import("./pages/ResetPassword"));
@@ -156,6 +157,7 @@ function Router() {
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
+      <Route path={"/confirm-email-change"} component={ConfirmEmailChange} />
       <Route path={"/complete-profile"} component={CompleteProfile} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />

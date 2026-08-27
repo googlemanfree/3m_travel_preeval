@@ -73,6 +73,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/flights": { title: `Recherche de vols | ${SITE}`, description: "Espace de recherche et de demande de vols 3M Booking.", heading: "Recherche de vols", lead: "Les recherches et demandes de réservation sont traitées dans un espace non indexé.", noindex: true },
   "/mon-espace": { title: `Mon espace | ${SITE}`, description: "Espace privé de suivi des démarches et communications.", heading: "Mon espace client", lead: "Connectez-vous pour consulter votre espace personnel. Cette page n’est pas indexée.", noindex: true },
   "/mon-dossier": { title: `Mon dossier | ${SITE}`, description: "Espace privé de suivi du dossier client.", heading: "Mon dossier", lead: "Connectez-vous pour suivre votre dossier. Cette page n’est pas indexée.", noindex: true },
+  "/confirm-email-change": { title: `Confirmer mon adresse e-mail | ${SITE}`, description: "Page sécurisée de confirmation du changement d’adresse e-mail.", heading: "Confirmer le changement d’adresse", lead: "Cette page sécurisée n’est pas indexée.", noindex: true },
 };
 
 const esc = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char] ?? char);
@@ -99,7 +100,7 @@ export function composePublicPrerender(template: string, url: string) {
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
   const procedurePage = procedureMetaForPath(path);
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
-  const privatePath = /^\/(admin|mon-espace|mon-dossier|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
+  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
     title: unknown ? `Page introuvable | ${SITE}` : SITE,

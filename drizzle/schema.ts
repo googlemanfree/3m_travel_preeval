@@ -207,6 +207,27 @@ export type Candidate = typeof candidates.$inferSelect;
 export type InsertCandidate = typeof candidates.$inferInsert;
 
 /**
+ * Changement d’adresse e-mail : les jetons ne sont conservés que sous forme
+ * d’empreinte. La modification n’est finalisée qu’après confirmation des deux
+ * boîtes concernées, dans un délai limité.
+ */
+export const candidateEmailChangeRequests = mysqlTable("candidate_email_change_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  currentEmail: varchar("currentEmail", { length: 320 }).notNull(),
+  newEmail: varchar("newEmail", { length: 320 }).notNull(),
+  currentEmailTokenHash: varchar("currentEmailTokenHash", { length: 128 }).notNull(),
+  newEmailTokenHash: varchar("newEmailTokenHash", { length: 128 }).notNull(),
+  currentEmailConfirmedAt: timestamp("currentEmailConfirmedAt"),
+  newEmailConfirmedAt: timestamp("newEmailConfirmedAt"),
+  status: mysqlEnum("status", ["pending", "confirmed", "cancelled", "expired"]).default("pending").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CandidateEmailChangeRequest = typeof candidateEmailChangeRequests.$inferSelect;
+
+/**
  * Documents uploadés par le candidat (CV, passeport, diplômes, etc.)
  */
 export const candidateFiles = mysqlTable("candidate_files", {

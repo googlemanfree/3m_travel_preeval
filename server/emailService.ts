@@ -301,6 +301,48 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
   }
 }
 
+type EmailChangeConfirmationInput = {
+  to: string;
+  fullName: string;
+  confirmationUrl: string;
+  recipientRole: "current" | "new";
+};
+
+/**
+ * Envoie une confirmation de changement d’adresse. Aucun jeton n’est journalisé
+ * et les deux boîtes concernées doivent confirmer indépendamment.
+ */
+export async function sendEmailChangeConfirmation(input: EmailChangeConfirmationInput): Promise<void> {
+  const safeName = escapeEmailHtml(input.fullName || "Candidat");
+  const isCurrentAddress = input.recipientRole === "current";
+  const title = isCurrentAddress ? "Confirmez le changement de votre adresse e-mail" : "Confirmez votre nouvelle adresse e-mail";
+  const explanation = isCurrentAddress
+    ? "Une demande de remplacement de l’adresse de connexion de votre espace client a été initiée. Confirmez-la uniquement si vous en êtes à l’origine."
+    : "Cette adresse a été proposée comme nouvelle adresse de connexion. Confirmez-la uniquement si vous êtes à l’origine de la demande.";
+
+  await sendGenericEmail({
+    to: input.to,
+    subject: `3M Travel & Services — ${title}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#172033;">
+        <div style="background:#0B2A52;padding:28px 32px;color:#fff;">
+          <p style="margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">3M Travel &amp; Services</p>
+          <h1 style="margin:0;font-size:24px;">${title}</h1>
+        </div>
+        <div style="padding:28px 32px;background:#f8fafc;">
+          <p>Bonjour <strong>${safeName}</strong>,</p>
+          <p>${explanation}</p>
+          <p style="text-align:center;margin:28px 0 18px;">
+            <a href="${input.confirmationUrl}" style="display:inline-block;background:#B98932;color:#172033;padding:13px 22px;border-radius:7px;text-decoration:none;font-weight:700;">Confirmer l’adresse</a>
+          </p>
+          <p style="font-size:13px;line-height:1.6;color:#475569;">Le lien expire dans une heure. Pour finaliser le changement, la confirmation de l’autre adresse est également requise.</p>
+          <p style="font-size:13px;line-height:1.6;color:#475569;">Si vous n’avez pas demandé ce changement, ne cliquez pas sur le lien et contactez l’agence par les coordonnées officielles.</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, fullName: string, destination: string): Promise<void> {
   const dashboardUrl = `${SITE_URL}/dashboard`;
   const destLabels: Record<string, string> = {

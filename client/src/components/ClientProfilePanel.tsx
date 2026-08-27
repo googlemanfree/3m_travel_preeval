@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Save, UserRound } from "lucide-react";
+import { Loader2, Mail, Save, ShieldCheck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,7 @@ export default function ClientProfilePanel() {
     employmentStatus: "",
     languageLevel: "",
   });
+  const [newEmail, setNewEmail] = useState("");
 
   useEffect(() => {
     const profile = profileQuery.data;
@@ -78,6 +79,22 @@ export default function ClientProfilePanel() {
     },
     onError: (error) => toast.error(error.message || "Impossible de mettre à jour le profil."),
   });
+  const emailChangeStatus = trpc.candidate.getEmailChangeRequestStatus.useQuery(undefined, { enabled: isAuthenticated, retry: 1 });
+  const requestEmailChange = trpc.candidate.requestEmailChange.useMutation({
+    onSuccess: async () => {
+      setNewEmail("");
+      await emailChangeStatus.refetch();
+      toast.success("Deux confirmations ont été envoyées. Votre adresse reste inchangée jusqu’à leur validation.");
+    },
+    onError: (error) => toast.error(error.message || "Impossible de demander le changement d’adresse."),
+  });
+  const cancelEmailChange = trpc.candidate.cancelEmailChange.useMutation({
+    onSuccess: async () => {
+      await emailChangeStatus.refetch();
+      toast.success("La demande de changement d’adresse a été annulée.");
+    },
+    onError: () => toast.error("Impossible d’annuler la demande pour le moment."),
+  });
 
   const update = (field: keyof ProfileForm, value: string) => setForm((current) => ({ ...current, [field]: value }));
 
@@ -88,6 +105,15 @@ export default function ClientProfilePanel() {
       return;
     }
     updateMutation.mutate(form);
+  };
+
+  const handleEmailChange = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!newEmail.trim()) {
+      toast.error("Saisissez votre nouvelle adresse e-mail.");
+      return;
+    }
+    requestEmailChange.mutate({ newEmail: newEmail.trim(), origin: window.location.origin });
   };
 
   if (profileQuery.isLoading) {
@@ -129,6 +155,28 @@ export default function ClientProfilePanel() {
         <div className="space-y-2 sm:max-w-md"><Label>Destination principale</Label><Select value={form.destination} onValueChange={(value) => update("destination", value)}><SelectTrigger><SelectValue placeholder="Choisir une destination" /></SelectTrigger><SelectContent>{destinationOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
         <Button type="submit" disabled={updateMutation.isPending} className="h-11 rounded-xl bg-blue-700 px-5 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
       </form>
+
+      <section className="mt-8 border-t border-slate-100 pt-6" aria-labelledby="email-change-title">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 id="email-change-title" className="flex items-center gap-2 text-base font-black text-slate-900"><Mail className="h-4 w-4 text-blue-700" /> Modifier mon adresse e-mail</h3>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Par sécurité, un lien est envoyé à votre adresse actuelle et à la nouvelle. Le changement n’est appliqué qu’après les deux confirmations.</p>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600"><ShieldCheck className="h-4 w-4 text-emerald-600" /> Double confirmation</span>
+        </div>
+
+        {emailChangeStatus.data?.pending ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+            <p>Une demande est en attente de confirmation sur les deux adresses. Votre e-mail de connexion actuel reste actif.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => cancelEmailChange.mutate()} disabled={cancelEmailChange.isPending} className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100"><X className="mr-1.5 h-4 w-4" /> Annuler la demande</Button>
+          </div>
+        ) : (
+          <form onSubmit={handleEmailChange} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="w-full max-w-md space-y-2"><Label htmlFor="client-new-email">Nouvelle adresse e-mail</Label><Input id="client-new-email" type="email" autoComplete="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} placeholder="nouvelle.adresse@exemple.com" required /></div>
+            <Button type="submit" disabled={requestEmailChange.isPending} className="h-10 bg-slate-900 text-white hover:bg-slate-800">{requestEmailChange.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}{requestEmailChange.isPending ? "Envoi…" : "Envoyer les confirmations"}</Button>
+          </form>
+        )}
+      </section>
     </Card>
   );
 }

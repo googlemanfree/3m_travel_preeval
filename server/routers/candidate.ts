@@ -25,10 +25,11 @@ import {
   favoriteFlights,
   evaluations,
   savedDestinationComparisons,
+  candidateEmailChangeRequests,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
@@ -82,6 +83,25 @@ export function hashPasswordResetToken(token: string): string {
 export function issuePasswordResetToken() {
   const rawToken = randomBytes(32).toString("hex");
   return { rawToken, tokenHash: hashPasswordResetToken(rawToken) };
+}
+
+const EMAIL_CHANGE_TTL_MS = 60 * 60 * 1000;
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function resolveTrustedClientOrigin(origin: string): string {
+  const requested = new URL(origin);
+  const configured = new URL((process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, ""));
+  const isCanonical = requested.origin === configured.origin;
+  const isLocalOrPreview = process.env.NODE_ENV !== "production" && (
+    requested.hostname === "localhost" || requested.hostname.endsWith(".manus.computer")
+  );
+  if (!isCanonical && !isLocalOrPreview) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Origine de confirmation non autorisée." });
+  }
+  return requested.origin;
 }
 
 // ─── Middleware : extraire le candidat depuis le header Authorization ─────────
@@ -470,6 +490,141 @@ export const candidateRouter = router({
 
       await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
       return { success: true };
+    }),
+
+  // ── Changement d'adresse e-mail : double confirmation sur les deux boîtes ──
+  getEmailChangeRequestStatus: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [request] = await db
+      .select({ expiresAt: candidateEmailChangeRequests.expiresAt })
+      .from(candidateEmailChangeRequests)
+      .where(and(eq(candidateEmailChangeRequests.candidateId, ctx.candidate.id), eq(candidateEmailChangeRequests.status, "pending")))
+      .orderBy(desc(candidateEmailChangeRequests.createdAt))
+      .limit(1);
+
+    if (!request) return { pending: false, expiresAt: null };
+    if (request.expiresAt <= new Date()) {
+      await db.update(candidateEmailChangeRequests)
+        .set({ status: "expired" })
+        .where(and(eq(candidateEmailChangeRequests.candidateId, ctx.candidate.id), eq(candidateEmailChangeRequests.status, "pending")));
+      return { pending: false, expiresAt: null };
+    }
+    return { pending: true, expiresAt: request.expiresAt };
+  }),
+
+  requestEmailChange: candidateProcedure
+    .input(z.object({ newEmail: z.string().email().max(320), origin: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const currentEmail = normalizeEmail(ctx.candidate.email);
+      const newEmail = normalizeEmail(input.newEmail);
+      if (currentEmail === newEmail) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez une adresse différente de votre adresse actuelle." });
+      }
+      const trustedOrigin = resolveTrustedClientOrigin(input.origin);
+      const [existingCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, newEmail)).limit(1);
+      if (existingCandidate && existingCandidate.id !== ctx.candidate.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette adresse ne peut pas être utilisée pour le moment." });
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + EMAIL_CHANGE_TTL_MS);
+      const { rawToken: currentEmailToken, tokenHash: currentEmailTokenHash } = issueVerificationToken();
+      const { rawToken: newEmailToken, tokenHash: newEmailTokenHash } = issueVerificationToken();
+      await db.update(candidateEmailChangeRequests)
+        .set({ status: "cancelled" })
+        .where(and(eq(candidateEmailChangeRequests.candidateId, ctx.candidate.id), eq(candidateEmailChangeRequests.status, "pending")));
+      await db.insert(candidateEmailChangeRequests).values({
+        candidateId: ctx.candidate.id,
+        currentEmail,
+        newEmail,
+        currentEmailTokenHash,
+        newEmailTokenHash,
+        status: "pending",
+        expiresAt,
+      });
+
+      try {
+        await Promise.all([
+          sendEmailChangeConfirmation({
+            to: currentEmail,
+            fullName: ctx.candidate.fullName,
+            recipientRole: "current",
+            confirmationUrl: `${trustedOrigin}/confirm-email-change?channel=current&token=${encodeURIComponent(currentEmailToken)}`,
+          }),
+          sendEmailChangeConfirmation({
+            to: newEmail,
+            fullName: ctx.candidate.fullName,
+            recipientRole: "new",
+            confirmationUrl: `${trustedOrigin}/confirm-email-change?channel=new&token=${encodeURIComponent(newEmailToken)}`,
+          }),
+        ]);
+      } catch {
+        await db.update(candidateEmailChangeRequests)
+          .set({ status: "cancelled" })
+          .where(and(
+            eq(candidateEmailChangeRequests.candidateId, ctx.candidate.id),
+            eq(candidateEmailChangeRequests.newEmail, newEmail),
+            eq(candidateEmailChangeRequests.status, "pending"),
+          ));
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible d’envoyer les confirmations pour le moment. Votre adresse n’a pas été modifiée." });
+      }
+
+      return { success: true, expiresAt };
+    }),
+
+  cancelEmailChange: candidateProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(candidateEmailChangeRequests)
+      .set({ status: "cancelled" })
+      .where(and(eq(candidateEmailChangeRequests.candidateId, ctx.candidate.id), eq(candidateEmailChangeRequests.status, "pending")));
+    return { success: true };
+  }),
+
+  confirmEmailChange: publicProcedure
+    .input(z.object({ token: z.string().trim().min(40).max(128), channel: z.enum(["current", "new"]) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const tokenHash = hashVerificationToken(input.token);
+      const tokenColumn = input.channel === "current"
+        ? candidateEmailChangeRequests.currentEmailTokenHash
+        : candidateEmailChangeRequests.newEmailTokenHash;
+      const [request] = await db.select().from(candidateEmailChangeRequests).where(eq(tokenColumn, tokenHash)).limit(1);
+      if (!request || request.status !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien n’est plus utilisable. Faites une nouvelle demande depuis votre profil." });
+      }
+      if (request.expiresAt <= new Date()) {
+        await db.update(candidateEmailChangeRequests).set({ status: "expired" }).where(eq(candidateEmailChangeRequests.id, request.id));
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien est expiré. Faites une nouvelle demande depuis votre profil." });
+      }
+
+      await db.update(candidateEmailChangeRequests)
+        .set(input.channel === "current" ? { currentEmailConfirmedAt: new Date() } : { newEmailConfirmedAt: new Date() })
+        .where(eq(candidateEmailChangeRequests.id, request.id));
+      const [updatedRequest] = await db.select().from(candidateEmailChangeRequests).where(eq(candidateEmailChangeRequests.id, request.id)).limit(1);
+      if (!updatedRequest?.currentEmailConfirmedAt || !updatedRequest.newEmailConfirmedAt) {
+        return { completed: false };
+      }
+
+      const [emailOwner] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, updatedRequest.newEmail)).limit(1);
+      if (emailOwner && emailOwner.id !== updatedRequest.candidateId) {
+        await db.update(candidateEmailChangeRequests).set({ status: "cancelled" }).where(eq(candidateEmailChangeRequests.id, updatedRequest.id));
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette adresse ne peut plus être utilisée. Faites une nouvelle demande depuis votre profil." });
+      }
+
+      // Les enregistrements reliés au compte sont alignés seulement après les deux confirmations.
+      await db.update(candidates).set({ email: updatedRequest.newEmail, emailVerified: true }).where(eq(candidates.id, updatedRequest.candidateId));
+      await db.update(applications).set({ email: updatedRequest.newEmail }).where(eq(applications.candidateId, updatedRequest.candidateId));
+      await db.update(evaluations).set({ email: updatedRequest.newEmail }).where(eq(evaluations.candidateId, updatedRequest.candidateId));
+      await db.update(agencyDossiers).set({ email: updatedRequest.newEmail }).where(eq(agencyDossiers.email, updatedRequest.currentEmail));
+      await db.update(candidateEmailChangeRequests)
+        .set({ status: "confirmed" })
+        .where(eq(candidateEmailChangeRequests.id, updatedRequest.id));
+      return { completed: true };
     }),
 
   // ── Liste des documents uploadés ──────────────────────────────────────────
