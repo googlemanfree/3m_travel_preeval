@@ -24,8 +24,10 @@ describe("lazy page timeout recovery contracts", () => {
     // Les pages de service et les articles d’études sont chargés à la demande.
     // La fiche publique de procédure reste une exception volontaire : elle est
     // chargée directement afin de ne pas exposer les 107 destinations à un
-    // écran blanc en cas de délai de récupération d’un module.
-    expect(lazyImports.length).toBeGreaterThanOrEqual(96);
+    // écran blanc en cas de délai de récupération d’un module. La page
+    // historique submit-review est désormais une redirection, non une page
+    // chargée à la demande.
+    expect(lazyImports.length).toBeGreaterThanOrEqual(95);
     expect(app).toContain('import CountryDetailPage from "./pages/CountryDetailPage"');
     expect(app).not.toContain('const CountryDetailPage = lazyWithTimeout');
     for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {

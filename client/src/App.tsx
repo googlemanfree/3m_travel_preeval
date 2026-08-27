@@ -110,7 +110,6 @@ const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomer
 const AdminInsuranceRequests = lazyWithTimeout(() => import("./pages/AdminInsuranceRequests"));
 const AdminAccessRecovery = lazyWithTimeout(() => import("./pages/AdminAccessRecovery"));
 const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTracking"));
-const SubmitReview = lazyWithTimeout(() => import("./pages/SubmitReview"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import Navbar from "./components/Navbar";
 import { FooterLegal } from "./components/FooterLegal";
@@ -438,9 +437,8 @@ function Router() {
           <AdminCustomerReviews />
         </AdminGuard>
       </Route>
-      <Route path={"/submit-review"}>
-        <SubmitReview />
-      </Route>
+      {/* Ancien lien indexé : le parcours public canonique reste l’évaluation sur l’accueil. */}
+      <Route path={"/submit-review"}>{() => <Redirect to="/?source=legacy-submit-review#evaluation-multi" />}</Route>
       <Route path={"/admin/users/:userId"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminUserDetails />

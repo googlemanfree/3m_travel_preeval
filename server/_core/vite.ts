@@ -48,9 +48,19 @@ function applyCanonicalDomainRedirect(app: Express) {
     return res.redirect(301, target);
   });
 }
+
+function registerLegacyPublicRedirects(app: Express) {
+  // Ancien point d’entrée présent dans l’index des moteurs : conserver le lien
+  // mais consolider définitivement son autorité sur l’évaluation publique.
+  app.get("/submit-review", (_req, res) => {
+    res.set({ "Cache-Control": "public, max-age=3600" });
+    return res.redirect(301, "/?source=legacy-submit-review#evaluation-multi");
+  });
+}
 export async function setupVite(app: Express, server: Server) {
   applyCanonicalDomainRedirect(app);
   registerSeoAssetRoutes(app);
+  registerLegacyPublicRedirects(app);
   const serverOptions = {
     middlewareMode: true,
     // Le proxy de prévisualisation ne relaie pas de WebSocket Vite fiable dans
@@ -142,6 +152,7 @@ export async function setupVite(app: Express, server: Server) {
 export function serveStatic(app: Express) {
   applyCanonicalDomainRedirect(app);
   registerSeoAssetRoutes(app);
+  registerLegacyPublicRedirects(app);
   const distPath =
     process.env.NODE_ENV === "development"
       ? path.resolve(import.meta.dirname, "../..", "dist", "public")

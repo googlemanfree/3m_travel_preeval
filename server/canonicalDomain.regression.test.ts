@@ -33,4 +33,12 @@ describe("domaine officiel 3M Travel", () => {
     expect(viteMiddleware).toContain('"Link": `<${target}>; rel=\\"canonical\\"`');
     expect(viteMiddleware).toContain("return res.redirect(301, target)");
   });
+
+  it("redirige la page historique de soumission vers l’évaluation publique canonique", () => {
+    const viteMiddleware = fs.readFileSync(path.resolve(import.meta.dirname, "_core/vite.ts"), "utf8");
+    const appRoutes = fs.readFileSync(path.resolve(import.meta.dirname, "../client/src/App.tsx"), "utf8");
+    expect(viteMiddleware).toContain('app.get("/submit-review"');
+    expect(viteMiddleware).toContain('res.redirect(301, "/?source=legacy-submit-review#evaluation-multi")');
+    expect(appRoutes).toContain('<Route path={"/submit-review"}>{() => <Redirect to="/?source=legacy-submit-review#evaluation-multi" />}</Route>');
+  });
 });

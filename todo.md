@@ -1802,3 +1802,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Accessibilité SEO de l’accueil
 - [x] Identifier l’image publique de l’accueil sans texte alternatif et lui attribuer une alternative descriptive adaptée.
 - [x] Vérifier que les images informatives de l’accueil possèdent une alternative et que les images décoratives restent correctement masquées.
+
+## Cycle avancé de clarification documentaire
+- [ ] Auditer le registre de clarification, les échéances, l’historique et les parcours de dépôt actuels.
+- [ ] Ajouter une échéance interne et un état de priorité aux demandes de clarification en attente.
+- [ ] Afficher l’historique complet et sécurisé des échanges pour chaque pièce dans l’espace candidat.
+- [ ] Permettre le dépôt direct de la pièce depuis une réponse de clarification reçue.
+- [ ] Tester les droits, échéances, historique, dépôt et confidentialité avant publication.
+- [ ] Étendre et valider la compétence réutilisable de clarification documentaire.
+
+## Priorité domaine affiché dans Google
+- [x] Vérifier les redirections, balises canoniques, `noindex`, sitemap et données structurées des domaines `.click` et `.com`.
+- [x] Éliminer tout signal technique résiduel pouvant présenter le domaine `.click` comme indexable ou principal.
+- [x] Vérifier la propriété Search Console, demander l’exploration de l’accueil canonique et soumettre le sitemap officiel.
