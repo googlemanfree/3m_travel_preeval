@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v34-premium-hover-interactions-static';
+const CACHE_NAME = '3m-travel-pwa-v35-protected-route-network-only';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
@@ -76,31 +76,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Pour les requêtes API tRPC ou données de vol, tenter le réseau puis stocker/fallback sur le cache local
+  // Les API contiennent des sessions, dossiers et informations candidates : ne
+  // jamais les mémoriser dans Cache Storage et ne jamais substituer une réponse
+  // JSON hors ligne. Une réponse partielle ou associée à une ancienne session
+  // ferait échouer tRPC ou risquerait d’afficher des données périmées.
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Réponse de repli JSON hors ligne pour l'API
-            return new Response(JSON.stringify({ offline: true, message: "Mode hors ligne - Données chargées depuis le cache local." }), {
-              headers: { 'Content-Type': 'application/json' }
-            });
-          });
-        })
-    );
+    event.respondWith(fetch(event.request));
     return;
   }
 

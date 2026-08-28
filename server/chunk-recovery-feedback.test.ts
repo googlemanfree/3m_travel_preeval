@@ -21,7 +21,7 @@ describe("chunk recovery feedback contracts", () => {
     const boundary = readProjectFile("client/src/components/ErrorBoundary.tsx");
 
     expect(boundary).toContain("handleManualRetry");
-    expect(boundary).toContain("Réessayer maintenant");
+    expect(boundary).toContain("Réessayer la page");
     expect(boundary).toContain("CHUNK_RELOAD_NOTICE_KEY");
     expect(boundary).toContain("reloadPageAfterChunkFailure");
   });

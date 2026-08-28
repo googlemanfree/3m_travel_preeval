@@ -71,6 +71,10 @@ class ErrorBoundary extends Component<Props, State> {
     } catch {
       // Le navigateur peut bloquer le stockage en mode privé.
     }
+    if (this.state.error && !isChunkLoadError(this.state.error)) {
+      this.setState({ hasError: false, error: null });
+      return;
+    }
     void reloadPageAfterChunkFailure();
   };
 
@@ -85,7 +89,9 @@ class ErrorBoundary extends Component<Props, State> {
 
             <h2 className="text-2xl font-bold mb-2">Cette page n’a pas pu être chargée</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Le chargement d’un module a échoué. Le cache local a été nettoyé ; réessayez sans perdre votre session.
+              {this.state.error && isChunkLoadError(this.state.error)
+                ? "Une mise à jour de page n’a pas pu être chargée. Nous allons réessayer sans déconnecter votre session."
+                : "Un élément de cette page a rencontré un problème temporaire. Réessayez ; votre session reste active."}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
@@ -95,7 +101,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="h-12 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary px-5 text-primary-foreground font-medium hover:opacity-90 transition shadow-lg cursor-pointer"
               >
                 <RotateCcw size={18} />
-                Réessayer maintenant
+                Réessayer la page
               </button>
               <a
                 href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site."

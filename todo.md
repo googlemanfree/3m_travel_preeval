@@ -1815,3 +1815,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les redirections, balises canoniques, `noindex`, sitemap et données structurées des domaines `.click` et `.com`.
 - [x] Éliminer tout signal technique résiduel pouvant présenter le domaine `.click` comme indexable ou principal.
 - [x] Vérifier la propriété Search Console, demander l’exploration de l’accueil canonique et soumettre le sitemap officiel.
+
+## Incident — repli erroné de chargement des routes protégées
+- [x] Reproduire et identifier la cause du message « Cette page n’a pas pu être chargée » sur `/mon-espace?section=dossier`.
+- [x] Corriger le mécanisme de reprise sans effacer la session candidat valide.
+- [x] Auditer les autres routes protégées pour le même repli de cache ou de chargement.
+- [x] Ajouter des régressions, vérifier TypeScript et les parcours concernés avant publication.
