@@ -363,14 +363,39 @@ export const documentClarificationRequests = mysqlTable("document_clarification_
   advisorMessageId: int("advisorMessageId"),
   notificationId: int("notificationId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  // Échéance exclusivement interne : elle n’est pas retournée au candidat.
+  dueAt: timestamp("dueAt"),
   answeredAt: timestamp("answeredAt"),
+  uploadedCandidateFileId: int("uploadedCandidateFileId"),
+  uploadedAt: timestamp("uploadedAt"),
   closedAt: timestamp("closedAt"),
 }, (table) => ({
   candidateStatusIdx: index("idx_document_clarifications_candidate_status").on(table.candidateId, table.status, table.createdAt),
   statusCreatedIdx: index("idx_document_clarifications_status_created").on(table.status, table.createdAt),
+  candidateDueIdx: index("idx_document_clarifications_candidate_due").on(table.candidateId, table.status, table.dueAt),
 }));
 
 export type DocumentClarificationRequest = typeof documentClarificationRequests.$inferSelect;
+
+/** Journal limité aux échanges visibles du candidat et aux dépôts associés. Les notes internes restent dans les journaux dédiés. */
+export const documentClarificationEvents = mysqlTable("document_clarification_events", {
+  id: int("id").autoincrement().primaryKey(),
+  clarificationRequestId: int("clarificationRequestId").notNull(),
+  candidateId: int("candidateId").notNull(),
+  actorRole: mysqlEnum("actorRole", ["candidate", "advisor", "system"]).notNull(),
+  eventType: varchar("eventType", { length: 80 }).notNull(),
+  message: text("message"),
+  candidateMessageId: int("candidateMessageId"),
+  advisorMessageId: int("advisorMessageId"),
+  candidateFileId: int("candidateFileId"),
+  actorAdminId: int("actorAdminId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  clarificationCreatedIdx: index("idx_document_clarification_events_request_created").on(table.clarificationRequestId, table.createdAt),
+  candidateCreatedIdx: index("idx_document_clarification_events_candidate_created").on(table.candidateId, table.createdAt),
+}));
+
+export type DocumentClarificationEvent = typeof documentClarificationEvents.$inferSelect;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DOSSIERS D'IMMIGRATION (APPLICATIONS)

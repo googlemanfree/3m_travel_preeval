@@ -34,7 +34,8 @@ describe("contrat de suivi des clarifications", () => {
   it("marque uniquement la clarification sélectionnée comme répondue et crée une notification cliente", () => {
     expect(adminRouter).toContain("clarificationRequestId: z.number().int().positive().optional()");
     expect(adminRouter).toContain("Cette demande ne correspond pas au candidat sélectionné");
-    expect(adminRouter).toContain('type: clarification ? "document_clarification_answered" : "admin_message"');
+    expect(adminRouter).toContain("buildDocumentClarificationAnsweredNotification(clarification.documentLabel)");
+    expect(adminRouter).toContain('type: clarificationNotification?.type ?? "admin_message"');
     expect(adminRouter).toContain('status: "answered"');
     expect(adminRouter).toContain("answeredByAdminId: admin.id");
   });

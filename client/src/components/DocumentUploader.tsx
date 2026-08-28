@@ -24,6 +24,10 @@ interface DocumentUploaderProps {
   onUploadSuccess?: () => void;
   maxFileSize?: number;
   acceptedFormats?: string[];
+  clarificationRequestId?: number;
+  clarificationDocumentLabel?: string;
+  lockedCategory?: string;
+  singleFile?: boolean;
 }
 
 export function DocumentUploader({
@@ -31,10 +35,14 @@ export function DocumentUploader({
   onUploadSuccess,
   maxFileSize = 10,
   acceptedFormats = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"],
+  clarificationRequestId,
+  clarificationDocumentLabel,
+  lockedCategory = "other",
+  singleFile = false,
 }: DocumentUploaderProps) {
   const [files, setFiles] = useState<DocumentFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("other");
+  const [selectedCategory, setSelectedCategory] = useState<string>(clarificationRequestId ? lockedCategory : "other");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -68,7 +76,8 @@ export function DocumentUploader({
   };
 
   const addFiles = (newFiles: File[]) => {
-    const validatedFiles: DocumentFile[] = newFiles
+    const filesToAdd = singleFile ? newFiles.slice(0, 1) : newFiles;
+    const validatedFiles: DocumentFile[] = filesToAdd
       .map((file) => {
         const validation = validateFile(file);
         return {
@@ -84,7 +93,7 @@ export function DocumentUploader({
         };
       });
 
-    setFiles((prev) => [...prev, ...validatedFiles]);
+    setFiles((prev) => singleFile ? validatedFiles : [...prev, ...validatedFiles]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +154,7 @@ export function DocumentUploader({
       const formData = new FormData();
       formData.append("file", fileObj);
       formData.append("fileType", file.category || "other");
+      if (clarificationRequestId) formData.append("clarificationRequestId", String(clarificationRequestId));
       const response = await fetch("/api/candidate/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -186,12 +196,12 @@ export function DocumentUploader({
           Téléverser vos documents
         </h3>
         <p className="text-gray-600 text-sm">
-          Déposez vos documents manquants pour accélérer le traitement de votre dossier
+          {clarificationDocumentLabel ? <>Déposez la pièce demandée pour <strong>{clarificationDocumentLabel}</strong>. Elle sera enregistrée dans cette conversation puis vérifiée par l’agence.</> : "Déposez vos documents manquants pour accélérer le traitement de votre dossier"}
         </p>
       </div>
 
       {/* Category Selector */}
-      <div className="mb-6">
+      {!clarificationRequestId && <div className="mb-6">
           <label id="document-category-label" className="block text-sm font-semibold text-gray-900 mb-2">
           Catégorie du document
         </label>
@@ -249,7 +259,7 @@ export function DocumentUploader({
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </div>}
 
       {/* Upload Zone */}
       <motion.div
@@ -266,7 +276,7 @@ export function DocumentUploader({
         <input
           ref={fileInputRef}
           type="file"
-          multiple
+          multiple={!singleFile}
           onChange={handleFileSelect}
           className="hidden"
           accept={acceptedFormats.join(",")}

@@ -7,12 +7,13 @@ import jwt from "jsonwebtoken";
 import multer from "multer";
 import { storagePut } from "../storage";
 import { randomBytes } from "node:crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
-import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidateFiles, candidates } from "../../drizzle/schema";
+import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidateFiles, candidates, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 import { imageSize } from "image-size";
 import { createPortraitProof } from "../portraitVerification";
+import { assertClarificationUploadEligibility } from "../../shared/documentClarification";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -119,6 +120,14 @@ function validateIncomingDocument(req: MulterRequest): { file: Express.Multer.Fi
   return { file, documentType, safeName: sanitizeFileName(file.originalname) };
 }
 
+export function parseClarificationRequestId(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) throw new Error("Référence de clarification invalide");
+  const clarificationRequestId = Number(value);
+  if (!Number.isSafeInteger(clarificationRequestId) || clarificationRequestId <= 0) throw new Error("Référence de clarification invalide");
+  return clarificationRequestId;
+}
+
 function checkPublicUploadRate(req: Request): boolean {
   const clientIp = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
@@ -206,12 +215,20 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
 
       const { file, documentType, safeName } = validateIncomingDocument(req);
       if (documentType === "photo_identite") validatePortrait(file);
-      const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
-      const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
       const db = await getDb();
       if (!db) throw new Error("Base de données indisponible");
       const [candidate] = await db.select({ email: candidates.email, dossierStatus: candidates.dossierStatus }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new Error("Candidat introuvable");
+      const clarificationRequestId = parseClarificationRequestId(req.body.clarificationRequestId);
+      const clarification = clarificationRequestId
+        ? (await db.select({ id: documentClarificationRequests.id, documentLabel: documentClarificationRequests.documentLabel, status: documentClarificationRequests.status, uploadedCandidateFileId: documentClarificationRequests.uploadedCandidateFileId }).from(documentClarificationRequests).where(and(
+          eq(documentClarificationRequests.id, clarificationRequestId),
+          eq(documentClarificationRequests.candidateId, candidateId),
+        )).limit(1))[0]
+        : null;
+      assertClarificationUploadEligibility(clarificationRequestId, clarification);
+      const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
+      const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
       const candidateFileType = documentType === "passport" ? "passeport"
         : documentType === "diploma" ? "diplome"
         : documentType === "cv" ? "cv"
@@ -227,6 +244,18 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
         status: "uploaded",
       });
       const candidateFileId = Number((candidateFileResult as any)[0]?.insertId || 0);
+      if (clarification && candidateFileId) {
+        const uploadedAt = new Date();
+        await db.update(documentClarificationRequests).set({ uploadedCandidateFileId: candidateFileId, uploadedAt }).where(eq(documentClarificationRequests.id, clarification.id));
+        await db.insert(documentClarificationEvents).values({
+          clarificationRequestId: clarification.id,
+          candidateId,
+          actorRole: "candidate",
+          eventType: "document_uploaded",
+          message: `Pièce transmise pour « ${clarification.documentLabel} ». Vérification en cours.`,
+          candidateFileId,
+        });
+      }
       if (candidate.dossierStatus === "nouveau" || candidate.dossierStatus === "evaluation") {
         await db.update(candidates).set({ dossierStatus: "documents" }).where(eq(candidates.id, candidateId));
       }
@@ -263,7 +292,7 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       }).catch((notificationError) => {
         console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
       });
-      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier) });
+      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier), clarification: clarification ? { id: clarification.id, documentLabel: clarification.documentLabel } : null });
     } catch (error) {
       console.error("[CandidateUpload] Error:", error);
       uploadErrorResponse(res, error);

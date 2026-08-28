@@ -104,6 +104,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [quickMessageEvisaSnapshots, setQuickMessageEvisaSnapshots] = useState<EvisaMessageSnapshot[]>([]);
   const [quickAttachment, setQuickAttachment] = useState<{ name: string; url: string; size?: number; type?: string } | null>(null);
   const [selectedClarification, setSelectedClarification] = useState<{ id: number; documentLabel: string; requestMessage: string } | null>(null);
+  const [clarificationDeadlineDrafts, setClarificationDeadlineDrafts] = useState<Record<number, string>>({});
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const { data: managedEvisaOverrides } = trpc.evisaCatalogue.getPublicOverrides.useQuery();
   const availableEvisas = mergeEvisaCatalogue(evisasDatabaseComplete, managedEvisaOverrides);
@@ -183,6 +184,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const documentReminderMutation = trpc.admin.sendCandidate360DocumentReminder.useMutation({
     onSuccess: async (result) => { toast.success("Relance envoyée", { description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
     onError: (mutationError) => toast.error("Relance impossible", { description: mutationError.message }),
+  });
+  const clarificationDeadlineMutation = trpc.admin.updateDocumentClarificationDeadline.useMutation({
+    onSuccess: async () => { toast.success("Échéance interne enregistrée"); await refresh(); },
+    onError: (mutationError) => toast.error("Échéance impossible à enregistrer", { description: mutationError.message }),
   });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
     onSuccess: async (result) => {
@@ -521,6 +526,52 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-3 pt-4">
+          {data.communications.documentClarifications?.length > 0 && (
+            <section className="rounded-xl border border-violet-200 bg-violet-50 p-4" aria-labelledby="admin-document-clarifications-title">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 id="admin-document-clarifications-title" className="font-semibold text-violet-950">Clarifications documentaires</h4>
+                  <p className="mt-1 text-sm text-violet-900">Échéances internes, messages et dépôt associé pour chaque pièce. Les réponses restent validées par un conseiller.</p>
+                </div>
+                <Badge className="border-violet-200 bg-white text-violet-900">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").length} en attente</Badge>
+              </div>
+              <div className="mt-3 space-y-3">
+                {data.communications.documentClarifications.map((item: any) => {
+                  const deadlineTone = item.deadline?.key === "overdue"
+                    ? "border-rose-200 bg-rose-50 text-rose-900"
+                    : item.deadline?.key === "urgent"
+                      ? "border-amber-200 bg-amber-50 text-amber-900"
+                      : "border-slate-200 bg-white text-slate-700";
+                  const draft = clarificationDeadlineDrafts[item.id] ?? (item.dueAt ? new Date(item.dueAt).toISOString().slice(0, 16) : "");
+                  return (
+                    <section key={item.id} className="rounded-lg border border-violet-100 bg-white p-3">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900">{item.documentLabel}</p>
+                            <StateBadge status={item.status} />
+                            <Badge className={deadlineTone}>{item.deadline?.label || "À planifier"}</Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-600">{item.requestMessage || "Le candidat demande une précision."}</p>
+                        </div>
+                        {item.status === "pending" && <Button size="sm" className="bg-violet-700 hover:bg-violet-800" onClick={() => { setSelectedClarification({ id: item.id, documentLabel: item.documentLabel, requestMessage: item.requestMessage || "" }); setQuickMessageText(`Bonjour,\n\nMerci pour votre demande concernant « ${item.documentLabel} ».\n\n`); setQuickMessageOpen(true); }}><MessageSquare className="mr-1 h-4 w-4" />Répondre avec un modèle</Button>}
+                      </div>
+                      <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <div>
+                          <Label htmlFor={`clarification-deadline-${item.id}`} className="text-xs">Échéance interne</Label>
+                          <Input id={`clarification-deadline-${item.id}`} className="mt-1 h-9 bg-white text-sm" type="datetime-local" value={draft} disabled={item.status !== "pending"} onChange={(event) => setClarificationDeadlineDrafts((current) => ({ ...current, [item.id]: event.target.value }))} />
+                        </div>
+                        <Button type="button" size="sm" variant="outline" className="self-end" disabled={item.status !== "pending" || clarificationDeadlineMutation.isPending} onClick={() => clarificationDeadlineMutation.mutate({ sessionToken, candidateId: candidate.id, clarificationRequestId: item.id, dueAt: draft ? new Date(draft) : null })}>{clarificationDeadlineMutation.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
+                      </div>
+                      <ol className="mt-3 space-y-2 border-l-2 border-violet-100 pl-3" aria-label={`Historique de la clarification ${item.documentLabel}`}>
+                        {(item.history ?? []).map((entry: any) => <li key={entry.id} className="text-xs text-slate-600"><span className="font-semibold text-violet-900">{entry.actorRole === "candidate" ? "Candidat" : entry.actorRole === "advisor" ? "Conseiller" : "Pilotage interne"}</span>{entry.message ? ` · ${entry.message}` : ""}<span className="ml-2 text-slate-400">{formatDate(entry.createdAt)}</span></li>)}
+                      </ol>
+                    </section>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {data.communications.documentClarifications?.filter((item: any) => item.status === "pending").length > 0 && <div className="rounded-xl border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-violet-950">Clarifications en attente</h4><p className="mt-1 text-sm text-violet-900">Répondez depuis ce dossier : le candidat recevra une notification dans son espace.</p></div><Badge className="border-violet-200 bg-white text-violet-900">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").length} en attente</Badge></div><div className="mt-3 space-y-2">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-violet-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-slate-900">{item.documentLabel}</p><p className="mt-1 text-xs text-slate-600">{item.requestMessage || "Le candidat demande une précision."}</p></div><Button size="sm" className="bg-violet-700 hover:bg-violet-800" onClick={() => { setSelectedClarification({ id: item.id, documentLabel: item.documentLabel, requestMessage: item.requestMessage || "" }); setQuickMessageText(`Bonjour,\n\nMerci pour votre demande concernant « ${item.documentLabel} ».\n\n`); setQuickMessageOpen(true); }}><MessageSquare className="mr-1 h-4 w-4" />Répondre avec un modèle</Button></div>)}</div></div>}
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
           {pendingRequirements.length > 0 && <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h4 className="font-semibold text-amber-950">{pendingRequirements.length} pièce(s) à compléter</h4><p className="mt-1 text-sm text-amber-800">Envoyez une relance claire au candidat avec les documents attendus.</p></div><Button variant="outline" className="border-amber-300 bg-white text-amber-900" disabled={documentReminderMutation.isPending} onClick={() => documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id })}><Send className="mr-2 h-4 w-4" />{documentReminderMutation.isPending ? "Envoi…" : "Relancer le candidat"}</Button></div>}

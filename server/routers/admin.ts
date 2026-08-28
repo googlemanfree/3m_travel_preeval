@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationRequests } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -18,6 +18,7 @@ import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocu
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
+import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -2942,7 +2943,7 @@ export const adminRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
-      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, advisors, requestHistory, latestEvaluations] = await Promise.all([
+      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
         db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
         db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
         db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, email)).orderBy(desc(clientDocuments.uploadedAt)).limit(100),
@@ -2953,6 +2954,7 @@ export const adminRouter = router({
         candidateRecord ? db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30) : Promise.resolve([]),
         candidateRecord ? db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
         candidateRecord ? db.select().from(documentClarificationRequests).where(eq(documentClarificationRequests.candidateId, candidateRecord.id)).orderBy(desc(documentClarificationRequests.createdAt)).limit(30) : Promise.resolve([]),
+        candidateRecord ? db.select().from(documentClarificationEvents).where(eq(documentClarificationEvents.candidateId, candidateRecord.id)).orderBy(asc(documentClarificationEvents.createdAt)).limit(150) : Promise.resolve([]),
         db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)),
         db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30),
         db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1),
@@ -2999,7 +3001,15 @@ export const adminRouter = router({
         statusHistory,
         timeline: buildCandidate360Timeline({ statusHistory, activity: activityLogs, requestHistory }),
         activity: [...activityLogs.map((item) => ({ type: item.actionType, description: item.description, createdAt: item.createdAt, actor: item.actorRole })), ...requestHistory.map((item) => ({ type: item.actionType, description: item.comment, createdAt: item.createdAt, actor: "admin" }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 50),
-        communications: { notifications, messages, documentClarifications },
+        communications: {
+          notifications,
+          messages,
+          documentClarifications: documentClarifications.map((clarification) => ({
+            ...clarification,
+            deadline: classifyDocumentClarificationDeadline(clarification.dueAt),
+            history: buildDocumentClarificationHistory(clarification, documentClarificationEventHistory, { includeInternal: true }),
+          })),
+        },
         evaluationVersions,
         evaluationContext: latestEvaluation ? {
           projectType: latestEvaluation.projectType ?? null,
@@ -3237,6 +3247,55 @@ export const adminRouter = router({
       return { success: true, count: missing.length };
     }),
 
+  updateDocumentClarificationDeadline: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      clarificationRequestId: z.number().int().positive(),
+      dueAt: z.date().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select({ email: applications.email }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ email: agencyDossiers.email }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      const candidateRecord = sourceRecord?.email
+        ? (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0]
+        : null;
+      if (!candidateRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable pour cette clarification." });
+      const clarification = (await db.select().from(documentClarificationRequests).where(and(
+        eq(documentClarificationRequests.id, input.clarificationRequestId),
+        eq(documentClarificationRequests.candidateId, candidateRecord.id),
+        eq(documentClarificationRequests.status, "pending"),
+      )).limit(1))[0];
+      if (!clarification) throw new TRPCError({ code: "NOT_FOUND", message: "Cette clarification n’est plus en attente ou ne correspond pas au dossier." });
+      const previousDueAt = clarification.dueAt;
+      await db.update(documentClarificationRequests).set({ dueAt: input.dueAt }).where(eq(documentClarificationRequests.id, clarification.id));
+      await db.insert(documentClarificationEvents).values({
+        clarificationRequestId: clarification.id,
+        candidateId: candidateRecord.id,
+        actorRole: "system",
+        eventType: "internal_deadline_updated",
+        message: input.dueAt ? `Échéance interne fixée au ${input.dueAt.toISOString()}.` : "Échéance interne retirée.",
+        actorAdminId: admin.id,
+      });
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "document_clarification_deadline_updated",
+        entityType: "document_clarification",
+        entityId: String(clarification.id),
+        description: `Échéance interne ${input.dueAt ? `fixée au ${input.dueAt.toISOString()}` : "retirée"} pour la clarification « ${clarification.documentLabel} » (ancienne valeur : ${previousDueAt?.toISOString() ?? "non définie"}).`,
+      });
+      return { success: true, dueAt: input.dueAt };
+    }),
+
   sendCandidate360Message: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
@@ -3288,13 +3347,14 @@ export const adminRouter = router({
       let notificationId: number | null = null;
       let advisorMessageId: number | null = null;
       if (candidateRecord) {
+        const clarificationNotification = clarification ? buildDocumentClarificationAnsweredNotification(clarification.documentLabel) : null;
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateRecord.id,
           caseId: operationalCase.id,
-          type: clarification ? "document_clarification_answered" : "admin_message",
-          title: clarification ? "Réponse à votre demande de précision" : "Nouveau message de 3M Travel Agency",
-          body: clarification ? `Une réponse est disponible pour la pièce « ${clarification.documentLabel} » dans votre espace.` : messageBody,
-          actionUrl: clarification ? "/mon-espace?section=documents" : "/mon-espace",
+          type: clarificationNotification?.type ?? "admin_message",
+          title: clarificationNotification?.title ?? "Nouveau message de 3M Travel Agency",
+          body: clarificationNotification?.body ?? messageBody,
+          actionUrl: clarificationNotification?.actionUrl ?? "/mon-espace",
           isRead: false,
         });
         notificationId = Number((notificationResult as any)[0]?.insertId || 0) || null;
@@ -3321,6 +3381,15 @@ export const adminRouter = router({
           notificationId,
           answeredAt: new Date(),
         }).where(eq(documentClarificationRequests.id, clarification.id));
+        await db.insert(documentClarificationEvents).values({
+          clarificationRequestId: clarification.id,
+          candidateId: clarification.candidateId,
+          actorRole: "advisor",
+          eventType: "advisor_response_sent",
+          message: messageBody,
+          advisorMessageId,
+          actorAdminId: admin.id,
+        });
       }
 
       let emailSent = false;

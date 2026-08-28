@@ -26,6 +26,8 @@ type DocumentClarification = {
   responseMessage?: string | null;
   createdAt?: Date | string | null;
   answeredAt?: Date | string | null;
+  canUpload?: boolean;
+  hasSubmittedDocument?: boolean;
 };
 
 const FALLBACK_REQUIREMENTS: Requirement[] = [
@@ -136,6 +138,7 @@ export default function DossierDocumentChecklist({
   projectType,
   onOpenDocuments,
   onRequestClarification,
+  onUploadClarification,
   customRequirements = [],
   clarifications = [],
 }: {
@@ -144,6 +147,7 @@ export default function DossierDocumentChecklist({
   projectType?: string | null;
   onOpenDocuments?: () => void;
   onRequestClarification?: (documentLabel: string) => void;
+  onUploadClarification?: (clarification: { id: number; documentLabel: string }) => void;
   customRequirements?: CustomRequirement[];
   clarifications?: DocumentClarification[];
 }) {
@@ -203,7 +207,7 @@ export default function DossierDocumentChecklist({
                   {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
                   {dueAt && <span className="mt-1 block text-xs font-medium text-slate-700">À déposer avant le {new Date(dueAt).toLocaleDateString("fr-FR")}</span>}
                   {pendingClarification && <span className="mt-2 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">En attente de réponse</span>}
-                  {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}</div>}
+                  {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}{answeredClarification.canUpload && answeredClarification.id && answeredClarification.documentLabel && onUploadClarification && <Button type="button" size="sm" className="mt-2 h-8 bg-emerald-700 text-xs hover:bg-emerald-800" onClick={() => onUploadClarification({ id: answeredClarification.id!, documentLabel: answeredClarification.documentLabel! })}>Déposer cette pièce maintenant</Button>}{answeredClarification.hasSubmittedDocument && <span className="mt-2 block font-semibold text-emerald-800">Pièce transmise — vérification en cours.</span>}</div>}
                   {(state.kind === "missing" || state.kind === "replace") && onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>}
                   {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" disabled={Boolean(pendingClarification)} onClick={() => onRequestClarification(requirement.label)} aria-label={pendingClarification ? `Une clarification est en attente pour ${requirement.label}` : `Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />{pendingClarification ? "Précision demandée" : "Demander une précision"}</Button>}
                 </div>

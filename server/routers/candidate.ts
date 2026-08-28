@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import {
   CandidateMessage,
   candidateFiles,
   candidateMessages,
+  documentClarificationEvents,
   documentClarificationRequests,
   candidates,
   applicationStatusHistory,
@@ -37,6 +38,7 @@ import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVeri
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
+import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -918,13 +920,32 @@ export const candidateRouter = router({
       id: documentClarificationRequests.id,
       documentLabel: documentClarificationRequests.documentLabel,
       status: documentClarificationRequests.status,
+      requestMessage: documentClarificationRequests.requestMessage,
       responseMessage: documentClarificationRequests.responseMessage,
       createdAt: documentClarificationRequests.createdAt,
       answeredAt: documentClarificationRequests.answeredAt,
+      uploadedCandidateFileId: documentClarificationRequests.uploadedCandidateFileId,
+      uploadedAt: documentClarificationRequests.uploadedAt,
     }).from(documentClarificationRequests)
       .where(eq(documentClarificationRequests.candidateId, ctx.candidate.id))
       .orderBy(desc(documentClarificationRequests.createdAt));
-    return requests;
+    const requestIds = requests.map((request) => request.id);
+    const events = requestIds.length
+      ? await db.select().from(documentClarificationEvents)
+        .where(and(
+          eq(documentClarificationEvents.candidateId, ctx.candidate.id),
+          inArray(documentClarificationEvents.clarificationRequestId, requestIds),
+        ))
+        .orderBy(asc(documentClarificationEvents.createdAt))
+      : [];
+    return requests.map((request) => ({
+      ...request,
+      // L’échéance reste une donnée de pilotage interne. Seuls les échanges
+      // explicitement autorisés sont retournés dans l’historique candidat.
+      history: buildDocumentClarificationHistory(request, events),
+      hasSubmittedDocument: Boolean(request.uploadedCandidateFileId),
+      canUpload: request.status === "answered" && !request.uploadedCandidateFileId,
+    }));
   }),
 
   requestDocumentClarification: candidateProcedure
@@ -938,11 +959,15 @@ export const candidateRouter = router({
       const documentLabel = input.documentLabel.replace(/\s+/g, " ").trim();
       const details = input.details?.replace(/\s+/g, " ").trim();
       const requestMessage = details || "Pouvez-vous préciser ce qui est attendu pour cette pièce ?";
+      // Objectif interne par défaut, modifiable par un conseiller. Il n’est pas
+      // communiqué comme une promesse au candidat et n’entraîne aucune relance automatique.
+      const dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const [created] = await db.insert(documentClarificationRequests).values({
         candidateId: ctx.candidate.id,
         documentLabel,
         requestMessage,
         status: "pending",
+        dueAt,
       });
       const requestId = Number((created as any).insertId || 0);
       const [message] = await db.insert(candidateMessages).values({
@@ -954,6 +979,14 @@ export const candidateRouter = router({
       const candidateMessageId = Number((message as any).insertId || 0);
       if (requestId && candidateMessageId) {
         await db.update(documentClarificationRequests).set({ candidateMessageId }).where(eq(documentClarificationRequests.id, requestId));
+        await db.insert(documentClarificationEvents).values({
+          clarificationRequestId: requestId,
+          candidateId: ctx.candidate.id,
+          actorRole: "candidate",
+          eventType: "request_created",
+          message: requestMessage,
+          candidateMessageId,
+        });
       }
       return { success: true, requestId: requestId || null };
     }),
