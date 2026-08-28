@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { buildApiNotFoundPayload } from "./apiJsonContract";
 import { registerOAuthRoutes } from "./oauth";
 import { registerGoogleCandidateOAuthRoutes } from "../googleCandidateOAuth";
 import { registerStorageProxy } from "./storageProxy";
@@ -116,6 +117,12 @@ async function startServer() {
       createContext,
     })
   );
+  // Ne jamais laisser un chemin tRPC non reconnu tomber dans le fallback SPA :
+  // un document HTML commençant par <!doctype> ne peut pas être décodé par le client.
+  // Ce garde-fou conserve un contrat JSON explicite pour les erreurs de routage.
+  app.use("/api/trpc", (req, res) => {
+    res.status(404).json(buildApiNotFoundPayload(req.path));
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

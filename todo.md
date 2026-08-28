@@ -1828,3 +1828,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les huit routes publiques signalées, leurs métadonnées et les coordonnées statiques avant publication.
 - [x] Améliorer le chargement global avec une présentation premium, accessible et sans repli trompeur.
 - [x] Ajouter les régressions nécessaires, vérifier TypeScript et publier la correction après contrôle visuel.
+
+## Incident — réponse HTML reçue par tRPC sur l’accueil
+- [x] Reproduire l’erreur `Unexpected token '<'` et identifier l’endpoint tRPC concerné.
+- [x] Empêcher tout fallback HTML de répondre aux chemins `/api/trpc`.
+- [x] Ajouter un garde-fou client pour signaler une réponse non JSON sans masquer l’erreur serveur.
+- [x] Ajouter les régressions, vérifier TypeScript, tester l’accueil et publier le correctif.

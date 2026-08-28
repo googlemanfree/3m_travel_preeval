@@ -11,6 +11,7 @@ import { CHUNK_RELOAD_NOTICE_KEY, clearStaleClientCaches } from "./lib/lazyWithT
 import { startLogin } from "./const";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
+import { normalizeApiResponse } from "./lib/apiResponseGuard";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -167,12 +168,13 @@ const trpcClient = trpc.createClient({
         }
         return {};
       },
-      fetch(input, init) {
-        return globalThis.fetch(input, {
+      async fetch(input, init) {
+        const response = await globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
           cache: "no-store",
         });
+        return normalizeApiResponse(response);
       },
     }),
   ],
