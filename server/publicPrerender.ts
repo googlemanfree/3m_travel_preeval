@@ -2,6 +2,9 @@ import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
+import { COMPANY_PROFILE } from "../client/src/lib/companyContacts";
+import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
+import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
@@ -91,6 +94,54 @@ const publicPath = (url: string) => {
   return raw === "/" ? "/" : raw.replace(/\/+$/, "");
 };
 const publicNav = `<nav aria-label="Navigation publique pré-rendue"><a href="/">Accueil</a><a href="/procedures">Procédures</a><a href="/evisas">e-Visas</a><a href="/tarifs">Tarifs</a><a href="/sources-officielles">Sources officielles</a><a href="/plan-du-site">Plan du site</a></nav>`;
+const OFFICIAL_SOURCE_DESTINATIONS = [
+  ["canada", "Canada", "Immigration, Réfugiés et Citoyenneté Canada"],
+  ["france", "France", "France-Visas"],
+  ["allemagne", "Allemagne", "Ministère fédéral des Affaires étrangères"],
+  ["belgique", "Belgique", "SPF Affaires étrangères"],
+  ["espagne", "Espagne", "Ministère des Affaires étrangères"],
+  ["italie", "Italie", "Ministère des Affaires étrangères"],
+  ["luxembourg", "Luxembourg", "Gouvernement du Luxembourg"],
+  ["portugal", "Portugal", "Ministère des Affaires étrangères"],
+  ["royaume-uni", "Royaume-Uni", "GOV.UK — Visas et immigration"],
+  ["suisse", "Suisse", "Secrétariat d’État aux migrations"],
+  ["australie", "Australie", "Department of Home Affairs"],
+  ["etats-unis", "États-Unis", "U.S. Department of State"],
+] as const;
+
+const routeSpecificPrerender = (path: string) => {
+  if (path === "/") {
+    return `<section aria-label="Services de mobilité"><h2>Préparez votre projet de mobilité internationale</h2><p>Découvrez les procédures, les sources institutionnelles et une évaluation initiale gratuite avant toute démarche.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Commencer l’évaluation gratuite</a> · <a href="/procedures">Explorer les procédures</a> · <a href="/sources-officielles">Consulter les sources officielles</a></p></section>`;
+  }
+  if (path === "/contact") {
+    const yaounde = COMPANY_PROFILE.offices.cameroon;
+    const ottawa = COMPANY_PROFILE.offices.ottawa;
+    return `<section aria-label="Coordonnées de 3M Travel"><h2>Coordonnées et bureaux</h2><article><h3>${esc(yaounde.label)}</h3><p>${yaounde.addressLines.map(esc).join("<br />")}</p><p><a href="https://wa.me/${esc(yaounde.whatsappNumber)}">WhatsApp : ${esc(yaounde.whatsappDisplay)}</a>${yaounde.phoneDisplay ? ` · <a href="tel:${esc(yaounde.phoneDisplay.replace(/\s/g, ""))}">${esc(yaounde.phoneDisplay)}</a>` : ""}</p><p>${esc(yaounde.openingHours.join(" · "))}</p></article><article><h3>${esc(ottawa.label)}</h3><p>${ottawa.addressLines.map(esc).join("<br />")}</p><p><a href="tel:${esc(ottawa.whatsappNumber)}">${esc(ottawa.whatsappDisplay)}</a></p></article><p><a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(yaounde.mapQuery)}">Ouvrir la carte de Yaoundé</a></p></section>`;
+  }
+  if (path === "/sources-officielles") {
+    const sources = OFFICIAL_SOURCE_DESTINATIONS.map(([key, country, authority]) => {
+      const portal = OFFICIAL_CONSULAR_PORTALS[key];
+      return portal ? `<article><h2>${esc(country)}</h2><p><strong>${esc(authority)}</strong><br />${esc(portal.label)}</p><p>Dernière vérification : ${esc(portal.verifiedAt)}. Les exigences peuvent changer.</p><p><a href="${esc(portal.url)}" target="_blank" rel="noopener noreferrer">Ouvrir la source officielle</a></p></article>` : "";
+    }).join("");
+    return `<section aria-label="Portails institutionnels"><h2>Portails institutionnels vérifiés</h2><p>Les liens ci-dessous ne constituent ni une garantie d’éligibilité, ni une soumission, ni une décision. Confirmez la procédure correspondant à votre nationalité et à votre projet.</p>${sources}</section>`;
+  }
+  if (path === "/tarifs") {
+    return `<section aria-label="Informations tarifaires"><h2>Comprendre les tarifs avant de vous engager</h2><article><h3>Évaluation gratuite</h3><p>Première orientation sur votre projet et les informations à confirmer, sans engagement de procédure.</p></article><article><h3>Ouverture et suivi de dossier</h3><p>Les honoraires d’agence sont communiqués pour le service demandé avant tout règlement.</p></article><article><h3>Accompagnement sur mesure</h3><p>Un devis peut être nécessaire selon la destination, les documents et les prestations retenues.</p></article><p>Les frais tiers ne sont pas présumés inclus. Leur montant, destinataire et conditions sont précisés selon la procédure.</p><p><a href="/?project=travail#evaluation-multi">Demander une orientation</a></p></section>`;
+  }
+  if (path === "/plan-du-site") {
+    const links = [["Accueil", "/"], ["Procédures et destinations", "/procedures"], ["e-Visas", "/evisas"], ["Tarifs", "/tarifs"], ["Contact", "/contact"], ["Sources officielles", "/sources-officielles"], ["Ressources", "/ressources"], ["Guide des procédures", "/guide-procedures"], ["Créer un compte", "/register"], ["Connexion candidat", "/login"]] as const;
+    return `<section aria-label="Navigation complète"><h2>Accéder rapidement aux services 3M Travel</h2><ul>${links.map(([label, href]) => `<li><a href="${href}">${label}</a></li>`).join("")}</ul></section>`;
+  }
+  if (path === "/procedures") {
+    const procedures = PUBLIC_DESTINATION_DETAILS.map(({ procedure }) => `<li><a href="/procedures/${encodeURIComponent(procedure.id)}">${esc(procedure.name)} — ${esc(procedure.visaType)}</a></li>`).join("");
+    return `<section aria-label="Catalogue des procédures"><h2>107 procédures par destination</h2><p>Recherchez une destination puis vérifiez les informations applicables auprès du portail institutionnel associé.</p><ul>${procedures}</ul></section>`;
+  }
+  if (path === "/evisas") {
+    const catalogue = evisasDatabaseComplete.slice(0, 18).map((entry) => `<li><a href="/evisa/${encodeURIComponent(entry.country.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}">${esc(entry.country)}</a> — ${esc(entry.type)} · ${esc(entry.region)}</li>`).join("");
+    return `<section aria-label="Aperçu de l’annuaire e-Visa"><h2>Annuaire des procédures e-Visa</h2><p>Les conditions de délivrance, nationalités admises, frais et délais doivent être confirmés sur le portail officiel de la destination avant toute démarche.</p><ul>${catalogue}</ul><p><a href="/contact">Demander une orientation à 3M Travel</a></p></section>`;
+  }
+  return "";
+};
 
 export function isPublicIndexablePath(url: string) {
   return Boolean(PUBLIC_PAGES[publicPath(url)]);
@@ -192,7 +243,8 @@ export function composePublicPrerender(template: string, url: string) {
     return `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier pour ${esc(procedure.name)}</h2><p>${esc(procedure.detailedDescription)}</p><h2>Étapes de préparation</h2><ol>${steps}</ol><h2>Documents à préparer</h2><ul>${documents}</ul>${institutionalSection}<h2>Guides et sources associés</h2>${guides || primaryGuide ? `<ul>${primaryGuide}${guides}</ul>` : "<p>Le guide détaillé est en cours de consolidation ; consultez le portail institutionnel lorsqu’il est vérifié.</p>"}${officialPortal}<p>Les exigences applicables, les délais et les décisions relèvent des autorités et partenaires compétents ; ils sont à confirmer avant toute démarche.</p><p><a href="/?project=${projectQuery}&amp;destination=${encodeURIComponent(procedure.id)}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>`;
   })() : "";
   const procedureFaqFallback = path === "/procedures" ? `<section aria-labelledby="seo-procedures-faq"><h2 id="seo-procedures-faq">Questions fréquentes</h2><dl>${PUBLIC_FAQ_ITEMS.map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section>` : "";
-  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${canadaFallback}${procedureFallback}${procedureFaqFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
+  const routeContent = routeSpecificPrerender(path);
+  const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${routeContent}${canadaFallback}${procedureFallback}${procedureFaqFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<meta\s+name="description"[^>]*>\s*/i, "")

@@ -57,4 +57,24 @@ describe("SEO dynamique", () => {
     expect(html).toContain("Questions fréquentes");
     expect(html).toContain("Oui. Créez d’abord votre compte");
   });
+
+  it("pré-rend un contenu réel propre à chaque page publique prioritaire", () => {
+    const contact = composePublicPrerender(template, "/contact").html;
+    const sources = composePublicPrerender(template, "/sources-officielles").html;
+    const procedures = composePublicPrerender(template, "/procedures").html;
+    const evisas = composePublicPrerender(template, "/evisas").html;
+    const pricing = composePublicPrerender(template, "/tarifs").html;
+    const sitemap = composePublicPrerender(template, "/plan-du-site").html;
+
+    expect(contact).toContain("+237 698 104 832");
+    expect(contact).toContain("hello@3mtravelagency.com");
+    expect(sources).toContain("Immigration, Réfugiés et Citoyenneté Canada");
+    expect(sources).toContain("Ouvrir la source officielle");
+    expect(procedures).toContain("107 procédures par destination");
+    expect(procedures).toContain("/procedures/allemagne-visiteur");
+    expect(evisas).toContain("Annuaire des procédures e-Visa");
+    expect(evisas).toContain("Kenya");
+    expect(pricing).toContain("Comprendre les tarifs avant de vous engager");
+    expect(sitemap).toContain("Accéder rapidement aux services 3M Travel");
+  });
 });

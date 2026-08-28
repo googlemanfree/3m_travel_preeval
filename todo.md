@@ -1821,3 +1821,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le mécanisme de reprise sans effacer la session candidat valide.
 - [x] Auditer les autres routes protégées pour le même repli de cache ou de chargement.
 - [x] Ajouter des régressions, vérifier TypeScript et les parcours concernés avant publication.
+
+## Incident — contenu public générique après déploiement
+- [x] Reproduire le contenu générique servi sous le marqueur `route-hotfix-c6a2c54a` sur les routes publiques signalées.
+- [x] Restaurer le pré-rendu et les contenus réels, en priorité pour `/contact` et `/sources-officielles`.
+- [x] Vérifier les huit routes publiques signalées, leurs métadonnées et les coordonnées statiques avant publication.
+- [x] Améliorer le chargement global avec une présentation premium, accessible et sans repli trompeur.
+- [x] Ajouter les régressions nécessaires, vérifier TypeScript et publier la correction après contrôle visuel.

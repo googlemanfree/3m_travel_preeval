@@ -15,6 +15,9 @@ describe("chunk recovery feedback contracts", () => {
     expect(fallback).toContain("progressbar");
     expect(fallback).toContain("Nouvelle tentative automatique dans");
     expect(fallback).toContain("Récupération automatique en cours");
+    expect(fallback).toContain("Nous préparons votre espace");
+    expect(fallback).toContain("3M Travel &amp; Services");
+    expect(fallback).toContain("motion-safe:animate-pulse");
   });
 
   it("offers a manual retry on the error screen and marks the reload reason", () => {
