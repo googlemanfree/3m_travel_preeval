@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getCandidateJourney, journeyStepIndex } from "../shared/candidateJourneyCatalog";
 import { procedures107Complete } from "../client/src/data/procedures107Complete";
+import fs from "node:fs";
 
 describe("catalogue de parcours candidat pays-visa", () => {
   it("réutilise le catalogue complet des fiches pays disponibles", () => {
@@ -31,5 +32,12 @@ describe("catalogue de parcours candidat pays-visa", () => {
     const journey = getCandidateJourney("Destination à vérifier", "Visiteur");
     expect(journey.officialSources).toEqual([]);
     expect(journey.steps.every((item) => item.sourceUrl === "")).toBe(true);
+  });
+
+  it("propose un aperçu sécurisé pour les documents disponibles à chaque étape", () => {
+    const component = fs.readFileSync("client/src/components/CandidateCountryJourney.tsx", "utf8");
+    expect(component).toContain("DocumentPreviewModal");
+    expect(component).toContain("setPreviewDocument");
+    expect(component).toContain("Aperçu");
   });
 });

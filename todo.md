@@ -2006,3 +2006,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier que le même pays, visa, étape et statut sont transmis au candidat et à l’administration.
 - [x] Tester les actions de pilotage admin : validation, progression, annulation et journalisation.
 - [x] Corriger les écarts détectés, rejouer les tests et publier un rapport d’audit.
+
+## Prévisualisation des documents générés par étape
+- [x] Remplacer le lien direct des documents d’étape par une action d’aperçu accessible.
+- [x] Réutiliser la fenêtre de prévisualisation sécurisée existante pour les PDF, images et formats non pris en charge.
+- [x] Vérifier les permissions, les états sans document et les actions d’ouverture/téléchargement, puis publier.
