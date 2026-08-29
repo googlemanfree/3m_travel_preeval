@@ -320,7 +320,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             </div>
           </div>
 
-          <CandidateCountryJourney destination={destination} visaType={visaType} dossierStatus={status} evaluationStatus={status === "nouveau" || status === "en_evaluation" ? "pending" : "validated"} />
+          <CandidateCountryJourney destination={destination} visaType={visaType} procedureLabel={visaType} dossierStatus={status} evaluationStatus={status === "nouveau" || status === "en_evaluation" ? "pending" : "validated"} />
 
           {/* Score et Statut */}
           <div>

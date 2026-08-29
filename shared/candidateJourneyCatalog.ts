@@ -1,8 +1,16 @@
+export type JourneyDocument = {
+  id: string;
+  label: string;
+  kind: "to_prepare" | "generated_by_agency";
+  sourceUrl?: string;
+};
+
 export type JourneyStep = {
   id: string;
   label: string;
   description: string;
   requiredInputs: string[];
+  documents: JourneyDocument[];
   sourceUrl: string;
 };
 
@@ -24,7 +32,7 @@ const GERMANY = "https://www.make-it-in-germany.com/";
 const UK = "https://www.gov.uk/browse/visas-immigration";
 const USA = "https://travel.state.gov/content/travel/en/us-visas.html";
 
-const step = (id: string, label: string, description: string, requiredInputs: string[], sourceUrl: string): JourneyStep => ({ id, label, description, requiredInputs, sourceUrl });
+const step = (id: string, label: string, description: string, requiredInputs: string[], sourceUrl: string): JourneyStep => ({ id, label, description, requiredInputs, documents: requiredInputs.map((input, index) => ({ id: `${id}-document-${index + 1}`, label: input, kind: "to_prepare", sourceUrl })), sourceUrl });
 const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: "Les étapes sont un guide de préparation. L’autorité compétente, l’employeur ou l’établissement décide de l’issue de la demande ; aucune obtention n’est garantie par 3M Travel & Services.", steps, officialSources: [sourceUrl] });
 
 export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
@@ -51,7 +59,7 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
   ]),
   common("Canada", "Entrée Express / PNP", CANADA, [
     step("evaluation", "Évaluation du profil", "Vérifier l’âge, les études, l’expérience, les langues et les facteurs de sélection.", ["CV", "Diplômes", "Historique professionnel"], CANADA),
-    step("language", "Langue et équivalence", "Obtenir les résultats d’un test reconnu et, si nécessaire, une évaluation des diplômes.", ["TEF/TCF ou IELTS/CELPIP", "EDE"], CANADA),
+    step("language", "Langue et équivalence", "Obtenir les résultats d’un test reconnu et, si nécessaire, une évaluation des diplômes.", ["TEF/TCF ou IELTS/CELPIP", "Évaluation des diplômes (EDE, par exemple WES)"], CANADA),
     step("profile", "Profil fédéral ou provincial", "Créer et maintenir le profil dans le système officiel approprié ; le Québec suit son propre parcours.", ["Profil en ligne", "Province ciblée"], CANADA),
     step("invitation", "Invitation et dossier complet", "Après invitation, fournir dans le délai officiel les pièces et déclarations demandées.", ["Invitation", "Certificats de police", "Preuves de fonds"], CANADA),
     step("decision", "Examen et décision", "L’autorité vérifie admissibilité, sécurité et médical avant sa décision.", ["Biométrie", "Examen médical", "Documents originaux"], CANADA),

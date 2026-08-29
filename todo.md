@@ -1980,6 +1980,22 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ne pas attribuer de portail officiel à une destination non vérifiée ; afficher « source institutionnelle à vérifier » tant que la source n’est pas validée.
 
 ## Couverture de toutes les destinations
-- [ ] Inventorier la liste complète des destinations réellement disponibles dans les ressources du projet.
-- [ ] Recenser les variantes visiteur, études, travail et sous-parcours spécifiques pour chaque destination.
-- [ ] Comparer la couverture réelle avec l’objectif annoncé de 107 fiches sans inventer de destinations.
+- [x] Inventorier la liste complète des destinations réellement disponibles dans les ressources du projet.
+- [x] Recenser les variantes visiteur, études, travail et sous-parcours spécifiques pour chaque destination.
+- [x] Comparer la couverture réelle avec l’objectif annoncé de 107 fiches sans inventer de destinations.
+
+## Référentiel mondial et centre documentaire par étape
+- [x] Définir un modèle mondial pays-visa-étape-document sans inventer d’exigences officielles.
+- [x] Enrichir le modèle Canada avec WES, Arrima/PNP et les documents générés par étape.
+- [x] Créer un centre client pour visualiser, télécharger et suivre chaque document généré.
+- [x] Ajouter côté administration la génération, validation, remplacement et publication contrôlée des documents.
+- [x] Synchroniser statuts, formulaires, documents et notifications entre les espaces candidat et admin.
+- [x] Tester le modèle Canada et le repli mondial, puis publier progressivement.
+
+## Plateforme mondiale d’accompagnement et pilotage terrain
+- [x] Définir le modèle mondial pays–visa–étape–document–validation.
+- [x] Ajouter des étapes d’accompagnement propres à chaque pays et type de visa, avec repli prudent pour les destinations non vérifiées.
+- [x] Créer un centre client pour les documents générés à chaque étape, incluant consultation et téléchargement.
+- [x] Étendre le pilotage admin : étapes, validations, documents, notes, échéances et actions terrain.
+- [x] Garantir la synchronisation bidirectionnelle des statuts, formulaires, documents et notifications.
+- [x] Tester Canada, Luxembourg, Schengen, autres destinations et repli mondial, puis publier par paliers.
