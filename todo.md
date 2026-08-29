@@ -1999,3 +1999,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Étendre le pilotage admin : étapes, validations, documents, notes, échéances et actions terrain.
 - [x] Garantir la synchronisation bidirectionnelle des statuts, formulaires, documents et notifications.
 - [x] Tester Canada, Luxembourg, Schengen, autres destinations et repli mondial, puis publier par paliers.
+
+## Audit exhaustif des parcours et de la synchronisation
+- [x] Auditer chaque fiche pays-visa du catalogue contre la présence d’au moins une étape et d’un document attendu.
+- [x] Auditer les variantes visiteur, études et travail ainsi que le repli des destinations non détaillées.
+- [x] Vérifier que le même pays, visa, étape et statut sont transmis au candidat et à l’administration.
+- [x] Tester les actions de pilotage admin : validation, progression, annulation et journalisation.
+- [x] Corriger les écarts détectés, rejouer les tests et publier un rapport d’audit.

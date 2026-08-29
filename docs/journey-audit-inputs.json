@@ -1,0 +1,457 @@
+[
+  {
+    "id": "allemagne-travail",
+    "country": "Allemagne",
+    "visaType": "travail"
+  },
+  {
+    "id": "australie-travail",
+    "country": "Australie",
+    "visaType": "travail"
+  },
+  {
+    "id": "canada-travail",
+    "country": "Canada",
+    "visaType": "travail"
+  },
+  {
+    "id": "france-travail",
+    "country": "France",
+    "visaType": "travail"
+  },
+  {
+    "id": "luxembourg-travail",
+    "country": "Luxembourg",
+    "visaType": "travail"
+  },
+  {
+    "id": "suisse-travail",
+    "country": "Suisse",
+    "visaType": "travail"
+  },
+  {
+    "id": "royaume-uni-travail",
+    "country": "Royaume-Uni",
+    "visaType": "travail"
+  },
+  {
+    "id": "etats-unis-travail",
+    "country": "États-Unis",
+    "visaType": "travail"
+  },
+  {
+    "id": "bulgarie-travail",
+    "country": "Bulgarie",
+    "visaType": "travail"
+  },
+  {
+    "id": "chypre-travail",
+    "country": "Chypre",
+    "visaType": "travail"
+  },
+  {
+    "id": "croatie-travail",
+    "country": "Croatie",
+    "visaType": "travail"
+  },
+  {
+    "id": "estonie-travail",
+    "country": "Estonie",
+    "visaType": "travail"
+  },
+  {
+    "id": "hongrie-travail",
+    "country": "Hongrie",
+    "visaType": "travail"
+  },
+  {
+    "id": "irlande-travail",
+    "country": "Irlande",
+    "visaType": "travail"
+  },
+  {
+    "id": "islande-travail",
+    "country": "Islande",
+    "visaType": "travail"
+  },
+  {
+    "id": "italie-travail",
+    "country": "Italie",
+    "visaType": "travail"
+  },
+  {
+    "id": "kenya-travail",
+    "country": "Kenya",
+    "visaType": "travail"
+  },
+  {
+    "id": "lettonie-travail",
+    "country": "Lettonie",
+    "visaType": "travail"
+  },
+  {
+    "id": "liechtenstein-travail",
+    "country": "Liechtenstein",
+    "visaType": "travail"
+  },
+  {
+    "id": "lituanie-travail",
+    "country": "Lituanie",
+    "visaType": "travail"
+  },
+  {
+    "id": "malaisie-travail",
+    "country": "Malaisie",
+    "visaType": "travail"
+  },
+  {
+    "id": "malte-travail",
+    "country": "Malte",
+    "visaType": "travail"
+  },
+  {
+    "id": "maurice-travail",
+    "country": "Maurice",
+    "visaType": "travail"
+  },
+  {
+    "id": "norvege-travail",
+    "country": "Norvège",
+    "visaType": "travail"
+  },
+  {
+    "id": "nouvelle-zelande-travail",
+    "country": "Nouvelle-Zélande",
+    "visaType": "travail"
+  },
+  {
+    "id": "pologne-travail",
+    "country": "Pologne",
+    "visaType": "travail"
+  },
+  {
+    "id": "portugal-travail",
+    "country": "Portugal",
+    "visaType": "travail"
+  },
+  {
+    "id": "qatar-travail",
+    "country": "Qatar",
+    "visaType": "travail"
+  },
+  {
+    "id": "roumanie-travail",
+    "country": "Roumanie",
+    "visaType": "travail"
+  },
+  {
+    "id": "senegal-travail",
+    "country": "Sénégal",
+    "visaType": "travail"
+  },
+  {
+    "id": "slovaquie-travail",
+    "country": "Slovaquie",
+    "visaType": "travail"
+  },
+  {
+    "id": "slovenie-travail",
+    "country": "Slovénie",
+    "visaType": "travail"
+  },
+  {
+    "id": "republique-tcheque-travail",
+    "country": "Rép. Tchèque",
+    "visaType": "travail"
+  },
+  {
+    "id": "gabon-travail",
+    "country": "Gabon",
+    "visaType": "travail"
+  },
+  {
+    "id": "suede-travail",
+    "country": "Suède",
+    "visaType": "travail"
+  },
+  {
+    "id": "danemark-travail",
+    "country": "Danemark",
+    "visaType": "travail"
+  },
+  {
+    "id": "autriche-travail",
+    "country": "Autriche",
+    "visaType": "travail"
+  },
+  {
+    "id": "finlande-travail",
+    "country": "Finlande",
+    "visaType": "travail"
+  },
+  {
+    "id": "espagne-travail",
+    "country": "Espagne",
+    "visaType": "travail"
+  },
+  {
+    "id": "grece-travail",
+    "country": "Grèce",
+    "visaType": "travail"
+  },
+  {
+    "id": "pays-bas-travail",
+    "country": "Pays-Bas",
+    "visaType": "travail"
+  },
+  {
+    "id": "belgique-etudes",
+    "country": "Belgique",
+    "visaType": "etudes"
+  },
+  {
+    "id": "france-etudes",
+    "country": "France",
+    "visaType": "etudes"
+  },
+  {
+    "id": "allemagne-etudes",
+    "country": "Allemagne",
+    "visaType": "etudes"
+  },
+  {
+    "id": "canada-etudes",
+    "country": "Canada",
+    "visaType": "etudes"
+  },
+  {
+    "id": "australie-etudes",
+    "country": "Australie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "royaume-uni-etudes",
+    "country": "Royaume-Uni",
+    "visaType": "etudes"
+  },
+  {
+    "id": "suisse-etudes",
+    "country": "Suisse",
+    "visaType": "etudes"
+  },
+  {
+    "id": "pays-bas-etudes",
+    "country": "Pays-Bas",
+    "visaType": "etudes"
+  },
+  {
+    "id": "suede-etudes",
+    "country": "Suède",
+    "visaType": "etudes"
+  },
+  {
+    "id": "danemark-etudes",
+    "country": "Danemark",
+    "visaType": "etudes"
+  },
+  {
+    "id": "finlande-etudes",
+    "country": "Finlande",
+    "visaType": "etudes"
+  },
+  {
+    "id": "espagne-etudes",
+    "country": "Espagne",
+    "visaType": "etudes"
+  },
+  {
+    "id": "italie-etudes",
+    "country": "Italie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "autriche-etudes",
+    "country": "Autriche",
+    "visaType": "etudes"
+  },
+  {
+    "id": "pologne-etudes",
+    "country": "Pologne",
+    "visaType": "etudes"
+  },
+  {
+    "id": "republique-tcheque-etudes",
+    "country": "Rép. Tchèque",
+    "visaType": "etudes"
+  },
+  {
+    "id": "hongrie-etudes",
+    "country": "Hongrie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "roumanie-etudes",
+    "country": "Roumanie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "slovaquie-etudes",
+    "country": "Slovaquie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "slovenie-etudes",
+    "country": "Slovénie",
+    "visaType": "etudes"
+  },
+  {
+    "id": "italie-visiteur",
+    "country": "Italie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "france-visiteur",
+    "country": "France",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "espagne-visiteur",
+    "country": "Espagne",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "allemagne-visiteur",
+    "country": "Allemagne",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "royaume-uni-visiteur",
+    "country": "Royaume-Uni",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "grece-visiteur",
+    "country": "Grèce",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "portugal-visiteur",
+    "country": "Portugal",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "suisse-visiteur",
+    "country": "Suisse",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "pays-bas-visiteur",
+    "country": "Pays-Bas",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "autriche-visiteur",
+    "country": "Autriche",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "suede-visiteur",
+    "country": "Suède",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "danemark-visiteur",
+    "country": "Danemark",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "finlande-visiteur",
+    "country": "Finlande",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "norvege-visiteur",
+    "country": "Norvège",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "islande-visiteur",
+    "country": "Islande",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "malte-visiteur",
+    "country": "Malte",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "chypre-visiteur",
+    "country": "Chypre",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "croatie-visiteur",
+    "country": "Croatie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "slovenie-visiteur",
+    "country": "Slovénie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "republique-tcheque-visiteur",
+    "country": "Rép. Tchèque",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "hongrie-visiteur",
+    "country": "Hongrie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "pologne-visiteur",
+    "country": "Pologne",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "roumanie-visiteur",
+    "country": "Roumanie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "slovaquie-visiteur",
+    "country": "Slovaquie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "lettonie-visiteur",
+    "country": "Lettonie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "lituanie-visiteur",
+    "country": "Lituanie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "estonie-visiteur",
+    "country": "Estonie",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "belgique-visiteur",
+    "country": "Belgique",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "luxembourg-visiteur",
+    "country": "Luxembourg",
+    "visaType": "visiteur"
+  },
+  {
+    "id": "liechtenstein-visiteur",
+    "country": "Liechtenstein",
+    "visaType": "visiteur"
+  }
+]
