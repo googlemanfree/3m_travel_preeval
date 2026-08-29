@@ -1861,3 +1861,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un aperçu fidèle de l’objet et du corps avant envoi définitif.
 - [x] Garantir que l’aperçu ne déclenche aucune notification ni envoi SMTP.
 - [x] Ajouter les tests d’autorisation, de contenu et de non-envoi, puis publier.
+
+## Communication d’évaluation multilingue et traçabilité
+- [x] Auditer les langues disponibles, l’aperçu e-mail et les événements d’envoi/ouverture existants.
+- [x] Ajouter des modèles d’évaluation en français et en anglais, sélectionnables par le conseiller.
+- [x] Ajouter l’impression directe de l’aperçu e-mail sans déclencher d’envoi.
+- [x] Afficher dans le profil candidat un historique détaillé et sécurisé des envois, tests et ouvertures.
+- [x] Ajouter les tests de confidentialité, de langue, d’impression et de traçabilité, puis publier.
