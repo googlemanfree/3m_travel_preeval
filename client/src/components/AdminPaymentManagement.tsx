@@ -24,6 +24,7 @@ interface Payment {
   receiptUrl?: string;
   receiptMimeType?: string;
   receiptFileName?: string;
+  agreementSigned?: boolean;
   paymentReceiptDelivery?: {
     status: "sent" | "failed" | "not_sent";
     lastAttemptAt?: Date | null;
@@ -75,6 +76,7 @@ export function AdminPaymentManagement() {
     receiptUrl: app.paymentReceipt?.fileUrl,
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
+    agreementSigned: Boolean(app.agreementSigned),
     paymentReceiptDelivery: app.paymentReceiptDelivery,
   }));
 
@@ -192,17 +194,24 @@ export function AdminPaymentManagement() {
     
     setIsProcessing(true);
     try {
-      await updatePaymentMutation.mutateAsync({
+      const paymentResult = await updatePaymentMutation.mutateAsync({
         id: selectedPayment.id,
         paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
         adminNotes: actionType === "cancel" ? adminNote.trim() || "Justificatif de paiement à corriger." : "Paiement validé par l’administration.",
       });
       
       if (actionType === 'confirm') {
-        toast.success("✓ Paiement confirmé avec succès", {
-          description: `Dossier ${selectedPayment.dossierNumber} - ${selectedPayment.fullName}`,
-          duration: 5000,
-        });
+        if (paymentResult.agreementRequired) {
+          toast.warning("Paiement confirmé, traitement encore bloqué", {
+            description: `Le protocole du dossier ${selectedPayment.dossierNumber} doit être signé par le client.`,
+            duration: 7000,
+          });
+        } else {
+          toast.success("✓ Paiement confirmé et dossier débloqué", {
+            description: `Dossier ${selectedPayment.dossierNumber} - ${selectedPayment.fullName}`,
+            duration: 5000,
+          });
+        }
       } else if (actionType === 'cancel') {
         toast.error("✗ Paiement annulé", {
           description: `Dossier ${selectedPayment.dossierNumber} - ${selectedPayment.fullName}`,
@@ -485,13 +494,20 @@ export function AdminPaymentManagement() {
                         {payment.amount.toLocaleString("fr-FR")} {payment.currency}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(payment.paymentStatus)}`}>
-                          {getStatusIcon(payment.paymentStatus)}
-                          {payment.paymentStatus === "SUCCESS" && "Confirmé"}
-                          {payment.paymentStatus === "PENDING" && "En attente"}
-                          {payment.paymentStatus === "FAILED" && "Échoué"}
-                          {payment.paymentStatus === "CANCELLED" && "Annulé"}
-                        </Badge>
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(payment.paymentStatus)}`}>
+                            {getStatusIcon(payment.paymentStatus)}
+                            {payment.paymentStatus === "SUCCESS" && "Confirmé"}
+                            {payment.paymentStatus === "PENDING" && "En attente"}
+                            {payment.paymentStatus === "FAILED" && "Échoué"}
+                            {payment.paymentStatus === "CANCELLED" && "Annulé"}
+                          </Badge>
+                          {payment.agreementSigned ? (
+                            <span className="text-[11px] font-medium text-emerald-700">Accord signé</span>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-amber-700">Accord requis</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-xs text-slate-600">
                         {payment.paymentStatus !== "SUCCESS" ? (

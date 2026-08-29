@@ -1895,3 +1895,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Capturer l’exception exacte du navigateur et la requête qui la déclenche.
 - [x] Corriger la cause commune sans remplacer un état de session par un écran générique.
 - [x] Vérifier la diffusion officielle, les anciennes URL et publier une nouvelle révision si nécessaire.
+
+## Protocole d’accord obligatoire et validation des paiements
+- [x] Cartographier les tables, procédures et écrans existants pour l’accord, les paiements et le passage en traitement.
+- [x] Ajouter la persistance sécurisée de la signature du protocole avec horodatage, identité et version du document.
+- [x] Afficher le protocole dans l’espace client et empêcher le traitement tant qu’il n’est pas signé.
+- [x] Ajouter côté administrateur une validation simple et traçable des paiements effectués en agence ou déjà réglés en ligne.
+- [x] Synchroniser le statut de signature, le statut de paiement et le déblocage documentaire entre client et administration.
+- [x] Écrire les tests d’autorisation et de règles métier, vérifier TypeScript et publier après validation.

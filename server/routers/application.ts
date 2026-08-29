@@ -26,6 +26,21 @@ function generateEvaluationDraftReference(): string {
   return `EVAL-DRAFT-${year}-${rand}`;
 }
 
+const PROCESSING_STATUSES = new Set([
+  "paye", "en_attente_documents", "documents_recus", "soumis_agences",
+  "en_cours_recrutement", "contrat_obtenu", "visa_approuve",
+]);
+
+function assertApplicationCanEnterStatus(application: Application, nextStatus: string): void {
+  if (!PROCESSING_STATUSES.has(nextStatus)) return;
+  if (!application.agreementSigned) {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole d’accord doit être signé avant le passage du dossier en traitement." });
+  }
+  if (application.paymentStatus !== "SUCCESS") {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être confirmé avant le passage du dossier en traitement." });
+  }
+}
+
 async function initCinetPayTransaction(params: {
   transactionId: string;
   amount: number;
@@ -645,12 +660,13 @@ export const applicationRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
       const isValidated = input.paymentStatus === "SUCCESS";
+      const canStartTreatment = isValidated && application.agreementSigned;
       await db.update(applications)
         .set({
           paymentStatus: input.paymentStatus,
           paymentDate: isValidated ? new Date() : application.paymentDate,
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
-          dossierStatus: isValidated ? "paye" : application.dossierStatus,
+          dossierStatus: canStartTreatment ? "paye" : application.dossierStatus,
           ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
         })
         .where(eq(applications.id, input.id));
@@ -682,7 +698,12 @@ export const applicationRouter = router({
         });
       }
 
-      return { success: true, dossierNumber: application.dossierNumber, paymentStatus: input.paymentStatus };
+      return {
+        success: true,
+        dossierNumber: application.dossierNumber,
+        paymentStatus: input.paymentStatus,
+        agreementRequired: isValidated && !application.agreementSigned,
+      };
     }),
 
   /** Envoie une confirmation de paiement uniquement après validation manuelle et journalise le résultat. */
@@ -757,6 +778,9 @@ export const applicationRouter = router({
       }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      assertApplicationCanEnterStatus(application, input.dossierStatus);
       await db.update(applications)
         .set({
           dossierStatus: input.dossierStatus,

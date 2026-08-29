@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard, Settings, Gauge, ZapOff } from "lucide-react";
@@ -21,6 +22,7 @@ import { DocumentsStatus } from "@/components/DocumentsStatus";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 import { type AnimationPreference } from "@shared/animationPreferences";
 import { DossierOverview } from "@/components/DossierOverview";
+import SignatureCanvas from "@/components/SignatureCanvas";
 
 // Composant onglet Paiements
 function PaymentsTab({ dossierNumber }: { dossierNumber?: string }) {
@@ -119,6 +121,9 @@ export default function MySpace() {
   const [pipelineSteps, setPipelineSteps] = useState<StatusStep[]>([]);
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [agreementSignatureName, setAgreementSignatureName] = useState("");
+  const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
   const { preference: animationPreference, setPreference: setAnimationPreference } = useAnimationPreferences();
 
   // Récupérer les données du dossier
@@ -128,6 +133,23 @@ export default function MySpace() {
   );
   const trpcUtils = trpc.useUtils();
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
+    onSuccess: async () => {
+      toast.success("Protocole d’accord signé et enregistré.");
+      setAgreementAccepted(false);
+      setAgreementSignatureName("");
+      setAgreementSignatureDataUrl(null);
+      await trpcUtils.candidate.getMyDossierData.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message || "La signature n’a pas pu être enregistrée."),
+  });
+
+  useEffect(() => {
+    const application = dossierData?.data?.application;
+    if (dossierData?.success && application && !application.agreementSigned) {
+      setActiveTab("agreement");
+    }
+  }, [dossierData]);
 
   // Rediriger si non authentifié
   useEffect(() => {
@@ -466,7 +488,7 @@ export default function MySpace() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="tracking">Suivi</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -683,29 +705,39 @@ export default function MySpace() {
 
           {/* Accord */}
           <TabsContent value="agreement" className="space-y-6">
-            <Card>
+            <Card className="border-blue-100 shadow-sm">
               <CardHeader>
-                <CardTitle>Accord de service</CardTitle>
+                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-blue-700" /> Protocole d’accord de service</CardTitle>
+                <CardDescription>Ce document doit être consulté et signé avant tout passage du dossier en traitement.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Vous devez accepter nos conditions d'utilisation pour continuer.
-                  </p>
-                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    {app?.agreementSigned ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-700">Accord signé le {app.agreementSignedAt ? new Date(app.agreementSignedAt).toLocaleDateString('fr-FR') : '—'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        <span className="text-amber-700">Accord non signé</span>
-                      </>
-                    )}
+              <CardContent className="space-y-5">
+                {app?.agreementSigned ? (
+                  <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+                    <div><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">Signature enregistrée le {app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleDateString("fr-FR") : "—"}. Le dossier peut progresser selon les autres validations requises.</p></div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord">
+                      <p className="font-bold text-slate-950">Protocole d’accord — 3M Travel & Services SARL</p>
+                      <p className="mt-3">Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale du candidat. 3M Travel & Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p>
+                      <p className="mt-3">Le candidat s’engage à transmettre des informations exactes, à fournir les pièces demandées et à signaler toute modification de sa situation. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.</p>
+                      <p className="mt-3">La signature confirme la lecture et l’acceptation de ce protocole pour le dossier référencé ci-dessus. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.</p>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                      <input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} />
+                      <span>Je confirme avoir lu le protocole, compris ses limites et autorise 3M Travel & Services à poursuivre l’instruction humaine de mon dossier.</span>
+                    </label>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div><label htmlFor="myspace-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><Input id="myspace-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} placeholder="Votre nom complet" className="mt-1" disabled={signAgreementMutation.isPending} /></div>
+                      <div><p className="text-sm font-semibold text-slate-800">Signature manuscrite</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div>
+                    </div>
+                    <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !app?.dossierNumber || signAgreementMutation.isPending} onClick={() => app?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: app.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>
+                      {signAgreementMutation.isPending ? "Enregistrement de la signature…" : "Signer le protocole d’accord"}
+                    </Button>
+                    <p className="text-xs text-slate-500">Tant que cette étape n’est pas signée, le dossier reste bloqué avant traitement, même si un paiement a déjà été reçu.</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
