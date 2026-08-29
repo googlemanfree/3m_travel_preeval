@@ -1952,3 +1952,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Journaliser l’auteur, l’ancien statut, le nouveau statut et le motif sans supprimer l’historique.
 - [x] Synchroniser le retour d’étape dans l’espace client et notifier le candidat si demandé.
 - [x] Ajouter les tests d’autorisation et de non-contournement, vérifier TypeScript et publier.
+
+## Rendu initial — flash footer et écran bleu
+- [x] Identifier le composant ou HTML de chargement qui affiche le footer avant le header.
+- [x] Garantir l’ordre de rendu header → contenu principal → footer au rechargement.
+- [x] Supprimer l’écran bleu d’informations d’agence pendant le chargement initial.
+- [x] Ajouter les tests de rechargement, vérifier le rendu public et publier.
