@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <meta name="3m-build-marker" content="public-content-restore-2026-08-28" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <script>document.documentElement.classList.add('js-enabled');</script>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1E3A8A" />
     <script>
@@ -57,24 +58,8 @@
     </script>
     <style>
       html, body, #root { min-height: 100%; margin: 0; }
-      body { background: #06152f; }
-      .boot-fallback { min-height: 100vh; display: grid; place-items: center; box-sizing: border-box; padding: 24px; color: #f8fbff; font-family: Inter, system-ui, sans-serif; background: radial-gradient(circle at 50% 28%, rgba(24, 82, 154, .32), transparent 38%), linear-gradient(145deg, #06152f 0%, #0b2f6f 62%, #071b3d 100%); }
-      .boot-fallback__content { display: grid; justify-items: center; gap: 16px; width: min(100%, 390px); text-align: center; }
-      .boot-fallback__brand { display: grid; place-items: center; width: min(78vw, 230px); height: 112px; padding: 12px 22px; border: 1px solid rgba(244, 185, 66, .55); border-radius: 28px; background: rgba(4, 20, 49, .38); box-shadow: 0 18px 55px rgba(0, 0, 0, .3), 0 0 35px rgba(244, 185, 66, .08); }
-      .boot-fallback__brand img { display: block; width: 100%; height: 100%; object-fit: contain; }
-      .boot-fallback__title { margin: 0; color: #fff; font-size: clamp(20px, 4vw, 26px); font-weight: 800; letter-spacing: .01em; }
-      .boot-fallback__subtitle { margin: 0; color: #e4edff; font-size: 14px; }
-      .boot-fallback__progress-wrap { display: grid; gap: 9px; width: min(100%, 310px); }
-      .boot-fallback__progress { position: relative; height: 8px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; background: rgba(255, 255, 255, .12); }
-      .boot-fallback__progress span { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f4b942, #fff2ad, #f4b942); box-shadow: 0 0 18px rgba(244, 185, 66, .75); animation: boot-progress 1.5s ease-in-out infinite; }
-      .boot-fallback__progress-label { color: #f7faff; font-size: 13px; font-weight: 600; }
-      .boot-fallback__spinner { width: 30px; height: 30px; border: 3px solid rgba(255, 255, 255, .2); border-top-color: #f4b942; border-right-color: #fff2ad; border-radius: 999px; animation: boot-spin .85s linear infinite; }
-      .boot-fallback__retry { margin-top: 4px; padding: 10px 20px; border: 1px solid rgba(244, 185, 66, .7); border-radius: 10px; background: #f4b942; color: #071b3d; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-      .boot-fallback__retry:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-      .boot-fallback__contact { margin-top: 2px; color: #e4edff; font-size: 13px; text-underline-offset: 3px; }
-      @keyframes boot-spin { to { transform: rotate(360deg); } }
-      @keyframes boot-progress { 0% { transform: translateX(-115%); } 100% { transform: translateX(255%); } }
-      @media (prefers-reduced-motion: reduce) { .boot-fallback__spinner { animation: none; } }
+      body { background: #f8fafc; }
+      html.js-enabled .seo-prerender { display: none !important; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -99,49 +84,6 @@
       })();
     </script>
     <div id="root"><!--prerender-app--></div>
-    <script>
-      // Filet de sécurité indépendant de React : si l'application n'a pas
-      // démarré (fichier principal qui échoue à charger, réseau coupé,
-      // cache périmé après un redéploiement) dans les 15 secondes, ce
-      // script pur JavaScript remplace l'écran de secours par un message
-      // et un bouton de rechargement — sans dépendre de React, puisque
-      // React est justement ce qui n'a peut-être jamais démarré.
-      (function () {
-        var BOOT_TIMEOUT_MS = 15000;
-        var RELOAD_FLAG_KEY = "3m_boot_timeout_reload_attempted";
-
-        window.setTimeout(function () {
-          var root = document.getElementById("root");
-          if (!root) return;
-          // Si React a déjà remplacé le contenu, ce div n'existe plus.
-          var stillBooting = root.querySelector(".boot-fallback");
-          if (!stillBooting) return;
-
-          var alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
-          if (!alreadyAttempted) {
-            sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
-            window.location.reload();
-            return;
-          }
-
-          // Déjà retenté une fois sans succès — on affiche un message
-          // clair avec un bouton, plutôt que de recharger indéfiniment.
-          root.innerHTML =
-            '<div class="boot-fallback" role="alert">' +
-              '<div class="boot-fallback__content">' +
-                '<div class="boot-fallback__brand"><img src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M Travel &amp; Services" /></div>' +
-                '<p class="boot-fallback__title">3M Travel &amp; Services</p>' +
-                '<p class="boot-fallback__subtitle">Le chargement rencontre un problème persistant.</p>' +
-                '<div class="boot-fallback__progress-wrap"><div class="boot-fallback__progress" role="progressbar" aria-label="Progression du chargement" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span style="width:18%"></span></div><span class="boot-fallback__progress-label">Vérification du réseau</span></div>' +
-                '<button class="boot-fallback__retry" onclick="sessionStorage.removeItem(\'' + RELOAD_FLAG_KEY + '\'); window.location.reload();">' +
-                  'Réessayer' +
-                '</button>' +
-                '<a class="boot-fallback__contact" href="https://wa.me/237698104832">Contacter l\'agence sur WhatsApp</a>' +
-              '</div>' +
-            '</div>';
-        }, BOOT_TIMEOUT_MS);
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script
       defer

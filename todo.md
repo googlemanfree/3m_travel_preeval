@@ -1834,3 +1834,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Empêcher tout fallback HTML de répondre aux chemins `/api/trpc`.
 - [x] Ajouter un garde-fou client pour signaler une réponse non JSON sans masquer l’erreur serveur.
 - [x] Ajouter les régressions, vérifier TypeScript, tester l’accueil et publier le correctif.
+
+## FAQ, transitions et newsletter publique
+- [ ] Auditer la FAQ existante, les transitions globales et le footer partagé.
+- [ ] Ajouter une FAQ dynamique, accessible et spécifique à l’accueil.
+- [ ] Consolider les transitions fluides entre routes avec respect de la réduction de mouvement.
+- [ ] Ajouter une inscription newsletter sécurisée dans le footer avec consentement, validation et anti-doublon.
+- [ ] Ajouter les tests, vérifier TypeScript, l’accessibilité et publier la version validée.
+
+## Flash du pré-rendu SEO au lancement mobile
+- [x] Ajouter un marqueur JavaScript précoce pour masquer le contenu SEO brut uniquement après activation de l’application.
+- [x] Conserver le pré-rendu et les métadonnées accessibles aux moteurs et aux utilisateurs sans JavaScript.
+- [x] Vérifier le premier rendu mobile sans texte brut, puis publier la correction.
