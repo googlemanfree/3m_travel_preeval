@@ -19,6 +19,7 @@ import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -1699,6 +1700,21 @@ export const adminRouter = router({
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
+          const statusSequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
+          const currentStatus: (typeof statusSequence)[number] = ["bilan_envoye", "en_attente_paiement"].includes(app.dossierStatus)
+            ? "PUBLISHED"
+            : ["paye", "en_attente_documents", "documents_recus"].includes(app.dossierStatus)
+              ? "DOCUMENTS_CHECK"
+              : ["soumis_agences", "en_cours_recrutement", "contrat_obtenu"].includes(app.dossierStatus)
+                ? "SUBMITTED"
+                : app.dossierStatus === "visa_approuve" ? "APPROVED" : "PENDING_48H";
+          const currentIndex = statusSequence.indexOf(currentStatus);
+          const targetIndex = statusSequence.indexOf(input.newStatus);
+          if (targetIndex !== currentIndex + 1) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
+          }
+          assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
+
           await db.update(applications)
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
@@ -1706,6 +1722,8 @@ export const adminRouter = router({
               lastStatusUpdatedBy: admin.fullName || "Admin",
             })
             .where(eq(applications.id, id));
+
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "online", dossierNumber: app.dossierNumber, manualValidation: true }) });
 
           candidateEmail = app.email;
           candidateName = app.fullName;
@@ -1723,6 +1741,20 @@ export const adminRouter = router({
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
 
+          const statusSequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
+          const currentStatus: (typeof statusSequence)[number] = dossier.status === "en_cours"
+            ? "PUBLISHED"
+            : ["documents_requis", "documents_recus"].includes(dossier.status)
+              ? "DOCUMENTS_CHECK"
+              : ["soumis", "recherche_employeur", "validation_adem", "contrat_obtenu"].includes(dossier.status)
+                ? "SUBMITTED"
+                : dossier.status === "approuve" ? "APPROVED" : "PENDING_48H";
+          const currentIndex = statusSequence.indexOf(currentStatus);
+          const targetIndex = statusSequence.indexOf(input.newStatus);
+          if (targetIndex !== currentIndex + 1) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
+          }
+
           await db.update(agencyDossiers)
             .set({
               status: internalStatusMap[input.newStatus] as any,
@@ -1730,6 +1762,8 @@ export const adminRouter = router({
               lastStatusChangeBy: admin.fullName || "Admin",
             })
             .where(eq(agencyDossiers.id, id));
+
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true }) });
 
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;

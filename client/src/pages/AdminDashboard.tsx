@@ -179,6 +179,14 @@ const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: R
   },
 };
 
+const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
+
+function getNextAdminStatus(status?: string): AdminStatus | null {
+  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
+  if (currentIndex < 0) return "PENDING_48H";
+  return ADMIN_STATUS_SEQUENCE[currentIndex + 1] ?? null;
+}
+
 const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; icon: React.ReactNode }> = {
   WEB: {
     label: "En ligne",
@@ -331,6 +339,7 @@ export function CandidateDetailModal({
     { enabled: !!candidateId && !!sessionToken }
   );
   const candidate = data?.candidate;
+  const nextAdminStatus = getNextAdminStatus(candidate?.status);
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
@@ -404,6 +413,11 @@ export function CandidateDetailModal({
       newStatus: selectedStatus as AdminStatus,
       notifyClient,
     });
+  };
+
+  const handleAdvanceToNextStep = () => {
+    if (!nextAdminStatus) return;
+    updateStatusMutation.mutate({ sessionToken, candidateId, newStatus: nextAdminStatus, notifyClient });
   };
 
   return (
@@ -530,6 +544,17 @@ export function CandidateDetailModal({
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{candidate.projectType || "Procédure à qualifier"}</p>
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Validation manuelle guidée</p>
+                    {nextAdminStatus ? (
+                      <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
+                        <CheckCircle className="mr-2 h-4 w-4" />Valider l’étape suivante : {STATUS_CONFIG[nextAdminStatus].label}
+                      </Button>
+                    ) : (
+                      <p className="mt-2 text-sm font-semibold text-emerald-900">Toutes les étapes prévues sont validées.</p>
+                    )}
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
+                  </div>
                   <Label htmlFor="candidate-status">Statut général</Label>
                   <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
                     <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
@@ -551,7 +576,7 @@ export function CandidateDetailModal({
                 <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
                 <div className="mt-4 grid gap-2">
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("documents", candidate.folderCode)}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
-                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4 text-amber-700" />Valider un paiement</Button>
+                  <Button className="justify-start bg-amber-600 text-white hover:bg-amber-700" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
                 </div>
               </section>}

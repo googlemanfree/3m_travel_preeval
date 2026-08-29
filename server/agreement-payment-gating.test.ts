@@ -55,4 +55,20 @@ describe("agreement and payment gating contracts", () => {
     expect(source).toContain("Accord requis");
     expect(source).toContain("Paiement confirmé, traitement encore bloqué");
   });
+
+  it("provides accessible manual payment and next-step controls in the candidate admin workspace", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("Valider le paiement en agence");
+    expect(dashboard).toContain("Valider l’étape suivante");
+    expect(dashboard).toContain("getNextAdminStatus");
+    expect(dashboard).toContain("Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes");
+  });
+
+  it("enforces sequential manual status validation and records the admin action", () => {
+    const adminRouter = read("server/routers/admin.ts");
+    expect(adminRouter).toContain("targetIndex !== currentIndex + 1");
+    expect(adminRouter).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
+    expect(adminRouter).toContain('evaluationType: "candidate_workflow"');
+    expect(adminRouter).toContain("manualValidation: true");
+  });
 });

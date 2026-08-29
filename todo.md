@@ -1938,3 +1938,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Bloquer tout dossier non évalué ou non validé avant l’étape suivante.
 - [x] Faire avancer explicitement l’étape après validation de l’évaluation, sans sauter d’étape.
 - [x] Ajouter les tests de progression, vérifier TypeScript et publier.
+
+## Validation manuelle du paiement et des étapes administratives
+- [x] Vérifier l’accessibilité et le fonctionnement du bouton admin de validation du paiement en agence.
+- [x] Afficher une action claire de validation pour l’étape courante de chaque candidat.
+- [x] Permettre à l’administrateur de faire avancer le dossier uniquement vers l’étape suivante, avec confirmation et audit.
+- [x] Synchroniser immédiatement le statut validé dans l’espace client.
+- [x] Tester les autorisations, les prérequis et les transitions, puis publier.
