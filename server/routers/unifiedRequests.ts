@@ -138,7 +138,7 @@ type EvaluationReviewCandidate = {
   dossierStatus: string;
 };
 
-export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date()): Array<T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean }> {
+export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date(), filter: "all" | "without_evaluation" = "all"): Array<T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean }> {
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(now); end.setHours(23, 59, 59, 999);
   return applicationsToReview.map((application) => {
@@ -151,7 +151,7 @@ export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationRevie
     const reviewOverdue = !advisorValidated && reviewDeadline <= now;
     const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end) || reviewOverdue);
     return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict), reviewDeadline, reviewOverdue };
-  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean; hasDraft: boolean });
+  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && !application.advisorValidated && application.relevantToday && (filter === "all" || !application.hasDraft)).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean; hasDraft: boolean });
 }
 
 export function calculateAdvisorWorkload(
@@ -236,6 +236,7 @@ async function ensureManagedRequest(source: SourceSnapshot) {
 }
 
 const sessionInput = z.object({ sessionToken: z.string().min(20) });
+const evaluationQueueInput = sessionInput.extend({ filter: z.enum(["all", "without_evaluation"]).default("all") });
 
 export const unifiedRequestsRouter = router({
   list: publicProcedure
@@ -693,14 +694,14 @@ export const unifiedRequestsRouter = router({
     }),
 
   evaluationReviewsToday: publicProcedure
-    .input(sessionInput)
+    .input(evaluationQueueInput)
     .query(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const candidates = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, destination: applications.destination, scoringTotal: applications.scoringTotal, adminAssignedTo: applications.adminAssignedTo, evaluationScheduledAt: applications.evaluationScheduledAt, createdAt: applications.createdAt, updatedAt: applications.updatedAt, scoringDetails: applications.scoringDetails, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, dossierStatus: applications.dossierStatus }).from(applications).orderBy(desc(applications.updatedAt)).limit(500);
       const now = new Date();
-      const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now);
+      const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now, input.filter);
       return { generatedAt: now, total: rows.length, rows };
     }),
 });

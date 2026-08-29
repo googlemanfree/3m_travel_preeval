@@ -1875,3 +1875,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer les liens `/evaluation` en maintenance par le parcours d’évaluation réellement opérationnel.
 - [x] Auditer les autres CTA et routes pour les mêmes replis maintenance/actualisation.
 - [x] Ajouter les régressions, vérifier TypeScript, tester les routes et publier la correction.
+
+## Suivi dossier et fiabilisation des parcours — nouvelle demande
+- [ ] Ajouter un filtre administrateur « dossiers sans évaluation » avec comptage et état vide explicite.
+- [ ] Ajouter une progression visuelle cohérente sur `/mon-dossier` à partir des données serveur, sans inventer d’étape.
+- [ ] Ajouter des skeleton loaders accessibles sur la page de suivi et préserver les erreurs récupérables.
+- [ ] Tester le parcours avec un compte candidat réel sans exposer ni enregistrer de secret.
+- [ ] Vérifier les anciennes URL `.click` et les chemins mémorisés par Cloudflare sans action destructive.
+- [ ] Étendre et valider la compétence réutilisable, puis tester TypeScript et publier.
+
+## Régression publique — `/mon-dossier`
+- [x] Reproduire l’écran d’erreur sur le domaine `.com` et isoler le module ou appel qui échoue.
+- [x] Corriger la cause racine du chargement sans masquer une erreur d’autorisation ou de session.
+- [x] Vérifier les variantes `/mon-dossier`, `/mon-espace?section=dossier` et les liens associés.
+- [x] Ajouter les régressions et tests de rendu public, puis publier seulement après validation.
