@@ -1915,3 +1915,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre le contrat de synchronisation tolérant aux réponses partielles ou anciennes sans perdre la session.
 - [x] Vérifier les actions Réessayer et Conserver ma session avec une session de 24 heures.
 - [x] Ajouter les tests de régression, publier et vérifier le domaine officiel.
+
+## Connexion — correction sans contrôle manuel
+- [x] Remplacer le contrôle candidat manuel par des tests automatisés de contrat et une vérification publique sans données privées.
+- [x] Vérifier qu’aucune réponse incompatible ne produit l’écran « Votre espace ne répond pas encore » pour une session conservée.
+- [ ] Publier la correction finale de connexion.
