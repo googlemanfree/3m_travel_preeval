@@ -41,4 +41,14 @@ describe("redirection Google et suivi candidat", () => {
     expect(navigation).toContain('setLocation("/mon-espace?section=dossier")');
     expect(navigation).toContain("!compact &&");
   });
+
+  it("regroupe les documents à signer sans mélanger les documents ordinaires", () => {
+    const space = read("client/src/pages/EvaluationSpace.tsx");
+    const signatures = read("client/src/components/SignableDocumentsPanel.tsx");
+    expect(space).toContain('id: "signatures", label: "Documents à signer"');
+    expect(space).toContain("<SignableDocumentsPanel");
+    expect(signatures).toContain("Protocole d’accord 3M Travel &amp; Services");
+    expect(signatures).toContain("Le protocole sera rendu signable après la confirmation du paiement.");
+    expect(signatures).toContain("documentsToSign");
+  });
 });

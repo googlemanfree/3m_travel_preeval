@@ -2019,3 +2019,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le bouton de suivi de dossier et son accès au dossier synchronisé.
 - [x] Réduire la surcharge en donnant la priorité à l’action suivante et aux informations utiles.
 - [x] Tester les états évaluation, paiement, protocole et suivi, puis publier.
+
+## Documents à signer dans l’espace candidat
+- [x] Identifier les documents d’accord, autorisation et validation nécessitant une signature dans le dossier actif.
+- [x] Créer une section dédiée avec statut « à signer », « signé » ou « en attente ».
+- [x] Permettre la consultation, la signature guidée et le téléchargement des documents signés selon les droits.
+- [x] Synchroniser la liste et les états de signature avec le pilotage administrateur.
+- [x] Ajouter les tests d’accès et de statut, vérifier TypeScript et publier.

@@ -46,12 +46,13 @@ import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
+import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const validSections = ["overview", "dossier", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"] as const;
+  const validSections = ["overview", "dossier", "signatures", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"] as const;
   type ClientSection = (typeof validSections)[number];
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
@@ -348,6 +349,7 @@ export default function EvaluationSpace() {
           {[
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
+            { id: "signatures", label: "Documents à signer", icon: ShieldCheck },
             { id: "documents", label: "Centre Documentaire", icon: FileText },
             { id: "profile", label: "Mon Profil & Avatar", icon: User },
             { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
@@ -1079,6 +1081,14 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "comparisons" && <SavedDestinationComparisonsPanel />}
           {activeTab === "history" && <div className="space-y-6"><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Historique des évaluations</h2><p className="mt-1 text-sm text-slate-600">Retrouvez vos évaluations, brouillons d’orientation et exports PDF. Les suggestions restent à vérifier par un conseiller.</p></div><EvaluationHistoryPanel evaluations={evaluations as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} /></section><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Comparaisons sauvegardées</h2><p className="mt-1 text-sm text-slate-600">Vos comparaisons enregistrées depuis l’espace candidat.</p></div><SavedDestinationComparisonsPanel /></section></div>}
+
+          {activeTab === "signatures" && (
+            <SignableDocumentsPanel
+              activeDossier={activeDossier}
+              documents={agencyDocuments as any[]}
+              onOpenProtocol={() => switchToSection("dossier")}
+            />
+          )}
 
           {activeTab === "documents" && (
             <div className="space-y-6">
