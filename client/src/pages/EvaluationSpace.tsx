@@ -45,6 +45,7 @@ import SavedDestinationComparisonsPanel from "@/components/SavedDestinationCompa
 import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 import SignatureCanvas from "@/components/SignatureCanvas";
+import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -260,6 +261,8 @@ export default function EvaluationSpace() {
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
   const evaluationRequired = !latestEvaluation && (cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
+  const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
+  const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
   const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(cProfile.destination || "general")}`);
   const priority = stats.unreadMessages > 0
     ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
@@ -474,6 +477,7 @@ export default function EvaluationSpace() {
                 </h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+              <CandidateCountryJourney destination={cProfile.destination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} />
 
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priority.tone}`}>
@@ -581,6 +585,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+              <CandidateCountryJourney destination={cProfile.destination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} />
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -1966,3 +1966,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un accès admin direct à un grand bloc-notes d’édition d’évaluation.
 - [x] Permettre l’envoi contrôlé de l’évaluation par e-mail et WhatsApp, avec audit et consentement approprié.
 - [x] Tester les deux parcours d’inscription, vérifier TypeScript et publier.
+
+## Parcours candidat dynamique par pays et type de visa
+- [x] Auditer les référentiels pays, types de visa, sous-parcours Canada et statuts synchronisés existants.
+- [ ] Documenter les exigences officielles vérifiées et les sources par destination et type de visa.
+- [x] Définir un catalogue d’étapes et de champs de formulaire par combinaison pays/visa.
+- [x] Afficher dans l’espace candidat uniquement les étapes et questions correspondant à son dossier.
+- [x] Synchroniser les étapes, validations, documents et statuts avec l’espace administrateur.
+- [x] Ajouter les tests des parcours Canada, Luxembourg et autres destinations, puis publier progressivement.
+
+### Constat de couverture à traiter
+- [ ] Résoudre l’écart constaté : le catalogue `procedures107Complete` contient actuellement 91 fiches, pas 107.
+- [ ] Ne pas attribuer de portail officiel à une destination non vérifiée ; afficher « source institutionnelle à vérifier » tant que la source n’est pas validée.

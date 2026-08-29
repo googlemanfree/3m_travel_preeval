@@ -51,6 +51,7 @@ import { AISummary } from "@/components/AISummary";
 import { InterviewQuestions } from "@/components/InterviewQuestions";
 import { PDFExporter } from "@/components/PDFExporter";
 import AdminPortraitReviewPanel from "@/components/AdminPortraitReviewPanel";
+import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -318,6 +319,8 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               </div>
             </div>
           </div>
+
+          <CandidateCountryJourney destination={destination} visaType={visaType} dossierStatus={status} evaluationStatus={status === "nouveau" || status === "en_evaluation" ? "pending" : "validated"} />
 
           {/* Score et Statut */}
           <div>
