@@ -540,11 +540,13 @@ export function AdminPaymentManagement() {
                                 onClick={() => handleConfirmPayment(payment)}
                                 variant="ghost"
                                 size="sm"
-                                title="Confirmer le paiement"
+                                title={payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? "Valider le paiement en agence" : "Confirmer le paiement"}
+                                aria-label={payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? `Valider le paiement en agence du dossier ${payment.dossierNumber}` : `Confirmer le paiement du dossier ${payment.dossierNumber}`}
                                 className="text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors"
                                 disabled={isProcessing}
                               >
                                 <CheckCircle2 className="w-4 h-4" />
+                                <span className="hidden xl:inline">{payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? "Valider agence" : "Valider"}</span>
                               </Button>
                               <Button
                                 onClick={() => handleCancelPayment(payment)}

@@ -1903,3 +1903,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter côté administrateur une validation simple et traçable des paiements effectués en agence ou déjà réglés en ligne.
 - [x] Synchroniser le statut de signature, le statut de paiement et le déblocage documentaire entre client et administration.
 - [x] Écrire les tests d’autorisation et de règles métier, vérifier TypeScript et publier après validation.
+
+## Contrôles visibles protocole, paiement agence et évaluation déjà reçue
+- [x] Ajouter un bouton client pour visualiser ou télécharger le protocole signé et accéder à l’étape suivante autorisée.
+- [x] Ajouter un bouton admin explicite « Valider paiement en agence » avec note et audit.
+- [x] Ajouter un bouton admin « Évaluation déjà reçue » avec note candidate déjà évalué et synchronisation côté client.
+- [x] Tester les trois parcours et publier la correction.
