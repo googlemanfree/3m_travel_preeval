@@ -27,6 +27,15 @@ describe("file de validation des bilans IA", () => {
     expect(rows[0].advisorValidated).toBe(false);
   });
 
+  it("fait remonter un candidat sans brouillon pour préparer sa première évaluation", () => {
+    const rows = selectEvaluationReviewsForAdvisorToday([
+      { ...base, scoringDetails: JSON.stringify({}), updatedAt: new Date("2026-08-17T11:30:00.000Z") },
+    ], advisor, now);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].hasDraft).toBe(false);
+    expect(rows[0].advisorValidated).toBe(false);
+  });
+
   it("retire de la file un brouillon déjà validé par un conseiller", () => {
     const rows = selectEvaluationReviewsForAdvisorToday([
       { ...base, scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan validé", advisorValidated: true } }) },

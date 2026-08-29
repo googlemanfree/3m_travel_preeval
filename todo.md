@@ -1848,3 +1848,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les appels partagés responsables des erreurs visibles sur les autres pages.
 - [x] Simplifier l’inscription avec un parcours clair, validation explicite et redirection fiable vers l’espace client.
 - [x] Ajouter les régressions, vérifier TypeScript, tester les parcours et publier après validation.
+
+## Priorités — évaluation admin, nouvelle évaluation et audit global
+- [x] Auditer la file admin des candidats sans évaluation et le contrat d’édition/envoi existant.
+- [x] Permettre à un administrateur habilité d’éditer, reformuler, prévisualiser et envoyer une évaluation validée dans l’espace client et par e-mail.
+- [x] Corriger le bouton « Nouvelle évaluation » et le parcours préalable des candidats non évalués.
+- [x] Parcourir les routes et CTA publics/protégés pour retirer les liens cassés vers maintenance ou actualisation forcée.
+- [x] Ajouter les régressions de droits, persistance, envoi et navigation ; vérifier TypeScript et publier.

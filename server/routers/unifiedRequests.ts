@@ -150,7 +150,7 @@ export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationRevie
     const reviewOverdue = !advisorValidated && reviewDeadline <= now;
     const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end) || reviewOverdue);
     return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict), reviewDeadline, reviewOverdue };
-  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && application.hasDraft && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, hasDraft: _hasDraft, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean });
+  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean; hasDraft: boolean });
 }
 
 export function calculateAdvisorWorkload(

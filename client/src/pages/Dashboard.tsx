@@ -449,12 +449,12 @@ export default function Dashboard() {
                         <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <h3 className="font-semibold text-red-900 mb-1">Erreur de chargement</h3>
-                          <p className="text-red-700 text-sm mb-3">Impossible de charger votre dossier. Veuillez actualiser la page ou vous reconnecter.</p>
+                          <p className="text-red-700 text-sm mb-3">La synchronisation de votre dossier a échoué temporairement. Vous pouvez relancer la synchronisation ou vous reconnecter.</p>
                           <div className="flex gap-2">
-                            <button onClick={handleRefresh} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded font-medium transition">
-                              Actualiser
+                            <button type="button" onClick={handleRefresh} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded font-medium transition">
+                              Réessayer la synchronisation
                             </button>
-                            <button onClick={handleLogout} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium transition">
+                            <button type="button" onClick={handleLogout} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium transition">
                               Se reconnecter
                             </button>
                           </div>

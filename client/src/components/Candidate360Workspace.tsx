@@ -216,7 +216,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     description: "Aucune action n’est encore planifiée pour ce dossier. Ajoutez une étape de traitement ou une échéance.",
   };
   const labelsList = labels.split(",").map((value) => value.trim()).filter(Boolean);
-  const isOnlineApplication = candidate.id.startsWith("online_");
+  // Tout candidat affiché dans le centre 360° peut recevoir une première évaluation ;
+  // l’identifiant interne est la seule condition nécessaire côté UI.
+  const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;
 
   const saveOperationalState = () => updateMutation.mutate({
     sessionToken,
@@ -521,7 +523,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
 
         <TabsContent value="evaluation" className="space-y-3 pt-4">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div>{isOnlineApplication && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />Ouvrir le bilan</Button>}</div></div>
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div>{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}</div></div>
           {data.evaluationVersions.length ? <div className="space-y-2">{data.evaluationVersions.map((version: any) => <div key={version.id} className="flex items-center justify-between rounded-lg border p-3"><div><p className="text-sm font-medium">Version {version.versionNumber}</p><p className="text-xs text-slate-500">Créée le {formatDate(version.createdAt)}</p></div><StateBadge status={version.approvalStatus} /></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun bilan versionné. Préparez l’évaluation lorsque les informations sont complètes.</p>}
         </TabsContent>
 
@@ -606,7 +608,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
       </Tabs>
 
-      {isOnlineApplication && <EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} />}
+      {canPrepareEvaluation && <EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} />}
     </div>
   );
 }
