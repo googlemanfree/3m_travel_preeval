@@ -76,6 +76,12 @@ export default function EvaluationSpace() {
     retry: 3,
     retryDelay: 1000,
   });
+  // Les hooks doivent rester inconditionnels : la section dossier réutilise ce résultat sans remonter d’erreur de rendu.
+  const evisaEmail = dashboardData?.candidate?.email ?? "";
+  const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery(
+    { email: evisaEmail },
+    { enabled: isAuthenticated && Boolean(evisaEmail), refetchOnWindowFocus: false, retry: 1 },
+  );
   const { data: caseTrackingData, refetch: refetchCaseTracking } = trpc.caseTracking.getMyCases.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
@@ -450,7 +456,7 @@ export default function EvaluationSpace() {
                         <p className="mt-2 text-xs leading-5 opacity-80">Les statuts et demandes sont synchronisés depuis l’agence. Aucune décision n’est prise automatiquement dans cet espace.</p>
                       </div>
                     </div>
-                    <Button type="button" onClick={() => switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
+                    <Button type="button" onClick={() => priority.target === "dossier" ? setLocation("/mon-dossier") : switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
                       {priority.label}<ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -555,7 +561,6 @@ export default function EvaluationSpace() {
                   <span className="text-xs font-bold bg-blue-700 text-white px-3 py-1 rounded-full uppercase">Temps réel</span>
                 </div>
                 {(() => {
-                  const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery({ email: cProfile.email });
                   const list = Array.isArray(evisaReqs?.data) ? evisaReqs.data : [];
                   if (list.length === 0) {
                     return (

@@ -9,10 +9,10 @@ function readProjectFile(relativePath: string) {
 }
 
 describe("client space and registration regression contracts", () => {
-  it("opens Mon dossier in the unified authenticated client space", () => {
+  it("opens Mon dossier on the dedicated authenticated tracking page", () => {
     const source = readProjectFile("client/src/components/ClientSpaceNavigation.tsx");
-    expect(source).toContain('href: "/mon-espace?section=dossier"');
-    expect(source).toContain('href="/mon-espace?section=dossier"');
+    expect(source).toContain('href: "/mon-dossier"');
+    expect(source).toContain('href="/mon-dossier"');
   });
 
   it("initializes and validates the requested client section", () => {

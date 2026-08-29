@@ -58,6 +58,14 @@ describe("SEO dynamique", () => {
     expect(html).toContain("Oui. Créez d’abord votre compte");
   });
 
+  it("ne sert pas le placeholder de maintenance sur la route d’évaluation protégée", () => {
+    const html = composePublicPrerender(template, "/evaluation").html;
+    expect(html).toContain("Évaluation préalable de votre projet");
+    expect(html).toContain("Connectez-vous pour compléter votre évaluation");
+    expect(html).not.toContain("This site is under maintenance");
+    expect(html).not.toContain("Site under maintenance");
+  });
+
   it("pré-rend un contenu réel propre à chaque page publique prioritaire", () => {
     const contact = composePublicPrerender(template, "/contact").html;
     const sources = composePublicPrerender(template, "/sources-officielles").html;

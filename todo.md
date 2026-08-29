@@ -1868,3 +1868,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter l’impression directe de l’aperçu e-mail sans déclencher d’envoi.
 - [x] Afficher dans le profil candidat un historique détaillé et sécurisé des envois, tests et ouvertures.
 - [x] Ajouter les tests de confidentialité, de langue, d’impression et de traçabilité, puis publier.
+
+## Incident prioritaire — Mon dossier et suivi candidat
+- [x] Reproduire l’erreur de `/mon-espace?section=dossier` et la cible incorrecte du bouton « Mon dossier ».
+- [x] Corriger la route de suivi candidat et synchroniser l’onglet dossier sans perte de session.
+- [x] Remplacer les liens `/evaluation` en maintenance par le parcours d’évaluation réellement opérationnel.
+- [x] Auditer les autres CTA et routes pour les mêmes replis maintenance/actualisation.
+- [x] Ajouter les régressions, vérifier TypeScript, tester les routes et publier la correction.
