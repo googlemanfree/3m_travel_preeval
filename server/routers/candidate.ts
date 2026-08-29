@@ -1285,7 +1285,7 @@ export const candidateRouter = router({
           agreementSignedAt: now,
           agreementSignatureName: input.signatureName,
           agreementIpAddress: input.ipAddress,
-          dossierStatus: "en_evaluation",
+          dossierStatus: app[0].paymentStatus === "SUCCESS" ? "paye" : "en_attente_paiement",
           lastStatusUpdateAt: new Date(),
         })
         .where(eq(applications.id, app[0].id));

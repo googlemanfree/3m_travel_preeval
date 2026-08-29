@@ -17,6 +17,7 @@ import { randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,21 +25,6 @@ function generateEvaluationDraftReference(): string {
   const year = new Date().getFullYear();
   const rand = randomInt(100000, 1000000);
   return `EVAL-DRAFT-${year}-${rand}`;
-}
-
-const PROCESSING_STATUSES = new Set([
-  "paye", "en_attente_documents", "documents_recus", "soumis_agences",
-  "en_cours_recrutement", "contrat_obtenu", "visa_approuve",
-]);
-
-function assertApplicationCanEnterStatus(application: Application, nextStatus: string): void {
-  if (!PROCESSING_STATUSES.has(nextStatus)) return;
-  if (!application.agreementSigned) {
-    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole d’accord doit être signé avant le passage du dossier en traitement." });
-  }
-  if (application.paymentStatus !== "SUCCESS") {
-    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être confirmé avant le passage du dossier en traitement." });
-  }
 }
 
 async function initCinetPayTransaction(params: {

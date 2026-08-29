@@ -17,11 +17,19 @@ describe("agreement and payment gating contracts", () => {
 
   it("protects processing statuses on the server", () => {
     const source = read("server/routers/application.ts");
-    expect(source).toContain("const PROCESSING_STATUSES = new Set");
-    expect(source).toContain("Le protocole d’accord doit être signé");
-    expect(source).toContain("Le paiement doit être confirmé");
+    const gate = read("server/utils/applicationGates.ts");
+    expect(gate).toContain("APPLICATION_PROCESSING_STATUSES = new Set");
+    expect(gate).toContain("Le protocole d’accord doit être signé");
+    expect(gate).toContain("Le paiement doit être confirmé");
     expect(source).toContain("agreementRequired: isValidated && !application.agreementSigned");
     expect(source).toContain("assertApplicationCanEnterStatus(application, input.dossierStatus)");
+  });
+
+  it("keeps online payment confirmation behind the agreement gate", () => {
+    const paymentSource = read("server/routers/cinetpayPayment.ts");
+    const webhookSource = read("server/routers/cinetpayWebhook.ts");
+    expect(paymentSource).toContain('dossierStatus: application.agreementSigned ? "paye" : application.dossierStatus');
+    expect(webhookSource).toContain('paymentStatus === "SUCCESS" && application.agreementSigned ? "paye" : application.dossierStatus');
   });
 
   it("exposes the agreement state next to payment status in admin", () => {
