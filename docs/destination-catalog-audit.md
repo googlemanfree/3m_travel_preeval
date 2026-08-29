@@ -13,3 +13,13 @@ La couverture de 107 fiches et la validation officielle des autres destinations 
 Pour le Luxembourg, la page officielle Guichet.lu consultée le 29 août 2026 confirme que les ressortissants de certains pays tiers peuvent devoir obtenir un visa avant le départ, que la procédure dépend de la durée et de la nature du séjour, et que la demande Schengen relève du consulat de la destination principale. Elle renvoie également vers les formulaires, les missions consulaires et les traducteurs assermentés. Source : https://guichet.public.lu/en/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html.
 
 Cette source est utilisée comme portail institutionnel du parcours Luxembourg visiteur et comme point de vérification des parcours nécessitant un séjour de plus de trois mois. Les exigences individuelles restent à confirmer selon la nationalité, la durée et le motif déclarés par le candidat.
+
+## Sources européennes directement consultées
+
+Le portail de la Commission européenne distingue les séjours de courte durée dans l’espace Schengen des parcours de travail et d’études de plus de 90 jours, et rappelle que les compétences sont partagées entre l’Union et les États membres. Source : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal_en.
+
+Le portail officiel du Royaume-Uni sépare explicitement les parcours visiteur, travail, études et installation, avec une vérification préalable du visa ou de l’ETA. Source : https://www.gov.uk/browse/visas-immigration.
+
+Le ministère portugais des Affaires étrangères décrit l’espace Schengen, les catégories de visa, le consulat compétent, la biométrie, les formulaires, les délais et les frais. Source : https://vistos.mne.gov.pt/en/short-stay-visas-schengen/general-information.
+
+Ces sources servent de références institutionnelles de niveau régional ou national. Elles ne remplacent pas la vérification du poste consulaire compétent selon la nationalité, le pays de résidence, le motif et la durée du séjour.
