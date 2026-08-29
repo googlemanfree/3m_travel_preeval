@@ -1931,3 +1931,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier que l’espace client affiche systématiquement le protocole à signer lorsqu’il est requis, avec accès clair à la signature.
 - [x] Ajouter ou rendre visible l’action admin de validation du paiement en agence pour chaque candidat.
 - [x] Tester la synchronisation client-admin, vérifier TypeScript et publier la mise à jour.
+
+## Évaluation bloc-notes et progression séquentielle
+- [x] Agrandir l’éditeur admin en bloc-notes confortable avec rédaction manuelle et conservation du brouillon.
+- [x] Garantir l’envoi du bilan rédigé dans l’espace client et par e-mail après validation humaine.
+- [x] Bloquer tout dossier non évalué ou non validé avant l’étape suivante.
+- [x] Faire avancer explicitement l’étape après validation de l’évaluation, sans sauter d’étape.
+- [x] Ajouter les tests de progression, vérifier TypeScript et publier.

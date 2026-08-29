@@ -32,6 +32,23 @@ describe("agreement and payment gating contracts", () => {
     expect(webhookSource).toContain('paymentStatus === "SUCCESS" && application.agreementSigned ? "paye" : application.dossierStatus');
   });
 
+  it("requires evaluation delivery before the next processing step", () => {
+    const gate = read("server/utils/applicationGates.ts");
+    expect(gate).toContain("evaluationDeliveryStatus?: string | null");
+    expect(gate).toContain('nextStatus === "bilan_envoye"');
+    expect(gate).toContain("Aucun dossier ne peut être traité avant l’évaluation validée");
+  });
+
+  it("exposes the manual notebook and visible protocol in the active client space", () => {
+    const adminPanel = read("client/src/components/AdminPreDossierEvaluationPanel.tsx");
+    const clientSpace = read("client/src/pages/EvaluationSpace.tsx");
+    expect(adminPanel).toContain("Saisir et envoyer l’évaluation manuellement");
+    expect(adminPanel).toContain("Aucun traitement IA n’est nécessaire");
+    expect(clientSpace).toContain("Protocole d’accord obligatoire");
+    expect(clientSpace).toContain("Signer le protocole d’accord");
+    expect(clientSpace).toContain("signAgreementProtocol");
+  });
+
   it("exposes the agreement state next to payment status in admin", () => {
     const source = read("client/src/components/AdminPaymentManagement.tsx");
     expect(source).toContain("agreementSigned: Boolean(app.agreementSigned)");
