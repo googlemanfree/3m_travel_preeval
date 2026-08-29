@@ -23,5 +23,22 @@ describe("redirection Google et suivi candidat", () => {
     expect(dashboard).toContain("currentStatus.action");
     expect(dashboard).not.toContain('status: "draft"');
   });
-});
 
+  it("priorise les prérequis du dossier dans l’espace candidat", () => {
+    const space = read("client/src/pages/EvaluationSpace.tsx");
+    const router = read("server/routers/candidate.ts");
+    expect(router).toContain("showAgreementAfterPayment");
+    expect(router).toContain("evaluationRequired");
+    expect(space).toContain("Évaluation rapide à compléter");
+    expect(space).toContain("Signez votre protocole d’accord");
+    expect(space).toContain('switchToSection("dossier")');
+    expect(space).toContain("<ClientSpaceNavigation compact />");
+  });
+
+  it("réduit les raccourcis aux services actifs et maintient le suivi du dossier accessible", () => {
+    const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
+    expect(navigation).toContain("visibleQuickLinks");
+    expect(navigation).toContain('setLocation("/mon-espace?section=dossier")');
+    expect(navigation).toContain("!compact &&");
+  });
+});

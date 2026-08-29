@@ -233,6 +233,7 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: cProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const workflow = dashboardData.workflow;
   const portraitIsMissing = !cProfile.avatarUrl;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
@@ -260,7 +261,8 @@ export default function EvaluationSpace() {
     : validatedEvaluationResponse || cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
-  const evaluationRequired = !latestEvaluation && (cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
+  const evaluationRequired = Boolean(workflow?.evaluationRequired) || (!latestEvaluation && (cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused"));
+  const agreementAfterPaymentRequired = Boolean(workflow?.showAgreementAfterPayment);
   const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
   const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
   const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(cProfile.destination || "general")}`);
@@ -269,7 +271,7 @@ export default function EvaluationSpace() {
     : cProfile.dossierStatus === "documents"
       ? { title: "Compléter les documents demandés", detail: "Consultez la checklist : l’agence précise les pièces réellement nécessaires à votre dossier.", target: "documents" as const, label: "Voir mes documents", icon: FileText, tone: "bg-blue-50 border-blue-200 text-blue-950" }
       : !latestEvaluation
-        ? { title: "Poursuivre votre évaluation", detail: "Votre dossier reste préparatoire tant que les informations et le CV requis ne sont pas transmis.", target: "dossier" as const, label: "Voir mon dossier", icon: Sparkles, tone: "bg-violet-50 border-violet-200 text-violet-950" }
+        ? { title: "Poursuivre votre évaluation", detail: "Votre dossier reste préparatoire tant que les informations et le CV requis ne sont pas transmis.", target: "dossier" as const, label: "Faire mon évaluation", icon: Sparkles, tone: "bg-violet-50 border-violet-200 text-violet-950" }
         : { title: "Suivre l’avancement de votre dossier", detail: reviewDueLabel ? `Une revue est indiquée au plus tard le ${reviewDueLabel}.` : "Votre conseiller publiera la prochaine étape après vérification.", target: "dossier" as const, label: "Suivre mon dossier", icon: FolderOpen, tone: "bg-emerald-50 border-emerald-200 text-emerald-950" };
   const PriorityIcon = priority.icon;
   const switchToSection = (nextSection: typeof activeTab) => {
@@ -341,18 +343,14 @@ export default function EvaluationSpace() {
 
       {/* Barre de navigation principale du tableau de bord */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <ClientSpaceNavigation />
+          <ClientSpaceNavigation compact />
           <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-gray-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
           {[
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
-            { id: "flights", label: "Vols Favoris & Réservations", icon: Plane },
-            { id: "comparisons", label: "Comparaisons", icon: ArrowLeftRight },
-            { id: "history", label: "Historique", icon: History },
             { id: "documents", label: "Centre Documentaire", icon: FileText },
             { id: "profile", label: "Mon Profil & Avatar", icon: User },
             { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
-            { id: "testimonials", label: "Témoignages & Réussites", icon: Award },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -401,7 +399,15 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {agreementAfterPaymentRequired && (
+                <Card className="border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-6 shadow-md" role="region" aria-labelledby="agreement-after-payment-title">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-4"><span className="rounded-2xl bg-amber-600 p-3 text-white"><ShieldCheck className="h-6 w-6" aria-hidden="true" /></span><div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Paiement confirmé · action requise</p><h2 id="agreement-after-payment-title" className="mt-1 text-xl font-black text-slate-950">Signez votre protocole d’accord</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">Votre paiement est enregistré. La signature du protocole est la prochaine étape avant le traitement humain de votre dossier.</p></div></div>
+                    <Button type="button" onClick={() => switchToSection("dossier")} className="h-12 shrink-0 bg-amber-700 px-5 text-white hover:bg-amber-800"><ShieldCheck className="mr-2 h-4 w-4" />Ouvrir le protocole</Button>
+                  </div>
+                </Card>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="p-5 border-violet-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -442,19 +448,6 @@ export default function EvaluationSpace() {
                   <p className="text-xs text-emerald-600 mt-4 font-medium">Synchronisés avec l'agence</p>
                 </Card>
 
-                <Card className="p-5 border-purple-100 bg-white shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Vols favoris</p>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.totalFavoriteFlights}</h3>
-                    </div>
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                      <Plane className="w-6 h-6" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-purple-600 mt-4 font-medium">Itinéraires sauvegardés</p>
-                </Card>
-
                 <Card className="p-5 border-amber-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
@@ -491,12 +484,12 @@ export default function EvaluationSpace() {
                         <p className="mt-2 text-xs leading-5 opacity-80">Les statuts et demandes sont synchronisés depuis l’agence. Aucune décision n’est prise automatiquement dans cet espace.</p>
                       </div>
                     </div>
-                    <Button type="button" onClick={() => priority.target === "dossier" ? setLocation("/mon-dossier") : switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
+                    <Button type="button" onClick={() => evaluationRequired ? openEvaluation() : switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
                       {priority.label}<ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                   <div className="mt-5 grid gap-2 border-t border-current/15 pt-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <button type="button" onClick={() => setLocation("/mon-dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                    <button type="button" onClick={() => switchToSection("dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
                       <span className="block text-xs font-semibold opacity-70">Référence de dossier</span><span className="mt-1 block font-mono">{cProfile.dossierNumber || "En cours d’attribution"}</span>
                     </button>
                     <button type="button" onClick={() => switchToSection("documents")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">

@@ -2011,3 +2011,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer le lien direct des documents d’étape par une action d’aperçu accessible.
 - [x] Réutiliser la fenêtre de prévisualisation sécurisée existante pour les PDF, images et formats non pris en charge.
 - [x] Vérifier les permissions, les états sans document et les actions d’ouverture/téléchargement, puis publier.
+
+## Cockpit candidat ciblé et allégé
+- [x] Afficher uniquement les services, étapes et documents demandés dans le dossier actif.
+- [x] Rendre visible l’évaluation obligatoire pour les candidats non évalués et guider vers son formulaire.
+- [x] Afficher le protocole d’accord à signer après le paiement confirmé, avec un état clair avant/après signature.
+- [x] Corriger le bouton de suivi de dossier et son accès au dossier synchronisé.
+- [x] Réduire la surcharge en donnant la priorité à l’action suivante et aux informations utiles.
+- [x] Tester les états évaluation, paiement, protocole et suivi, puis publier.

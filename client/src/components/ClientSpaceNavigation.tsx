@@ -80,7 +80,7 @@ export function jinkoClientTrackingFromEnrichment(enrichmentJson: string | null)
 
 type DateFilter = "all" | "7" | "30" | "older";
 
-export default function ClientSpaceNavigation() {
+export default function ClientSpaceNavigation({ compact = false }: { compact?: boolean }) {
   const [, setLocation] = useLocation();
   const { candidate } = useCandidateAuth();
   const dossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, { enabled: Boolean(candidate) });
@@ -109,6 +109,12 @@ export default function ClientSpaceNavigation() {
   });
 
   const dossierNumber = dossierQuery.data?.data?.application?.dossierNumber ?? null;
+  const visibleQuickLinks = quickLinks.filter((link) => {
+    if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
+    if (["Réserver un vol", "Vols favoris"].includes(link.label)) return Boolean(requestsQuery.data?.length);
+    if (link.label === "Mes séjours") return Boolean(hotelRequestsQuery.data?.length);
+    return false;
+  });
   const filteredRequests = useMemo(() => {
     const requests = requestsQuery.data ?? [];
     const now = Date.now();
@@ -130,19 +136,19 @@ export default function ClientSpaceNavigation() {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Espace Client</p>
             <h2 id="client-space-navigation-title" className="mt-1 text-xl font-black text-slate-900">Bonjour {candidate?.fullName || "Candidat"}</h2>
-            <p className="mt-1 text-sm text-slate-600">Retrouvez ici vos dossiers, documents, messages, favoris et demandes de vols.</p>
+            <p className="mt-1 text-sm text-slate-600">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
-              {dossierNumber ? <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
+              {dossierNumber ? <button type="button" onClick={() => setLocation("/mon-espace?section=dossier")} aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</button> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
             </div>
           </div>
-          <Button type="button" variant="outline" onClick={() => setLocation("/")} className="h-12 rounded-xl border-blue-200 font-bold text-blue-800 hover:bg-blue-50">
-            <Home className="mr-2 h-4 w-4" /> Retour au site
+          <Button type="button" onClick={() => setLocation("/mon-espace?section=dossier")} className="h-12 rounded-xl bg-blue-800 font-bold text-white hover:bg-blue-900">
+            <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
           </Button>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          {quickLinks.map(({ href, label, description, icon: Icon, tone }) => (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleQuickLinks.map(({ href, label, description, icon: Icon, tone }) => (
             <a key={href} href={href} className="group min-h-36 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md">
               <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
               <span className="mt-3 block text-sm font-black text-slate-900">{label}</span>
@@ -152,6 +158,7 @@ export default function ClientSpaceNavigation() {
         </div>
       </Card>
 
+      {!compact && <>
       <Card className="border-slate-200 bg-slate-50 p-5 shadow-sm">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-3">
@@ -429,6 +436,7 @@ export default function ClientSpaceNavigation() {
       </Card>
 
       {comparisonRequestId && <Card className="border-sky-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Comparateur transparent</p><h3 className="mt-1 text-base font-black text-slate-900">Devis partenaires vérifiés</h3><p className="mt-1 text-xs text-slate-600">Seuls les devis saisis et vérifiés par l’agence sont affichés. Aucun prix tiers n’est estimé ou inventé.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setComparisonRequestId(null)}>Fermer</Button></div>{partnerQuotesQuery.isLoading ? <p className="mt-4 text-sm text-slate-500">Chargement des devis…</p> : partnerQuotesQuery.data?.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{quote.partnerName}</p><p className="mt-1 text-xs text-slate-500">Vérifié le {new Date(quote.verifiedAt).toLocaleDateString("fr-FR")}</p></div><p className="text-base font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</p></div>{quote.fareDetails && <p className="mt-3 text-xs text-slate-700"><strong>Tarif :</strong> {quote.fareDetails}</p>}{quote.baggageDetails && <p className="mt-2 text-xs text-slate-700"><strong>Bagages :</strong> {quote.baggageDetails}</p>}{quote.terms && <p className="mt-2 text-xs text-slate-600"><strong>Conditions :</strong> {quote.terms}</p>}</div>)}</div> : <p className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">Aucun devis partenaire vérifié n’est encore disponible pour cette réservation. Votre conseiller peut ajouter une comparaison dès réception d’une offre réelle.</p>}</Card>}
+      </>}
     </section>
   );
 }

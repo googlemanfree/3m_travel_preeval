@@ -1905,6 +1905,19 @@ export const candidateRouter = router({
         createdAt: candidate.createdAt,
       },
       activeDossier: activeApp,
+      workflow: {
+        paymentConfirmed: activeApp?.paymentStatus === "SUCCESS",
+        agreementSigned: Boolean(activeApp?.agreementSigned),
+        showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
+        evaluationRequired: candidate.evaluationDeclarationStatus === "not_declared" || candidate.evaluationDeclarationStatus === "refused",
+        requestedService: activeApp
+          ? {
+              destination: activeApp.destination || candidate.destination || null,
+              projectType: (activeApp as any).projectType || clientEvaluations[0]?.projectType || null,
+              dossierNumber: activeApp.dossierNumber,
+            }
+          : null,
+      },
       applications: appRows,
       favoriteFlights: favFlights,
       evaluations: clientEvaluations,
