@@ -25,7 +25,8 @@ function makeRows() {
       from: (table: unknown) => ({
         orderBy: () => ({ limit: async () => [] }),
         limit: async () => table ? [state.account] : [],
-        where: () => ({
+          where: () => ({
+          orderBy: () => ({ limit: async () => [] }),
           limit: async () => [state.account],
         }),
       }),

@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -14,20 +13,28 @@ import {
 import { PaymentModal } from "./PaymentModal";
 import { SecureDocumentUpload } from "./SecureDocumentUpload";
 
+export type DossierProgressStatus =
+  | "nouveau"
+  | "en_evaluation"
+  | "bilan_envoye"
+  | "en_attente_paiement"
+  | "paye"
+  | "documents_requis"
+  | "en_attente_documents"
+  | "documents_recus"
+  | "soumis"
+  | "soumis_agences"
+  | "en_cours"
+  | "recherche_employeur"
+  | "validation_adem"
+  | "en_cours_recrutement"
+  | "contrat_obtenu"
+  | "approuve"
+  | "visa_approuve"
+  | "refuse";
+
 export interface DossierProgressBarProps {
-  status:
-    | "nouveau"
-    | "en_evaluation"
-    | "bilan_envoye"
-    | "en_attente_paiement"
-    | "paye"
-    | "en_attente_documents"
-    | "documents_recus"
-    | "soumis_agences"
-    | "en_cours_recrutement"
-    | "contrat_obtenu"
-    | "visa_approuve"
-    | "refuse";
+  status: DossierProgressStatus;
   createdAt?: Date;
   evaluationCompletedAt?: Date;
   documentsReceivedAt?: Date;
@@ -136,8 +143,32 @@ const STEPS = [
   },
 ];
 
+type SupportedProgressStatus = Exclude<DossierProgressStatus, "documents_requis" | "soumis" | "en_cours" | "recherche_employeur" | "validation_adem" | "approuve">;
+
+export function normalizeProgressStatus(status: DossierProgressStatus | string): SupportedProgressStatus {
+  const mapped: string = (() => {
+    switch (status) {
+      case "documents_requis":
+        return "en_attente_documents";
+      case "soumis":
+        return "soumis_agences";
+      case "en_cours":
+        return "en_evaluation";
+      case "recherche_employeur":
+      case "validation_adem":
+        return "en_cours_recrutement";
+      case "approuve":
+        return "visa_approuve";
+      default:
+        return status;
+    }
+  })();
+
+  return (STEPS.some((step) => step.id === mapped) ? mapped : "nouveau") as SupportedProgressStatus;
+}
+
 export function DossierProgressBar({
-  status,
+  status: rawStatus,
   createdAt,
   evaluationCompletedAt,
   documentsReceivedAt,
@@ -146,12 +177,14 @@ export function DossierProgressBar({
   email = "",
   onPaymentSuccess,
 }: DossierProgressBarProps) {
+  const status = normalizeProgressStatus(rawStatus);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const currentStepIndex = useMemo(() => {
-    return STEPS.findIndex((step) => step.id === status);
+    const index = STEPS.findIndex((step) => step.id === status);
+    return index >= 0 ? index : 0;
   }, [status]);
 
-  const currentStep = STEPS[currentStepIndex];
+  const currentStep = STEPS[currentStepIndex] ?? STEPS[0];
   const progressPercentage = ((currentStepIndex + 1) / STEPS.length) * 100;
 
   const isRefused = status === "refuse";

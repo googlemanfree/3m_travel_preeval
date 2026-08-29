@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { TRPCError } from "@trpc/server";
 import { generateEvaluationReportHTML } from "../evaluationService";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 const draftInput = z.object({
   dossierNumber: z.string().min(1),
@@ -314,6 +315,14 @@ export const evaluationAdminRouter = router({
         if (!db) {
           throw new Error("Base de données non disponible");
         }
+
+        const [application] = await db
+          .select({ agreementSigned: applications.agreementSigned, paymentStatus: applications.paymentStatus })
+          .from(applications)
+          .where(eq(applications.dossierNumber, input.dossierNumber))
+          .limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+        assertApplicationCanEnterStatus(application, input.newStatus);
 
         await db
           .update(applications)

@@ -1836,13 +1836,125 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les régressions, vérifier TypeScript, tester l’accueil et publier le correctif.
 
 ## FAQ, transitions et newsletter publique
-- [ ] Auditer la FAQ existante, les transitions globales et le footer partagé.
-- [ ] Ajouter une FAQ dynamique, accessible et spécifique à l’accueil.
-- [ ] Consolider les transitions fluides entre routes avec respect de la réduction de mouvement.
-- [ ] Ajouter une inscription newsletter sécurisée dans le footer avec consentement, validation et anti-doublon.
-- [ ] Ajouter les tests, vérifier TypeScript, l’accessibilité et publier la version validée.
+- [x] Auditer la FAQ existante, les transitions globales et le footer partagé.
+- [x] Ajouter une FAQ dynamique, accessible et spécifique à l’accueil.
+- [x] Consolider les transitions fluides entre routes avec respect de la réduction de mouvement.
+- [x] Ajouter une inscription newsletter sécurisée dans le footer avec consentement, validation et anti-doublon.
+- [x] Ajouter les tests, vérifier TypeScript, l’accessibilité et publier la version validée.
 
-## Flash du pré-rendu SEO au lancement mobile
-- [x] Ajouter un marqueur JavaScript précoce pour masquer le contenu SEO brut uniquement après activation de l’application.
-- [x] Conserver le pré-rendu et les métadonnées accessibles aux moteurs et aux utilisateurs sans JavaScript.
-- [x] Vérifier le premier rendu mobile sans texte brut, puis publier la correction.
+## Priorités — espace client et inscription
+- [x] Reproduire l’erreur déclenchée par le bouton « Mon dossier » et identifier le contrat ou module fautif.
+- [x] Corriger le chargement de la section dossier sans perdre la session ni exposer de données d’un autre candidat.
+- [x] Vérifier les appels partagés responsables des erreurs visibles sur les autres pages.
+- [x] Simplifier l’inscription avec un parcours clair, validation explicite et redirection fiable vers l’espace client.
+- [x] Ajouter les régressions, vérifier TypeScript, tester les parcours et publier après validation.
+
+## Priorités — évaluation admin, nouvelle évaluation et audit global
+- [x] Auditer la file admin des candidats sans évaluation et le contrat d’édition/envoi existant.
+- [x] Permettre à un administrateur habilité d’éditer, reformuler, prévisualiser et envoyer une évaluation validée dans l’espace client et par e-mail.
+- [x] Corriger le bouton « Nouvelle évaluation » et le parcours préalable des candidats non évalués.
+- [x] Parcourir les routes et CTA publics/protégés pour retirer les liens cassés vers maintenance ou actualisation forcée.
+- [x] Ajouter les régressions de droits, persistance, envoi et navigation ; vérifier TypeScript et publier.
+
+## Prévisualisation du bilan par e-mail
+- [x] Auditer l’éditeur d’évaluation, le contenu sauvegardé et la mutation d’envoi.
+- [x] Ajouter un aperçu fidèle de l’objet et du corps avant envoi définitif.
+- [x] Garantir que l’aperçu ne déclenche aucune notification ni envoi SMTP.
+- [x] Ajouter les tests d’autorisation, de contenu et de non-envoi, puis publier.
+
+## Communication d’évaluation multilingue et traçabilité
+- [x] Auditer les langues disponibles, l’aperçu e-mail et les événements d’envoi/ouverture existants.
+- [x] Ajouter des modèles d’évaluation en français et en anglais, sélectionnables par le conseiller.
+- [x] Ajouter l’impression directe de l’aperçu e-mail sans déclencher d’envoi.
+- [x] Afficher dans le profil candidat un historique détaillé et sécurisé des envois, tests et ouvertures.
+- [x] Ajouter les tests de confidentialité, de langue, d’impression et de traçabilité, puis publier.
+
+## Incident prioritaire — Mon dossier et suivi candidat
+- [x] Reproduire l’erreur de `/mon-espace?section=dossier` et la cible incorrecte du bouton « Mon dossier ».
+- [x] Corriger la route de suivi candidat et synchroniser l’onglet dossier sans perte de session.
+- [x] Remplacer les liens `/evaluation` en maintenance par le parcours d’évaluation réellement opérationnel.
+- [x] Auditer les autres CTA et routes pour les mêmes replis maintenance/actualisation.
+- [x] Ajouter les régressions, vérifier TypeScript, tester les routes et publier la correction.
+
+## Suivi dossier et fiabilisation des parcours — nouvelle demande
+- [x] Ajouter un filtre administrateur « dossiers sans évaluation » avec comptage et état vide explicite.
+- [x] Ajouter une progression visuelle cohérente sur `/mon-dossier` à partir des données serveur, sans inventer d’étape.
+- [x] Ajouter des skeleton loaders accessibles sur la page de suivi et préserver les erreurs récupérables.
+- [x] Remplacer le test avec un compte candidat réel par une validation automatisée de contrat et une vérification publique sans données privées, conformément à la demande de ne pas prendre le contrôle.
+- [x] Vérifier les anciennes URL `.click` et les chemins mémorisés par Cloudflare sans action destructive.
+- [x] Étendre et valider la compétence réutilisable, puis tester TypeScript et publier.
+
+## Régression publique — `/mon-dossier`
+- [x] Reproduire l’écran d’erreur sur le domaine `.com` et isoler le module ou appel qui échoue.
+- [x] Corriger la cause racine du chargement sans masquer une erreur d’autorisation ou de session.
+- [x] Vérifier les variantes `/mon-dossier`, `/mon-espace?section=dossier` et les liens associés.
+- [x] Ajouter les régressions et tests de rendu public, puis publier seulement après validation.
+
+## Régression répétée — `/mon-dossier` après publication
+- [x] Comparer le build public et la prévisualisation pour la route dédiée.
+- [x] Capturer l’exception exacte du navigateur et la requête qui la déclenche.
+- [x] Corriger la cause commune sans remplacer un état de session par un écran générique.
+- [x] Vérifier la diffusion officielle, les anciennes URL et publier une nouvelle révision si nécessaire.
+
+## Protocole d’accord obligatoire et validation des paiements
+- [x] Cartographier les tables, procédures et écrans existants pour l’accord, les paiements et le passage en traitement.
+- [x] Ajouter la persistance sécurisée de la signature du protocole avec horodatage, identité et version du document.
+- [x] Afficher le protocole dans l’espace client et empêcher le traitement tant qu’il n’est pas signé.
+- [x] Ajouter côté administrateur une validation simple et traçable des paiements effectués en agence ou déjà réglés en ligne.
+- [x] Synchroniser le statut de signature, le statut de paiement et le déblocage documentaire entre client et administration.
+- [x] Écrire les tests d’autorisation et de règles métier, vérifier TypeScript et publier après validation.
+
+## Contrôles visibles protocole, paiement agence et évaluation déjà reçue
+- [x] Ajouter un bouton client pour visualiser ou télécharger le protocole signé et accéder à l’étape suivante autorisée.
+- [x] Ajouter un bouton admin explicite « Valider paiement en agence » avec note et audit.
+- [x] Ajouter un bouton admin « Évaluation déjà reçue » avec note candidate déjà évalué et synchronisation côté client.
+- [x] Tester les trois parcours et publier la correction.
+
+## Régression connexion — réponse serveur incompatible
+- [x] Reproduire et identifier la procédure ou réponse qui déclenche « Unable to transform response from server ».
+- [x] Rendre le contrat de synchronisation tolérant aux réponses partielles ou anciennes sans perdre la session.
+- [x] Vérifier les actions Réessayer et Conserver ma session avec une session de 24 heures.
+- [x] Ajouter les tests de régression, publier et vérifier le domaine officiel.
+
+## Connexion — correction sans contrôle manuel
+- [x] Remplacer le contrôle candidat manuel par des tests automatisés de contrat et une vérification publique sans données privées.
+- [x] Vérifier qu’aucune réponse incompatible ne produit l’écran « Votre espace ne répond pas encore » pour une session conservée.
+- [x] Publier la correction finale de connexion.
+
+## Confirmation paiement agence et PDF protocole signé
+- [x] Afficher une notification visuelle de succès après validation admin d’un paiement manuel en agence.
+- [x] Ajouter un téléchargement PDF direct et sécurisé du protocole d’accord signé côté client.
+- [x] Ajouter les tests de régression, vérifier TypeScript et publier la mise à jour.
+
+## Simplification évaluation, protocole visible et paiement agence
+- [x] Remplacer l’interface d’évaluation admin dépendante de l’IA par un champ de saisie manuelle et une action d’envoi.
+- [x] Vérifier que l’espace client affiche systématiquement le protocole à signer lorsqu’il est requis, avec accès clair à la signature.
+- [x] Ajouter ou rendre visible l’action admin de validation du paiement en agence pour chaque candidat.
+- [x] Tester la synchronisation client-admin, vérifier TypeScript et publier la mise à jour.
+
+## Évaluation bloc-notes et progression séquentielle
+- [x] Agrandir l’éditeur admin en bloc-notes confortable avec rédaction manuelle et conservation du brouillon.
+- [x] Garantir l’envoi du bilan rédigé dans l’espace client et par e-mail après validation humaine.
+- [x] Bloquer tout dossier non évalué ou non validé avant l’étape suivante.
+- [x] Faire avancer explicitement l’étape après validation de l’évaluation, sans sauter d’étape.
+- [x] Ajouter les tests de progression, vérifier TypeScript et publier.
+
+## Validation manuelle du paiement et des étapes administratives
+- [x] Vérifier l’accessibilité et le fonctionnement du bouton admin de validation du paiement en agence.
+- [x] Afficher une action claire de validation pour l’étape courante de chaque candidat.
+- [x] Permettre à l’administrateur de faire avancer le dossier uniquement vers l’étape suivante, avec confirmation et audit.
+- [x] Synchroniser immédiatement le statut validé dans l’espace client.
+- [x] Tester les autorisations, les prérequis et les transitions, puis publier.
+
+## Annulation sécurisée d’une validation administrative
+- [x] Limiter l’annulation à la dernière étape validée et calculer automatiquement l’étape précédente.
+- [x] Exiger un motif explicite et une confirmation avant toute annulation.
+- [x] Journaliser l’auteur, l’ancien statut, le nouveau statut et le motif sans supprimer l’historique.
+- [x] Synchroniser le retour d’étape dans l’espace client et notifier le candidat si demandé.
+- [x] Ajouter les tests d’autorisation et de non-contournement, vérifier TypeScript et publier.
+
+## Rendu initial — flash footer et écran bleu
+- [x] Identifier le composant ou HTML de chargement qui affiche le footer avant le header.
+- [x] Garantir l’ordre de rendu header → contenu principal → footer au rechargement.
+- [x] Supprimer l’écran bleu d’informations d’agence pendant le chargement initial.
+- [x] Ajouter les tests de rechargement, vérifier le rendu public et publier.

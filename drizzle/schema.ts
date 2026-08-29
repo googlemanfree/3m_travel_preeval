@@ -6,6 +6,7 @@ export * from "./evisaCatalogueSchema";
 export * from "./routeHealthSchema";
 export * from "./richTextSchema";
 export * from "./footerEngagementSchema";
+export * from "./newsletterSchema";
 export * from "./placementPortalSchema";
 export * from "./securityMfaSchema";
 
@@ -1237,6 +1238,7 @@ export const evaluationEmails = mysqlTable("evaluation_emails", {
   visaType: varchar("visaType", { length: 100 }).notNull(),
   // Email tracking
   emailType: mysqlEnum("emailType", ["admissibility_report", "reminder", "follow_up"]).default("admissibility_report").notNull(),
+  language: mysqlEnum("language", ["fr", "en"]).default("fr").notNull(),
   scheduledAt: timestamp("scheduledAt").notNull(),  // Quand l'email doit être envoyé (createdAt + 48h)
   sentAt: timestamp("sentAt"),  // Quand l'email a été effectivement envoyé
   status: mysqlEnum("status", ["pending", "sent", "failed", "bounced"]).default("pending").notNull(),

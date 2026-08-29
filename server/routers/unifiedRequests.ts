@@ -44,6 +44,7 @@ const evaluationDraftSchema = z.object({
   message: z.string().trim().max(12000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
+  language: z.enum(["fr", "en"]).default("fr"),
 });
 
 function isProvisionalEvaluationReference(reference: string) {
@@ -137,7 +138,7 @@ type EvaluationReviewCandidate = {
   dossierStatus: string;
 };
 
-export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date()): Array<T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean }> {
+export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date(), filter: "all" | "without_evaluation" = "all"): Array<T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean }> {
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(now); end.setHours(23, 59, 59, 999);
   return applicationsToReview.map((application) => {
@@ -150,7 +151,7 @@ export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationRevie
     const reviewOverdue = !advisorValidated && reviewDeadline <= now;
     const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end) || reviewOverdue);
     return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict), reviewDeadline, reviewOverdue };
-  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && application.hasDraft && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, hasDraft: _hasDraft, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean });
+  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && !application.advisorValidated && application.relevantToday && (filter === "all" || !application.hasDraft)).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean; hasDraft: boolean });
 }
 
 export function calculateAdvisorWorkload(
@@ -235,6 +236,7 @@ async function ensureManagedRequest(source: SourceSnapshot) {
 }
 
 const sessionInput = z.object({ sessionToken: z.string().min(20) });
+const evaluationQueueInput = sessionInput.extend({ filter: z.enum(["all", "without_evaluation"]).default("all") });
 
 export const unifiedRequestsRouter = router({
   list: publicProcedure
@@ -351,7 +353,7 @@ export const unifiedRequestsRouter = router({
       const adminDraft = details.adminDraft ?? {};
       const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, contentJson: evaluationBilanVersions.contentJson, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versions = await Promise.all(rawVersions.map(async (version) => ({ ...version, pdfUrl: version.pdfKey ? await storageGetSignedUrl(version.pdfKey) : null })));
-      return { application, versions, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", profileSummary: adminDraft.profileSummary ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify : [], nextAdminAction: adminDraft.nextAdminAction ?? "", message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M Travel" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`), requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
+      return { application, versions, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", profileSummary: adminDraft.profileSummary ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify : [], nextAdminAction: adminDraft.nextAdminAction ?? "", message: application.evaluationDeliveryMessage ?? "", language: adminDraft.language === "en" ? "en" : "fr", subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M Travel" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`), requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
     }),
 
   previewEvaluationDeliveryEmail: publicProcedure
@@ -436,7 +438,7 @@ export const unifiedRequestsRouter = router({
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
-      const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
+      const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
       const messageHtml = input.message ? sanitizeRichTextHtml(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
@@ -537,7 +539,7 @@ export const unifiedRequestsRouter = router({
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
       const emailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
-      const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: application.visaType || "Évaluation de profil", emailType: "admissibility_report", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });
+      const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: application.visaType || "Évaluation de profil", emailType: "admissibility_report", language: deliveryDraft.language === "en" ? "en" : "fr", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });
       const trackingEmailId = Number((insertedTracking as any)[0]?.insertId ?? 0);
       const availabilityHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
       try {
@@ -692,14 +694,14 @@ export const unifiedRequestsRouter = router({
     }),
 
   evaluationReviewsToday: publicProcedure
-    .input(sessionInput)
+    .input(evaluationQueueInput)
     .query(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const candidates = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, destination: applications.destination, scoringTotal: applications.scoringTotal, adminAssignedTo: applications.adminAssignedTo, evaluationScheduledAt: applications.evaluationScheduledAt, createdAt: applications.createdAt, updatedAt: applications.updatedAt, scoringDetails: applications.scoringDetails, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, dossierStatus: applications.dossierStatus }).from(applications).orderBy(desc(applications.updatedAt)).limit(500);
       const now = new Date();
-      const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now);
+      const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now, input.filter);
       return { generatedAt: now, total: rows.length, rows };
     }),
 });

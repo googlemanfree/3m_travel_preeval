@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -19,6 +19,7 @@ import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -1699,6 +1700,21 @@ export const adminRouter = router({
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
+          const statusSequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
+          const currentStatus: (typeof statusSequence)[number] = ["bilan_envoye", "en_attente_paiement"].includes(app.dossierStatus)
+            ? "PUBLISHED"
+            : ["paye", "en_attente_documents", "documents_recus"].includes(app.dossierStatus)
+              ? "DOCUMENTS_CHECK"
+              : ["soumis_agences", "en_cours_recrutement", "contrat_obtenu"].includes(app.dossierStatus)
+                ? "SUBMITTED"
+                : app.dossierStatus === "visa_approuve" ? "APPROVED" : "PENDING_48H";
+          const currentIndex = statusSequence.indexOf(currentStatus);
+          const targetIndex = statusSequence.indexOf(input.newStatus);
+          if (targetIndex !== currentIndex + 1) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
+          }
+          assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
+
           await db.update(applications)
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
@@ -1706,6 +1722,8 @@ export const adminRouter = router({
               lastStatusUpdatedBy: admin.fullName || "Admin",
             })
             .where(eq(applications.id, id));
+
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "online", dossierNumber: app.dossierNumber, manualValidation: true }) });
 
           candidateEmail = app.email;
           candidateName = app.fullName;
@@ -1723,6 +1741,20 @@ export const adminRouter = router({
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
 
+          const statusSequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
+          const currentStatus: (typeof statusSequence)[number] = dossier.status === "en_cours"
+            ? "PUBLISHED"
+            : ["documents_requis", "documents_recus"].includes(dossier.status)
+              ? "DOCUMENTS_CHECK"
+              : ["soumis", "recherche_employeur", "validation_adem", "contrat_obtenu"].includes(dossier.status)
+                ? "SUBMITTED"
+                : dossier.status === "approuve" ? "APPROVED" : "PENDING_48H";
+          const currentIndex = statusSequence.indexOf(currentStatus);
+          const targetIndex = statusSequence.indexOf(input.newStatus);
+          if (targetIndex !== currentIndex + 1) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
+          }
+
           await db.update(agencyDossiers)
             .set({
               status: internalStatusMap[input.newStatus] as any,
@@ -1730,6 +1762,8 @@ export const adminRouter = router({
               lastStatusChangeBy: admin.fullName || "Admin",
             })
             .where(eq(agencyDossiers.id, id));
+
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true }) });
 
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;
@@ -1786,6 +1820,99 @@ export const adminRouter = router({
           message: "Erreur lors de la mise à jour du statut",
         });
       }
+    }),
+
+  revertCandidateStatus: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string(),
+      reason: z.string().trim().min(5).max(1000),
+      notifyClient: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+
+      const sequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
+      const labels: Record<(typeof sequence)[number], string> = {
+        PENDING_48H: "Évaluation sous 48h",
+        PUBLISHED: "Bilan Consulaire Disponible",
+        DOCUMENTS_CHECK: "Collecte des documents",
+        SUBMITTED: "Soumission consulaire",
+        APPROVED: "Visa Accordé",
+      };
+      let currentStatus: (typeof sequence)[number];
+      let previousStatus: (typeof sequence)[number];
+      let candidateEmail = "";
+      let candidateName = "";
+      let dossierNumber = "";
+
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+        currentStatus = ["bilan_envoye", "en_attente_paiement"].includes(application.dossierStatus)
+          ? "PUBLISHED"
+          : ["paye", "en_attente_documents", "documents_recus"].includes(application.dossierStatus)
+            ? "DOCUMENTS_CHECK"
+            : ["soumis_agences", "en_cours_recrutement", "contrat_obtenu"].includes(application.dossierStatus)
+              ? "SUBMITTED"
+              : application.dossierStatus === "visa_approuve" ? "APPROVED" : "PENDING_48H";
+        const currentIndex = sequence.indexOf(currentStatus);
+        if (currentIndex <= 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune validation précédente ne peut être annulée." });
+        previousStatus = sequence[currentIndex - 1];
+        const internalStatus: Record<(typeof sequence)[number], string> = { PENDING_48H: "en_evaluation", PUBLISHED: "bilan_envoye", DOCUMENTS_CHECK: "en_attente_documents", SUBMITTED: "soumis_agences", APPROVED: "visa_approuve" };
+        await db.update(applications).set({ dossierStatus: internalStatus[previousStatus] as any, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || "Admin" }).where(eq(applications.id, reference.id));
+        candidateEmail = application.email;
+        candidateName = application.fullName;
+        dossierNumber = application.dossierNumber;
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
+        currentStatus = dossier.status === "en_cours"
+          ? "PUBLISHED"
+          : ["documents_requis", "documents_recus"].includes(dossier.status)
+            ? "DOCUMENTS_CHECK"
+            : ["soumis", "recherche_employeur", "validation_adem", "contrat_obtenu"].includes(dossier.status)
+              ? "SUBMITTED"
+              : dossier.status === "approuve" ? "APPROVED" : "PENDING_48H";
+        const currentIndex = sequence.indexOf(currentStatus);
+        if (currentIndex <= 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune validation précédente ne peut être annulée." });
+        previousStatus = sequence[currentIndex - 1];
+        const internalStatus: Record<(typeof sequence)[number], string> = { PENDING_48H: "nouveau", PUBLISHED: "en_cours", DOCUMENTS_CHECK: "documents_requis", SUBMITTED: "soumis", APPROVED: "approuve" };
+        await db.update(agencyDossiers).set({ status: internalStatus[previousStatus] as any, lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.fullName || "Admin" }).where(eq(agencyDossiers.id, reference.id));
+        candidateEmail = dossier.email;
+        candidateName = dossier.fullName;
+        dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
+      }
+
+      await db.insert(adminActivityLogs).values({
+        adminEmail: admin.email,
+        action: "status_changed",
+        evaluationType: "candidate_workflow_rollback",
+        evaluationId: String(reference.id),
+        oldStatus: currentStatus,
+        newStatus: previousStatus,
+        details: JSON.stringify({ source: reference.source, dossierNumber, reason: input.reason.trim(), secureRollback: true }),
+      });
+
+      let notificationSent = false;
+      if (input.notifyClient && candidateEmail) {
+        try {
+          await sendGenericEmail({
+            to: candidateEmail,
+            subject: `Correction du suivi de votre dossier ${dossierNumber}`,
+            html: `<p>Bonjour ${candidateName},</p><p>Une correction administrative a été appliquée au suivi de votre dossier <strong>${dossierNumber}</strong>.</p><p>Étape active : <strong>${labels[previousStatus]}</strong>.</p><p>Motif communiqué : ${input.reason.trim()}</p><p>Consultez votre espace client : <a href="https://www.3mtravelagency.com/mon-espace">www.3mtravelagency.com/mon-espace</a>.</p>`,
+          });
+          notificationSent = true;
+        } catch (emailError) {
+          console.error("[Admin Revert Candidate Status] Email notification failed:", emailError);
+        }
+      }
+
+      return { success: true, previousStatus, previousStatusLabel: labels[previousStatus], notificationSent };
     }),
 
   /**
@@ -2077,6 +2204,7 @@ export const adminRouter = router({
           const [account] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
           if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
           const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
+          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
           return {
             success: true,
             candidate: {
@@ -2092,6 +2220,7 @@ export const adminRouter = router({
               status: "PENDING_48H",
               internalStatus: account.dossierStatus,
               source: "ACCOUNT_ONLY" as const,
+              emailHistory,
               scoringTotal: null,
               scoringBadge: null,
               scoringData: null,
@@ -2121,6 +2250,7 @@ export const adminRouter = router({
           const docs = await db.select().from(clientDocuments)
             .where(eq(clientDocuments.candidateEmail, app.email))
             .limit(50);
+          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, app.id)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
 
           const mapStatus = (status: string): string => {
             const mapping: Record<string, string> = {
@@ -2160,6 +2290,7 @@ export const adminRouter = router({
               status: mapStatus(app.dossierStatus),
               internalStatus: app.dossierStatus,
               source: "WEB" as const,
+              emailHistory,
               scoringTotal: app.scoringTotal,
               scoringBadge: app.scoringBadge,
               scoringData,

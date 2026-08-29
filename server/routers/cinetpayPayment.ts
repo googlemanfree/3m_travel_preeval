@@ -121,7 +121,7 @@ export const cinetpayPaymentRouter = router({
           paymentStatus: "SUCCESS",
           paymentDate: new Date(),
           paymentMethod: verification.paymentMethod || null,
-          dossierStatus: "paye",
+          dossierStatus: application.agreementSigned ? "paye" : application.dossierStatus,
         }).where(and(eq(applications.id, application.id), eq(applications.paymentStatus, "PENDING")));
         return { success: true, status: "SUCCESS" as const };
       }

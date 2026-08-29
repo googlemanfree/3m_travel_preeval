@@ -11,7 +11,7 @@ import { resetPwaCache } from "@/lib/pwaClient";
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
   { href: "/flights#3m-booking", label: "Mes séjours", description: "Suivre une demande d’hôtel", icon: BedDouble, tone: "bg-orange-50 text-orange-700" },
-  { href: "/mon-dossier", label: "Suivre mon dossier", description: "Ouvrir automatiquement votre dossier actif", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
+  { href: "/mon-dossier", label: "Mon dossier", description: "Suivre votre dossier actif et ses étapes", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
   { href: "/document-upload", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
   { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700" },
   { href: "/evisas", label: "Destinations", description: "Explorer les procédures e-Visa", icon: Plane, tone: "bg-amber-50 text-amber-700" },
@@ -133,7 +133,7 @@ export default function ClientSpaceNavigation() {
             <p className="mt-1 text-sm text-slate-600">Retrouvez ici vos dossiers, documents, messages, favoris et demandes de vols.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
-              {dossierNumber ? <a href="/mon-dossier" aria-label={`Suivre automatiquement le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
+              {dossierNumber ? <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
             </div>
           </div>
           <Button type="button" variant="outline" onClick={() => setLocation("/")} className="h-12 rounded-xl border-blue-200 font-bold text-blue-800 hover:bg-blue-50">

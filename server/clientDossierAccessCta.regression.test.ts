@@ -15,7 +15,7 @@ describe("CTA public et accès direct au dossier connecté", () => {
 
   it("conserve le raccourci de dossier dans l’espace client sans nouvelle authentification", () => {
     expect(clientNavigationSource).toContain('href: "/mon-dossier"');
-    expect(clientNavigationSource).toContain("Ouvrir automatiquement votre dossier actif");
+    expect(clientNavigationSource).toContain("Suivre votre dossier actif et ses étapes");
   });
 
   it("renforce la taille du titre et du texte d’introduction du hero", () => {

@@ -97,11 +97,13 @@ export default function Register() {
       localStorage.setItem("registrationEvaluationDeclaration", form.evaluationAlreadyCompleted);
       // Aucun JWT candidat n’est créé avant la validation du lien d’activation.
       sessionStorage.removeItem("3m_candidate_token");
-      // Attendre 2 secondes avant d’afficher l’écran d’activation
-      setTimeout(() => {
-        toast.success("Compte créé ! Un lien d’activation a été envoyé à votre adresse email.");
-        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
-      }, 2000);
+      const activationEmailSent = data.activationEmailSent !== false;
+      toast[activationEmailSent ? "success" : "warning"](
+        activationEmailSent
+          ? "Compte créé ! Consultez votre boîte e-mail pour l’activer."
+          : "Compte créé. Utilisez le renvoi sécurisé si l’e-mail n’arrive pas.",
+      );
+      navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
     },
     onError: (err) => {
       // Améliorer la gestion des erreurs

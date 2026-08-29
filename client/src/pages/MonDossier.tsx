@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
 import { DossierProgressBar } from "@/components/DossierProgressBar";
 import SignatureCanvas from "@/components/SignatureCanvas";
@@ -355,10 +356,14 @@ export default function MonDossier() {
               </CardContent>
             </Card>
           ) : isLoading ? (
-            <div className="text-center py-16">
-              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Chargement de votre dossier...</p>
-            </div>
+            <section className="space-y-6" aria-busy="true" aria-live="polite" aria-label="Chargement du suivi de dossier">
+              <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4"><div className="space-y-2"><Skeleton className="h-4 w-36 bg-blue-100" /><Skeleton className="h-7 w-56 bg-blue-100" /><Skeleton className="h-4 w-72 max-w-full bg-blue-100" /></div><Skeleton className="h-14 w-14 rounded-full bg-blue-100" /></div>
+                <div className="mt-6 space-y-2"><div className="flex justify-between"><Skeleton className="h-3 w-32 bg-blue-100" /><Skeleton className="h-3 w-12 bg-blue-100" /></div><Skeleton className="h-3 w-full bg-blue-100" /></div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2"><Card><CardContent className="space-y-3 p-6"><Skeleton className="h-4 w-28" /><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-36" /></CardContent></Card><Card><CardContent className="space-y-3 p-6"><Skeleton className="h-4 w-32" /><Skeleton className="h-8 w-40" /><Skeleton className="h-4 w-52" /></CardContent></Card></div>
+              <p className="text-center text-sm font-medium text-slate-600">Chargement sécurisé de votre suivi…</p>
+            </section>
           ) : dossier ? (
             dossier.trackingKind === "evaluation" ? <Card className="mx-auto max-w-2xl overflow-hidden border-0 shadow-md"><div className="bg-gradient-to-r from-[#0B2A52] to-[#1E4D8F] p-6 text-white"><p className="text-sm font-semibold text-blue-100">Suivi de votre évaluation</p><h2 className="mt-1 text-2xl font-bold">{dossier.dossierNumber}</h2><p className="mt-2 text-blue-50">Votre demande a bien été enregistrée. Un conseiller vérifie les éléments déclarés avant toute réponse.</p></div><CardContent className="space-y-4 p-6"><div className="rounded-lg border border-amber-200 bg-amber-50 p-4"><p className="font-semibold text-amber-950">{dossier.evaluationReviewState === "reviewed" ? "Revue enregistrée" : "Revue en cours"}</p><p className="mt-1 text-sm text-amber-900">{dossier.evaluationReviewState === "reviewed" ? "Votre conseiller a enregistré la revue. Consultez votre espace candidat ou vos e-mails pour toute réponse validée." : "Votre évaluation est dans la file de revue. Aucune décision ni réponse définitive n’est produite automatiquement."}</p></div><p className="text-sm text-slate-600">Destination déclarée : <strong>{dossier.destination}</strong></p><p className="text-xs text-slate-500">Le suivi par référence et adresse e-mail protège l’accès à vos informations. Les documents, notes internes et brouillons ne sont jamais affichés ici.</p><Button type="button" variant="outline" className="w-full" onClick={() => { setCredentials(null); setSubmitted(false); setDossierNumber(""); setEmail(""); }}>Consulter un autre dossier</Button></CardContent></Card> : <div className="space-y-6">
               {/* Barre de progression visuelle */}

@@ -287,11 +287,18 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.evaluationDeclarationStatus !== "validated") {
-        throw new TRPCError({ code: "CONFLICT", message: "L’évaluation doit être validée par un conseiller avant sa remise." });
+      const body = input.message.trim();
+      const manualReviewNote = "Évaluation préparée, vérifiée et validée manuellement par l’administration lors de la remise au candidat.";
+      if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
+        await db.update(candidates).set({
+          evaluationDeclarationStatus: "validated",
+          evaluationDeclaredAt: candidate.evaluationDeclaredAt ?? new Date(),
+          evaluationReviewedAt: new Date(),
+          evaluationReviewedBy: admin.email,
+          evaluationReviewNote: manualReviewNote,
+        }).where(eq(candidates.id, candidate.id));
       }
 
-      const body = input.message.trim();
       const notificationResult = await db.insert(clientNotifications).values({
         candidateId: candidate.id,
         type: "evaluation_delivered",
@@ -321,7 +328,7 @@ export const adminCandidateManagementRouter = router({
         await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
       }
 
-      return { success: true, deliveredToClientSpace: true, emailSent, deliveredBy: admin.email };
+      return { success: true, deliveredToClientSpace: true, emailSent, deliveredBy: admin.email, evaluationValidatedManually: true, reviewNote: manualReviewNote };
     }),
 
   activatePreDossierAccount: publicProcedure

@@ -22,12 +22,16 @@ describe("lazy page timeout recovery contracts", () => {
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
     // Les pages de service et les articles d’études sont chargés à la demande.
+    // La fiche publique de procédure et le suivi critique Mon dossier restent
+    // des exceptions volontaires : ils sont chargés directement afin de ne pas
+    // exposer les destinations ou le suivi à un écran blanc en cas de délai de
+    // récupération d’un module.
     // La fiche publique de procédure reste une exception volontaire : elle est
     // chargée directement afin de ne pas exposer les 107 destinations à un
     // écran blanc en cas de délai de récupération d’un module. La page
     // historique submit-review est désormais une redirection, non une page
     // chargée à la demande.
-    expect(lazyImports.length).toBeGreaterThanOrEqual(95);
+    expect(lazyImports.length).toBeGreaterThanOrEqual(94);
     expect(app).toContain('import CountryDetailPage from "./pages/CountryDetailPage"');
     expect(app).not.toContain('const CountryDetailPage = lazyWithTimeout');
     for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {

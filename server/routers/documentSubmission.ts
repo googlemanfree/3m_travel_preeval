@@ -7,6 +7,7 @@ import { z } from "zod";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
 import { classifyDocument, classifyMultipleDocuments } from "../documentClassificationService";
 import { candidateProcedure } from "./candidate";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 export const documentSubmissionRouter = router({
   analyzeDocumentReadability: publicProcedure
@@ -99,6 +100,12 @@ export const documentSubmissionRouter = router({
 
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
+      if (!app.agreementSigned) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole d’accord doit être signé avant la transmission des documents." });
+      }
+      if (app.paymentStatus !== "SUCCESS") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être confirmé avant la transmission des documents." });
+      }
       if (app.dossierStatus !== "en_attente_documents" && app.dossierStatus !== "en_attente_paiement") {
         throw new TRPCError({ 
           code: "BAD_REQUEST", 
@@ -172,6 +179,7 @@ export const documentSubmissionRouter = router({
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
 
       const newStatus = input.verified ? "soumis_agences" : "en_attente_documents";
+      assertApplicationCanEnterStatus(app, newStatus);
 
       await db.update(applications)
         .set({

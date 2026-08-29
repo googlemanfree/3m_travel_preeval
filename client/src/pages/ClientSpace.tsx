@@ -112,7 +112,7 @@ export default function ClientSpace() {
           </Card>
           <Card className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
             <Button
-              onClick={() => setLocation('/evaluation-ia')}
+              onClick={() => setLocation('/evaluation')}
               className="w-full bg-white text-purple-600 hover:bg-gray-100"
             >
               Nouvelle évaluation

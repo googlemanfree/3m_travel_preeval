@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard, Settings, Gauge, ZapOff } from "lucide-react";
@@ -21,6 +22,52 @@ import { DocumentsStatus } from "@/components/DocumentsStatus";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 import { type AnimationPreference } from "@shared/animationPreferences";
 import { DossierOverview } from "@/components/DossierOverview";
+import SignatureCanvas from "@/components/SignatureCanvas";
+import { jsPDF } from "jspdf";
+
+const escapeAgreementHtml = (value: unknown) => String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#039;" })[character] ?? character);
+
+function downloadSignedAgreementPdf(application: { dossierNumber?: string | null; agreementSignatureName?: string | null; agreementSignedAt?: number | null }) {
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  const margin = 20;
+  const contentWidth = 170;
+  const signedDate = application.agreementSignedAt ? new Date(Number(application.agreementSignedAt) * 1000).toLocaleString("fr-FR") : "—";
+  const writeParagraph = (text: string, y: number, size = 11) => {
+    pdf.setFontSize(size);
+    const lines = pdf.splitTextToSize(text, contentWidth);
+    pdf.text(lines, margin, y);
+    return y + lines.length * (size * 0.48) + 7;
+  };
+  pdf.setTextColor(15, 36, 96);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(18);
+  pdf.text("3M Travel & Services SARL", margin, 25);
+  pdf.setDrawColor(201, 151, 43);
+  pdf.setLineWidth(1);
+  pdf.line(margin, 31, 190, 31);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(13);
+  pdf.text("Protocole d’accord de service — copie signée", margin, 42);
+  pdf.setFillColor(243, 246, 251);
+  pdf.roundedRect(margin, 50, contentWidth, 31, 3, 3, "F");
+  pdf.setTextColor(30, 41, 59);
+  pdf.setFontSize(10);
+  pdf.text(`Dossier : ${application.dossierNumber || "—"}`, margin + 6, 60);
+  pdf.text(`Signataire : ${application.agreementSignatureName || "Candidat"}`, margin + 6, 68);
+  pdf.text(`Date de signature : ${signedDate}`, margin + 6, 76);
+  pdf.setTextColor(30, 41, 59);
+  let y = 98;
+  y = writeParagraph("Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale du candidat. 3M Travel & Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.", y);
+  y = writeParagraph("Le candidat s’engage à transmettre des informations exactes, à fournir les pièces demandées et à signaler toute modification de sa situation. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.", y);
+  y = writeParagraph("La signature confirme la lecture et l’acceptation de ce protocole pour le dossier référencé. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.", y);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Statut : protocole signé et enregistré dans le dossier.", margin, y + 5);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(71, 85, 105);
+  pdf.text("Document généré depuis l’espace client sécurisé — 3M Travel & Services", margin, 282);
+  pdf.save(`protocole-signe-${application.dossierNumber || "dossier"}.pdf`);
+}
 
 // Composant onglet Paiements
 function PaymentsTab({ dossierNumber }: { dossierNumber?: string }) {
@@ -119,6 +166,9 @@ export default function MySpace() {
   const [pipelineSteps, setPipelineSteps] = useState<StatusStep[]>([]);
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [agreementSignatureName, setAgreementSignatureName] = useState("");
+  const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
   const { preference: animationPreference, setPreference: setAnimationPreference } = useAnimationPreferences();
 
   // Récupérer les données du dossier
@@ -128,6 +178,23 @@ export default function MySpace() {
   );
   const trpcUtils = trpc.useUtils();
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
+    onSuccess: async () => {
+      toast.success("Protocole d’accord signé et enregistré.");
+      setAgreementAccepted(false);
+      setAgreementSignatureName("");
+      setAgreementSignatureDataUrl(null);
+      await trpcUtils.candidate.getMyDossierData.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message || "La signature n’a pas pu être enregistrée."),
+  });
+
+  useEffect(() => {
+    const application = dossierData?.data?.application;
+    if (dossierData?.success && application && !application.agreementSigned) {
+      setActiveTab("agreement");
+    }
+  }, [dossierData]);
 
   // Rediriger si non authentifié
   useEffect(() => {
@@ -466,7 +533,7 @@ export default function MySpace() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="tracking">Suivi</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -683,29 +750,39 @@ export default function MySpace() {
 
           {/* Accord */}
           <TabsContent value="agreement" className="space-y-6">
-            <Card>
+            <Card className="border-blue-100 shadow-sm">
               <CardHeader>
-                <CardTitle>Accord de service</CardTitle>
+                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-blue-700" /> Protocole d’accord de service</CardTitle>
+                <CardDescription>Ce document doit être consulté et signé avant tout passage du dossier en traitement.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Vous devez accepter nos conditions d'utilisation pour continuer.
-                  </p>
-                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    {app?.agreementSigned ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-700">Accord signé le {app.agreementSignedAt ? new Date(app.agreementSignedAt).toLocaleDateString('fr-FR') : '—'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        <span className="text-amber-700">Accord non signé</span>
-                      </>
-                    )}
+              <CardContent className="space-y-5">
+                {app?.agreementSigned ? (
+                  <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+                    <div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">Signature enregistrée le {app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleDateString("fr-FR") : "—"} par {app.agreementSignatureName || "le candidat"}. Le dossier peut progresser selon les autres validations requises.</p><div className="mt-4 flex flex-wrap gap-2"><Button type="button" variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-100" onClick={() => { const popup = window.open("", "_blank", "noopener,noreferrer,width=800,height=900"); if (!popup) { toast.error("Autorisez les fenêtres contextuelles pour visualiser le protocole."); return; } const signedDate = app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleString("fr-FR") : "—"; popup.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole signé — ${escapeAgreementHtml(app.dossierNumber)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:40px auto;padding:0 24px;color:#10234f;line-height:1.6}h1{color:#0f2460}header{border-bottom:3px solid #c9972b;padding-bottom:16px;margin-bottom:28px}.meta{background:#f3f6fb;padding:16px;margin:20px 0}button{background:#0f2460;color:white;border:0;padding:12px 18px;border-radius:6px}@media print{button{display:none}}</style></head><body><header><h1>3M Travel &amp; Services SARL</h1><p>Protocole d’accord de service — copie signée</p></header><div class="meta"><strong>Dossier :</strong> ${escapeAgreementHtml(app.dossierNumber)}<br><strong>Signataire :</strong> ${escapeAgreementHtml(app.agreementSignatureName || "Candidat")}<br><strong>Date de signature :</strong> ${escapeAgreementHtml(signedDate)}</div><p>Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale. 3M Travel &amp; Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p><p>Le candidat s’engage à transmettre des informations exactes et les pièces demandées. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.</p><p>La signature confirme la lecture et l’acceptation du protocole pour le dossier référencé. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.</p><p><strong>Statut :</strong> protocole signé et enregistré dans le dossier.</p><button onclick="window.print()">Imprimer / enregistrer en PDF</button></body></html>`); popup.document.close(); popup.focus(); }}><Download className="mr-2 h-4 w-4" /> Visualiser le protocole signé</Button><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-50" onClick={() => downloadSignedAgreementPdf(app)}><Download className="mr-2 h-4 w-4" /> Télécharger le PDF signé</Button><Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" onClick={() => setActiveTab(app.paymentStatus === "SUCCESS" ? "documents" : "payments")}>{app.paymentStatus === "SUCCESS" ? "Passer aux documents" : "Passer au paiement"}</Button></div></div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord">
+                      <p className="font-bold text-slate-950">Protocole d’accord — 3M Travel & Services SARL</p>
+                      <p className="mt-3">Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale du candidat. 3M Travel & Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p>
+                      <p className="mt-3">Le candidat s’engage à transmettre des informations exactes, à fournir les pièces demandées et à signaler toute modification de sa situation. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.</p>
+                      <p className="mt-3">La signature confirme la lecture et l’acceptation de ce protocole pour le dossier référencé ci-dessus. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.</p>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                      <input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} />
+                      <span>Je confirme avoir lu le protocole, compris ses limites et autorise 3M Travel & Services à poursuivre l’instruction humaine de mon dossier.</span>
+                    </label>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div><label htmlFor="myspace-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><Input id="myspace-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} placeholder="Votre nom complet" className="mt-1" disabled={signAgreementMutation.isPending} /></div>
+                      <div><p className="text-sm font-semibold text-slate-800">Signature manuscrite</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div>
+                    </div>
+                    <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !app?.dossierNumber || signAgreementMutation.isPending} onClick={() => app?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: app.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>
+                      {signAgreementMutation.isPending ? "Enregistrement de la signature…" : "Signer le protocole d’accord"}
+                    </Button>
+                    <p className="text-xs text-slate-500">Tant que cette étape n’est pas signée, le dossier reste bloqué avant traitement, même si un paiement a déjà été reçu.</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
