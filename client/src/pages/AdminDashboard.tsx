@@ -187,6 +187,12 @@ function getNextAdminStatus(status?: string): AdminStatus | null {
   return ADMIN_STATUS_SEQUENCE[currentIndex + 1] ?? null;
 }
 
+function getPreviousAdminStatus(status?: string): AdminStatus | null {
+  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
+  if (currentIndex <= 0) return null;
+  return ADMIN_STATUS_SEQUENCE[currentIndex - 1];
+}
+
 const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; icon: React.ReactNode }> = {
   WEB: {
     label: "En ligne",
@@ -330,6 +336,8 @@ export function CandidateDetailModal({
   const [preDossierVisaType, setPreDossierVisaType] = useState("");
   const [preDossierNotes, setPreDossierNotes] = useState("");
   const [preDossierConfirmationOpen, setPreDossierConfirmationOpen] = useState(false);
+  const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
+  const [rollbackReason, setRollbackReason] = useState("");
   const sessionToken = typeof window !== "undefined"
     ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
     : "";
@@ -340,6 +348,7 @@ export function CandidateDetailModal({
   );
   const candidate = data?.candidate;
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
+  const previousAdminStatus = getPreviousAdminStatus(candidate?.status);
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
@@ -357,6 +366,17 @@ export function CandidateDetailModal({
     onError: (err) => {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     },
+  });
+
+  const revertStatusMutation = trpc.admin.revertCandidateStatus.useMutation({
+    onSuccess: (result) => {
+      setRollbackDialogOpen(false);
+      setRollbackReason("");
+      toast({ title: "Dernière validation annulée", description: `Le dossier revient à l’étape « ${result.previousStatusLabel} »${result.notificationSent ? " et le client a été notifié." : "."}` });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Annulation impossible", description: err.message, variant: "destructive" }),
   });
 
   const activatePreDossierMutation = trpc.adminCandidateManagement.activatePreDossierAccount.useMutation({
@@ -553,6 +573,11 @@ export function CandidateDetailModal({
                     ) : (
                       <p className="mt-2 text-sm font-semibold text-emerald-900">Toutes les étapes prévues sont validées.</p>
                     )}
+                    {previousAdminStatus && (
+                      <Button type="button" variant="outline" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
+                        <X className="mr-2 h-4 w-4" />Annuler la dernière validation
+                      </Button>
+                    )}
                     <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
                   </div>
                   <Label htmlFor="candidate-status">Statut général</Label>
@@ -607,6 +632,23 @@ export function CandidateDetailModal({
             <AlertDialogFooter>
               <AlertDialogCancel disabled={activatePreDossierMutation.isPending}>Annuler</AlertDialogCancel>
               <AlertDialogAction disabled={activatePreDossierMutation.isPending || !candidate?.internalId} onClick={(event) => { event.preventDefault(); if (candidate?.internalId) activatePreDossierMutation.mutate({ sessionToken, candidateId: candidate.internalId, destination: preDossierDestination.trim(), visaType: preDossierVisaType.trim(), adminNotes: preDossierNotes.trim() || undefined }); }}>{activatePreDossierMutation.isPending ? "Activation…" : "Confirmer l’activation"}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={rollbackDialogOpen} onOpenChange={setRollbackDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Annuler la dernière validation ?</AlertDialogTitle>
+              <AlertDialogDescription>Le dossier reviendra uniquement à l’étape précédente. L’historique, le paiement et les documents ne seront pas supprimés.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="rollback-reason">Motif obligatoire</Label>
+              <textarea id="rollback-reason" value={rollbackReason} onChange={(event) => setRollbackReason(event.target.value)} minLength={5} maxLength={1000} className="min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-red-500" placeholder="Expliquez l’erreur à corriger…" />
+              <p className="text-xs text-slate-500">Le motif sera enregistré dans le journal d’audit et pourra être communiqué au candidat.</p>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={revertStatusMutation.isPending}>Conserver la validation</AlertDialogCancel>
+              <AlertDialogAction className="bg-red-700 hover:bg-red-800" disabled={rollbackReason.trim().length < 5 || revertStatusMutation.isPending} onClick={(event) => { event.preventDefault(); revertStatusMutation.mutate({ sessionToken, candidateId, reason: rollbackReason.trim(), notifyClient }); }}>{revertStatusMutation.isPending ? "Annulation…" : "Confirmer l’annulation"}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

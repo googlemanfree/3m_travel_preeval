@@ -13,6 +13,7 @@ vi.mock("@/lib/trpc", () => ({
     admin: {
       getCandidateDetails: { useQuery: (...args: unknown[]) => getCandidateDetails(...args) },
       updateCandidateStatus: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      revertCandidateStatus: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
     adminCandidateManagement: {
       activatePreDossierAccount: { useMutation: () => ({ mutate: activatePreDossierAccount, isPending: false }) },

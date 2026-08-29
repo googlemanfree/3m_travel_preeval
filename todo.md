@@ -1945,3 +1945,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre à l’administrateur de faire avancer le dossier uniquement vers l’étape suivante, avec confirmation et audit.
 - [x] Synchroniser immédiatement le statut validé dans l’espace client.
 - [x] Tester les autorisations, les prérequis et les transitions, puis publier.
+
+## Annulation sécurisée d’une validation administrative
+- [x] Limiter l’annulation à la dernière étape validée et calculer automatiquement l’étape précédente.
+- [x] Exiger un motif explicite et une confirmation avant toute annulation.
+- [x] Journaliser l’auteur, l’ancien statut, le nouveau statut et le motif sans supprimer l’historique.
+- [x] Synchroniser le retour d’étape dans l’espace client et notifier le candidat si demandé.
+- [x] Ajouter les tests d’autorisation et de non-contournement, vérifier TypeScript et publier.

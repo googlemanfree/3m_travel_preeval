@@ -71,4 +71,16 @@ describe("agreement and payment gating contracts", () => {
     expect(adminRouter).toContain('evaluationType: "candidate_workflow"');
     expect(adminRouter).toContain("manualValidation: true");
   });
+
+  it("allows only a motivated rollback to the immediately previous validated step", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    const adminRouter = read("server/routers/admin.ts");
+    expect(dashboard).toContain("Annuler la dernière validation");
+    expect(dashboard).toContain("Motif obligatoire");
+    expect(dashboard).toContain("rollbackReason.trim().length < 5");
+    expect(adminRouter).toContain("revertCandidateStatus: publicProcedure");
+    expect(adminRouter).toContain("Aucune validation précédente ne peut être annulée");
+    expect(adminRouter).toContain('evaluationType: "candidate_workflow_rollback"');
+    expect(adminRouter).toContain("secureRollback: true");
+  });
 });
