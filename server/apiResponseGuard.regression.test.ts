@@ -14,6 +14,14 @@ describe("garde-fou des réponses API", () => {
     expect(payload[0].error.json.message).toContain("réponse API");
   });
 
+  it("ré-encapsule une réponse JSON brute dans une enveloppe tRPC", async () => {
+    const response = await normalizeApiResponse(new Response('{"candidate":{"id":7}}', {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    expect(await response.json()).toEqual([{ result: { data: { json: { candidate: { id: 7 } } } } }]);
+  });
+
   it("laisse passer une réponse JSON valide sans la modifier", async () => {
     const response = new Response('{"result":{"data":null}}', {
       status: 200,

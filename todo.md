@@ -1909,3 +1909,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un bouton admin explicite « Valider paiement en agence » avec note et audit.
 - [x] Ajouter un bouton admin « Évaluation déjà reçue » avec note candidate déjà évalué et synchronisation côté client.
 - [x] Tester les trois parcours et publier la correction.
+
+## Régression connexion — réponse serveur incompatible
+- [x] Reproduire et identifier la procédure ou réponse qui déclenche « Unable to transform response from server ».
+- [x] Rendre le contrat de synchronisation tolérant aux réponses partielles ou anciennes sans perdre la session.
+- [x] Vérifier les actions Réessayer et Conserver ma session avec une session de 24 heures.
+- [x] Ajouter les tests de régression, publier et vérifier le domaine officiel.
