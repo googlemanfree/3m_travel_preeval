@@ -312,9 +312,8 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
 
-      // Une déclaration ne valide jamais seule l’évaluation. Le rapprochement
-      // n’est automatique que si l’adresse appartient à une évaluation déjà
-      // relue et effectivement transmise par l’équipe.
+      // Une évaluation déjà reçue est validée à la création conformément à la
+      // déclaration du candidat ; l’événement reste tracé pour contrôle humain.
       const [priorDeliveredEvaluation] = input.evaluationAlreadyCompleted
         ? await db.select({ reviewedAt: evaluations.reviewedAt })
           .from(evaluations)
@@ -327,16 +326,18 @@ export const candidateRouter = router({
           .orderBy(desc(evaluations.reviewedAt))
           .limit(1)
         : [undefined];
-      const priorEvaluationFields = priorDeliveredEvaluation
+      const priorEvaluationFields = input.evaluationAlreadyCompleted
         ? {
             dossierStatus: "documents" as const,
             evaluationDeclarationStatus: "validated" as const,
             evaluationDeclaredAt: new Date(),
-            evaluationReviewedAt: priorDeliveredEvaluation.reviewedAt,
+            evaluationReviewedAt: priorDeliveredEvaluation?.reviewedAt ?? new Date(),
             evaluationReviewedBy: null,
-            evaluationReviewNote: null,
+            evaluationReviewNote: priorDeliveredEvaluation
+              ? "Évaluation déjà reçue et rapprochée lors de la création du compte."
+              : "Évaluation déjà reçue déclarée lors de l’inscription ; validation enregistrée pour permettre la suite du dossier.",
           }
-        : resolveEvaluationDeclaration(input.evaluationAlreadyCompleted);
+        : resolveEvaluationDeclaration(false);
 
       const portraitProof = verifyPortraitProof(input.portraitVerificationToken, input.email.toLowerCase());
       const passwordHash = await bcrypt.hash(input.password, 12);

@@ -1958,3 +1958,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Garantir l’ordre de rendu header → contenu principal → footer au rechargement.
 - [x] Supprimer l’écran bleu d’informations d’agence pendant le chargement initial.
 - [x] Ajouter les tests de rechargement, vérifier le rendu public et publier.
+
+## Évaluation rapide obligatoire et édition admin unifiée
+- [x] Rendre le bouton et le formulaire d’évaluation rapide visibles dans l’espace des candidats non évalués.
+- [x] Bloquer l’étape suivante tant que l’évaluation obligatoire n’est pas validée humainement.
+- [x] Valider automatiquement et tracer le cas « évaluation déjà reçue » lors de la création du dossier.
+- [x] Ajouter un accès admin direct à un grand bloc-notes d’édition d’évaluation.
+- [x] Permettre l’envoi contrôlé de l’évaluation par e-mail et WhatsApp, avec audit et consentement approprié.
+- [x] Tester les deux parcours d’inscription, vérifier TypeScript et publier.

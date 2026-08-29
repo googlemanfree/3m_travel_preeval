@@ -259,6 +259,8 @@ export default function EvaluationSpace() {
     : validatedEvaluationResponse || cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
+  const evaluationRequired = !latestEvaluation && (cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
+  const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(cProfile.destination || "general")}`);
   const priority = stats.unreadMessages > 0
     ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
     : cProfile.dossierStatus === "documents"
@@ -381,6 +383,21 @@ export default function EvaluationSpace() {
             <div className="space-y-6">
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               {/* Widgets statistiques et progression */}
+              {evaluationRequired && (
+                <Card className="border-2 border-violet-300 bg-gradient-to-r from-violet-50 via-white to-amber-50 p-6 shadow-md" role="region" aria-labelledby="quick-evaluation-title">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-4">
+                      <span className="rounded-2xl bg-violet-600 p-3 text-white shadow-sm"><Sparkles className="h-6 w-6" aria-hidden="true" /></span>
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Étape obligatoire</p>
+                        <h2 id="quick-evaluation-title" className="mt-1 text-xl font-black text-slate-950">Évaluation rapide à compléter</h2>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">Votre dossier ne peut pas avancer avant la soumission et la validation humaine de votre évaluation. Commencez maintenant depuis votre espace.</p>
+                      </div>
+                    </div>
+                    <Button type="button" onClick={openEvaluation} className="h-12 shrink-0 bg-violet-700 px-5 text-white hover:bg-violet-800"><Sparkles className="mr-2 h-4 w-4" />Faire mon évaluation</Button>
+                  </div>
+                </Card>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-5 border-violet-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between gap-3">
@@ -564,6 +581,14 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+              {evaluationRequired && (
+                <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Prochaine étape</p><h3 id="dossier-evaluation-title" className="mt-1 text-xl font-black text-violet-950">Compléter l’évaluation rapide</h3><p className="mt-2 text-sm leading-6 text-violet-900">Cette étape doit être terminée avant l’examen des documents et la poursuite du dossier.</p></div>
+                    <Button type="button" onClick={openEvaluation} className="h-12 shrink-0 bg-violet-700 text-white hover:bg-violet-800"><Sparkles className="mr-2 h-4 w-4" />Ouvrir l’évaluation</Button>
+                  </div>
+                </Card>
+              )}
               <Card className="border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
                 <CardHeader>
                   <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
