@@ -22,6 +22,15 @@ describe("communication de bilan contrôlée", () => {
     expect(editorSource).toContain("Aperçu e-mail exact");
   });
 
+  it("conserve l’aperçu séparé de la procédure d’envoi définitif", () => {
+    const routerSource = readProjectFile("server/routers/unifiedRequests.ts");
+    const previewBlock = routerSource.slice(routerSource.indexOf("previewEvaluationDeliveryEmail"), routerSource.indexOf("sendEvaluationTestEmail"));
+    expect(previewBlock).toContain("requiresManualValidation: true");
+    expect(previewBlock).toContain("recipient: application.email");
+    expect(previewBlock).not.toContain("sendEmail(");
+    expect(readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Aperçu exact de l’e-mail d’évaluation");
+  });
+
   it("n’autorise une livraison planifiée qu’après validation humaine explicite", () => {
     const now = new Date("2026-08-18T12:00:00.000Z");
     const scheduled = {

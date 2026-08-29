@@ -1855,3 +1855,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le bouton « Nouvelle évaluation » et le parcours préalable des candidats non évalués.
 - [x] Parcourir les routes et CTA publics/protégés pour retirer les liens cassés vers maintenance ou actualisation forcée.
 - [x] Ajouter les régressions de droits, persistance, envoi et navigation ; vérifier TypeScript et publier.
+
+## Prévisualisation du bilan par e-mail
+- [x] Auditer l’éditeur d’évaluation, le contenu sauvegardé et la mutation d’envoi.
+- [x] Ajouter un aperçu fidèle de l’objet et du corps avant envoi définitif.
+- [x] Garantir que l’aperçu ne déclenche aucune notification ni envoi SMTP.
+- [x] Ajouter les tests d’autorisation, de contenu et de non-envoi, puis publier.
