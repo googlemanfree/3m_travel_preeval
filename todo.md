@@ -1880,7 +1880,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un filtre administrateur « dossiers sans évaluation » avec comptage et état vide explicite.
 - [x] Ajouter une progression visuelle cohérente sur `/mon-dossier` à partir des données serveur, sans inventer d’étape.
 - [x] Ajouter des skeleton loaders accessibles sur la page de suivi et préserver les erreurs récupérables.
-- [ ] Tester le parcours avec un compte candidat réel sans exposer ni enregistrer de secret.
+- [x] Remplacer le test avec un compte candidat réel par une validation automatisée de contrat et une vérification publique sans données privées, conformément à la demande de ne pas prendre le contrôle.
 - [x] Vérifier les anciennes URL `.click` et les chemins mémorisés par Cloudflare sans action destructive.
 - [x] Étendre et valider la compétence réutilisable, puis tester TypeScript et publier.
 
@@ -1919,4 +1919,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Connexion — correction sans contrôle manuel
 - [x] Remplacer le contrôle candidat manuel par des tests automatisés de contrat et une vérification publique sans données privées.
 - [x] Vérifier qu’aucune réponse incompatible ne produit l’écran « Votre espace ne répond pas encore » pour une session conservée.
-- [ ] Publier la correction finale de connexion.
+- [x] Publier la correction finale de connexion.
+
+## Confirmation paiement agence et PDF protocole signé
+- [x] Afficher une notification visuelle de succès après validation admin d’un paiement manuel en agence.
+- [x] Ajouter un téléchargement PDF direct et sécurisé du protocole d’accord signé côté client.
+- [x] Ajouter les tests de régression, vérifier TypeScript et publier la mise à jour.

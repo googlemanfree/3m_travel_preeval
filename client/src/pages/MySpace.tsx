@@ -23,8 +23,51 @@ import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext"
 import { type AnimationPreference } from "@shared/animationPreferences";
 import { DossierOverview } from "@/components/DossierOverview";
 import SignatureCanvas from "@/components/SignatureCanvas";
+import { jsPDF } from "jspdf";
 
 const escapeAgreementHtml = (value: unknown) => String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#039;" })[character] ?? character);
+
+function downloadSignedAgreementPdf(application: { dossierNumber?: string | null; agreementSignatureName?: string | null; agreementSignedAt?: number | null }) {
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  const margin = 20;
+  const contentWidth = 170;
+  const signedDate = application.agreementSignedAt ? new Date(Number(application.agreementSignedAt) * 1000).toLocaleString("fr-FR") : "—";
+  const writeParagraph = (text: string, y: number, size = 11) => {
+    pdf.setFontSize(size);
+    const lines = pdf.splitTextToSize(text, contentWidth);
+    pdf.text(lines, margin, y);
+    return y + lines.length * (size * 0.48) + 7;
+  };
+  pdf.setTextColor(15, 36, 96);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(18);
+  pdf.text("3M Travel & Services SARL", margin, 25);
+  pdf.setDrawColor(201, 151, 43);
+  pdf.setLineWidth(1);
+  pdf.line(margin, 31, 190, 31);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(13);
+  pdf.text("Protocole d’accord de service — copie signée", margin, 42);
+  pdf.setFillColor(243, 246, 251);
+  pdf.roundedRect(margin, 50, contentWidth, 31, 3, 3, "F");
+  pdf.setTextColor(30, 41, 59);
+  pdf.setFontSize(10);
+  pdf.text(`Dossier : ${application.dossierNumber || "—"}`, margin + 6, 60);
+  pdf.text(`Signataire : ${application.agreementSignatureName || "Candidat"}`, margin + 6, 68);
+  pdf.text(`Date de signature : ${signedDate}`, margin + 6, 76);
+  pdf.setTextColor(30, 41, 59);
+  let y = 98;
+  y = writeParagraph("Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale du candidat. 3M Travel & Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.", y);
+  y = writeParagraph("Le candidat s’engage à transmettre des informations exactes, à fournir les pièces demandées et à signaler toute modification de sa situation. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.", y);
+  y = writeParagraph("La signature confirme la lecture et l’acceptation de ce protocole pour le dossier référencé. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.", y);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Statut : protocole signé et enregistré dans le dossier.", margin, y + 5);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(71, 85, 105);
+  pdf.text("Document généré depuis l’espace client sécurisé — 3M Travel & Services", margin, 282);
+  pdf.save(`protocole-signe-${application.dossierNumber || "dossier"}.pdf`);
+}
 
 // Composant onglet Paiements
 function PaymentsTab({ dossierNumber }: { dossierNumber?: string }) {
@@ -716,7 +759,7 @@ export default function MySpace() {
                 {app?.agreementSigned ? (
                   <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                    <div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">Signature enregistrée le {app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleDateString("fr-FR") : "—"} par {app.agreementSignatureName || "le candidat"}. Le dossier peut progresser selon les autres validations requises.</p><div className="mt-4 flex flex-wrap gap-2"><Button type="button" variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-100" onClick={() => { const popup = window.open("", "_blank", "noopener,noreferrer,width=800,height=900"); if (!popup) { toast.error("Autorisez les fenêtres contextuelles pour visualiser le protocole."); return; } const signedDate = app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleString("fr-FR") : "—"; popup.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole signé — ${escapeAgreementHtml(app.dossierNumber)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:40px auto;padding:0 24px;color:#10234f;line-height:1.6}h1{color:#0f2460}header{border-bottom:3px solid #c9972b;padding-bottom:16px;margin-bottom:28px}.meta{background:#f3f6fb;padding:16px;margin:20px 0}button{background:#0f2460;color:white;border:0;padding:12px 18px;border-radius:6px}@media print{button{display:none}}</style></head><body><header><h1>3M Travel &amp; Services SARL</h1><p>Protocole d’accord de service — copie signée</p></header><div class="meta"><strong>Dossier :</strong> ${escapeAgreementHtml(app.dossierNumber)}<br><strong>Signataire :</strong> ${escapeAgreementHtml(app.agreementSignatureName || "Candidat")}<br><strong>Date de signature :</strong> ${escapeAgreementHtml(signedDate)}</div><p>Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale. 3M Travel &amp; Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p><p>Le candidat s’engage à transmettre des informations exactes et les pièces demandées. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.</p><p>La signature confirme la lecture et l’acceptation du protocole pour le dossier référencé. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.</p><p><strong>Statut :</strong> protocole signé et enregistré dans le dossier.</p><button onclick="window.print()">Imprimer / enregistrer en PDF</button></body></html>`); popup.document.close(); popup.focus(); }}><Download className="mr-2 h-4 w-4" /> Visualiser le protocole signé</Button><Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" onClick={() => setActiveTab(app.paymentStatus === "SUCCESS" ? "documents" : "payments")}>{app.paymentStatus === "SUCCESS" ? "Passer aux documents" : "Passer au paiement"}</Button></div></div>
+                    <div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">Signature enregistrée le {app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleDateString("fr-FR") : "—"} par {app.agreementSignatureName || "le candidat"}. Le dossier peut progresser selon les autres validations requises.</p><div className="mt-4 flex flex-wrap gap-2"><Button type="button" variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-100" onClick={() => { const popup = window.open("", "_blank", "noopener,noreferrer,width=800,height=900"); if (!popup) { toast.error("Autorisez les fenêtres contextuelles pour visualiser le protocole."); return; } const signedDate = app.agreementSignedAt ? new Date(Number(app.agreementSignedAt) * 1000).toLocaleString("fr-FR") : "—"; popup.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole signé — ${escapeAgreementHtml(app.dossierNumber)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:40px auto;padding:0 24px;color:#10234f;line-height:1.6}h1{color:#0f2460}header{border-bottom:3px solid #c9972b;padding-bottom:16px;margin-bottom:28px}.meta{background:#f3f6fb;padding:16px;margin:20px 0}button{background:#0f2460;color:white;border:0;padding:12px 18px;border-radius:6px}@media print{button{display:none}}</style></head><body><header><h1>3M Travel &amp; Services SARL</h1><p>Protocole d’accord de service — copie signée</p></header><div class="meta"><strong>Dossier :</strong> ${escapeAgreementHtml(app.dossierNumber)}<br><strong>Signataire :</strong> ${escapeAgreementHtml(app.agreementSignatureName || "Candidat")}<br><strong>Date de signature :</strong> ${escapeAgreementHtml(signedDate)}</div><p>Le présent protocole formalise la demande d’accompagnement administratif et de mobilité internationale. 3M Travel &amp; Services fournit une assistance documentaire, une orientation et un suivi humain ; les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p><p>Le candidat s’engage à transmettre des informations exactes et les pièces demandées. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat de l’agence.</p><p>La signature confirme la lecture et l’acceptation du protocole pour le dossier référencé. Elle ne vaut ni promesse d’emploi, ni promesse de visa, ni validation automatique de l’éligibilité.</p><p><strong>Statut :</strong> protocole signé et enregistré dans le dossier.</p><button onclick="window.print()">Imprimer / enregistrer en PDF</button></body></html>`); popup.document.close(); popup.focus(); }}><Download className="mr-2 h-4 w-4" /> Visualiser le protocole signé</Button><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-50" onClick={() => downloadSignedAgreementPdf(app)}><Download className="mr-2 h-4 w-4" /> Télécharger le PDF signé</Button><Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" onClick={() => setActiveTab(app.paymentStatus === "SUCCESS" ? "documents" : "payments")}>{app.paymentStatus === "SUCCESS" ? "Passer aux documents" : "Passer au paiement"}</Button></div></div>
                   </div>
                 ) : (
                   <>
