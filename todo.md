@@ -1877,15 +1877,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les régressions, vérifier TypeScript, tester les routes et publier la correction.
 
 ## Suivi dossier et fiabilisation des parcours — nouvelle demande
-- [ ] Ajouter un filtre administrateur « dossiers sans évaluation » avec comptage et état vide explicite.
-- [ ] Ajouter une progression visuelle cohérente sur `/mon-dossier` à partir des données serveur, sans inventer d’étape.
-- [ ] Ajouter des skeleton loaders accessibles sur la page de suivi et préserver les erreurs récupérables.
+- [x] Ajouter un filtre administrateur « dossiers sans évaluation » avec comptage et état vide explicite.
+- [x] Ajouter une progression visuelle cohérente sur `/mon-dossier` à partir des données serveur, sans inventer d’étape.
+- [x] Ajouter des skeleton loaders accessibles sur la page de suivi et préserver les erreurs récupérables.
 - [ ] Tester le parcours avec un compte candidat réel sans exposer ni enregistrer de secret.
-- [ ] Vérifier les anciennes URL `.click` et les chemins mémorisés par Cloudflare sans action destructive.
-- [ ] Étendre et valider la compétence réutilisable, puis tester TypeScript et publier.
+- [x] Vérifier les anciennes URL `.click` et les chemins mémorisés par Cloudflare sans action destructive.
+- [x] Étendre et valider la compétence réutilisable, puis tester TypeScript et publier.
 
 ## Régression publique — `/mon-dossier`
 - [x] Reproduire l’écran d’erreur sur le domaine `.com` et isoler le module ou appel qui échoue.
 - [x] Corriger la cause racine du chargement sans masquer une erreur d’autorisation ou de session.
 - [x] Vérifier les variantes `/mon-dossier`, `/mon-espace?section=dossier` et les liens associés.
 - [x] Ajouter les régressions et tests de rendu public, puis publier seulement après validation.
+
+## Régression répétée — `/mon-dossier` après publication
+- [x] Comparer le build public et la prévisualisation pour la route dédiée.
+- [x] Capturer l’exception exacte du navigateur et la requête qui la déclenche.
+- [x] Corriger la cause commune sans remplacer un état de session par un écran générique.
+- [x] Vérifier la diffusion officielle, les anciennes URL et publier une nouvelle révision si nécessaire.

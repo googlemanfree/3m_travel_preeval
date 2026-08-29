@@ -48,7 +48,7 @@ const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
 const Billets = lazyWithTimeout(() => import("./pages/Billets"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const ProcedureLuxembourg = lazyWithTimeout(() => import("./pages/ProcedureLuxembourg"));
-const MonDossier = lazyWithTimeout(() => import("./pages/MonDossier"));
+import MonDossier from "./pages/MonDossier";
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
 const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
