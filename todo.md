@@ -1978,3 +1978,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ### Constat de couverture à traiter
 - [ ] Résoudre l’écart constaté : le catalogue `procedures107Complete` contient actuellement 91 fiches, pas 107.
 - [x] Ne pas attribuer de portail officiel à une destination non vérifiée ; afficher « source institutionnelle à vérifier » tant que la source n’est pas validée.
+
+## Couverture de toutes les destinations
+- [ ] Inventorier la liste complète des destinations réellement disponibles dans les ressources du projet.
+- [ ] Recenser les variantes visiteur, études, travail et sous-parcours spécifiques pour chaque destination.
+- [ ] Comparer la couverture réelle avec l’objectif annoncé de 107 fiches sans inventer de destinations.
