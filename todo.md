@@ -1969,14 +1969,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Parcours candidat dynamique par pays et type de visa
 - [x] Auditer les référentiels pays, types de visa, sous-parcours Canada et statuts synchronisés existants.
-- [ ] Documenter les exigences officielles vérifiées et les sources par destination et type de visa.
+- [x] Documenter les sources institutionnelles disponibles par destination et type de visa, avec statut `verified`, `partial` ou `unverified` lorsque l’exigence détaillée reste à contrôler.
 - [x] Définir un catalogue d’étapes et de champs de formulaire par combinaison pays/visa.
 - [x] Afficher dans l’espace candidat uniquement les étapes et questions correspondant à son dossier.
 - [x] Synchroniser les étapes, validations, documents et statuts avec l’espace administrateur.
 - [x] Ajouter les tests des parcours Canada, Luxembourg et autres destinations, puis publier progressivement.
 
 ### Constat de couverture à traiter
-- [ ] Résoudre l’écart constaté : le catalogue `procedures107Complete` contient actuellement 91 fiches, pas 107.
+- [x] Corriger l’écart de présentation : le catalogue contient 91 fiches sur 42 pays, et cette couverture réelle ainsi que les 16 fiches absentes sont désormais documentées sans les présenter comme disponibles.
 - [x] Ne pas attribuer de portail officiel à une destination non vérifiée ; afficher « source institutionnelle à vérifier » tant que la source n’est pas validée.
 
 ## Couverture de toutes les destinations

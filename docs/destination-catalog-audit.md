@@ -23,3 +23,7 @@ Le portail officiel du Royaume-Uni sépare explicitement les parcours visiteur, 
 Le ministère portugais des Affaires étrangères décrit l’espace Schengen, les catégories de visa, le consulat compétent, la biométrie, les formulaires, les délais et les frais. Source : https://vistos.mne.gov.pt/en/short-stay-visas-schengen/general-information.
 
 Ces sources servent de références institutionnelles de niveau régional ou national. Elles ne remplacent pas la vérification du poste consulaire compétent selon la nationalité, le pays de résidence, le motif et la durée du séjour.
+
+## Règle de couverture mondiale
+
+Le parcours accepte toute destination et tout motif déclaré, même lorsque le catalogue détaillé n’a pas encore de fiche dédiée. Dans ce cas, l’espace candidat affiche un parcours de collecte prudent — identité, nationalité, résidence, motif, durée, ressources, hébergement, études ou emploi, historique de voyage et pièces disponibles — puis place la validation institutionnelle dans la file administrative. Les exigences spécifiques, frais, délais, formulaires et portails ne sont jamais présentés comme confirmés sans source institutionnelle identifiée et contrôlée. Cette règle permet l’ouverture d’un dossier mondial sans transformer une hypothèse en conseil consulaire.
