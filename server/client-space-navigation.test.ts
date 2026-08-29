@@ -16,7 +16,7 @@ describe("client space navigation", () => {
 
   it("provides bidirectional client shortcuts without exposing agent routes", () => {
     expect(navigation).toContain('href: "/flights"');
-    expect(navigation).toContain('href: "/mon-dossier"');
+    expect(navigation).toContain('href: "/mon-espace?section=dossier"');
     expect(navigation).toContain('href: "/document-upload"');
     expect(navigation).toContain('href: "/evisas"');
     expect(navigation).toContain('setLocation("/")');

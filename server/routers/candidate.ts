@@ -385,25 +385,29 @@ export const candidateRouter = router({
         });
       }
 
-      // Envoyer l'email de confirmation avec lien
+            // Le compte est déjà persisté : une panne SMTP ne doit pas transformer
+      // l’inscription en page de maintenance. L’écran suivant permet un renvoi.
+      let activationEmailSent = true;
       try {
         await sendVerificationLink(normalizedEmail, input.fullName, rawToken, {
           priorEvaluationRecognized: Boolean(priorDeliveredEvaluation),
         });
       } catch (err) {
+        activationEmailSent = false;
         console.error("[Register] Email verification link send error:", err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Compte créé, mais l’e-mail d’activation n’a pas pu être envoyé. Utilisez le renvoi d’activation." });
       }
-
       return {
         candidateId,
         candidateToken: null,
         requiresEmailVerification: true,
         requiresPortrait: false,
+        activationEmailSent,
         priorEvaluationMatched: Boolean(priorDeliveredEvaluation),
-        message: priorDeliveredEvaluation
-          ? "Compte créé. Votre évaluation déjà transmise par l’équipe est reconnue ; confirmez votre adresse e-mail pour accéder au dépôt sécurisé des pièces demandées."
-          : "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email.",
+        message: activationEmailSent
+          ? priorDeliveredEvaluation
+            ? "Compte créé. Votre évaluation déjà transmise par l’équipe est reconnue ; confirmez votre adresse e-mail pour accéder au dépôt sécurisé des pièces demandées."
+            : "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email."
+          : "Compte créé. Le lien d’activation n’a pas pu être distribué immédiatement ; utilisez l’écran de renvoi sécurisé.",
       };
     }),
 

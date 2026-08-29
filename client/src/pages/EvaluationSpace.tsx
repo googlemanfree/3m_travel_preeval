@@ -49,12 +49,15 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
+  const validSections = ["overview", "dossier", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"] as const;
+  type ClientSection = (typeof validSections)[number];
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "history" | "documents" | "profile" | "messages" | "testimonials">("overview");
+  const initialSection = validSections.includes(section as ClientSection) ? (section as ClientSection) : "overview";
+  const [activeTab, setActiveTab] = useState<ClientSection>(initialSection);
   const [clarificationDocument, setClarificationDocument] = useState<string | null>(null);
   const [clarificationDetails, setClarificationDetails] = useState("");
   const [uploadClarification, setUploadClarification] = useState<{ id: number; documentLabel: string } | null>(null);
@@ -139,8 +142,8 @@ export default function EvaluationSpace() {
 
   useEffect(() => {
     if (searchParams.get("section")) {
-      const s = searchParams.get("section") as any;
-      if (["overview", "dossier", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"].includes(s)) {
+      const s = searchParams.get("section") as ClientSection;
+      if (validSections.includes(s)) {
         setActiveTab(s);
       }
     }

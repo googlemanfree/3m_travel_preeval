@@ -1834,3 +1834,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Empêcher tout fallback HTML de répondre aux chemins `/api/trpc`.
 - [x] Ajouter un garde-fou client pour signaler une réponse non JSON sans masquer l’erreur serveur.
 - [x] Ajouter les régressions, vérifier TypeScript, tester l’accueil et publier le correctif.
+
+## FAQ, transitions et newsletter publique
+- [ ] Auditer la FAQ existante, les transitions globales et le footer partagé.
+- [ ] Ajouter une FAQ dynamique, accessible et spécifique à l’accueil.
+- [ ] Consolider les transitions fluides entre routes avec respect de la réduction de mouvement.
+- [ ] Ajouter une inscription newsletter sécurisée dans le footer avec consentement, validation et anti-doublon.
+- [ ] Ajouter les tests, vérifier TypeScript, l’accessibilité et publier la version validée.
+
+## Priorités — espace client et inscription
+- [x] Reproduire l’erreur déclenchée par le bouton « Mon dossier » et identifier le contrat ou module fautif.
+- [x] Corriger le chargement de la section dossier sans perdre la session ni exposer de données d’un autre candidat.
+- [x] Vérifier les appels partagés responsables des erreurs visibles sur les autres pages.
+- [x] Simplifier l’inscription avec un parcours clair, validation explicite et redirection fiable vers l’espace client.
+- [x] Ajouter les régressions, vérifier TypeScript, tester les parcours et publier après validation.
