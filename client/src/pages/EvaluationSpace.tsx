@@ -44,6 +44,7 @@ import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
 import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
+import SignatureCanvas from "@/components/SignatureCanvas";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -68,6 +69,9 @@ export default function EvaluationSpace() {
   const [budgetStartDate, setBudgetStartDate] = useState<string>("");
   const [budgetEndDate, setBudgetEndDate] = useState<string>("");
   const [visaTypeCalc, setVisaTypeCalc] = useState<string>("study"); // study, work, visitor, business
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [agreementSignatureName, setAgreementSignatureName] = useState("");
+  const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
 
   // Requête unique pour le résumé complet du tableau de bord client
   const { data: dashboardData, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
@@ -91,6 +95,16 @@ export default function EvaluationSpace() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
     refetchInterval: 30_000,
+  });
+  const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
+    onSuccess: () => {
+      toast.success("Protocole d’accord signé et enregistré.");
+      void trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      setAgreementAccepted(false);
+      setAgreementSignatureName("");
+      setAgreementSignatureDataUrl(null);
+    },
+    onError: (signError) => toast.error(signError.message || "La signature n’a pas pu être enregistrée."),
   });
   const clarificationMutation = trpc.candidate.requestDocumentClarification.useMutation({
     onSuccess: () => {
@@ -549,6 +563,24 @@ export default function EvaluationSpace() {
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
+              </Card>
+              <Card className="border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
+                <CardHeader>
+                  <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
+                  <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
+                </CardHeader>
+                <CardContent>
+                  {activeDossier?.agreementSigned ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4" role="status"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700" /><div><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">La signature est enregistrée dans votre dossier. Vous pouvez poursuivre les étapes autorisées.</p></div></div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel &amp; Services SARL</p><p className="mt-2">3M Travel &amp; Services fournit une assistance documentaire, une orientation et un suivi humain. Les décisions de visa, de permis ou de recrutement appartiennent exclusivement aux autorités et employeurs compétents.</p><p className="mt-2">Le candidat s’engage à transmettre des informations exactes et les pièces demandées. Les frais officiels de tiers et les décisions des autorités ne constituent pas une garantie de résultat.</p><p className="mt-2">La signature confirme la lecture et l’acceptation du protocole pour le dossier référencé ; elle ne vaut ni promesse d’emploi, ni promesse de visa.</p></div>
+                      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
+                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div></div>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>{signAgreementMutation.isPending ? "Enregistrement…" : "Signer le protocole d’accord"}</Button>
+                    </div>
+                  )}
+                </CardContent>
               </Card>
 
               {/* Suivi e-Visa en direct */}

@@ -1925,3 +1925,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une notification visuelle de succès après validation admin d’un paiement manuel en agence.
 - [x] Ajouter un téléchargement PDF direct et sécurisé du protocole d’accord signé côté client.
 - [x] Ajouter les tests de régression, vérifier TypeScript et publier la mise à jour.
+
+## Simplification évaluation, protocole visible et paiement agence
+- [x] Remplacer l’interface d’évaluation admin dépendante de l’IA par un champ de saisie manuelle et une action d’envoi.
+- [x] Vérifier que l’espace client affiche systématiquement le protocole à signer lorsqu’il est requis, avec accès clair à la signature.
+- [x] Ajouter ou rendre visible l’action admin de validation du paiement en agence pour chaque candidat.
+- [x] Tester la synchronisation client-admin, vérifier TypeScript et publier la mise à jour.
