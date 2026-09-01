@@ -530,8 +530,14 @@ export const evaluationRouter = router({
       receiptSentAt: evaluation.receiptSentAt,
       reviewDeadline: evaluation.reviewDeadline,
       reviewedAt: evaluation.reviewedAt,
+      reviewedBy: evaluation.reviewedBy,
+      secondReviewRequired: evaluation.secondReviewRequired,
+      secondReviewedAt: evaluation.secondReviewedAt,
+      secondReviewedBy: evaluation.secondReviewedBy,
+      finalReviewedAt: evaluation.secondReviewRequired ? evaluation.secondReviewedAt : evaluation.reviewedAt,
+      finalReviewedBy: evaluation.secondReviewRequired ? evaluation.secondReviewedBy : evaluation.reviewedBy,
       finalResponseSentAt: evaluation.finalResponseSentAt,
-      reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null,
+      reviewDraft: evaluation.finalResponseSentAt && (!evaluation.secondReviewRequired || evaluation.secondReviewedAt) ? evaluation.reviewDraft : null,
     }));
   }),
 

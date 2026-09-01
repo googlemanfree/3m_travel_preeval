@@ -27,7 +27,8 @@ describe("workflow dynamique Gemini des évaluations", () => {
     const adminRouter = read("server/routers/aiEvaluationManagement.ts");
     expect(candidateRouter).toContain("reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null");
     expect(candidateRouter).not.toContain("evaluations: evalRows");
-    expect(evaluationRouter).toContain("reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null");
+    expect(evaluationRouter).toContain("finalReviewedAt: evaluation.secondReviewRequired ? evaluation.secondReviewedAt : evaluation.reviewedAt");
+    expect(evaluationRouter).toContain("reviewDraft: evaluation.finalResponseSentAt && (!evaluation.secondReviewRequired || evaluation.secondReviewedAt) ? evaluation.reviewDraft : null");
     expect(adminRouter).toContain("parsePreparationDraft");
     expect(adminRouter).toContain("requireValidAdminSession");
     expect(adminRouter).toContain("sendValidatedEvaluationResponseEmail");

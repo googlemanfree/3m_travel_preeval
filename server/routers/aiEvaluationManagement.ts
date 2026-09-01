@@ -58,6 +58,10 @@ interface UnifiedItem {
   reviewDeadline?: Date | null;
   reviewDraft?: string | null;
   reviewedAt?: Date | null;
+  reviewedBy?: string | null;
+  secondReviewRequired?: boolean;
+  secondReviewedAt?: Date | null;
+  secondReviewedBy?: string | null;
   finalResponseSentAt?: Date | null;
   preparationState?: "ready" | "unavailable" | "not_requested";
   preparationDraft?: {
@@ -206,6 +210,10 @@ function parseProjectDetails(value: string | null): Record<string, unknown> {
 
 function textDetail(value: unknown, maximum = 1000): string | undefined {
   return typeof value === "string" ? value.trim().slice(0, maximum) || undefined : undefined;
+}
+
+function requiresSecondHumanReview(draft: string): boolean {
+  return /défavorable|defavorable|insuffisant|incompatible|inéligible|ineligible|refus|risque élevé|risque eleve|impossible|absence de garantie/i.test(draft);
 }
 
 async function requireEvaluationCandidate(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluationId: number) {
@@ -358,7 +366,7 @@ export const aiEvaluationManagementRouter = router({
         const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
         const preparationDraft = parsePreparationDraft(e.aiReportContent);
         const luxembourgReview = internalLuxembourgReview(e);
-        const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue });
+        const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue || Boolean(e.secondReviewRequired && !e.secondReviewedAt) });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
@@ -366,7 +374,7 @@ export const aiEvaluationManagementRouter = router({
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
-          referenceCode: e.referenceCode, reviewDeadline: e.reviewDeadline, reviewDraft: e.reviewDraft, reviewedAt: e.reviewedAt, finalResponseSentAt: e.finalResponseSentAt,
+          referenceCode: e.referenceCode, reviewDeadline: e.reviewDeadline, reviewDraft: e.reviewDraft, reviewedAt: e.reviewedAt, reviewedBy: e.reviewedBy, secondReviewRequired: e.secondReviewRequired, secondReviewedAt: e.secondReviewedAt, secondReviewedBy: e.secondReviewedBy, finalResponseSentAt: e.finalResponseSentAt,
           preparationState: preparationDraft ? "ready" : e.aiProcessingError ? "unavailable" : "not_requested",
           preparationDraft,
           luxembourgReview,
@@ -479,19 +487,51 @@ export const aiEvaluationManagementRouter = router({
         const evaluation = current[0];
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (!evaluation.reviewDraft?.trim()) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un projet de réponse avant de le valider." });
-        if (!evaluation.reviewedAt) {
-          await db.update(evaluations).set({ status: "reviewed", reviewedAt: new Date(), reviewedBy: admin.email, reviewNote: input.validationNote }).where(eq(evaluations.id, input.evaluationId));
-          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "validated", note: input.validationNote });
-        }
+        if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: evaluation.secondReviewRequired && !evaluation.secondReviewedAt ? "Une seconde validation admin est requise avant l’envoi." : "Cette réponse est déjà validée." });
+        const now = new Date();
+        const secondReviewRequired = requiresSecondHumanReview(evaluation.reviewDraft);
+        await db.update(evaluations).set({ status: secondReviewRequired ? "pending" : "reviewed", reviewedAt: now, reviewedBy: admin.email, reviewNote: input.validationNote, secondReviewRequired }).where(eq(evaluations.id, input.evaluationId));
+        await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: secondReviewRequired ? "validated_pending_second_review" : "validated", note: input.validationNote });
+        if (secondReviewRequired) return { success: true, delivered: false, requiresSecondReview: true };
         const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft });
         if (delivered) {
-          await db.update(evaluations).set({ finalResponseSentAt: new Date() }).where(eq(evaluations.id, evaluation.id));
+          await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
           await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
         }
-        return { success: true, delivered };
+        return { success: true, delivered, requiresSecondReview: false };
       }),
 
-    getResponseTemplates: publicProcedure
+    getEvaluationReviewHistory: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), evaluationId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      return db.select().from(evaluationReviewEvents).where(eq(evaluationReviewEvents.evaluationId, input.evaluationId)).orderBy(desc(evaluationReviewEvents.createdAt));
+    }),
+
+  secondValidateEvaluationResponse: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), evaluationId: z.number().int().positive(), validationNote: z.string().trim().min(8).max(800) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [evaluation] = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
+      if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+      if (!evaluation.reviewedAt || !evaluation.secondReviewRequired) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation ne nécessite pas de seconde validation." });
+      if (evaluation.secondReviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde validation est déjà enregistrée." });
+      const now = new Date();
+      await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote }).where(eq(evaluations.id, evaluation.id));
+      await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "second_validated", note: input.validationNote });
+      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
+      if (delivered && !evaluation.finalResponseSentAt) {
+        await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
+        await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée après seconde revue et envoyée par e-mail." });
+      }
+      return { success: true, delivered };
+    }),
+
+  getResponseTemplates: publicProcedure
       .input(z.object({ sessionToken: z.string().min(1) }))
       .query(async ({ input }) => {
         await requireValidAdminSession(input.sessionToken);

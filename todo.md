@@ -2081,3 +2081,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher clairement la provenance IA du brouillon et conserver la modification humaine avant envoi.
 - [x] Garantir côté serveur qu’aucun e-mail ni changement d’étape ne part sans validation admin explicite.
 - [x] Ajouter les tests de régression IA/admin, vérifier TypeScript et build, puis publier.
+
+## Validation renforcée des évaluations IA
+- [x] Afficher l’historique des modifications humaines du brouillon IA avant validation.
+- [x] Imposer une seconde validation admin pour les évaluations sensibles ou défavorables.
+- [x] Afficher date et conseiller de validation dans l’espace candidat.
+- [x] Rendre opérationnel l’envoi validé et synchroniser la progression de l’étape Évaluation côté candidat.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
