@@ -2075,3 +2075,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un aperçu de l’e-mail d’évaluation avant validation et envoi admin.
 - [x] Afficher une confirmation détaillée après dépôt réussi d’un PNG ou PDF côté candidat.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Assistance IA avec validation humaine obligatoire
+- [x] Réactiver la génération IA de brouillons pour les évaluations éligibles, sans décision automatique.
+- [x] Afficher clairement la provenance IA du brouillon et conserver la modification humaine avant envoi.
+- [x] Garantir côté serveur qu’aucun e-mail ni changement d’étape ne part sans validation admin explicite.
+- [x] Ajouter les tests de régression IA/admin, vérifier TypeScript et build, puis publier.

@@ -43,4 +43,21 @@ describe("pilotage administratif des évaluations 2026", () => {
     expect(dashboard).toContain("Vérifier la procédure officielle Guichet.lu");
     expect(dashboard).toContain("Délais de revue — objectif");
   });
+
+  it("sépare la préparation IA de la validation humaine et de la diffusion", () => {
+    const source = read("server/routers/aiEvaluationManagement.ts");
+    const dashboard = read("client/src/pages/AdminAIEvaluationDashboard.tsx");
+    expect(source).toContain("generateGeminiEvaluationDraft");
+    expect(source).toContain("if (!evaluation.reviewDraft?.trim())");
+    expect(source).toContain("sendValidatedEvaluationResponseEmail");
+    expect(dashboard).toContain("L’IA prépare uniquement une proposition");
+    expect(dashboard).toContain("validation humaine requise");
+  });
+
+  it("conserve le consentement pour la préparation automatique côté soumission", () => {
+    const source = read("server/routers/evaluation.ts");
+    expect(source).toContain("if (input.geminiAnalysisConsent)");
+    expect(source).toContain("preparatoryAnalysisConsentRecordedAt");
+    expect(source).toContain("aiReportContent: JSON.stringify(draft)");
+  });
 });
