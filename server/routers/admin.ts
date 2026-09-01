@@ -2596,8 +2596,10 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string().min(1),
       candidateId: z.number().int().positive(),
-      fileType: z.enum(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "autre"]),
+      fileType: z.enum(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre"]),
       fileName: z.string().min(1).max(255),
+      receiptDataUrl: z.string().startsWith("data:application/pdf;base64,").max(15_000_000).optional(),
+      receiptFileName: z.string().min(1).max(255).optional(),
       mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
       sizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
       dataUrl: z.string().max(15_000_000),
@@ -2617,7 +2619,7 @@ export const adminRouter = router({
       if (!buffer.length || buffer.length !== input.sizeBytes || buffer.length > 10 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit peser au maximum 10 Mo." });
       const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-180) || "document";
       const stored = await storagePut(`admin-documents/${input.candidateId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
-      await db.insert(candidateFiles).values({
+      const insertedDocument = await db.insert(candidateFiles).values({
         candidateId: input.candidateId,
         fileType: input.fileType,
         fileName: input.fileName,
@@ -2629,7 +2631,28 @@ export const adminRouter = router({
         correctionComment: `Document déposé par l’administration (${admin.email || "administrateur"}).`,
         extractedData: input.recognition ? JSON.stringify({ source: "admin_ai_suggestion", ...input.recognition }) : null,
       });
-      return { success: true, url: stored.url };
+      let receiptUrl: string | null = null;
+      if (input.fileType === "document_remis_main_propre" && input.receiptDataUrl) {
+        const receiptMatch = input.receiptDataUrl.match(/^data:application\/pdf;base64,(.+)$/);
+        if (!receiptMatch) throw new TRPCError({ code: "BAD_REQUEST", message: "Décharge PDF invalide." });
+        const receiptBuffer = Buffer.from(receiptMatch[1], "base64");
+        if (!receiptBuffer.length || receiptBuffer.length > 10 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Décharge PDF invalide ou trop volumineuse." });
+        const receiptStored = await storagePut(`admin-documents/${input.candidateId}/receipts/${Date.now()}-receipt.pdf`, receiptBuffer, "application/pdf");
+        receiptUrl = receiptStored.url;
+        await db.insert(candidateFiles).values({
+          candidateId: input.candidateId,
+          fileType: "autre",
+          fileName: input.receiptFileName || `Décharge - ${input.fileName}`.slice(0, 255),
+          fileUrl: receiptStored.url,
+          fileKey: receiptStored.key,
+          fileSizeBytes: receiptBuffer.length,
+          mimeType: "application/pdf",
+          status: "uploaded",
+          correctionComment: `Décharge automatique du document remis en main propre (document source #${Number(insertedDocument[0]?.insertId || 0)}).`,
+          extractedData: JSON.stringify({ source: "agency_handover_receipt", sourceDocumentId: Number(insertedDocument[0]?.insertId || 0), sourceDocumentName: input.fileName }),
+        });
+      }
+      return { success: true, url: stored.url, receiptUrl };
     }),
 
   suggestDroppedDocumentMetadata: publicProcedure

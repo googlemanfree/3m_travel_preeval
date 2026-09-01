@@ -225,6 +225,13 @@
       "when": 1787253531832,
       "tag": "0031_add_hotel_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1788266228228,
+      "tag": "0032_document_remis_main_propre",
+      "breakpoints": true
     }
   ]
 }

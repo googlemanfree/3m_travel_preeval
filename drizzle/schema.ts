@@ -312,6 +312,7 @@ export const candidateFiles = mysqlTable("candidate_files", {
     "extrait_naissance",
     "casier_judiciaire",
     "justificatif_paiement",
+    "document_remis_main_propre",
     "autre",
   ]).notNull(),
   fileName: varchar("fileName", { length: 255 }).notNull(),

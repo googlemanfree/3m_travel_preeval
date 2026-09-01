@@ -2038,3 +2038,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier le fichier dans l’espace candidat après contrôle admin, sans exposer les autres dossiers.
 - [x] Générer ou rattacher la décharge de dépôt et journaliser l’opération.
 - [x] Tester les droits, le stockage et la synchronisation, puis publier.
+
+## Documents remis en main propre et décharge PDF
+- [x] Ajouter la catégorie `document_remis_main_propre` dans les contrats et sélecteurs documentaires.
+- [x] Afficher clairement cette catégorie côté administration et espace candidat.
+- [x] Générer automatiquement une décharge PDF lors du dépôt admin en agence.
+- [x] Rattacher la décharge au dossier, au document source et à l’historique d’audit.
+- [x] Tester les droits, le PDF et la synchronisation, puis publier.

@@ -307,6 +307,40 @@ export function AdminDocumentsManagement() {
     reader.readAsDataURL(file);
   });
 
+  const buildAgencyHandoverReceipt = async (file: File, candidateId: number) => {
+    const target = (candidateDirectory?.candidates ?? []).find((candidate: any) => candidate.internalId === candidateId);
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const safe = (value: string) => value.replace(/[\\()\r\n]/g, " ").slice(0, 180);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.setTextColor(10, 37, 64);
+    pdf.text("3M Travel Agency", 105, 24, { align: "center" });
+    pdf.setFontSize(14);
+    pdf.text("DÉCHARGE DE REMISE EN MAIN PROPRE", 105, 40, { align: "center" });
+    pdf.setDrawColor(255, 152, 0);
+    pdf.line(20, 48, 190, 48);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(40, 40, 40);
+    [
+      `Date de dépôt : ${new Date().toLocaleDateString("fr-FR")}`,
+      `Dossier : ${target?.folderCode || "Non renseigné"}`,
+      `Candidat : ${target?.fullName || "Non renseigné"}`,
+      `E-mail : ${target?.email || "Non renseigné"}`,
+      `Document remis : ${file.name}`,
+      "Origine : dépôt physique en agence",
+      "Déposé par : administration 3M Travel & Services",
+    ].forEach((line, index) => pdf.text(safe(line), 25, 68 + index * 10));
+    pdf.setFontSize(10);
+    pdf.text("Cette décharge confirme l’enregistrement du document remis physiquement au dossier.", 25, 155, { maxWidth: 160 });
+    pdf.text("Le document reste soumis au contrôle et à la validation de l’agence.", 25, 168, { maxWidth: 160 });
+    pdf.setFontSize(9);
+    pdf.text("Document généré automatiquement par la plateforme 3M Travel & Services.", 25, 220);
+    const dataUri = pdf.output("datauristring");
+    return `data:application/pdf;base64,${dataUri.split(",")[1] || ""}`;
+  };
+
   const recognizeDroppedFile = async (file: File) => {
     const key = `${file.name}-${file.size}`;
     setIsRecognizing(true);
@@ -336,14 +370,17 @@ export function AdminDocumentsManagement() {
     try {
       for (const file of droppedFiles) {
         const recognition = recognitionByFile[`${file.name}-${file.size}`];
+        const receiptDataUrl = uploadDocumentType === "document_remis_main_propre" ? await buildAgencyHandoverReceipt(file, candidateId) : undefined;
         await uploadDocumentForCandidateMutation.mutateAsync({
           sessionToken,
           candidateId,
-          fileType: uploadDocumentType as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "justificatif_paiement" | "autre",
+          fileType: uploadDocumentType as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "justificatif_paiement" | "document_remis_main_propre" | "autre",
           fileName: file.name,
           mimeType: file.type as "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           sizeBytes: file.size,
           dataUrl: await toDataUrl(file),
+          receiptDataUrl,
+          receiptFileName: receiptDataUrl ? `Decharge-remise-main-propre-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150)}.pdf` : undefined,
           recognition: recognition ? { ...recognition, documentType: recognition.documentType as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "justificatif_paiement" | "autre" } : undefined,
         });
       }
@@ -631,7 +668,7 @@ export function AdminDocumentsManagement() {
                 <p className="mt-2 text-sm font-semibold text-slate-900">Déposez vos fichiers ici</p><p className="text-xs text-slate-500">PDF, images ou Word · 10 Mo maximum par fichier</p>
                 <label className="mt-3 inline-flex cursor-pointer items-center rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50">Sélectionner des fichiers<input type="file" multiple className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => event.currentTarget.files && acceptDroppedFiles(event.currentTarget.files)} /></label>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2"><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{uploadTargets.map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</select><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option></select></div>
+              <div className="grid gap-2 sm:grid-cols-2"><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{uploadTargets.map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</select><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option><option value="document_remis_main_propre">Document remis en main propre</option></select></div>
               {droppedFiles.length > 0 && <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => { const recognition = recognitionByFile[`${file.name}-${file.size}`]; return <div key={`${file.name}-${index}`} className="flex items-start justify-between gap-2 text-xs"><div className="min-w-0"><p className="truncate font-medium">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</p>{recognition ? <p className="mt-0.5 text-violet-700">IA : {recognition.documentType} · {recognition.confidence}% — {recognition.suggestedFolder}. À confirmer avant dépôt.</p> : <p className="mt-0.5 text-slate-500">{isRecognizing ? "Analyse IA en cours…" : "Analyse IA en attente"}</p>}</div><button type="button" onClick={() => { setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index)); setRecognitionByFile((current) => { const next = { ...current }; delete next[`${file.name}-${file.size}`]; return next; }); }} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>; })}</div>}
               <Button type="button" onClick={handleAdminDropUpload} disabled={isLoading || !uploadCandidateId || !droppedFiles.length} className="w-full gap-2"><Upload className="h-4 w-4" />Déposer dans le dossier</Button>
             </CardContent>
