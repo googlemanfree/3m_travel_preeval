@@ -2026,3 +2026,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre la consultation, la signature guidée et le téléchargement des documents signés selon les droits.
 - [x] Synchroniser la liste et les états de signature avec le pilotage administrateur.
 - [x] Ajouter les tests d’accès et de statut, vérifier TypeScript et publier.
+
+## Condition d’évaluation et envoi admin — reprise après restauration
+- [x] Afficher le message d’évaluation obligatoire uniquement pour un dossier sans évaluation.
+- [x] Conserver l’envoi admin du résultat vers l’espace candidat et par e-mail avec accès direct.
+- [x] Ajouter la régression de condition, vérifier TypeScript et publier.

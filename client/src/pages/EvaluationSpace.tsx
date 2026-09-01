@@ -262,7 +262,7 @@ export default function EvaluationSpace() {
     : validatedEvaluationResponse || cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
-  const evaluationRequired = Boolean(workflow?.evaluationRequired) || (!latestEvaluation && (cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused"));
+  const evaluationRequired = !latestEvaluation && cProfile.evaluationDeclarationStatus !== "validated" && (Boolean(workflow?.evaluationRequired) || cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
   const agreementAfterPaymentRequired = Boolean(workflow?.showAgreementAfterPayment);
   const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
   const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
