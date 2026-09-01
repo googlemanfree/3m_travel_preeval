@@ -2119,3 +2119,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger les conditions de désactivation et les enchaînements des boutons d’action.
 - [x] Garantir une mise en page utilisable sans débordement horizontal sur mobile.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Barre d’actions et pilotage des dossiers sensibles
+- [x] Agrandir l’espace de préparation sur toute la fenêtre disponible, sans débordement mobile.
+- [x] Ajouter une barre d’actions fixe en bas avec validation et envoi toujours visibles.
+- [x] Afficher un toast de succès temporaire après chaque action réussie.
+- [x] Ajouter un filtre rapide pour les dossiers sensibles nécessitant une double validation.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

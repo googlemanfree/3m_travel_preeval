@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
+import { useToast } from "@/components/ui/use-toast";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -266,6 +267,7 @@ function initialReviewDraft(item: DashboardItem) {
 }
 
 export default function AdminAIEvaluationDashboard() {
+  const { toast } = useToast();
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const { data, isLoading, refetch, isFetching } = trpc.aiEvaluationManagement.getUnifiedDashboard.useQuery(
     { sessionToken, limit: 500 },
@@ -470,7 +472,7 @@ export default function AdminAIEvaluationDashboard() {
     }
     if (!window.confirm("Ajouter cette pièce à la checklist du candidat ? Elle restera modifiable et ne déclenche aucun envoi automatique.")) return;
     createDocumentRequirement.mutate({ sessionToken, evaluationId, documentType: requestedDocumentLabel.trim(), candidateComment: requestedDocumentComment.trim(), dueAt: requestedDocumentDueAt ? new Date(`${requestedDocumentDueAt}T23:59:59.999Z`).toISOString() : undefined, reason: requestedDocumentReason.trim() }, {
-      onSuccess: () => { setRequestedDocumentLabel(""); setRequestedDocumentComment(""); setRequestedDocumentDueAt(""); setRequestedDocumentReason(""); setDocumentRequirementNotice("Pièce ajoutée à la checklist du candidat et journalisée."); },
+      onSuccess: () => { setRequestedDocumentLabel(""); setRequestedDocumentComment(""); setRequestedDocumentDueAt(""); setRequestedDocumentReason(""); setDocumentRequirementNotice("Pièce ajoutée à la checklist du candidat et journalisée."); toast({ title: "Checklist mise à jour", description: "La demande de pièce a été enregistrée." }); },
       onError: (error) => setDocumentRequirementNotice(error.message),
     });
   };
@@ -500,7 +502,7 @@ export default function AdminAIEvaluationDashboard() {
   const validateResponse = (item: DashboardItem) => {
     const evaluationId = evaluationNumericId(item);
     if (!Number.isInteger(evaluationId)) return;
-    validateAndSend.mutate({ sessionToken, evaluationId, validationNote: reviewReason }, { onSuccess: (result) => setDeliveryNotice(result.requiresSecondReview ? "Première validation enregistrée. Une seconde validation humaine est requise avant l’envoi." : result.delivered ? "Réponse validée et envoyée au candidat." : "Réponse validée, mais l’e-mail n’a pas été envoyé. Réessayez depuis cette fiche."), onError: (error) => setDeliveryNotice(error.message) });
+    validateAndSend.mutate({ sessionToken, evaluationId, validationNote: reviewReason }, { onSuccess: (result) => { const message = result.requiresSecondReview ? "Première validation enregistrée. Une seconde validation humaine est requise avant l’envoi." : result.delivered ? "Réponse validée et envoyée au candidat." : "Réponse validée, mais l’e-mail n’a pas été envoyé. Réessayez depuis cette fiche."; setDeliveryNotice(message); toast({ title: result.requiresSecondReview ? "Seconde validation requise" : result.delivered ? "Évaluation envoyée" : "Évaluation validée", description: message }); }, onError: (error) => setDeliveryNotice(error.message) });
   };
 
   const loadResponseTemplate = (item: DashboardItem) => {
@@ -513,7 +515,7 @@ export default function AdminAIEvaluationDashboard() {
   const restartPreparation = (item: DashboardItem) => {
     const evaluationId = evaluationNumericId(item);
     if (!Number.isInteger(evaluationId) || reviewReason.trim().length < 8 || !window.confirm("Relancer la préparation interne à partir des réponses déclarées ? Aucun élément ne sera envoyé au candidat.")) return;
-    retryPreparation.mutate({ sessionToken, evaluationId, reason: reviewReason }, { onSuccess: () => setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }), onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
+    retryPreparation.mutate({ sessionToken, evaluationId, reason: reviewReason }, { onSuccess: () => { setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }); toast({ title: "Brouillon préparé", description: "Le brouillon est prêt pour la relecture humaine." }); }, onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
   };
 
   const loadProjectTemplate = (item: DashboardItem) => {
@@ -527,7 +529,7 @@ export default function AdminAIEvaluationDashboard() {
     const evaluationId = evaluationNumericId(item);
     const reason = window.prompt("Indiquez le motif de la relance (8 caractères minimum) :")?.trim() ?? "";
     if (!Number.isInteger(evaluationId) || reason.length < 8 || !window.confirm("Relancer la préparation interne à partir des réponses déclarées ? Aucun élément ne sera envoyé au candidat.")) return;
-    retryPreparation.mutate({ sessionToken, evaluationId, reason }, { onSuccess: () => setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }), onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
+    retryPreparation.mutate({ sessionToken, evaluationId, reason }, { onSuccess: () => { setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }); toast({ title: "Brouillon préparé", description: "Le brouillon est prêt pour la relecture humaine." }); }, onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
   };
 
   const clearManagedTemplateForm = () => {
