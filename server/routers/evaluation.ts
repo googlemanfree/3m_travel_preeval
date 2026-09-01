@@ -30,7 +30,7 @@ const destinationCategoryEnum = z.enum(["schengen", "canada", "autre"]);
 const acquisitionSourceEnum = z.enum(["facebook", "whatsapp", "direct", "other"]);
 const DOCUMENT_UPLOAD_TTL_MS = 30 * 60 * 1000;
 const MAX_EVALUATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
-const ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
+const ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "application/x-pdf", "text/pdf", "application/octet-stream", "image/jpeg", "image/png"]);
 const evaluationDocumentTypeEnum = z.enum(["passport", "cv", "diploma", "certificate", "birth_certificate", "bank_statement", "language_test", "educational_transcript", "proof_of_residence", "other"]);
 const orientationAlternativeCandidates: Record<string, string[]> = {
   Canada: ["France", "Belgique", "Allemagne", "Luxembourg", "Royaume-Uni"],
@@ -40,6 +40,17 @@ const orientationAlternativeCandidates: Record<string, string[]> = {
   Allemagne: ["France", "Belgique", "Luxembourg", "Canada"],
   "Royaume-Uni": ["Canada", "France", "Belgique", "Allemagne"],
 };
+
+function hasExpectedEvaluationSignature(fileName: string, mimeType: string, buffer: Buffer): boolean {
+  const startsWith = (...signature: number[]) => signature.every((value, index) => buffer[index] === value);
+  const normalizedMime = mimeType.toLowerCase().trim();
+  if (new Set(["application/pdf", "application/x-pdf", "text/pdf", "application/octet-stream"]).has(normalizedMime)) {
+    return /\.pdf$/i.test(fileName) && startsWith(0x25, 0x50, 0x44, 0x46);
+  }
+  if (normalizedMime === "image/png") return startsWith(0x89, 0x50, 0x4e, 0x47);
+  if (normalizedMime === "image/jpeg") return startsWith(0xff, 0xd8, 0xff);
+  return false;
+}
 
 function getEvaluationUploadSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -321,6 +332,7 @@ export const evaluationRouter = router({
     const base64 = input.fileBase64.includes(",") ? input.fileBase64.split(",")[1] : input.fileBase64;
     const buffer = Buffer.from(base64, "base64");
     if (!buffer.length || buffer.length !== input.sizeBytes || buffer.length > MAX_EVALUATION_DOCUMENT_BYTES) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier est invalide ou dépasse 10 Mo." });
+    if (!hasExpectedEvaluationSignature(input.fileName, input.mimeType, buffer)) throw new TRPCError({ code: "BAD_REQUEST", message: "Le contenu du fichier ne correspond pas au format déclaré." });
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150) || "document";
     const stored = await storagePut(`evaluation-documents/${input.evaluationId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
     const result = await db.insert(clientDocuments).values({ evaluationId: input.evaluationId, candidateEmail: input.email.toLowerCase(), documentType: input.documentType, documentName: safeName, documentUrl: stored.url, fileSize: buffer.length, source: "online", receivedByAdmin: false }).$returningId();

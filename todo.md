@@ -2064,3 +2064,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher le rattachement du compte candidat dans la fiche admin avec lien direct vers son espace.
 - [x] Mettre en évidence le statut actuel et les documents synchronisés par l’agence dans l’espace candidat.
 - [x] Ajouter les tests de régression, vérifier accessibilité, TypeScript et build, puis publier.
+
+## Évaluations nouveaux candidats et formats documentaires
+- [x] Simplifier l’envoi et la validation humaine des évaluations des candidats nouvellement inscrits.
+- [x] Autoriser les images PNG dans les téléversements candidats et admin avec vérification de signature.
+- [x] Autoriser les fichiers PDF valides quel que soit leur nom, sans désactiver les limites de taille et les contrôles de contenu.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

@@ -13,7 +13,7 @@ interface MulterRequest extends Request {
 }
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
-const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
+const ALLOWED_MIME_TYPES = new Set(["application/pdf", "application/x-pdf", "text/pdf", "application/octet-stream", "image/jpeg", "image/png"]);
 const ALLOWED_DOCUMENT_TYPES = new Set([
   "passport",
   "cv",
@@ -45,7 +45,8 @@ function sanitizeFileName(fileName: string): string {
 function hasExpectedSignature(file: Express.Multer.File): boolean {
   const bytes = file.buffer;
   const startsWith = (...signature: number[]) => signature.every((value, index) => bytes[index] === value);
-  if (file.mimetype === "application/pdf") return startsWith(0x25, 0x50, 0x44, 0x46);
+  const isPdfMime = new Set(["application/pdf", "application/x-pdf", "text/pdf", "application/octet-stream"]).has(file.mimetype);
+  if (isPdfMime) return /\.pdf$/i.test(file.originalname || "") && startsWith(0x25, 0x50, 0x44, 0x46);
   if (file.mimetype === "image/jpeg") return startsWith(0xff, 0xd8, 0xff);
   if (file.mimetype === "image/png") return startsWith(0x89, 0x50, 0x4e, 0x47);
   return false;

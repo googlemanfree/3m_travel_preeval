@@ -58,3 +58,24 @@ describe("admin agency document upload", () => {
     expect(clientSource).toContain("Synchronisation agence");
     expect(clientSource).toContain("agencyDocumentCount");
   });
+
+
+  it("accepts PNG and PDF MIME variants only with matching content checks", () => {
+    const candidateUpload = readFileSync(resolve(process.cwd(), "server/routers/candidateUpload.ts"), "utf8");
+    const agencyUpload = readFileSync(resolve(process.cwd(), "server/routers/agencyDossierUpload.ts"), "utf8");
+    const evaluationUpload = readFileSync(resolve(process.cwd(), "server/routers/evaluation.ts"), "utf8");
+    for (const source of [candidateUpload, agencyUpload, evaluationUpload]) {
+      expect(source).toContain("application/pdf");
+      expect(source).toContain("application/x-pdf");
+      expect(source).toContain("image/png");
+      expect(source).toContain("0x25, 0x50, 0x44, 0x46");
+    }
+    expect(candidateUpload).toContain("0x89, 0x50, 0x4e, 0x47");
+  });
+
+  it("provides a direct human review queue for newly received evaluations", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminAIEvaluationDashboard.tsx"), "utf8");
+    expect(source).toContain("pendingQueueOnly");
+    expect(source).toContain("Nouveaux à traiter");
+    expect(source).toContain("Valider puis envoyer");
+  });
