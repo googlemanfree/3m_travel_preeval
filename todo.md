@@ -2113,3 +2113,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre de personnaliser le texte d’accompagnement juste avant une relance.
 - [x] Ajouter le téléchargement direct du PDF depuis la fenêtre d’aperçu admin.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Réorganisation et actions du traitement admin
+- [x] Réduire la saturation visuelle et séparer clairement édition, aperçu, validation et diffusion.
+- [x] Corriger les conditions de désactivation et les enchaînements des boutons d’action.
+- [x] Garantir une mise en page utilisable sans débordement horizontal sur mobile.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
