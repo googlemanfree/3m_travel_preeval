@@ -11,6 +11,7 @@ export type AgencyDocumentView = {
   documentUrl: string;
   fileSize?: number | null;
   source: "agency_scan" | "admin_upload" | "candidate_upload";
+  uploadedBy?: string | null;
   verificationStatus: "pending" | "verified" | "rejected";
   verificationComment?: string | null;
   createdAt: Date | string;
@@ -85,7 +86,7 @@ export default function AgencyDocumentsPanel({
                   </div>
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-gray-900">{document.documentName}</p>
-                    <p className="text-xs text-gray-500">{document.documentType.replaceAll("_", " ")}</p>
+                    <p className="text-xs text-gray-500">{document.documentType.replaceAll("_", " ")}</p><p className="mt-1 text-[11px] text-gray-500">Reçu le {document.createdAt ? new Date(document.createdAt).toLocaleString("fr-FR") : "date non disponible"} · Origine : {document.source === "admin_upload" || document.source === "agency_scan" ? "remis en agence" : "dépôt candidat"}</p><p className="text-[11px] text-gray-500">Enregistré par : {document.uploadedBy || "agence"}</p>
                     {document.verificationComment && document.verificationStatus === "rejected" && (
                       <p className="mt-1 text-xs text-red-600">{document.verificationComment}</p>
                     )}

@@ -39,7 +39,7 @@ export function AdminDocumentsManagement() {
   const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
-  const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "candidate">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "candidate" | "agency">("all");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [dossierFilter, setDossierFilter] = useState("all");
   const [classificationFilter, setClassificationFilter] = useState("all");
@@ -757,7 +757,7 @@ export function AdminDocumentsManagement() {
                 ))}
               </select>
               <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as typeof sourceFilter)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" aria-label="Filtrer par origine">
-                <option value="all">Toutes les origines</option><option value="client">Dépôt dossier</option><option value="candidate">Espace candidat</option>
+                <option value="all">Toutes les origines</option><option value="client">Dépôt dossier</option><option value="candidate">Candidat en ligne</option><option value="agency">Documents remis en agence</option>
               </select>
               <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" aria-label="Filtrer par type de document">
                 <option value="all">Tous les types</option>{documentTypes.map((type) => <option key={type} value={type}>{getDocumentTypeLabel(type)}</option>)}

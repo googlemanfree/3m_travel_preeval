@@ -2139,3 +2139,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Sauvegarder automatiquement le brouillon pendant la rédaction du bilan.
 - [x] Distinguer visuellement les sections générées par IA des modifications humaines.
 - [x] Ajouter les tests de droits et de synchronisation, vérifier TypeScript et build, puis publier.
+
+## Documents agence et activation de l’évaluation
+- [x] Ajouter un filtre « Documents remis en agence » dans le centre documentaire.
+- [x] Afficher date, origine et conseiller pour chaque document dans l’espace candidat.
+- [x] Prévisualiser les documents déposés par l’administration avant validation définitive.
+- [x] Corriger l’envoi de l’évaluation et activer l’étape Évaluation côté candidat après validation humaine.
+- [x] Ajouter les tests de synchronisation, vérifier TypeScript et build, puis publier.

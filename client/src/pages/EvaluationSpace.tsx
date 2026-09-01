@@ -258,7 +258,17 @@ export default function EvaluationSpace() {
     refuse: "Décision défavorable",
   };
   const currentDossierStatusLabel = dossierStatusLabel[String(cProfile.dossierStatus)] || "Suivi en cours";
-  const latestEvaluation = evaluations[0] as any;
+  const latestEvaluation = (evaluations[0] as any) ?? (activeDossier?.evaluationDeliveryStatus === "sent" ? {
+    id: `application-${activeDossier.id}`,
+    referenceCode: activeDossier.dossierNumber,
+    destinationCountry: activeDossier.destination,
+    projectType: (activeDossier as any).projectType,
+    visaType: (activeDossier as any).visaType,
+    status: "completed",
+    finalResponseSentAt: activeDossier.evaluationCompletedAt,
+    reviewDraft: activeDossier.evaluationDeliveryMessage,
+    createdAt: activeDossier.evaluationCompletedAt,
+  } : null);
   const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
   const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
   const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;

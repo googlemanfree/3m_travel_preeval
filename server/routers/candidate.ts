@@ -1858,10 +1858,27 @@ export const candidateRouter = router({
       db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)),
       db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
       db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidate.id)).orderBy(desc(candidateFiles.uploadedAt)),
-      db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, candidate.email)).orderBy(desc(clientDocuments.createdAt)),
+      db.select({
+        id: agencyDossierDocuments.id,
+        dossierId: agencyDossierDocuments.dossierId,
+        documentType: agencyDossierDocuments.documentType,
+        documentName: agencyDossierDocuments.documentName,
+        documentUrl: agencyDossierDocuments.documentUrl,
+        fileSize: agencyDossierDocuments.fileSize,
+        source: agencyDossierDocuments.source,
+        uploadedBy: agencyDossierDocuments.uploadedBy,
+        verificationStatus: agencyDossierDocuments.verificationStatus,
+        verificationComment: agencyDossierDocuments.verificationComment,
+        createdAt: agencyDossierDocuments.createdAt,
+        updatedAt: agencyDossierDocuments.updatedAt,
+      }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossierDocuments.createdAt)),
     ]);
 
     const activeApp = appRows[0] || null;
+    const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
+      ...document,
+      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+    })));
     const clientEvaluations = evalRows.map((evaluation) => ({
       id: evaluation.id,
       referenceCode: evaluation.referenceCode,
@@ -1898,8 +1915,8 @@ export const candidateRouter = router({
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
-        dossierNumber: (candidate as any).dossierNumber || activeApp?.dossierNumber || "N/A",
-        dossierStatus: (candidate as any).dossierStatus || activeApp?.dossierStatus || "evaluation",
+        dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || "N/A",
+        dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || "evaluation",
         evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
         evaluationDeclaredAt: candidate.evaluationDeclaredAt,
         evaluationReviewedAt: candidate.evaluationReviewedAt,
@@ -1926,7 +1943,7 @@ export const candidateRouter = router({
       evaluations: clientEvaluations,
       messages: messageRows,
       candidateFiles: fileRows,
-      agencyDocuments: agencyDocRows,
+      agencyDocuments: synchronizedAgencyDocuments,
       stats: {
         totalEvaluations: clientEvaluations.length,
         totalFavoriteFlights: favFlights.length,
