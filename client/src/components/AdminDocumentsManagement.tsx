@@ -87,6 +87,11 @@ export function AdminDocumentsManagement() {
     { enabled: !!sessionToken }
   );
 
+  const { data: candidateDirectory } = trpc.admin.listCandidates.useQuery(
+    { sessionToken, limit: 200, offset: 0, sortBy: "recent" },
+    { enabled: !!sessionToken },
+  );
+
   const handleApproveDocument = async (doc: Document) => {
     setIsLoading(true);
     try {
@@ -247,7 +252,7 @@ export function AdminDocumentsManagement() {
   });
 
   const documentTypes = Array.from(new Set(documents.map((document) => document.documentType).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr"));
-  const uploadTargets = Array.from(new Map(documents.filter((document) => document.candidateId).map((document) => [document.candidateId as number, { id: document.candidateId as number, label: `${document.candidateName} · ${document.dossierNumber}` }])).values()).sort((left, right) => left.label.localeCompare(right.label, "fr"));
+  const uploadTargets = Array.from(new Map((candidateDirectory?.candidates ?? []).map((candidate: any) => [candidate.internalId, { id: candidate.internalId as number, label: `${candidate.fullName} · ${candidate.folderCode}` }])).values()).sort((left, right) => left.label.localeCompare(right.label, "fr"));
   const dossierSummaries = Array.from(documents.reduce((summary, document) => {
     const key = document.dossierNumber || "N/A";
     const current = summary.get(key) || { dossierNumber: key, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0, latestAt: document.submittedAt };

@@ -2031,3 +2031,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher le message d’évaluation obligatoire uniquement pour un dossier sans évaluation.
 - [x] Conserver l’envoi admin du résultat vers l’espace candidat et par e-mail avec accès direct.
 - [x] Ajouter la régression de condition, vérifier TypeScript et publier.
+
+## Fichiers déposés en agence dans l’espace candidat
+- [x] Ajouter un formulaire admin de téléversement ciblant un candidat précis.
+- [x] Stocker le fichier avec origine `scanned_agency` ou `manual_admin`, type, nom et auteur admin.
+- [x] Publier le fichier dans l’espace candidat après contrôle admin, sans exposer les autres dossiers.
+- [x] Générer ou rattacher la décharge de dépôt et journaliser l’opération.
+- [x] Tester les droits, le stockage et la synchronisation, puis publier.
