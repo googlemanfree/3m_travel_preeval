@@ -79,3 +79,21 @@ describe("admin agency document upload", () => {
     expect(source).toContain("Nouveaux à traiter");
     expect(source).toContain("Valider puis envoyer");
   });
+
+
+  it("exposes a non-sending email preview before final validation", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminAIEvaluationDashboard.tsx"), "utf8");
+    expect(source).toContain("Aperçu de l’e-mail d’évaluation");
+    expect(source).toContain("Aucun e-mail n’est envoyé depuis cet aperçu");
+    expect(source).toContain("Prévisualiser l’e-mail");
+    expect(source).toContain("Valider puis envoyer");
+  });
+
+  it("shows uploaded filename, detected format, size and human-review status", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/components/DocumentUploader.tsx"), "utf8");
+    expect(source).toContain("Document reçu avec succès");
+    expect(source).toContain("Format détecté");
+    expect(source).toContain("en attente de vérification humaine");
+    expect(source).toContain('lastUploaded.name');
+    expect(source).toContain('lastUploaded.size');
+  });

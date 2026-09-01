@@ -21,7 +21,7 @@ interface DocumentFile {
 
 interface DocumentUploaderProps {
   dossierNumber: string;
-  onUploadSuccess?: () => void;
+  onUploadSuccess?: (file: { name: string; type: string; size: number }) => void;
   maxFileSize?: number;
   acceptedFormats?: string[];
   clarificationRequestId?: number;
@@ -46,6 +46,7 @@ export function DocumentUploader({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [lastUploaded, setLastUploaded] = useState<{ name: string; type: string; size: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
@@ -165,8 +166,10 @@ export function DocumentUploader({
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Erreur lors du dépôt du document.");
 
+      const uploadedFile = { name: file.name, type: fileObj.type || (file.name.toLowerCase().endsWith(".png") ? "image/png" : "application/pdf"), size: file.size };
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "success" as const, progress: 100 } : f));
-      onUploadSuccess?.();
+      setLastUploaded(uploadedFile);
+      onUploadSuccess?.(uploadedFile);
     } catch (error) {
       setFiles((prev) => prev.map((f) => f.id === file.id ? {
         ...f,
@@ -191,6 +194,7 @@ export function DocumentUploader({
   return (
     <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="mb-6">
+        {lastUploaded && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left" role="status" aria-live="polite"><div className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" /><div><p className="font-bold text-emerald-950">Document reçu avec succès</p><p className="mt-1 text-sm text-emerald-900"><strong>{lastUploaded.name}</strong> a bien été transmis à l’agence.</p><p className="mt-1 text-xs text-emerald-800">Format détecté : <strong>{lastUploaded.type === "image/png" || lastUploaded.name.toLowerCase().endsWith(".png") ? "PNG" : "PDF"}</strong> · Taille : <strong>{formatFileSize(lastUploaded.size)}</strong> · Statut : <strong>en attente de vérification humaine</strong>.</p><p className="mt-2 text-xs text-emerald-800">Vous pouvez continuer à déposer une autre pièce ou consulter le centre documentaire pour suivre son traitement.</p></div></div></div>}
         <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
           <Upload className="w-5 h-5 text-blue-600" />
           Téléverser vos documents

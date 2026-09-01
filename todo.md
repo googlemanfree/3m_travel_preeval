@@ -2070,3 +2070,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Autoriser les images PNG dans les téléversements candidats et admin avec vérification de signature.
 - [x] Autoriser les fichiers PDF valides quel que soit leur nom, sans désactiver les limites de taille et les contrôles de contenu.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Prévisualisation d’évaluation et confirmation documentaire
+- [x] Ajouter un aperçu de l’e-mail d’évaluation avant validation et envoi admin.
+- [x] Afficher une confirmation détaillée après dépôt réussi d’un PNG ou PDF côté candidat.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
