@@ -2094,3 +2094,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Refuser côté serveur un second validateur identique au premier conseiller.
 - [x] Afficher une timeline simplifiée des étapes validées dans l’espace candidat.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Correction envoi bilan et espace candidat
+- [x] Rendre le bouton « Valider et envoyer » opérationnel par e-mail et dans l’espace candidat.
+- [x] Agrandir l’éditeur de bilan sur ordinateur et téléphone avec une mise en page responsive.
+- [x] Corriger l’erreur de synchronisation et de chargement de /mon-espace.
+- [x] Ajouter les tests de régression, vérifier TypeScript, build et rendu responsive, puis publier.

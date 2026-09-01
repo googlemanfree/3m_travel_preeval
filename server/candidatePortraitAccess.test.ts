@@ -16,3 +16,10 @@ describe("hasUsableCandidatePortrait", () => {
     expect(hasUsableCandidatePortrait({ avatarVerificationStatus: "rejected", avatarUrl: "https://example.test/portrait.jpg" })).toBe(false);
   });
 });
+
+  it("conserve un accès au tableau de bord pour reprendre l’onboarding", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(new URL("./routers/candidate.ts", import.meta.url), "utf8");
+    expect(source).toContain('const PORTRAIT_DASHBOARD_PATHS = new Set(["candidate.getClientDashboardSummary"])');
+    expect(source).toContain("!PORTRAIT_DASHBOARD_PATHS.has(path)");
+  });

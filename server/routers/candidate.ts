@@ -178,6 +178,9 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 // Le portrait est une barrière serveur : seules les mutations d’onboarding
 // peuvent être appelées avant la vérification humaine.
 const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
+// Le tableau de bord doit rester accessible pour afficher l’avertissement et permettre
+// la reprise de l’onboarding ; les ressources documentaires restent protégées.
+const PORTRAIT_DASHBOARD_PATHS = new Set(["candidate.getClientDashboardSummary"]);
 // Contrat de la requête de synthèse consommée par l’espace candidat après actualisation.
 export const CANDIDATE_DASHBOARD_CONTRACT = "candidate.getClientDashboardSummary";
 
@@ -197,7 +200,7 @@ export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }
     throw new TRPCError({ code: "FORBIDDEN", message: "EMAIL_VERIFICATION_REQUIRED" });
   }
 
-  if (!hasUsableCandidatePortrait(candidate) && !PORTRAIT_ONBOARDING_PATHS.has(path)) {
+  if (!hasUsableCandidatePortrait(candidate) && !PORTRAIT_ONBOARDING_PATHS.has(path) && !PORTRAIT_DASHBOARD_PATHS.has(path)) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Un portrait humain vérifié est obligatoire pour accéder à votre espace et à vos ressources." });
   }
 
