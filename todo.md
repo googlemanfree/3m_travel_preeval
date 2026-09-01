@@ -2146,3 +2146,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Prévisualiser les documents déposés par l’administration avant validation définitive.
 - [x] Corriger l’envoi de l’évaluation et activer l’étape Évaluation côté candidat après validation humaine.
 - [x] Ajouter les tests de synchronisation, vérifier TypeScript et build, puis publier.
+
+## Correction évaluation introuvable et documents exploitables
+- [x] Corriger la résolution du dossier transmis à l’éditeur afin de supprimer « Dossier d’évaluation introuvable ».
+- [x] Permettre à l’admin d’ouvrir et télécharger les CV et PDF du candidat avec URL sécurisée et provenance claire.
+- [x] Permettre le dépôt admin de tous les documents remis en agence dans le dossier candidat ou pré-dossier sélectionné.
+- [x] Vérifier que l’envoi du bilan active l’évaluation côté candidat sans mélange documentaire.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

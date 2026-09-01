@@ -10,6 +10,7 @@ import {
   consultationRequests,
   contactMessages,
   evaluationEmails,
+  evaluations,
   flightBookingRequests,
   insuranceRequests,
   profileEvaluations,
@@ -62,6 +63,18 @@ async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof
   await db.update(applications).set({ dossierNumber, updatedAt: new Date() }).where(eq(applications.id, application.id));
   await db.update(cases).set({ caseNumber: dossierNumber, updatedAt: new Date() }).where(eq(cases.legacyApplicationId, application.id));
   return dossierNumber;
+}
+
+async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, sourceRecordId: number) {
+  const [directApplication] = await db.select().from(applications).where(eq(applications.id, sourceRecordId)).limit(1);
+  if (directApplication) return directApplication;
+  const [sourceEvaluation] = await db.select({ candidateId: evaluations.candidateId, email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, sourceRecordId)).limit(1);
+  if (!sourceEvaluation) return null;
+  const applicationWhere = sourceEvaluation.candidateId
+    ? eq(applications.candidateId, sourceEvaluation.candidateId)
+    : and(eq(applications.email, sourceEvaluation.email), eq(applications.fullName, sourceEvaluation.fullName));
+  const [linkedApplication] = await db.select().from(applications).where(applicationWhere).orderBy(desc(applications.createdAt)).limit(1);
+  return linkedApplication ?? null;
 }
 
 type SourceType = typeof sourceTypes[number];
@@ -346,8 +359,8 @@ export const unifiedRequestsRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const adminDraft = details.adminDraft ?? {};
@@ -362,8 +375,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
       const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
@@ -382,8 +395,8 @@ export const unifiedRequestsRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const draft = details.adminDraft ?? {};
@@ -425,8 +438,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan envoyé ne peut plus être régénéré." });
       const generated = await generateDestinationEvaluationDraft(application, input.destination);
       let details: Record<string, unknown> = {};
@@ -450,8 +463,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé et ne peut plus être modifié." });
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
@@ -480,8 +493,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan envoyé ne peut plus être validé." });
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
@@ -502,8 +515,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (!application.evaluationRequiresSecondApproval || application.evaluationApprovalStatus !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune seconde approbation n’est requise pour ce bilan." });
       const version = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
       if (!version || version.approvalStatus !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune version de bilan en attente d’approbation." });
@@ -523,8 +536,8 @@ export const unifiedRequestsRouter = router({
       if (input.scheduledAt.getTime() <= Date.now() + 60_000) throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez une date et heure au moins une minute dans le futur." });
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
       let scheduledDetails: Record<string, unknown> = {};
       try { scheduledDetails = JSON.parse(application.scoringDetails || "{}"); } catch { scheduledDetails = {}; }
@@ -542,8 +555,8 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const application = await resolveEvaluationApplication(db, input.sourceRecordId);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable. Vérifiez que le candidat possède un dossier actif avant de préparer son bilan." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
       if (!["nouveau", "en_evaluation"].includes(application.dossierStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "Le dossier a déjà progressé vers une étape ultérieure." });
       let deliveryDetails: Record<string, unknown> = {};
