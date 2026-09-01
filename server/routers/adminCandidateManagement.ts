@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
@@ -350,24 +350,36 @@ export const adminCandidateManagementRouter = router({
         .orderBy(desc(agencyDossiers.createdAt))
         .limit(1);
       const linkedExistingDossier = existing.length > 0;
+      let agencyDossierId: number;
       if (linkedExistingDossier) {
+        agencyDossierId = existing[0].id;
         await db.update(agencyDossiers).set({
           destination: input.destination,
           visaType: input.visaType,
+          status: "en_cours",
           assignedToAdmin: admin.email,
           ...(input.adminNotes ? { adminNotes: input.adminNotes } : {}),
-        }).where(eq(agencyDossiers.id, existing[0].id));
+        }).where(eq(agencyDossiers.id, agencyDossierId));
       } else {
-        await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+        const inserted = await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+        agencyDossierId = Number((inserted as any)[0]?.insertId || 0);
       }
       await db.update(candidates).set({ dossierStatus: "documents", destination: input.destination as any, visaType: input.visaType, dossierNote: input.adminNotes ?? null }).where(eq(candidates.id, candidate.id));
+      await db.insert(agencyDossierHistory).values({
+        dossierId: agencyDossierId,
+        action: "account_linked",
+        changedBy: admin.email || "unknown",
+        oldValue: linkedExistingDossier ? "pré-dossier sans compte" : null,
+        newValue: JSON.stringify({ candidateId: candidate.id, email: candidate.email }),
+        details: "Compte candidat rattaché au pré-dossier agence après validation administrative",
+      });
       let emailSent = false;
       try {
-        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, `3M-AGN-${candidate.id.toString().padStart(4, "0")}`, input.destination, 0);
+        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, `3M-AGN-${agencyDossierId.toString().padStart(4, "0")}`, input.destination, 0);
       } catch {
         emailSent = false;
       }
-      return { success: true, emailSent, linkedExistingDossier };
+      return { success: true, emailSent, linkedExistingDossier, agencyDossierId };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

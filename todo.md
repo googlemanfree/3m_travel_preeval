@@ -2047,11 +2047,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les droits, le PDF et la synchronisation, puis publier.
 
 ## Pré-dossier agence avant inscription
-- [ ] Permettre à l’administration de créer ou compléter un pré-dossier sans compte candidat.
-- [ ] Ajouter et classer les documents remis en agence sur ce pré-dossier.
-- [ ] Rattacher de façon sécurisée le pré-dossier au compte lors de l’inscription, par identité, e-mail et numéro de dossier.
-- [ ] Rendre les documents et statuts visibles dans l’espace candidat après rattachement.
-- [ ] Tester les doublons, les erreurs de rattachement et les droits d’accès, puis publier.
+- [x] Permettre à l’administration de créer ou compléter un pré-dossier sans compte candidat.
+- [x] Ajouter et classer les documents remis en agence sur ce pré-dossier.
+- [x] Rattacher de façon sécurisée le pré-dossier au compte lors de l’inscription, par identité, e-mail et numéro de dossier.
+- [x] Rendre les documents et statuts visibles dans l’espace candidat après rattachement.
+- [x] Tester les doublons, les erreurs de rattachement et les droits d’accès, puis publier.
 
 ## Pré-dossier agence avant inscription — synchronisation documentaire
 - [x] Ajouter une interface admin pour créer et éditer un pré-dossier autonome avec identité, contact, destination et type de visa.
