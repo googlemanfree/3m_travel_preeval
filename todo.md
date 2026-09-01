@@ -2100,3 +2100,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Agrandir l’éditeur de bilan sur ordinateur et téléphone avec une mise en page responsive.
 - [x] Corriger l’erreur de synchronisation et de chargement de /mon-espace.
 - [x] Ajouter les tests de régression, vérifier TypeScript, build et rendu responsive, puis publier.
+
+## Pilotage admin des bilans et expérience applicative
+- [x] Ajouter un indicateur visuel pendant la génération du PDF et l’envoi de l’e-mail.
+- [x] Ajouter le renvoi sécurisé de l’e-mail d’évaluation depuis le profil candidat.
+- [x] Prévisualiser le PDF généré dans l’interface admin avant l’envoi définitif.
+- [x] Moderniser l’espace admin en application de traitement complète, responsive et accessible.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

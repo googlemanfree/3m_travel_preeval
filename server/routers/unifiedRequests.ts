@@ -376,6 +376,24 @@ export const unifiedRequestsRouter = router({
       };
     }),
 
+  previewEvaluationDeliveryPdf: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      let details: Record<string, any> = {};
+      try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+      const draft = details.adminDraft ?? {};
+      if (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
+      const versions = await db.select({ versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
+      const versionNumber = versions[0]?.versionNumber ?? 1;
+      const pdf = await createFinalEvaluationPdf(application, versionNumber, versions);
+      return { url: pdf.url, key: pdf.key, fileName: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, versionNumber, requiresManualValidation: true };
+    }),
+
   sendEvaluationTestEmail: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), testEmail: z.string().trim().email().max(320) }))
     .mutation(async ({ input }) => {
