@@ -7,8 +7,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { agencyDossiers, agencyDossierHistory } from "../../drizzle/schema";
-import { eq, and, like, desc, isNull, isNotNull } from "drizzle-orm";
+import { agencyDossiers, agencyDossierHistory, candidates } from "../../drizzle/schema";
+import { eq, and, or, like, desc, isNull, isNotNull } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 
@@ -172,6 +172,7 @@ export const agencyDossierRouter = router({
     .input(z.object({
       status: z.string().optional(),
       destination: z.string().optional(),
+      search: z.string().trim().max(120).optional(),
       includeDeleted: z.boolean().optional().default(false),
       limit: z.number().default(50),
       offset: z.number().default(0),
@@ -188,19 +189,42 @@ export const agencyDossierRouter = router({
       }
 
       try {
+        const visibilityWhere = input.includeDeleted ? isNotNull(agencyDossiers.deletedAt) : isNull(agencyDossiers.deletedAt);
+        const searchTerm = input.search?.trim();
+        const whereClause = searchTerm
+          ? and(visibilityWhere, or(
+              like(agencyDossiers.fullName, `%${searchTerm}%`),
+              like(agencyDossiers.email, `%${searchTerm}%`),
+              like(agencyDossiers.phone, `%${searchTerm}%`),
+            ))
+          : visibilityWhere;
         const dossiers = await db
           .select()
           .from(agencyDossiers)
-          .where(input.includeDeleted ? isNotNull(agencyDossiers.deletedAt) : isNull(agencyDossiers.deletedAt))
+          .where(whereClause)
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(input.limit)
           .offset(input.offset);
 
-        const countResult = await db.select().from(agencyDossiers).where(input.includeDeleted ? isNotNull(agencyDossiers.deletedAt) : isNull(agencyDossiers.deletedAt));
+        const countResult = await db.select().from(agencyDossiers).where(whereClause);
         const total = countResult.length;
+        const emailKeys = dossiers.map((dossier) => dossier.email.toLowerCase());
+        const candidateRows = emailKeys.length
+          ? await db.select({ id: candidates.id, email: candidates.email, fullName: candidates.fullName }).from(candidates)
+          : [];
+        const candidateByEmail = new Map(candidateRows.map((candidate) => [candidate.email.toLowerCase(), candidate]));
+        const dossiersWithAccount = dossiers.map((dossier) => {
+          const account = candidateByEmail.get(dossier.email.toLowerCase());
+          return {
+            ...dossier,
+            linkedCandidateId: account?.id ?? null,
+            linkedCandidateEmail: account?.email ?? null,
+            linkedCandidateName: account?.fullName ?? null,
+          };
+        });
 
         return {
-          dossiers,
+          dossiers: dossiersWithAccount,
           total,
           limit: input.limit,
           offset: input.offset,

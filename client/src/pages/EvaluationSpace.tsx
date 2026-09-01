@@ -242,6 +242,22 @@ export default function EvaluationSpace() {
     verificationStatus: document.verificationStatus,
     status: document.status,
   }));
+  const agencyDocumentCount = (agencyDocuments ?? []).length;
+  const candidateDocumentCount = (candidateFiles ?? []).length;
+  const dossierStatusLabel: Record<string, string> = {
+    nouveau: "Dossier créé",
+    evaluation: "Évaluation en cours",
+    documents: "Documents à compléter",
+    en_attente_documents: "Documents à compléter",
+    documents_recus: "Documents reçus",
+    en_cours: "Traitement en cours",
+    soumis_agences: "Dossier transmis",
+    en_cours_recrutement: "Accompagnement en cours",
+    contrat_obtenu: "Contrat obtenu",
+    visa_approuve: "Visa approuvé",
+    refuse: "Décision défavorable",
+  };
+  const currentDossierStatusLabel = dossierStatusLabel[String(cProfile.dossierStatus)] || "Suivi en cours";
   const latestEvaluation = evaluations[0] as any;
   const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
   const customRequirements = (caseTrackingData?.cases ?? [])
@@ -409,6 +425,32 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
+              <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]" aria-label="Résumé du dossier et documents synchronisés">
+                <Card className="border-blue-200 bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 p-6 text-white shadow-lg">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Statut actuel du dossier</p>
+                      <h2 className="mt-2 text-2xl font-black">{currentDossierStatusLabel}</h2>
+                      <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100">Votre dossier est suivi par l’agence. Les étapes sont mises à jour après validation humaine de chaque élément.</p>
+                    </div>
+                    <span className="rounded-2xl bg-white/15 p-3" aria-hidden="true"><TrendingUp className="h-7 w-7 text-amber-300" /></span>
+                  </div>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-sm text-blue-100">
+                    <span><strong className="text-white">Référence :</strong> {cProfile.dossierNumber || "En attribution"}</span>
+                    <span><strong className="text-white">Destination :</strong> {cProfile.destination || "À préciser"}</span>
+                  </div>
+                  <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
+                </Card>
+                <Card className="border-emerald-200 bg-emerald-50/70 p-6 shadow-sm" role="region" aria-labelledby="agency-sync-title">
+                  <div className="flex items-start justify-between gap-3">
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Synchronisation agence</p><h2 id="agency-sync-title" className="mt-2 text-xl font-black text-slate-950">Documents reçus et visibles</h2></div>
+                    <span className="rounded-2xl bg-emerald-600 p-3 text-white" aria-hidden="true"><FileText className="h-6 w-6" /></span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces déposées en agence apparaissent ici avec leur statut de vérification, sans attendre une nouvelle transmission.</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Par l’agence</p><p className="mt-1 text-2xl font-black text-emerald-800">{agencyDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Depuis votre espace</p><p className="mt-1 text-2xl font-black text-slate-900">{candidateDocumentCount}</p></div></div>
+                  <Button type="button" variant="outline" onClick={() => switchToSection("documents")} className="mt-4 border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"><FileText className="mr-2 h-4 w-4" />Ouvrir le centre documentaire</Button>
+                </Card>
+              </section>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="p-5 border-violet-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between gap-3">

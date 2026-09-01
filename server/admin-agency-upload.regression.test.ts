@@ -40,3 +40,21 @@ describe("admin agency document upload", () => {
     expect(source).toContain("updateDossierMutation");
     expect(source).toContain("AgencyDossierDocumentCenter");
   });
+
+
+  it("supports dossier search and account linkage metadata in the admin list contract", () => {
+    const source = readFileSync(resolve(process.cwd(), "server/routers/agencyDossier.ts"), "utf8");
+    expect(source).toContain('search: z.string().trim().max(120).optional()');
+    expect(source).toContain("linkedCandidateId");
+    expect(source).toContain("linkedCandidateName");
+  });
+
+  it("shows the direct client-space link and synchronized agency summary", () => {
+    const adminSource = readFileSync(resolve(process.cwd(), "client/src/pages/AdminAgencyDossiers.tsx"), "utf8");
+    const clientSource = readFileSync(resolve(process.cwd(), "client/src/pages/EvaluationSpace.tsx"), "utf8");
+    expect(adminSource).toContain("Ouvrir l’espace client");
+    expect(adminSource).toContain("Compte candidat rattaché");
+    expect(clientSource).toContain("Statut actuel du dossier");
+    expect(clientSource).toContain("Synchronisation agence");
+    expect(clientSource).toContain("agencyDocumentCount");
+  });

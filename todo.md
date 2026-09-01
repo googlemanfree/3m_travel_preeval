@@ -2058,3 +2058,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre le dépôt sécurisé de documents physiques sur un pré-dossier sans compte candidat, avec catégorie, reçu PDF et journal d’audit.
 - [x] Durcir le rattachement par e-mail lors de l’inscription et vérifier que les documents agence restent visibles dans l’espace candidat.
 - [x] Ajouter des tests du parcours agence → dépôt → inscription → synchronisation et vérifier TypeScript, tests et build.
+
+## Recherche et synchronisation visuelle des pré-dossiers
+- [x] Ajouter une recherche admin par numéro de dossier ou identité, avec état vide et compteur de résultats.
+- [x] Afficher le rattachement du compte candidat dans la fiche admin avec lien direct vers son espace.
+- [x] Mettre en évidence le statut actuel et les documents synchronisés par l’agence dans l’espace candidat.
+- [x] Ajouter les tests de régression, vérifier accessibilité, TypeScript et build, puis publier.

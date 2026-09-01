@@ -86,6 +86,9 @@ interface Dossier {
   lastStatusChangeBy?: string | null;
   createdAt: string;
   updatedAt: string;
+  linkedCandidateId?: number | null;
+  linkedCandidateEmail?: string | null;
+  linkedCandidateName?: string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -171,6 +174,7 @@ export default function AdminAgencyDossiers() {
     limit: 100,
     offset: 0,
     includeDeleted: showTrash,
+    search: search.trim() || undefined,
   });
 
   const dossiers: Dossier[] = (data?.dossiers ?? []) as Dossier[];
@@ -181,7 +185,9 @@ export default function AdminAgencyDossiers() {
       !search ||
       d.fullName.toLowerCase().includes(search.toLowerCase()) ||
       d.email.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search);
+      d.phone.includes(search) ||
+      String(d.id).includes(search.trim()) ||
+      `3m-agn-${String(d.id).padStart(4, "0")}`.includes(search.toLowerCase().trim());
     const matchStatus = filterStatus === "all" || d.status === filterStatus;
     const matchDest =
       filterDestination === "all" ||
@@ -456,7 +462,7 @@ export default function AdminAgencyDossiers() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Rechercher par nom, email, téléphone..."
+                  placeholder="Rechercher par n° dossier, nom, email ou téléphone..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
@@ -558,8 +564,16 @@ export default function AdminAgencyDossiers() {
                             <TableCell>
                               <div>
                                 <p className="text-white font-medium">{d.fullName}</p>
+                                <p className="text-slate-400 text-xs font-mono">3M-AGN-{String(d.id).padStart(4, "0")}</p>
                                 {d.nationality && (
                                   <p className="text-slate-400 text-xs">{d.nationality}</p>
+                                )}
+                                {d.linkedCandidateId ? (
+                                  <Badge className="mt-1 border-emerald-400/30 bg-emerald-500/15 text-emerald-200 text-[11px]" aria-label="Compte candidat rattaché">
+                                    <CheckCircle2 className="mr-1 h-3 w-3" /> Compte rattaché
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="mt-1 border-amber-400/30 text-amber-200 text-[11px]">Pré-dossier autonome</Badge>
                                 )}
                               </div>
                             </TableCell>
@@ -910,6 +924,19 @@ export default function AdminAgencyDossiers() {
               </div>
 
               {/* Identité */}
+              <div className={`rounded-lg border p-4 ${selectedDossier.linkedCandidateId ? "border-emerald-400/30 bg-emerald-500/10" : "border-amber-400/30 bg-amber-500/10"}`} role="status" aria-live="polite">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className={`text-xs font-black uppercase tracking-wider ${selectedDossier.linkedCandidateId ? "text-emerald-300" : "text-amber-300"}`}>
+                      {selectedDossier.linkedCandidateId ? "Compte candidat rattaché" : "Pré-dossier sans compte"}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-200">N° 3M-AGN-{String(selectedDossier.id).padStart(4, "0")}</p>
+                  </div>
+                  {selectedDossier.linkedCandidateId && <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700"><a href={`/mon-espace?section=dossier&candidateId=${selectedDossier.linkedCandidateId}`} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />Ouvrir l’espace client</a></Button>}
+                </div>
+                <p className="mt-2 text-xs text-slate-300">{selectedDossier.linkedCandidateId ? `Compte associé : ${selectedDossier.linkedCandidateName || selectedDossier.linkedCandidateEmail || "candidat"}.` : "Le rattachement sera proposé lors de l’inscription avec cet e-mail."}</p>
+              </div>
+
               <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
                 <h4 className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">Identité</h4>
                 <InfoRow icon={<Users className="w-4 h-4" />} label="Nom" value={selectedDossier.fullName} />
