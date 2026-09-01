@@ -2153,3 +2153,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre le dépôt admin de tous les documents remis en agence dans le dossier candidat ou pré-dossier sélectionné.
 - [x] Vérifier que l’envoi du bilan active l’évaluation côté candidat sans mélange documentaire.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Confirmation de la cible documentaire admin
+- [x] Afficher une carte claire du dossier source avant dépôt avec type, numéro, identité, e-mail et destination.
+- [x] Signaler visuellement les pré-dossiers agence et bloquer tout dépôt sans cible précise.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
