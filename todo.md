@@ -2126,3 +2126,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher un toast de succès temporaire après chaque action réussie.
 - [x] Ajouter un filtre rapide pour les dossiers sensibles nécessitant une double validation.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Correctif chargement éditeur de bilan
+- [x] Diagnostiquer la requête ou l’erreur qui laisse l’éditeur sur « Chargement du brouillon ».
+- [x] Ajouter un état d’erreur visible avec bouton Réessayer et sortie sûre.
+- [x] Rendre les actions disponibles dès que les données minimales sont prêtes, sans contourner les validations métier.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
