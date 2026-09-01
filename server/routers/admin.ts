@@ -2664,6 +2664,7 @@ export const adminRouter = router({
       if (!input.candidateId) throw new TRPCError({ code: "BAD_REQUEST", message: "Cible de dépôt manquante." });
       const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
+      const [operationalCase] = await db.select({ id: cases.id, caseNumber: cases.caseNumber }).from(cases).where(eq(cases.candidateId, input.candidateId)).orderBy(desc(cases.createdAt)).limit(1);
       const stored = await storagePut(`admin-documents/${input.candidateId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
       const insertedDocument = await db.insert(candidateFiles).values({
         candidateId: input.candidateId,
@@ -2698,9 +2699,11 @@ export const adminRouter = router({
           extractedData: JSON.stringify({ source: "agency_handover_receipt", sourceDocumentId: Number(insertedDocument[0]?.insertId || 0), sourceDocumentName: input.fileName }),
         });
       }
+            if (operationalCase) {
+        await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_uploaded", entityType: "candidate_file", entityId: String(Number(insertedDocument[0]?.insertId || 0)), description: `Dépôt admin ciblé · ${input.fileName} · type ${input.fileType} · ${input.mimeType} · ${buffer.length} octets · dossier ${operationalCase.caseNumber || input.candidateId}.` });
+      }
       return { success: true, url: stored.url, receiptUrl };
     }),
-
   suggestDroppedDocumentMetadata: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1), fileName: z.string().min(1).max(255),

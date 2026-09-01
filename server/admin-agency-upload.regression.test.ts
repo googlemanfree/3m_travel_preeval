@@ -116,3 +116,26 @@ describe("admin agency document upload", () => {
     expect(source).toContain("Zone préparée par l’assistance IA");
     expect(source).toContain("proposition IA à relire");
   });
+
+
+  it("requires a final target and file confirmation before admin upload", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/components/AdminDocumentsManagement.tsx"), "utf8");
+    expect(source).toContain("uploadConfirmationOpen");
+    expect(source).toContain("Confirmer le dépôt documentaire");
+    expect(source).toContain("Fichiers à déposer");
+    expect(source).toContain("handleAdminDropUpload(true)");
+  });
+
+  it("supports a quick search across candidate and agency dossier targets", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/components/AdminDocumentsManagement.tsx"), "utf8");
+    expect(source).toContain("uploadTargetSearch");
+    expect(source).toContain("visibleUploadTargets");
+    expect(source).toContain("Rechercher un nom ou numéro");
+  });
+
+  it("audits the exact target of admin candidate document deposits", () => {
+    const source = readFileSync(resolve(process.cwd(), "server/routers/admin.ts"), "utf8");
+    expect(source).toContain('actionType: "document_uploaded"');
+    expect(source).toContain("Dépôt admin ciblé");
+    expect(source).toContain("caseNumber");
+  });

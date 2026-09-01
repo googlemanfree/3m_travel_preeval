@@ -2158,3 +2158,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une carte claire du dossier source avant dépôt avec type, numéro, identité, e-mail et destination.
 - [x] Signaler visuellement les pré-dossiers agence et bloquer tout dépôt sans cible précise.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Confirmation et audit des dépôts admin
+- [x] Ajouter une fenêtre de confirmation finale avec dossier cible et liste des fichiers.
+- [x] Ajouter une recherche rapide dans le sélecteur de dossiers.
+- [x] Journaliser chaque dépôt avec cible, candidat, fichiers, origine et conseiller.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
