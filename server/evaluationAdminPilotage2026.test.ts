@@ -61,3 +61,19 @@ describe("pilotage administratif des évaluations 2026", () => {
     expect(source).toContain("aiReportContent: JSON.stringify(draft)");
   });
 });
+
+  it("exige un second conseiller distinct et expose le filtre dédié", () => {
+    const source = read("server/routers/aiEvaluationManagement.ts");
+    const dashboard = read("client/src/pages/AdminAIEvaluationDashboard.tsx");
+    expect(source).toContain("secondValidateEvaluationResponse");
+    expect(source).toContain("evaluation.reviewedBy.toLowerCase() === admin.email.toLowerCase()");
+    expect(dashboard).toContain("secondReviewOnly");
+    expect(dashboard).toContain("Secondes validations en attente");
+  });
+
+  it("affiche une timeline candidate alimentée par l’historique des statuts", () => {
+    const source = read("client/src/pages/EvaluationSpace.tsx");
+    expect(source).toContain("validatedSteps");
+    expect(source).toContain("Étapes validées récemment");
+    expect(source).toContain("candidateCase?.history");
+  });

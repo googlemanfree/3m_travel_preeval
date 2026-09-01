@@ -2088,3 +2088,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher date et conseiller de validation dans l’espace candidat.
 - [x] Rendre opérationnel l’envoi validé et synchroniser la progression de l’étape Évaluation côté candidat.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Seconde validation et historique candidat
+- [x] Ajouter un filtre admin dédié aux évaluations en attente de seconde validation.
+- [x] Refuser côté serveur un second validateur identique au premier conseiller.
+- [x] Afficher une timeline simplifiée des étapes validées dans l’espace candidat.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

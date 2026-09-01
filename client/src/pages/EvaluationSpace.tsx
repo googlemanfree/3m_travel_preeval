@@ -259,6 +259,8 @@ export default function EvaluationSpace() {
   };
   const currentDossierStatusLabel = dossierStatusLabel[String(cProfile.dossierStatus)] || "Suivi en cours";
   const latestEvaluation = evaluations[0] as any;
+  const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
+  const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
   const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
   const customRequirements = (caseTrackingData?.cases ?? [])
     .filter((item: any) => item.caseNumber === evaluationCaseNumber)
@@ -447,6 +449,7 @@ export default function EvaluationSpace() {
                     <span><strong className="text-white">Destination :</strong> {cProfile.destination || "À préciser"}</span>
                   </div>
                   <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
+                  <div className="mt-5 border-t border-white/15 pt-4" aria-label="Historique simplifié des étapes validées"><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-200">Étapes validées récemment</p>{validatedSteps.length === 0 ? <p className="mt-2 text-xs text-blue-100">Aucune étape validée n’est encore enregistrée.</p> : <ol className="mt-3 space-y-2">{validatedSteps.map((entry: any) => <li key={entry.id} className="flex items-start gap-2 text-xs text-blue-50"><span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-blue-950">✓</span><span><strong className="text-white">{String(entry.newStatus).replaceAll("_", " ")}</strong><span className="ml-2 text-blue-200">{new Date(entry.createdAt).toLocaleDateString("fr-FR")}</span></span></li>)}</ol>}</div>
                 </Card>
                 <Card className="border-emerald-200 bg-emerald-50/70 p-6 shadow-sm" role="region" aria-labelledby="agency-sync-title">
                   <div className="flex items-start justify-between gap-3">

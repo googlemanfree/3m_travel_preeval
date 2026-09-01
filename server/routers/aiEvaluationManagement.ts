@@ -520,6 +520,7 @@ export const aiEvaluationManagementRouter = router({
       if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
       if (!evaluation.reviewedAt || !evaluation.secondReviewRequired) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation ne nécessite pas de seconde validation." });
       if (evaluation.secondReviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde validation est déjà enregistrée." });
+      if (evaluation.reviewedBy && evaluation.reviewedBy.toLowerCase() === admin.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "Un second conseiller différent du premier est obligatoire pour cette évaluation." });
       const now = new Date();
       await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote }).where(eq(evaluations.id, evaluation.id));
       await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "second_validated", note: input.validationNote });
