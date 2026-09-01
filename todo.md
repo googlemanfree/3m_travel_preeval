@@ -2107,3 +2107,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Prévisualiser le PDF généré dans l’interface admin avant l’envoi définitif.
 - [x] Moderniser l’espace admin en application de traitement complète, responsive et accessible.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Suivi des relances et archivage PDF admin
+- [x] Afficher dans l’administration si chaque e-mail de bilan ou de relance a été ouvert, avec date de lecture.
+- [x] Permettre de personnaliser le texte d’accompagnement juste avant une relance.
+- [x] Ajouter le téléchargement direct du PDF depuis la fenêtre d’aperçu admin.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

@@ -594,7 +594,7 @@ export const unifiedRequestsRouter = router({
     }),
 
   sendEvaluationReminder: publicProcedure
-    .input(sessionInput.extend({ applicationId: z.number().int().positive(), language: z.enum(["fr", "en"]).default("fr") }))
+    .input(sessionInput.extend({ applicationId: z.number().int().positive(), language: z.enum(["fr", "en"]).default("fr"), customMessage: z.string().trim().max(3000).optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -607,7 +607,7 @@ export const unifiedRequestsRouter = router({
       if (minimumNextReminder && minimumNextReminder > now) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Une relance a déjà été envoyée. Réessayez après le ${minimumNextReminder.toLocaleString("fr-FR")}.` });
       const language = input.language as EvaluationReminderLanguage;
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
-      const baseHtml = buildEvaluationReminderEmailHtml(application.fullName, application.dossierNumber, language);
+      const baseHtml = buildEvaluationReminderEmailHtml(application.fullName, application.dossierNumber, language, input.customMessage);
       const trackingInsert = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: application.visaType || "Évaluation de profil", emailType: "reminder", scheduledAt: now, status: "pending", reportContent: baseHtml, secureLink: candidateSpaceUrl });
       const trackingEmailId = Number((trackingInsert as any)[0]?.insertId ?? 0);
       const html = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(baseHtml, trackingEmailId) : baseHtml;
