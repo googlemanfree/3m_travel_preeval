@@ -1,7 +1,7 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -343,7 +343,12 @@ export const adminCandidateManagementRouter = router({
       if (candidate.evaluationDeclarationStatus !== "not_declared" && candidate.evaluationDeclarationStatus !== "validated") {
         throw new TRPCError({ code: "CONFLICT", message: "L’évaluation déclarée doit être validée manuellement avant l’ouverture du dossier." });
       }
-      const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(1);
+      // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
+      // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
+      const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
+        .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})`))
+        .orderBy(desc(agencyDossiers.createdAt))
+        .limit(1);
       const linkedExistingDossier = existing.length > 0;
       if (linkedExistingDossier) {
         await db.update(agencyDossiers).set({

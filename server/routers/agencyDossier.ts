@@ -113,6 +113,59 @@ export const agencyDossierRouter = router({
     }),
 
   /**
+   * Modifier les métadonnées d’un pré-dossier avant inscription.
+   * L’identité et le contexte pays/visa restent éditables uniquement par un admin,
+   * avec une trace avant/après pour préserver la continuité agence → espace client.
+   */
+  updateDossier: protectedProcedure
+    .input(z.object({
+      dossierId: z.number().int().positive(),
+      fullName: z.string().min(2),
+      email: z.string().email(),
+      phone: z.string().min(5),
+      dateOfBirth: z.string().optional(),
+      nationality: z.string().optional(),
+      destination: z.string().min(2),
+      visaType: z.string().min(2),
+      educationLevel: z.string().optional(),
+      employmentStatus: z.string().optional(),
+      monthlyIncome: z.number().optional(),
+      bankBalance: z.number().optional(),
+      adminNotes: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent modifier un pré-dossier." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [existing] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, input.dossierId), isNull(agencyDossiers.deletedAt))).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Pré-dossier introuvable ou supprimé." });
+      const next = {
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        dateOfBirth: input.dateOfBirth || null,
+        nationality: input.nationality || null,
+        destination: input.destination,
+        visaType: input.visaType,
+        educationLevel: input.educationLevel || null,
+        employmentStatus: input.employmentStatus || null,
+        monthlyIncome: input.monthlyIncome ?? null,
+        bankBalance: input.bankBalance ?? null,
+        adminNotes: input.adminNotes || null,
+      };
+      await db.update(agencyDossiers).set(next).where(eq(agencyDossiers.id, input.dossierId));
+      await db.insert(agencyDossierHistory).values({
+        dossierId: input.dossierId,
+        action: "metadata_updated",
+        changedBy: ctx.user.email || "unknown",
+        oldValue: JSON.stringify(existing),
+        newValue: JSON.stringify(next),
+        details: "Métadonnées du pré-dossier modifiées par un administrateur",
+      });
+      return { success: true, dossierId: input.dossierId };
+    }),
+
+  /**
    * Récupérer tous les dossiers en agence
    */
   getDossiers: protectedProcedure

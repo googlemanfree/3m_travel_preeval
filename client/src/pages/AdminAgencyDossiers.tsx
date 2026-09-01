@@ -134,6 +134,7 @@ export default function AdminAgencyDossiers() {
 
   // Modales
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingDossierId, setEditingDossierId] = useState<number | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -219,6 +220,17 @@ export default function AdminAgencyDossiers() {
     },
   });
 
+  const updateDossierMutation = trpc.agencyDossier.updateDossier.useMutation({
+    onSuccess: () => {
+      toast.success("Pré-dossier mis à jour avec succès.");
+      setShowAddModal(false);
+      setEditingDossierId(null);
+      resetForm();
+      refetch();
+    },
+    onError: (err) => toast.error(err.message || "Erreur lors de la modification du pré-dossier"),
+  });
+
   const updateStatusMutation = trpc.agencyDossier.updateStatus.useMutation({
     onSuccess: () => {
       toast.success("Statut mis à jour avec succès !");
@@ -278,6 +290,24 @@ export default function AdminAgencyDossiers() {
       toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
+    const payload = {
+      fullName: form.fullName,
+      email: form.email,
+      phone: form.phone,
+      dateOfBirth: form.dateOfBirth || undefined,
+      nationality: form.nationality || undefined,
+      destination: form.destination,
+      visaType: form.visaType,
+      educationLevel: form.educationLevel || undefined,
+      employmentStatus: form.employmentStatus || undefined,
+      monthlyIncome: form.monthlyIncome ? parseInt(form.monthlyIncome) : undefined,
+      bankBalance: form.bankBalance ? parseInt(form.bankBalance) : undefined,
+      adminNotes: form.adminNotes || undefined,
+    };
+    if (editingDossierId) {
+      updateDossierMutation.mutate({ dossierId: editingDossierId, ...payload });
+      return;
+    }
     createMutation.mutate({
       fullName: form.fullName,
       email: form.email,
@@ -292,6 +322,25 @@ export default function AdminAgencyDossiers() {
       bankBalance: form.bankBalance ? parseInt(form.bankBalance) : undefined,
       adminNotes: form.adminNotes || undefined,
     });
+  };
+
+  const openEditModal = (dossier: Dossier) => {
+    setEditingDossierId(dossier.id);
+    setForm({
+      fullName: dossier.fullName || "",
+      email: dossier.email || "",
+      phone: dossier.phone || "",
+      dateOfBirth: dossier.dateOfBirth ? String(dossier.dateOfBirth).slice(0, 10) : "",
+      nationality: dossier.nationality || "",
+      destination: dossier.destination || "",
+      visaType: dossier.visaType || "",
+      educationLevel: dossier.educationLevel || "",
+      employmentStatus: dossier.employmentStatus || "",
+      monthlyIncome: dossier.monthlyIncome ? String(dossier.monthlyIncome) : "",
+      bankBalance: dossier.bankBalance ? String(dossier.bankBalance) : "",
+      adminNotes: dossier.adminNotes || "",
+    });
+    setShowAddModal(true);
   };
 
   const openStatusModal = (d: Dossier) => {
@@ -557,7 +606,10 @@ export default function AdminAgencyDossiers() {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>
-                                <Button
+                                  <Button size="icon" variant="ghost" onClick={() => openEditModal(d)} className="w-8 h-8 text-slate-400 hover:text-blue-300 hover:bg-blue-400/10" title="Modifier les informations" aria-label={`Modifier les informations du dossier de ${d.fullName}`}>
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => openStatusModal(d)}
@@ -616,9 +668,9 @@ export default function AdminAgencyDossiers() {
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Plus className="w-5 h-5 text-blue-400" />
-              Nouveau Dossier en Agence
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <Plus className="w-5 h-5 text-blue-400" />
+                {editingDossierId ? "Modifier le pré-dossier agence" : "Nouveau Dossier en Agence"}
             </DialogTitle>
           </DialogHeader>
 
@@ -812,20 +864,20 @@ export default function AdminAgencyDossiers() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => { setShowAddModal(false); resetForm(); }}
+                onClick={() => { setShowAddModal(false); setEditingDossierId(null); resetForm(); }}
                 className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
                 Annuler
               </Button>
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || updateDossierMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {createMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Création...</>
+                {createMutation.isPending || updateDossierMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>
                 ) : (
-                  <><Plus className="w-4 h-4 mr-2" /> Créer le Dossier</>
+                  <><Plus className="w-4 h-4 mr-2" /> {editingDossierId ? "Enregistrer les modifications" : "Créer le Dossier"}</>
                 )}
               </Button>
             </DialogFooter>

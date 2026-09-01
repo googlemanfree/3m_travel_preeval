@@ -17,3 +17,26 @@ describe("admin agency document upload", () => {
     expect(source).toContain("storagePut(`admin-documents/");
   });
 });
+
+
+  it("exposes a separate audited metadata update for agency pre-dossiers", () => {
+    const source = readFileSync(resolve(process.cwd(), "server/routers/agencyDossier.ts"), "utf8");
+    expect(source).toContain("updateDossier: protectedProcedure");
+    expect(source).toContain('action: "metadata_updated"');
+    expect(source).toContain("isNull(agencyDossiers.deletedAt)");
+  });
+
+  it("links signup to the latest active agency dossier without case-sensitive email drift", () => {
+    const source = readFileSync(resolve(process.cwd(), "server/routers/adminCandidateManagement.ts"), "utf8");
+    expect(source).toContain("LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})");
+    expect(source).toContain("orderBy(desc(agencyDossiers.createdAt))");
+    expect(source).toContain("isNull(agencyDossiers.deletedAt)");
+  });
+
+  it("keeps the admin pre-dossier form reusable for editing", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminAgencyDossiers.tsx"), "utf8");
+    expect(source).toContain("editingDossierId");
+    expect(source).toContain("openEditModal");
+    expect(source).toContain("updateDossierMutation");
+    expect(source).toContain("AgencyDossierDocumentCenter");
+  });
