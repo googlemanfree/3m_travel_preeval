@@ -97,3 +97,22 @@ describe("admin agency document upload", () => {
     expect(source).toContain('lastUploaded.name');
     expect(source).toContain('lastUploaded.size');
   });
+
+  it("offers distinct online and agency upload targets and preserves agency provenance", () => {
+    const clientSource = readFileSync(resolve(process.cwd(), "client/src/components/AdminDocumentsManagement.tsx"), "utf8");
+    const adminSource = readFileSync(resolve(process.cwd(), "server/routers/admin.ts"), "utf8");
+    expect(clientSource).toContain("agency:${candidate.internalId}");
+    expect(clientSource).toContain("agencyDossierId: targetId");
+    expect(clientSource).toContain('doc.source === "agency" ? "agency"');
+    expect(adminSource).toContain("agencyDossierDocuments");
+    expect(adminSource).toContain('source: "agency"');
+    expect(adminSource).toContain('target: "agency_dossier"');
+  });
+
+  it("provides recovery, autosave and origin cues in the evaluation editor", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/components/EvaluationDeliveryEditor.tsx"), "utf8");
+    expect(source).toContain("Signaler au support technique");
+    expect(source).toContain("Sauvegarde automatique");
+    expect(source).toContain("Zone préparée par l’assistance IA");
+    expect(source).toContain("proposition IA à relire");
+  });

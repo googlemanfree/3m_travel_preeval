@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -1932,7 +1932,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       documentId: z.number().int(),
-      source: z.enum(["client", "candidate"]).default("client"),
+      source: z.enum(["client", "candidate", "agency"]).default("client"),
       status: z.enum(["pending", "approved", "rejected"]),
       comment: z.string().optional(),
     }))
@@ -1971,8 +1971,18 @@ export const adminRouter = router({
           candidateName = app?.fullName || doc.candidateEmail.split("@")[0];
           const [candidate] = await db.select().from(candidates).where(eq(candidates.email, doc.candidateEmail)).limit(1);
           candidateId = candidate?.id ?? null;
+        } else if (input.source === "agency") {
+          const [fileRec] = await db.select({ id: agencyDossierDocuments.id, documentName: agencyDossierDocuments.documentName, verificationStatus: agencyDossierDocuments.verificationStatus, dossierId: agencyDossierDocuments.dossierId, candidateEmail: agencyDossiers.email, candidateName: agencyDossiers.fullName }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossierDocuments.id, input.documentId)).limit(1);
+          if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Document agence introuvable" });
+          await db.update(agencyDossierDocuments).set({ verificationStatus: input.status === "approved" ? "verified" : input.status === "rejected" ? "rejected" : "pending", verificationComment: input.comment || null, updatedAt: new Date() }).where(eq(agencyDossierDocuments.id, input.documentId));
+          documentName = fileRec.documentName;
+          candidateEmail = fileRec.candidateEmail || "";
+          candidateName = fileRec.candidateName || "Candidat";
+          const [cand] = candidateEmail ? await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1) : [];
+          candidateId = cand?.id ?? null;
+          await db.insert(agencyDossierHistory).values({ dossierId: fileRec.dossierId, action: "document_status_updated", changedBy: admin.email || "Admin", oldValue: fileRec.verificationStatus, newValue: input.status, details: input.comment || "Statut documentaire mis à jour" });
         } else {
-          const [fileRec] = await db.select().from(candidateFiles).where(eq(candidateFiles.id, input.documentId)).limit(1);
+          const [fileRec] = await db.select({ id: candidateFiles.id, fileName: candidateFiles.fileName, candidateId: candidateFiles.candidateId }).from(candidateFiles).where(eq(candidateFiles.id, input.documentId)).limit(1);
           if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Fichier candidat introuvable" });
 
           const newFileStatus = input.status === "approved" ? "verified" : input.status === "rejected" ? "rejected" : "uploaded";
@@ -2539,7 +2549,7 @@ export const adminRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       try {
-        const [clientRows, candidateRows] = await Promise.all([
+        const [clientRows, candidateRows, agencyDocumentRows] = await Promise.all([
           db.select().from(clientDocuments).orderBy(desc(clientDocuments.receiptGeneratedAt)).limit(1000),
           db.select({
             id: candidateFiles.id,
@@ -2555,6 +2565,20 @@ export const adminRouter = router({
             extractedData: candidateFiles.extractedData,
             replacesFileId: candidateFiles.replacesFileId,
           }).from(candidateFiles).leftJoin(candidates, eq(candidateFiles.candidateId, candidates.id)).orderBy(desc(candidateFiles.uploadedAt)).limit(1000),
+          db.select({
+            id: agencyDossierDocuments.id,
+            dossierId: agencyDossierDocuments.dossierId,
+            candidateName: agencyDossiers.fullName,
+            candidateEmail: agencyDossiers.email,
+            dossierNumber: agencyDossierDocuments.dossierId,
+            documentType: agencyDossierDocuments.documentType,
+            documentName: agencyDossierDocuments.documentName,
+            documentUrl: agencyDossierDocuments.documentUrl,
+            verificationStatus: agencyDossierDocuments.verificationStatus,
+            verificationComment: agencyDossierDocuments.verificationComment,
+            uploadedAt: agencyDossierDocuments.createdAt,
+            fileSize: agencyDossierDocuments.fileSize,
+          }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(1000),
         ]);
         const candidateIds = Array.from(new Set(candidateRows.map((row) => row.candidateId).filter((id): id is number => typeof id === "number")));
         const applicationRows = candidateIds.length
@@ -2569,6 +2593,9 @@ export const adminRouter = router({
           })),
           ...candidateRows.map((doc) => ({
             id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
+          })),
+          ...agencyDocumentRows.map((doc) => ({
+            id: doc.id, source: "agency" as const, candidateId: null, candidateEmail: doc.candidateEmail, dossierNumber: `3M-AGN-${String(doc.dossierNumber).padStart(4, "0")}`, candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.verificationStatus === "verified" ? "verified" : doc.verificationStatus === "rejected" ? "rejected" : "pending", verificationStatus: doc.verificationStatus === "verified" ? "approved" : doc.verificationStatus === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.verificationComment, receiptNumber: null, replacesId: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
           })),
         ];
         const normalizedSearch = input.search?.trim().toLowerCase();
@@ -2595,7 +2622,8 @@ export const adminRouter = router({
   uploadDocumentForCandidate: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
-      candidateId: z.number().int().positive(),
+      candidateId: z.number().int().positive().optional(),
+      agencyDossierId: z.number().int().positive().optional(),
       fileType: z.enum(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre"]),
       fileName: z.string().min(1).max(255),
       receiptDataUrl: z.string().startsWith("data:application/pdf;base64,").max(15_000_000).optional(),
@@ -2611,13 +2639,31 @@ export const adminRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
-      if (!candidate[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
       const match = input.dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
       if (!match || match[1] !== input.mimeType) throw new TRPCError({ code: "BAD_REQUEST", message: "Format de fichier invalide." });
       const buffer = Buffer.from(match[2], "base64");
       if (!buffer.length || buffer.length !== input.sizeBytes || buffer.length > 10 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit peser au maximum 10 Mo." });
       const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-180) || "document";
+      if (input.agencyDossierId) {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, input.agencyDossierId)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Pré-dossier agence introuvable." });
+        const stored = await storagePut(`agency-dossiers/${input.agencyDossierId}/documents/${Date.now()}-${safeName}`, buffer, input.mimeType);
+        const [inserted] = await db.insert(agencyDossierDocuments).values({ dossierId: input.agencyDossierId, documentType: input.fileType, documentName: safeName, documentUrl: stored.url, fileSize: buffer.length, source: "admin_upload", uploadedBy: admin.email || "admin", verificationStatus: "pending" }).$returningId();
+        await db.insert(agencyDossierHistory).values({ dossierId: input.agencyDossierId, action: "document_uploaded", changedBy: admin.email || "admin", oldValue: null, newValue: JSON.stringify({ documentId: inserted.id, documentType: input.fileType, documentName: safeName, source: "admin_upload" }), details: "Document remis en agence et rattaché au pré-dossier sélectionné" });
+        if (input.receiptDataUrl) {
+          const receiptMatch = input.receiptDataUrl.match(/^data:application\/pdf;base64,(.+)$/);
+          if (!receiptMatch) throw new TRPCError({ code: "BAD_REQUEST", message: "Décharge PDF invalide." });
+          const receiptBuffer = Buffer.from(receiptMatch[1], "base64");
+          if (!receiptBuffer.length || receiptBuffer.length > 10 * 1024 * 1024 || !receiptBuffer.subarray(0, 4).equals(Buffer.from("%PDF"))) throw new TRPCError({ code: "BAD_REQUEST", message: "Décharge PDF invalide ou trop volumineuse." });
+          const receiptStored = await storagePut(`agency-dossiers/${input.agencyDossierId}/receipts/${Date.now()}-receipt.pdf`, receiptBuffer, "application/pdf");
+          const [receipt] = await db.insert(agencyDossierDocuments).values({ dossierId: input.agencyDossierId, documentType: "decharge_remise_main_propre", documentName: input.receiptFileName || `Decharge-${safeName}.pdf`, documentUrl: receiptStored.url, fileSize: receiptBuffer.length, source: "admin_upload", uploadedBy: admin.email || "admin", verificationStatus: "pending" }).$returningId();
+          await db.insert(agencyDossierHistory).values({ dossierId: input.agencyDossierId, action: "receipt_generated", changedBy: admin.email || "admin", oldValue: null, newValue: JSON.stringify({ documentId: receipt.id, sourceDocumentId: inserted.id }), details: "Décharge générée pour le document remis en agence" });
+        }
+        return { success: true, url: stored.url, receiptUrl: null, target: "agency_dossier", agencyDossierId: input.agencyDossierId };
+      }
+      if (!input.candidateId) throw new TRPCError({ code: "BAD_REQUEST", message: "Cible de dépôt manquante." });
+      const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
       const stored = await storagePut(`admin-documents/${input.candidateId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
       const insertedDocument = await db.insert(candidateFiles).values({
         candidateId: input.candidateId,

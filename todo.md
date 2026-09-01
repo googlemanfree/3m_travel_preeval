@@ -2132,3 +2132,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un état d’erreur visible avec bouton Réessayer et sortie sûre.
 - [x] Rendre les actions disponibles dès que les données minimales sont prêtes, sans contourner les validations métier.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Documents agence et fiabilité du pilotage admin
+- [x] Permettre le dépôt des documents remis en agence dans le bon dossier et les afficher dans admin et espace client sans mélange entre candidats.
+- [x] Réparer les boutons admin sans action et ajouter un signalement support après plusieurs échecs de Réessayer.
+- [x] Sauvegarder automatiquement le brouillon pendant la rédaction du bilan.
+- [x] Distinguer visuellement les sections générées par IA des modifications humaines.
+- [x] Ajouter les tests de droits et de synchronisation, vérifier TypeScript et build, puis publier.
