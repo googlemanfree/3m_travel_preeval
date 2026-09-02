@@ -489,8 +489,9 @@ function AppShell() {
   const isAccessRoute = ["/login", "/register", "/signup", "/evaluation", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"].some(
     (path) => normalizedLocation === path,
   );
-  const showFloatingTools = widgetsVisible && location !== "/contact" && !isAccessRoute;
-  const showPublicFooter = !location.startsWith("/admin");
+  const isAdminRoute = location === "/admin" || location.startsWith("/admin/");
+  const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
+  const showPublicFooter = !isAdminRoute;
 
   return (
     <ErrorBoundary>

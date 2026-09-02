@@ -2250,3 +2250,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Erreur de transformation pré-dossiers
 - [x] Diagnostiquer l’erreur « Unable to transform response from server » lors de la recherche pré-dossier.
 - [x] Corriger le contrat de sortie sans exposer de données sensibles et ajouter une régression de recherche filtrée.
+
+## Clics admin recouverts par le widget flottant
+- [x] Réserver une zone hors widgets pour les actions de fiche admin sur PC.
+- [x] Ajuster le positionnement et le z-index du widget sans désactiver les contrôles candidats.
+- [ ] Rejouer le clic sur COMPTE-1410001 et vérifier l’éditeur sans diffusion.
