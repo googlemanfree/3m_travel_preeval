@@ -42,5 +42,8 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(editor).toContain("bootstrapPlatformSession.useQuery");
     expect(editor).toContain("providedSessionToken || restoredPlatformToken");
     expect(editor).toContain('localStorage.setItem("adminSessionToken", restoredPlatformToken)');
+    expect(editor).toContain("candidateBootstrapApplicationId");
+    expect(editor).toContain("effectiveSourceRecordId");
+    expect(editor).toContain("sourceRecordId: effectiveSourceRecordId");
   });
 });
