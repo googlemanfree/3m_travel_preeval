@@ -2171,3 +2171,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Activer la validation administrative du paiement avec code secret obligatoire avant activation de l’étape et attribution du numéro officiel.
 - [x] Gérer séparément les déclarations « évaluation déjà faite » et « paiement déjà effectué » avec contrôle admin et traçabilité.
 - [x] Ajouter les tests de sécurité et de synchronisation, vérifier TypeScript et build, puis publier.
+
+## Pilotage des déclarations et synchronisation agence
+- [x] Créer un tableau de bord admin listant les candidats ayant déclaré une évaluation préalable ou un paiement en agence.
+- [x] Afficher une notification de succès et le numéro officiel dans l’espace candidat après validation du code de paiement.
+- [x] Prévisualiser puis valider explicitement les documents scannés en agence avant leur synchronisation définitive.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.

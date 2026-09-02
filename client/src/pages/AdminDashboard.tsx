@@ -1564,7 +1564,25 @@ export default function AdminDashboard() {
           </div>
           <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div>
 
-          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} /><AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
+          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+            <Card className="border-amber-200 bg-amber-50/70">
+              <CardContent className="p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div><h2 className="text-base font-black text-slate-950">Déclarations préalables à contrôler</h2><p className="text-sm text-slate-600">Candidats ayant déclaré une évaluation déjà réalisée ou un paiement effectué en agence.</p></div>
+                  <Badge className="w-fit bg-amber-600 text-white">{externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length} à contrôler</Badge>
+                </div>
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  {[...externalEvaluationCandidates, ...candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL")].slice(0, 8).map((candidate) => (
+                    <div key={`declaration-${candidate.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-3">
+                      <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setSelectedCandidateId(candidate.id)} aria-label={`Ouvrir le dossier de ${candidate.fullName}`}>Ouvrir</Button>
+                    </div>
+                  ))}
+                </div>
+                {(externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length) === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
+              </CardContent>
+            </Card>
+            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />

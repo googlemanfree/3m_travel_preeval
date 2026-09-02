@@ -368,6 +368,21 @@ export default function ClientDashboard() {
   }, [dossierData]);
 
   useEffect(() => {
+    const paymentStatus = dossierData?.data?.paymentStatus ?? dossierData?.data?.application?.paymentStatus;
+    const officialNumber = dossierData?.data?.application?.dossierNumber;
+    if (paymentStatus === "SUCCESS" && officialNumber && typeof window !== "undefined") {
+      const notificationKey = `3m-payment-confirmed-${officialNumber}`;
+      if (!sessionStorage.getItem(notificationKey)) {
+        sessionStorage.setItem(notificationKey, "1");
+        toast.success("Paiement validé par l’administration", {
+          description: `Votre dossier officiel ${officialNumber} est maintenant activé.`,
+          duration: 6000,
+          position: "bottom-center",
+        });
+      }
+    }
+  }, [dossierData]);
+  useEffect(() => {
     if (documentsData && documentsData.documents) {
       setDocuments(
         documentsData.documents.map((doc: any) => ({
@@ -941,8 +956,13 @@ export default function ClientDashboard() {
               </div>
               {paymentIsComplete ? (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-                  <div className="flex items-center gap-2 font-semibold text-emerald-800">
-                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Paiement validé et enregistré par l'agence
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 font-semibold text-emerald-800">
+                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Paiement validé et enregistré par l’agence
+                    </div>
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+                      <span className="font-semibold">Numéro officiel du dossier :</span> <span className="font-mono font-black tracking-wide">{dossier.numero}</span>
+                    </div>
                   </div>
                   <Button
                     onClick={() => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,7 @@ export function AdminDocumentsManagement() {
   const [rejectingDocSource, setRejectingDocSource] = useState<"client" | "candidate" | "agency">("client");
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
+  const [previewAcknowledged, setPreviewAcknowledged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [markerAnnotations, setMarkerAnnotations] = useState<Record<string, string>>({});
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
@@ -60,6 +61,11 @@ export function AdminDocumentsManagement() {
   const [uploadConfirmationOpen, setUploadConfirmationOpen] = useState(false);
   const [uploadDocumentType, setUploadDocumentType] = useState("autre");
   const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
+  useEffect(() => {
+    setPreviewAcknowledged(false);
+    setActiveMarkerId(null);
+    setMarkerAnnotations({});
+  }, [previewingDoc?.id]);
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [recognitionByFile, setRecognitionByFile] = useState<Record<string, { documentType: string; confidence: number; suggestedFolder: string; summary: string; reviewRequired: true }>>({});
   const [isRecognizing, setIsRecognizing] = useState(false);
@@ -1063,6 +1069,9 @@ export function AdminDocumentsManagement() {
 
               {previewingDoc?.documentUrl && (
                 <>
+                  <div className={`mb-3 rounded-lg border px-3 py-2 text-sm ${previewAcknowledged ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                    {previewAcknowledged ? "Document consulté : la validation est disponible." : "Consultez le document avant de confirmer sa synchronisation."}
+                  </div>
                   {previewingDoc.documentUrl.toLowerCase().endsWith(".pdf") ? (
                     <iframe
                       src={previewingDoc.documentUrl}
@@ -1097,13 +1106,14 @@ export function AdminDocumentsManagement() {
               </Button>
               {previewingDoc?.verificationStatus === "pending" && (
                 <>
+                  {!previewAcknowledged && <Button type="button" variant="outline" onClick={() => setPreviewAcknowledged(true)} className="border-amber-300 text-amber-900">J’ai consulté ce document</Button>}
                   <Button
                     onClick={() => {
                       if (previewingDoc) handleApproveDocument(previewingDoc);
                       setPreviewingDoc(null);
                     }}
-                    disabled={isLoading}
-                    className="bg-green-600 hover:bg-green-700"
+                    disabled={isLoading || !previewAcknowledged}
+                    className="bg-green-600 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? "Approbation..." : "Approuver"}
                   </Button>
@@ -1112,8 +1122,8 @@ export function AdminDocumentsManagement() {
                       if (previewingDoc) handleRejectDocument(previewingDoc);
                       setPreviewingDoc(null);
                     }}
-                    disabled={isLoading}
-                    className="bg-red-600 hover:bg-red-700"
+                    disabled={isLoading || !previewAcknowledged}
+                    className="bg-red-600 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Renvoyer avec annotations
                   </Button>
