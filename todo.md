@@ -2255,3 +2255,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réserver une zone hors widgets pour les actions de fiche admin sur PC.
 - [x] Ajuster le positionnement et le z-index du widget sans désactiver les contrôles candidats.
 - [ ] Rejouer le clic sur COMPTE-1410001 et vérifier l’éditeur sans diffusion.
+
+## Détection admin avec paramètres d’URL
+- [x] Normaliser le chemin admin sans query string ni hash avant de masquer les widgets flottants.
+- [ ] Vérifier la capture admin avec `?version` et confirmer l’absence de widgets au-dessus des actions.

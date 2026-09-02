@@ -486,10 +486,11 @@ function AppShell() {
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
+  const pathnameOnly = normalizedLocation.split(/[?#]/, 1)[0] || "/";
   const isAccessRoute = ["/login", "/register", "/signup", "/evaluation", "/mon-espace", "/mon-dossier", "/document-upload", "/assistance-acces", "/confirm-email-change"].some(
-    (path) => normalizedLocation === path,
+    (path) => pathnameOnly === path,
   );
-  const isAdminRoute = location === "/admin" || location.startsWith("/admin/");
+  const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
   const showPublicFooter = !isAdminRoute;
 
