@@ -69,9 +69,21 @@ const normalizeDestination = (value: string | null | undefined): EvaluationDesti
   return "europe";
 };
 
-export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, sourceType = "application", open, onOpenChange, onCompleted }: Props) {
+export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, sourceRecordId, sourceType = "application", open, onOpenChange, onCompleted }: Props) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
+  const platformBootstrap = trpc.adminAuth.bootstrapPlatformSession.useQuery(undefined, {
+    enabled: open && !providedSessionToken,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const restoredPlatformToken = (platformBootstrap.data as { sessionToken?: string } | undefined)?.sessionToken;
+  const sessionToken = providedSessionToken || restoredPlatformToken || "";
+  useEffect(() => {
+    if (!restoredPlatformToken) return;
+    sessionStorage.setItem("adminSessionToken", restoredPlatformToken);
+    localStorage.setItem("adminSessionToken", restoredPlatformToken);
+  }, [restoredPlatformToken]);
   const [candidateBootstrapReady, setCandidateBootstrapReady] = useState(sourceType !== "candidate");
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const bootstrapAttempt = useRef("");

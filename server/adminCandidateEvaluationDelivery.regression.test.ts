@@ -36,4 +36,11 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(router).toContain("Math.floor(1000 + Math.random() * 9000)");
     expect(read("server/routers/application.ts")).toContain("randomInt(1000, 10000)");
   });
+
+  it("récupère une session plateforme lorsque le jeton admin local manque", () => {
+    const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    expect(editor).toContain("bootstrapPlatformSession.useQuery");
+    expect(editor).toContain("providedSessionToken || restoredPlatformToken");
+    expect(editor).toContain('localStorage.setItem("adminSessionToken", restoredPlatformToken)');
+  });
 });
