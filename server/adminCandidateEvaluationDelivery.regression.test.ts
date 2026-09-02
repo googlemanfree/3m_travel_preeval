@@ -32,5 +32,8 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(editor).toContain('sourceType?: "application" | "candidate"');
     expect(editor).toContain("Initialisation sécurisée du dossier d’évaluation");
     expect(dashboard).toContain('sourceType="candidate"');
+    expect(router).toContain("applications.dossierNumber est limité à 20 caractères");
+    expect(router).toContain("Math.floor(1000 + Math.random() * 9000)");
+    expect(read("server/routers/application.ts")).toContain("randomInt(1000, 10000)");
   });
 });

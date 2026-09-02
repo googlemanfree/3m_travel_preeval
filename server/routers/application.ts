@@ -23,7 +23,8 @@ import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 function generateEvaluationDraftReference(): string {
   const year = new Date().getFullYear();
-  const rand = randomInt(100000, 1000000);
+  // `applications.dossierNumber` est limité à 20 caractères.
+  const rand = randomInt(1000, 10000);
   return `EVAL-DRAFT-${year}-${rand}`;
 }
 

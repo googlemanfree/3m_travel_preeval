@@ -59,7 +59,8 @@ function mapCandidateDestination(destination: string | null | undefined): "canad
 }
 
 function generateBootstrapEvaluationReference() {
-  return `EVAL-DRAFT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+  // applications.dossierNumber est limité à 20 caractères en production.
+  return `EVAL-DRAFT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
