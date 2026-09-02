@@ -2268,3 +2268,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Artefacts publics non propagés
 - [ ] Corriger le décalage entre le checkpoint et l’index, le service worker et l’en-tête de build servis publiquement.
 - [ ] Vérifier les domaines .com, .click et manus.space après propagation.
+
+## Rendu blanc après propagation public
+- [ ] Identifier pourquoi l’admin devient blanc après chargement du nouveau bundle/service worker.
+- [ ] Corriger le démarrage sans réintroduire l’ancien cache ni les widgets flottants sur admin.
+- [ ] Rejouer l’accès admin et les boutons du dossier interne après correction.
+
+## Fiche Dossier 360° bloquée
+- [ ] Identifier pourquoi la fiche 360° reste sur le spinner après ouverture d’un dossier.
+- [ ] Afficher une erreur exploitable et un bouton Réessayer si la fiche ne répond pas.
+- [ ] Corriger l’identifiant ou la requête de détail sans retirer les contrôles admin.
+- [ ] Rejouer l’ouverture de COMPTE-1410001 puis accéder à l’éditeur.
+
+## Déploiement public obsolète
+- [x] Identifier où l’artefact `public-content-restore-2026-08-28` est encore servi par les trois domaines.
+- [x] Corriger le chemin de publication sans remplacer le contenu actuel par un placeholder.
+- [ ] Revalider les en-têtes, l’index, le service worker et le bundle admin après publication.
