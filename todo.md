@@ -2207,3 +2207,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réduire les re-rendus et les chargements inutiles dans l’espace admin.
 - [x] Organiser les actions de validation, aperçu et envoi dans une barre desktop lisible.
 - [x] Préserver un mode de secours compact pour les petits écrans sans chevauchement.
+## Test complet d’envoi d’évaluation et audit admin PC
+- [x] Préparer un compte et un dossier de test sans utiliser de données client réelles.
+- [x] Vérifier la validation humaine, l’envoi e-mail, le suivi et la génération du PDF.
+- [x] Contrôler les logs serveur et les erreurs réseau liées à l’envoi.
+- [x] Nettoyer les éléments inutiles de l’interface admin PC sans retirer les actions métier.
+- [x] Rejouer les tests, vérifier TypeScript et le build, puis publier.
+- [x] Corriger l’erreur production de `saveEvaluationDeliveryDraft` liée au chargement de `profile_evaluations`.
+- [x] Ajouter une régression garantissant que la sauvegarde du bilan ne dépend pas d’une table source indisponible.

@@ -92,6 +92,14 @@ describe("reprise et aperçu du bilan", () => {
     expect(editor).not.toContain("sm:grid-cols-4");
   });
 
+  it("tolère l’indisponibilité de la table legacy sans bloquer le pilotage", () => {
+    const router = read("server/routers/unifiedRequests.ts");
+    expect(router).toContain("async function loadLegacyProfileEvaluations");
+    expect(router).toContain("continuing with primary sources");
+    expect(router).toContain("loadLegacyProfileEvaluationsForEmail(db, source.email)");
+    expect(router).not.toContain("db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),");
+  });
+
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
     const router = read("server/routers/unifiedRequests.ts");
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");

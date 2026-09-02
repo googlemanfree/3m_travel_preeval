@@ -98,6 +98,26 @@ type SourceSnapshot = {
   updatedAt: Date;
 };
 
+ type UnifiedDb = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+
+async function loadLegacyProfileEvaluations(db: UnifiedDb) {
+  try {
+    return await db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200);
+  } catch (error) {
+    console.warn("[UnifiedRequests] Legacy profile_evaluations unavailable; continuing with primary sources.", error instanceof Error ? error.message : String(error));
+    return [];
+  }
+}
+
+async function loadLegacyProfileEvaluationsForEmail(db: UnifiedDb, email: string) {
+  try {
+    return await db.select({ id: profileEvaluations.id, destination: profileEvaluations.destination, projectType: profileEvaluations.projectType, status: profileEvaluations.status, scoringTotal: profileEvaluations.scoringTotal, createdAt: profileEvaluations.createdAt }).from(profileEvaluations).where(eq(profileEvaluations.email, email)).orderBy(desc(profileEvaluations.createdAt)).limit(20);
+  } catch (error) {
+    console.warn("[UnifiedRequests] Legacy profile_evaluations unavailable for Customer 360; continuing without legacy evaluations.", error instanceof Error ? error.message : String(error));
+    return [];
+  }
+}
+
 export function inferUnifiedWorkflow(sourceType: SourceType, status: string): WorkflowStatus {
   const normalized = status.toLowerCase();
   if (normalized.includes("rejected") || normalized.includes("cancelled") || normalized === "refuse") return "rejected";
@@ -187,7 +207,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
 
   const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
-    db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),
+    loadLegacyProfileEvaluations(db),
     db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200),
     db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(200),
     db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt)).limit(200),
@@ -651,7 +671,7 @@ export const unifiedRequestsRouter = router({
       const [history, dossierRows, evaluationRows, consultationRows, flightRows, insuranceRows, translationRows, documents, messages] = await Promise.all([
         db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, request.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(100),
         db.select({ id: applications.id, dossierNumber: applications.dossierNumber, destination: applications.destination, visaType: applications.visaType, dossierStatus: applications.dossierStatus, paymentStatus: applications.paymentStatus, createdAt: applications.createdAt }).from(applications).where(eq(applications.email, source.email)).orderBy(desc(applications.createdAt)).limit(20),
-        db.select({ id: profileEvaluations.id, destination: profileEvaluations.destination, projectType: profileEvaluations.projectType, status: profileEvaluations.status, scoringTotal: profileEvaluations.scoringTotal, createdAt: profileEvaluations.createdAt }).from(profileEvaluations).where(eq(profileEvaluations.email, source.email)).orderBy(desc(profileEvaluations.createdAt)).limit(20),
+        loadLegacyProfileEvaluationsForEmail(db, source.email),
         db.select({ id: consultationRequests.id, targetCountry: consultationRequests.targetCountry, status: consultationRequests.status, createdAt: consultationRequests.createdAt }).from(consultationRequests).where(eq(consultationRequests.email, source.email)).orderBy(desc(consultationRequests.createdAt)).limit(20),
         db.select({ id: flightBookingRequests.id, requestRef: flightBookingRequests.requestRef, status: flightBookingRequests.status, priority: flightBookingRequests.priority, createdAt: flightBookingRequests.createdAt }).from(flightBookingRequests).where(eq(flightBookingRequests.candidateEmail, source.email)).orderBy(desc(flightBookingRequests.createdAt)).limit(20),
         db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, status: insuranceRequests.status, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, source.email)).orderBy(desc(insuranceRequests.createdAt)).limit(20),
