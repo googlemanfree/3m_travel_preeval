@@ -2264,3 +2264,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Forcer une nouvelle empreinte d’index et de bundle pour éviter le service de l’ancien build public.
 - [ ] Vérifier les trois domaines publiés et confirmer le bundle contenant la garde admin.
 - [ ] Rejouer le test du dossier interne et des boutons après propagation.
+
+## Artefacts publics non propagés
+- [ ] Corriger le décalage entre le checkpoint et l’index, le service worker et l’en-tête de build servis publiquement.
+- [ ] Vérifier les domaines .com, .click et manus.space après propagation.
