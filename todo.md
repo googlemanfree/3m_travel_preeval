@@ -2164,3 +2164,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une recherche rapide dans le sélecteur de dossiers.
 - [x] Journaliser chaque dépôt avec cible, candidat, fichiers, origine et conseiller.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Deux parcours candidats et validation paiement sécurisée
+- [x] Permettre à l’administration d’ouvrir et télécharger les CV/PDF soumis en ligne, puis d’envoyer le résultat dans l’e-mail et l’espace client.
+- [x] Synchroniser les documents déposés en agence vers le bon compte candidat après rattachement, sans mélange entre dossiers.
+- [x] Activer la validation administrative du paiement avec code secret obligatoire avant activation de l’étape et attribution du numéro officiel.
+- [x] Gérer séparément les déclarations « évaluation déjà faite » et « paiement déjà effectué » avec contrôle admin et traçabilité.
+- [x] Ajouter les tests de sécurité et de synchronisation, vérifier TypeScript et build, puis publier.

@@ -25,6 +25,7 @@ interface Payment {
   receiptMimeType?: string;
   receiptFileName?: string;
   agreementSigned?: boolean;
+  paymentSecretCodeSubmittedAt?: Date | string | null;
   paymentReceiptDelivery?: {
     status: "sent" | "failed" | "not_sent";
     lastAttemptAt?: Date | null;
@@ -46,6 +47,7 @@ export function AdminPaymentManagement() {
   const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNote, setAdminNote] = useState("");
+  const [paymentSecretCode, setPaymentSecretCode] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
@@ -77,6 +79,7 @@ export function AdminPaymentManagement() {
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
     agreementSigned: Boolean(app.agreementSigned),
+    paymentSecretCodeSubmittedAt: app.paymentSecretCodeSubmittedAt,
     paymentReceiptDelivery: app.paymentReceiptDelivery,
   }));
 
@@ -175,6 +178,8 @@ export function AdminPaymentManagement() {
 
   const handleConfirmPayment = (payment: Payment) => {
     setSelectedPayment(payment);
+    setPaymentSecretCode("");
+    setAdminNote("");
     setActionType('confirm');
     setConfirmDialogOpen(true);
   };
@@ -191,12 +196,17 @@ export function AdminPaymentManagement() {
       toast.error("Un motif de rejet d’au moins 3 caractères est obligatoire.");
       return;
     }
+    if (actionType === "confirm" && paymentSecretCode.trim().length < 6) {
+      toast.error("Saisissez le code secret transmis par le candidat avant de confirmer le paiement.");
+      return;
+    }
     
     setIsProcessing(true);
     try {
       const paymentResult = await updatePaymentMutation.mutateAsync({
         id: selectedPayment.id,
         paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
+        paymentSecretCode: actionType === "confirm" ? paymentSecretCode.trim() : undefined,
         adminNotes: actionType === "cancel" ? adminNote.trim() || "Justificatif de paiement à corriger." : "Paiement validé par l’administration.",
       });
       
@@ -690,10 +700,20 @@ export function AdminPaymentManagement() {
                     </div>
                   </div>
                   
-                  {actionType === 'confirm' ? (
-                    <p className="text-sm text-slate-700">
-                      En confirmant ce versement de <strong>65 000 XAF</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
-                    </p>
+                      {actionType === 'confirm' ? (
+                    <div className="space-y-3">
+                        <p className="text-sm text-slate-700">
+                        En confirmant ce versement de <strong>65 000 XAF</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
+                      </p>
+                      <Badge className={selectedPayment.paymentSecretCodeSubmittedAt ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}>
+                        {selectedPayment.paymentSecretCodeSubmittedAt ? `Code reçu le ${new Date(selectedPayment.paymentSecretCodeSubmittedAt).toLocaleString("fr-FR")}` : "Code candidat non encore transmis"}
+                      </Badge>
+                      <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+                        <Label htmlFor="admin-payment-secret" className="text-xs font-semibold text-amber-950">Code secret transmis par le candidat</Label>
+                        <Input id="admin-payment-secret" value={paymentSecretCode} onChange={(event) => setPaymentSecretCode(event.target.value)} placeholder="6 caractères minimum" autoComplete="off" minLength={6} maxLength={64} className="mt-2 bg-white" disabled={isProcessing} />
+                        <p className="mt-1 text-xs text-amber-900">Le code est comparé à son empreinte sécurisée et n’est jamais conservé en clair.</p>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-2 pt-1">
                       <p className="text-sm text-red-600">

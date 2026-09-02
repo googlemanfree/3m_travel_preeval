@@ -1392,6 +1392,26 @@ export const candidateRouter = router({
     }),
 
   // ── Récupérer toutes les données du dossier ────────────────────────────────
+  /** Transmettre le code secret de paiement sans jamais conserver sa valeur brute. */
+  submitPaymentSecretCode: candidateProcedure
+    .input(z.object({
+      code: z.string().trim().min(6, "Le code secret doit contenir au moins 6 caractères.").max(64),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [application] = await db.select({ id: applications.id, paymentStatus: applications.paymentStatus })
+        .from(applications)
+        .where(eq(applications.candidateId, ctx.candidate.id))
+        .orderBy(desc(applications.createdAt))
+        .limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier de paiement n’est rattaché à votre compte." });
+      if (application.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Ce paiement est déjà validé." });
+      const codeHash = createHash("sha256").update(input.code.trim(), "utf8").digest("hex");
+      await db.update(applications).set({ paymentSecretCodeHash: codeHash, paymentSecretCodeSubmittedAt: new Date() }).where(eq(applications.id, application.id));
+      return { success: true, message: "Code secret transmis. L’administration peut maintenant vérifier le paiement." };
+    }),
+
   getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

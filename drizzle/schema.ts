@@ -484,6 +484,10 @@ export const applications = mysqlTable("applications", {
   paymentCurrency: varchar("paymentCurrency", { length: 10 }).default("XAF").notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }),   // MTN / ORANGE / CARD
   paymentDate: timestamp("paymentDate"),
+  paymentSecretCodeHash: varchar("paymentSecretCodeHash", { length: 128 }),
+  paymentSecretCodeSubmittedAt: timestamp("paymentSecretCodeSubmittedAt"),
+  paymentValidatedAt: timestamp("paymentValidatedAt"),
+  paymentValidatedBy: varchar("paymentValidatedBy", { length: 320 }),
   // Statut du dossier — Processus visa travail
   dossierStatus: mysqlEnum("dossierStatus", [
     "nouveau",

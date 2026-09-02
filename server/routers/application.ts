@@ -13,7 +13,7 @@ import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, send
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
-import { randomBytes, randomInt } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
@@ -633,6 +633,7 @@ export const applicationRouter = router({
     .input(z.object({
       id: z.number().int().positive(),
       paymentStatus: z.enum(["SUCCESS", "FAILED", "CANCELLED"]),
+      paymentSecretCode: z.string().trim().min(6).max(64).optional(),
       adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -646,12 +647,27 @@ export const applicationRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
       const isValidated = input.paymentStatus === "SUCCESS";
+      if (isValidated) {
+        if (!application.paymentSecretCodeHash) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le candidat doit d’abord transmettre son code secret de paiement." });
+        }
+        if (!input.paymentSecretCode) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Le code secret de paiement est obligatoire pour valider ce paiement." });
+        }
+        const submittedHash = createHash("sha256").update(input.paymentSecretCode.trim(), "utf8").digest("hex");
+        if (submittedHash !== application.paymentSecretCodeHash) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Le code secret de paiement est incorrect." });
+        }
+      }
+      const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;
       const canStartTreatment = isValidated && application.agreementSigned;
       await db.update(applications)
         .set({
           paymentStatus: input.paymentStatus,
           paymentDate: isValidated ? new Date() : application.paymentDate,
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
+          paymentValidatedAt: validatedAt,
+          paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : application.paymentValidatedBy,
           dossierStatus: canStartTreatment ? "paye" : application.dossierStatus,
           ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
         })

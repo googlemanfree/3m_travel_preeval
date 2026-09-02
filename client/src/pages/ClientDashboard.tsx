@@ -40,6 +40,7 @@ import {
   Loader2,
   X,
   UserRound,
+  Send,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -119,6 +120,7 @@ export default function ClientDashboard() {
   const [correctionComment, setCorrectionComment] = useState("");
   const [correctionFile, setCorrectionFile] = useState<File | null>(null);
   const [paymentReceiptUploading, setPaymentReceiptUploading] = useState(false);
+  const [paymentSecretCode, setPaymentSecretCode] = useState("");
   const [notificationFilter, setNotificationFilter] = useState<"all" | "admin" | "agency">("all");
   const [notificationView, setNotificationView] = useState<"active" | "archived">("active");
   const [notificationQuery, setNotificationQuery] = useState("");
@@ -218,6 +220,14 @@ export default function ClientDashboard() {
     },
   });
 
+  const submitPaymentSecretCodeMutation = trpc.candidate.submitPaymentSecretCode.useMutation({
+    onSuccess: (result) => {
+      setPaymentSecretCode("");
+      toast.success(result.message || "Code secret transmis à l’administration.");
+      void trpcUtils.candidate.getMyDossierData.invalidate();
+    },
+    onError: (error) => toast.error(error.message || "Le code secret n’a pas pu être transmis."),
+  });
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
   const deleteDocumentMutation = trpc.candidate.deleteDocument.useMutation({
     onSuccess: async () => {
@@ -1022,6 +1032,23 @@ export default function ClientDashboard() {
                       </div>
                     </div>
 
+                    <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm" role="region" aria-labelledby="payment-secret-title">
+                      <div className="flex items-start gap-3">
+                        <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+                        <div className="min-w-0 flex-1">
+                          <h3 id="payment-secret-title" className="font-bold text-amber-950">Code secret de paiement</h3>
+                          <p className="mt-1 text-sm leading-5 text-amber-900">Après un règlement en agence, transmettez le code remis par l’agence. L’administrateur le vérifiera avant d’activer le paiement et le numéro officiel du dossier.</p>
+                          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); if (paymentSecretCode.trim().length >= 6) submitPaymentSecretCodeMutation.mutate({ code: paymentSecretCode }); }}>
+                            <Label htmlFor="payment-secret-code" className="sr-only">Code secret de paiement</Label>
+                            <Input id="payment-secret-code" value={paymentSecretCode} onChange={(event) => setPaymentSecretCode(event.target.value)} placeholder="Code secret (6 caractères minimum)" autoComplete="one-time-code" minLength={6} maxLength={64} className="bg-white" disabled={submitPaymentSecretCodeMutation.isPending || paymentIsComplete} />
+                            <Button type="submit" disabled={submitPaymentSecretCodeMutation.isPending || paymentIsComplete || paymentSecretCode.trim().length < 6} className="shrink-0 bg-amber-700 text-white hover:bg-amber-800">
+                              {submitPaymentSecretCodeMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="mr-2 h-4 w-4" aria-hidden="true" />}
+                              {submitPaymentSecretCodeMutation.isPending ? "Transmission…" : "Transmettre le code"}
+                            </Button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
                     {/* Option Paiement direct en agence */}
                     <div className="bg-white/90 p-4 rounded-xl border border-blue-200 shadow-xs space-y-3">
                       <div className="flex items-center justify-between">
