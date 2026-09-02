@@ -2184,3 +2184,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Activer automatiquement l’étape Évaluation après validation humaine réussie.
 - [x] Ajouter un retour d’erreur exploitable et un état de succès après l’action.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Brouillons et historique des envois d’évaluation
+- [x] Ajouter un bouton « Enregistrer le brouillon » sans envoi ni activation de l’étape candidat.
+- [x] Afficher sur la fiche candidat l’historique des envois réussis ou échoués.
+- [x] Afficher un toast de succès détaillé après l’envoi effectif de l’e-mail.
+- [x] Ajouter les tests de non-diffusion et d’envoi, vérifier TypeScript et build, puis publier.
