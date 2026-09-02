@@ -2217,7 +2217,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une régression garantissant que la sauvegarde du bilan ne dépend pas d’une table source indisponible.
 
 ## Test réel et supervision des remises d’évaluation
-- [ ] Vérifier le flux complet depuis l’interface admin sur un dossier candidat réel, avec confirmation explicite avant l’envoi.
+- [x] Vérifier le flux complet depuis l’interface admin sur un dossier candidat réel, avec confirmation explicite avant l’envoi.
 - [x] Ajouter une carte de santé SMTP et de génération PDF visible uniquement côté admin.
 - [x] Afficher les derniers succès et échecs de remise sans exposer de secrets ni de contenu privé.
 - [x] Renforcer le suivi d’ouverture des e-mails et éviter les relances dupliquées.
