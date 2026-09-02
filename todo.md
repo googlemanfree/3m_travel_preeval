@@ -2223,3 +2223,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Renforcer le suivi d’ouverture des e-mails et éviter les relances dupliquées.
 - [x] Ajouter une relance automatique contrôlée pour les e-mails non ouverts, avec délai et journalisation.
 - [x] Tester l’automatisation, TypeScript et le build, puis publier.
+
+## Reprise du système préparation et envoi
+- [x] Diagnostiquer pourquoi l’éditeur affiche « Dossier d’évaluation introuvable » alors que le dossier existe.
+- [x] Corriger la résolution du dossier sans contourner l’authentification admin ni les validations humaines.
+- [x] Agrandir l’espace de préparation et de rédaction sur PC.
+- [x] Ajouter un bouton ou indicateur SMTP explicite dans le flux admin.
+- [ ] Vérifier les boutons Réessayer, Prévisualiser, Enregistrer, Valider et Envoyer.
+- [x] Ajouter les tests de régression, vérifier TypeScript et le build, puis publier.

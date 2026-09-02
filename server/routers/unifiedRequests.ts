@@ -7,6 +7,7 @@ import {
   applications,
   candidateFiles,
   candidateMessages,
+  candidates,
   consultationRequests,
   contactMessages,
   evaluationEmails,
@@ -68,6 +69,15 @@ async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof
 async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, sourceRecordId: number) {
   const [directApplication] = await db.select().from(applications).where(eq(applications.id, sourceRecordId)).limit(1);
   if (directApplication) return directApplication;
+
+  // The admin dossier list also exposes account-only candidates with their candidate ID.
+  // Resolve that ID to the newest linked application before trying legacy evaluation IDs.
+  const [candidateAccount] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, sourceRecordId)).limit(1);
+  if (candidateAccount) {
+    const [accountApplication] = await db.select().from(applications).where(eq(applications.candidateId, candidateAccount.id)).orderBy(desc(applications.createdAt)).limit(1);
+    if (accountApplication) return accountApplication;
+  }
+
   const [sourceEvaluation] = await db.select({ candidateId: evaluations.candidateId, email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, sourceRecordId)).limit(1);
   if (!sourceEvaluation) return null;
   const applicationWhere = sourceEvaluation.candidateId

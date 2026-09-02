@@ -88,8 +88,10 @@ describe("reprise et aperçu du bilan", () => {
     expect(editor).toContain("setRecommendations(joinLines");
     expect(editor).toContain("lg:flex-row");
     expect(editor).toContain("lg:overflow-hidden");
-    expect(editor).toContain("min-w-[560px]");
+    expect(editor).toContain("lg:min-w-[640px]");
     expect(editor).not.toContain("sm:grid-cols-4");
+    expect(editor).toContain("Tester SMTP");
+    expect(editor).toContain("lg:min-w-[640px]");
   });
 
   it("tolère l’indisponibilité de la table legacy sans bloquer le pilotage", () => {
@@ -98,6 +100,13 @@ describe("reprise et aperçu du bilan", () => {
     expect(router).toContain("continuing with primary sources");
     expect(router).toContain("loadLegacyProfileEvaluationsForEmail(db, source.email)");
     expect(router).not.toContain("db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),");
+  });
+
+  it("résout un compte candidat admin vers son application liée", () => {
+    const router = read("server/routers/unifiedRequests.ts");
+    expect(router).toContain("const [candidateAccount] = await db.select({ id: candidates.id })");
+    expect(router).toContain("eq(applications.candidateId, candidateAccount.id)");
+    expect(router).toContain("orderBy(desc(applications.createdAt)).limit(1)");
   });
 
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
