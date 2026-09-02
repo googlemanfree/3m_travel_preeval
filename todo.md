@@ -2240,3 +2240,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif compte pré-dossier sans application
 - [x] Corriger le flux des comptes pré-dossiers sans application : l’éditeur partagé utilise désormais une initialisation dédiée avant d’ouvrir l’éditeur partagé, sans activation du dossier client.
 - [x] Ajouter une régression ciblée pour un compte candidat sans application liée.
+
+## Blocage bootstrap en production
+- [x] Afficher explicitement l’erreur de bootstrap au lieu de laisser l’éditeur sur un chargement infini.
+- [x] Ajouter un bouton Réessayer qui réinitialise la tentative et relance uniquement l’initialisation du dossier.
+- [ ] Vérifier que la procédure initializeEvaluationDelivery est bien exposée et que la session admin est acceptée en production.
+- [ ] Tester le compte interne sans application liée puis republier la correction.
