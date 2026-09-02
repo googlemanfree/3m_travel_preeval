@@ -2229,13 +2229,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la résolution du dossier sans contourner l’authentification admin ni les validations humaines.
 - [x] Agrandir l’espace de préparation et de rédaction sur PC.
 - [x] Ajouter un bouton ou indicateur SMTP explicite dans le flux admin.
-- [ ] Vérifier les boutons Réessayer, Prévisualiser, Enregistrer, Valider et Envoyer.
+- [x] Vérifier les boutons Réessayer, Prévisualiser, Enregistrer, Valider et Envoyer.
 - [x] Ajouter les tests de régression, vérifier TypeScript et le build, puis publier.
 
 ## Synchronisation du launcher admin publié
 - [x] Vérifier pourquoi le domaine public sert encore l’ancien bundle admin après le checkpoint.
 - [x] Publier une empreinte de bundle cohérente avec le launcher vers l’éditeur partagé.
-- [ ] Rejouer la vérification navigateur des boutons sur le dossier interne sans nouvel envoi candidat.
+- [x] Rejouer la vérification navigateur des boutons sur le dossier interne sans nouvel envoi candidat.
 
 ## Correctif compte pré-dossier sans application
 - [x] Corriger le flux des comptes pré-dossiers sans application : l’éditeur partagé utilise désormais une initialisation dédiée avant d’ouvrir l’éditeur partagé, sans activation du dossier client.
@@ -2244,8 +2244,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Blocage bootstrap en production
 - [x] Afficher explicitement l’erreur de bootstrap au lieu de laisser l’éditeur sur un chargement infini.
 - [x] Ajouter un bouton Réessayer qui réinitialise la tentative et relance uniquement l’initialisation du dossier.
-- [ ] Vérifier que la procédure initializeEvaluationDelivery est bien exposée et que la session admin est acceptée en production.
-- [ ] Tester le compte interne sans application liée puis republier la correction.
+- [x] Vérifier que la procédure initializeEvaluationDelivery est bien exposée et que la session admin est acceptée en production.
+- [x] Tester le compte interne sans application liée puis republier la correction.
 
 ## Erreur de transformation pré-dossiers
 - [x] Diagnostiquer l’erreur « Unable to transform response from server » lors de la recherche pré-dossier.
@@ -2254,33 +2254,33 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Clics admin recouverts par le widget flottant
 - [x] Réserver une zone hors widgets pour les actions de fiche admin sur PC.
 - [x] Ajuster le positionnement et le z-index du widget sans désactiver les contrôles candidats.
-- [ ] Rejouer le clic sur COMPTE-1410001 et vérifier l’éditeur sans diffusion.
+- [x] Rejouer le clic sur COMPTE-1410001 et vérifier l’éditeur sans diffusion.
 
 ## Détection admin avec paramètres d’URL
 - [x] Normaliser le chemin admin sans query string ni hash avant de masquer les widgets flottants.
-- [ ] Vérifier la capture admin avec `?version` et confirmer l’absence de widgets au-dessus des actions.
+- [x] Vérifier la capture admin avec `?version` et confirmer l’absence de widgets au-dessus des actions.
 
 ## Propagation CDN du correctif admin
 - [x] Forcer une nouvelle empreinte d’index et de bundle pour éviter le service de l’ancien build public.
-- [ ] Vérifier les trois domaines publiés et confirmer le bundle contenant la garde admin.
-- [ ] Rejouer le test du dossier interne et des boutons après propagation.
+- [x] Vérifier les trois domaines publiés et confirmer le bundle contenant la garde admin.
+- [x] Rejouer le test du dossier interne et des boutons après propagation.
 
 ## Artefacts publics non propagés
-- [ ] Corriger le décalage entre le checkpoint et l’index, le service worker et l’en-tête de build servis publiquement.
-- [ ] Vérifier les domaines .com, .click et manus.space après propagation.
+- [x] Corriger le décalage entre le checkpoint et l’index, le service worker et l’en-tête de build servis publiquement.
+- [x] Vérifier les domaines .com, .click et manus.space après propagation.
 
 ## Rendu blanc après propagation public
-- [ ] Identifier pourquoi l’admin devient blanc après chargement du nouveau bundle/service worker.
-- [ ] Corriger le démarrage sans réintroduire l’ancien cache ni les widgets flottants sur admin.
-- [ ] Rejouer l’accès admin et les boutons du dossier interne après correction.
+- [x] Identifier pourquoi l’admin devient blanc après chargement du nouveau bundle/service worker.
+- [x] Corriger le démarrage sans réintroduire l’ancien cache ni les widgets flottants sur admin.
+- [x] Rejouer l’accès admin et les boutons du dossier interne après correction.
 
 ## Fiche Dossier 360° bloquée
-- [ ] Identifier pourquoi la fiche 360° reste sur le spinner après ouverture d’un dossier.
-- [ ] Afficher une erreur exploitable et un bouton Réessayer si la fiche ne répond pas.
-- [ ] Corriger l’identifiant ou la requête de détail sans retirer les contrôles admin.
-- [ ] Rejouer l’ouverture de COMPTE-1410001 puis accéder à l’éditeur.
+- [x] Identifier pourquoi la fiche 360° reste sur le spinner après ouverture d’un dossier.
+- [x] Afficher une erreur exploitable et un bouton Réessayer si la fiche ne répond pas.
+- [x] Corriger l’identifiant ou la requête de détail sans retirer les contrôles admin.
+- [x] Rejouer l’ouverture de COMPTE-1410001 puis accéder à l’éditeur.
 
 ## Déploiement public obsolète
 - [x] Identifier où l’artefact `public-content-restore-2026-08-28` est encore servi par les trois domaines.
 - [x] Corriger le chemin de publication sans remplacer le contenu actuel par un placeholder.
-- [ ] Revalider les en-têtes, l’index, le service worker et le bundle admin après publication.
+- [x] Revalider les en-têtes, l’index, le service worker et le bundle admin après publication.
