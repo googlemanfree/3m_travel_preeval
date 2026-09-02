@@ -2231,3 +2231,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un bouton ou indicateur SMTP explicite dans le flux admin.
 - [ ] Vérifier les boutons Réessayer, Prévisualiser, Enregistrer, Valider et Envoyer.
 - [x] Ajouter les tests de régression, vérifier TypeScript et le build, puis publier.
+
+## Synchronisation du launcher admin publié
+- [x] Vérifier pourquoi le domaine public sert encore l’ancien bundle admin après le checkpoint.
+- [x] Publier une empreinte de bundle cohérente avec le launcher vers l’éditeur partagé.
+- [ ] Rejouer la vérification navigateur des boutons sur le dossier interne sans nouvel envoi candidat.
+
+## Correctif compte pré-dossier sans application
+- [x] Corriger le flux des comptes pré-dossiers sans application : l’éditeur partagé utilise désormais une initialisation dédiée avant d’ouvrir l’éditeur partagé, sans activation du dossier client.
+- [x] Ajouter une régression ciblée pour un compte candidat sans application liée.

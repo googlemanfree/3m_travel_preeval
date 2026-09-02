@@ -15,6 +15,7 @@ import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 type Props = {
   sessionToken: string;
   sourceRecordId: number;
+  sourceType?: "application" | "candidate";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCompleted: () => void;
@@ -68,10 +69,34 @@ const normalizeDestination = (value: string | null | undefined): EvaluationDesti
   return "europe";
 };
 
-export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, onOpenChange, onCompleted }: Props) {
+export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, sourceType = "application", open, onOpenChange, onCompleted }: Props) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
-  const { data, isLoading, isFetching, isError, error, refetch } = trpc.unifiedRequests.getEvaluationDelivery.useQuery({ sessionToken, sourceRecordId }, { enabled: open && Boolean(sessionToken), retry: 2, refetchOnWindowFocus: false });
+  const [candidateBootstrapReady, setCandidateBootstrapReady] = useState(sourceType !== "candidate");
+  const bootstrapAttempt = useRef("");
+  const initializeEvaluationDelivery = trpc.unifiedRequests.initializeEvaluationDelivery.useMutation({
+    onSuccess: () => setCandidateBootstrapReady(true),
+    onError: (bootstrapError) => {
+      setCandidateBootstrapReady(false);
+      toast({ title: "Initialisation impossible", description: bootstrapError.message, variant: "destructive" });
+    },
+  });
+  const bootstrapKey = `${sourceType}:${sourceRecordId}`;
+  useEffect(() => {
+    if (sourceType !== "candidate") return;
+    if (!open || !sessionToken || bootstrapAttempt.current === bootstrapKey) return;
+    bootstrapAttempt.current = bootstrapKey;
+    setCandidateBootstrapReady(false);
+    initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId });
+  }, [bootstrapKey, initializeEvaluationDelivery, open, sessionToken, sourceRecordId, sourceType]);
+  useEffect(() => {
+    if (!open) {
+      bootstrapAttempt.current = "";
+      if (sourceType === "candidate") setCandidateBootstrapReady(false);
+    }
+  }, [open, sourceType]);
+  const queryEnabled = open && Boolean(sessionToken) && (sourceType !== "candidate" || candidateBootstrapReady);
+  const { data, isLoading, isFetching, isError, error, refetch } = trpc.unifiedRequests.getEvaluationDelivery.useQuery({ sessionToken, sourceRecordId }, { enabled: queryEnabled, retry: 2, refetchOnWindowFocus: false });
   const [score, setScore] = useState("0");
   const [destination, setDestination] = useState<EvaluationDestination>("europe");
   const [verdict, setVerdict] = useState("");
@@ -324,7 +349,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600" role="status" aria-live="polite"><span className={`inline-block h-2 w-2 rounded-full ${autosaveStatus === "saving" ? "bg-amber-500" : autosaveStatus === "error" ? "bg-rose-500" : autosaveStatus === "saved" ? "bg-emerald-500" : "bg-slate-300"}`} />{autosaveStatus === "saving" ? "Sauvegarde automatique en cours…" : autosaveStatus === "error" ? "Sauvegarde à vérifier" : autosaveStatus === "saved" ? "Brouillon sauvegardé" : "Prêt pour la rédaction"}</div>
         {data && !isLoading && <><div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3" aria-label="Outils du bilan"><Button size="sm" variant="outline" onClick={() => void ensureDraft()} disabled={saveDraft.isPending}><Eye className="mr-1 h-4 w-4" />Prévisualiser</Button><Button size="sm" variant="outline" onClick={() => void openEmailPreview()} disabled={saveDraft.isPending || previewEmail.isFetching}><Mail className="mr-1 h-4 w-4" />{previewEmail.isFetching ? "Préparation…" : "Aperçu e-mail"}</Button><Button size="sm" variant="outline" onClick={() => void openPdfPreview()} disabled={saveDraft.isPending || previewPdf.isPending}><FileText className="mr-1 h-4 w-4" />{previewPdf.isPending ? "Génération PDF…" : "Aperçu PDF"}</Button><Button size="sm" variant="outline" onClick={() => void saveDraftOnly()} disabled={saveDraft.isPending}><Save className="mr-1 h-4 w-4" />Enregistrer</Button><Button size="sm" variant="outline" className="border-emerald-300 text-emerald-800" onClick={() => void openWhatsAppDraft()} disabled={saveDraft.isPending}><MessageCircle className="mr-1 h-4 w-4" />WhatsApp</Button><Button size="sm" variant="outline" className="border-sky-300 text-sky-800" onClick={() => void checkSmtp()} disabled={deliveryHealth.isFetching}><Mail className="mr-1 h-4 w-4" />{deliveryHealth.isFetching ? "Contrôle SMTP…" : "Tester SMTP"}</Button></div><div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-950" role="status" aria-live="polite"><span className="font-semibold">SMTP/PDF :</span>{deliveryHealth.data ? `${deliveryHealth.data.smtp.status === "operational" ? "opérationnel" : "à vérifier"} · ${deliveryHealth.data.smtp.sentLast24h} remise(s) / 24 h · PDF ${deliveryHealth.data.pdf.status}` : deliveryHealth.isFetching ? "contrôle en cours…" : "contrôle disponible via « Tester SMTP »"}</div></>}
       </DialogHeader>
-      {!sessionToken ? <div role="alert" className="mx-auto max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-950"><strong className="block text-base">Session administrateur introuvable</strong><p className="mt-2">Reconnectez-vous à l’espace admin puis rouvrez ce bilan.</p></div> : isLoading ? <div role="status" className="mx-auto flex min-h-[320px] max-w-xl items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500"><span><Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-700" />Chargement du brouillon d’évaluation…</span></div> : isError || !data ? <div role="alert" className="mx-auto max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-950"><strong className="block text-base">Le brouillon n’a pas pu être chargé</strong><p className="mt-2">{error?.message || "Aucune donnée n’a été retournée par le serveur."}</p><Button className="mt-4" variant="outline" onClick={() => { setRetryAttempts((attempts) => attempts + 1); void refetch(); }}><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>{retryAttempts >= 3 && <Button asChild className="mt-3" variant="outline"><a href={`mailto:3mtravelandservices@gmail.com?subject=${encodeURIComponent(`Problème de chargement du bilan ${sourceRecordId}`)}&body=${encodeURIComponent(`Bonjour,\n\nLe brouillon du bilan ${sourceRecordId} ne se charge pas après ${retryAttempts} tentatives.\nURL : ${window.location.href}`)}`}><MessageCircle className="mr-2 h-4 w-4" />Signaler au support technique</a></Button>}</div> : <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto pb-24 lg:flex-row lg:gap-6 lg:overflow-hidden">
+      {!sessionToken ? <div role="alert" className="mx-auto max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-950"><strong className="block text-base">Session administrateur introuvable</strong><p className="mt-2">Reconnectez-vous à l’espace admin puis rouvrez ce bilan.</p></div> : sourceType === "candidate" && !candidateBootstrapReady ? <div role="status" className="mx-auto flex min-h-[320px] max-w-xl items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500"><span><Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-700" />Initialisation sécurisée du dossier d’évaluation…</span></div> : isLoading ? <div role="status" className="mx-auto flex min-h-[320px] max-w-xl items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500"><span><Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-700" />Chargement du brouillon d’évaluation…</span></div> : isError || !data ? <div role="alert" className="mx-auto max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-950"><strong className="block text-base">Le brouillon n’a pas pu être chargé</strong><p className="mt-2">{error?.message || "Aucune donnée n’a été retournée par le serveur."}</p><Button className="mt-4" variant="outline" onClick={() => { setRetryAttempts((attempts) => attempts + 1); void refetch(); }}><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>{retryAttempts >= 3 && <Button asChild className="mt-3" variant="outline"><a href={`mailto:3mtravelandservices@gmail.com?subject=${encodeURIComponent(`Problème de chargement du bilan ${sourceRecordId}`)}&body=${encodeURIComponent(`Bonjour,\n\nLe brouillon du bilan ${sourceRecordId} ne se charge pas après ${retryAttempts} tentatives.\nURL : ${window.location.href}`)}`}><MessageCircle className="mr-2 h-4 w-4" />Signaler au support technique</a></Button>}</div> : <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto pb-24 lg:flex-row lg:gap-6 lg:overflow-hidden">
         <div className="min-w-0 flex-none space-y-4 pr-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:pr-3">
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-950"><strong>{data.application.fullName}</strong> · {provisionalReference ? "Numéro de dossier attribué à la validation finale" : `Dossier ${data.application.dossierNumber}`} · {data.application.destination || "Destination à préciser"}</div>
           {data.application.evaluationDeliveryStatus === "sent" && <div className={`rounded-lg border p-3 text-sm ${data.application.evaluationReportViewedAt ? "border-emerald-200 bg-emerald-50 text-emerald-950" : "border-slate-200 bg-slate-50 text-slate-700"}`}><div className="flex items-center gap-2 font-semibold"><Mail className="h-4 w-4" />{data.application.evaluationReportViewedAt ? `E-mail de bilan ouvert le ${new Date(data.application.evaluationReportViewedAt).toLocaleString("fr-FR")}` : "E-mail de bilan envoyé — ouverture non encore confirmée"}</div><p className="mt-1 text-xs">Ce statut est mis à jour lorsqu’une ouverture de l’e-mail est détectée ; il ne remplace pas la consultation du PDF dans l’espace client.</p></div>}

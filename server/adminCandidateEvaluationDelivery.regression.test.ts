@@ -22,4 +22,15 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(panel).toContain("Ouvrez l’espace de préparation complet");
     expect(panel).not.toContain("onDeliver");
   });
+
+  it("initialise un dossier provisoire pour les comptes sans application liée", () => {
+    const router = read("server/routers/unifiedRequests.ts");
+    const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(router).toContain("initializeEvaluationDelivery");
+    expect(router).toContain("candidate_pre_dossier");
+    expect(editor).toContain('sourceType?: "application" | "candidate"');
+    expect(editor).toContain("Initialisation sécurisée du dossier d’évaluation");
+    expect(dashboard).toContain('sourceType="candidate"');
+  });
 });

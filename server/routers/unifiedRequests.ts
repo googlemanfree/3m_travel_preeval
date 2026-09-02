@@ -53,6 +53,15 @@ function isProvisionalEvaluationReference(reference: string) {
   return reference.startsWith("EVAL-DRAFT-");
 }
 
+function mapCandidateDestination(destination: string | null | undefined): "canada" | "luxembourg" | "pologne" | "europe" | "golfe" | "oceanie" | "caucase" | "autre" {
+  if (destination === "canada" || destination === "luxembourg" || destination === "pologne" || destination === "europe" || destination === "golfe" || destination === "oceanie" || destination === "caucase") return destination;
+  return "autre";
+}
+
+function generateBootstrapEvaluationReference() {
+  return `EVAL-DRAFT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+}
+
 async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
   if (!isProvisionalEvaluationReference(application.dossierNumber)) return application.dossierNumber;
   const year = new Date().getFullYear();
@@ -381,6 +390,65 @@ export const unifiedRequestsRouter = router({
       await db.update(unifiedClientRequests).set({ lastActivityAt: new Date(), firstRespondedAt: request.firstRespondedAt ?? new Date() }).where(eq(unifiedClientRequests.id, request.id));
       await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "internal_comment", comment: input.comment, actorAdminAccountId: admin.id });
       return { success: true };
+    }),
+
+  initializeEvaluationDelivery: publicProcedure
+    .input(sessionInput.extend({ candidateId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+
+      const [existing] = await db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)).limit(1);
+      if (existing) return { success: true, created: false, candidateId: candidate.id, application: existing, message: "Le dossier d’évaluation provisoire existe déjà." };
+
+      let dossierNumber = generateBootstrapEvaluationReference();
+      while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
+        dossierNumber = generateBootstrapEvaluationReference();
+      }
+      const destination = mapCandidateDestination(candidate.destination);
+      const draftDestination = destination === "autre" ? "europe" : destination;
+      const initialDraft = {
+        destination: draftDestination,
+        finalScore: 0,
+        verdict: "",
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        language: candidate.preferredLanguage === "en" ? "en" : "fr",
+        advisorValidated: false,
+        advisorValidatedAt: null,
+        advisorValidatedByAdminId: null,
+      };
+      await db.insert(applications).values({
+        dossierNumber,
+        candidateId: candidate.id,
+        fullName: candidate.fullName,
+        email: candidate.email,
+        whatsappNumber: candidate.phone || "Non renseigné",
+        nationality: candidate.nationality || null,
+        academicLevel: candidate.educationLevel || null,
+        languageSkills: candidate.languageLevel || null,
+        destination,
+        formulaChosen: "integral",
+        visaType: candidate.visaType || "À qualifier",
+        dossierStatus: "nouveau",
+        paymentStatus: "PENDING",
+        paymentAmount: 0,
+        paymentCurrency: "XAF",
+        scoringTotal: 0,
+        scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", adminDraft: initialDraft }),
+        evaluationDeliveryStatus: "draft",
+        evaluationRequiresSecondApproval: false,
+        evaluationApprovalStatus: "not_required",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const [application] = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
+      if (!application) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le dossier provisoire n’a pas pu être initialisé." });
+      return { success: true, created: true, candidateId: candidate.id, application, message: "Dossier d’évaluation provisoire initialisé sans activer le dossier client." };
     }),
 
   getEvaluationDelivery: publicProcedure
