@@ -25,7 +25,7 @@ export function AdminSystemStatus() {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
-  const smtpHealthQuery = trpc.monitoring.getSmtpHealth.useQuery(undefined, {
+  const deliveryHealthQuery = trpc.monitoring.getEvaluationDeliveryHealth.useQuery(undefined, {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
@@ -44,8 +44,10 @@ export function AdminSystemStatus() {
   }, []);
 
   const status = statusQuery.data;
+  const deliveryHealth = deliveryHealthQuery.data;
   const serverTone = status?.server.status ?? "degraded";
   const databaseTone = status?.database.status ?? "unavailable";
+  const pdfTone = deliveryHealth?.pdf.status === "operational" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : deliveryHealth?.pdf.status === "degraded" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-600";
 
   return (
     <section aria-labelledby="system-status-title" className="space-y-4">
@@ -72,7 +74,11 @@ export function AdminSystemStatus() {
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Serveur applicatif</CardTitle><Server className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[serverTone].className}>{statusStyle[serverTone].label}</Badge><p className="text-xs text-slate-500">Réponse interne : {status?.server.latencyMs ?? "—"} ms · Actif depuis {status ? formatUptime(status.server.uptimeMs) : "—"}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Base de données</CardTitle><Database className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[databaseTone].className}>{statusStyle[databaseTone].label}</Badge><p className="text-xs text-slate-500">{status?.database.message ?? "Contrôle en cours…"}{status?.database.latencyMs !== null && status?.database.latencyMs !== undefined ? ` · ${status.database.latencyMs} ms` : ""}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Trafic tRPC</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent><p className="text-2xl font-bold text-slate-900">{status?.traffic.totalRequests ?? "—"}</p><p className="text-xs text-slate-500">Erreurs : {status?.traffic.errorRate ?? "—"} · Délais : {status?.traffic.timeoutRate ?? "—"}</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Messagerie SMTP</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={smtpHealthQuery.data?.configured ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{smtpHealthQuery.data?.configured ? "Configurée" : "À configurer"}</Badge><p className="text-xs text-slate-500">{smtpHealthQuery.data?.host ?? "Serveur non configuré"} · Port {smtpHealthQuery.data?.port ?? "—"}</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Messagerie SMTP</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={deliveryHealth?.smtp.status === "operational" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : deliveryHealth?.smtp.status === "degraded" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}>{deliveryHealth?.smtp.status === "operational" ? "Opérationnelle" : deliveryHealth?.smtp.status === "degraded" ? "Dégradée" : "Indisponible"}</Badge><p className="text-xs text-slate-500">{deliveryHealth?.smtp.host ?? "Serveur non configuré"} · Port {deliveryHealth?.smtp.port ?? "—"}</p><p className="text-xs text-slate-500">24 h : {deliveryHealth?.smtp.sentLast24h ?? "—"} succès · {deliveryHealth?.smtp.failedLast24h ?? "—"} échec(s)</p></CardContent></Card>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Génération PDF des bilans</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={pdfTone}>{deliveryHealth?.pdf.status === "operational" ? "Enregistrée" : deliveryHealth?.pdf.status === "degraded" ? "À examiner" : "En attente"}</Badge><p className="text-xs text-slate-500">{deliveryHealth?.pdf.generatedCount ?? "—"} PDF enregistrés · {deliveryHealth?.pdf.missingForSentCount ?? "—"} bilan(s) envoyé(s) sans PDF enregistré</p><p className="text-xs text-slate-500">Dernière génération enregistrée : {deliveryHealth?.pdf.lastGeneratedAt ? new Date(deliveryHealth.pdf.lastGeneratedAt).toLocaleString("fr-FR") : "—"}</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Suivi des ouvertures</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><p className="text-2xl font-bold text-slate-900">{deliveryHealth?.smtp.sentLast24h ?? "—"}</p><p className="text-xs text-slate-500">Remises e-mail tracées sur les dernières 24 h. Les ouvertures sont associées au dossier via le pixel sécurisé.</p><p className="text-xs text-slate-500">La relance est limitée à une seule remise par dossier non ouvert.</p></CardContent></Card>
       </div>
 
       {diagnosis.data && <div className={`rounded-xl border p-4 text-sm ${diagnosis.data.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}><p className="font-semibold">Diagnostic {diagnosis.data.ok ? "réussi" : "à examiner"} · {diagnosis.data.durationMs} ms</p><ul className="mt-2 list-disc space-y-1 pl-5">{diagnosis.data.findings.map((finding) => <li key={finding}>{finding}</li>)}</ul></div>}

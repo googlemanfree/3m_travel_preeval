@@ -3,8 +3,10 @@
  * Accessible uniquement aux administrateurs
  */
 
-import { sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import { getDb } from "../db";
+import { applications, evaluationEmails } from "../../drizzle/schema";
+import { evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
 import { getSmtpHealth } from "../_core/email";
 import { adminProcedure, router } from "../_core/trpc";
 import {
@@ -28,6 +30,41 @@ export async function notifySmtpFailureIfNeeded(reason: string, now = Date.now()
 
 export const monitoringRouter = router({
   getSmtpHealth: adminProcedure.query(() => getSmtpHealth()),
+
+  /** Supervision agrégée des remises d’évaluation et des PDF, sans données personnelles. */
+  getEvaluationDeliveryHealth: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Base de données indisponible");
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [emailRows, pdfRows, missingPdfRows] = await Promise.all([
+      db.select({ status: evaluationEmails.status, createdAt: evaluationEmails.createdAt, sentAt: evaluationEmails.sentAt }).from(evaluationEmails).where(gte(evaluationEmails.createdAt, since)).orderBy(desc(evaluationEmails.createdAt)).limit(500),
+      db.select({ generatedAt: evaluationBilanVersions.sentAt }).from(evaluationBilanVersions).where(isNotNull(evaluationBilanVersions.pdfKey)).orderBy(desc(evaluationBilanVersions.sentAt)).limit(200),
+      db.select({ id: applications.id }).from(applications).where(and(eq(applications.evaluationDeliveryStatus, "sent"), isNull(applications.evaluationReportPdfKey))).limit(100),
+    ]);
+    const sentLast24h = emailRows.filter((row) => row.status === "sent").length;
+    const failedLast24h = emailRows.filter((row) => row.status === "failed" || row.status === "bounced").length;
+    const lastFailure = emailRows.find((row) => row.status === "failed" || row.status === "bounced");
+    const lastSuccess = emailRows.find((row) => row.status === "sent");
+    const smtp = getSmtpHealth();
+    return {
+      checkedAt: new Date(),
+      smtp: {
+        ...smtp,
+        status: !smtp.configured ? "unavailable" as const : failedLast24h > 0 ? "degraded" as const : "operational" as const,
+        sentLast24h,
+        failedLast24h,
+        lastFailureAt: lastFailure?.createdAt ?? null,
+        lastSuccessAt: lastSuccess?.sentAt ?? lastSuccess?.createdAt ?? null,
+      },
+      pdf: {
+        status: missingPdfRows.length > 0 ? "degraded" as const : pdfRows.length > 0 ? "operational" as const : "waiting" as const,
+        generatedCount: pdfRows.length,
+        missingForSentCount: missingPdfRows.length,
+        lastGeneratedAt: pdfRows[0]?.generatedAt ?? null,
+      },
+    };
+  }),
+
   /** État synthétique, réservé aux administrateurs connectés. */
   getConnectivityStatus: adminProcedure.query(async () => {
     const startedAt = Date.now();

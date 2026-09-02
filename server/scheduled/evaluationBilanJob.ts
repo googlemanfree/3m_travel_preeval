@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getDb } from "../db";
 import { applications, evaluationEmails } from "../../drizzle/schema";
 import { clientNotifications, evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
@@ -106,19 +106,51 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     const deliveredApplications = await db.select().from(applications).where(eq(applications.evaluationDeliveryStatus, "sent")).limit(500);
     const reminders = deliveredApplications.filter((app) => shouldSendEvaluationReminder(app, now));
     for (const app of reminders) {
+      const claimAt = new Date();
+      const claim = await db.update(applications).set({ evaluationReportReminderSentAt: claimAt, updatedAt: claimAt }).where(and(
+        eq(applications.id, app.id),
+        eq(applications.evaluationDeliveryStatus, "sent"),
+        isNull(applications.evaluationReportViewedAt),
+        isNull(applications.evaluationReportReminderSentAt),
+      ));
+      const claimed = Number((claim as any)[0]?.affectedRows ?? 0) > 0;
+      if (!claimed) continue;
+
+      let reminderTrackingEmailId = 0;
+      let reminderDispatched = false;
       try {
+        const reminderBaseHtml = buildEvaluationReminderEmailHtml(app.fullName, app.dossierNumber);
+        const trackingInsert = await db.insert(evaluationEmails).values({
+          evaluationId: app.id,
+          candidateEmail: app.email,
+          candidateName: app.fullName,
+          destinationCountry: app.destination || "Mobilité internationale",
+          visaType: app.visaType || "Évaluation de profil",
+          emailType: "reminder",
+          language: "fr",
+          scheduledAt: now,
+          status: "pending",
+          reportContent: reminderBaseHtml,
+          secureLink: buildCandidateSpaceAccessUrl(app.dossierNumber),
+        });
+        reminderTrackingEmailId = Number((trackingInsert as any)[0]?.insertId ?? 0);
+        const reminderHtml = reminderTrackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(reminderBaseHtml, reminderTrackingEmailId) : reminderBaseHtml;
         await sendEmail({
           to: app.email,
           subject: `Rappel : votre bilan d’évaluation est disponible — Dossier ${app.dossierNumber}`,
-          html: buildEvaluationReminderEmailHtml(app.fullName, app.dossierNumber),
+          html: reminderHtml,
         });
+        reminderDispatched = true;
         const sentAt = new Date();
+        if (reminderTrackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt, reportContent: reminderHtml }).where(eq(evaluationEmails.id, reminderTrackingEmailId));
         await db.update(applications).set({ evaluationReportReminderSentAt: sentAt, updatedAt: sentAt }).where(eq(applications.id, app.id));
         if (app.candidateId) {
           await db.insert(clientNotifications).values({ candidateId: app.candidateId, type: "evaluation_reminder", title: "Rappel : votre bilan vous attend", body: `Votre bilan finalisé pour le dossier ${app.dossierNumber} n’a pas encore été consulté. Il reste disponible dans votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: sentAt });
         }
         reminderCount++;
       } catch (err) {
+        if (reminderTrackingEmailId > 0 && !reminderDispatched) await db.update(evaluationEmails).set({ status: "failed", failureReason: err instanceof Error ? err.message : String(err) }).where(eq(evaluationEmails.id, reminderTrackingEmailId));
+        if (!reminderDispatched) await db.update(applications).set({ evaluationReportReminderSentAt: null, updatedAt: new Date() }).where(and(eq(applications.id, app.id), isNull(applications.evaluationReportViewedAt)));
         console.error(`[Evaluation Bilan Job] ERROR reminder for ${app.dossierNumber}:`, err);
         errorCount++;
       }

@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { buildEvaluationDeliveryEmailHtml, buildEvaluationReminderEmailHtml, canAutoDeliverEvaluation, shouldSendEvaluationReminder } from "./evaluationBilanJob";
 import { resolveCandidateReturnPath } from "../../client/src/lib/candidateRedirect";
 
-describe("rappel de consultation du bilan", () => {
+const root = resolve(import.meta.dirname, "../..");
+
+ describe("rappel de consultation du bilan", () => {
   const now = new Date("2026-08-16T12:00:00.000Z");
   const base = { evaluationDeliveryStatus: "sent", evaluationCompletedAt: new Date("2026-08-13T11:59:00.000Z"), evaluationReportViewedAt: null, evaluationReportReminderSentAt: null };
 
@@ -20,6 +24,16 @@ describe("rappel de consultation du bilan", () => {
 
     expect(html).toContain(`href=\"${expectedLink}\"`);
     expect(reminderHtml).toContain(`href=\"${expectedLink}\"`);
+  });
+
+  it("trace la relance et ajoute un pixel d’ouverture avant de la marquer envoyée", () => {
+    const source = readFileSync(resolve(root, "server/scheduled/evaluationBilanJob.ts"), "utf8");
+    expect(source).toContain('emailType: "reminder"');
+    expect(source).toContain("appendEvaluationOpenTrackingPixel(reminderBaseHtml, reminderTrackingEmailId)");
+    expect(source).toContain('set({ status: "sent", sentAt, reportContent: reminderHtml })');
+    expect(source).toContain("evaluationReportReminderSentAt: sentAt");
+    expect(source).toContain("const claimed = Number((claim as any)[0]?.affectedRows ?? 0) > 0");
+    expect(source).toContain("if (!reminderDispatched) await db.update(applications).set({ evaluationReportReminderSentAt: null");
   });
 
   it("restaure le dossier du candidat après connexion depuis le lien e-mail", () => {

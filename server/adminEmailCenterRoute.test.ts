@@ -42,6 +42,17 @@ describe("Centre e-mail administrateur", () => {
     expect(center).toContain("Archiver le dossier");
   });
 
+  it("expose la santé SMTP, les remises et les PDF dans une sonde admin agrégée", () => {
+    const monitoring = fs.readFileSync(path.join(root, "server/routers/monitoring.ts"), "utf8");
+    const status = fs.readFileSync(path.join(root, "client/src/components/AdminSystemStatus.tsx"), "utf8");
+    expect(monitoring).toContain("getEvaluationDeliveryHealth");
+    expect(monitoring).toContain("sentLast24h");
+    expect(monitoring).toContain("missingForSentCount");
+    expect(status).toContain("Génération PDF des bilans");
+    expect(status).toContain("Suivi des ouvertures");
+    expect(status).toContain("deliveryHealthQuery");
+  });
+
   it("alerte le propriétaire en cas de défaillance SMTP sans répétition immédiate", () => {
     const monitoring = fs.readFileSync(path.join(root, "server/routers/monitoring.ts"), "utf8");
     expect(monitoring).toContain("notifySmtpFailureIfNeeded");
