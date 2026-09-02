@@ -187,8 +187,8 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
   });
 
   const ensureDraft = async () => {
-    if (!payload.recommendations.length) {
-      toast({ title: "Recommandation requise", description: "Ajoutez au moins une recommandation personnalisée avant l’envoi.", variant: "destructive" });
+    if (payload.verdict.trim().length < 3) {
+      toast({ title: "Bilan requis", description: "Saisissez au moins trois caractères dans le champ du bilan avant l’envoi.", variant: "destructive" });
       return false;
     }
     await saveDraft.mutateAsync(payload);

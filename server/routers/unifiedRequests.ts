@@ -499,7 +499,8 @@ export const unifiedRequestsRouter = router({
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
-      if (!previousDraft.verdict || !Array.isArray(previousDraft.recommendations) || !previousDraft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Préparez et enregistrez un brouillon complet avant validation." });
+      const verdict = typeof previousDraft.verdict === "string" ? previousDraft.verdict.trim() : "";
+      if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);
       const nextDraft = { ...previousDraft, advisorValidated: true, advisorValidatedAt: now.toISOString(), advisorValidatedByAdminId: admin.id };

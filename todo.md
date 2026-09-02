@@ -2177,3 +2177,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une notification de succès et le numéro officiel dans l’espace candidat après validation du code de paiement.
 - [x] Prévisualiser puis valider explicitement les documents scannés en agence avant leur synchronisation définitive.
 - [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+
+## Flux d’évaluation simplifié
+- [x] Ajouter une interface admin simple de saisie du bilan pour chaque candidat.
+- [x] Rendre le bouton « Valider et envoyer » fiable pour l’espace client et l’e-mail.
+- [x] Activer automatiquement l’étape Évaluation après validation humaine réussie.
+- [x] Ajouter un retour d’erreur exploitable et un état de succès après l’action.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
