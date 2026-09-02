@@ -2,7 +2,7 @@
  * Dashboard Administrateur — 3M Travel & Services
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import React, { useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { lazy, Suspense, useState, useEffect, useCallback, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
@@ -108,6 +108,8 @@ import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
+
+const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -336,6 +338,7 @@ export function CandidateDetailModal({
   const [preDossierVisaType, setPreDossierVisaType] = useState("");
   const [preDossierNotes, setPreDossierNotes] = useState("");
   const [preDossierConfirmationOpen, setPreDossierConfirmationOpen] = useState(false);
+  const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
   const sessionToken = typeof window !== "undefined"
@@ -409,15 +412,6 @@ export function CandidateDetailModal({
     onError: (err) => toast({ title: "Décision impossible", description: err.message, variant: "destructive" }),
   });
 
-  const deliverValidatedEvaluationMutation = trpc.adminCandidateManagement.deliverValidatedEvaluation.useMutation({
-    onSuccess: (result) => {
-      toast({ title: "Évaluation remise", description: result.emailSent ? "L’évaluation est disponible dans l’espace client et envoyée par e-mail." : "L’évaluation est disponible dans l’espace client ; l’envoi e-mail devra être relancé." });
-      void refetch();
-      onStatusUpdated();
-    },
-    onError: (err) => toast({ title: "Remise impossible", description: err.message, variant: "destructive" }),
-  });
-
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
     setPreDossierDestination(candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry);
@@ -441,7 +435,8 @@ export function CandidateDetailModal({
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <>
+      <Dialog open onOpenChange={onClose}>
       <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
         <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
           <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
@@ -511,8 +506,7 @@ export function CandidateDetailModal({
                   reviewNote={candidate.evaluationReviewNote}
                   isReviewing={reviewEvaluationMutation.isPending}
                   onReview={(decision, note) => reviewEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, decision, note })}
-                  isDelivering={deliverValidatedEvaluationMutation.isPending}
-                  onDeliver={(subject, message) => deliverValidatedEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, subject, message, confirmed: true })}
+                  onOpenEditor={() => setEvaluationEditorOpen(true)}
                 />
                 <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
@@ -653,7 +647,19 @@ export function CandidateDetailModal({
           </AlertDialogContent>
         </AlertDialog>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      {candidate && isPreDossierAccount && (
+        <Suspense fallback={null}>
+          <EvaluationDeliveryEditor
+            sessionToken={sessionToken}
+            sourceRecordId={candidate.internalId}
+            open={evaluationEditorOpen}
+            onOpenChange={setEvaluationEditorOpen}
+            onCompleted={() => { void refetch(); onStatusUpdated(); }}
+          />
+        </Suspense>
+      )}
+    </>
   );
 }
 

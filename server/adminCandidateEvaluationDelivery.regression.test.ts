@@ -15,10 +15,11 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(router).toContain("sendClientNotificationEmail");
   });
 
-  it("propose un contrôle explicite avant la remise dans le panneau admin", () => {
+  it("ouvre l’éditeur partagé avant toute remise dans le panneau admin", () => {
     const panel = read("client/src/components/AdminPreDossierEvaluationPanel.tsx");
-    expect(panel).toContain("Confirmer la remise");
-    expect(panel).toContain("onDeliver");
-    expect(panel).toContain("espace client et par e-mail");
+    expect(panel).toContain("Saisir et envoyer l’évaluation manuellement");
+    expect(panel).toContain("onOpenEditor");
+    expect(panel).toContain("Ouvrez l’espace de préparation complet");
+    expect(panel).not.toContain("onDeliver");
   });
 });

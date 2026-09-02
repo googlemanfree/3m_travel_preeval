@@ -43,7 +43,8 @@ describe("agreement and payment gating contracts", () => {
     const adminPanel = read("client/src/components/AdminPreDossierEvaluationPanel.tsx");
     const clientSpace = read("client/src/pages/EvaluationSpace.tsx");
     expect(adminPanel).toContain("Saisir et envoyer l’évaluation manuellement");
-    expect(adminPanel).toContain("Aucun traitement IA n’est nécessaire");
+    expect(adminPanel).toContain("Ouvrez l’espace de préparation complet");
+    expect(adminPanel).not.toContain("Aucun traitement IA n’est nécessaire");
     expect(clientSpace).toContain("Protocole d’accord obligatoire");
     expect(clientSpace).toContain("Signer le protocole d’accord");
     expect(clientSpace).toContain("signAgreementProtocol");
