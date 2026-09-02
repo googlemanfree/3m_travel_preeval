@@ -46,4 +46,11 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(editor).toContain("effectiveSourceRecordId");
     expect(editor).toContain("sourceRecordId: effectiveSourceRecordId");
   });
+
+  it("stabilise la recherche des pré-dossiers avant d’appeler tRPC", () => {
+    const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
+    expect(panel).toContain("debouncedSearch");
+    expect(panel).toContain("window.setTimeout");
+    expect(panel).toContain("search: debouncedSearch");
+  });
 });

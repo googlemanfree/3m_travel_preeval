@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, FileText, FolderPlus, Mail, RefreshCw, Search, UserRound } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,16 @@ export default function AdminPreDossierAccountsPanel({ sessionToken }: { session
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selected, setSelected] = useState<PreDossierAccount | null>(null);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [search]);
   const [destination, setDestination] = useState("canada");
   const [visaType, setVisaType] = useState("Études");
   const [adminNotes, setAdminNotes] = useState("");
-  const queryInput = useMemo(() => ({ sessionToken, search: search.trim() }), [sessionToken, search]);
+  const queryInput = useMemo(() => ({ sessionToken, search: debouncedSearch }), [sessionToken, debouncedSearch]);
   const query = trpc.adminCandidateManagement.listPreDossierAccounts.useQuery(queryInput, { enabled: Boolean(sessionToken), retry: false });
   const reviewMutation = trpc.adminCandidateManagement.reviewEvaluationDeclaration.useMutation({
     onSuccess: () => {
