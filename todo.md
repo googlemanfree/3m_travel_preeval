@@ -2190,3 +2190,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher sur la fiche candidat l’historique des envois réussis ou échoués.
 - [x] Afficher un toast de succès détaillé après l’envoi effectif de l’e-mail.
 - [x] Ajouter les tests de non-diffusion et d’envoi, vérifier TypeScript et build, puis publier.
+
+## Reprise des brouillons et aperçu e-mail
+- [ ] Ajouter un bouton « Reprendre l’évaluation » pour chaque brouillon sauvegardé.
+- [ ] Prévisualiser l’objet, le destinataire et le contenu de l’e-mail avant diffusion.
+- [ ] Garantir que l’aperçu ne déclenche aucun envoi ni changement d’étape.
+- [ ] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+## Reprise de l’éditeur après défaut mobile
+- [ ] Supprimer la mise en page actuelle en colonnes comprimées sur mobile.
+- [ ] Recomposer l’éditeur en une seule colonne mobile et deux zones lisibles sur desktop.
+- [ ] Remplacer les barres d’actions superposées par une barre responsive sans chevauchement.
+- [ ] Vérifier que les champs, l’aperçu, la reprise de version, l’aperçu e-mail, la validation et l’envoi restent accessibles.
+- [ ] Tester mobile et desktop, puis publier la correction.

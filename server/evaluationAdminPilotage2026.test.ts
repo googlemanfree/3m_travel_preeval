@@ -71,9 +71,33 @@ describe("pilotage administratif des évaluations 2026", () => {
     expect(dashboard).toContain("Secondes validations en attente");
   });
 
-  it("affiche une timeline candidate alimentée par l’historique des statuts", () => {
+    it("affiche une timeline candidate alimentée par l’historique des statuts", () => {
     const source = read("client/src/pages/EvaluationSpace.tsx");
     expect(source).toContain("validatedSteps");
     expect(source).toContain("Étapes validées récemment");
     expect(source).toContain("candidateCase?.history");
   });
+
+describe("reprise et aperçu du bilan", () => {
+  it("expose le contenu sérialisé des versions et le contrôle de reprise côté éditeur", () => {
+    const router = read("server/routers/unifiedRequests.ts");
+    const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    expect(router).toContain("contentJson: evaluationBilanVersions.contentJson");
+    expect(editor).toContain("const resumeVersion = (version: any)");
+    expect(editor).toContain("Reprendre l’évaluation");
+    expect(editor).toContain("setRecommendations(joinLines");
+  });
+
+  it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
+    const router = read("server/routers/unifiedRequests.ts");
+    const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    expect(router).toContain("previewEvaluationDeliveryEmail: publicProcedure");
+    expect(router).toContain("return {\n        recipient:");
+    const previewBlock = router.slice(router.indexOf("previewEvaluationDeliveryEmail"), router.indexOf("previewEvaluationDeliveryPdf"));
+    expect(previewBlock).not.toContain("sendEmail(");
+    expect(editor).toContain("sandbox=\"\" srcDoc={emailPreview.html}");
+    expect(editor).toContain("Destinataire :");
+    expect(editor).toContain("Objet :");
+  });
+});
+
