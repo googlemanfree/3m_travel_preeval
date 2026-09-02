@@ -2192,13 +2192,18 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les tests de non-diffusion et d’envoi, vérifier TypeScript et build, puis publier.
 
 ## Reprise des brouillons et aperçu e-mail
-- [ ] Ajouter un bouton « Reprendre l’évaluation » pour chaque brouillon sauvegardé.
-- [ ] Prévisualiser l’objet, le destinataire et le contenu de l’e-mail avant diffusion.
-- [ ] Garantir que l’aperçu ne déclenche aucun envoi ni changement d’étape.
-- [ ] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
+- [x] Ajouter un bouton « Reprendre l’évaluation » pour chaque brouillon sauvegardé.
+- [x] Prévisualiser l’objet, le destinataire et le contenu de l’e-mail avant diffusion.
+- [x] Garantir que l’aperçu ne déclenche aucun envoi ni changement d’étape.
+- [x] Ajouter les tests de régression, vérifier TypeScript et build, puis publier.
 ## Reprise de l’éditeur après défaut mobile
-- [ ] Supprimer la mise en page actuelle en colonnes comprimées sur mobile.
-- [ ] Recomposer l’éditeur en une seule colonne mobile et deux zones lisibles sur desktop.
-- [ ] Remplacer les barres d’actions superposées par une barre responsive sans chevauchement.
-- [ ] Vérifier que les champs, l’aperçu, la reprise de version, l’aperçu e-mail, la validation et l’envoi restent accessibles.
-- [ ] Tester mobile et desktop, puis publier la correction.
+- [x] Supprimer la mise en page actuelle en colonnes comprimées sur mobile.
+- [x] Recomposer l’éditeur en une seule colonne mobile et deux zones lisibles sur desktop.
+- [x] Remplacer les barres d’actions superposées par une barre responsive sans chevauchement.
+- [x] Vérifier que les champs, l’aperçu, la reprise de version, l’aperçu e-mail, la validation et l’envoi restent accessibles.
+- [x] Tester mobile et desktop, puis publier la correction.
+## Optimisation admin prioritaire PC
+- [x] Adapter l’éditeur à un usage principal sur ordinateur avec une zone de travail large.
+- [x] Réduire les re-rendus et les chargements inutiles dans l’espace admin.
+- [x] Organiser les actions de validation, aperçu et envoi dans une barre desktop lisible.
+- [x] Préserver un mode de secours compact pour les petits écrans sans chevauchement.

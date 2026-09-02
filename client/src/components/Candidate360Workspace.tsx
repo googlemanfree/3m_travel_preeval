@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, FileText,
   FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
+const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
@@ -617,7 +617,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
       </Tabs>
 
       <Dialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Renvoyer le bilan d’évaluation</DialogTitle><DialogDescription>Personnalisez le message d’accompagnement. Le lien sécurisé et le bilan restent générés par le serveur.</DialogDescription></DialogHeader><div className="space-y-2"><Label htmlFor="resend-evaluation-message">Message d’accompagnement</Label><Textarea id="resend-evaluation-message" value={resendMessage} onChange={(event) => setResendMessage(event.target.value)} maxLength={3000} rows={8} /><p className="text-right text-xs text-slate-500">{resendMessage.length}/3000</p></div><DialogFooter><Button variant="outline" onClick={() => setResendDialogOpen(false)}>Annuler</Button><Button disabled={evaluationReminderMutation.isPending || resendMessage.trim().length < 3} onClick={() => { evaluationReminderMutation.mutate({ sessionToken, applicationId: candidate.internalId, language: "fr", customMessage: resendMessage.trim() }); setResendDialogOpen(false); }}><Mail className="mr-2 h-4 w-4" />{evaluationReminderMutation.isPending ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Envoi…</> : "Envoyer la relance"}</Button></DialogFooter></DialogContent></Dialog>
-      {canPrepareEvaluation && <EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} />}
+      {canPrepareEvaluation && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} /></Suspense>}
     </div>
   );
 }

@@ -86,6 +86,10 @@ describe("reprise et aperçu du bilan", () => {
     expect(editor).toContain("const resumeVersion = (version: any)");
     expect(editor).toContain("Reprendre l’évaluation");
     expect(editor).toContain("setRecommendations(joinLines");
+    expect(editor).toContain("lg:flex-row");
+    expect(editor).toContain("lg:overflow-hidden");
+    expect(editor).toContain("min-w-[560px]");
+    expect(editor).not.toContain("sm:grid-cols-4");
   });
 
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
@@ -98,6 +102,8 @@ describe("reprise et aperçu du bilan", () => {
     expect(editor).toContain("sandbox=\"\" srcDoc={emailPreview.html}");
     expect(editor).toContain("Destinataire :");
     expect(editor).toContain("Objet :");
+    expect(editor).toContain("isLoading ?");
+    expect(editor).not.toContain("isLoading || isFetching ?");
   });
 });
 

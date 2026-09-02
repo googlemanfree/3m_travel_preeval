@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
+const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 import { AlertTriangle, Clock3, Eye, Gauge, Inbox, MessageSquare, RefreshCw, Send, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -125,6 +125,6 @@ export function UnifiedRequestInbox({ sessionToken }: { sessionToken: string }) 
         <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Clock3 className="h-4 w-4" /> Journal de traitement</CardTitle></CardHeader><CardContent>{detail.history.length ? <ol className="space-y-3 border-l border-slate-200 pl-4">{detail.history.map((item: any) => <li key={item.id} className="relative text-sm"><span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-blue-600" /><p className="font-medium text-slate-800">{item.actionType.replaceAll("_", " ")}</p><p className="text-slate-600">{item.comment || `${item.previousValue || ""} → ${item.newValue || ""}`}</p><p className="mt-1 text-xs text-slate-500">{new Date(item.createdAt).toLocaleString("fr-FR")}</p></li>)}</ol> : <p className="text-sm text-slate-500">Le journal sera créé à la première action de traitement.</p>}</CardContent></Card>
       </div>}</DialogContent>
     </Dialog>
-    {deliveryEditorRecordId !== null && <EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={deliveryEditorRecordId} open={true} onOpenChange={(open) => !open && setDeliveryEditorRecordId(null)} onCompleted={() => { setSelected((current: any) => current ? { ...current, sourceStatus: "bilan_envoye", workflowStatus: "processing", workflowLabel: "En traitement" } : current); void utils.unifiedRequests.list.invalidate(); void utils.unifiedRequests.dashboard.invalidate(); void utils.unifiedRequests.getCustomer360.invalidate(); }} />}
+    {deliveryEditorRecordId !== null && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={deliveryEditorRecordId} open={true} onOpenChange={(open) => !open && setDeliveryEditorRecordId(null)} onCompleted={() => { setSelected((current: any) => current ? { ...current, sourceStatus: "bilan_envoye", workflowStatus: "processing", workflowLabel: "En traitement" } : current); void utils.unifiedRequests.list.invalidate(); void utils.unifiedRequests.dashboard.invalidate(); void utils.unifiedRequests.getCustomer360.invalidate(); }} /></Suspense>}
   </div>;
 }
