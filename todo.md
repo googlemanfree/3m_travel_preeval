@@ -2259,3 +2259,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Détection admin avec paramètres d’URL
 - [x] Normaliser le chemin admin sans query string ni hash avant de masquer les widgets flottants.
 - [ ] Vérifier la capture admin avec `?version` et confirmer l’absence de widgets au-dessus des actions.
+
+## Propagation CDN du correctif admin
+- [x] Forcer une nouvelle empreinte d’index et de bundle pour éviter le service de l’ancien build public.
+- [ ] Vérifier les trois domaines publiés et confirmer le bundle contenant la garde admin.
+- [ ] Rejouer le test du dossier interne et des boutons après propagation.
