@@ -57,6 +57,10 @@ function registerLegacyPublicRedirects(app: Express) {
     res.set({ "Cache-Control": "public, max-age=3600" });
     return res.redirect(301, "/?source=legacy-submit-review#evaluation-multi");
   });
+  app.get("/evaluation-primaire", (_req, res) => {
+    res.set({ "Cache-Control": "public, max-age=3600" });
+    return res.redirect(301, "/#evaluation-multi");
+  });
 }
 export async function setupVite(app: Express, server: Server) {
   applyCanonicalDomainRedirect(app);

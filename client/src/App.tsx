@@ -277,7 +277,7 @@ function Router() {
           <AdminEmailSettings />
         </AdminGuard>
       </Route>
-      <Route path={"/evaluation-primaire"} component={NotFound} />
+      <Route path={"/evaluation-primaire"}>{() => <Redirect to="/#evaluation-multi" />}</Route>
       <Route path={"/simple-signup"}>{() => <Redirect to="/register" />}</Route>
       <Route path={"/schedule-agency"}>{() => <Redirect to="/contact" />}</Route>
       <Route path={"/visa-types"}>{() => <Redirect to="/procedures" />}</Route>

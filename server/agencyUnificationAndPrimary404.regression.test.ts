@@ -30,8 +30,8 @@ describe("pilotage unifié agence/en ligne et route primaire", () => {
     expect(applicationRouter).toContain("if (existingAgencyCase)");
   });
 
-  it("retourne la page 404 pour l’ancien chemin evaluation-primaire", () => {
-    expect(app).toContain('<Route path={"/evaluation-primaire"} component={NotFound} />');
-    expect(app).not.toContain('<Route path={"/evaluation-primaire"}>{() => <Redirect');
+  it("redirige l’ancien chemin evaluation-primaire vers le formulaire gratuit", () => {
+    expect(app).toContain('<Route path={"/evaluation-primaire"}>{() => <Redirect to="/#evaluation-multi" />}</Route>');
+    expect(app).not.toContain('<Route path={"/evaluation-primaire"} component={NotFound} />');
   });
 });
