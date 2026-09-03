@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v36-admin-widget-route-fix';
+const CACHE_NAME = '3m-travel-pwa-v37-urgent-footer-upload-fix';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'

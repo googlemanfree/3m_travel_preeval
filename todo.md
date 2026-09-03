@@ -2488,3 +2488,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réparer le bouton « Suivre mon dossier » sur /mon-espace?section=dossier.
 - [x] Corriger la catégorie d’upload du portrait biométrique depuis « Choisir dans la galerie ».
 - [x] Ajouter des régressions ciblées, tester les trois bugs et publier avec URL/action exacte.
+
+## Propagation publique à confirmer — bugs urgents
+- [ ] Vérifier et forcer la propagation publique du Footer sans QR ni tooltips saturants après observation du domaine www.
+- [ ] Confirmer sur une session candidat que /mon-espace?section=dossier ouvre bien /mon-dossier au clic.
+- [ ] Confirmer publiquement le flux biométrique avec la catégorie photo_identite sans contourner la vérification humaine.
