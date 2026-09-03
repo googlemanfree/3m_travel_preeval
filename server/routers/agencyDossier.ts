@@ -7,7 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { agencyDossiers, agencyDossierHistory, candidates } from "../../drizzle/schema";
+import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory, candidates } from "../../drizzle/schema";
 import { eq, and, or, like, desc, isNull, isNotNull, sql } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
@@ -333,6 +333,29 @@ export const agencyDossierRouter = router({
             code: "BAD_REQUEST",
             message: "Cette étape est réservée aux procédures de travail au Luxembourg.",
           });
+        }
+
+        if (input.newStatus === "en_cours") {
+          const cvDocuments = await db
+            .select({ id: agencyDossierDocuments.id })
+            .from(agencyDossierDocuments)
+            .where(and(
+              eq(agencyDossierDocuments.dossierId, input.dossierId),
+              or(
+                like(agencyDossierDocuments.documentType, "%cv%"),
+                like(agencyDossierDocuments.documentName, "%cv%"),
+                like(agencyDossierDocuments.documentType, "%curriculum%"),
+                like(agencyDossierDocuments.documentName, "%curriculum%"),
+              ),
+            ))
+            .limit(1);
+
+          if (cvDocuments.length === 0) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Un CV exploitable doit être déposé avant le passage du pré-dossier en cours.",
+            });
+          }
         }
 
         const oldStatus = dossier[0].status;

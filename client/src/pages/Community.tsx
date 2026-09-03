@@ -72,6 +72,18 @@ const serviceLabels = {
 
 type PricingPlan = { title: string; subtitle: string; launchRange: string; annualRange: string; delivery: string; points: string[] };
 
+const fallbackPricingPlans: PricingPlan[] = [
+  { title: "Présence digitale", subtitle: "Pour cadrer une vitrine, une landing page ou une refonte légère.", launchRange: "150 000–450 000 FCFA", annualRange: "À confirmer", delivery: "2–4 semaines", points: ["Structure et contenus de base", "Design responsive", "Mise en ligne et prise en main"] },
+  { title: "Plateforme métier", subtitle: "Pour un espace client, un workflow interne ou une plateforme connectée.", launchRange: "À partir de 650 000 FCFA", annualRange: "À confirmer", delivery: "6–12 semaines", points: ["Cadrage fonctionnel", "Développement et tests", "Accompagnement au lancement"] },
+];
+
+const deliveryExamples = [
+  ["Portail client", "Espace sécurisé pour déposer des documents, suivre un dossier et recevoir des notifications."],
+  ["Site vitrine", "Page de présentation responsive avec parcours de contact, contenus structurés et appels à l’action."],
+  ["Tableau de pilotage", "Interface interne pour centraliser des demandes, statuts, documents et historiques."],
+  ["Kit de croissance", "Calendrier éditorial, contenus sociaux et repères SEO adaptés à une activité locale."],
+];
+
 export default function Community() {
   const [form, setForm] = useState({ service: "web_platform" as keyof typeof serviceLabels, fullName: "", email: "", phone: "", organization: "", message: "" });
   const { data: content } = trpc.digitalServices.getContent.useQuery();
@@ -85,8 +97,9 @@ export default function Community() {
   const pricingPlans = useMemo(() => {
     try {
       const parsed = JSON.parse(content?.pricingJson || "[]") as PricingPlan[];
-      return Array.isArray(parsed) ? parsed.filter((plan) => plan?.title && plan?.launchRange && Array.isArray(plan?.points)) : [];
-    } catch { return []; }
+      const validPlans = Array.isArray(parsed) ? parsed.filter((plan) => plan?.title && plan?.launchRange && Array.isArray(plan?.points)) : [];
+      return validPlans.length ? validPlans : fallbackPricingPlans;
+    } catch { return fallbackPricingPlans; }
   }, [content?.pricingJson]);
   const submitRequest = trpc.digitalServices.createRequest.useMutation({
     onSuccess: ({ reference }) => {
@@ -181,6 +194,13 @@ export default function Community() {
                 </ul>
               </article>;
             })}
+          </div>
+        </section>
+
+        <section className="border-y border-slate-200 bg-white px-4 py-18 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-3xl"><p className="text-sm font-black uppercase tracking-[.14em] text-blue-700">Exemples de livrables</p><h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Des formats concrets, adaptés à votre besoin.</h2><p className="mt-4 leading-7 text-slate-600">Ces exemples décrivent des formats de réalisation possibles. Ils ne constituent pas une liste de références clients ni une promesse de résultat ; le périmètre, le tarif et le délai sont confirmés après cadrage.</p></div>
+            <div className="mt-10 grid gap-5 md:grid-cols-2">{deliveryExamples.map(([title, text]) => <article key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6"><h3 className="text-xl font-black text-slate-950">{title}</h3><p className="mt-3 leading-7 text-slate-600">{text}</p></article>)}</div>
           </div>
         </section>
 

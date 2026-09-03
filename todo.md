@@ -2432,3 +2432,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le module `/admin/agency-dossiers` qui affiche 0 résultat pour des pré-dossiers existants recherchés par identifiant, dont le fictif `390001`.
 - [x] Ajouter une régression de recherche/chargement et vérifier sans mutation de statut.
 - [ ] Publier le correctif et fournir l’URL/action/résultat exacts.
+
+## Correction verrou pré-dossier agence — test E2E
+- [x] Bloquer côté serveur toute transition agence vers « En cours » sans CV exploitable.
+- [x] Ajouter une régression dédiée à cette transition bloquante.
+- [x] Remettre uniquement `3M-AGN-420001` à « Nouveau » et consigner la restauration.
+- [ ] Reprendre le test E2E fictif après publication du verrou.
