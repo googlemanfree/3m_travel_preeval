@@ -263,18 +263,39 @@ export const applicationRouter = router({
         .limit(1);
 
       if (newApp) {
-        const [caseInsert] = await db.insert(cases).values({
-          caseNumber: dossierNumber,
-          candidateId: ctx.candidate.id,
-          legacyApplicationId: newApp.id,
-          sourceChannel: "online",
-          countryTarget: input.destination,
-          caseType: input.formulaChosen,
-          visaType: input.visaType ?? null,
-          currentStatus: "nouveau",
-          openedAt: new Date(),
-        });
-        const caseId = Number(caseInsert.insertId);
+        const [linkedAgencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
+          .where(ilike(agencyDossiers.email, input.email.trim()))
+          .orderBy(desc(agencyDossiers.createdAt))
+          .limit(1);
+        const [existingAgencyCase] = linkedAgencyDossier
+          ? await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyAgencyDossierId, linkedAgencyDossier.id)).limit(1)
+          : [];
+        let caseId: number;
+        if (existingAgencyCase) {
+          await db.update(cases).set({
+            candidateId: ctx.candidate.id,
+            legacyApplicationId: newApp.id,
+            sourceChannel: "online",
+            countryTarget: input.destination,
+            caseType: input.formulaChosen,
+            visaType: input.visaType ?? null,
+          }).where(eq(cases.id, existingAgencyCase.id));
+          caseId = existingAgencyCase.id;
+        } else {
+          const [caseInsert] = await db.insert(cases).values({
+            caseNumber: dossierNumber,
+            candidateId: ctx.candidate.id,
+            legacyApplicationId: newApp.id,
+            legacyAgencyDossierId: linkedAgencyDossier?.id ?? null,
+            sourceChannel: "online",
+            countryTarget: input.destination,
+            caseType: input.formulaChosen,
+            visaType: input.visaType ?? null,
+            currentStatus: "nouveau",
+            openedAt: new Date(),
+          });
+          caseId = Number(caseInsert.insertId);
+        }
         await Promise.all([
           db.insert(caseApplicants).values({ caseId, relationshipType: "principal", fullName: input.fullName, nationality: input.nationality ?? null }),
           db.insert(caseStatusHistory).values({ caseId, newStatus: "nouveau", changedByRole: "candidate", changedById: ctx.candidate.id, comment: "Dossier créé depuis l’espace candidat." }),

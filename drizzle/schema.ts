@@ -975,6 +975,10 @@ export const agencyDossiers = mysqlTable("agency_dossiers", {
   lastStatusChangeAt: timestamp("lastStatusChangeAt"),
   lastStatusChangeBy: varchar("lastStatusChangeBy", { length: 320 }),
   
+  // Paiement initial déclaré lors du dépôt en agence
+  initialPaymentStatus: mysqlEnum("initialPaymentStatus", ["unknown", "pending", "paid"]).default("unknown").notNull(),
+  depositDate: timestamp("depositDate"),
+
   // Notifications
   welcomeEmailSent: boolean("welcomeEmailSent").default(false).notNull(),
   statusUpdateEmailSent: boolean("statusUpdateEmailSent").default(false).notNull(),

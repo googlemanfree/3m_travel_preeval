@@ -679,8 +679,14 @@ function ImportAgencyModal({
     email: "",
     whatsapp: "",
     city: "Yaoundé",
+    dateOfBirth: "",
+    nationality: "",
     destinationCountry: "",
     projectType: "",
+    documentsReceived: "",
+    initialPaymentStatus: "unknown" as "unknown" | "pending" | "paid",
+    assignedToAdmin: "",
+    depositDate: new Date().toISOString().slice(0, 10),
     initialStatus: "DOCUMENTS_CHECK" as AdminStatus,
   });
 
@@ -758,12 +764,17 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="city">Ville</Label>
-              <Input
-                id="city"
-                value={form.city}
-                onChange={(e) => setField("city", e.target.value)}
-                placeholder="Yaoundé"
-              />
+              <Input id="city" value={form.city} onChange={(e) => setField("city", e.target.value)} placeholder="Yaoundé" />
+            </div>
+
+            <div>
+              <Label htmlFor="dateOfBirth">Date de naissance</Label>
+              <Input id="dateOfBirth" type="date" value={form.dateOfBirth} onChange={(e) => setField("dateOfBirth", e.target.value)} />
+            </div>
+
+            <div>
+              <Label htmlFor="nationality">Nationalité</Label>
+              <Input id="nationality" value={form.nationality} onChange={(e) => setField("nationality", e.target.value)} placeholder="Camerounaise" />
             </div>
 
             <div>
@@ -792,6 +803,33 @@ function ImportAgencyModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="documentsReceived">Documents déjà remis</Label>
+              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme" className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+            </div>
+
+            <div>
+              <Label htmlFor="initialPaymentStatus">Statut de paiement initial</Label>
+              <Select value={form.initialPaymentStatus} onValueChange={(v) => setField("initialPaymentStatus", v)}>
+                <SelectTrigger id="initialPaymentStatus"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unknown">Non renseigné</SelectItem>
+                  <SelectItem value="pending">En attente</SelectItem>
+                  <SelectItem value="paid">Payé en agence</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="assignedToAdmin">Conseiller référent (email)</Label>
+              <Input id="assignedToAdmin" type="email" value={form.assignedToAdmin} onChange={(e) => setField("assignedToAdmin", e.target.value)} placeholder="conseiller@3mtravelagency.com" />
+            </div>
+
+            <div>
+              <Label htmlFor="depositDate">Date de dépôt</Label>
+              <Input id="depositDate" type="date" value={form.depositDate} onChange={(e) => setField("depositDate", e.target.value)} required />
             </div>
 
             <div>
