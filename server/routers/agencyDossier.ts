@@ -427,6 +427,20 @@ export const agencyDossierRouter = router({
   /**
    * Ajouter des notes au dossier
    */
+  validateEvaluation: protectedProcedure
+    .input(z.object({ dossierId: z.number().int().positive(), note: z.string().trim().max(1000).optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent valider une évaluation" });
+      const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, input.dossierId)).limit(1);
+      if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence non trouvé" });
+      const validatedAt = new Date();
+      const validatedBy = ctx.user.email || "unknown";
+      await db.update(agencyDossiers).set({ evaluationValidatedAt: validatedAt, evaluationValidatedBy: validatedBy, evaluationValidationNote: input.note?.trim() || "Évaluation validée manuellement par l’administration." }).where(eq(agencyDossiers.id, input.dossierId));
+      await db.insert(agencyDossierHistory).values({ dossierId: input.dossierId, action: "evaluation_validated", changedBy: validatedBy, oldValue: dossier.evaluationValidatedAt ? "validated" : "pending", newValue: "validated", details: input.note?.trim() || "Évaluation validée indépendamment du rattachement automatique." });
+      return { success: true, validatedAt, validatedBy };
+    }),
   addNotes: protectedProcedure
     .input(z.object({
       dossierId: z.number(),

@@ -89,6 +89,9 @@ interface Dossier {
   linkedCandidateId?: number | null;
   linkedCandidateEmail?: string | null;
   linkedCandidateName?: string | null;
+  evaluationValidatedAt?: string | Date | null;
+  evaluationValidatedBy?: string | null;
+  evaluationValidationNote?: string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -249,6 +252,14 @@ export default function AdminAgencyDossiers() {
     onError: (err) => {
       toast.error(err.message || "Erreur lors de la mise à jour du statut");
     },
+  });
+
+  const validateEvaluationMutation = trpc.agencyDossier.validateEvaluation.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Évaluation validée par ${result.validatedBy}.`);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message || "Erreur lors de la validation de l’évaluation"),
   });
 
   const addNotesMutation = trpc.agencyDossier.addNotes.useMutation({
@@ -976,6 +987,15 @@ export default function AdminAgencyDossiers() {
                 </div>
               )}
 
+              <div className={`rounded-xl border p-3 text-sm ${selectedDossier.evaluationValidatedAt ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100" : "border-amber-400/40 bg-amber-500/10 text-amber-100"}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">Validation de l’évaluation</p>
+                    <p className="mt-1 text-xs">{selectedDossier.evaluationValidatedAt ? `Validée le ${new Date(selectedDossier.evaluationValidatedAt).toLocaleString("fr-FR")} par ${selectedDossier.evaluationValidatedBy || "administration"}.` : "Aucune validation admin explicite enregistrée."}</p>
+                  </div>
+                  {!selectedDossier.evaluationValidatedAt && <Button type="button" size="sm" onClick={() => validateEvaluationMutation.mutate({ dossierId: selectedDossier.id })} disabled={validateEvaluationMutation.isPending} className="bg-emerald-600 text-white hover:bg-emerald-700">{validateEvaluationMutation.isPending ? "Validation…" : "Valider cette évaluation"}</Button>}
+                </div>
+              </div>
               <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-100">
                 <p className="font-semibold">Documents remis en agence</p>
                 <p className="mt-1 text-xs leading-5 text-blue-200">Ajoutez ici les scans des pièces déposées physiquement. Chaque dépôt est privé, horodaté et synchronisé avec l’espace client.</p>

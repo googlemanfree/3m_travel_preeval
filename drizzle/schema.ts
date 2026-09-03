@@ -983,6 +983,11 @@ export const agencyDossiers = mysqlTable("agency_dossiers", {
   initialPaymentStatus: mysqlEnum("initialPaymentStatus", ["unknown", "pending", "paid"]).default("unknown").notNull(),
   depositDate: timestamp("depositDate"),
 
+  // Validation humaine de l’évaluation agence
+  evaluationValidatedAt: timestamp("evaluationValidatedAt"),
+  evaluationValidatedBy: varchar("evaluationValidatedBy", { length: 320 }),
+  evaluationValidationNote: text("evaluationValidationNote"),
+
   // Notifications
   welcomeEmailSent: boolean("welcomeEmailSent").default(false).notNull(),
   statusUpdateEmailSent: boolean("statusUpdateEmailSent").default(false).notNull(),

@@ -2517,6 +2517,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tracer l’appel réseau réel de lecture/extraction du CV et corriger l’erreur Failed to fetch.
 - [ ] Vérifier et corriger les handlers Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action.
 - [ ] Vérifier et corriger les handlers Prévisualiser, Aperçu PDF et Valider et envoyer, sans déclencher d’envoi pendant le test.
-- [ ] Ajouter un champ de saisie manuelle du bilan dans l’espace admin.
-- [ ] Ajouter un bouton admin indépendant « Valider cette évaluation » pour les dossiers agence.
+- [x] Ajouter un champ de saisie manuelle du bilan dans l’espace admin.
+- [x] Ajouter un bouton admin indépendant « Valider cette évaluation » pour les dossiers agence.
 - [ ] Tester chaque bouton par clic réel, publier et documenter les limites sans session candidat.
