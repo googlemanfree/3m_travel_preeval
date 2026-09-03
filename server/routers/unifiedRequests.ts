@@ -674,7 +674,12 @@ export const unifiedRequestsRouter = router({
       const trackingEmailId = Number((insertedTracking as any)[0]?.insertId ?? 0);
       const availabilityHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
       try {
-        await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
+        await sendEmail({
+          to: application.email,
+          subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+          html: availabilityHtml,
+          attachments: [{ filename: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }],
+        });
         if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: availabilityHtml }).where(eq(evaluationEmails.id, trackingEmailId));
       } catch (error) {
         if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "failed", failureReason: error instanceof Error ? error.message : String(error) }).where(eq(evaluationEmails.id, trackingEmailId));

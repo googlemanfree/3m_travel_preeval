@@ -27,6 +27,9 @@ const transporter = smtpHost && smtpUser && smtpPass ? nodemailer.createTranspor
     user: smtpUser,
     pass: smtpPass,
   },
+  connectionTimeout: 15000,
+  greetingTimeout: 10000,
+  socketTimeout: 30000,
 }) : null;
 
 /** État non sensible utilisable par la supervision ; aucun secret SMTP n’est renvoyé. */
@@ -45,6 +48,7 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   replyTo?: string;
+  attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>;
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -72,6 +76,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       subject: options.subject,
       html: options.html,
       replyTo: options.replyTo,
+      attachments: options.attachments,
     });
 
     console.log(`[Email] Sent successfully via SMTP to ${options.to}`, info.messageId);

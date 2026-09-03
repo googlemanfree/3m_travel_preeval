@@ -2321,4 +2321,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Correctif ciblé /evaluation-primaire
 - [x] Rétablir la redirection de /evaluation-primaire vers /#evaluation-multi sans modifier les autres routes.
-- [ ] Tester le code et le comportement public publié, puis fournir l’URL exacte et le résultat attendu.
+- [x] Tester le code et le comportement public publié, puis fournir l’URL exacte et le résultat attendu.
+
+## Nouveau lot — bilan manuel, SMTP et PDF
+- [x] Point 1 — Réparer le bouton admin « Préparation du bilan d’évaluation » pour déclencher réellement la préparation.
+- [x] Point 2 — Garantir une revue et validation manuelles avant tout envoi au candidat.
+- [x] Point 3 — Fiabiliser l’envoi SMTP de l’évaluation et rendre les échecs explicites, sans envoi silencieux.
+- [x] Point 4 — Générer un PDF professionnel avec logo, puis le distribuer par e-mail et dans l’espace client.
+- [ ] Tester chaque point, publier progressivement et fournir pour chacun l’URL/action/résultat attendu ; aucune suppression sans confirmation.

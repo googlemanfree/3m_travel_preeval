@@ -436,7 +436,7 @@ export function CandidateDetailModal({
 
   return (
     <>
-      <Dialog open onOpenChange={onClose}>
+      <Dialog open={!evaluationEditorOpen} onOpenChange={onClose}>
       <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
         <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
           <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
@@ -649,7 +649,7 @@ export function CandidateDetailModal({
       </DialogContent>
       </Dialog>
       {candidate && isPreDossierAccount && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<div role="status" className="fixed inset-x-4 bottom-4 z-[100] rounded-xl border border-blue-200 bg-white p-4 text-sm text-blue-950 shadow-xl sm:inset-x-auto sm:right-6 sm:w-[360px]">Chargement de l’espace de préparation du bilan…</div>}>
           <EvaluationDeliveryEditor
             sessionToken={sessionToken}
             sourceRecordId={candidate.internalId}

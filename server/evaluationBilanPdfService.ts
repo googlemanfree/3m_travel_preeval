@@ -1,4 +1,6 @@
 import { jsPDF } from "jspdf";
+import fs from "node:fs";
+import path from "node:path";
 import type { Application } from "../drizzle/schema";
 import { storagePut } from "./storage";
 
@@ -61,18 +63,31 @@ function writeParagraph(doc: jsPDF, text: string, x: number, y: number, width: n
   return y;
 }
 
-export async function createFinalEvaluationPdf(application: Application, versionNumber: number, auditTrail: EvaluationPdfAuditEntry[] = []): Promise<{ key: string; url: string }> {
+export async function createFinalEvaluationPdf(application: Application, versionNumber: number, auditTrail: EvaluationPdfAuditEntry[] = []): Promise<{ key: string; url: string; bytes: Buffer }> {
   const draft = readDraft(application);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = 20;
   doc.setFillColor(30, 58, 138);
   doc.rect(0, 0, 210, 34, "F");
+  const logoCandidates = [
+    path.resolve(import.meta.dirname, "../client/public/favicon.png"),
+    path.resolve(import.meta.dirname, "public/favicon.png"),
+  ];
+  const logoPath = logoCandidates.find((candidate) => fs.existsSync(candidate));
+  if (logoPath) {
+    try {
+      const logoData = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
+      doc.addImage(logoData, "PNG", 18, 4, 24, 24);
+    } catch (error) {
+      console.warn("[Evaluation PDF] Logo unavailable:", error);
+    }
+  }
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("3M Travel & Services", 18, 16);
+  doc.text("3M Travel & Services", 48, 16);
   doc.setFontSize(11);
-  doc.text("Bilan d’évaluation préliminaire — document finalisé", 18, 25);
+  doc.text("Bilan d’évaluation préliminaire — document finalisé", 48, 25);
   doc.setTextColor(31, 41, 55);
   y = 48;
   doc.setFontSize(10);
@@ -106,5 +121,6 @@ export async function createFinalEvaluationPdf(application: Application, version
   writeParagraph(doc, "Ce bilan est une évaluation indicative établie par 3M Travel & Services. Il ne constitue ni une décision ni une garantie d’immigration délivrée par une autorité publique.", 18, y, 174);
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(application.dossierNumber || application.id).replace(/[^a-zA-Z0-9_-]/g, "-");
-  return storagePut(`evaluation-bilans/${reference}/bilan-final-v${versionNumber}.pdf`, bytes, "application/pdf");
+  const stored = await storagePut(`evaluation-bilans/${reference}/bilan-final-v${versionNumber}.pdf`, bytes, "application/pdf");
+  return { ...stored, bytes };
 }
