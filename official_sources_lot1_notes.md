@@ -68,3 +68,9 @@
 ## Vérification publique après publication
 
 Le catalogue public `https://www.3mtravelagency.com/procedures?check=official-sources-lot1-v4` affiche 107 destinations, le filtre « Portail vérifié uniquement » et des liens « Source officielle » sur les fiches. La fiche `https://www.3mtravelagency.com/procedures/allemagne-travail?check=source-layer-c936ae1a` se charge et expose un portail consulaire officiel ainsi qu’une source institutionnelle, avec une date de vérification affichée. Les images décoratives spécifiques restent reportées conformément à la décision de périmètre.
+
+## Contrôle opérationnel complémentaire — 2026-09-03
+- La vérification multi-dossiers agence n’a pas pu être exécutée dans le navigateur : /admin répond « Accès refusé — Authentification requise » sans session admin active.
+- Aucun bilan réel n’a été préparé, envoyé ou modifié pendant cette vérification.
+- Le correctif statique du bouton /mon-dossier et le bornage documentaire par evaluationId sont couverts par 12 régressions locales, TypeScript et build.
+- Les images décoratives du lot 1 restent explicitement reportées ; cette passe couvre uniquement les sources officielles déjà vérifiées.

@@ -5,6 +5,7 @@ import {
   adminAccounts,
   agencyDossiers,
   applications,
+  agencyDossierDocuments,
   candidateFiles,
   candidateMessages,
   candidates,
@@ -93,6 +94,17 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     adminNotes: agencyDossiers.adminNotes,
   }).from(agencyDossiers).where(eq(agencyDossiers.id, sourceRecordId)).limit(1);
   if (agencyDossier) {
+    const [agencyCvDocument] = await db.select({ documentUrl: agencyDossierDocuments.documentUrl, documentName: agencyDossierDocuments.documentName })
+      .from(agencyDossierDocuments)
+      .where(and(
+        eq(agencyDossierDocuments.dossierId, agencyDossier.id),
+        inArray(agencyDossierDocuments.documentType, ["cv", "curriculum_vitae", "resume"]),
+        inArray(agencyDossierDocuments.verificationStatus, ["pending", "verified"]),
+      ))
+      .orderBy(desc(agencyDossierDocuments.createdAt))
+      .limit(1);
+    const effectiveCvUrl = agencyDossier.cvFileUrl ?? agencyCvDocument?.documentUrl ?? null;
+    const effectiveCvName = agencyDossier.cvFileName ?? agencyCvDocument?.documentName ?? null;
     const marker = `[agency-dossier:${agencyDossier.id}]`;
     const [markedApplication] = await db.select().from(applications).where(like(applications.adminNote, `%${marker}%`)).orderBy(desc(applications.createdAt)).limit(1);
     if (markedApplication) return markedApplication;
@@ -107,7 +119,7 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     // Les dossiers agence déjà documentés n’ont pas toujours de ligne applications.
     // Créer une seule application de préparation, déterministement marquée par l’origine,
     // sans activer le dossier ni modifier le paiement.
-    if (agencyDossier.cvFileUrl || agencyDossier.cvFileName) {
+    if (effectiveCvUrl || effectiveCvName) {
       const destination = mapCandidateDestination(String(agencyDossier.destination || "").trim().toLowerCase());
       const dossierNumber = `EVAL-AG-${agencyDossier.id}`;
       await db.insert(applications).values({
@@ -120,7 +132,7 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
         dateOfBirth: agencyDossier.dateOfBirth ?? null,
         destination,
         visaType: agencyDossier.visaType || null,
-        cvUrl: agencyDossier.cvFileUrl ?? null,
+        cvUrl: effectiveCvUrl,
         documentsSubmissionMethod: "agence_physique",
         dossierStatus: "nouveau",
         paymentStatus: "PENDING",
