@@ -2490,6 +2490,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des régressions ciblées, tester les trois bugs et publier avec URL/action exacte.
 
 ## Propagation publique à confirmer — bugs urgents
-- [ ] Vérifier et forcer la propagation publique du Footer sans QR ni tooltips saturants après observation du domaine www.
+- [x] Vérifier et forcer la propagation publique du Footer sans QR ni tooltips saturants après observation du domaine www.
 - [ ] Confirmer sur une session candidat que /mon-espace?section=dossier ouvre bien /mon-dossier au clic.
 - [ ] Confirmer publiquement le flux biométrique avec la catégorie photo_identite sans contourner la vérification humaine.
+
+## Décision de périmètre — lot 1
+- [x] Publier uniquement la couche de sources officielles déjà vérifiées pour le lot 1.
+- [x] Reporter la collecte des images décoratives premium ; aucune image supplémentaire n’est engagée dans cette passe.
+- [x] Traiter les trois bugs urgents avant la reprise des destinations.
+- [ ] Reprendre l’harmonisation visuelle globale uniquement après confirmation du périmètre suivant.
