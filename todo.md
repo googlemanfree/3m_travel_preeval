@@ -2446,3 +2446,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Finaliser et vérifier les enrichissements de /formation et /3m-digital.
 - [x] Tester et publier uniquement ces périmètres, puis fournir les URL/actions exactes.
 - [x] Arrêter le test E2E au blocage biométrique sans le contourner.
+
+## Réduction et amélioration du pied de page
+- [x] Réduire la hauteur et la densité visuelle du pied de page sans supprimer les coordonnées ni les liens essentiels.
+- [x] Améliorer la hiérarchie responsive du pied de page sur ordinateur et mobile.
+- [x] Tester les liens et publier avec URL/action exacte de vérification.
