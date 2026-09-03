@@ -588,7 +588,7 @@ export function AdminPaymentManagement() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {payment.receiptUrl && <Button onClick={() => setReceiptPreview(payment)} variant="ghost" size="sm" title="Prévisualiser le justificatif de paiement" className="text-blue-700 hover:bg-blue-50"><Eye className="w-4 h-4" /></Button>}
+                          {payment.receiptUrl && <Button onClick={() => setReceiptPreview(payment)} variant="ghost" size="sm" title="Prévisualiser le justificatif de paiement" className="text-blue-700 hover:bg-blue-50"><Eye className="w-4 h-4" /><span className="hidden lg:inline">Aperçu</span></Button>}
                           {payment.paymentStatus === "PENDING" && (
                             <>
                               <Button

@@ -2389,3 +2389,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une progression visuelle côté client pour l’activation du dossier.
 - [x] Ajouter un formulaire admin pour enregistrer de nouvelles étapes de visa officielles par pays/type — gestionnaire officiel existant réutilisé.
 - [x] Tester chaque point, vérifier TypeScript/build et publier avec URL/action/résultat exacts.
+
+## Aperçu paiement, infobulles et documents par étape
+- [x] Ajouter un aperçu rapide de la preuve de paiement depuis la liste admin.
+- [x] Ajouter une infobulle explicative et une action attendue pour chaque étape de progression client.
+- [x] Permettre le téléchargement des documents requis associés à chaque étape de visa affichée.
+- [x] Tester chaque point, vérifier TypeScript/build et publier avec URL/action/résultat exacts.
