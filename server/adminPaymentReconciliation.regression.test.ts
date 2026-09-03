@@ -21,5 +21,8 @@ describe("rapprochement paiement admin", () => {
     expect(component).toContain("Confirmé par un conseiller");
     expect(component).toContain("Orange Money à distance");
     expect(component).toContain("Montant confirmé");
+    expect(component).toContain("Référence à vérifier");
+    expect(component).toContain("Écart de montant");
+    expect(component).toContain("pendingReferenceCount");
   });
 });

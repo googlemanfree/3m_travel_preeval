@@ -2302,3 +2302,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier la version finale après validation.
 - [x] Ajouter dans la fiche dossier admin un aperçu lisible du CV, un accès aux informations exploitables et un téléchargement sécurisé rattaché au candidat.
 - [x] Vérifier que le CV est disponible avant la préparation de l’évaluation et afficher un état explicite s’il manque.
+
+## Pilotage prioritaire — filtres, extraction CV et alertes
+- [x] Ajouter un filtre admin « Référence soumise à vérifier ».
+- [x] Ajouter un filtre admin « Écart de montant » avec comparaison attendu/confirmé.
+- [x] Intégrer l’extraction IA des informations clés du CV avec validation humaine avant enregistrement.
+- [x] Afficher une pastille d’alerte sur les dossiers ayant une nouvelle référence à vérifier.
+- [x] Ajouter les tests de régression, vérifier TypeScript, le build et le rendu PC.
+- [ ] Publier chaque jalon validé et préparer le bilan des sept points.

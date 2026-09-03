@@ -42,6 +42,7 @@ export function AdminPaymentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
+  const [filterReconciliation, setFilterReconciliation] = useState<"all" | "reference_pending" | "amount_gap">("all");
   const [summaryStartDate, setSummaryStartDate] = useState("");
   const [summaryEndDate, setSummaryEndDate] = useState("");
   
@@ -93,11 +94,15 @@ export function AdminPaymentManagement() {
     paymentReceiptDelivery: app.paymentReceiptDelivery,
   }));
 
+  const pendingReferenceCount = payments.filter((payment) => payment.paymentStatus === "PENDING" && Boolean(payment.transactionId)).length;
+
   // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
   const [filterReceiptDelivery, setFilterReceiptDelivery] = useState<"all" | "sent" | "failed" | "not_sent">("all");
   const filteredPayments = payments.filter((payment) => {
     const receiptStatus = payment.paymentReceiptDelivery?.status ?? "not_sent";
     if (filterReceiptDelivery !== "all" && receiptStatus !== filterReceiptDelivery) return false;
+    if (filterReconciliation === "reference_pending" && !(payment.paymentStatus === "PENDING" && Boolean(payment.transactionId))) return false;
+    if (filterReconciliation === "amount_gap" && (payment.confirmedAmount == null || payment.confirmedAmount === payment.expectedAmount)) return false;
     if (filterMethod === "all") return true;
     const method = String(payment.paymentMethod || "").toLowerCase();
     if (filterMethod === "mobile_money") {
@@ -441,6 +446,7 @@ export function AdminPaymentManagement() {
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-blue-600" />
                 Gestion des Paiements
+                {pendingReferenceCount > 0 && <Badge className="ml-2 inline-flex items-center gap-1 bg-amber-100 text-amber-900"><AlertCircle className="h-3.5 w-3.5" />{pendingReferenceCount} référence(s) à vérifier</Badge>}
               </CardTitle>
               <CardDescription>Suivi des paiements des frais d'ouverture de dossier</CardDescription>
             </div>
@@ -474,6 +480,16 @@ export function AdminPaymentManagement() {
               <option value="SUCCESS">Confirmés</option>
               <option value="PENDING">En attente</option>
               <option value="FAILED">Échoués</option>
+            </select>
+            <select
+              value={filterReconciliation}
+              onChange={(e) => setFilterReconciliation(e.target.value as "all" | "reference_pending" | "amount_gap")}
+              aria-label="Filtrer les rapprochements de paiement"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous les rapprochements</option>
+              <option value="reference_pending">Référence à vérifier</option>
+              <option value="amount_gap">Écart de montant</option>
             </select>
             <select
               value={filterMethod}
