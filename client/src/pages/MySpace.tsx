@@ -579,6 +579,34 @@ export default function MySpace() {
               />
             )}
 
+            {evaluationReportPdfUrl && (() => {
+              const activationSteps = [
+                { label: "Bilan PDF reçu", done: Boolean(evaluationReportPdfUrl) },
+                { label: "Bilan confirmé", done: Boolean(app?.evaluationClientConfirmedAt) },
+                { label: "Activation demandée", done: Boolean(app?.activationRequestedAt) },
+                { label: "Paiement confirmé", done: app?.paymentStatus === "SUCCESS" },
+                { label: "Dossier activé", done: app?.dossierStatus === "active" || app?.dossierStatus === "processing" },
+              ];
+              const completed = activationSteps.filter((step) => step.done).length;
+              const percentage = Math.round((completed / activationSteps.length) * 100);
+              return (
+                <Card className="border-blue-200 bg-white" aria-label="Progression de l’activation du dossier">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div><CardTitle className="text-base text-slate-900">Progression de l’activation</CardTitle><CardDescription>Chaque étape doit être validée dans l’ordre.</CardDescription></div>
+                      <Badge variant="outline" className="border-blue-200 text-blue-800">{percentage}%</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage} aria-label={`Activation du dossier à ${percentage}%`}><div className="h-full rounded-full bg-blue-700 transition-[width] duration-500" style={{ width: `${percentage}%` }} /></div>
+                    <ol className="mt-4 grid gap-3 sm:grid-cols-5">
+                      {activationSteps.map((step, index) => <li key={step.label} className={`flex items-start gap-2 text-xs ${step.done ? "text-emerald-800" : "text-slate-500"}`}><span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${step.done ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>{step.done ? "✓" : index + 1}</span><span>{step.label}</span></li>)}
+                    </ol>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             {app?.destination && (() => {
               const sourceRecord = OFFICIAL_SOURCE_CATALOG[normalizeCountryKey(app.destination)];
               return (

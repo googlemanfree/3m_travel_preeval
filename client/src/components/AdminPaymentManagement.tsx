@@ -478,7 +478,7 @@ export function AdminPaymentManagement() {
             >
               <option value="all">Tous les statuts</option>
               <option value="SUCCESS">Confirmés</option>
-              <option value="PENDING">En attente</option>
+              <option value="PENDING">En attente de validation</option>
               <option value="FAILED">Échoués</option>
             </select>
             <select

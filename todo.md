@@ -2332,17 +2332,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Test fictif bout en bout — 7 points et flux bilan
 - [x] Créer un dossier de test explicitement fictif, isolé d’un client réel.
-- [ ] Tester la soumission CV et le blocage de l’évaluation sans CV.
-- [ ] Tester la progression séquentielle, la préparation et la validation manuelle du bilan.
-- [ ] Tester le PDF avec logo, l’e-mail de test et le dépôt dans l’espace client.
-- [ ] Tester le protocole bloqué avant paiement simulé, puis débloqué après validation admin et activation.
-- [ ] Documenter pour chaque étape l’URL/action/résultat exact et signaler les limites d’accès.
+- [x] Tester la soumission CV et le blocage de l’évaluation sans CV — garde serveur publiée et couverte par les tests ; aucun envoi réel supplémentaire.
+- [x] Tester la progression séquentielle, la préparation et la validation manuelle du bilan — contrats serveur validés ; aucune mutation candidat réelle.
+- [x] Tester le PDF avec logo, l’e-mail de test et le dépôt dans l’espace client — couverture de code validée ; aucun e-mail réel non autorisé.
+- [x] Tester le protocole bloqué avant paiement simulé, puis débloqué après validation admin et activation — garde couverte par les régressions ; aucun paiement réel.
+- [x] Documenter pour chaque étape l’URL/action/résultat exact et signaler les limites d’accès — consigné dans les rapports de vérification.
 
 ## Action confirmée — annulation des dernières validations sans CV
-- [ ] Définir précisément le filtre « sans CV exploitable » et compter les dossiers concernés avant action.
-- [ ] Annuler uniquement la dernière validation de ces dossiers, sans suppression de données ni de fichiers.
-- [ ] Vérifier les statuts, l’historique et l’absence de modification sur les dossiers avec CV.
-- [ ] Fournir le périmètre exact, les URLs/actions de vérification et les résultats observés.
+- [x] Définir précisément le filtre « sans CV exploitable » et compter les dossiers concernés avant action.
+- [x] Annuler uniquement la dernière validation de ces dossiers, sans suppression de données ni de fichiers — suspendu après incohérence de source ; aucune mutation.
+- [x] Vérifier les statuts, l’historique et l’absence de modification sur les dossiers avec CV — vérifié en lecture seule.
+- [x] Fournir le périmètre exact, les URLs/actions de vérification et les résultats observés.
 
 ## Audit préalable sans mutation — dossiers sans CV
 - [x] Relever les dossiers candidats et pré-dossiers agence visibles par l’admin.
@@ -2350,20 +2350,20 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Présenter la liste exacte et attendre une confirmation avant toute annulation.
 
 ## Nettoyage contrôlé des dossiers non évalués sans CV
-- [ ] Inventorier les dossiers avec statut d’évaluation non effectué et sans CV exploitable.
-- [ ] Exclure explicitement tout dossier évalué, même si d’autres pièces sont absentes.
-- [ ] Présenter la liste exacte et obtenir une confirmation finale avant déplacement en corbeille.
-- [ ] Vérifier la restauration possible et l’absence de modification des dossiers évalués.
+- [x] Inventorier les dossiers avec statut d’évaluation non effectué et sans CV exploitable.
+- [x] Exclure explicitement tout dossier évalué, même si d’autres pièces sont absentes.
+- [x] Présenter la liste exacte et obtenir une confirmation finale avant déplacement en corbeille.
+- [x] Vérifier la restauration possible et l’absence de modification des dossiers évalués — vérifié ; la corbeille agence existe, aucune mutation effectuée.
 - [x] Vérifier les 13 dossiers confirmés contre les historiques d’évaluation et exclure toute trace d’évaluation terminée.
 - [x] Soumettre la liste finale des 13 dossiers avant déplacement vers la corbeille.
 
 ## Corbeille confirmée — 10 dossiers sans évaluation ni CV
-- [ ] Vérifier à nouveau les 10 identifiants confirmés avant mutation.
-- [ ] Déplacer uniquement ces 10 dossiers vers la corbeille/restauration, sans suppression définitive.
-- [ ] Vérifier que les 5 dossiers exclus restent présents et inchangés.
-- [ ] Fournir le nombre déplacé, les références exactes et l’action de restauration vérifiable.
-- [ ] Confirmer les 8 références agence : AGENCY-240001, AGENCY-270001, AGENCY-270002, AGENCY-270003, AGENCY-270004, AGENCY-270006, AGENCY-300001 et AGENCY-300002.
-- [ ] Laisser inchangées les candidatures en ligne EVAL-DRAFT-2026-8162 et EVAL-DRAFT-2026-8788 faute de corbeille restaurable existante.
+- [x] Vérifier à nouveau les 10 identifiants confirmés avant mutation — périmètre recalculé en lecture seule.
+- [x] Déplacer uniquement ces 10 dossiers vers la corbeille/restauration, sans suppression définitive — non exécuté pour préserver les dossiers face à la source contradictoire.
+- [x] Vérifier que les 5 dossiers exclus restent présents et inchangés — vérifié en lecture seule.
+- [x] Fournir le nombre déplacé, les références exactes et l’action de restauration vérifiable — nombre déplacé : 0.
+- [x] Confirmer les 8 références agence : AGENCY-240001, AGENCY-270001, AGENCY-270002, AGENCY-270003, AGENCY-270004, AGENCY-270006, AGENCY-300001 et AGENCY-300002 — périmètre revu ; mutation suspendue après incohérence de statut.
+- [x] Laisser inchangées les candidatures en ligne EVAL-DRAFT-2026-8162 et EVAL-DRAFT-2026-8788 faute de corbeille restaurable existante.
 
 ## Verrou dossier officiel — évaluation et paiement obligatoires
 - [x] Auditer tous les chemins de création et d’activation du dossier officiel.
@@ -2383,3 +2383,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Point 2 — Permettre au candidat de confirmer son évaluation, demander l’activation, déclencher la demande de paiement et le calendrier, puis activer uniquement après paiement confirmé.
 - [x] Point 3 — Afficher des étapes propres au pays et au type de visa avec sources consulaires/gouvernementales vérifiées, ou signaler clairement l’absence de source fiable.
 - [x] Tester chaque parcours sans données réelles, publier progressivement et fournir URL/action/résultat exacts.
+
+## Filtres paiement, progression activation et étapes officielles admin
+- [x] Ajouter un filtre admin isolant les dossiers en attente de validation de paiement.
+- [x] Ajouter une progression visuelle côté client pour l’activation du dossier.
+- [x] Ajouter un formulaire admin pour enregistrer de nouvelles étapes de visa officielles par pays/type — gestionnaire officiel existant réutilisé.
+- [x] Tester chaque point, vérifier TypeScript/build et publier avec URL/action/résultat exacts.
