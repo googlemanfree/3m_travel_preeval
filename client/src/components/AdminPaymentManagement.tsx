@@ -16,11 +16,15 @@ interface Payment {
   fullName: string;
   email: string;
   amount: number;
+  expectedAmount: number;
+  confirmedAmount?: number | null;
   currency: string;
   paymentStatus: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
   paymentMethod?: string;
   paymentDate?: Date;
   transactionId?: string;
+  validatedAt?: Date | string | null;
+  validatedBy?: string | null;
   receiptUrl?: string;
   receiptMimeType?: string;
   receiptFileName?: string;
@@ -48,6 +52,8 @@ export function AdminPaymentManagement() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNote, setAdminNote] = useState("");
   const [paymentSecretCode, setPaymentSecretCode] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [confirmedAmount, setConfirmedAmount] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
@@ -69,12 +75,16 @@ export function AdminPaymentManagement() {
     dossierNumber: app.dossierNumber,
     fullName: app.fullName,
     email: app.email,
-    amount: app.paymentAmount || 65000,
+    amount: app.paymentAmount || app.paymentExpectedAmount || 65000,
+    expectedAmount: app.paymentExpectedAmount || app.paymentAmount || 65000,
+    confirmedAmount: app.paymentConfirmedAmount,
     currency: app.paymentCurrency || "XAF",
     paymentStatus: app.paymentStatus || "PENDING",
     paymentMethod: app.paymentMethod,
     paymentDate: app.paymentDate,
     transactionId: app.paymentTransactionId,
+    validatedAt: app.paymentValidatedAt,
+    validatedBy: app.paymentValidatedBy,
     receiptUrl: app.paymentReceipt?.fileUrl,
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
@@ -155,6 +165,21 @@ export function AdminPaymentManagement() {
     }
   };
 
+  const getOperationalPaymentLabel = (payment: Payment) => {
+    if (payment.paymentStatus === "SUCCESS") return "Confirmé par un conseiller";
+    if (payment.paymentStatus === "FAILED") return "À corriger";
+    if (payment.paymentStatus === "CANCELLED") return "Annulé";
+    return payment.transactionId ? "Référence soumise à vérifier" : "En attente de référence";
+  };
+
+  const getPaymentMethodLabel = (payment: Payment) => {
+    const method = String(payment.paymentMethod ?? "").toLowerCase();
+    if (method.includes("agency") || method.includes("agence") || method.includes("cash") || method.includes("caisse")) return "Paiement en agence";
+    if (method.includes("orange")) return "Orange Money à distance";
+    if (method.includes("mobile") || method.includes("mtn")) return "Mobile Money à distance";
+    return payment.paymentMethod || "Mode à préciser";
+  };
+
   const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
     setReceiptEmailPayment(payment);
     setReceiptEmailAction(action);
@@ -179,6 +204,8 @@ export function AdminPaymentManagement() {
   const handleConfirmPayment = (payment: Payment) => {
     setSelectedPayment(payment);
     setPaymentSecretCode("");
+    setPaymentReference(payment.transactionId || "");
+    setConfirmedAmount(String(payment.confirmedAmount ?? payment.expectedAmount ?? payment.amount));
     setAdminNote("");
     setActionType('confirm');
     setConfirmDialogOpen(true);
@@ -207,6 +234,9 @@ export function AdminPaymentManagement() {
         id: selectedPayment.id,
         paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
         paymentSecretCode: actionType === "confirm" ? paymentSecretCode.trim() : undefined,
+        paymentReference: paymentReference.trim() || undefined,
+        expectedAmount: actionType === "confirm" ? Number(selectedPayment.expectedAmount) : undefined,
+        confirmedAmount: actionType === "confirm" ? Number(confirmedAmount) : undefined,
         adminNotes: actionType === "cancel" ? adminNote.trim() || "Justificatif de paiement à corriger." : "Paiement validé par l’administration.",
       });
       
@@ -497,21 +527,20 @@ export function AdminPaymentManagement() {
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
                       <td className="py-3 px-4 text-xs text-gray-600">
-                        <p className="font-medium text-slate-800">{payment.paymentMethod || "À préciser"}</p>
-                        <p className="mt-0.5 font-mono text-slate-500">{payment.transactionId || "—"}</p>
+                        <p className="font-medium text-slate-800">{getPaymentMethodLabel(payment)}</p>
+                        <p className="mt-0.5 font-mono text-slate-500">{payment.transactionId || "Référence non fournie"}</p>
                       </td>
-                      <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                        {payment.amount.toLocaleString("fr-FR")} {payment.currency}
+                      <td className="py-3 px-4 text-right text-xs text-gray-700">
+                        <p><span className="text-gray-500">Attendu :</span> <strong>{payment.expectedAmount.toLocaleString("fr-FR")} {payment.currency}</strong></p>
+                        <p className={payment.confirmedAmount != null && payment.confirmedAmount !== payment.expectedAmount ? "font-bold text-rose-700" : "text-emerald-700"}><span className="text-gray-500">Confirmé :</span> {payment.confirmedAmount != null ? `${payment.confirmedAmount.toLocaleString("fr-FR")} ${payment.currency}` : "—"}</p>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex flex-col items-center gap-1">
                           <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(payment.paymentStatus)}`}>
                             {getStatusIcon(payment.paymentStatus)}
-                            {payment.paymentStatus === "SUCCESS" && "Confirmé"}
-                            {payment.paymentStatus === "PENDING" && "En attente"}
-                            {payment.paymentStatus === "FAILED" && "Échoué"}
-                            {payment.paymentStatus === "CANCELLED" && "Annulé"}
+                            {getOperationalPaymentLabel(payment)}
                           </Badge>
+                          {payment.paymentStatus === "SUCCESS" && <span className="text-[11px] text-slate-500">{payment.validatedBy || "Conseiller non renseigné"} · {payment.validatedAt ? new Date(payment.validatedAt).toLocaleString("fr-FR") : "Date non renseignée"}</span>}
                           {payment.agreementSigned ? (
                             <span className="text-[11px] font-medium text-emerald-700">Accord signé</span>
                           ) : (
@@ -693,10 +722,14 @@ export function AdminPaymentManagement() {
                       <span className="font-semibold text-gray-900">{selectedPayment.fullName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Montant:</span>
+                      <span className="text-gray-600">Montant attendu:</span>
                       <span className="font-semibold text-gray-900">
-                        {selectedPayment.amount.toLocaleString("fr-FR")} {selectedPayment.currency}
+                        {selectedPayment.expectedAmount.toLocaleString("fr-FR")} {selectedPayment.currency}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Référence / mode:</span>
+                      <span className="max-w-[60%] text-right font-semibold text-gray-900">{getPaymentMethodLabel(selectedPayment)} · {selectedPayment.transactionId || "À fournir"}</span>
                     </div>
                   </div>
                   
@@ -708,6 +741,17 @@ export function AdminPaymentManagement() {
                       <Badge className={selectedPayment.paymentSecretCodeSubmittedAt ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}>
                         {selectedPayment.paymentSecretCodeSubmittedAt ? `Code reçu le ${new Date(selectedPayment.paymentSecretCodeSubmittedAt).toLocaleString("fr-FR")}` : "Code candidat non encore transmis"}
                       </Badge>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label htmlFor="admin-payment-reference" className="text-xs font-semibold text-slate-800">Référence Orange Money ou mention agence</Label>
+                          <Input id="admin-payment-reference" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Référence ou Paiement en agence" maxLength={255} className="mt-2 bg-white" disabled={isProcessing} />
+                        </div>
+                        <div>
+                          <Label htmlFor="admin-confirmed-amount" className="text-xs font-semibold text-slate-800">Montant confirmé ({selectedPayment.currency})</Label>
+                          <Input id="admin-confirmed-amount" type="number" min="0" step="1" value={confirmedAmount} onChange={(event) => setConfirmedAmount(event.target.value)} className="mt-2 bg-white" disabled={isProcessing} />
+                          <p className="mt-1 text-xs text-slate-500">Attendu : {selectedPayment.expectedAmount.toLocaleString("fr-FR")} {selectedPayment.currency}</p>
+                        </div>
+                      </div>
                       <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
                         <Label htmlFor="admin-payment-secret" className="text-xs font-semibold text-amber-950">Code secret transmis par le candidat</Label>
                         <Input id="admin-payment-secret" value={paymentSecretCode} onChange={(event) => setPaymentSecretCode(event.target.value)} placeholder="6 caractères minimum" autoComplete="off" minLength={6} maxLength={64} className="mt-2 bg-white" disabled={isProcessing} />

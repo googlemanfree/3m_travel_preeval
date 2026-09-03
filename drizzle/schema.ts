@@ -481,6 +481,8 @@ export const applications = mysqlTable("applications", {
   paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("PENDING").notNull(),
   paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),
   paymentAmount: int("paymentAmount").default(65000).notNull(),
+  paymentExpectedAmount: int("paymentExpectedAmount").default(65000).notNull(),
+  paymentConfirmedAmount: int("paymentConfirmedAmount"),
   paymentCurrency: varchar("paymentCurrency", { length: 10 }).default("XAF").notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }),   // MTN / ORANGE / CARD
   paymentDate: timestamp("paymentDate"),

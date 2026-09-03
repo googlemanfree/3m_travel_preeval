@@ -635,6 +635,9 @@ export const applicationRouter = router({
       id: z.number().int().positive(),
       paymentStatus: z.enum(["SUCCESS", "FAILED", "CANCELLED"]),
       paymentSecretCode: z.string().trim().min(6).max(64).optional(),
+      paymentReference: z.string().trim().max(255).optional(),
+      expectedAmount: z.number().int().nonnegative().max(100000000).optional(),
+      confirmedAmount: z.number().int().nonnegative().max(100000000).optional(),
       adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -667,6 +670,9 @@ export const applicationRouter = router({
           paymentStatus: input.paymentStatus,
           paymentDate: isValidated ? new Date() : application.paymentDate,
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
+          paymentTransactionId: input.paymentReference || application.paymentTransactionId,
+          paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
+          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : application.paymentConfirmedAmount,
           paymentValidatedAt: validatedAt,
           paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : application.paymentValidatedBy,
           dossierStatus: canStartTreatment ? "paye" : application.dossierStatus,

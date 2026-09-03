@@ -2291,3 +2291,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Enrichir la fiche 360° côté client avec interactions fluides et infobulles explicatives.
 - [x] Ajouter ou mettre à jour les tests, vérifier TypeScript, le build et le rendu responsive.
 - [x] Publier la version finale après validation.
+
+## Refonte prioritaire du pilotage — Paiement et CV
+- [x] Auditer les tables, routes tRPC et composants admin liés aux paiements agence et Orange Money.
+- [x] Afficher par dossier la source du paiement, la référence ou la mention agence, le statut, le montant attendu et le montant confirmé.
+- [x] Ajouter la validation humaine traçable avec date et conseiller, sans activer CinetPay.
+- [x] Synchroniser le statut confirmé et les écarts de montant avec l’espace candidat et l’étape métier suivante.
+- [x] Rendre les CV candidats visibles, ouvrables et téléchargeables côté admin, avec rattachement strict au bon dossier.
+- [x] Ajouter les tests de régression, vérifier TypeScript, le build et le rendu admin PC.
+- [x] Publier la version finale après validation.
+- [x] Ajouter dans la fiche dossier admin un aperçu lisible du CV, un accès aux informations exploitables et un téléchargement sécurisé rattaché au candidat.
+- [x] Vérifier que le CV est disponible avant la préparation de l’évaluation et afficher un état explicite s’il manque.
