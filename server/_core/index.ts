@@ -123,6 +123,13 @@ async function startServer() {
   app.use("/api/trpc", (req, res) => {
     res.status(404).json(buildApiNotFoundPayload(req.path));
   });
+  // Compatibilité legacy : cette URL doit continuer à ouvrir l’évaluation gratuite.
+  // Le handler est enregistré avant Vite/statique afin que curl et le navigateur
+  // reçoivent le même 301, quel que soit le mode de déploiement.
+  app.get("/evaluation-primaire", (_req, res) => {
+    res.set({ "Cache-Control": "public, max-age=3600" });
+    return res.redirect(301, "/#evaluation-multi");
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
