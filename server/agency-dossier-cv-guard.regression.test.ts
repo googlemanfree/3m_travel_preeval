@@ -12,12 +12,14 @@ describe("agency dossier CV guard", () => {
   it("checks agency dossier documents before en_cours is persisted", () => {
     const transition = routerSource.indexOf('input.newStatus === "en_cours"');
     const cvLookup = routerSource.indexOf("agencyDossierDocuments", transition);
+    const dossierCvFields = routerSource.indexOf("cvFileUrl || dossier[0].cvFileName", transition);
     const statusWrite = routerSource.indexOf(".update(agencyDossiers)", transition);
     const guardMessage = routerSource.indexOf("Un CV exploitable doit être déposé", transition);
 
     expect(transition).toBeGreaterThan(-1);
     expect(cvLookup).toBeGreaterThan(transition);
-    expect(guardMessage).toBeGreaterThan(cvLookup);
+    expect(dossierCvFields).toBeGreaterThan(transition);
+    expect(guardMessage).toBeGreaterThan(Math.max(cvLookup, dossierCvFields));
     expect(statusWrite).toBeGreaterThan(guardMessage);
   });
 });

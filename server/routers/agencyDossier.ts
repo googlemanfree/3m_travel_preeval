@@ -336,19 +336,22 @@ export const agencyDossierRouter = router({
         }
 
         if (input.newStatus === "en_cours") {
-          const cvDocuments = await db
-            .select({ id: agencyDossierDocuments.id })
-            .from(agencyDossierDocuments)
-            .where(and(
-              eq(agencyDossierDocuments.dossierId, input.dossierId),
-              or(
-                like(agencyDossierDocuments.documentType, "%cv%"),
-                like(agencyDossierDocuments.documentName, "%cv%"),
-                like(agencyDossierDocuments.documentType, "%curriculum%"),
-                like(agencyDossierDocuments.documentName, "%curriculum%"),
-              ),
-            ))
-            .limit(1);
+          const dossierHasCv = Boolean(dossier[0].cvFileUrl || dossier[0].cvFileName);
+          const cvDocuments = dossierHasCv
+            ? [{ id: -1 }]
+            : await db
+                .select({ id: agencyDossierDocuments.id })
+                .from(agencyDossierDocuments)
+                .where(and(
+                  eq(agencyDossierDocuments.dossierId, input.dossierId),
+                  or(
+                    like(agencyDossierDocuments.documentType, "%cv%"),
+                    like(agencyDossierDocuments.documentName, "%cv%"),
+                    like(agencyDossierDocuments.documentType, "%curriculum%"),
+                    like(agencyDossierDocuments.documentName, "%curriculum%"),
+                  ),
+                ))
+                .limit(1);
 
           if (cvDocuments.length === 0) {
             throw new TRPCError({
