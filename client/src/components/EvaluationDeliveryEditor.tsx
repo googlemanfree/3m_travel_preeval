@@ -15,7 +15,7 @@ import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 type Props = {
   sessionToken: string;
   sourceRecordId: number;
-  sourceType?: "application" | "candidate";
+  sourceType?: "application" | "candidate" | "agency";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCompleted: () => void;
@@ -112,7 +112,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     setCandidateBootstrapApplicationId(null);
     setCandidateBootstrapReady(false);
     setBootstrapError(null);
-    initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId });
+    initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" });
     bootstrapTimeout.current = window.setTimeout(() => {
       setCandidateBootstrapReady(false);
       setBootstrapError("Le serveur n’a pas répondu après 15 secondes. Vérifiez la session administrateur puis réessayez.");
@@ -139,7 +139,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     setBootstrapError(null);
     setCandidateBootstrapApplicationId(null);
     setCandidateBootstrapReady(false);
-    initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId });
+    initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" });
   };
   const queryEnabled = open && Boolean(sessionToken) && (sourceType !== "candidate" || candidateBootstrapReady);
   const { data, isLoading, isFetching, isError, error, refetch } = trpc.unifiedRequests.getEvaluationDelivery.useQuery({ sessionToken, sourceRecordId: effectiveSourceRecordId }, { enabled: queryEnabled, retry: 2, refetchOnWindowFocus: false });

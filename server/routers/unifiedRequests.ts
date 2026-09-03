@@ -472,12 +472,20 @@ export const unifiedRequestsRouter = router({
       return { success: true };
     }),
 
-  initializeEvaluationDelivery: publicProcedure
-    .input(sessionInput.extend({ candidateId: z.number().int().positive() }))
+initializeEvaluationDelivery: publicProcedure
+    .input(sessionInput.extend({ candidateId: z.number().int().positive(), sourceType: z.enum(["candidate", "agency"]).default("candidate") }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données non disponible." });
+      if (input.sourceType === "agency") {
+        const [agencyDossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, input.candidateId)).limit(1);
+        if (!agencyDossier) throw new TRPCError({ code: "NOT_FOUND", message: "Pré-dossier agence introuvable." });
+        const [linkedCandidate] = await db.select().from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
+        const agencyApplication = await resolveEvaluationApplication(db, agencyDossier.id);
+        if (!agencyApplication) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation agence introuvable." });
+        return { success: true, created: false, candidateId: linkedCandidate?.id ?? null, application: agencyApplication, message: "Dossier d’évaluation agence résolu." };
+      }
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
 

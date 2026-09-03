@@ -653,7 +653,7 @@ export function CandidateDetailModal({
           <EvaluationDeliveryEditor
             sessionToken={sessionToken}
             sourceRecordId={candidate.internalId}
-            sourceType="candidate"
+            sourceType="agency"
             open={evaluationEditorOpen}
             onOpenChange={setEvaluationEditorOpen}
             onCompleted={() => { void refetch(); onStatusUpdated(); }}
