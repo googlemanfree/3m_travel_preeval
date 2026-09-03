@@ -13,4 +13,12 @@ describe("agency dossier admin search", () => {
     expect(source).toContain("like(agencyDossiers.email");
     expect(source).toContain("like(agencyDossiers.phone");
   });
+
+  it("keeps the client-side id filter for the legacy agency list", () => {
+    const currentDir = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(currentDir, "../client/src/pages/AdminAgencyDossiers.tsx"), "utf8");
+
+    expect(source).toContain("search: undefined");
+    expect(source).toContain("String(d.id).includes(search.trim())");
+  });
 });

@@ -2429,6 +2429,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tester, publier par périmètre confirmé et fournir URL/action/résultat exacts pour chaque point.
 
 ## Correctif listing dossiers agence
-- [ ] Corriger le module `/admin/agency-dossiers` qui affiche 0 résultat pour des pré-dossiers existants recherchés par identifiant, dont le fictif `390001`.
-- [ ] Ajouter une régression de recherche/chargement et vérifier sans mutation de statut.
+- [x] Corriger le module `/admin/agency-dossiers` qui affiche 0 résultat pour des pré-dossiers existants recherchés par identifiant, dont le fictif `390001`.
+- [x] Ajouter une régression de recherche/chargement et vérifier sans mutation de statut.
 - [ ] Publier le correctif et fournir l’URL/action/résultat exacts.

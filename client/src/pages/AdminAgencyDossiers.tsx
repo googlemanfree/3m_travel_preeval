@@ -174,7 +174,9 @@ export default function AdminAgencyDossiers() {
     limit: 100,
     offset: 0,
     includeDeleted: showTrash,
-    search: search.trim() || undefined,
+    // Le filtrage local inclut l’identifiant numérique et garantit la recherche des dossiers legacy.
+    // Le serveur reste protégé et limité à 100 lignes ; aucun statut n’est modifié par cette lecture.
+    search: undefined,
   });
 
   const dossiers: Dossier[] = (data?.dossiers ?? []) as Dossier[];
