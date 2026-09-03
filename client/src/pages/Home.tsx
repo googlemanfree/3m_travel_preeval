@@ -613,7 +613,14 @@ export default function Home() {
       </section>
 
       {/* ─── ACCÈS RAPIDES : les contenus détaillés restent sur leurs pages dédiées ─── */}
-      <section className="border-y border-slate-200 bg-slate-50 py-10 md:py-12" aria-labelledby="home-quick-access-title">
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="border-y border-slate-200 bg-slate-50 py-10 md:py-12"
+        aria-labelledby="home-quick-access-title"
+      >
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
@@ -647,7 +654,7 @@ export default function Home() {
             </a>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">

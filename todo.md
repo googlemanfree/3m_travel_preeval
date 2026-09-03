@@ -2413,3 +2413,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des animations de survol accessibles sur les liens du hub d’accès rapide.
 - [x] Ajouter un retour en haut pratique sur la page d’accueil sans dégrader le header.
 - [x] Vérifier desktop/mobile, les liens et publier avec URL/action exacte.
+
+## Hero mobile et visibilité CRS
+- [x] Empiler proprement les CTA principaux et CRS sur mobile sans surcharge.
+- [x] Ajouter un badge visuel discret « Populaire » ou « Nouveau » au bouton CRS du hero.
+- [x] Ajouter une apparition en fondu au défilement sur la section des accès rapides.
+- [x] Vérifier le rendu mobile, l’accessibilité et publier avec URL/action exacte.
