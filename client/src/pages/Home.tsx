@@ -605,27 +605,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── ACTUALITÉS OFFICIELLES DES AMBASSADES (CANADA / EUROPE) ──────── */}
-      <EmbassyNewsWidget />
-
-      {/* ─── SIMULATEUR DE SCORE CANADA (CRS) ─────────────────────────────── */}
-      <CanadaScoreSimulator />
-
-      {/* ─── CONVERTISSEUR DE DEVISES & FRAIS CONSULAIRES ────────────────── */}
-      <CurrencyConverterWidget />
-
-      {/* ─── RECHERCHE MULTI-SERVICES (façon ease.travel) ──────────────────── */}
-      <TravelSearchHero />
-      <div className="h-8 md:h-12" />
-
-      {/* ─── QUESTIONS À AUREOL ───────────────────────────────────────────── */}
-      <AureolQuestionField />
-
-      {/* ─── SECTION NOS DOMAINES D'EXPERTISE ──────────────────────────── */}
-      <ServicesSection />
-
-      {/* ─── SECTION COMMUNAUTÉ & ACTUALITÉS FACEBOOK ──────────────────── */}
-      <FacebookFeedSection />
+      {/* ─── ACCÈS RAPIDES : les contenus détaillés restent sur leurs pages dédiées ─── */}
+      <section className="border-y border-slate-200 bg-slate-50 py-10 md:py-12" aria-labelledby="home-quick-access-title">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Pour aller plus loin</p>
+              <h2 id="home-quick-access-title" className="mt-1 text-2xl font-black text-slate-950 md:text-3xl">Choisissez votre prochaine étape</h2>
+            </div>
+            <a href="/procedures" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-900">
+              Voir toutes les procédures <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-sm">
+              <p className="text-sm font-black text-slate-950">Canada</p>
+              <p className="mt-1 text-sm text-slate-600">Calculez votre score indicatif avant d’explorer les parcours.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            </a>
+            <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+              <p className="text-sm font-black text-slate-950">Procédures par destination</p>
+              <p className="mt-1 text-sm text-slate-600">Comparer les pays, visas et sources officielles.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            </a>
+            <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+              <p className="text-sm font-black text-slate-950">Ressources et actualités</p>
+              <p className="mt-1 text-sm text-slate-600">Guides, informations pratiques et mises à jour.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Consulter les ressources <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            </a>
+            <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+              <p className="text-sm font-black text-slate-950">Services et accompagnement</p>
+              <p className="mt-1 text-sm text-slate-600">Parler à l’agence pour un besoin précis.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Nous contacter <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">

@@ -2401,3 +2401,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réparer le rattachement des dossiers agence déjà évalués vers leur dossier d’évaluation et leur brouillon admin.
 - [x] Ajouter une validation explicite par admin avant préparation et envoi du bilan, pour les parcours agence et en ligne.
 - [x] Tester chaque correctif sans données client réelles et fournir URL/action/résultat exacts avant publication.
+
+## Allègement ciblé de la page d’accueil
+- [x] Identifier les sections d’accueil redondantes ou secondaires et les réduire à un aperçu/lien vers leurs pages dédiées.
+- [x] Conserver en priorité le hero, le CTA d’évaluation gratuite et l’accès rapide aux destinations principales.
+- [x] Ajouter un lien visible depuis l’accueil vers le simulateur de score CRS Canada existant sur /canada.
+- [x] Vérifier l’affichage responsive, les liens et publier avec URL/action exacte de contrôle.

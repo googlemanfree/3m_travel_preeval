@@ -108,6 +108,7 @@ export default function Canada() {
       </section>
 
       {/* ÉTAPE 1 OBLIGATOIRE : SIMULATEUR DE SCORE AU DÉBUT DE LA SECTION CANADA */}
+      <div id="simulateur-crs-canada" className="scroll-mt-24">
       <ServiceSection
         tone="blue"
         title="Étape 1 : Évaluez votre score CRS avant de continuer"
@@ -157,6 +158,7 @@ export default function Canada() {
           </div>
         </div>
       </ServiceSection>
+      </div>
 
       {/* ÉTAPE 2 : VOIES DÉTAILLÉES AVEC ANIMATION FLUIDE DE DÉVERROUILLAGE */}
       <div id="voies-canada" className="scroll-mt-24">
