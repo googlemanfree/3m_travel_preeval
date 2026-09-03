@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { agencyDossiers, agencyDossierHistory, candidates } from "../../drizzle/schema";
-import { eq, and, or, like, desc, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, or, like, desc, isNull, isNotNull, sql } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 
@@ -196,6 +196,7 @@ export const agencyDossierRouter = router({
               like(agencyDossiers.fullName, `%${searchTerm}%`),
               like(agencyDossiers.email, `%${searchTerm}%`),
               like(agencyDossiers.phone, `%${searchTerm}%`),
+              sql`CAST(${agencyDossiers.id} AS CHAR) LIKE ${`%${searchTerm}%`}`,
             ))
           : visibilityWhere;
         const dossiers = await db
