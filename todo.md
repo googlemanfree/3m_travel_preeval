@@ -2471,7 +2471,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point.
 
 ## Lot 1 — 10 destinations prioritaires
-- [ ] Vérifier les sources officielles pour Canada, Luxembourg, France, Belgique, Allemagne, Suisse, Royaume-Uni, États-Unis, Australie et Italie.
+- [x] Vérifier les sources officielles pour Canada, Luxembourg, France, Belgique, Allemagne, Suisse, Royaume-Uni, États-Unis, Australie et Italie.
 - [ ] Enrichir les fiches du lot avec contenu vérifié et visuels décoratifs premium.
 - [ ] Tester les routes, sources, images et rendu responsive du lot.
 - [ ] Publier le lot uniquement après vérification et fournir les URL/actions exactes.
