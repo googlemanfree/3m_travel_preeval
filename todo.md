@@ -2407,3 +2407,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver en priorité le hero, le CTA d’évaluation gratuite et l’accès rapide aux destinations principales.
 - [x] Ajouter un lien visible depuis l’accueil vers le simulateur de score CRS Canada existant sur /canada.
 - [x] Vérifier l’affichage responsive, les liens et publier avec URL/action exacte de contrôle.
+
+## Visibilité CRS et navigation de l’accueil
+- [x] Ajouter un bouton secondaire vers le simulateur CRS dans le hero.
+- [x] Ajouter des animations de survol accessibles sur les liens du hub d’accès rapide.
+- [x] Ajouter un retour en haut pratique sur la page d’accueil sans dégrader le header.
+- [x] Vérifier desktop/mobile, les liens et publier avec URL/action exacte.

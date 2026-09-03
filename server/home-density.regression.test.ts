@@ -9,6 +9,10 @@ const canada = readFileSync(resolve(root, "client/src/pages/Canada.tsx"), "utf8"
 describe("accueil allégé et accès CRS", () => {
   it("conserve le hero, l’évaluation principale et les accès rapides", () => {
     expect(home).toContain("<HeroSectionVIP");
+    expect(home).toContain('href="/canada#simulateur-crs-canada"');
+    expect(home).toContain('aria-label="Retour en haut de la page"');
+    expect(home).toContain('window.scrollTo({ top: 0, behavior: "smooth" })');
+    expect(home).toContain('hover:-translate-y-1 hover:border-blue-500');
     expect(home).toContain('id="evaluation-multi"');
     expect(home).toContain("Choisissez votre prochaine étape");
     expect(home).toContain('href="/procedures"');

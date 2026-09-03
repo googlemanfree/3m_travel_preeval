@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
   Upload, CheckCircle2, ArrowRight, Users, FileText,
-  Star, Clock, Shield, X, ChevronRight, ChevronLeft, Quote,
+  Star, Clock, Shield, X, ChevronRight, ChevronLeft, ChevronUp, Quote,
   CheckCircle, AlertCircle, Info, BookOpen, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -435,6 +435,7 @@ export default function Home() {
   const [cvBase64, setCvBase64] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
@@ -442,6 +443,12 @@ export default function Home() {
     document.title = "3M Travel Agency | Mobilité internationale en confiance";
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => setShowBackToTop(window.scrollY > 520);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   useEffect(() => {
     if (window.location.hash !== "#evaluation-multi") return;
     const scrollToEvaluation = () => {
@@ -618,22 +625,22 @@ export default function Home() {
             </a>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-sm">
+            <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 focus-within:-translate-y-1 focus-within:border-blue-500 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Canada</p>
               <p className="mt-1 text-sm text-slate-600">Calculez votre score indicatif avant d’explorer les parcours.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+            <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Procédures par destination</p>
               <p className="mt-1 text-sm text-slate-600">Comparer les pays, visas et sources officielles.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+            <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Ressources et actualités</p>
               <p className="mt-1 text-sm text-slate-600">Guides, informations pratiques et mises à jour.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Consulter les ressources <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-400 hover:shadow-sm">
+            <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Services et accompagnement</p>
               <p className="mt-1 text-sm text-slate-600">Parler à l’agence pour un besoin précis.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Nous contacter <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
@@ -1373,10 +1380,20 @@ export default function Home() {
 
       {/* Les boutons WhatsApp et Aureol sont désormais montés une seule fois
           dans App.tsx afin de rester séparés sur toutes les pages. */}
+          {showBackToTop && (
+        <button
+          type="button"
+          aria-label="Retour en haut de la page"
+          title="Retour en haut"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95"
+        >
+          <ChevronUp className="h-5 w-5" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
-
 // ─── Composant Témoignages ────────────────────────────────────────────────────
 
 const TESTIMONIALS = [

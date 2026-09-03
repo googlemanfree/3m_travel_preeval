@@ -215,6 +215,15 @@ export default function HeroSectionVIP({
               💬 Discuter avec un Expert (WhatsApp)
             </a>
           </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="group flex min-h-14 w-full items-center justify-center rounded-xl border border-amber-300/80 bg-amber-400/10 px-6 py-4 text-center font-bold text-amber-100 shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-amber-300 hover:text-slate-950 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px]"
+          >
+            <a href="/canada#simulateur-crs-canada">
+              <span className="inline-flex items-center gap-2"><span aria-hidden="true">🇨🇦</span> Simulateur CRS Canada <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></span>
+            </a>
+          </Button>
         </motion.div>
 
         {/* Boutons Connexion/Inscription */}
