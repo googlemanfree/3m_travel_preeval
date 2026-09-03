@@ -54,15 +54,23 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
   }, [location, navigate, requiresPasswordChange]);
 
   if (isChecking || requiresPasswordChange) {
+    const loadingMessage = requiresPasswordChange ? "Préparation de votre espace sécurisé" : "Vérification de votre accès administrateur";
+    const loadingDetail = requiresPasswordChange ? "Vous allez être redirigé vers la mise à jour de votre mot de passe." : "La session est vérifiée avant l’ouverture du tableau de bord.";
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">
-            {requiresPasswordChange ? "Redirection vers la création de votre nouveau mot de passe..." : "Vérification de l'accès..."}
-          </p>
-        </div>
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,#e8f1ff,transparent_52%),#f8fafc] px-4 py-10" aria-busy="true" aria-live="polite">
+        <section className="w-full max-w-md rounded-3xl border border-blue-100 bg-white/95 p-7 text-center shadow-xl shadow-blue-950/10 backdrop-blur">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-800 ring-8 ring-blue-50/70">
+            <Lock className="h-7 w-7" aria-hidden="true" />
+          </div>
+          <p className="mt-6 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">3M Travel &amp; Services</p>
+          <h1 className="mt-2 text-xl font-black text-slate-950">{loadingMessage}</h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-600">{loadingDetail}</p>
+          <div className="mt-6" role="progressbar" aria-label="Chargement de l’espace administrateur" aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100"><motion.div className="h-full w-2/5 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-700" animate={{ x: ["-120%", "280%"] }} transition={{ duration: 1.35, repeat: Infinity, ease: "easeInOut" }} /></div>
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500"><span className="h-2 w-2 animate-pulse rounded-full bg-blue-600" aria-hidden="true" />Connexion sécurisée en cours…</div>
+          </div>
+        </section>
+      </main>
     );
   }
 

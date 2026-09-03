@@ -2284,3 +2284,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier où l’artefact `public-content-restore-2026-08-28` est encore servi par les trois domaines.
 - [x] Corriger le chemin de publication sans remplacer le contenu actuel par un placeholder.
 - [x] Revalider les en-têtes, l’index, le service worker et le bundle admin après publication.
+
+## Notification de mise à jour, chargement admin et fiche 360°
+- [x] Transformer la bannière de mise à jour en notification discrète non intrusive.
+- [x] Ajouter une animation de chargement fluide lors de l’accès à l’interface d’administration.
+- [x] Enrichir la fiche 360° côté client avec interactions fluides et infobulles explicatives.
+- [x] Ajouter ou mettre à jour les tests, vérifier TypeScript, le build et le rendu responsive.
+- [x] Publier la version finale après validation.
