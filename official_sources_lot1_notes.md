@@ -64,3 +64,7 @@
 - Source consultée : https://www.eda.admin.ch/countries/usa/en/home/visa.html
 - Éléments vérifiés : les exigences dépendent de la nationalité, de la durée et du motif ; la source distingue court séjour Schengen et long séjour ; elle renvoie vers la procédure, les formulaires et les frais.
 - Couverture : utiliser la représentation compétente du pays de résidence du candidat pour les détails opérationnels.
+
+## Vérification publique après publication
+
+Le catalogue public `https://www.3mtravelagency.com/procedures?check=official-sources-lot1-v4` affiche 107 destinations, le filtre « Portail vérifié uniquement » et des liens « Source officielle » sur les fiches. La fiche `https://www.3mtravelagency.com/procedures/allemagne-travail?check=source-layer-c936ae1a` se charge et expose un portail consulaire officiel ainsi qu’une source institutionnelle, avec une date de vérification affichée. Les images décoratives spécifiques restent reportées conformément à la décision de périmètre.
