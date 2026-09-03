@@ -2423,15 +2423,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Nouvelle mission — rapport, test fictif et contenus
 - [x] Produire un rapport non destructif des 12 pré-dossiers agence actifs avec paiement unknown et montant à 0.
 - [ ] Tenter un test fictif de bout en bout et documenter immédiatement toute nécessité de connexion admin.
-- [ ] Finaliser l’aperçu rapide de preuve de paiement, les infobulles des étapes client et le téléchargement des documents requis par étape.
-- [ ] Enrichir /formation avec durée réelle, format, prix indicatif, prérequis, attestation et programme.
-- [ ] Enrichir /3m-digital avec réalisations concrètes, tarifs indicatifs et délais de livraison.
+- [x] Finaliser l’aperçu rapide de preuve de paiement, les infobulles des étapes client et le téléchargement des documents requis par étape.
+- [x] Enrichir /formation avec durée réelle, format, prix indicatif, prérequis, attestation et programme.
+- [x] Enrichir /3m-digital avec réalisations concrètes, tarifs indicatifs et délais de livraison.
 - [ ] Tester, publier par périmètre confirmé et fournir URL/action/résultat exacts pour chaque point.
 
 ## Correctif listing dossiers agence
 - [x] Corriger le module `/admin/agency-dossiers` qui affiche 0 résultat pour des pré-dossiers existants recherchés par identifiant, dont le fictif `390001`.
 - [x] Ajouter une régression de recherche/chargement et vérifier sans mutation de statut.
-- [ ] Publier le correctif et fournir l’URL/action/résultat exacts.
+- [x] Publier le correctif et fournir l’URL/action/résultat exacts.
 
 ## Correction verrou pré-dossier agence — test E2E
 - [x] Bloquer côté serveur toute transition agence vers « En cours » sans CV exploitable.
