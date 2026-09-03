@@ -2314,7 +2314,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Points prioritaires 4 à 7 — règles, protocole, unification et routes
 - [x] Point 4 — Bloquer côté serveur toute transition d’évaluation vers « en cours » si aucun CV exploitable n’est détecté.
-- [ ] Point 5 — Enrichir le protocole d’accord et verrouiller sa signature après paiement confirmé, avec ordre séquentiel des étapes.
+- [x] Point 5 — Enrichir le protocole d’accord et verrouiller sa signature après paiement confirmé, avec ordre séquentiel des étapes.
 - [ ] Point 6 — Unifier le pilotage en ligne/agence, rattacher sans doublon et enrichir le formulaire de pré-dossier agence.
 - [ ] Point 7 — Faire retourner un vrai 404 pour /evaluation-primaire au lieu de rediriger vers #evaluation-multi.
 - [ ] Tester et publier chaque point validé ; ne supprimer aucune route, donnée ou composant sans confirmation.

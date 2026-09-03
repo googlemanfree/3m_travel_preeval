@@ -1006,6 +1006,9 @@ export const applicationRouter = router({
       if (app.agreementSigned) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ce protocole a déjà été signé' });
       }
+      if (app.paymentStatus !== 'SUCCESS') {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Le protocole ne peut être signé qu’après confirmation du paiement.' });
+      }
       // Récupérer l'IP du candidat
       const ipAddress =
         (ctx as any)?.req?.headers?.['x-forwarded-for'] as string ||

@@ -1262,10 +1262,12 @@ export const candidateRouter = router({
         )
         .limit(1);
 
-      if (!app || app.length === 0) {
+            if (!app || app.length === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
       }
-
+      if (app[0].paymentStatus !== "SUCCESS") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être signé qu’après confirmation du paiement." });
+      }
       // Sauvegarder l'image de la signature dessinée, si fournie
       let signatureImageUrl: string | undefined;
       if (input.signatureDataUrl) {
