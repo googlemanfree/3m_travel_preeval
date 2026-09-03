@@ -2451,3 +2451,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réduire la hauteur et la densité visuelle du pied de page sans supprimer les coordonnées ni les liens essentiels.
 - [x] Améliorer la hiérarchie responsive du pied de page sur ordinateur et mobile.
 - [x] Tester les liens et publier avec URL/action exacte de vérification.
+
+## Contenus publics et pied de page mobile
+- [ ] Reprendre et finaliser l’enrichissement visible de /formation et /3m-digital.
+- [ ] Rendre les colonnes secondaires du pied de page repliables en accordéon sur mobile, en conservant leur contenu.
+- [ ] Ajouter un bouton « Retour en haut » discret et fluide au pied de page.
+- [ ] Tester desktop/mobile, les routes et les liens puis publier avec URL/action exacte.
+
+## Correctif espace vide du pied de page
+- [x] Supprimer l’espace vide excessif créé par la grille du pied de page.
+- [x] Rééquilibrer QR code et newsletter pour éviter une colonne droite anormalement haute.
+- [x] Vérifier desktop/mobile et publier avec URL/action exacte.

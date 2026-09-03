@@ -104,14 +104,14 @@ function NewsletterSignup({ language }: { language: Language }) {
     subscribe.mutate({ email, language, consentGiven: true });
   };
   const copy = (value: Copy) => value[language];
-  return <section aria-labelledby="newsletter-title" className="border-t border-white/20 pt-5">
+  return <section aria-labelledby="newsletter-title" className="border-t border-white/20 pt-3">
     <h2 id="newsletter-title" className="text-sm font-bold text-white">{copy(footerCopy.newsletterTitle)}</h2>
-    <p className="mt-2 text-xs leading-relaxed text-slate-200">{copy(footerCopy.newsletterText)}</p>
-    <form className="mt-3 space-y-3" onSubmit={submit}>
+    <p className="mt-1 text-xs leading-snug text-slate-200">{copy(footerCopy.newsletterText)}</p>
+    <form className="mt-2 space-y-2" onSubmit={submit}>
       <label htmlFor="newsletter-email" className="sr-only">{copy(footerCopy.newsletterEmail)}</label>
-      <input id="newsletter-email" type="email" required maxLength={320} autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setFeedback(null); }} placeholder={copy(footerCopy.newsletterEmail)} className="min-h-10 w-full rounded-lg border border-white/30 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300" />
+      <input id="newsletter-email" type="email" required maxLength={320} autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setFeedback(null); }} placeholder={copy(footerCopy.newsletterEmail)} className="min-h-9 w-full rounded-lg border border-white/30 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300" />
       <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-200"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400" /> <span>{copy(footerCopy.newsletterConsent)}</span></label>
-      <button type="submit" disabled={subscribe.isPending || !consent} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-bold text-[#061a36] transition hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-60">{subscribe.isPending ? "…" : copy(footerCopy.newsletterSubmit)}</button>
+      <button type="submit" disabled={subscribe.isPending || !consent} className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-bold text-[#061a36] transition hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-60">{subscribe.isPending ? "…" : copy(footerCopy.newsletterSubmit)}</button>
       <p role="status" aria-live="polite" className="min-h-5 text-xs text-amber-200">{feedback === "success" ? copy(footerCopy.newsletterSuccess) : feedback === "already" ? copy(footerCopy.newsletterAlready) : feedback === "error" ? copy(footerCopy.newsletterError) : ""}</p>
     </form>
   </section>; 
