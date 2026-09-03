@@ -2395,3 +2395,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une infobulle explicative et une action attendue pour chaque étape de progression client.
 - [x] Permettre le téléchargement des documents requis associés à chaque étape de visa affichée.
 - [x] Tester chaque point, vérifier TypeScript/build et publier avec URL/action/résultat exacts.
+
+## Bugs prioritaires — upload, agence-évaluation et validation du bilan
+- [x] Corriger l’upload PDF/JPG/PNG/DOC/DOCX selon la catégorie choisie, notamment « Autres », avec bouton Réessayer fonctionnel.
+- [x] Réparer le rattachement des dossiers agence déjà évalués vers leur dossier d’évaluation et leur brouillon admin.
+- [x] Ajouter une validation explicite par admin avant préparation et envoi du bilan, pour les parcours agence et en ligne.
+- [x] Tester chaque correctif sans données client réelles et fournir URL/action/résultat exacts avant publication.

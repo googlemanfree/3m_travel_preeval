@@ -179,6 +179,11 @@ export function DocumentUploader({
     }
   };
 
+  const retryUpload = async (file: DocumentFile) => {
+    if (!file.file) return;
+    await uploadFile({ ...file, status: "pending", error: undefined, progress: 0 }, file.file);
+  };
+
   const handleUploadAll = async () => {
     const pendingFiles = files.filter((f) => f.status === "pending");
     for (const file of pendingFiles) {
@@ -387,7 +392,14 @@ export function DocumentUploader({
                       <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                     )}
                     {file.status === "error" && (
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                        {file.file && (
+                          <Button type="button" size="sm" variant="outline" onClick={() => void retryUpload(file)}>
+                            Réessayer
+                          </Button>
+                        )}
+                      </div>
                     )}
                     {file.status === "uploading" && (
                       <Loader2 className="w-5 h-5 text-blue-600 flex-shrink-0 animate-spin" />

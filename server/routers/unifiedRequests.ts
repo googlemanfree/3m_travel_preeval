@@ -88,6 +88,19 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     if (accountApplication) return accountApplication;
   }
 
+  // Les dossiers créés en agence sont identifiés par agencyDossiers.id dans la liste admin.
+  // Ils ne correspondent donc pas directement à applications.id. Réutiliser d’abord
+  // l’application déjà créée pour le même candidat/e-mail afin d’éviter tout doublon.
+  const [agencyDossier] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName }).from(agencyDossiers).where(eq(agencyDossiers.id, sourceRecordId)).limit(1);
+  if (agencyDossier) {
+    const [agencyCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
+    const agencyWhere = agencyCandidate
+      ? eq(applications.candidateId, agencyCandidate.id)
+      : and(eq(applications.email, agencyDossier.email), eq(applications.fullName, agencyDossier.fullName));
+    const [agencyApplication] = await db.select().from(applications).where(agencyWhere).orderBy(desc(applications.createdAt)).limit(1);
+    if (agencyApplication) return agencyApplication;
+  }
+
   const [sourceEvaluation] = await db.select({ candidateId: evaluations.candidateId, email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, sourceRecordId)).limit(1);
   if (!sourceEvaluation) return null;
   const applicationWhere = sourceEvaluation.candidateId
@@ -500,6 +513,7 @@ export const unifiedRequestsRouter = router({
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const draft = details.adminDraft ?? {};
       if (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
+      if (draft.advisorValidated !== true) throw new TRPCError({ code: "BAD_REQUEST", message: "Validez explicitement le bilan en tant qu’administrateur avant de générer le PDF." });
       const versions = await db.select({ versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versionNumber = versions[0]?.versionNumber ?? 1;
       const pdf = await createFinalEvaluationPdf(application, versionNumber, versions);

@@ -35,13 +35,47 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
-const ALLOWED_DOCUMENT_TYPES = new Set([
-  "passport", "cv", "diploma", "transcript", "bank_statement", "employment_letter",
-  "birth_certificate", "marriage_certificate", "proof_of_residence", "other",
-  "passeport", "diplome", "releve_bancaire", "lettre_motivation", "contrat_travail",
-  "lettre_admission", "acte_naissance", "acte_mariage", "justificatif_hebergement",
-  "photo_identite", "casier_judiciaire",
-]);
+const DOCUMENT_TYPE_ALIASES: Record<string, string> = {
+  passport: "passport",
+  passeport: "passport",
+  id_card: "national_id",
+  national_id: "national_id",
+  birth_certificate: "birth_certificate",
+  acte_naissance: "birth_certificate",
+  proof_of_residence: "proof_of_residence",
+  justificatif_residence: "proof_of_residence",
+  justificatif_domicile: "proof_of_residence",
+  financial_documents: "bank_statement",
+  bank_statement: "bank_statement",
+  releve_bancaire: "bank_statement",
+  employment_letter: "employment_letter",
+  education_documents: "diploma",
+  diploma: "diploma",
+  diplome: "diploma",
+  educational_transcript: "educational_transcript",
+  transcript: "educational_transcript",
+  medical_documents: "medical_document",
+  medical_document: "medical_document",
+  marriage_certificate: "marriage_certificate",
+  acte_mariage: "marriage_certificate",
+  police_certificate: "police_clearance",
+  police_clearance: "police_clearance",
+  visa_documents: "visa",
+  visa: "visa",
+  language_test: "language_test",
+  professional_documents: "certificate",
+  travel_documents: "travel_document",
+  other: "other",
+  autres: "other",
+  "autres/divers": "other",
+  autre: "other",
+};
+const ALLOWED_DOCUMENT_TYPES = new Set(Object.values(DOCUMENT_TYPE_ALIASES));
+
+function normalizeDocumentType(value: string): string {
+  const normalized = value.trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  return DOCUMENT_TYPE_ALIASES[normalized] || "";
+}
 const publicUploadAttempts = new Map<string, { count: number; resetAt: number }>();
 
 const upload = multer({
@@ -75,9 +109,18 @@ function sanitizeFileName(fileName: string): string {
 function isExpectedFileContent(file: Express.Multer.File): boolean {
   const bytes = file.buffer;
   const startsWith = (...signature: number[]) => signature.every((value, index) => bytes[index] === value);
-  const hasPdfExtension = /\.pdf$/i.test(file.originalname || "");
-  const isPdfMime = new Set(["application/pdf", "application/x-pdf", "text/pdf", "application/octet-stream"]).has(file.mimetype);
+  const fileName = file.originalname || "";
+  const hasPdfExtension = /\.pdf$/i.test(fileName);
+  const hasDocExtension = /\.doc$/i.test(fileName);
+  const hasDocxExtension = /\.docx$/i.test(fileName);
+  const isPdfMime = new Set(["application/pdf", "application/x-pdf", "text/pdf"]).has(file.mimetype);
   if (isPdfMime) return hasPdfExtension && startsWith(0x25, 0x50, 0x44, 0x46);
+  if (file.mimetype === "application/octet-stream") {
+    if (hasPdfExtension && startsWith(0x25, 0x50, 0x44, 0x46)) return true;
+    if (hasDocExtension && startsWith(0xd0, 0xcf, 0x11, 0xe0)) return true;
+    if (hasDocxExtension && startsWith(0x50, 0x4b, 0x03, 0x04)) return true;
+    return false;
+  }
   if (file.mimetype === "image/jpeg") return startsWith(0xff, 0xd8, 0xff);
   if (file.mimetype === "image/png") return startsWith(0x89, 0x50, 0x4e, 0x47);
   if (file.mimetype === "image/webp") return startsWith(0x52, 0x49, 0x46, 0x46) && bytes.subarray(8, 12).toString("ascii") === "WEBP";
@@ -116,7 +159,8 @@ function validatePortrait(file: Express.Multer.File): { width: number; height: n
 function validateIncomingDocument(req: MulterRequest): { file: Express.Multer.File; documentType: string; safeName: string } {
   const file = req.file;
   if (!file) throw new Error("Aucun fichier reçu");
-  const documentType = typeof req.body.fileType === "string" ? req.body.fileType.trim().toLowerCase() : "";
+  const rawDocumentType = typeof req.body.fileType === "string" ? req.body.fileType : "";
+  const documentType = normalizeDocumentType(rawDocumentType);
   if (!ALLOWED_DOCUMENT_TYPES.has(documentType)) throw new Error("Catégorie de document non autorisée");
   if (file.size <= 0 || file.size > MAX_FILE_SIZE) throw new Error("Taille de fichier non autorisée");
   if (!ALLOWED_MIME_TYPES.has(file.mimetype) || !isExpectedFileContent(file)) {
