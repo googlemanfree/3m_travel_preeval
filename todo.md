@@ -2331,7 +2331,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester chaque point, publier progressivement et fournir pour chacun l’URL/action/résultat attendu ; aucune suppression sans confirmation.
 
 ## Test fictif bout en bout — 7 points et flux bilan
-- [ ] Créer un dossier de test explicitement fictif, isolé d’un client réel.
+- [x] Créer un dossier de test explicitement fictif, isolé d’un client réel.
 - [ ] Tester la soumission CV et le blocage de l’évaluation sans CV.
 - [ ] Tester la progression séquentielle, la préparation et la validation manuelle du bilan.
 - [ ] Tester le PDF avec logo, l’e-mail de test et le dépôt dans l’espace client.
@@ -2371,3 +2371,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver les pré-dossiers agence préparatoires sans les transformer en dossiers officiels prématurément.
 - [x] Afficher clairement le motif de blocage côté admin et côté candidat.
 - [x] Tester les combinaisons autorisées/refusées, puis publier avec URL/action/résultat exacts.
+
+## Audit dossiers restants et actions back-office
+- [x] Inventorier l’état du paiement pour tous les dossiers encore présents.
+- [x] Lister les dossiers ayant une évaluation terminée et un CV soumis.
+- [x] Vérifier précisément les options admin d’ajout de dossier et de corbeille/restauration.
+- [x] Fournir les URL/actions/résultats attendus sans modifier les données métier.
+
+## Nouvelle phase candidat — activation, paiement et étapes officielles
+- [x] Point 1 — Rendre la validation manuelle du paiement opérationnelle par dossier avec statut, horodatage et validateur.
+- [x] Point 2 — Permettre au candidat de confirmer son évaluation, demander l’activation, déclencher la demande de paiement et le calendrier, puis activer uniquement après paiement confirmé.
+- [x] Point 3 — Afficher des étapes propres au pays et au type de visa avec sources consulaires/gouvernementales vérifiées, ou signaler clairement l’absence de source fiable.
+- [x] Tester chaque parcours sans données réelles, publier progressivement et fournir URL/action/résultat exacts.

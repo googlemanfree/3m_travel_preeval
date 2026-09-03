@@ -1414,6 +1414,40 @@ export const candidateRouter = router({
       return { success: true, message: "Code secret transmis. L’administration peut maintenant vérifier le paiement." };
     }),
 
+  confirmEvaluationReceipt: candidateProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [application] = await db.select().from(applications)
+      .where(eq(applications.candidateId, ctx.candidate.id))
+      .orderBy(desc(applications.createdAt))
+      .limit(1);
+    if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier n’est rattaché à votre compte." });
+    if (application.evaluationDeliveryStatus !== "sent" || (!application.evaluationReportPdfKey && !application.evaluationReportPdfUrl)) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le bilan PDF doit être envoyé avant confirmation." });
+    }
+    await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, application.id));
+    return { success: true, message: "Bilan confirmé. Vous pouvez maintenant demander l’activation du dossier." };
+  }),
+
+  requestDossierActivation: candidateProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [application] = await db.select().from(applications)
+      .where(eq(applications.candidateId, ctx.candidate.id))
+      .orderBy(desc(applications.createdAt))
+      .limit(1);
+    if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier n’est rattaché à votre compte." });
+    if (!application.evaluationClientConfirmedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Confirmez d’abord la réception du bilan PDF." });
+    if (application.paymentStatus === "SUCCESS") return { success: true, alreadyActive: true, message: "Le paiement est déjà confirmé ; votre dossier est actif." };
+    const now = new Date();
+    await db.update(applications).set({
+      activationRequestedAt: application.activationRequestedAt ?? now,
+      paymentOpeningRequestedAt: application.paymentOpeningRequestedAt ?? now,
+      dossierStatus: "en_attente_paiement",
+    }).where(eq(applications.id, application.id));
+    return { success: true, paymentRequested: true, appointmentUnlocked: true, message: "Demande d’activation enregistrée. Le paiement d’ouverture et la prise de rendez-vous sont maintenant disponibles." };
+  }),
+
   getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1949,6 +1983,10 @@ export const candidateRouter = router({
       activeDossier: activeApp,
       workflow: {
         paymentConfirmed: activeApp?.paymentStatus === "SUCCESS",
+        paymentOpeningRequested: Boolean(activeApp?.paymentOpeningRequestedAt),
+        evaluationClientConfirmed: Boolean(activeApp?.evaluationClientConfirmedAt),
+        activationRequested: Boolean(activeApp?.activationRequestedAt),
+        appointmentUnlocked: Boolean(activeApp?.activationRequestedAt),
         agreementSigned: Boolean(activeApp?.agreementSigned),
         showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
         evaluationRequired: candidate.evaluationDeclarationStatus === "not_declared" || candidate.evaluationDeclarationStatus === "refused",

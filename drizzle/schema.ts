@@ -534,6 +534,10 @@ export const applications = mysqlTable("applications", {
   evaluationReportPdfUrl: varchar("evaluationReportPdfUrl", { length: 512 }),
   evaluationReportViewedAt: timestamp("evaluationReportViewedAt"),
   evaluationReportReminderSentAt: timestamp("evaluationReportReminderSentAt"),
+  // Confirmation candidat et demande d’activation après réception du bilan
+  evaluationClientConfirmedAt: timestamp("evaluationClientConfirmedAt"),
+  activationRequestedAt: timestamp("activationRequestedAt"),
+  paymentOpeningRequestedAt: timestamp("paymentOpeningRequestedAt"),
   
   // Gestion des documents (originaux vs scan pro)
   documentsSubmissionMethod: mysqlEnum("documentsSubmissionMethod", ["en_ligne", "agence_physique"]),

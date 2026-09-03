@@ -24,8 +24,14 @@ import { type AnimationPreference } from "@shared/animationPreferences";
 import { DossierOverview } from "@/components/DossierOverview";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import { jsPDF } from "jspdf";
+import { OFFICIAL_SOURCE_CATALOG } from "@shared/officialSourceCatalog";
 
 const escapeAgreementHtml = (value: unknown) => String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#039;" })[character] ?? character);
+const normalizeCountryKey = (value: unknown) => String(value ?? "").trim().toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const OFFICIAL_PROCEDURE_STEPS: Record<string, { scope: string; steps: string[] }> = {
+  canada: { scope: "Visa visiteur / résident temporaire", steps: ["Vérifier le document requis pour entrer au Canada.", "Préparer les copies électroniques et la demande selon les instructions IRCC.", "Soumettre la demande et les frais via le canal indiqué par IRCC.", "Fournir les données biométriques lorsque cela est requis."] },
+  luxembourg: { scope: "Visa court séjour Schengen (type C)", steps: ["Vérifier l’obligation de visa et la validité du passeport.", "Déposer la demande auprès du consulat compétent avec les justificatifs requis.", "Respecter les délais de dépôt publiés par l’autorité compétente.", "Attendre la décision consulaire ; un visa ne garantit pas à lui seul l’entrée."] },
+};
 
 function downloadSignedAgreementPdf(application: { dossierNumber?: string | null; agreementSignatureName?: string | null; agreementSignedAt?: number | null }) {
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
@@ -190,6 +196,21 @@ export default function MySpace() {
     },
     onError: (mutationError) => toast.error(mutationError.message || "La signature n’a pas pu être enregistrée."),
   });
+  const confirmEvaluationReceiptMutation = trpc.candidate.confirmEvaluationReceipt.useMutation({
+    onSuccess: async (result) => {
+      toast.success(result.message);
+      await trpcUtils.candidate.getMyDossierData.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message || "La confirmation du bilan a échoué."),
+  });
+  const requestDossierActivationMutation = trpc.candidate.requestDossierActivation.useMutation({
+    onSuccess: async (result) => {
+      toast.success(result.message);
+      await trpcUtils.candidate.getMyDossierData.invalidate();
+      setActiveTab("payments");
+    },
+    onError: (mutationError) => toast.error(mutationError.message || "La demande d’activation a échoué."),
+  });
 
   useEffect(() => {
     const application = dossierData?.data?.application;
@@ -269,6 +290,7 @@ export default function MySpace() {
   const app = dossierData?.data?.application;
   const documents = dossierData?.data?.documents || [];
   const messages = dossierData?.data?.messages || [];
+  const evaluationReportPdfUrl = dossierData?.data?.evaluationReportPdfUrl || app?.evaluationReportPdfUrl || null;
   const candidateName = candidate?.fullName || "Candidat";
 
   // Détecter les documents manquants
@@ -555,6 +577,58 @@ export default function MySpace() {
                 currentStatus={app?.dossierStatus || "nouveau"}
                 completionPercentage={completionPercentage}
               />
+            )}
+
+            {app?.destination && (() => {
+              const sourceRecord = OFFICIAL_SOURCE_CATALOG[normalizeCountryKey(app.destination)];
+              return (
+                <Card className="border-slate-200 bg-white">
+                  <CardHeader>
+                    <CardTitle className="text-slate-900">Étapes officielles de votre destination</CardTitle>
+                    <CardDescription>Les exigences dépendent du pays et du type de visa sélectionné. Aucun contenu non sourcé n’est ajouté.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {sourceRecord?.verificationStatus === "verified" && sourceRecord.sources.length > 0 && OFFICIAL_PROCEDURE_STEPS[normalizeCountryKey(app.destination)] ? (
+                      <div className="space-y-4" role="list" aria-label="Étapes et sources officielles">
+                        <p className="text-sm text-slate-700">Source officielle disponible pour {app.destination}{(app as any).visaType ? ` · ${(app as any).visaType}` : ""} :</p>
+                        <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-700">{OFFICIAL_PROCEDURE_STEPS[normalizeCountryKey(app.destination)].steps.map((step) => <li key={step}>{step}</li>)}</ol>
+                        {sourceRecord.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 hover:bg-blue-100"><span>{source.label}</span><ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" /></a>)}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-amber-900" role="status">Aucune étape détaillée officiellement vérifiée n’est actuellement configurée pour cette combinaison pays/type de visa. Consultez le consulat ou portail gouvernemental compétent avant toute démarche.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
+            {evaluationReportPdfUrl && (
+              <Card className="border-blue-200 bg-blue-50/60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-blue-950"><FileText className="h-5 w-5 text-blue-700" /> Votre bilan d’évaluation</CardTitle>
+                  <CardDescription>Consultez le PDF reçu, confirmez sa réception, puis demandez l’activation de votre dossier.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="button" variant="outline" asChild>
+                      <a href={evaluationReportPdfUrl} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4" /> Ouvrir le bilan PDF</a>
+                    </Button>
+                    {!app?.evaluationClientConfirmedAt ? (
+                      <Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" disabled={confirmEvaluationReceiptMutation.isPending} onClick={() => confirmEvaluationReceiptMutation.mutate()}>
+                        {confirmEvaluationReceiptMutation.isPending ? "Confirmation…" : "Confirmer la réception du bilan"}
+                      </Button>
+                    ) : !app?.activationRequestedAt ? (
+                      <Button type="button" className="bg-emerald-700 text-white hover:bg-emerald-800" disabled={requestDossierActivationMutation.isPending} onClick={() => requestDossierActivationMutation.mutate()}>
+                        {requestDossierActivationMutation.isPending ? "Demande en cours…" : "Demander l’activation du dossier"}
+                      </Button>
+                    ) : (
+                      <Badge className="bg-amber-600 px-3 py-2">Activation demandée — paiement et rendez-vous disponibles</Badge>
+                    )}
+                  </div>
+                  {app?.evaluationClientConfirmedAt && !app?.activationRequestedAt && <p className="text-sm text-blue-900">Bilan confirmé. Votre demande d’activation déclenchera la demande de paiement d’ouverture et l’accès au calendrier de rendez-vous.</p>}
+                  {app?.activationRequestedAt && app?.paymentStatus !== "SUCCESS" && <p className="text-sm text-amber-900">Votre dossier attend la confirmation du paiement. Le calendrier est ouvert pour la prise de rendez-vous.</p>}
+                </CardContent>
+              </Card>
             )}
 
             <Card>
