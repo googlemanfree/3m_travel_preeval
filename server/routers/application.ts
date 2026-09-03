@@ -685,7 +685,7 @@ export const applicationRouter = router({
         }
       }
       const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;
-      const canStartTreatment = isValidated && application.agreementSigned;
+      const canStartTreatment = isValidated && application.agreementSigned && application.evaluationDeliveryStatus === "sent";
       await db.update(applications)
         .set({
           paymentStatus: input.paymentStatus,

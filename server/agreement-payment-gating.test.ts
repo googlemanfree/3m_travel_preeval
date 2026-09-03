@@ -28,8 +28,8 @@ describe("agreement and payment gating contracts", () => {
   it("keeps online payment confirmation behind the agreement gate", () => {
     const paymentSource = read("server/routers/cinetpayPayment.ts");
     const webhookSource = read("server/routers/cinetpayWebhook.ts");
-    expect(paymentSource).toContain('dossierStatus: application.agreementSigned ? "paye" : application.dossierStatus');
-    expect(webhookSource).toContain('paymentStatus === "SUCCESS" && application.agreementSigned ? "paye" : application.dossierStatus');
+    expect(paymentSource).toContain('dossierStatus: application.agreementSigned && application.evaluationDeliveryStatus === "sent" ? "paye" : application.dossierStatus');
+    expect(webhookSource).toContain('paymentStatus === "SUCCESS" && application.agreementSigned && application.evaluationDeliveryStatus === "sent" ? "paye" : application.dossierStatus');
   });
 
   it("requires evaluation delivery before the next processing step", () => {

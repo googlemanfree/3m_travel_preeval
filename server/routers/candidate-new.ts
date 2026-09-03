@@ -7,10 +7,11 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans } from "../../drizzle/schema";
+import { evaluations, users, applications, candidates, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { eq, desc, like, or, and } from "drizzle-orm";
+import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -1070,9 +1071,9 @@ export const adminRouter = router({
             "APPROVED": "visa_approuve",
           };
 
-          const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+                    const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
-
+          assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
           await db.update(applications)
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
@@ -1094,9 +1095,17 @@ export const adminRouter = router({
             "APPROVED": "approuve",
           };
 
-          const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+                    const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
-
+          if (input.newStatus !== "PENDING_48H") {
+            const [linkedCandidate] = await db.select({ evaluationDeclarationStatus: candidates.evaluationDeclarationStatus, evaluationReviewedAt: candidates.evaluationReviewedAt }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            const [linkedApplication] = await db.select({ paymentStatus: applications.paymentStatus, evaluationDeliveryStatus: applications.evaluationDeliveryStatus }).from(applications).where(eq(applications.email, dossier.email)).orderBy(desc(applications.createdAt)).limit(1);
+            const evaluationValidated = linkedApplication?.evaluationDeliveryStatus === "sent" || (linkedCandidate?.evaluationDeclarationStatus === "validated" && Boolean(linkedCandidate.evaluationReviewedAt));
+            const paymentConfirmed = dossier.initialPaymentStatus === "paid" || linkedApplication?.paymentStatus === "SUCCESS";
+            if (!evaluationValidated || !paymentConfirmed) {
+              throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le dossier agence ne peut pas passer en traitement sans évaluation validée et paiement confirmé." });
+            }
+          }
           await db.update(agencyDossiers)
             .set({
               status: internalStatusMap[input.newStatus] as any,

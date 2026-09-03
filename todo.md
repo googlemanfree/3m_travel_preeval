@@ -2328,4 +2328,46 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Point 2 — Garantir une revue et validation manuelles avant tout envoi au candidat.
 - [x] Point 3 — Fiabiliser l’envoi SMTP de l’évaluation et rendre les échecs explicites, sans envoi silencieux.
 - [x] Point 4 — Générer un PDF professionnel avec logo, puis le distribuer par e-mail et dans l’espace client.
-- [ ] Tester chaque point, publier progressivement et fournir pour chacun l’URL/action/résultat attendu ; aucune suppression sans confirmation.
+- [x] Tester chaque point, publier progressivement et fournir pour chacun l’URL/action/résultat attendu ; aucune suppression sans confirmation.
+
+## Test fictif bout en bout — 7 points et flux bilan
+- [ ] Créer un dossier de test explicitement fictif, isolé d’un client réel.
+- [ ] Tester la soumission CV et le blocage de l’évaluation sans CV.
+- [ ] Tester la progression séquentielle, la préparation et la validation manuelle du bilan.
+- [ ] Tester le PDF avec logo, l’e-mail de test et le dépôt dans l’espace client.
+- [ ] Tester le protocole bloqué avant paiement simulé, puis débloqué après validation admin et activation.
+- [ ] Documenter pour chaque étape l’URL/action/résultat exact et signaler les limites d’accès.
+
+## Action confirmée — annulation des dernières validations sans CV
+- [ ] Définir précisément le filtre « sans CV exploitable » et compter les dossiers concernés avant action.
+- [ ] Annuler uniquement la dernière validation de ces dossiers, sans suppression de données ni de fichiers.
+- [ ] Vérifier les statuts, l’historique et l’absence de modification sur les dossiers avec CV.
+- [ ] Fournir le périmètre exact, les URLs/actions de vérification et les résultats observés.
+
+## Audit préalable sans mutation — dossiers sans CV
+- [x] Relever les dossiers candidats et pré-dossiers agence visibles par l’admin.
+- [x] Vérifier pour chacun la présence d’un CV exploitable, sans modifier les statuts.
+- [x] Présenter la liste exacte et attendre une confirmation avant toute annulation.
+
+## Nettoyage contrôlé des dossiers non évalués sans CV
+- [ ] Inventorier les dossiers avec statut d’évaluation non effectué et sans CV exploitable.
+- [ ] Exclure explicitement tout dossier évalué, même si d’autres pièces sont absentes.
+- [ ] Présenter la liste exacte et obtenir une confirmation finale avant déplacement en corbeille.
+- [ ] Vérifier la restauration possible et l’absence de modification des dossiers évalués.
+- [x] Vérifier les 13 dossiers confirmés contre les historiques d’évaluation et exclure toute trace d’évaluation terminée.
+- [x] Soumettre la liste finale des 13 dossiers avant déplacement vers la corbeille.
+
+## Corbeille confirmée — 10 dossiers sans évaluation ni CV
+- [ ] Vérifier à nouveau les 10 identifiants confirmés avant mutation.
+- [ ] Déplacer uniquement ces 10 dossiers vers la corbeille/restauration, sans suppression définitive.
+- [ ] Vérifier que les 5 dossiers exclus restent présents et inchangés.
+- [ ] Fournir le nombre déplacé, les références exactes et l’action de restauration vérifiable.
+- [ ] Confirmer les 8 références agence : AGENCY-240001, AGENCY-270001, AGENCY-270002, AGENCY-270003, AGENCY-270004, AGENCY-270006, AGENCY-300001 et AGENCY-300002.
+- [ ] Laisser inchangées les candidatures en ligne EVAL-DRAFT-2026-8162 et EVAL-DRAFT-2026-8788 faute de corbeille restaurable existante.
+
+## Verrou dossier officiel — évaluation et paiement obligatoires
+- [x] Auditer tous les chemins de création et d’activation du dossier officiel.
+- [x] Bloquer côté serveur la création/activation officielle si l’évaluation n’est pas validée ou si le paiement n’est pas confirmé.
+- [x] Conserver les pré-dossiers agence préparatoires sans les transformer en dossiers officiels prématurément.
+- [x] Afficher clairement le motif de blocage côté admin et côté candidat.
+- [x] Tester les combinaisons autorisées/refusées, puis publier avec URL/action/résultat exacts.

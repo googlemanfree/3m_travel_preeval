@@ -1,9 +1,10 @@
 import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { getDb } from '../db';
-import { applications, candidates } from '../../drizzle/schema';
-import { eq, sql } from "drizzle-orm";
+import { agencyDossiers, applications, candidates } from '../../drizzle/schema';
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { sendDossierConfirmationEmail } from '../emailService';
+import { assertApplicationCanEnterStatus } from '../utils/applicationGates';
 import crypto from 'crypto';
 
 // Générer un numéro de dossier unique au format #3M-AAAA-XXXX
@@ -48,12 +49,34 @@ export const adminDossierRouter = router({
         const dossierNumber = await generateDossierNumber();
         const accessCode = crypto.randomBytes(6).toString('hex').toUpperCase();
 
-        // Vérifier si le candidat existe
+        // La création officielle ne doit jamais contourner les deux prérequis.
+        // Le dépôt préparatoire agence possède son propre formulaire et reste inchangé.
         let candidate = await (db as any).query.candidates.findFirst({
           where: eq(candidates.email, input.email),
         });
+        if (!candidate) {
+          return { success: false, error: 'Un compte candidat, une évaluation validée et un paiement confirmé sont requis avant la création du dossier officiel.' };
+        }
+        const [latestApplication] = await db.select({
+          paymentStatus: applications.paymentStatus,
+          evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
+        }).from(applications)
+          .where(eq(applications.candidateId, candidate.id))
+          .orderBy(desc(applications.createdAt))
+          .limit(1);
+        const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
+          .where(and(isNull(agencyDossiers.deletedAt), eq(agencyDossiers.email, candidate.email), eq(agencyDossiers.initialPaymentStatus, "paid")))
+          .orderBy(desc(agencyDossiers.createdAt))
+          .limit(1);
+        const agencyPaymentConfirmed = Boolean(paidAgencyDossier);
+        const evaluationValidated = (candidate.evaluationDeclarationStatus === 'validated' && Boolean(candidate.evaluationReviewedAt)) || latestApplication?.evaluationDeliveryStatus === 'sent';
+        const paymentConfirmed = latestApplication?.paymentStatus === 'SUCCESS' || agencyPaymentConfirmed;
+        if (!evaluationValidated || !paymentConfirmed) {
+          return { success: false, error: 'Création bloquée : l’évaluation doit être validée et le paiement confirmé avant l’ouverture du dossier officiel.' };
+        }
 
-        // Créer le candidat s'il n'existe pas
+        // Créer le candidat s'il n'existe pas (conservé pour compatibilité historique,
+        // mais rendu inatteignable par la garde ci-dessus).
         if (!candidate) {
           // Générer un mot de passe temporaire
           const tempPassword = crypto.randomBytes(16).toString('hex');
@@ -190,6 +213,14 @@ export const adminDossierRouter = router({
             error: 'Accès refusé',
           };
         }
+
+        const application = await (db as any).query.applications.findFirst({
+          where: eq(applications.dossierNumber, input.dossierNumber),
+        });
+        if (!application) {
+          return { success: false, error: 'Dossier non trouvé' };
+        }
+        assertApplicationCanEnterStatus(application, input.dossierStatus);
 
         await db
           .update(applications)

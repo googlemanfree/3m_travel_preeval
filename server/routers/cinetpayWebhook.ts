@@ -147,7 +147,7 @@ export function registerCinetPayWebhook(app: Express): void {
       await db.update(applications)
         .set({
           paymentStatus,
-          dossierStatus: paymentStatus === "SUCCESS" && application.agreementSigned ? "paye" : application.dossierStatus,
+          dossierStatus: paymentStatus === "SUCCESS" && application.agreementSigned && application.evaluationDeliveryStatus === "sent" ? "paye" : application.dossierStatus,
           paymentMethod: paymentMethod || null,
           paymentDate: paymentStatus === "SUCCESS" ? new Date() : application.paymentDate,
         })

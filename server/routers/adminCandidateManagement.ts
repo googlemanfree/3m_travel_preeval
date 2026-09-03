@@ -340,8 +340,19 @@ export const adminCandidateManagementRouter = router({
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: "Ce compte possède déjà un dossier actif." });
-      if (candidate.evaluationDeclarationStatus !== "not_declared" && candidate.evaluationDeclarationStatus !== "validated") {
-        throw new TRPCError({ code: "CONFLICT", message: "L’évaluation déclarée doit être validée manuellement avant l’ouverture du dossier." });
+      if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel." });
+      }
+      const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus }).from(applications)
+        .where(eq(applications.candidateId, candidate.id))
+        .orderBy(desc(applications.createdAt))
+        .limit(1);
+      const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
+        .where(and(isNull(agencyDossiers.deletedAt), eq(agencyDossiers.email, candidate.email), eq(agencyDossiers.initialPaymentStatus, "paid")))
+        .orderBy(desc(agencyDossiers.createdAt))
+        .limit(1);
+      if (latestApplication?.paymentStatus !== "SUCCESS" && !paidAgencyDossier) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être confirmé avant l’ouverture du dossier officiel." });
       }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
