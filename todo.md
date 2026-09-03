@@ -2499,3 +2499,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reporter la collecte des images décoratives premium ; aucune image supplémentaire n’est engagée dans cette passe.
 - [x] Traiter les trois bugs urgents avant la reprise des destinations.
 - [ ] Reprendre l’harmonisation visuelle globale uniquement après confirmation du périmètre suivant.
+
+## Vérification réelle avant reprise du lot 1
+- [ ] Tester avec une session candidat effective que le bouton de suivi ouvre /mon-dossier.
+- [x] Tester le flux « Choisir dans la galerie » sans contourner la vérification biométrique.
+- [x] Vérifier le Footer public après propagation et publier toute correction nécessaire.
+- [x] Reprendre ensuite le lot 1 avec sources officielles uniquement, sans collecte d’images.
+
+## Correctifs urgents supplémentaires — suivi, bilans agence et documents
+- [x] Corriger statiquement le bouton « Suivre mon dossier » et ajouter un test automatisé du clic.
+- [x] Documenter explicitement que le bouton n’est pas validé en session live sans connexion candidat.
+- [ ] Diagnostiquer et corriger le rattachement des bilans pour plusieurs dossiers réels déjà évalués en agence, sans mutation de statut pendant l’audit.
+- [x] Garantir que les documents sont isolés par dossier/candidat et validés individuellement par un admin.
+- [ ] Tester, publier et fournir URL/action/résultat exacts avant de reprendre les volets secondaires.

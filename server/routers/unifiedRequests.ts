@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
 import {
   adminAccounts,
@@ -77,28 +77,79 @@ async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof
 }
 
 async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, sourceRecordId: number) {
-  const [directApplication] = await db.select().from(applications).where(eq(applications.id, sourceRecordId)).limit(1);
-  if (directApplication) return directApplication;
-
-  // The admin dossier list also exposes account-only candidates with their candidate ID.
-  // Resolve that ID to the newest linked application before trying legacy evaluation IDs.
-  const [candidateAccount] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, sourceRecordId)).limit(1);
-  if (candidateAccount) {
-    const [accountApplication] = await db.select().from(applications).where(eq(applications.candidateId, candidateAccount.id)).orderBy(desc(applications.createdAt)).limit(1);
-    if (accountApplication) return accountApplication;
-  }
-
-  // Les dossiers créés en agence sont identifiés par agencyDossiers.id dans la liste admin.
-  // Ils ne correspondent donc pas directement à applications.id. Réutiliser d’abord
-  // l’application déjà créée pour le même candidat/e-mail afin d’éviter tout doublon.
-  const [agencyDossier] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName }).from(agencyDossiers).where(eq(agencyDossiers.id, sourceRecordId)).limit(1);
+  // Un identifiant de pré-dossier agence peut entrer en collision avec applications.id.
+  // Résoudre l’origine agence en premier évite de charger le mauvais candidat.
+  const [agencyDossier] = await db.select({
+    id: agencyDossiers.id,
+    email: agencyDossiers.email,
+    fullName: agencyDossiers.fullName,
+    phone: agencyDossiers.phone,
+    destination: agencyDossiers.destination,
+    visaType: agencyDossiers.visaType,
+    nationality: agencyDossiers.nationality,
+    dateOfBirth: agencyDossiers.dateOfBirth,
+    cvFileUrl: agencyDossiers.cvFileUrl,
+    cvFileName: agencyDossiers.cvFileName,
+    adminNotes: agencyDossiers.adminNotes,
+  }).from(agencyDossiers).where(eq(agencyDossiers.id, sourceRecordId)).limit(1);
   if (agencyDossier) {
+    const marker = `[agency-dossier:${agencyDossier.id}]`;
+    const [markedApplication] = await db.select().from(applications).where(like(applications.adminNote, `%${marker}%`)).orderBy(desc(applications.createdAt)).limit(1);
+    if (markedApplication) return markedApplication;
+
     const [agencyCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
     const agencyWhere = agencyCandidate
       ? eq(applications.candidateId, agencyCandidate.id)
       : and(eq(applications.email, agencyDossier.email), eq(applications.fullName, agencyDossier.fullName));
     const [agencyApplication] = await db.select().from(applications).where(agencyWhere).orderBy(desc(applications.createdAt)).limit(1);
     if (agencyApplication) return agencyApplication;
+
+    // Les dossiers agence déjà documentés n’ont pas toujours de ligne applications.
+    // Créer une seule application de préparation, déterministement marquée par l’origine,
+    // sans activer le dossier ni modifier le paiement.
+    if (agencyDossier.cvFileUrl || agencyDossier.cvFileName) {
+      const destination = mapCandidateDestination(String(agencyDossier.destination || "").trim().toLowerCase());
+      const dossierNumber = `EVAL-AG-${agencyDossier.id}`;
+      await db.insert(applications).values({
+        dossierNumber,
+        candidateId: agencyCandidate?.id ?? null,
+        fullName: agencyDossier.fullName,
+        email: agencyDossier.email,
+        whatsappNumber: agencyDossier.phone,
+        nationality: agencyDossier.nationality ?? null,
+        dateOfBirth: agencyDossier.dateOfBirth ?? null,
+        destination,
+        visaType: agencyDossier.visaType || null,
+        cvUrl: agencyDossier.cvFileUrl ?? null,
+        documentsSubmissionMethod: "agence_physique",
+        dossierStatus: "nouveau",
+        paymentStatus: "PENDING",
+        paymentAmount: 0,
+        paymentExpectedAmount: 0,
+        paymentCurrency: "XAF",
+        scoringDetails: JSON.stringify({ agencyDossierId: agencyDossier.id, adminDraft: {}, source: "agency" }),
+        adminNote: `${marker} Pré-dossier agence source pour préparation du bilan. ${agencyDossier.adminNotes || ""}`.trim(),
+        evaluationDeliveryStatus: "draft",
+        evaluationRequiresSecondApproval: false,
+        evaluationApprovalStatus: "not_required",
+        emailVerified: false,
+        agreementSigned: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const [createdApplication] = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
+      if (createdApplication) return createdApplication;
+    }
+  }
+
+  const [directApplication] = await db.select().from(applications).where(eq(applications.id, sourceRecordId)).limit(1);
+  if (directApplication) return directApplication;
+
+  // The admin dossier list also exposes account-only candidates with their candidate ID.
+  const [candidateAccount] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, sourceRecordId)).limit(1);
+  if (candidateAccount) {
+    const [accountApplication] = await db.select().from(applications).where(eq(applications.candidateId, candidateAccount.id)).orderBy(desc(applications.createdAt)).limit(1);
+    if (accountApplication) return accountApplication;
   }
 
   const [sourceEvaluation] = await db.select({ candidateId: evaluations.candidateId, email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, sourceRecordId)).limit(1);

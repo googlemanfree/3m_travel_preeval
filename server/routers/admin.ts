@@ -1310,7 +1310,7 @@ export const adminRouter = router({
         const documents = await db
           .select()
           .from(clientDocuments)
-          .where(eq(clientDocuments.candidateEmail, app[0].email))
+          .where(eq(clientDocuments.evaluationId, app[0].id))
           .limit(50);
 
         const reports = await db
@@ -3146,10 +3146,15 @@ export const adminRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
+      const linkedApplication = reference.source === "online"
+        ? sourceRecord
+        : (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0] ?? null;
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
         db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
         db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
-        db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, email)).orderBy(desc(clientDocuments.uploadedAt)).limit(100),
+        linkedApplication
+          ? db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100)
+          : Promise.resolve([]),
         db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)),
         db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)),
         db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)),
