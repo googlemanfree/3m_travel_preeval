@@ -36,6 +36,9 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 const DOCUMENT_TYPE_ALIASES: Record<string, string> = {
+  photo_identite: "photo_identite",
+  portrait: "photo_identite",
+  portrait_humain: "photo_identite",
   passport: "passport",
   passeport: "passport",
   id_card: "national_id",

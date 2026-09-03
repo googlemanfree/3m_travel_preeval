@@ -2462,3 +2462,29 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Supprimer l’espace vide excessif créé par la grille du pied de page.
 - [x] Rééquilibrer QR code et newsletter pour éviter une colonne droite anormalement haute.
 - [x] Vérifier desktop/mobile et publier avec URL/action exacte.
+
+## Nouvelle mission — destinations et cohérence visuelle
+- [ ] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants.
+- [ ] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable.
+- [ ] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes.
+- [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
+- [ ] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point.
+
+## Lot 1 — 10 destinations prioritaires
+- [ ] Vérifier les sources officielles pour Canada, Luxembourg, France, Belgique, Allemagne, Suisse, Royaume-Uni, États-Unis, Australie et Italie.
+- [ ] Enrichir les fiches du lot avec contenu vérifié et visuels décoratifs premium.
+- [ ] Tester les routes, sources, images et rendu responsive du lot.
+- [ ] Publier le lot uniquement après vérification et fournir les URL/actions exactes.
+
+## Autorisation d’exécution autonome — lot 1 destinations
+- [ ] Réaliser le lot 1 complet jusqu’à publication sans nouvelle demande de confirmation intermédiaire, sauf blocage technique ou source officielle introuvable.
+- [ ] Collecter des visuels spécifiques autorisés pour les 10 destinations et les rattacher aux fiches.
+- [ ] Vérifier l’intégrité des sources et signaler les lacunes sans inventer.
+- [ ] Tester puis publier le lot 1 et documenter les URL/actions exactes.
+
+## Bugs urgents — Footer, suivi dossier et biométrie
+- [x] Supprimer l’affichage répété et saturé des menus/tooltips du pied de page.
+- [x] Retirer le QR code et raccourcir davantage la newsletter du pied de page sans perdre les liens utiles.
+- [x] Réparer le bouton « Suivre mon dossier » sur /mon-espace?section=dossier.
+- [x] Corriger la catégorie d’upload du portrait biométrique depuis « Choisir dans la galerie ».
+- [x] Ajouter des régressions ciblées, tester les trois bugs et publier avec URL/action exacte.

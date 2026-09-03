@@ -139,10 +139,10 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
             <p className="mt-1 text-sm text-slate-600">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
-              {dossierNumber ? <button type="button" onClick={() => setLocation("/mon-espace?section=dossier")} aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</button> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
+              {dossierNumber ? <button type="button" onClick={() => setLocation("/mon-dossier")} aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</button> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
             </div>
           </div>
-          <Button type="button" onClick={() => setLocation("/mon-espace?section=dossier")} className="h-12 rounded-xl bg-blue-800 font-bold text-white hover:bg-blue-900">
+          <Button type="button" onClick={() => setLocation("/mon-dossier")} className="h-12 rounded-xl bg-blue-800 font-bold text-white hover:bg-blue-900">
             <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
           </Button>
         </div>

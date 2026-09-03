@@ -1,0 +1,12 @@
+string;   name: string;
+'allemagne-travail',     name: 'Allemagne',
+'australie-travail',     name: 'Australie',
+'canada-travail',     name: 'Canada',
+'france-travail',     name: 'France',
+'luxembourg-travail',     name: 'Luxembourg',
+'suisse-travail',     name: 'Suisse',
+'royaume-uni-travail',     name: 'Royaume-Uni',
+'etats-unis-travail',     name: 'États-Unis',
+'belgique-etudes',     name: 'Belgique',
+'italie-visiteur',     name: 'Italie',
+'italie-visiteur',     name: country.name,
