@@ -37,6 +37,9 @@ describe("agreement and payment gating contracts", () => {
     expect(gate).toContain("evaluationDeliveryStatus?: string | null");
     expect(gate).toContain('nextStatus === "bilan_envoye"');
     expect(gate).toContain("Aucun dossier ne peut être traité avant l’évaluation validée");
+    expect(gate).toContain('nextStatus === "en_evaluation"');
+    expect(gate).toContain("Un CV exploitable doit être détecté avant de démarrer l’évaluation.");
+    expect(read("server/routers/evaluationAdmin.ts")).toContain("cvUrl: applications.cvUrl");
   });
 
   it("exposes the manual notebook and visible protocol in the active client space", () => {

@@ -317,7 +317,7 @@ export const evaluationAdminRouter = router({
         }
 
         const [application] = await db
-          .select({ agreementSigned: applications.agreementSigned, paymentStatus: applications.paymentStatus })
+          .select({ agreementSigned: applications.agreementSigned, paymentStatus: applications.paymentStatus, cvUrl: applications.cvUrl })
           .from(applications)
           .where(eq(applications.dossierNumber, input.dossierNumber))
           .limit(1);

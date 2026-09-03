@@ -2309,4 +2309,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer l’extraction IA des informations clés du CV avec validation humaine avant enregistrement.
 - [x] Afficher une pastille d’alerte sur les dossiers ayant une nouvelle référence à vérifier.
 - [x] Ajouter les tests de régression, vérifier TypeScript, le build et le rendu PC.
-- [ ] Publier chaque jalon validé et préparer le bilan des sept points.
+- [x] Publier le premier jalon validé.
+- [ ] Préparer le bilan complet des sept points prioritaires après réception et traitement des points restants.
+
+## Points prioritaires 4 à 7 — règles, protocole, unification et routes
+- [x] Point 4 — Bloquer côté serveur toute transition d’évaluation vers « en cours » si aucun CV exploitable n’est détecté.
+- [ ] Point 5 — Enrichir le protocole d’accord et verrouiller sa signature après paiement confirmé, avec ordre séquentiel des étapes.
+- [ ] Point 6 — Unifier le pilotage en ligne/agence, rattacher sans doublon et enrichir le formulaire de pré-dossier agence.
+- [ ] Point 7 — Faire retourner un vrai 404 pour /evaluation-primaire au lieu de rediriger vers #evaluation-multi.
+- [ ] Tester et publier chaque point validé ; ne supprimer aucune route, donnée ou composant sans confirmation.
