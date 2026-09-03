@@ -2438,3 +2438,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une régression dédiée à cette transition bloquante.
 - [x] Remettre uniquement `3M-AGN-420001` à « Nouveau » et consigner la restauration.
 - [x] Reprendre le test E2E fictif après publication du verrou.
+
+## Reprise ciblée après arrêt du test E2E
+- [x] Finaliser et vérifier l’aperçu rapide des preuves de paiement côté admin.
+- [x] Finaliser et vérifier les infobulles des étapes côté client.
+- [x] Finaliser et vérifier le téléchargement des documents requis par étape de visa.
+- [x] Finaliser et vérifier les enrichissements de /formation et /3m-digital.
+- [x] Tester et publier uniquement ces périmètres, puis fournir les URL/actions exactes.
+- [x] Arrêter le test E2E au blocage biométrique sans le contourner.
