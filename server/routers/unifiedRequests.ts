@@ -103,13 +103,16 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
       ))
       .orderBy(desc(agencyDossierDocuments.createdAt))
       .limit(1);
-    const effectiveCvUrl = agencyDossier.cvFileUrl ?? agencyCvDocument?.documentUrl ?? null;
-    const effectiveCvName = agencyDossier.cvFileName ?? agencyCvDocument?.documentName ?? null;
+    const [agencyCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
+    const [candidateCvFile] = agencyCandidate
+      ? await db.select({ fileUrl: candidateFiles.fileUrl, fileName: candidateFiles.fileName, status: candidateFiles.status }).from(candidateFiles).where(and(eq(candidateFiles.candidateId, agencyCandidate.id), eq(candidateFiles.fileType, "cv"), inArray(candidateFiles.status, ["uploaded", "verified"]))).orderBy(desc(candidateFiles.uploadedAt)).limit(1)
+      : [undefined];
+    const effectiveCvUrl = agencyDossier.cvFileUrl ?? agencyCvDocument?.documentUrl ?? candidateCvFile?.fileUrl ?? null;
+    const effectiveCvName = agencyDossier.cvFileName ?? agencyCvDocument?.documentName ?? candidateCvFile?.fileName ?? null;
     const marker = `[agency-dossier:${agencyDossier.id}]`;
     const [markedApplication] = await db.select().from(applications).where(like(applications.adminNote, `%${marker}%`)).orderBy(desc(applications.createdAt)).limit(1);
     if (markedApplication) return markedApplication;
 
-    const [agencyCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
     const agencyWhere = agencyCandidate
       ? eq(applications.candidateId, agencyCandidate.id)
       : and(eq(applications.email, agencyDossier.email), eq(applications.fullName, agencyDossier.fullName));

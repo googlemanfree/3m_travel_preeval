@@ -3146,9 +3146,13 @@ export const adminRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
+      const agencyCandidateId = candidateRecord?.id ?? null;
       const linkedApplication = reference.source === "online"
         ? sourceRecord
-        : (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0] ?? null;
+        : (agencyCandidateId
+          ? (await db.select().from(applications).where(eq(applications.candidateId, agencyCandidateId)).orderBy(desc(applications.createdAt)).limit(1))[0]
+            ?? (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]
+          : (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]) ?? null;
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
         db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
         db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
