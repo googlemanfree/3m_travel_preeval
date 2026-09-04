@@ -358,6 +358,7 @@ export function CandidateDetailModal({
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
+  const evaluationEditorSourceType = candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
 
   useEffect(() => {
     if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
@@ -654,12 +655,12 @@ export function CandidateDetailModal({
         </AlertDialog>
       </DialogContent>
       </Dialog>
-      {candidate && isPreDossierAccount && (
+      {candidate && (isPreDossierAccount || openEvaluationEditor) && (
         <Suspense fallback={<div role="status" className="fixed inset-x-4 bottom-4 z-[100] rounded-xl border border-blue-200 bg-white p-4 text-sm text-blue-950 shadow-xl sm:inset-x-auto sm:right-6 sm:w-[360px]">Chargement de l’espace de préparation du bilan…</div>}>
           <EvaluationDeliveryEditor
             sessionToken={sessionToken}
             sourceRecordId={candidate.internalId}
-            sourceType="agency"
+            sourceType={evaluationEditorSourceType}
             open={evaluationEditorOpen}
             onOpenChange={setEvaluationEditorOpen}
             onCompleted={() => { void refetch(); onStatusUpdated(); }}

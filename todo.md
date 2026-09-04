@@ -2551,3 +2551,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ouvrir la fiche agence EVAL-AG-240001 par clic réel ; la fiche charge, affiche les actions de pilotage et aucune action sensible n a été déclenchée.
 - [x] Brancher l ouverture automatique de l éditeur manuel lorsque Préparer l évaluation est cliqué depuis la file.
 - [ ] Republier puis confirmer visuellement que le bloc-notes manuel s ouvre directement depuis Préparer.
+
+- [x] Identifier la cause live du bloc-notes absent : EvaluationDeliveryEditor était conditionné uniquement à isPreDossierAccount.
+- [x] Étendre le rendu à la fiche ouverte depuis Bilans et choisir sourceType agency/application selon la référence du dossier ; TypeScript et 17 tests passent.
+- [ ] Republier puis vérifier que le bloc-notes manuel est visible avec un champ de saisie, sans cliquer sur Valider et envoyer.
