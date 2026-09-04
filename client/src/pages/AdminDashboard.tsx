@@ -1655,7 +1655,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="evaluation-review" className="space-y-6">
-            <AdvisorEvaluationReviewQueue sessionToken={sessionToken} onOpenDossier={(dossierNumber) => { setSearch(dossierNumber); setActiveAdminTab("candidates"); toast({ title: "Dossier filtré", description: `Ouvrez ${dossierNumber} dans la liste pour relire et valider son bilan.` }); }} />
+            <AdvisorEvaluationReviewQueue sessionToken={sessionToken} onOpenDossier={(dossierNumber, candidateId) => { setSearch(dossierNumber); setSelectedCandidateId(candidateId); setActiveAdminTab("candidates"); toast({ title: "Dossier ouvert", description: `${dossierNumber} est ouvert dans la fiche 360° pour préparer et relire le bilan.` }); }} />
           </TabsContent>
 
           <TabsContent value="evaluation-reminders" className="space-y-6">

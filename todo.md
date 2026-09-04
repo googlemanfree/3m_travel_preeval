@@ -2534,3 +2534,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la priorité du jeton admin : localStorage avant sessionStorage pour les requêtes du tableau de bord et l import agence.
 - [x] Ajouter une régression de désynchronisation de session ; TypeScript et 12 tests ciblés passent.
 - [ ] Rejouer le clic Préparer l évaluation après reconnexion admin fraîche et vérifier l ouverture de l éditeur.
+
+- [x] Relier « Préparer l évaluation » à l identifiant candidat de l application et ouvrir directement la fiche 360° admin.
+- [x] Ajouter une régression du branchement file Bilans → fiche 360° ; TypeScript et 13 tests ciblés passent.
+- [ ] Vérifier visuellement après publication que la fiche 360° et l éditeur manuel s ouvrent pour un dossier sans envoyer le bilan.

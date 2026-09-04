@@ -36,6 +36,13 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).toContain('value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")}');
   });
 
+  it("ouvre directement la fiche 360 depuis la file des bilans", () => {
+    const queueSource = read("client/src/components/AdvisorEvaluationReviewQueue.tsx");
+    expect(queueSource).toContain("onOpenDossier(row.dossierNumber, String(row.id))");
+    const dashboardSource = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboardSource).toContain('setSelectedCandidateId(candidateId); setActiveAdminTab("candidates")');
+  });
+
   it("dirige le suivi client vers la page dédiée", () => {
     const source = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(source).toContain('href="/mon-dossier"');
