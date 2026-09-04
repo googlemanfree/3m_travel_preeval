@@ -2,7 +2,7 @@
  * Dashboard Administrateur — 3M Travel & Services
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import React, { lazy, Suspense, useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
@@ -963,18 +963,23 @@ export default function AdminDashboard() {
       .slice(0, 2);
   };
 
+  const candidateListInput = useMemo(() => ({
+    sessionToken,
+    search: search || undefined,
+    status: statusFilter !== "ALL" ? statusFilter : undefined,
+    activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
+    source: sourceFilter !== "ALL" ? sourceFilter : undefined,
+    destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
+    sortBy,
+  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, sortBy]);
   const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
-    {
-      sessionToken,
-      search: search || undefined,
-      status: statusFilter !== "ALL" ? statusFilter : undefined,
-      activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
-      source: sourceFilter !== "ALL" ? sourceFilter : undefined,
-      destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
-      sortBy,
-    },
+    candidateListInput,
     { enabled: !!sessionToken }
   );
+  useEffect(() => {
+    if (!sessionToken) return;
+    void trpcUtils.admin.listCandidates.reset();
+  }, [sessionToken, trpcUtils]);
   const { data: pendingPaymentApplications = [] } = trpc.application.listApplications.useQuery({
     paymentStatus: "PENDING",
     limit: 100,

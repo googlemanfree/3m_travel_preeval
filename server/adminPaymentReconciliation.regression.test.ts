@@ -25,4 +25,20 @@ describe("rapprochement paiement admin", () => {
     expect(component).toContain("Écart de montant");
     expect(component).toContain("pendingReferenceCount");
   });
+
+  it("ne demande plus le code secret candidat pour confirmer un paiement", () => {
+    const component = readProjectFile("client/src/components/AdminPaymentManagement.tsx");
+    expect(component).not.toContain("admin-payment-secret");
+    expect(component).not.toContain("paymentSecretCode: actionType");
+    expect(component).not.toContain("Saisissez le code secret transmis par le candidat");
+    expect(component).toContain("référence Orange Money ou la mention de paiement en agence");
+    expect(component).toContain("paymentReference: paymentReference.trim() || undefined");
+  });
+
+  it("réinitialise le cache tRPC de la liste candidats pour le jeton courant", () => {
+    const dashboard = readProjectFile("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("trpcUtils.admin.listCandidates.reset()");
+    expect(dashboard).toContain("const candidateListInput = useMemo");
+    expect(dashboard).toContain("sessionToken");
+  });
 });

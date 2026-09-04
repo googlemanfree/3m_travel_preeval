@@ -52,7 +52,6 @@ export function AdminPaymentManagement() {
   const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNote, setAdminNote] = useState("");
-  const [paymentSecretCode, setPaymentSecretCode] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
@@ -208,7 +207,6 @@ export function AdminPaymentManagement() {
 
   const handleConfirmPayment = (payment: Payment) => {
     setSelectedPayment(payment);
-    setPaymentSecretCode("");
     setPaymentReference(payment.transactionId || "");
     setConfirmedAmount(String(payment.confirmedAmount ?? payment.expectedAmount ?? payment.amount));
     setAdminNote("");
@@ -228,17 +226,12 @@ export function AdminPaymentManagement() {
       toast.error("Un motif de rejet d’au moins 3 caractères est obligatoire.");
       return;
     }
-    if (actionType === "confirm" && paymentSecretCode.trim().length < 6) {
-      toast.error("Saisissez le code secret transmis par le candidat avant de confirmer le paiement.");
-      return;
-    }
     
     setIsProcessing(true);
     try {
       const paymentResult = await updatePaymentMutation.mutateAsync({
         id: selectedPayment.id,
         paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
-        paymentSecretCode: actionType === "confirm" ? paymentSecretCode.trim() : undefined,
         paymentReference: paymentReference.trim() || undefined,
         expectedAmount: actionType === "confirm" ? Number(selectedPayment.expectedAmount) : undefined,
         confirmedAmount: actionType === "confirm" ? Number(confirmedAmount) : undefined,
@@ -768,10 +761,8 @@ export function AdminPaymentManagement() {
                           <p className="mt-1 text-xs text-slate-500">Attendu : {selectedPayment.expectedAmount.toLocaleString("fr-FR")} {selectedPayment.currency}</p>
                         </div>
                       </div>
-                      <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-                        <Label htmlFor="admin-payment-secret" className="text-xs font-semibold text-amber-950">Code secret transmis par le candidat</Label>
-                        <Input id="admin-payment-secret" value={paymentSecretCode} onChange={(event) => setPaymentSecretCode(event.target.value)} placeholder="6 caractères minimum" autoComplete="off" minLength={6} maxLength={64} className="mt-2 bg-white" disabled={isProcessing} />
-                        <p className="mt-1 text-xs text-amber-900">Le code est comparé à son empreinte sécurisée et n’est jamais conservé en clair.</p>
+                      <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                        La validation repose sur la référence Orange Money ou la mention de paiement en agence, le montant vérifié et la confirmation manuelle du conseiller. Aucun code secret candidat n’est requis dans ce modal.
                       </div>
                     </div>
                   ) : (

@@ -13,7 +13,7 @@ import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, send
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
@@ -655,7 +655,6 @@ export const applicationRouter = router({
     .input(z.object({
       id: z.number().int().positive(),
       paymentStatus: z.enum(["SUCCESS", "FAILED", "CANCELLED"]),
-      paymentSecretCode: z.string().trim().min(6).max(64).optional(),
       paymentReference: z.string().trim().max(255).optional(),
       expectedAmount: z.number().int().nonnegative().max(100000000).optional(),
       confirmedAmount: z.number().int().nonnegative().max(100000000).optional(),
@@ -673,15 +672,11 @@ export const applicationRouter = router({
 
       const isValidated = input.paymentStatus === "SUCCESS";
       if (isValidated) {
-        if (!application.paymentSecretCodeHash) {
-          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le candidat doit d’abord transmettre son code secret de paiement." });
-        }
-        if (!input.paymentSecretCode) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Le code secret de paiement est obligatoire pour valider ce paiement." });
-        }
-        const submittedHash = createHash("sha256").update(input.paymentSecretCode.trim(), "utf8").digest("hex");
-        if (submittedHash !== application.paymentSecretCodeHash) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Le code secret de paiement est incorrect." });
+        const paymentMethod = String(application.paymentMethod || "").toLowerCase();
+        const isAgencyPayment = paymentMethod.includes("agency") || paymentMethod.includes("agence") || paymentMethod.includes("cash") || paymentMethod.includes("caisse");
+        const reference = input.paymentReference?.trim() || application.paymentTransactionId?.trim() || "";
+        if (!isAgencyPayment && !reference) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Une référence Orange Money est requise, sauf pour un paiement effectué en agence." });
         }
       }
       const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;

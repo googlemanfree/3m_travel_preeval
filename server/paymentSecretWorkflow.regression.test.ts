@@ -11,19 +11,21 @@ const adminPayments = readFileSync(resolve(root, "client/src/components/AdminPay
 
 
 describe("workflow code secret de paiement", () => {
-  it("ne stocke pas le code candidat en clair et exige son empreinte avant validation admin", () => {
+  it("conserve la transmission candidate facultative sans en faire un verrou admin", () => {
     expect(candidateRouter).toContain("submitPaymentSecretCode");
     expect(candidateRouter).toContain("createHash(\"sha256\")");
-    expect(applicationRouter).toContain("paymentSecretCodeHash");
-    expect(applicationRouter).toContain("Le candidat doit d’abord transmettre son code secret de paiement.");
-    expect(applicationRouter).toContain("Le code secret de paiement est incorrect.");
+    expect(applicationRouter).toContain("paymentReference: z.string().trim().max(255).optional()");
+    expect(applicationRouter).toContain("Une référence Orange Money est requise, sauf pour un paiement effectué en agence.");
+    expect(applicationRouter).not.toContain("Le candidat doit d’abord transmettre son code secret de paiement.");
+    expect(applicationRouter).not.toContain("Le code secret de paiement est incorrect.");
   });
 
-  it("transmet le code depuis l’espace candidat et le demande explicitement à l’admin", () => {
+  it("conserve le champ de référence et retire le code secret du modal admin", () => {
     expect(candidateDashboard).toContain("paymentSecretCode");
     expect(candidateDashboard).toContain("Transmettre le code");
-    expect(adminPayments).toContain("admin-payment-secret");
-    expect(adminPayments).toContain("paymentSecretCode:");
+    expect(adminPayments).not.toContain("admin-payment-secret");
+    expect(adminPayments).not.toContain("paymentSecretCode:");
+    expect(adminPayments).toContain("paymentReference");
   });
 
   it("conserve l’isolation des documents agence par cible distincte", () => {

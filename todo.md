@@ -2585,3 +2585,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver la ligne ACCOUNT_ONLY avec son code `COMPTE-<id>` tant qu’une application liée reste en statut EVAL-DRAFT, afin de permettre la recherche et l’accès au dossier de test.
 - [x] TypeScript et 11 régressions ciblées réussissent après ce correctif.
 - [ ] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon.
+
+## Nouvelle passe — session admin et confirmation paiement
+- [x] Invalider et vider explicitement le cache tRPC de la liste candidats après reconnexion ou changement de jeton, afin d’éviter l’écart liste/fiche.
+- [x] Ajouter une régression vérifiant que la liste candidats ne reste pas servie par un cache associé à un ancien jeton de session.
+- [x] Retirer l’exigence du code secret candidat dans le modal Confirmer le paiement.
+- [x] Conserver obligatoirement la référence Orange Money ou la mention paiement en agence, la validation humaine, l’identité du conseiller et l’horodatage.
+- [x] Tester et publier les deux corrections sans confirmer de paiement réel.
