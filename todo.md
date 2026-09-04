@@ -2546,3 +2546,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Faire tourner la révision PWA et le marqueur de build pour propager le correctif online_ sur le domaine public.
 - [x] Mettre à jour la régression PWA ; TypeScript et 17 tests ciblés passent.
 - [ ] Rejouer le clic Bilans → Préparer après la rotation PWA et confirmer la fiche 360° sans erreur de transformation.
+
+- [x] Vérifier en session admin publiée que Bilans → Préparer ouvre la fiche 360° sans erreur de transformation et envoie candidateId=online_420001.
+- [x] Ouvrir la fiche agence EVAL-AG-240001 par clic réel ; la fiche charge, affiche les actions de pilotage et aucune action sensible n a été déclenchée.
+- [x] Brancher l ouverture automatique de l éditeur manuel lorsque Préparer l évaluation est cliqué depuis la file.
+- [ ] Republier puis confirmer visuellement que le bloc-notes manuel s ouvre directement depuis Préparer.

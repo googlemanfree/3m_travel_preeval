@@ -325,11 +325,13 @@ export function CandidateDetailModal({
   onClose,
   onStatusUpdated,
   onOpenOperations,
+  openEvaluationEditor = false,
 }: {
   candidateId: string;
   onClose: () => void;
   onStatusUpdated: () => void;
   onOpenOperations: (area: "payments" | "documents" | "emails", folderCode: string) => void;
+  openEvaluationEditor?: boolean;
 }) {
   const { toast } = useToast();
   const [notifyClient, setNotifyClient] = useState(true);
@@ -356,6 +358,10 @@ export function CandidateDetailModal({
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
+
+  useEffect(() => {
+    if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
+  }, [candidate, openEvaluationEditor]);
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -888,6 +894,7 @@ export default function AdminDashboard() {
   const [destinationFilter, setDestinationFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -1655,7 +1662,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="evaluation-review" className="space-y-6">
-            <AdvisorEvaluationReviewQueue sessionToken={sessionToken} onOpenDossier={(dossierNumber, candidateId) => { setSearch(dossierNumber); setSelectedCandidateId(candidateId); setActiveAdminTab("candidates"); toast({ title: "Dossier ouvert", description: `${dossierNumber} est ouvert dans la fiche 360° pour préparer et relire le bilan.` }); }} />
+            <AdvisorEvaluationReviewQueue sessionToken={sessionToken} onOpenDossier={(dossierNumber, candidateId) => { setSearch(dossierNumber); setOpenEvaluationEditor(true); setSelectedCandidateId(candidateId); setActiveAdminTab("candidates"); toast({ title: "Dossier ouvert", description: `${dossierNumber} est ouvert dans la fiche 360° pour préparer et relire le bilan.` }); }} />
           </TabsContent>
 
           <TabsContent value="evaluation-reminders" className="space-y-6">
@@ -2183,8 +2190,9 @@ export default function AdminDashboard() {
       {selectedCandidateId && (
         <CandidateDetailModal
           candidateId={selectedCandidateId}
-          onClose={() => setSelectedCandidateId(null)}
+          onClose={() => { setSelectedCandidateId(null); setOpenEvaluationEditor(false); }}
           onStatusUpdated={handleRefresh}
+          openEvaluationEditor={openEvaluationEditor}
           onOpenOperations={(area, folderCode) => {
             setSearch(folderCode);
             setActiveAdminTab(area);
