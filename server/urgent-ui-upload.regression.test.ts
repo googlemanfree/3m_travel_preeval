@@ -25,6 +25,11 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).toContain("CV introuvable");
   });
 
+  it("privilégie le jeton admin local pour éviter la désynchronisation de session", () => {
+    const source = read("client/src/pages/AdminDashboard.tsx");
+    expect(source).toContain('localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken")');
+  });
+
   it("rend les onglets admin Pilotage et Bilans cliquables", () => {
     const source = read("client/src/pages/AdminDashboard.tsx");
     expect(source).toContain('value="pilotage" onClick={() => setActiveAdminTab("pilotage")}');

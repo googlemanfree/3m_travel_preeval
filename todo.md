@@ -2527,3 +2527,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les régressions correspondantes et valider TypeScript + 11 tests ciblés.
 - [ ] Tester les boutons de mutation Pilotage et bilan par clic réel sans déclencher d action sensible.
 - [ ] Vérifier l isolation multi-dossiers et les bilans agence sur plusieurs dossiers réels dans une session admin active.
+
+- [x] Vérifier en session admin publiée que le clic sur « Bilans à valider » ouvre bien la file et affiche « Section active : evaluation-review ».
+- [x] Vérifier en session admin publiée que la file affiche les boutons « Préparer l’évaluation » sans déclencher d envoi.
+
+- [x] Corriger la priorité du jeton admin : localStorage avant sessionStorage pour les requêtes du tableau de bord et l import agence.
+- [x] Ajouter une régression de désynchronisation de session ; TypeScript et 12 tests ciblés passent.
+- [ ] Rejouer le clic Préparer l évaluation après reconnexion admin fraîche et vérifier l ouverture de l éditeur.

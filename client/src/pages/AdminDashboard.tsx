@@ -342,7 +342,7 @@ export function CandidateDetailModal({
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
   const sessionToken = typeof window !== "undefined"
-    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || ""
     : "";
 
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
@@ -710,7 +710,7 @@ function ImportAgencyModal({
       toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
-    importMutation.mutate({ sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "", ...form });
+    importMutation.mutate({ sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "" : "", ...form });
   };
 
   const setField = (key: keyof typeof form, value: string) =>
@@ -878,7 +878,7 @@ export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
   const sessionToken = typeof window !== "undefined"
-    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || ""
     : "";
 
   const [search, setSearch] = useState("");
