@@ -36,6 +36,15 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).toContain('value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")}');
   });
 
+  it("conserve les handlers de préparation du bilan et le verrou humain avant envoi", () => {
+    const source = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    expect(source).toContain("const openEmailPreview = async () =>");
+    expect(source).toContain("const openPdfPreview = async () =>");
+    expect(source).toContain("const saveDraftOnly = async () =>");
+    expect(source).toContain("Valider et envoyer");
+    expect(source).toContain("if (!(await ensureDraft())) return");
+  });
+
   it("sérialise la fiche candidat avant sa transformation tRPC", () => {
     const source = read("server/routers/admin.ts");
     expect(source).toContain("function serializeAdminCandidateDetails<T>(value: T): T");

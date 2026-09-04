@@ -2559,3 +2559,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diagnostiquer l erreur de modale : la réponse getCandidateDetails était valide mais la transformation client échouait sur les valeurs temporelles ; sérialisation locale ajoutée pour account/online/agency.
 - [x] Ajouter la régression de sérialisation de la fiche candidat ; TypeScript et 18 tests ciblés passent.
 - [x] Rejouer après publication le clic Bilans → Préparer et confirmer visuellement la zone de saisie du bloc-notes sans valider ni envoyer.
+
+- [x] Ajouter une régression des handlers openEmailPreview, openPdfPreview, saveDraftOnly et du verrou ensureDraft avant Valider et envoyer ; TypeScript et 19 tests ciblés passent.
