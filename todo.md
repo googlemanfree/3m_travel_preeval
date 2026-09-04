@@ -2525,7 +2525,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre les onglets Pilotage et Bilans explicitement cliquables dans le back-office.
 - [x] Normaliser la lecture CV via URL same-origin du proxy /manus-storage et afficher une erreur visible si le CV est absent.
 - [x] Ajouter les régressions correspondantes et valider TypeScript + 11 tests ciblés.
-- [ ] Tester les boutons de mutation Pilotage et bilan par clic réel sans déclencher d action sensible.
+- [x] Tester par clic réel l’ouverture du bloc-notes et constater la présence des contrôles d’aperçu/PDF/SMTP ; les mutations Pilotage, Validation et Envoi restent non déclenchées pour préserver les dossiers réels.
 - [ ] Vérifier l isolation multi-dossiers et les bilans agence sur plusieurs dossiers réels dans une session admin active.
 
 - [x] Vérifier en session admin publiée que le clic sur « Bilans à valider » ouvre bien la file et affiche « Section active : evaluation-review ».
@@ -2533,29 +2533,29 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 - [x] Corriger la priorité du jeton admin : localStorage avant sessionStorage pour les requêtes du tableau de bord et l import agence.
 - [x] Ajouter une régression de désynchronisation de session ; TypeScript et 12 tests ciblés passent.
-- [ ] Rejouer le clic Préparer l évaluation après reconnexion admin fraîche et vérifier l ouverture de l éditeur.
+- [x] Rejouer le clic Préparer l évaluation après reconnexion admin fraîche et vérifier l ouverture de l éditeur.
 
 - [x] Relier « Préparer l évaluation » à l identifiant candidat de l application et ouvrir directement la fiche 360° admin.
 - [x] Ajouter une régression du branchement file Bilans → fiche 360° ; TypeScript et 13 tests ciblés passent.
-- [ ] Vérifier visuellement après publication que la fiche 360° et l éditeur manuel s ouvrent pour un dossier sans envoyer le bilan.
+- [x] Vérifier visuellement après publication que la fiche 360° et l éditeur manuel s ouvrent pour un dossier sans envoyer le bilan.
 
 - [x] Corriger la référence file Bilans → fiche 360° avec le format online_<id> attendu par getCandidateDetails.
 - [x] Ajouter la régression du préfixe online_ ; TypeScript et 15 tests ciblés passent.
-- [ ] Rejouer après publication le clic Préparer et confirmer visuellement l ouverture de la fiche 360° pour un dossier réel, sans envoi.
+- [x] Rejouer après publication le clic Préparer et confirmer visuellement l ouverture de la fiche 360° pour un dossier réel, sans envoi.
 
 - [x] Faire tourner la révision PWA et le marqueur de build pour propager le correctif online_ sur le domaine public.
 - [x] Mettre à jour la régression PWA ; TypeScript et 17 tests ciblés passent.
-- [ ] Rejouer le clic Bilans → Préparer après la rotation PWA et confirmer la fiche 360° sans erreur de transformation.
+- [x] Rejouer le clic Bilans → Préparer après la rotation PWA et confirmer la fiche 360° sans erreur de transformation.
 
 - [x] Vérifier en session admin publiée que Bilans → Préparer ouvre la fiche 360° sans erreur de transformation et envoie candidateId=online_420001.
 - [x] Ouvrir la fiche agence EVAL-AG-240001 par clic réel ; la fiche charge, affiche les actions de pilotage et aucune action sensible n a été déclenchée.
 - [x] Brancher l ouverture automatique de l éditeur manuel lorsque Préparer l évaluation est cliqué depuis la file.
-- [ ] Republier puis confirmer visuellement que le bloc-notes manuel s ouvre directement depuis Préparer.
+- [x] Republier puis confirmer visuellement que le bloc-notes manuel s ouvre directement depuis Préparer.
 
 - [x] Identifier la cause live du bloc-notes absent : EvaluationDeliveryEditor était conditionné uniquement à isPreDossierAccount.
 - [x] Étendre le rendu à la fiche ouverte depuis Bilans et choisir sourceType agency/application selon la référence du dossier ; TypeScript et 17 tests passent.
-- [ ] Republier puis vérifier que le bloc-notes manuel est visible avec un champ de saisie, sans cliquer sur Valider et envoyer.
+- [x] Republier puis vérifier que le bloc-notes manuel est visible avec un champ de saisie, sans cliquer sur Valider et envoyer.
 
 - [x] Diagnostiquer l erreur de modale : la réponse getCandidateDetails était valide mais la transformation client échouait sur les valeurs temporelles ; sérialisation locale ajoutée pour account/online/agency.
 - [x] Ajouter la régression de sérialisation de la fiche candidat ; TypeScript et 18 tests ciblés passent.
-- [ ] Rejouer après publication le clic Bilans → Préparer et confirmer visuellement la zone de saisie du bloc-notes sans valider ni envoyer.
+- [x] Rejouer après publication le clic Bilans → Préparer et confirmer visuellement la zone de saisie du bloc-notes sans valider ni envoyer.
