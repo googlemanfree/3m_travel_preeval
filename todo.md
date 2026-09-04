@@ -2582,3 +2582,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver l’alias `COMPTE-<id>` dans les clés de recherche quand une application provisoire EVAL-DRAFT existe déjà.
 - [x] Ajouter la régression de recherche par alias ; TypeScript et 11 tests ciblés réussissent.
 - [ ] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon.
+- [x] Conserver la ligne ACCOUNT_ONLY avec son code `COMPTE-<id>` tant qu’une application liée reste en statut EVAL-DRAFT, afin de permettre la recherche et l’accès au dossier de test.
+- [x] TypeScript et 11 régressions ciblées réussissent après ce correctif.
+- [ ] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon.

@@ -1571,8 +1571,13 @@ export const adminRouter = router({
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
+        const provisionalAccountEmails = new Set(
+          onlineApps
+            .filter((record) => record.dossierNumber?.startsWith("EVAL-DRAFT-"))
+            .map((record) => record.email.toLowerCase()),
+        );
         const normalizedAccounts = candidateRows
-          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()))
+          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()) || provisionalAccountEmails.has(candidate.email.toLowerCase()))
           .map((candidate) => ({
             id: `account_${candidate.id}`,
             internalId: candidate.id,
