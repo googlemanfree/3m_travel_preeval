@@ -2171,7 +2171,12 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
-            <AdminPaymentManagement />
+            <AdminPaymentManagement
+              onPaymentUpdated={() => {
+                void trpcUtils.admin.listCandidates.invalidate();
+                void trpcUtils.application.listApplications.invalidate();
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="inbox" className="space-y-6">

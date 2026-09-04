@@ -2602,3 +2602,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre la référence Orange Money facultative dans la mutation admin ; utiliser une trace `VALIDATION_MANUELLE` lorsqu’aucune référence n’est fournie.
 - [x] Modifier le modal pour indiquer que la référence est facultative et permettre la confirmation sans saisie.
 - [x] Ajouter les régressions ; TypeScript et 7 tests ciblés passent, sans exécuter de confirmation de paiement réelle.
+
+## Rafraîchissement liste après modal paiement
+- [x] Invalider la liste candidats après une validation de paiement réussie et après fermeture du modal.
+- [x] Ajouter une régression couvrant le rafraîchissement du parent après mutation et fermeture.
+- [x] Tester et publier sans confirmer de paiement réel : TypeScript et 7 tests ciblés passent.

@@ -38,7 +38,11 @@ interface Payment {
   };
 }
 
-export function AdminPaymentManagement() {
+interface AdminPaymentManagementProps {
+  onPaymentUpdated?: () => void;
+}
+
+export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
@@ -258,6 +262,8 @@ export function AdminPaymentManagement() {
       }
       
       setConfirmDialogOpen(false);
+      // Le modal vient d’être fermé après une mutation réussie : le parent invalide sa liste candidats.
+      onPaymentUpdated?.();
       setSelectedPayment(null);
       setActionType(null);
       setAdminNote("");

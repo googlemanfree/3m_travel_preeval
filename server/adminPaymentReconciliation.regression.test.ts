@@ -34,6 +34,9 @@ describe("rapprochement paiement admin", () => {
     expect(component).toContain("La référence est facultative");
     expect(component).toContain("VALIDATION_MANUELLE");
     expect(component).toContain("paymentReference: paymentReference.trim() || undefined");
+    expect(component).toContain("onPaymentUpdated?.()");
+    expect(readProjectFile("client/src/pages/AdminDashboard.tsx")).toContain("trpcUtils.admin.listCandidates.invalidate()");
+    expect(readProjectFile("client/src/pages/AdminDashboard.tsx")).toContain("trpcUtils.application.listApplications.invalidate()");
   });
 
   it("réinitialise le cache tRPC de la liste candidats pour le jeton courant", () => {
