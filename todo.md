@@ -2574,3 +2574,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] TypeScript et 9 régressions ciblées réussis après ce correctif.
 - [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon.
 - [ ] Tester les actions Pilotage du dossier TEST INTERNE, sans activer le dossier ni envoyer de communication.
+- [x] Brancher `ACCOUNT_ONLY` sur `sourceType: candidate` afin d’utiliser le bootstrap d’évaluation existant au lieu de charger directement un identifiant candidat sans application.
+- [x] Ajouter la régression de ce branchement ; TypeScript et 10 tests ciblés réussissent.
+- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon.

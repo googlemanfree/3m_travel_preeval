@@ -45,6 +45,13 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).toContain("if (!(await ensureDraft())) return");
   });
 
+  it("branche les comptes ACCOUNT_ONLY sur le bootstrap candidat", () => {
+    const source = read("client/src/pages/AdminDashboard.tsx");
+    expect(source).toContain('candidate?.source === "ACCOUNT_ONLY" ? "candidate"');
+    const editorSource = read("client/src/components/EvaluationDeliveryEditor.tsx");
+    expect(editorSource).toContain('initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" })');
+  });
+
   it("sérialise la fiche candidat avant sa transformation tRPC", () => {
     const source = read("server/routers/admin.ts");
     expect(source).toContain("function serializeAdminCandidateDetails<T>(value: T): T");

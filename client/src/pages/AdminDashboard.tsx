@@ -358,7 +358,7 @@ export function CandidateDetailModal({
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
-  const evaluationEditorSourceType = candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
+  const evaluationEditorSourceType = candidate?.source === "ACCOUNT_ONLY" ? "candidate" : candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
 
   useEffect(() => {
     if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
