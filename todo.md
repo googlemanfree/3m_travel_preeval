@@ -2555,3 +2555,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier la cause live du bloc-notes absent : EvaluationDeliveryEditor était conditionné uniquement à isPreDossierAccount.
 - [x] Étendre le rendu à la fiche ouverte depuis Bilans et choisir sourceType agency/application selon la référence du dossier ; TypeScript et 17 tests passent.
 - [ ] Republier puis vérifier que le bloc-notes manuel est visible avec un champ de saisie, sans cliquer sur Valider et envoyer.
+
+- [x] Diagnostiquer l erreur de modale : la réponse getCandidateDetails était valide mais la transformation client échouait sur les valeurs temporelles ; sérialisation locale ajoutée pour account/online/agency.
+- [x] Ajouter la régression de sérialisation de la fiche candidat ; TypeScript et 18 tests ciblés passent.
+- [ ] Rejouer après publication le clic Bilans → Préparer et confirmer visuellement la zone de saisie du bloc-notes sans valider ni envoyer.

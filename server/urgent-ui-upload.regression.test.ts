@@ -36,6 +36,12 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).toContain('value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")}');
   });
 
+  it("sérialise la fiche candidat avant sa transformation tRPC", () => {
+    const source = read("server/routers/admin.ts");
+    expect(source).toContain("function serializeAdminCandidateDetails<T>(value: T): T");
+    expect(source).toContain("return serializeAdminCandidateDetails({");
+  });
+
   it("ouvre directement la fiche 360 depuis la file des bilans", () => {
     const queueSource = read("client/src/components/AdvisorEvaluationReviewQueue.tsx");
     expect(queueSource).toContain("onOpenDossier(row.dossierNumber, `online_${row.id}`)");
