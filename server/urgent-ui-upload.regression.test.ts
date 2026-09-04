@@ -38,7 +38,7 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("ouvre directement la fiche 360 depuis la file des bilans", () => {
     const queueSource = read("client/src/components/AdvisorEvaluationReviewQueue.tsx");
-    expect(queueSource).toContain("onOpenDossier(row.dossierNumber, String(row.id))");
+    expect(queueSource).toContain("onOpenDossier(row.dossierNumber, `online_${row.id}`)");
     const dashboardSource = read("client/src/pages/AdminDashboard.tsx");
     expect(dashboardSource).toContain('setSelectedCandidateId(candidateId); setActiveAdminTab("candidates")');
   });

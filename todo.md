@@ -2538,3 +2538,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Relier « Préparer l évaluation » à l identifiant candidat de l application et ouvrir directement la fiche 360° admin.
 - [x] Ajouter une régression du branchement file Bilans → fiche 360° ; TypeScript et 13 tests ciblés passent.
 - [ ] Vérifier visuellement après publication que la fiche 360° et l éditeur manuel s ouvrent pour un dossier sans envoyer le bilan.
+
+- [x] Corriger la référence file Bilans → fiche 360° avec le format online_<id> attendu par getCandidateDetails.
+- [x] Ajouter la régression du préfixe online_ ; TypeScript et 15 tests ciblés passent.
+- [ ] Rejouer après publication le clic Préparer et confirmer visuellement l ouverture de la fiche 360° pour un dossier réel, sans envoi.
