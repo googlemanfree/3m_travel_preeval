@@ -245,10 +245,15 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   // l’identifiant interne est la seule condition nécessaire côté UI.
   const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;
   const extractCandidateCv = async () => {
-    if (!candidateCv?.documentUrl || cvExtractionMutation.isPending) return;
+    if (cvExtractionMutation.isPending) return;
+    if (!candidateCv?.documentUrl) {
+      toast.error("CV introuvable", { description: "Aucun CV exploitable n’est rattaché à ce dossier." });
+      return;
+    }
     try {
-      const response = await fetch(candidateCv.documentUrl, { credentials: "include" });
-      if (!response.ok) throw new Error("Le CV n’est pas accessible depuis le dossier.");
+      const documentUrl = new URL(String(candidateCv.documentUrl), window.location.origin).toString();
+      const response = await fetch(documentUrl, { credentials: "include", headers: { Accept: "application/pdf,image/png,image/jpeg,application/octet-stream" }, cache: "no-store" });
+      if (!response.ok) throw new Error(`Le CV n’est pas accessible depuis le dossier (${response.status}).`);
       const blob = await response.blob();
       if (blob.size > 5 * 1024 * 1024) throw new Error("Le CV dépasse la taille maximale d’analyse de 5 Mo.");
       const bytes = new Uint8Array(await blob.arrayBuffer());

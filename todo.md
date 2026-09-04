@@ -2520,3 +2520,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un champ de saisie manuelle du bilan dans l’espace admin.
 - [x] Ajouter un bouton admin indépendant « Valider cette évaluation » pour les dossiers agence.
 - [ ] Tester chaque bouton par clic réel, publier et documenter les limites sans session candidat.
+
+## Stabilisation admin — handlers et lecture CV
+- [x] Rendre les onglets Pilotage et Bilans explicitement cliquables dans le back-office.
+- [x] Normaliser la lecture CV via URL same-origin du proxy /manus-storage et afficher une erreur visible si le CV est absent.
+- [x] Ajouter les régressions correspondantes et valider TypeScript + 11 tests ciblés.
+- [ ] Tester les boutons de mutation Pilotage et bilan par clic réel sans déclencher d action sensible.
+- [ ] Vérifier l isolation multi-dossiers et les bilans agence sur plusieurs dossiers réels dans une session admin active.

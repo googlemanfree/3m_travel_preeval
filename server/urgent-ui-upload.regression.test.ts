@@ -18,6 +18,19 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(source).not.toContain('role="tooltip"');
   });
 
+  it("normalise le proxy CV et signale un CV manquant", () => {
+    const source = read("client/src/components/Candidate360Workspace.tsx");
+    expect(source).toContain("new URL(String(candidateCv.documentUrl), window.location.origin)");
+    expect(source).toContain('cache: "no-store"');
+    expect(source).toContain("CV introuvable");
+  });
+
+  it("rend les onglets admin Pilotage et Bilans cliquables", () => {
+    const source = read("client/src/pages/AdminDashboard.tsx");
+    expect(source).toContain('value="pilotage" onClick={() => setActiveAdminTab("pilotage")}');
+    expect(source).toContain('value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")}');
+  });
+
   it("dirige le suivi client vers la page dédiée", () => {
     const source = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(source).toContain('href="/mon-dossier"');
