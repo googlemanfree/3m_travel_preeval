@@ -1517,6 +1517,10 @@ export const adminRouter = router({
           id: `online_${app.id}`,
           internalId: app.id,
           folderCode: app.dossierNumber,
+          searchableFolderCodes: [
+            app.dossierNumber,
+            ...(candidateByEmail.get(app.email.toLowerCase()) ? [`COMPTE-${String(candidateByEmail.get(app.email.toLowerCase())!.id).padStart(5, "0")}`] : []),
+          ],
           fullName: app.fullName,
           email: app.email,
           whatsapp: app.whatsappNumber || "",
@@ -1621,6 +1625,7 @@ export const adminRouter = router({
           const query = input.search.toLowerCase().trim();
           allCandidates = allCandidates.filter(c =>
             c.folderCode?.toLowerCase().includes(query) ||
+            ("searchableFolderCodes" in c && c.searchableFolderCodes.some((code) => code.toLowerCase().includes(query))) ||
             c.fullName?.toLowerCase().includes(query) ||
             c.email?.toLowerCase().includes(query) ||
             c.destinationCountry?.toLowerCase().includes(query)

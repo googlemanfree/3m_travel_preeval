@@ -52,6 +52,13 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(editorSource).toContain('initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" })');
   });
 
+  it("conserve l alias COMPTE dans la recherche après création d une application provisoire", () => {
+    const source = read("server/routers/admin.ts");
+    expect(source).toContain("searchableFolderCodes");
+    expect(source).toContain('COMPTE-${String(candidateByEmail.get(app.email.toLowerCase())!.id).padStart(5, "0")}');
+    expect(source).toContain('c.searchableFolderCodes.some((code) => code.toLowerCase().includes(query))');
+  });
+
   it("sérialise la fiche candidat avant sa transformation tRPC", () => {
     const source = read("server/routers/admin.ts");
     expect(source).toContain("function serializeAdminCandidateDetails<T>(value: T): T");

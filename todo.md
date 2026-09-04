@@ -2577,3 +2577,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Brancher `ACCOUNT_ONLY` sur `sourceType: candidate` afin d’utiliser le bootstrap d’évaluation existant au lieu de charger directement un identifiant candidat sans application.
 - [x] Ajouter la régression de ce branchement ; TypeScript et 10 tests ciblés réussissent.
 - [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon.
+
+## Recherche dossier account-only après bootstrap
+- [x] Conserver l’alias `COMPTE-<id>` dans les clés de recherche quand une application provisoire EVAL-DRAFT existe déjà.
+- [x] Ajouter la régression de recherche par alias ; TypeScript et 11 tests ciblés réussissent.
+- [ ] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon.
