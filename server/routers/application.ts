@@ -672,12 +672,8 @@ export const applicationRouter = router({
 
       const isValidated = input.paymentStatus === "SUCCESS";
       if (isValidated) {
-        const paymentMethod = String(application.paymentMethod || "").toLowerCase();
-        const isAgencyPayment = paymentMethod.includes("agency") || paymentMethod.includes("agence") || paymentMethod.includes("cash") || paymentMethod.includes("caisse");
-        const reference = input.paymentReference?.trim() || application.paymentTransactionId?.trim() || "";
-        if (!isAgencyPayment && !reference) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Une référence Orange Money est requise, sauf pour un paiement effectué en agence." });
-        }
+        // La validation conseiller peut être faite sans référence saisie : cela couvre les paiements en agence et les validations manuelles documentées.
+        // Une référence Orange Money déjà connue est conservée lorsqu’elle existe ; sinon la trace VALIDATION_MANUELLE est enregistrée.
       }
       const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;
       const canStartTreatment = isValidated && application.agreementSigned && application.evaluationDeliveryStatus === "sent";
@@ -686,7 +682,7 @@ export const applicationRouter = router({
           paymentStatus: input.paymentStatus,
           paymentDate: isValidated ? new Date() : application.paymentDate,
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
-          paymentTransactionId: input.paymentReference || application.paymentTransactionId,
+          paymentTransactionId: input.paymentReference?.trim() || application.paymentTransactionId || "VALIDATION_MANUELLE",
           paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
           paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : application.paymentConfirmedAmount,
           paymentValidatedAt: validatedAt,

@@ -747,13 +747,10 @@ export function AdminPaymentManagement() {
                         <p className="text-sm text-slate-700">
                         En confirmant ce versement de <strong>65 000 XAF</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
                       </p>
-                      <Badge className={selectedPayment.paymentSecretCodeSubmittedAt ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}>
-                        {selectedPayment.paymentSecretCodeSubmittedAt ? `Code reçu le ${new Date(selectedPayment.paymentSecretCodeSubmittedAt).toLocaleString("fr-FR")}` : "Code candidat non encore transmis"}
-                      </Badge>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <Label htmlFor="admin-payment-reference" className="text-xs font-semibold text-slate-800">Référence Orange Money ou mention agence</Label>
-                          <Input id="admin-payment-reference" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Référence ou Paiement en agence" maxLength={255} className="mt-2 bg-white" disabled={isProcessing} />
+                          <Label htmlFor="admin-payment-reference" className="text-xs font-semibold text-slate-800">Référence Orange Money ou mention agence <span className="font-normal text-slate-500">(facultatif)</span></Label>
+                          <Input id="admin-payment-reference" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Facultatif — référence ou paiement en agence" maxLength={255} className="mt-2 bg-white" disabled={isProcessing} />
                         </div>
                         <div>
                           <Label htmlFor="admin-confirmed-amount" className="text-xs font-semibold text-slate-800">Montant confirmé ({selectedPayment.currency})</Label>
@@ -762,7 +759,7 @@ export function AdminPaymentManagement() {
                         </div>
                       </div>
                       <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-                        La validation repose sur la référence Orange Money ou la mention de paiement en agence, le montant vérifié et la confirmation manuelle du conseiller. Aucun code secret candidat n’est requis dans ce modal.
+                        La référence est facultative. Le conseiller peut confirmer simplement le paiement, y compris pour un paiement en agence ; une trace VALIDATION_MANUELLE sera enregistrée si aucune référence n’est saisie.
                       </div>
                     </div>
                   ) : (

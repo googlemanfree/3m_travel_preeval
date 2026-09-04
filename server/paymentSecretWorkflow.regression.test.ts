@@ -15,7 +15,7 @@ describe("workflow code secret de paiement", () => {
     expect(candidateRouter).toContain("submitPaymentSecretCode");
     expect(candidateRouter).toContain("createHash(\"sha256\")");
     expect(applicationRouter).toContain("paymentReference: z.string().trim().max(255).optional()");
-    expect(applicationRouter).toContain("Une référence Orange Money est requise, sauf pour un paiement effectué en agence.");
+    expect(applicationRouter).toContain("paymentTransactionId: input.paymentReference?.trim() || application.paymentTransactionId || \"VALIDATION_MANUELLE\"");
     expect(applicationRouter).not.toContain("Le candidat doit d’abord transmettre son code secret de paiement.");
     expect(applicationRouter).not.toContain("Le code secret de paiement est incorrect.");
   });

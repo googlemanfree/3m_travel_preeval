@@ -2597,3 +2597,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reproduire la page blanche sur `/admin/login` ou `/admin` et relever l’erreur console/réseau exacte : après rechargement, `/admin/login` rend le formulaire ; aucune exception JavaScript persistante n’apparaît dans les logs, seulement un rechargement réseau transitoire.
 - [x] Aucun correctif métier supplémentaire appliqué : aucune cause persistante n’a été confirmée ; le rechargement sécurisé existant récupère la page sans contourner l’authentification.
 - [x] Vérifier le rendu publié : `/admin/login?check=blank-page-f51f671f` affiche le formulaire Admin 3M Travel ; la connexion reste requise et aucun dossier n’est modifié.
+
+## Validation paiement simplifiée
+- [x] Rendre la référence Orange Money facultative dans la mutation admin ; utiliser une trace `VALIDATION_MANUELLE` lorsqu’aucune référence n’est fournie.
+- [x] Modifier le modal pour indiquer que la référence est facultative et permettre la confirmation sans saisie.
+- [x] Ajouter les régressions ; TypeScript et 7 tests ciblés passent, sans exécuter de confirmation de paiement réelle.

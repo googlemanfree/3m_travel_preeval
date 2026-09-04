@@ -31,7 +31,8 @@ describe("rapprochement paiement admin", () => {
     expect(component).not.toContain("admin-payment-secret");
     expect(component).not.toContain("paymentSecretCode: actionType");
     expect(component).not.toContain("Saisissez le code secret transmis par le candidat");
-    expect(component).toContain("référence Orange Money ou la mention de paiement en agence");
+    expect(component).toContain("La référence est facultative");
+    expect(component).toContain("VALIDATION_MANUELLE");
     expect(component).toContain("paymentReference: paymentReference.trim() || undefined");
   });
 
