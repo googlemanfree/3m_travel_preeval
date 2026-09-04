@@ -2563,7 +2563,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une régression des handlers openEmailPreview, openPdfPreview, saveDraftOnly et du verrou ensureDraft avant Valider et envoyer ; TypeScript et 19 tests ciblés passent.
 
 ## Test contrôlé autorisé — dossier fictif/test
-- [ ] Identifier le dossier explicitement fictif ou interne à utiliser et confirmer son code avant mutation.
+- [x] Identifier le dossier explicitement fictif ou interne à utiliser et confirmer son code avant mutation : COMPTE-1140001 — TEST INTERNE.
 - [ ] Tester Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action uniquement sur le dossier de test.
 - [ ] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement.
 - [ ] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts.
