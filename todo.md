@@ -2592,3 +2592,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Retirer l’exigence du code secret candidat dans le modal Confirmer le paiement.
 - [x] Conserver obligatoirement la référence Orange Money ou la mention paiement en agence, la validation humaine, l’identité du conseiller et l’horodatage.
 - [x] Tester et publier les deux corrections sans confirmer de paiement réel.
+
+## Bug page blanche admin
+- [x] Reproduire la page blanche sur `/admin/login` ou `/admin` et relever l’erreur console/réseau exacte : après rechargement, `/admin/login` rend le formulaire ; aucune exception JavaScript persistante n’apparaît dans les logs, seulement un rechargement réseau transitoire.
+- [x] Aucun correctif métier supplémentaire appliqué : aucune cause persistante n’a été confirmée ; le rechargement sécurisé existant récupère la page sans contourner l’authentification.
+- [x] Vérifier le rendu publié : `/admin/login?check=blank-page-f51f671f` affiche le formulaire Admin 3M Travel ; la connexion reste requise et aucun dossier n’est modifié.
