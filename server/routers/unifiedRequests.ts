@@ -161,10 +161,56 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
   if (directApplication) return directApplication;
 
   // The admin dossier list also exposes account-only candidates with their candidate ID.
-  const [candidateAccount] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, sourceRecordId)).limit(1);
+  const [candidateAccount] = await db.select().from(candidates).where(eq(candidates.id, sourceRecordId)).limit(1);
   if (candidateAccount) {
     const [accountApplication] = await db.select().from(applications).where(eq(applications.candidateId, candidateAccount.id)).orderBy(desc(applications.createdAt)).limit(1);
     if (accountApplication) return accountApplication;
+    // Certains comptes créés après une évaluation externe n’ont pas encore de ligne applications.
+    // Initialiser uniquement un brouillon de préparation, sans activer le dossier ni modifier le paiement.
+    let dossierNumber = generateBootstrapEvaluationReference();
+    while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
+      dossierNumber = generateBootstrapEvaluationReference();
+    }
+    const destination = mapCandidateDestination(candidateAccount.destination);
+    const draftDestination = destination === "autre" ? "europe" : destination;
+    const initialDraft = {
+      destination: draftDestination,
+      finalScore: 0,
+      verdict: "",
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+      language: candidateAccount.preferredLanguage === "en" ? "en" : "fr",
+      advisorValidated: false,
+      advisorValidatedAt: null,
+      advisorValidatedByAdminId: null,
+    };
+    await db.insert(applications).values({
+      dossierNumber,
+      candidateId: candidateAccount.id,
+      fullName: candidateAccount.fullName,
+      email: candidateAccount.email,
+      whatsappNumber: candidateAccount.phone || "Non renseigné",
+      nationality: candidateAccount.nationality || null,
+      academicLevel: candidateAccount.educationLevel || null,
+      languageSkills: candidateAccount.languageLevel || null,
+      destination,
+      formulaChosen: "integral",
+      visaType: candidateAccount.visaType || "À qualifier",
+      dossierStatus: "nouveau",
+      paymentStatus: "PENDING",
+      paymentAmount: 0,
+      paymentCurrency: "XAF",
+      scoringTotal: 0,
+      scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", adminDraft: initialDraft }),
+      evaluationDeliveryStatus: "draft",
+      evaluationRequiresSecondApproval: false,
+      evaluationApprovalStatus: "not_required",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const [createdAccountApplication] = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
+    if (createdAccountApplication) return createdAccountApplication;
   }
 
   const [sourceEvaluation] = await db.select({ candidateId: evaluations.candidateId, email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, sourceRecordId)).limit(1);

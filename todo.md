@@ -2561,3 +2561,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rejouer après publication le clic Bilans → Préparer et confirmer visuellement la zone de saisie du bloc-notes sans valider ni envoyer.
 
 - [x] Ajouter une régression des handlers openEmailPreview, openPdfPreview, saveDraftOnly et du verrou ensureDraft avant Valider et envoyer ; TypeScript et 19 tests ciblés passent.
+
+## Test contrôlé autorisé — dossier fictif/test
+- [ ] Identifier le dossier explicitement fictif ou interne à utiliser et confirmer son code avant mutation.
+- [ ] Tester Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action uniquement sur le dossier de test.
+- [ ] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement.
+- [ ] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts.
+
+## Correctif account-only — COMPTE-1140001 TEST INTERNE
+- [x] Dossier de test identifié : COMPTE-1140001 — TEST INTERNE (source account-only).
+- [x] Corriger le cas où un compte candidat sans ligne applications provoquait « Dossier d’évaluation introuvable » ; création d’un brouillon provisoire sans activation ni modification de paiement.
+- [x] TypeScript et 9 régressions ciblées réussis après ce correctif.
+- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon.
+- [ ] Tester les actions Pilotage du dossier TEST INTERNE, sans activer le dossier ni envoyer de communication.
