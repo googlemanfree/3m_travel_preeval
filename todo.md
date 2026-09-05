@@ -2613,3 +2613,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la configuration du lien tRPC et la disponibilité de `/api/trpc` en navigation fraîche : baseUrl same-origin `/api/trpc`, probe `auth.me` HTTP 200.
 - [x] Corriger la résilience réseau sans données fictives : deux reprises bornées uniquement pour les erreurs de fetch transitoires, réponses HTTP et erreurs métier inchangées.
 - [x] Ajouter une régression et tester `/` avant publication : TypeScript, test réseau ciblé et navigation fraîche sans erreur console.
+
+## Vérification post-paiement et contrôle de l’espace client
+- [x] Vérifier que la liste candidats est invalidée et actualisée après fermeture du modal suivant une validation de paiement réussie : callback parent + invalidation `listCandidates`/`listApplications` publiés.
+- [x] Cartographier les actions admin réellement disponibles : workflow, échéances, tâches, checklist/documentation, rappels, messages, extraction CV, évaluation, statut, paiement et module de suppression agence séparé.
+- [x] Vérifier les garde-fous d’autorisation et ne pas exécuter de suppression sur un dossier réel : les mutations Candidate360 contrôlent `requireValidAdminSession(input.sessionToken)` ; suppression non exécutée.
+- [x] Documenter les URL/actions et limites live dans `admin_client_control_audit_2026-09-05.md`; la session admin externe n’était pas stable pour un clic métier réel.
+
+## Communication client — CV et rapports
+- [x] Cartographier les e-mails, PDF, messages et textes de l’espace client liés aux CV, évaluations et rapports ; les écrans techniques identifiés sont séparés des sorties client.
+- [x] Retirer les mentions client de « IA », « intelligence artificielle », « généré par IA » et équivalents dans les e-mails de rapport et le HTML du bilan ; les libellés admin restent disponibles en interne.
+- [x] Ajouter des régressions vérifiant le filtre client, les e-mails de rapport et la conservation des libellés techniques admin.
+- [x] Tester la page publique `/evaluation` et publier avec une action de vérification exacte ; la page demande une connexion et n’affiche aucune mention IA.

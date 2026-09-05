@@ -18,6 +18,7 @@ import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
+import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -943,7 +944,7 @@ export const applicationRouter = router({
             reportId,
             "autre",
             "processing",
-            `<pre style="font-family: monospace; white-space: pre-wrap;">${report}</pre>`
+            `<pre style="font-family: monospace; white-space: pre-wrap;">${sanitizeClientCommunicationHtml(report)}</pre>`
           );
           emailSendSuccess = true;
           
@@ -1387,7 +1388,7 @@ export const applicationRouter = router({
             report.reportId,
             "autre",
             "processing",
-            `<pre style="font-family: monospace; white-space: pre-wrap;">${report.reportContent}</pre>`
+            `<pre style="font-family: monospace; white-space: pre-wrap;">${sanitizeClientCommunicationHtml(report.reportContent)}</pre>`
           );
           emailSendSuccess = true;
 
