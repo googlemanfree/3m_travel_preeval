@@ -202,7 +202,7 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
       paymentAmount: 0,
       paymentCurrency: "XAF",
       scoringTotal: 0,
-      scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", adminDraft: initialDraft }),
+      scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", sourceFormSnapshot: buildCandidateFormSnapshot(candidateAccount), adminDraft: initialDraft }),
       evaluationDeliveryStatus: "draft",
       evaluationRequiresSecondApproval: false,
       evaluationApprovalStatus: "not_required",
@@ -220,6 +220,45 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     : and(eq(applications.email, sourceEvaluation.email), eq(applications.fullName, sourceEvaluation.fullName));
   const [linkedApplication] = await db.select().from(applications).where(applicationWhere).orderBy(desc(applications.createdAt)).limit(1);
   return linkedApplication ?? null;
+}
+
+function buildCandidateFormSnapshot(candidate: {
+  id: number;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  nationality?: string | null;
+  dateOfBirth?: string | null;
+  destination?: string | null;
+  visaType?: string | null;
+  formulaChosen?: string | null;
+  educationLevel?: string | null;
+  employmentStatus?: string | null;
+  languageLevel?: string | null;
+  preferredLanguage?: string | null;
+  scoreResult?: string | null;
+  scoreDetails?: string | null;
+  updatedAt?: Date | null;
+}) {
+  return {
+    candidateId: candidate.id,
+    capturedAt: new Date().toISOString(),
+    sourceUpdatedAt: candidate.updatedAt?.toISOString() ?? null,
+    fullName: candidate.fullName,
+    email: candidate.email,
+    phone: candidate.phone ?? null,
+    nationality: candidate.nationality ?? null,
+    dateOfBirth: candidate.dateOfBirth ?? null,
+    destination: candidate.destination ?? null,
+    visaType: candidate.visaType ?? null,
+    formulaChosen: candidate.formulaChosen ?? null,
+    educationLevel: candidate.educationLevel ?? null,
+    employmentStatus: candidate.employmentStatus ?? null,
+    languageLevel: candidate.languageLevel ?? null,
+    preferredLanguage: candidate.preferredLanguage ?? null,
+    scoreResult: candidate.scoreResult ?? null,
+    scoreDetails: candidate.scoreDetails ?? null,
+  };
 }
 
 type SourceType = typeof sourceTypes[number];
@@ -573,7 +612,7 @@ initializeEvaluationDelivery: publicProcedure
         paymentAmount: 0,
         paymentCurrency: "XAF",
         scoringTotal: 0,
-        scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", adminDraft: initialDraft }),
+        scoringDetails: JSON.stringify({ bootstrapSource: "candidate_pre_dossier", sourceFormSnapshot: buildCandidateFormSnapshot(candidate), adminDraft: initialDraft }),
         evaluationDeliveryStatus: "draft",
         evaluationRequiresSecondApproval: false,
         evaluationApprovalStatus: "not_required",

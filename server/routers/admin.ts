@@ -2564,7 +2564,12 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       try {
         const [clientRows, candidateRows, agencyDocumentRows] = await Promise.all([
-          db.select().from(clientDocuments).orderBy(desc(clientDocuments.receiptGeneratedAt)).limit(1000),
+          db.select({
+            document: clientDocuments,
+            evaluationCandidateId: evaluations.candidateId,
+            evaluationFullName: evaluations.fullName,
+            evaluationEmail: evaluations.email,
+          }).from(clientDocuments).leftJoin(evaluations, eq(clientDocuments.evaluationId, evaluations.id)).orderBy(desc(clientDocuments.receiptGeneratedAt)).limit(1000),
           db.select({
             id: candidateFiles.id,
             candidateId: candidateFiles.candidateId,
@@ -2594,7 +2599,10 @@ export const adminRouter = router({
             fileSize: agencyDossierDocuments.fileSize,
           }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(1000),
         ]);
-        const candidateIds = Array.from(new Set(candidateRows.map((row) => row.candidateId).filter((id): id is number => typeof id === "number")));
+        const candidateIds = Array.from(new Set([
+          ...candidateRows.map((row) => row.candidateId),
+          ...clientRows.map((row) => row.evaluationCandidateId),
+        ].filter((id): id is number => typeof id === "number")));
         const applicationRows = candidateIds.length
           ? await db.select({ candidateId: applications.candidateId, dossierNumber: applications.dossierNumber, createdAt: applications.createdAt }).from(applications).where(inArray(applications.candidateId, candidateIds)).orderBy(desc(applications.createdAt)).limit(2000)
           : [];
@@ -2602,8 +2610,8 @@ export const adminRouter = router({
         for (const row of applicationRows) if (row.candidateId && !dossierByCandidate.has(row.candidateId)) dossierByCandidate.set(row.candidateId, row.dossierNumber);
 
         const documents = [
-          ...clientRows.map((doc: any) => ({
-            id: doc.id, source: "client" as const, candidateId: null, candidateEmail: doc.candidateEmail, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+          ...clientRows.map(({ document: doc, evaluationCandidateId, evaluationFullName, evaluationEmail }: any) => ({
+            id: doc.id, source: "client" as const, candidateId: evaluationCandidateId ?? null, candidateEmail: doc.candidateEmail || evaluationEmail || null, dossierNumber: evaluationCandidateId ? (dossierByCandidate.get(evaluationCandidateId) || `EVAL-${doc.evaluationId}`) : `EVAL-${doc.evaluationId}`, candidateName: evaluationFullName || doc.candidateEmail || evaluationEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
           })),
           ...candidateRows.map((doc) => ({
             id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,

@@ -16,6 +16,13 @@ describe("Isolation documentaire par dossier", () => {
     expect(source).toContain("eq(applications.fullName, sourceRecord.fullName)");
   });
 
+  it("rattache chaque clientDocument à son evaluation et son dossier source dans listDocuments", () => {
+    const source = read("server/routers/admin.ts");
+    expect(source).toContain("leftJoin(evaluations, eq(clientDocuments.evaluationId, evaluations.id))");
+    expect(source).toContain("evaluationCandidateId: evaluations.candidateId");
+    expect(source).toContain("dossierByCandidate.get(evaluationCandidateId)");
+  });
+
   it("conserve la validation individuelle par identifiant documentaire", () => {
     const source = read("server/routers/admin.ts");
     expect(source).toContain("where(eq(clientDocuments.id, input.documentId))");
