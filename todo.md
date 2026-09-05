@@ -2648,5 +2648,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger l’isolation stricte pour empêcher toute fuite ou association croisée entre dossiers : listDocuments rattache désormais clientDocuments à evaluationId → candidateId → dossier.
 - [x] Ajouter une régression multi-dossiers statique et vérifier en lecture seule les flux candidate_files/agency_dossier_documents sur plusieurs sources ; aucune donnée n’a été modifiée.
 - [x] Synchroniser automatiquement les champs métier du compte vers le dossier provisoire via sourceFormSnapshot, incluant destination, visa, identité, formation, emploi et langue ; aucun secret n’est copié.
-- [ ] Faciliter l’envoi de pièces depuis l’espace client et centraliser leur affichage groupé par dossier côté admin.
-- [ ] Tester avec plusieurs dossiers distincts par clic réel, sans suppression, puis publier les URL/actions exactes de vérification.
+- [x] Faciliter l’envoi de pièces depuis l’espace client : rattachement par application, lecture bornée par dossier, formats PDF/JPG/PNG/DOC/DOCX et affichage centralisé côté admin.
+- [ ] Tester avec plusieurs dossiers distincts par clic réel, sans suppression, puis publier les URL/actions exactes de vérification ; les vérifications SQL et 17 régressions sont passées, mais le clic live multi-dossiers reste à rejouer.

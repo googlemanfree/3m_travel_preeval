@@ -16,12 +16,20 @@ import { notifyDocumentSubmission } from "../services/documentSubmissionNotifica
 const PAYMENT_AMOUNT = 65000; // XAF
 const PAYMENT_CURRENCY = "XAF";
 const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024;
-const ALLOWED_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
+const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
 
 function matchesDocumentSignature(buffer: Buffer, mimeType: string): boolean {
   if (mimeType === "application/pdf") return buffer.subarray(0, 4).toString("ascii") === "%PDF";
   if (mimeType === "image/jpeg") return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   if (mimeType === "image/png") return buffer[0] === 0x89 && buffer.subarray(1, 4).toString("ascii") === "PNG";
+  if (mimeType === "application/msword") return buffer.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]));
+  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return buffer.subarray(0, 2).toString("ascii") === "PK";
   return false;
 }
 
@@ -246,7 +254,7 @@ export const paymentRouter = router({
       documentType: z.enum(["passport", "diplomas", "birth_certificate", "cv", "employment_letter", "other"]),
       documentName: z.string(),
       fileBase64: z.string().min(1),
-      mimeType: z.enum(["application/pdf", "image/jpeg", "image/png"]),
+      mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -267,7 +275,7 @@ export const paymentRouter = router({
         const encodedFile = input.fileBase64.includes(",") ? input.fileBase64.split(",").pop()! : input.fileBase64;
         const fileBuffer = Buffer.from(encodedFile, "base64");
         if (!ALLOWED_DOCUMENT_MIME_TYPES.has(input.mimeType) || fileBuffer.length === 0 || fileBuffer.length > MAX_DOCUMENT_SIZE || !matchesDocumentSignature(fileBuffer, input.mimeType)) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Le document doit être un PDF, JPEG ou PNG valide de 5 Mo maximum." });
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Le document doit être un PDF, JPEG, PNG, DOC ou DOCX valide de 5 Mo maximum." });
         }
 
         const documentType = input.documentType === "diplomas" ? "diploma" : input.documentType;
@@ -277,7 +285,7 @@ export const paymentRouter = router({
         const receiptNumber = `DOC-${Date.now()}-${randomBytes(6).toString("hex")}`;
 
         await db.insert(clientDocuments).values({
-          evaluationId: 0,
+          evaluationId: application.id,
           candidateEmail: ctx.user.email,
           documentType: documentType as any,
           documentName,
@@ -322,7 +330,7 @@ export const paymentRouter = router({
         }
 
         const documents = await db.select().from(clientDocuments)
-          .where(eq(clientDocuments.candidateEmail, application.email));
+          .where(and(eq(clientDocuments.evaluationId, application.id), eq(clientDocuments.candidateEmail, ctx.user.email)));
         return {
           dossierNumber: input.dossierNumber,
           documents: documents.map((doc) => ({
