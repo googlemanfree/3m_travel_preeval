@@ -313,7 +313,9 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
     .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header { background: linear-gradient(135deg, #0B1F4B 0%, #1E5AA8 58%, #2D8FC4 100%); color: white; padding: 28px 30px 34px; text-align: center; }
+    .brand-logo { display: block; width: 86px; height: 86px; object-fit: contain; margin: 0 auto 14px; border-radius: 50%; background: #ffffff; padding: 6px; }
+    .brand-name { margin: 0 0 12px; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: #D7F3FF; font-weight: 700; }
     .header h1 { margin: 0; font-size: 24px; font-weight: 800; }
     .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; }
     .body { padding: 40px 30px; }
@@ -340,11 +342,14 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     .cta { background: #1E3A8A; color: white; padding: 15px 30px; border-radius: 6px; text-align: center; margin-top: 20px; font-weight: 600; text-decoration: none; display: inline-block; }
     .footer { background: #F8FAFF; padding: 30px; text-align: center; font-size: 12px; color: #6B7280; border-top: 1px solid #E5E7EB; }
     .footer p { margin: 8px 0; }
+    .footer .brand-signature { color: #1E3A8A; font-weight: 700; letter-spacing: 0.04em; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <img class="brand-logo" src="https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M Travel &amp; Services" />
+      <p class="brand-name">3M Travel &amp; Services SARL</p>
       <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
       <p>Évaluation indicative d’agence — 3M Travel & Services</p>
     </div>
@@ -413,7 +418,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     </div>
     
     <div class="footer">
-      <p><strong>3M Travel & Services SARL</strong></p>
+      <p class="brand-signature"><strong>3M Travel &amp; Services SARL</strong></p>
       <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
       <p>RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
       <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>

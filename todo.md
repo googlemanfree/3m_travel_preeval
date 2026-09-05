@@ -2625,3 +2625,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Retirer les mentions client de « IA », « intelligence artificielle », « généré par IA » et équivalents dans les e-mails de rapport et le HTML du bilan ; les libellés admin restent disponibles en interne.
 - [x] Ajouter des régressions vérifiant le filtre client, les e-mails de rapport et la conservation des libellés techniques admin.
 - [x] Tester la page publique `/evaluation` et publier avec une action de vérification exacte ; la page demande une connexion et n’affiche aucune mention IA.
+
+## Audit client, PDF et aperçus avant envoi
+- [x] Auditer notifications, messagerie et autres textes visibles dans l’espace client pour repérer toute mention IA.
+- [x] Nettoyer les mentions techniques restantes côté client sans modifier les écrans admin internes.
+- [x] Améliorer le PDF du bilan avec le logo officiel et la palette bleu 3M Travel.
+- [x] Confirmer les aperçus e-mail et PDF déjà disponibles dans l’éditeur admin avant envoi, avec régression dédiée.
+- [x] Ajouter les régressions et tester sans envoyer de communication réelle ; TypeScript et 6 tests ciblés passent.
