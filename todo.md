@@ -2607,3 +2607,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Invalider la liste candidats après une validation de paiement réussie et après fermeture du modal.
 - [x] Ajouter une régression couvrant le rafraîchissement du parent après mutation et fermeture.
 - [x] Tester et publier sans confirmer de paiement réel : TypeScript et 7 tests ciblés passent.
+
+## Erreur tRPC Failed to fetch sur `/`
+- [x] Relever les erreurs serveur, navigateur et réseau liées aux requêtes tRPC de la page d’accueil : le serveur répond actuellement en 200 et l’échec signalé n’est pas reproduit après reprise.
+- [x] Vérifier la configuration du lien tRPC et la disponibilité de `/api/trpc` en navigation fraîche : baseUrl same-origin `/api/trpc`, probe `auth.me` HTTP 200.
+- [x] Corriger la résilience réseau sans données fictives : deux reprises bornées uniquement pour les erreurs de fetch transitoires, réponses HTTP et erreurs métier inchangées.
+- [x] Ajouter une régression et tester `/` avant publication : TypeScript, test réseau ciblé et navigation fraîche sans erreur console.

@@ -169,12 +169,24 @@ const trpcClient = trpc.createClient({
         return {};
       },
       async fetch(input, init) {
-        const response = await globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-          cache: "no-store",
-        });
-        return normalizeApiResponse(response);
+        const maxNetworkRetries = 2;
+        let lastError: unknown;
+        for (let attempt = 0; attempt <= maxNetworkRetries; attempt += 1) {
+          try {
+            const response = await globalThis.fetch(input, {
+              ...(init ?? {}),
+              credentials: "include",
+              cache: "no-store",
+            });
+            return normalizeApiResponse(response);
+          } catch (error) {
+            lastError = error;
+            const isTransientNetworkError = error instanceof TypeError || (error instanceof Error && /fetch|network|load failed/i.test(error.message));
+            if (!isTransientNetworkError || attempt === maxNetworkRetries) throw error;
+            await new Promise((resolve) => window.setTimeout(resolve, attempt === 0 ? 250 : 750));
+          }
+        }
+        throw lastError instanceof Error ? lastError : new Error("Unable to reach the API server.");
       },
     }),
   ],
