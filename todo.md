@@ -2650,3 +2650,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser automatiquement les champs métier du compte vers le dossier provisoire via sourceFormSnapshot, incluant destination, visa, identité, formation, emploi et langue ; aucun secret n’est copié.
 - [x] Faciliter l’envoi de pièces depuis l’espace client : rattachement par application, lecture bornée par dossier, formats PDF/JPG/PNG/DOC/DOCX et affichage centralisé côté admin.
 - [ ] Tester avec plusieurs dossiers distincts par clic réel, sans suppression, puis publier les URL/actions exactes de vérification ; les vérifications SQL et 17 régressions sont passées, mais le clic live multi-dossiers reste à rejouer.
+
+## Alias documentaire public
+- [x] Ajouter la redirection `/document-upload` → `/submit-documents` pour conserver l’ancienne URL sans page blanche.
+- [x] TypeScript et 12 régressions ciblées passent après le correctif d’alias.
+- [ ] Rejouer en navigation fraîche `/document-upload` et confirmer la redirection publiée vers la page sécurisée.

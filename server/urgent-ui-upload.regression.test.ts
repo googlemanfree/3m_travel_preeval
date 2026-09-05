@@ -72,6 +72,12 @@ describe("Correctifs urgents upload et navigation", () => {
     expect(dashboardSource).toContain('setSelectedCandidateId(candidateId); setActiveAdminTab("candidates")');
   });
 
+  it("redirige l alias historique document-upload vers le dépôt sécurisé", () => {
+    const source = read("client/src/App.tsx");
+    expect(source).toContain('path={"/document-upload"}');
+    expect(source).toContain('Redirect to="/submit-documents"');
+  });
+
   it("dirige le suivi client vers la page dédiée", () => {
     const source = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(source).toContain('href="/mon-dossier"');

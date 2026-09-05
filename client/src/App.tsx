@@ -213,6 +213,7 @@ function Router() {
       <Route path={"/my-space"}>{() => <Redirect to="/mon-espace" />}</Route>
 
       {/* Depot des documents */}
+      <Route path={"/document-upload"}>{() => <Redirect to="/submit-documents" />}</Route>
       <Route path={"/submit-documents"}>
         <AuthGuard message="Vous devez créer un compte pour soumettre vos documents.">
           <SubmitDocuments />
