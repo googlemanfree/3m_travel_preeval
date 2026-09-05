@@ -2632,3 +2632,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Améliorer le PDF du bilan avec le logo officiel et la palette bleu 3M Travel.
 - [x] Confirmer les aperçus e-mail et PDF déjà disponibles dans l’éditeur admin avant envoi, avec régression dédiée.
 - [x] Ajouter les régressions et tester sans envoyer de communication réelle ; TypeScript et 6 tests ciblés passent.
+
+## Évaluation hors ligne — validation admin
+- [x] Localiser le modèle de traçabilité existant et la fiche candidat admin.
+- [x] Ajouter une mutation sécurisée pour valider l’évaluation hors ligne avec canal appel/agence/e-mail.
+- [x] Ajouter le bouton simple et l’affichage conseiller/date/canal dans la fiche admin.
+- [x] Ajouter les régressions sans retirer les aperçus e-mail/PDF existants ; TypeScript et 9 tests ciblés passent.
+- [ ] Tester le clic réel sur COMPTE-1140001 TEST INTERNE sans envoyer de bilan ni modifier de paiement, puis publier l’URL/action exacte.

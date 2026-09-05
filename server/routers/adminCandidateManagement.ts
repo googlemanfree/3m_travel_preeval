@@ -216,6 +216,35 @@ export const adminCandidateManagementRouter = router({
       };
     }),
 
+  validateOfflineEvaluation: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      channel: z.enum(["appel", "agence", "email"]),
+      note: z.string().trim().max(1000).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      const reviewedAt = new Date();
+      const channelLabel = input.channel === "appel" ? "appel téléphonique" : input.channel === "agence" ? "bureau en agence" : "e-mail";
+      const traceNote = `Évaluation validée hors ligne — canal : ${channelLabel} ; conseiller : ${admin.email} ; date : ${reviewedAt.toISOString()}.${input.note?.trim() ? ` Note : ${input.note.trim()}` : ""}`;
+      await db.update(candidates).set({
+        evaluationDeclarationStatus: "validated",
+        evaluationDeclaredAt: candidate.evaluationDeclaredAt ?? reviewedAt,
+        evaluationReviewedAt: reviewedAt,
+        evaluationReviewedBy: admin.email,
+        evaluationReviewNote: traceNote,
+      }).where(eq(candidates.id, candidate.id));
+      const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
+      const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: visibleMessage, isRead: false });
+      return { success: true, reviewedAt, reviewedBy: admin.email, channel: input.channel };
+    }),
   reviewEvaluationDeclaration: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
