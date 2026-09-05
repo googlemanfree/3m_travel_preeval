@@ -2639,3 +2639,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter le bouton simple et l’affichage conseiller/date/canal dans la fiche admin.
 - [x] Ajouter les régressions sans retirer les aperçus e-mail/PDF existants ; TypeScript et 9 tests ciblés passent.
 - [ ] Tester le clic réel sur COMPTE-1140001 TEST INTERNE sans envoyer de bilan ni modifier de paiement, puis publier l’URL/action exacte.
+- [x] Corriger le branchement de la vue ACCOUNT_ONLY : le bouton hors ligne est maintenant rendu dans `AdminPreDossierEvaluationPanel`, utilisé par COMPTE-1140001, avec mutation parent et canaux appel/agence/e-mail.
+- [x] TypeScript et la régression hors ligne étendue passent ; les aperçus e-mail/PDF sont conservés.
+- [ ] Rejouer après publication le clic réel sur le bouton dans COMPTE-1140001, sans envoyer de bilan ni modifier le paiement.

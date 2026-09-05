@@ -5,6 +5,8 @@ import path from "node:path";
 const projectRoot = process.cwd();
 const routerSource = fs.readFileSync(path.join(projectRoot, "server/routers/adminCandidateManagement.ts"), "utf8");
 const workspaceSource = fs.readFileSync(path.join(projectRoot, "client/src/components/Candidate360Workspace.tsx"), "utf8");
+const preDossierPanelSource = fs.readFileSync(path.join(projectRoot, "client/src/components/AdminPreDossierEvaluationPanel.tsx"), "utf8");
+const dashboardSource = fs.readFileSync(path.join(projectRoot, "client/src/pages/AdminDashboard.tsx"), "utf8");
 const editorSource = fs.readFileSync(path.join(projectRoot, "client/src/components/EvaluationDeliveryEditor.tsx"), "utf8");
 
 describe("validation d’évaluation hors ligne", () => {
@@ -22,6 +24,12 @@ describe("validation d’évaluation hors ligne", () => {
     expect(workspaceSource).toContain("offlineEvaluationChannel");
     expect(workspaceSource).toContain("offlineEvaluationNote");
     expect(workspaceSource).toContain("validateOfflineEvaluation");
+    expect(preDossierPanelSource).toContain("Valider l’évaluation hors ligne");
+    expect(preDossierPanelSource).toContain("Appel téléphonique");
+    expect(preDossierPanelSource).toContain("Bureau en agence");
+    expect(preDossierPanelSource).toContain("E-mail");
+    expect(dashboardSource).toContain("onOfflineValidate");
+    expect(dashboardSource).toContain("validateOfflineEvaluation");
   });
 
   it("conserve les aperçus avant envoi dans l’éditeur de bilan", () => {

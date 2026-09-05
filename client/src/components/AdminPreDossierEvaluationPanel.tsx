@@ -12,10 +12,15 @@ type Props = {
   onReview?: (decision: "validate" | "refuse" | "request_correction", note?: string) => void;
   isReviewing?: boolean;
   onOpenEditor?: () => void;
+  onOfflineValidate?: (channel: "appel" | "agence" | "email", note?: string) => void;
+  isOfflineValidating?: boolean;
 };
 
-export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false, onOpenEditor }: Props) {
+export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false, onOpenEditor, onOfflineValidate, isOfflineValidating = false }: Props) {
   const [note, setNote] = useState("");
+  const [offlineOpen, setOfflineOpen] = useState(false);
+  const [offlineChannel, setOfflineChannel] = useState<"appel" | "agence" | "email">("appel");
+  const [offlineNote, setOfflineNote] = useState("");
   const pending = status === "pending_validation" || status === "refused";
   const validated = status === "validated";
   return (
@@ -46,6 +51,15 @@ export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt,
           </div>
         </div>
       )}
+      {onOfflineValidate && (
+        <div className="mt-4 flex flex-col gap-3 border-t border-violet-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Évaluation réalisée hors ligne</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">Validez simplement une évaluation faite par téléphone, en agence ou par e-mail. Le conseiller et la date sont tracés, sans envoyer de bilan.</p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => setOfflineOpen(true)} className="shrink-0 border-emerald-300 text-emerald-800 hover:bg-emerald-50">Valider l’évaluation hors ligne</Button>
+        </div>
+      )}
       {onOpenEditor && (
         <div className="mt-4 flex flex-col gap-3 border-t border-violet-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -53,6 +67,21 @@ export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt,
             <p className="mt-1 text-sm leading-6 text-slate-700">Ouvrez l’espace de préparation complet pour rédiger, enregistrer le brouillon, prévisualiser le PDF et contrôler SMTP avant toute diffusion.</p>
           </div>
           <Button type="button" onClick={onOpenEditor} className="shrink-0 bg-blue-700 text-white hover:bg-blue-800">Ouvrir l’espace de préparation</Button>
+        </div>
+      )}
+      {offlineOpen && onOfflineValidate && (
+        <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4" role="dialog" aria-label="Validation de l’évaluation hors ligne">
+          <p className="text-sm font-semibold text-slate-900">Canal de l’évaluation</p>
+          <select className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm" value={offlineChannel} onChange={(event) => setOfflineChannel(event.target.value as "appel" | "agence" | "email")}>
+            <option value="appel">Appel téléphonique</option>
+            <option value="agence">Bureau en agence</option>
+            <option value="email">E-mail</option>
+          </select>
+          <textarea className="mt-2 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" maxLength={1000} value={offlineNote} onChange={(event) => setOfflineNote(event.target.value)} placeholder="Note du conseiller (facultatif)" />
+          <div className="mt-3 flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setOfflineOpen(false)}>Annuler</Button>
+            <Button type="button" disabled={isOfflineValidating} onClick={() => onOfflineValidate(offlineChannel, offlineNote.trim() || undefined)} className="bg-emerald-700 hover:bg-emerald-800">{isOfflineValidating ? "Validation…" : "Confirmer la validation hors ligne"}</Button>
+          </div>
         </div>
       )}
     </section>

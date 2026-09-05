@@ -418,6 +418,14 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Décision impossible", description: err.message, variant: "destructive" }),
   });
+  const offlineEvaluationMutation = trpc.adminCandidateManagement.validateOfflineEvaluation.useMutation({
+    onSuccess: () => {
+      toast({ title: "Évaluation hors ligne validée", description: "Le canal, le conseiller et la date sont enregistrés dans le dossier." });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Validation hors ligne impossible", description: err.message, variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
@@ -514,6 +522,8 @@ export function CandidateDetailModal({
                   isReviewing={reviewEvaluationMutation.isPending}
                   onReview={(decision, note) => reviewEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, decision, note })}
                   onOpenEditor={() => setEvaluationEditorOpen(true)}
+                  onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, channel, note })}
+                  isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
                 <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
