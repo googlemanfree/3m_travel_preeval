@@ -2660,4 +2660,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reproduire le cas signalé avec la session locale héritée : l’écran « Restauration sécurisée de votre espace… » pouvait rester affiché ; après nettoyage des clés candidat, le fallback public est observable.
 - [x] Corriger la logique client : AuthGuard termine désormais la restauration avec un fallback de 750 ms et `/mon-espace` utilise `autoRedirect` vers `/login` avec le chemin de retour.
 - [x] Ajouter une régression Vitest couvrant le délai borné de restauration et la redirection de `/mon-espace` ; 3 tests passent dans `protectedRouteFeatures.regression.test.ts`.
-- [ ] Vérifier en navigation publique fraîche l’URL et le résultat exacts, puis publier le correctif.
+- [x] Vérifier après publication `https://www.3mtravelagency.com/mon-espace?section=dossier` sans session : l’URL affiche « Accès Réservé aux Membres » avec « Se connecter » et « Inscription », sans chargement infini.
