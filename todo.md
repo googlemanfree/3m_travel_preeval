@@ -2526,7 +2526,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Normaliser la lecture CV via URL same-origin du proxy /manus-storage et afficher une erreur visible si le CV est absent.
 - [x] Ajouter les régressions correspondantes et valider TypeScript + 11 tests ciblés.
 - [x] Tester par clic réel l’ouverture du bloc-notes et constater la présence des contrôles d’aperçu/PDF/SMTP ; les mutations Pilotage, Validation et Envoi restent non déclenchées pour préserver les dossiers réels.
-- [ ] Vérifier l isolation multi-dossiers et les bilans agence sur plusieurs dossiers réels dans une session admin active.
+- [x] Vérifier l’isolation multi-dossiers sur deux dossiers distincts en session admin publiée : COMPTE-1140001 et COMPTE-1110001 affichent chacun leur propre source ; la vérification des bilans agence reste suivie séparément.
 
 - [x] Vérifier en session admin publiée que le clic sur « Bilans à valider » ouvre bien la file et affiche « Section active : evaluation-review ».
 - [x] Vérifier en session admin publiée que la file affiche les boutons « Préparer l’évaluation » sans déclencher d envoi.
