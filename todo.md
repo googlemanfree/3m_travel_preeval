@@ -2638,10 +2638,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une mutation sécurisée pour valider l’évaluation hors ligne avec canal appel/agence/e-mail.
 - [x] Ajouter le bouton simple et l’affichage conseiller/date/canal dans la fiche admin.
 - [x] Ajouter les régressions sans retirer les aperçus e-mail/PDF existants ; TypeScript et 9 tests ciblés passent.
-- [ ] Tester le clic réel sur COMPTE-1140001 TEST INTERNE sans envoyer de bilan ni modifier de paiement, puis publier l’URL/action exacte.
+- [x] Tester le clic réel sur COMPTE-1140001 TEST INTERNE sans envoyer de bilan ni modifier de paiement ; trace observée avec canal appel téléphonique, conseiller et date dans `live_offline_validation_findings_2026-09-06.md`.
 - [x] Corriger le branchement de la vue ACCOUNT_ONLY : le bouton hors ligne est maintenant rendu dans `AdminPreDossierEvaluationPanel`, utilisé par COMPTE-1140001, avec mutation parent et canaux appel/agence/e-mail.
 - [x] TypeScript et la régression hors ligne étendue passent ; les aperçus e-mail/PDF sont conservés.
-- [ ] Rejouer après publication le clic réel sur le bouton dans COMPTE-1140001, sans envoyer de bilan ni modifier le paiement.
+- [x] Rejouer après publication le clic réel sur le bouton dans COMPTE-1140001, sans envoyer de bilan ni modifier le paiement ; la confirmation a été exécutée et la trace est visible dans la fiche.
 
 ## Bug prioritaire — isolation documentaire et synchronisation candidat
 - [x] Auditer les requêtes et clés de rattachement des documents par dossier candidat, côté client et admin.
