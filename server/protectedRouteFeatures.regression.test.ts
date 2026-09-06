@@ -24,3 +24,12 @@ const documentPath = new URL("../client/src/pages/DocumentUploadPage.tsx", impor
     expect(documentUpload).toContain("Téléversement impossible");
   });
 });
+
+
+  it("borne la restauration de session et redirige /mon-espace sans authentification", () => {
+    const authGuard = readFileSync(appPath, "utf8");
+    const appSource = readFileSync(new URL("../client/src/App.tsx", import.meta.url), "utf8");
+    expect(authGuard).toContain("window.setTimeout(finishRestoration, 750)");
+    expect(authGuard).toContain("if (!isAuthenticated && autoRedirect)");
+    expect(appSource).toContain('<AuthGuard autoRedirect message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">');
+  });

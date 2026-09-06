@@ -34,8 +34,20 @@ export default function AuthGuard({
   const [isRestoringSession, setIsRestoringSession] = useState(true);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setIsRestoringSession(false));
-    return () => window.cancelAnimationFrame(frame);
+    let finished = false;
+    const finishRestoration = () => {
+      if (finished) return;
+      finished = true;
+      setIsRestoringSession(false);
+    };
+    const frame = window.requestAnimationFrame(finishRestoration);
+    // Fallback déterministe : un navigateur ou une page en arrière-plan peut suspendre rAF.
+    const timeout = window.setTimeout(finishRestoration, 750);
+    return () => {
+      finished = true;
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {

@@ -152,7 +152,7 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path={"/mon-espace"}>
-        <AuthGuard message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">
+        <AuthGuard autoRedirect message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">
           <EvaluationSpace />
         </AuthGuard>
       </Route>

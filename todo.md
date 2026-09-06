@@ -2655,3 +2655,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter la redirection `/document-upload` → `/submit-documents` pour conserver l’ancienne URL sans page blanche.
 - [x] TypeScript et 12 régressions ciblées passent après le correctif d’alias.
 - [x] Rejouer en navigation fraîche `/document-upload` et confirmer la page publiée sécurisée : sans session, « Connexion requise » et aucun document exposé.
+
+## Bug public — restauration infinie de /mon-espace sans session
+- [x] Reproduire le cas signalé avec la session locale héritée : l’écran « Restauration sécurisée de votre espace… » pouvait rester affiché ; après nettoyage des clés candidat, le fallback public est observable.
+- [x] Corriger la logique client : AuthGuard termine désormais la restauration avec un fallback de 750 ms et `/mon-espace` utilise `autoRedirect` vers `/login` avec le chemin de retour.
+- [x] Ajouter une régression Vitest couvrant le délai borné de restauration et la redirection de `/mon-espace` ; 3 tests passent dans `protectedRouteFeatures.regression.test.ts`.
+- [ ] Vérifier en navigation publique fraîche l’URL et le résultat exacts, puis publier le correctif.
