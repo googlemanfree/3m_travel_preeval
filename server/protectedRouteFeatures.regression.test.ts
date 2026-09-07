@@ -56,3 +56,14 @@ it("explique la protection du dossier et expose les effets visuels de l’écran
   expect(authGuard).toContain('transition={{ duration: 0.65, ease: "easeOut" }}');
   expect(authGuard).toContain("transition-all duration-200 hover:-translate-y-0.5");
 });
+
+
+it("prépare les CTA d’accès avec chargement, aide et adaptation mobile", () => {
+  const authGuard = readFileSync(appPath, "utf8");
+  expect(authGuard).toContain("pendingAction");
+  expect(authGuard).toContain("Loader2");
+  expect(authGuard).toContain("animate-spin");
+  expect(authGuard).toContain("Mot de passe oublié ? Besoin d’aide ?");
+  expect(authGuard).toContain("px-3 py-6 sm:px-4 sm:py-10");
+  expect(authGuard).toContain("text-lg font-black sm:text-xl");
+});

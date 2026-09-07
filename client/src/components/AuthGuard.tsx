@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { motion } from "framer-motion";
-import { Lock, LogIn, UserPlus, ArrowRight } from "lucide-react";
+import { Lock, LogIn, UserPlus, ArrowRight, Loader2, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
@@ -32,6 +32,7 @@ export default function AuthGuard({
   const { isAuthenticated } = useCandidateAuth();
   const [location, navigate] = useLocation();
   const [isRestoringSession, setIsRestoringSession] = useState(true);
+  const [pendingAction, setPendingAction] = useState<"login" | "register" | null>(null);
 
   useEffect(() => {
     let finished = false;
@@ -92,7 +93,7 @@ export default function AuthGuard({
 
   // Écran d'accès refusé avec CTA
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
+    <div className="min-h-screen flex items-center justify-center px-3 py-6 sm:px-4 sm:py-10"
       style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -102,56 +103,74 @@ export default function AuthGuard({
       >
         <div className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] ring-1 ring-white/20">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-8 py-6 text-center text-white">
-            <img src={LOGO_URL} alt="Logo 3M Travel Agency" className="w-14 h-14 rounded-xl mx-auto mb-3 object-contain" />
-            <h1 className="text-xl font-black">Accès Réservé aux Membres</h1>
+          <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-5 py-5 text-center text-white sm:px-8 sm:py-6">
+            <img src={LOGO_URL} alt="Logo 3M Travel Agency" className="mx-auto mb-3 h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
+            <h1 className="text-lg font-black sm:text-xl">Accès Réservé aux Membres</h1>
           </div>
 
           {/* Corps */}
-          <div className="px-8 py-8 text-center">
-            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-amber-500" />
+          <div className="px-5 py-6 text-center sm:px-8 sm:py-8">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 sm:h-16 sm:w-16">
+              <Lock className="h-7 w-7 text-amber-500 sm:h-8 sm:w-8" />
             </div>
 
-            <p className="text-gray-700 text-base leading-relaxed mb-6 font-medium">
+            <p className="mb-5 text-sm font-medium leading-relaxed text-gray-700 sm:mb-6 sm:text-base">
               {message}
             </p>
 
-            <p className="mb-5 text-sm leading-relaxed text-slate-500">
+            <p className="mb-5 text-xs leading-relaxed text-slate-500 sm:text-sm">
               Votre dossier contient des informations personnelles et des documents confidentiels. Connectez-vous ou créez un compte pour que seul votre espace sécurisé puisse y accéder.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-2">
               <Button
-                onClick={() => navigate(`/login?redirect=1&from=${encodeURIComponent(getRequestedInternalPath(location))}`)}
-                className="h-12 font-semibold"
+                disabled={pendingAction !== null}
+                onClick={() => {
+                  setPendingAction("login");
+                  navigate(`/login?redirect=1&from=${encodeURIComponent(getRequestedInternalPath(location))}`);
+                }}
+                className="h-11 font-semibold sm:h-12"
                 style={{ background: "linear-gradient(135deg, #1E3A8A, #2563EB)" }}
               >
-                <LogIn className="w-4 h-4 mr-2" />
-                Se connecter
-                <ArrowRight className="w-4 h-4 ml-2" />
+                {pendingAction === "login" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                {pendingAction === "login" ? "Ouverture…" : "Se connecter"}
+                {pendingAction !== "login" && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
               <Button
-                onClick={() => navigate(`/register?from=${encodeURIComponent(getRequestedInternalPath(location))}`)}
+                disabled={pendingAction !== null}
+                onClick={() => {
+                  setPendingAction("register");
+                  navigate(`/register?from=${encodeURIComponent(getRequestedInternalPath(location))}`);
+                }}
                 variant="outline"
-                className="h-12 font-semibold border-2 border-[#1E3A8A] text-[#1E3A8A] hover:bg-blue-50"
+                className="h-11 border-2 border-[#1E3A8A] font-semibold text-[#1E3A8A] hover:bg-blue-50 sm:h-12"
               >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Inscription
+                {pendingAction === "register" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                {pendingAction === "register" ? "Ouverture…" : "Inscription"}
               </Button>
             </div>
 
             <Button
               type="button"
+              variant="link"
+              onClick={() => navigate("/forgot-password")}
+              className="mb-3 h-auto px-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#2563EB]"
+            >
+              <CircleHelp className="mr-2 h-4 w-4" />
+              Mot de passe oublié ? Besoin d’aide ?
+            </Button>
+
+            <Button
+              type="button"
               variant="ghost"
               onClick={() => navigate("/")}
-              className="mb-6 w-full font-semibold text-[#1E3A8A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-[#1E3A8A] hover:shadow-md active:translate-y-0"
+              className="mb-5 w-full font-semibold text-[#1E3A8A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-[#1E3A8A] hover:shadow-md active:translate-y-0 sm:mb-6"
             >
               ← Retour à l’accueil
             </Button>
 
             {/* Avantages */}
-            <div className="bg-blue-50 rounded-xl p-4 text-left">
+            <div className="rounded-xl bg-blue-50 p-3 text-left sm:p-4">
               <p className="text-sm font-semibold text-blue-800 mb-2">Avec votre compte 3M Travel :</p>
               <ul className="space-y-1.5 text-sm text-blue-700">
                 <li className="flex items-center gap-2">

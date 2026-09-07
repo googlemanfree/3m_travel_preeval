@@ -2675,3 +2675,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une apparition fade-in fluide à la carte d’accès au chargement initial ; animation `opacity/y` avec transition ease-out contrôlée.
 - [x] Ajouter un court texte explicatif au-dessus des options pour expliquer que l’authentification protège le dossier et les documents personnels ; texte visible et couvert par régression.
 - [x] Vérifier le rendu et les interactions sur `/mon-espace?section=dossier` sans session : texte explicatif visible, carte animée et bouton de retour survolable ; publication confirmée.
+
+## Accès candidat — chargement, aide et mobile
+- [x] Ajouter un spinner et un état désactivé sur les boutons de connexion/inscription lorsqu’une action est en cours ; `pendingAction` et `Loader2` sont couverts par régression.
+- [x] Ajouter un lien « Mot de passe oublié ? » ou « Besoin d’aide ? » sous les options de connexion ; il ouvre `/forgot-password`.
+- [x] Optimiser la carte d’accès sur mobile avec marges, padding et tailles de texte adaptés aux petits écrans ; rendu contrôlé en viewport 390×844.
+- [ ] Vérifier les clics et le rendu mobile sur `/mon-espace?section=dossier` sans session, puis publier.
