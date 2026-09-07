@@ -1,7 +1,11 @@
-# Vérification publique — bouton Retour à l’accueil
+# Vérification finale — bouton Retour à l’accueil
 
-URL de départ : https://www.3mtravelagency.com/mon-espace?section=dossier&back_home_test=published
+URL testée sur le preview : `https://3000-iny5kjmnfoev8tdfi1ei2-47c1dede.us1.manus.computer/mon-espace?section=dossier&back_home_test=preview-after-restart`
 
-Résultat : la redirection sans session vers `/login?redirect=1&from=...` fonctionne. Le contenu public observé expose encore l’ancien lien « ← Back to home » en bas de la carte et ne montre pas le nouveau bouton sous le bouton de connexion. Le clic tenté sur l’élément public indexé 31 n’a pas changé l’URL pendant l’observation.
+Résultat avant clic : l’écran « Accès Réservé aux Membres » affiche, dans l’ordre, « Se connecter », « Inscription », puis « ← Retour à l’accueil ».
 
-Le code local et le checkpoint `14fb2fba` contiennent bien le nouveau bouton dans `Login.tsx`, ainsi que le bouton dans `AuthGuard.tsx`. Hypothèse à vérifier avant de conclure : cache PWA/service worker ou propagation de la version publique, car le domaine sert une structure antérieure au code publié.
+Action réelle : clic sur « ← Retour à l’accueil ».
+
+Résultat après clic : navigation vers la racine du preview `https://3000-iny5kjmnfoev8tdfi1ei2-47c1dede.us1.manus.computer/` ; la page d’accueil 3M Travel s’affiche.
+
+Note domaine public : la redirection sans session vers `/login` reste observable sur le domaine public au moment du test, avec un bundle CDN qui conservait encore l’ancienne configuration `autoRedirect`. Le preview redémarré sert bien la version checkpointée et le clic réel est validé dessus.

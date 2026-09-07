@@ -2664,4 +2664,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Accès public — retour à l’accueil
 - [x] Ajouter le bouton « Retour à l’accueil » sous les options « Se connecter » et « Inscription » de l’écran d’accès réservé ; le bouton appelle `navigate("/")` et la régression dédiée passe.
-- [ ] Vérifier son clic depuis `/mon-espace?section=dossier` sans session et publier la correction.
+- [x] Vérifier le clic depuis `/mon-espace?section=dossier` sans session : le bouton « Retour à l’accueil » est visible sous les options et ramène réellement à `/` sur le preview publié.
