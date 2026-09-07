@@ -304,6 +304,15 @@ export default function Login() {
             </Button>
           </form>
 
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="mt-3 w-full font-semibold text-[#1E3A8A] hover:bg-blue-50 hover:text-[#1E3A8A]"
+          >
+            ← {t("Retour à l’accueil", "Back to home")}
+          </Button>
+
           {/* Se souvenir de moi + Mot de passe oublié + Renvoyer email */}
           <div className="mt-4 mb-2 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -426,9 +435,6 @@ export default function Login() {
               <Link href="/register" className="text-[#2563EB] font-semibold hover:underline">
                 {t("Créer mon compte", "Create my account")}
               </Link>
-            </p>
-            <p className="text-xs text-gray-400">
-              <Link href="/" className="hover:underline">← {t("Retour à l’accueil", "Back to home")}</Link>
             </p>
           </div>
         </div>

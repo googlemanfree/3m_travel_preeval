@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const appPath = new URL("../client/src/components/AuthGuard.tsx", import.meta.url);
 const documentPath = new URL("../client/src/pages/DocumentUploadPage.tsx", import.meta.url);
+const loginPath = new URL("../client/src/pages/Login.tsx", import.meta.url);
 
  describe("parcours protégés — chargement, export et téléversement", () => {
   it("transforme les favoris en lignes PDF sans identité ni données sensibles", () => {
@@ -37,7 +38,11 @@ const documentPath = new URL("../client/src/pages/DocumentUploadPage.tsx", impor
 
 it("affiche le retour à l’accueil sous les options de connexion", () => {
   const authGuard = readFileSync(appPath, "utf8");
+  const login = readFileSync(loginPath, "utf8");
   expect(authGuard).toContain('onClick={() => navigate("/")}');
   expect(authGuard).toContain("← Retour à l’accueil");
   expect(authGuard.indexOf("← Retour à l’accueil")).toBeGreaterThan(authGuard.indexOf("Inscription"));
+  expect(login).toContain('onClick={() => navigate("/")}');
+  expect(login).toContain('t("Retour à l’accueil", "Back to home")');
+  expect(login.indexOf('t("Retour à l’accueil", "Back to home")')).toBeGreaterThan(login.indexOf('type="submit"'));
 });
