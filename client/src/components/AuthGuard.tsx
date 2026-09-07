@@ -137,6 +137,15 @@ export default function AuthGuard({
               </Button>
             </div>
 
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate("/")}
+              className="mb-6 w-full font-semibold text-[#1E3A8A] hover:bg-blue-50 hover:text-[#1E3A8A]"
+            >
+              ← Retour à l’accueil
+            </Button>
+
             {/* Avantages */}
             <div className="bg-blue-50 rounded-xl p-4 text-left">
               <p className="text-sm font-semibold text-blue-800 mb-2">Avec votre compte 3M Travel :</p>
@@ -160,9 +169,6 @@ export default function AuthGuard({
               </ul>
             </div>
 
-            <p className="mt-4 text-xs text-gray-700">
-              <button onClick={() => navigate("/")} className="font-medium text-blue-900 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">← Retour à l'accueil</button>
-            </p>
           </div>
         </div>
       </motion.div>

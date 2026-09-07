@@ -33,3 +33,11 @@ const documentPath = new URL("../client/src/pages/DocumentUploadPage.tsx", impor
     expect(authGuard).toContain("if (!isAuthenticated && autoRedirect)");
     expect(appSource).toContain('<AuthGuard autoRedirect message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">');
   });
+
+
+it("affiche le retour à l’accueil sous les options de connexion", () => {
+  const authGuard = readFileSync(appPath, "utf8");
+  expect(authGuard).toContain('onClick={() => navigate("/")}');
+  expect(authGuard).toContain("← Retour à l’accueil");
+  expect(authGuard.indexOf("← Retour à l’accueil")).toBeGreaterThan(authGuard.indexOf("Inscription"));
+});

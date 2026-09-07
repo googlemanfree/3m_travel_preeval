@@ -2661,3 +2661,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la logique client : AuthGuard termine désormais la restauration avec un fallback de 750 ms et `/mon-espace` utilise `autoRedirect` vers `/login` avec le chemin de retour.
 - [x] Ajouter une régression Vitest couvrant le délai borné de restauration et la redirection de `/mon-espace` ; 3 tests passent dans `protectedRouteFeatures.regression.test.ts`.
 - [x] Vérifier après publication `https://www.3mtravelagency.com/mon-espace?section=dossier` sans session : l’URL affiche « Accès Réservé aux Membres » avec « Se connecter » et « Inscription », sans chargement infini.
+
+## Accès public — retour à l’accueil
+- [x] Ajouter le bouton « Retour à l’accueil » sous les options « Se connecter » et « Inscription » de l’écran d’accès réservé ; le bouton appelle `navigate("/")` et la régression dédiée passe.
+- [ ] Vérifier son clic depuis `/mon-espace?section=dossier` sans session et publier la correction.
