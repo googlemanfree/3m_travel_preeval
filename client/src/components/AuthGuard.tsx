@@ -95,9 +95,9 @@ export default function AuthGuard({
     <div className="min-h-screen flex items-center justify-center px-4"
       style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
         className="w-full max-w-lg"
       >
         <div className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] ring-1 ring-white/20">
@@ -115,6 +115,10 @@ export default function AuthGuard({
 
             <p className="text-gray-700 text-base leading-relaxed mb-6 font-medium">
               {message}
+            </p>
+
+            <p className="mb-5 text-sm leading-relaxed text-slate-500">
+              Votre dossier contient des informations personnelles et des documents confidentiels. Connectez-vous ou créez un compte pour que seul votre espace sécurisé puisse y accéder.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
@@ -141,7 +145,7 @@ export default function AuthGuard({
               type="button"
               variant="ghost"
               onClick={() => navigate("/")}
-              className="mb-6 w-full font-semibold text-[#1E3A8A] hover:bg-blue-50 hover:text-[#1E3A8A]"
+              className="mb-6 w-full font-semibold text-[#1E3A8A] transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-[#1E3A8A] hover:shadow-md active:translate-y-0"
             >
               ← Retour à l’accueil
             </Button>

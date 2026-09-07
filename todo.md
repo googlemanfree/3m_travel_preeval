@@ -2669,3 +2669,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Design écran de connexion
 - [x] Renforcer l’effet carte du conteneur de connexion avec une ombre portée, des coins arrondis modernes et un contour discret, sans modifier le parcours d’authentification ; régression et TypeScript passent.
 - [x] Vérifier le rendu sur l’écran public sans session : la carte affiche ses coins arrondis et son ombre portée, sans changement du parcours.
+
+## Interaction et explication de l’écran d’accès
+- [x] Ajouter un effet de survol dynamique au bouton « Retour à l’accueil », sans changer sa navigation vers `/` ; transition, élévation et ombre ajoutées.
+- [x] Ajouter une apparition fade-in fluide à la carte d’accès au chargement initial ; animation `opacity/y` avec transition ease-out contrôlée.
+- [x] Ajouter un court texte explicatif au-dessus des options pour expliquer que l’authentification protège le dossier et les documents personnels ; texte visible et couvert par régression.
+- [ ] Vérifier le rendu et les interactions sur `/mon-espace?section=dossier` sans session, puis publier.

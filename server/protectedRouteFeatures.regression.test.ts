@@ -47,3 +47,12 @@ it("affiche le retour à l’accueil sous les options de connexion", () => {
   expect(login).toContain('t("Retour à l’accueil", "Back to home")');
   expect(login.indexOf('t("Retour à l’accueil", "Back to home")')).toBeGreaterThan(login.indexOf('type="submit"'));
 });
+
+
+it("explique la protection du dossier et expose les effets visuels de l’écran d’accès", () => {
+  const authGuard = readFileSync(appPath, "utf8");
+  expect(authGuard).toContain("Votre dossier contient des informations personnelles et des documents confidentiels.");
+  expect(authGuard).toContain("initial={{ opacity: 0, y: 12 }}");
+  expect(authGuard).toContain('transition={{ duration: 0.65, ease: "easeOut" }}');
+  expect(authGuard).toContain("transition-all duration-200 hover:-translate-y-0.5");
+});
