@@ -27,12 +27,13 @@ const loginPath = new URL("../client/src/pages/Login.tsx", import.meta.url);
 });
 
 
-  it("borne la restauration de session et redirige /mon-espace sans authentification", () => {
+  it("borne la restauration et affiche un accès clair pour /mon-espace sans authentification", () => {
     const authGuard = readFileSync(appPath, "utf8");
     const appSource = readFileSync(new URL("../client/src/App.tsx", import.meta.url), "utf8");
     expect(authGuard).toContain("window.setTimeout(finishRestoration, 750)");
-    expect(authGuard).toContain("if (!isAuthenticated && autoRedirect)");
-    expect(appSource).toContain('<AuthGuard autoRedirect message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">');
+    expect(authGuard).toContain("Accès Réservé aux Membres");
+    expect(appSource).toContain('<AuthGuard message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">');
+    expect(appSource).not.toContain('<AuthGuard autoRedirect message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">');
   });
 
 
