@@ -2665,3 +2665,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Accès public — retour à l’accueil
 - [x] Ajouter le bouton « Retour à l’accueil » sous les options « Se connecter » et « Inscription » de l’écran d’accès réservé ; le bouton appelle `navigate("/")` et la régression dédiée passe.
 - [x] Vérifier le clic depuis `/mon-espace?section=dossier` sans session : le bouton « Retour à l’accueil » est visible sous les options et ramène réellement à `/` sur le preview publié.
+
+## Design écran de connexion
+- [x] Renforcer l’effet carte du conteneur de connexion avec une ombre portée, des coins arrondis modernes et un contour discret, sans modifier le parcours d’authentification ; régression et TypeScript passent.
+- [ ] Vérifier le rendu sur l’écran public sans session et publier la finition visuelle.

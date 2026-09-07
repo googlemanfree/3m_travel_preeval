@@ -100,7 +100,7 @@ export default function AuthGuard({
         transition={{ duration: 0.5 }}
         className="w-full max-w-lg"
       >
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] ring-1 ring-white/20">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-8 py-6 text-center text-white">
             <img src={LOGO_URL} alt="Logo 3M Travel Agency" className="w-14 h-14 rounded-xl mx-auto mb-3 object-contain" />
