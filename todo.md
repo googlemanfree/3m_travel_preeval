@@ -2668,4 +2668,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Design écran de connexion
 - [x] Renforcer l’effet carte du conteneur de connexion avec une ombre portée, des coins arrondis modernes et un contour discret, sans modifier le parcours d’authentification ; régression et TypeScript passent.
-- [ ] Vérifier le rendu sur l’écran public sans session et publier la finition visuelle.
+- [x] Vérifier le rendu sur l’écran public sans session : la carte affiche ses coins arrondis et son ombre portée, sans changement du parcours.
