@@ -6,10 +6,9 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Allemagne",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Auswärtiges Amt — Visiteur, études, travail et affaires —",
-        "url": "https://www.auswaertiges-amt.de/en/visa-service"
-      }
+      { "label": "Auswärtiges Amt — Visa et séjour", "url": "https://www.auswaertiges-amt.de/en/visa-service/215870-215870" },
+      { "label": "Federal Foreign Office — Informations visas", "url": "https://www.germany.info/us-en/service/visa" },
+      { "label": "Federal Foreign Office — Emploi en Allemagne", "url": "https://www.germany.info/us-en/service/visa/employment-visa-922292" }
     ]
   },
   "australie": {
@@ -36,10 +35,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Belgique",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Office des Étrangers (SPF Intérieur) — Visiteur, Études, Travail —",
-        "url": "https://dofi.ibz.be/fr"
-      }
+      { "label": "Office des étrangers — Court séjour", "url": "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay" },
+      { "label": "Office des étrangers — Études", "url": "https://dofi.ibz.be/en/themes/third-country-nationals/study" },
+      { "label": "EU Immigration Portal — Travailleur salarié", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en" },
+      { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
   "bulgarie": {
@@ -136,10 +135,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "France",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère de l'Europe et des Affaires étrangères — Visiteur, études, travail —",
-        "url": "https://france-visas.gouv.fr/"
-      }
+      { "label": "France-Visas — Portail officiel", "url": "https://france-visas.gouv.fr/en/" },
+      { "label": "France-Visas — Étudiant", "url": "https://france-visas.gouv.fr/en/etudiant" },
+      { "label": "France-Visas — Motif professionnel", "url": "https://france-visas.gouv.fr/en/motif-professionnel" },
+      { "label": "Diplomatie française — Demande de visa", "url": "https://us.diplomatie.gouv.fr/en/applying-for-a-visa" }
     ]
   },
   "gabon": {
@@ -306,10 +305,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Pays-Bas",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "IND — Visiteur —",
-        "url": "https://ind.nl/en/short-stay"
-      }
+      { "label": "IND — Court séjour", "url": "https://ind.nl/en/short-stay/short-stay-holiday-or-business-visa" },
+      { "label": "IND — Études", "url": "https://ind.nl/en/residence-permits/study" },
+      { "label": "Government.nl — Venir travailler", "url": "https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work" },
+      { "label": "NetherlandsWorldwide — Visa", "url": "https://www.netherlandsworldwide.nl/visa-the-netherlands" }
     ]
   },
   "pologne": {
@@ -416,10 +415,9 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Suisse",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Secrétariat d'État aux migrations (SEM) — visiteur, études, travail —",
-        "url": "https://www.sem.admin.ch/sem/fr/home.html"
-      }
+      { "label": "SEM — Travail en Suisse", "url": "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html" },
+      { "label": "Confédération — Visas pour ressortissants étrangers", "url": "https://www.ch.ch/en/foreign-nationals-in-switzerland/entry-and-stay-in-switzerland/visas-for-foreign-nationals/" },
+      { "label": "Représentation suisse — Visa, entrée et séjour", "url": "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland" }
     ]
   }
 };
