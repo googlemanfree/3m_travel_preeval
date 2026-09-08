@@ -399,10 +399,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Slovénie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Gouvernement de la République de Slovénie — Visiteur, études et travail —",
-        "url": "https://www.gov.si/en/topics/entry-and-residence/"
-      }
+      { "label": "Government.si — Entry and residence", "url": "https://www.gov.si/en/topics/entry-and-residence/" },
+      { "label": "Government.si — Electronic visa application form", "url": "https://www.gov.si/en/registries/services/electronic-visa-application-form/" },
+      { "label": "EU Immigration Portal — Student in Slovenia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en" },
+      { "label": "EU Immigration Portal — Employed worker in Slovenia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en" }
     ]
   },
   "suede": {

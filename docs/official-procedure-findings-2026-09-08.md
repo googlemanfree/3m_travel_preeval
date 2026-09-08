@@ -226,3 +226,14 @@ Le parcours Croatie doit distinguer court séjour C, études avec séjour tempor
 ### Règle d’intégration
 
 Le parcours Roumanie doit distinguer visa Schengen C court séjour, visa national D, admission et séjour étudiant, ainsi que l’autorisation de travail et le permis de séjour. Aucune entrée avec un visa de visite ne doit être présentée comme un droit de travailler ou de s’installer.
+
+## Slovénie — vingtième lot de sources institutionnelles consultées
+
+- **Government of Slovenia — Entry and residence** : https://www.gov.si/en/topics/entry-and-residence/. Les règles distinguent citoyens UE/EEE et ressortissants de pays tiers ; les séjours longs reposent sur un certificat ou permis de résidence selon le motif.
+- **Government of Slovenia — Electronic visa application form** : https://www.gov.si/en/registries/services/electronic-visa-application-form/. Le formulaire électronique doit encore être imprimé et déposé auprès d’une ambassade ou d’un centre de visas jusqu’à nouvel ordre.
+- **EU Immigration Portal — Student in Slovenia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en. Les études requièrent un permis temporaire, une admission, assurance, ressources, document de voyage et casier ; l’autorité compétente dépend du lieu et de la situation d’entrée.
+- **EU Immigration Portal — Employed worker in Slovenia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en. Le travail repose sur un permis unique de séjour et de travail, demandé par le candidat ou l’employeur, avec contrat et consentement du service de l’emploi.
+
+### Règle d’intégration
+
+Le parcours Slovénie doit distinguer court séjour Schengen, permis temporaire d’études et permis unique de travail. Les personnes UE/EEE et les ressortissants de pays tiers ne doivent pas recevoir les mêmes exigences ; le poste diplomatique ou l’unité administrative compétente doit rester visible.

@@ -2855,3 +2855,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Roumanie
 - [x] Contrôler les sources institutionnelles roumaines pour court séjour, études et travail.
 - [x] Intégrer les variantes Roumanie dans le catalogue détaillé avec distinction visa Schengen C, visa national D, permis étudiant et autorisation de travail.
+
+## Audit officiel par lots — Slovénie
+- [x] Contrôler les sources institutionnelles slovènes pour court séjour, études et travail.
+- [x] Intégrer les variantes Slovénie dans le catalogue détaillé avec distinction Schengen, permis d’études et permis unique de travail, en séparant UE/EEE et pays tiers.

@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Slovénie", "Visiteur", "https://www.gov.si/en/topics/entry-and-residence/", [
+    step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité et la durée si un visa Schengen est requis pour entrer en Slovénie.", ["Nationalité", "Durée", "Motif"], "https://www.gov.si/en/topics/entry-and-residence/"),
+    step("application", "Formulaire de visa", "Remplir le formulaire officiel, l’imprimer et le déposer auprès de l’ambassade ou du centre compétent.", ["Formulaire", "Passeport", "Rendez-vous"], "https://www.gov.si/en/registries/services/electronic-visa-application-form/"),
+    step("documents", "Pièces du séjour", "Réunir motif, hébergement, ressources, assurance et justificatifs demandés par la représentation compétente.", ["Motif", "Hébergement", "Ressources", "Assurance"], "https://www.gov.si/en/topics/entry-and-residence/"),
+    step("decision", "Décision et entrée", "Suivre la décision ; un visa de court séjour ne donne pas un droit d’installation ou de travail.", ["Référence", "Notifications", "Documents"], "https://www.gov.si/en/topics/entry-and-residence/"),
+  ]),
+  regional("Slovénie", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en", [
+    step("admission", "Admission dans un établissement", "Obtenir la preuve d’admission ou d’inscription dans un programme reconnu.", ["Admission", "Programme", "Inscription"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en"),
+    step("residence", "Permis temporaire d’études", "Demander le premier permis de séjour temporaire auprès de la mission diplomatique ou de l’unité administrative compétente.", ["Passeport", "Assurance", "Ressources", "Casier"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en"),
+    step("registration", "Enregistrement de résidence", "Après l’arrivée, enregistrer le lieu de résidence dans le délai officiel applicable.", ["Adresse", "Permis", "Inscription"], "https://www.gov.si/en/topics/entry-and-residence/"),
+    step("renewal", "Suivi et renouvellement", "Maintenir l’inscription et demander le renouvellement avant l’expiration du permis.", ["Permis", "Inscription", "Ressources"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovenia_en"),
+  ]),
+  regional("Slovénie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en", [
+    step("single_permit", "Permis unique séjour-travail", "Le candidat ou l’employeur introduit la demande de permis unique auprès de la mission ou de l’unité administrative compétente.", ["Employeur", "Contrat", "Passeport"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en"),
+    step("employment_consent", "Consentement du service de l’emploi", "L’autorité compétente recueille le consentement du service de l’emploi conformément aux règles applicables.", ["Contrat", "Qualification", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en"),
+    step("documents", "Pièces de séjour et travail", "Fournir assurance, moyens, contrat signé, casier et les justificatifs exigés pour le permis unique.", ["Assurance", "Ressources", "Contrat", "Casier"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en"),
+    step("residence", "Entrée et permis", "Après décision favorable, respecter les formalités d’entrée, de résidence et les limites liées à l’employeur.", ["Visa", "Adresse", "Permis"], "https://www.gov.si/en/topics/entry-and-residence/"),
+  ]),
   regional("Roumanie", "Visiteur", "http://www.mae.ro/en/node/2035", [
     step("visa_c", "Vérifier le visa Schengen C", "Déterminer selon la nationalité et la destination principale si un visa Schengen court séjour est requis pour la Roumanie.", ["Nationalité", "Destination principale", "Durée"], "http://www.mae.ro/en/node/2035"),
     step("application", "Préparer la demande", "Réunir le motif, le passeport, les moyens, l’hébergement, l’assurance et les pièces demandées par le poste compétent.", ["Passeport", "Motif", "Ressources", "Assurance"], "http://www.mae.ro/en/node/2035"),
@@ -472,7 +490,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
