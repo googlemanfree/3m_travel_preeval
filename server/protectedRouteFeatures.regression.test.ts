@@ -3,6 +3,7 @@ import { favoriteFlightRows, favoriteFlightsFilename } from "../shared/favoriteF
 import { readFileSync } from "node:fs";
 
 const appPath = new URL("../client/src/components/AuthGuard.tsx", import.meta.url);
+const adminGuardPath = new URL("../client/src/components/AdminGuard.tsx", import.meta.url);
 const documentPath = new URL("../client/src/pages/DocumentUploadPage.tsx", import.meta.url);
 const loginPath = new URL("../client/src/pages/Login.tsx", import.meta.url);
 
@@ -120,5 +121,16 @@ describe("fiche 360 agence après ouverture du paiement", () => {
     const block = adminRouter.slice(adminRouter.indexOf("  getCandidate360:"), adminRouter.indexOf("  updateCandidate360Workflow:"));
     expect(block).toContain("requireAdminSessionFromCookie(ctx.req.headers.cookie)");
     expect(block).toContain("requireValidAdminSession(input.sessionToken)");
+  });
+});
+
+
+describe("AdminGuard — bootstrap sans cookie", () => {
+  it("borne la vérification et expose la connexion admin après expiration", () => {
+    const guard = readFileSync(adminGuardPath, "utf8");
+    expect(guard).toContain("bootstrapTimedOut");
+    expect(guard).toContain("setBootstrapTimedOut(true)");
+    expect(guard).toContain("!bootstrapTimedOut");
+    expect(guard).toContain('navigate("/admin/login")');
   });
 });

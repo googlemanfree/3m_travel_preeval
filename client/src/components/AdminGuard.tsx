@@ -21,6 +21,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     return localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "";
   });
   const [queryTimedOut, setQueryTimedOut] = useState(false);
+  const [bootstrapTimedOut, setBootstrapTimedOut] = useState(false);
   const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
   const platformBootstrap = trpc.adminAuth.bootstrapPlatformSession.useQuery(undefined, {
     enabled: !sessionToken && adminSession.data?.authenticated === false,
@@ -41,8 +42,13 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     const timeout = window.setTimeout(() => setQueryTimedOut(true), 5_000);
     return () => window.clearTimeout(timeout);
   }, [adminSession.isLoading]);
+  useEffect(() => {
+    if (!platformBootstrap.isLoading) { setBootstrapTimedOut(false); return; }
+    const timeout = window.setTimeout(() => setBootstrapTimedOut(true), 6_000);
+    return () => window.clearTimeout(timeout);
+  }, [platformBootstrap.isLoading]);
   const isBootstrapping = !sessionToken && adminSession.data?.authenticated === false && platformBootstrap.isLoading;
-  const isChecking = (adminSession.isLoading || isBootstrapping) && !queryTimedOut;
+  const isChecking = (adminSession.isLoading || isBootstrapping) && !queryTimedOut && !bootstrapTimedOut;
   const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
   const sessionTemporarilyUnavailable = adminSession.isError && !/non authentifi|expir|invalid/i.test(adminSession.error?.message ?? "");
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;

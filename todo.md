@@ -2715,3 +2715,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier et corriger le refetch : `getCandidate360` utilise désormais le cookie HttpOnly prioritaire, `placeholderData` et `retry: 2`, avec indication de synchronisation non bloquante.
 - [x] Ajouter la couverture de conservation de fiche et du fallback cookie de getCandidate360 ; 17 tests ciblés passent et TypeScript est valide.
 - [ ] Retester le contrôle puis confirmer le paiement uniquement après retour d’une fiche stable.
+
+## AdminGuard — fin du chargement de session
+- [x] Empêcher l’écran « Connexion sécurisée en cours… » de rester indéfini : le bootstrap admin est maintenant borné par un délai de 6 secondes.
+- [x] Afficher après délai l’écran d’accès avec le bouton « Se connecter en tant qu’Admin » vers `/admin/login`, sans présenter un dashboard vide.
+- [x] Ajouter une régression couvrant `bootstrapTimedOut`, l’expiration et le lien `/admin/login` ; 18 tests ciblés et TypeScript passent.
