@@ -3042,3 +3042,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Tunisie avec étapes vérifiables de visa, carte de séjour, inscription et contrat visé ; signaler le renvoi ministériel lorsque la page détaillée n’est pas lisible.
 - [x] Ajouter les sources officielles tunisiennes au registre partagé.
 - [x] Valider la matrice Tunisie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Ouganda
+- [x] Contrôler les sources DCIC pour Tourist Visa, Student Pass et Work Permit.
+- [x] Intégrer les variantes Ouganda dans le catalogue détaillé avec demande en ligne, passeport de six mois, approbation/biométrie et sponsor organisationnel.
+- [x] Ajouter les sources DCIC et le portail e-Visa au registre officiel.
+- [x] Valider la matrice Ouganda avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Ouganda
+- [x] Contrôler les sources DCIC pour Tourist Visa, Student Pass et Work Permit.
+- [x] Intégrer les variantes Ouganda dans le catalogue détaillé avec demande en ligne, passeport de six mois, approbation/biométrie et sponsor organisationnel.
+- [x] Ajouter les sources DCIC et le portail e-Visa au registre officiel.
+- [x] Valider la matrice Ouganda avec les tests ciblés et TypeScript.

@@ -563,3 +563,13 @@ L’Algérie est intégrée en trois variantes : Visiteur, Études et Travail, a
 Le portail MAE fournit les informations et services consulaires pour les visas d’entrée. Le service e-Intérieur exige une entrée légale et, pour une activité rémunérée, un contrat de travail visé ou une attestation de non-soumission ; pour les études, une attestation de scolarité/inscription, revenus, passeport, hébergement et formulaire visa-carte de séjour. La page Emploi des étrangers n’a pas été extraite ; ses détails opérationnels restent à confirmer directement auprès du ministère.
 ### Règle d’intégration
 La Tunisie est intégrée avec des étapes vérifiables pour Visiteur et Études. Le parcours Travail est présenté uniquement comme une vérification officielle de contrat visé/carte de séjour et renvoie au ministère de l’Emploi tant que la source détaillée n’est pas lisible ; aucune étape de travail non vérifiée n’est ajoutée.
+
+## Lot Ouganda — sources officielles consultées
+- Directorate of Citizenship and Immigration Control — Tourist Visa : https://www.immigration.go.ug/services/tourist-visa
+- Directorate of Citizenship and Immigration Control — Student Pass : https://www.immigration.go.ug/services/student-pass
+- Directorate of Citizenship and Immigration Control — Work Permit : https://www.immigration.go.ug/services/work-permit
+- Uganda Electronic Visa/Permit Application System : https://visas.immigration.go.ug/
+### Faits vérifiables
+Le Tourist Visa est une entrée unique pouvant aller jusqu’à trois mois, avec demande en ligne, passeport de six mois, itinéraire, photo et hébergement ; l’approbation doit être utilisée dans les 90 jours et la biométrie intervient avec les pièces et la lettre d’approbation. Le Student Pass concerne les étrangers inscrits dans un établissement et exige notamment carte étudiante, admission, lettre de soutien, preuve de paiement et passeport de six mois. Le Work Permit permet de vivre et travailler et doit être sponsorisé par une organisation ou entreprise dotée d’un code organisationnel.
+### Règle d’intégration
+L’Ouganda est intégré en trois variantes : Tourist Visa, Student Pass et Work Permit, avec portail officiel, documents obligatoires, approbation et biométrie avant finalisation.

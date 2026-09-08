@@ -314,6 +314,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "ouganda": {
+    "country": "Ouganda",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Uganda Immigration — Tourist Visa", "url": "https://www.immigration.go.ug/services/tourist-visa" },
+      { "label": "Uganda Immigration — Student Pass", "url": "https://www.immigration.go.ug/services/student-pass" },
+      { "label": "Uganda Immigration — Work Permit", "url": "https://www.immigration.go.ug/services/work-permit" },
+      { "label": "Uganda Electronic Visa/Permit Application System", "url": "https://visas.immigration.go.ug/" }
+    ]
+  },
   "tunisie": {
     "country": "Tunisie",
     "verificationStatus": "verified",
