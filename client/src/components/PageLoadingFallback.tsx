@@ -68,6 +68,25 @@ export default function PageLoadingFallback() {
               : `Nouvelle tentative automatique dans ${secondsLeft} seconde${secondsLeft > 1 ? "s" : ""}.`}
               </p>
             </div>
+
+            {isRecovering && (
+              <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="min-h-11 flex-1 rounded-xl bg-amber-300 px-4 py-2 text-sm font-black text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                >
+                  Recharger la page
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = "/"; }}
+                  className="min-h-11 flex-1 rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  Retour à l’accueil
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

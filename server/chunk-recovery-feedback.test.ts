@@ -41,3 +41,12 @@ describe("chunk recovery feedback contracts", () => {
     expect(app).toContain("<ChunkReloadNotice />");
   });
 });
+
+  it("offers explicit recovery actions after the countdown expires", () => {
+    const fallback = readProjectFile("client/src/components/PageLoadingFallback.tsx");
+
+    expect(fallback).toContain("Recharger la page");
+    expect(fallback).toContain("Retour à l’accueil");
+    expect(fallback).toContain("window.location.reload");
+    expect(fallback).toContain('window.location.href = "/"');
+  });

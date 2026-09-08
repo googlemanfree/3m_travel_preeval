@@ -2720,3 +2720,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Empêcher l’écran « Connexion sécurisée en cours… » de rester indéfini : le bootstrap admin est maintenant borné par un délai de 6 secondes.
 - [x] Afficher après délai l’écran d’accès avec le bouton « Se connecter en tant qu’Admin » vers `/admin/login`, sans présenter un dashboard vide.
 - [x] Ajouter une régression couvrant `bootstrapTimedOut`, l’expiration et le lien `/admin/login` ; 18 tests ciblés et TypeScript passent.
+
+## Démarrage global du dashboard admin
+- [x] Reproduire le chargeur « Nous préparons votre espace » et sa tentative automatique à 15 secondes après navigation admin fraîche.
+- [x] Localiser `PageLoadingFallback` et borner l’attente à `LAZY_PAGE_TIMEOUT_MS` ; après expiration, l’écran devient récupérable au lieu de rester sans action.
+- [x] Ajouter les sorties « Recharger la page » et « Retour à l’accueil » après expiration, avec régression dédiée ; 17 tests ciblés et TypeScript passent.
+- [ ] Ajouter une régression et retester la fiche `3M-AGN-270002` avant de poursuivre paiement/protocole.
