@@ -2464,8 +2464,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier desktop/mobile et publier avec URL/action exacte.
 
 ## Nouvelle mission — destinations et cohérence visuelle
-- [ ] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants.
-- [ ] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable.
+- [x] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants. La couche sources est auditée ; les visuels restent hors périmètre.
+- [x] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable. Le registre compte 107 sources HTTPS et aucune procédure du catalogue n’est manquante.
 - [ ] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes.
 - [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
 - [ ] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point.
@@ -2479,8 +2479,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Autorisation d’exécution autonome — lot 1 destinations
 - [ ] Réaliser le lot 1 complet jusqu’à publication sans nouvelle demande de confirmation intermédiaire, sauf blocage technique ou source officielle introuvable.
 - [ ] Collecter des visuels spécifiques autorisés pour les 10 destinations et les rattacher aux fiches.
-- [ ] Vérifier l’intégrité des sources et signaler les lacunes sans inventer.
-- [ ] Tester puis publier le lot 1 et documenter les URL/actions exactes.
+- [x] Vérifier l’intégrité des sources et signaler les lacunes sans inventer. Les réponses HTTP atypiques sont documentées sans les présenter comme une absence de source.
+- [x] Tester puis publier la couche sources du lot 1 et documenter les URL/actions exactes. Les dix routes représentatives répondent HTTP 200 ; les images restent reportées.
 
 ## Bugs urgents — Footer, suivi dossier et biométrie
 - [x] Supprimer l’affichage répété et saturé des menus/tooltips du pied de page.

@@ -21,3 +21,9 @@ L’ancienne URL UAE qui répondait HTTP 404 a été remplacée. Les anciennes U
 | Bulgarie — travail | [Ministère de l’Intérieur de Bulgarie](https://www.mi.government.bg/en/general/naemane-na-slujiteli-grajdani-ot-drugi-darjavi/) |
 | Émirats arabes unis — visa touristique | [Ministère de l’Économie des Émirats arabes unis](https://www.moet.gov.ae/en/-/travel-requirements-for-the-uae-tourist-visa) |
 | Türkiye — e‑Visa | [Portail e‑Visa officiel](https://www.evisa.gov.tr/en/tour/) |
+
+## Vérification des routes du lot 1
+
+Les dix routes suivantes répondent HTTP 200 sur la prévisualisation : `/procedures/canada-travail`, `/procedures/luxembourg-travail`, `/procedures/france-travail`, `/procedures/belgique-etudes`, `/procedures/allemagne-travail`, `/procedures/suisse-travail`, `/procedures/royaume-uni-travail`, `/procedures/etats-unis-travail`, `/procedures/australie-travail` et `/procedures/italie-travail`.
+
+Cette vérification porte sur la couche publique des sources et du contenu. Elle ne valide pas la collecte d’images décoratives, qui reste explicitement reportée.
