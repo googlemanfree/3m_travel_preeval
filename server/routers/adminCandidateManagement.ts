@@ -11,6 +11,7 @@ import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../em
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
+import { INITIAL_AGREEMENT_PROTOCOL, AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -964,14 +965,15 @@ export const adminCandidateManagementRouter = router({
         applicationId = application.id;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
-      const paragraphs = input.content.split(/\\n\\s*\\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\\n/g, "<br>")}</p>`).join("");
-      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#10234f;line-height:1.6"><h1>3M Travel &amp; Services</h1><p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p><p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p>${paragraphs}<p style="font-size:12px;color:#64748b">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p></body></html>`;
+      const protocolText = input.content.trim().length >= 50 ? input.content : INITIAL_AGREEMENT_PROTOCOL;
+      const paragraphs = protocolText.split(/\\n\\s*\\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\\n/g, "<br>")}</p>`).join("");
+      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#10234f;line-height:1.6"><h1>3M Travel &amp; Services</h1><p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p><p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p><p style="font-size:12px;color:#64748b">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>${paragraphs}<p style="font-size:12px;color:#64748b">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p></body></html>`;
       const storageKey = `agreements/${reference.source}/${reference.id}/${Date.now()}-protocole.html`;
       const stored = await storagePut(storageKey, Buffer.from(html, "utf8"), "text/html; charset=utf-8");
       if (agencyDossierId) {
-        await db.insert(agencyDossierDocuments).values({ dossierId: agencyDossierId, documentType: "protocole_accord", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "admin_upload", uploadedBy: admin.email, verificationStatus: "verified", verificationComment: "Protocole préparé et validé par l’administrateur avant diffusion." });
+        await db.insert(agencyDossierDocuments).values({ dossierId: agencyDossierId, documentType: "protocole_accord", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "admin_upload", uploadedBy: admin.email, verificationStatus: "verified", verificationComment: `Protocole ${AGREEMENT_PROTOCOL_VERSION} préparé et validé par l’administrateur avant diffusion.`, });
       } else if (applicationId) {
-        await db.insert(clientDocuments).values({ evaluationId: applicationId, candidateEmail: email, documentType: "other", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "manual_admin", uploadedByAdmin: admin.email, receivedByAdmin: true, status: "verified", verificationStatus: "approved", verifiedByAdmin: admin.email, verifiedAt: new Date(), adminNotes: "Protocole éditable préparé par l’administrateur et déposé après paiement confirmé." });
+        await db.insert(clientDocuments).values({ evaluationId: applicationId, candidateEmail: email, documentType: "other", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "manual_admin", uploadedByAdmin: admin.email, receivedByAdmin: true, status: "verified", verificationStatus: "approved", verifiedByAdmin: admin.email, verifiedAt: new Date(), adminNotes: `Protocole éditable (${AGREEMENT_PROTOCOL_VERSION}) préparé par l’administrateur et déposé après paiement confirmé.`, });
       }
       try {
         await sendGenericEmail({ to: email, subject: input.subject?.trim() || `Protocole d’accord — ${dossierNumber}`, html });

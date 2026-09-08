@@ -3110,3 +3110,22 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la validation humaine à l’inscription, le rattachement agence/en ligne, les libellés de prévisualisation, l’action WhatsApp manuelle, la navigation dossier et les libellés de session/reset admin.
 - [x] Rejouer la suite admin/évaluation/progression : 67 fichiers de test réussis, 222 tests réussis, TypeScript sans erreur.
 - [x] Conserver les garde-fous : aucun envoi automatique sans validation humaine, aucune mutation de paiement ou de dossier réel pendant les tests.
+
+## Enrichissement du protocole d’accord — 3M-AGN-270002
+- [ ] Remplacer le brouillon court admin par un protocole initial détaillé, rassurant et transparent, sans promesse de visa, d’emploi ou de décision.
+- [ ] Synchroniser la version envoyée, déposée dans l’espace client, imprimable et PDF avec le même contenu validé.
+- [ ] Décrire explicitement la sélection du candidat et le déclenchement d’un second protocole adapté au pays, au type de visa et à la formule/prestation choisie.
+- [ ] Conserver les garde-fous : paiement confirmé avant signature, frais distincts des frais officiels, obligations du candidat, limites de responsabilité et traçabilité du conseiller.
+- [ ] Ajouter les tests de cohérence des copies client/admin/PDF et publier après validation TypeScript et régressions.
+
+## Protocole d’accord enrichi — vérifié
+- [x] Remplacer les copies courtes du protocole dans Candidate360Workspace, MySpace et EvaluationSpace par une rédaction détaillée et cohérente.
+- [x] Ajouter les obligations de l’agence et du candidat, délais indicatifs, frais officiels distincts, limites de responsabilité, protection documentaire, séquencement et signature après paiement confirmé.
+- [x] Ajouter le modèle manuel du second protocole, distinct du premier, contextualisable par destination, type de procédure et formule choisie, sans envoi automatique.
+- [x] Ajouter la version `2026-09-08-v2` et les tests de contenu, de diffusion et de TypeScript : 15 tests réussis.
+
+## Protocole d’accord enrichi — vérifié
+- [x] Remplacer les copies courtes du protocole dans Candidate360Workspace, MySpace et EvaluationSpace par une rédaction détaillée et cohérente.
+- [x] Ajouter les obligations de l’agence et du candidat, délais indicatifs, frais officiels distincts, limites de responsabilité, protection documentaire, séquencement et signature après paiement confirmé.
+- [x] Ajouter le modèle manuel du second protocole, distinct du premier, contextualisable par destination, type de procédure et formule choisie, sans envoi automatique.
+- [x] Ajouter la version `2026-09-08-v2` et les tests de contenu, de diffusion et de TypeScript : 15 tests réussis.
