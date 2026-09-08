@@ -326,3 +326,13 @@ Tant que les sources officielles de résidence et les formalités complémentair
   - Le candidat doit disposer d’une offre confirmée avant la demande ; le visa ne doit pas être présenté comme une promesse d’emploi.
 ### Règle d’intégration
 Le Royaume-Uni peut être intégré en trois variantes distinctes : Standard Visitor/ETA selon la nationalité, Student visa et Skilled Worker visa. Les pièces, frais, délais et conditions détaillés doivent rester renvoyés aux pages GOV.UK et au dossier individuel.
+
+## Lot États-Unis — sources officielles consultées
+- **U.S. Department of State — Visitor Visa** : https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa
+  - Le visa visiteur couvre les motifs B-1/B-2 autorisés ; l’emploi et les études diplômantes ne sont pas permis sous ce statut. La séquence comprend DS-160, photo, rendez-vous, biométrie/entretien et justificatifs selon le poste compétent.
+- **U.S. Department of State — Student Visa** : https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html
+  - Le type F ou M dépend de l’établissement et du programme. Le candidat doit être accepté par un établissement approuvé SEVP, être enregistré dans SEVIS, obtenir le Form I-20, puis déposer DS-160 et se présenter selon les instructions consulaires.
+- **U.S. Department of State — Temporary Worker Visas** : https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html
+  - La catégorie de travail dépend de l’emploi ; la plupart des demandes exigent une pétition employeur approuvée par USCIS avant la demande de visa. La suite comprend DS-160, rendez-vous, biométrie/entretien et pièces liées à la pétition.
+### Règle d’intégration
+Les États-Unis sont intégrés en trois variantes distinctes : Visitor B-1/B-2, Student F/M et Temporary Worker. Les catégories ne doivent pas être mélangées ; la pétition employeur, le SEVP/SEVIS et les instructions du poste compétent restent bloquants selon la variante.

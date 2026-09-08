@@ -632,6 +632,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("eligibility", "Éligibilité et anglais", "Vérifier le métier éligible, le salaire applicable et la preuve de connaissance de l’anglais selon le dossier.", ["Occupation", "Salaire", "Anglais", "Passeport"], "https://www.gov.uk/skilled-worker-visa"),
     step("online_application", "Demande et identité", "Déposer la demande en ligne, fournir l’identité et les documents requis, puis attendre la décision.", ["Formulaire", "Biométrie", "Documents", "Décision"], "https://www.gov.uk/skilled-worker-visa"),
   ]),
+  regional("États-Unis", "Visiteur", "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa", [
+    step("visa_category", "Catégorie B-1/B-2", "Vérifier que le motif relève du visiteur et ne constitue ni un emploi ni des études diplômantes.", ["Motif", "Durée", "Passeport"], "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa"),
+    step("ds160", "Formulaire DS-160", "Remplir la demande non-immigrant en ligne et conserver la page de confirmation.", ["DS-160", "Photo", "Passeport"], "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa"),
+    step("interview", "Rendez-vous et biométrie", "Prendre rendez-vous auprès du poste compétent, fournir les justificatifs et passer l’entretien lorsque requis.", ["Rendez-vous", "Biométrie", "Ressources", "Attaches"], "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa"),
+    step("decision_entry", "Décision et admission", "Suivre la décision ; le visa permet de demander l’admission mais ne garantit pas l’entrée, décidée au port d’arrivée.", ["Décision", "Passeport", "I-94", "Conditions"], "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa"),
+  ]),
+  regional("États-Unis", "Études", "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html", [
+    step("sevp_admission", "Admission dans une école SEVP", "Obtenir l’acceptation d’un établissement approuvé et l’inscription dans le système SEVIS.", ["Admission", "SEVP", "SEVIS"], "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html"),
+    step("i20", "Formulaire I-20", "Recevoir le Form I-20 de l’établissement et payer la redevance SEVIS I-901 selon les instructions officielles.", ["I-20", "SEVIS", "Frais"], "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html"),
+    step("ds160", "DS-160 et entretien", "Remplir le DS-160, fournir la photo et prendre rendez-vous auprès de la mission compétente.", ["DS-160", "Passeport", "Rendez-vous", "Photo"], "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html"),
+    step("decision_entry", "Décision et entrée", "Présenter les documents requis et respecter les conditions F ou M après la décision et à l’entrée.", ["I-20", "Visa", "Biométrie", "Décision"], "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html"),
+  ]),
+  regional("États-Unis", "Travail", "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html", [
+    step("category", "Catégorie de travail temporaire", "Identifier la catégorie adaptée au poste et à la durée du travail temporaire.", ["Poste", "Durée", "Employeur", "Qualification"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
+    step("petition", "Pétition employeur USCIS", "Faire approuver la pétition employeur requise, généralement le Form I-129, avant la demande de visa.", ["Employeur", "I-129", "USCIS", "Receipt"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
+    step("ds160", "DS-160 et rendez-vous", "Après approbation, remplir le DS-160, payer les frais applicables et prendre le rendez-vous consulaire.", ["DS-160", "Pétition", "Passeport", "Rendez-vous"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
+    step("decision_entry", "Décision et admission", "Fournir biométrie et pièces, suivre la décision et comprendre que l’admission finale relève du CBP au port d’entrée.", ["Biométrie", "Décision", "I-797", "I-94"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -653,7 +671,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

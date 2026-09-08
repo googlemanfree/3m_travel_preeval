@@ -2898,3 +2898,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Contrôler les sources GOV.UK pour Standard Visitor, Student visa et Skilled Worker visa.
 - [x] Intégrer les variantes Royaume-Uni dans le catalogue détaillé avec vérification ETA/visa, sponsor étudiant et Certificate of Sponsorship.
 - [x] Ajouter les sources GOV.UK au registre officiel et valider les 21 tests ciblés avec TypeScript.
+
+## Audit officiel par lots — États-Unis
+- [x] Contrôler les sources du Département d’État pour Visitor B-1/B-2, Student F/M et Temporary Worker.
+- [x] Intégrer les variantes États-Unis dans le catalogue détaillé avec DS-160, SEVIS/I-20 et pétition employeur comme points bloquants.
+- [x] Enrichir le registre officiel avec les pages Visitor Visa, Student Visa, Temporary Worker et Visa Wizard.
+- [x] Valider la matrice États-Unis avec les tests ciblés et TypeScript.

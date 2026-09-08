@@ -118,10 +118,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "États-Unis",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "U.S. Department of State — Visiteur —",
-        "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html"
-      }
+      { "label": "U.S. Department of State — Visitor Visa", "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html/visa" },
+      { "label": "U.S. Department of State — Student Visa", "url": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html" },
+      { "label": "U.S. Department of State — Temporary Worker Visas", "url": "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html" },
+      { "label": "U.S. Department of State — Visa Wizard", "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/wizard.html" }
     ]
   },
   "finlande": {
