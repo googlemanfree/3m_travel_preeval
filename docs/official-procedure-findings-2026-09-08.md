@@ -420,3 +420,13 @@ Le Brésil est intégré en trois variantes : VIVIS/visiteur, VITEM IV/études e
   - L’employeur demande le visa de travail standard ; les autorités distinguent aussi la Green visa selon la situation professionnelle.
 ### Règle d’intégration
 Les Émirats arabes unis sont intégrés en trois variantes : Tourist/Visit, Student residence et Work residence. Les étapes renvoient aux autorités ICP/GDRFA et aux conditions de parrainage officielles.
+
+## Lot Mexique — sources officielles consultées
+- **SRE — Visas to Mexico** : https://embamex.sre.gob.mx/finlandia/index.php/traveling/visas
+  - Le statut visiteur sans activité rémunérée couvre les séjours jusqu’à 180 jours selon la nationalité et l’éligibilité.
+- **Consulado de México — Student Temporary Resident Visa** : https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/117-student-visa
+  - Les études de plus de 180 jours relèvent du visa de résident temporaire étudiant ; l’admission, les moyens financiers et le rendez-vous consulaire sont requis, puis la carte de résident doit être demandée auprès de l’INM après l’entrée.
+- **Consulado de México — Temporary Resident Visa** : https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/115-temporary-resident-visa
+  - La résidence temporaire couvre plus de 180 jours et moins de quatre ans, avec formulaire, passeport, photo, frais et justificatifs correspondant à la catégorie ; les activités rémunérées nécessitent l’autorisation migratoire appropriée.
+### Règle d’intégration
+Le Mexique est intégré en trois variantes : visiteur non lucratif jusqu’à 180 jours, résident temporaire étudiant et résident temporaire avec autorisation de travail selon la catégorie et la décision de l’INM.

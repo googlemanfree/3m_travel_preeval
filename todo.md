@@ -2952,3 +2952,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes UAE dans le catalogue détaillé avec distinction permis d’entrée, parrainage étudiant et demande employeur.
 - [x] Ajouter les sources officielles UAE au registre partagé.
 - [x] Valider la matrice UAE avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Mexique
+- [x] Contrôler les sources SRE pour visiteur non lucratif, résident temporaire étudiant et résident temporaire avec autorisation de travail.
+- [x] Intégrer les variantes Mexique dans le catalogue détaillé avec seuil de 180 jours, carte INM et autorisation migratoire de travail.
+- [x] Ajouter les sources SRE/Consulados de México au registre officiel.
+- [x] Valider la matrice Mexique avec les tests ciblés et TypeScript.

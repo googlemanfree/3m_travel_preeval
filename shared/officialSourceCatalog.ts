@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "mexique": {
+    "country": "Mexique",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "SRE — Visas to Mexico", "url": "https://embamex.sre.gob.mx/finlandia/index.php/traveling/visas" },
+      { "label": "Consulado de México — Student Temporary Resident Visa", "url": "https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/117-student-visa" },
+      { "label": "Consulado de México — Temporary Resident Visa", "url": "https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/115-temporary-resident-visa" }
+    ]
+  },
   "emirats arabes unis": {
     "country": "Émirats arabes unis",
     "verificationStatus": "verified",

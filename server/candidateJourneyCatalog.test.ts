@@ -96,6 +96,9 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Émirats arabes unis", "Visiteur", "u.ae"],
       ["Émirats arabes unis", "Études", "u.ae"],
       ["Émirats arabes unis", "Travail", "u.ae"],
+      ["Mexique", "Visiteur", "sre.gob.mx"],
+      ["Mexique", "Études", "consulmex.sre.gob.mx"],
+      ["Mexique", "Travail", "consulmex.sre.gob.mx"],
     ] as const;
     for (const [country, visa, sourceHost] of cases) {
       const journey = getCandidateJourney(country, visa);
