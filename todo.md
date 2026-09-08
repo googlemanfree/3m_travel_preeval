@@ -3068,3 +3068,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Persister les validations d’étapes avec contrôle du séquencement bloquant et synchronisation admin/client.
 - [x] Ajouter les tests de mutation, d’isolation, de droits et de rendu de la checklist. TypeScript et 14 tests ciblés passent ; l’espace protégé redirige correctement les visiteurs non connectés.
 - [x] Publier la checklist et documenter l’URL/action exacte ainsi que le résultat attendu.
+
+## Barre de progression du parcours — nouveau lot
+- [x] Cartographier le calcul d’avancement officiel et l’état persistant de la checklist.
+- [x] Afficher au-dessus de la checklist le pourcentage d’accomplissement et le nombre d’étapes réalisées.
+- [x] Synchroniser la barre après chaque coche, décochage et actualisation sans contourner les étapes verrouillées.
+- [x] Ajouter les tests du calcul, de l’accessibilité et du rendu. TypeScript et 14 tests ciblés passent.
+- [x] Publier et documenter l’URL/action exacte de vérification.

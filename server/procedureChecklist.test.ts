@@ -28,6 +28,8 @@ describe("checklist interactive des procédures", () => {
     expect(component).toContain('type="checkbox"');
     expect(component).toContain("aria-label={");
     expect(component).toContain("checklistMutation.mutate({ stepId: checklistStepId, checked: event.target.checked })");
+    expect(component).toContain("Pourcentage d’accomplissement du parcours");
+    expect(component).toContain("completedStepCount / journey.steps.length");
   });
 });
 

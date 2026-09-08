@@ -56,7 +56,10 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
   const persistedStepIds = useMemo(() => new Set(checklistQuery.data?.data?.completedStepIds ?? []), [checklistQuery.data?.data?.completedStepIds]);
   const checklistCurrentIndex = checklistQuery.data?.data?.currentIndex ?? currentIndex;
   const completedIndex = Math.max(-1, currentIndex - 1);
-  const progress = Math.round(((completedIndex + 1) / journey.steps.length) * 100);
+  const checklistCompletedCount = Array.from(persistedStepIds).filter((stepId) => /^checklist-\d+$/.test(stepId)).length;
+  const officialCompletedCount = Math.max(0, currentIndex);
+  const completedStepCount = Math.min(journey.steps.length, Math.max(officialCompletedCount, checklistCompletedCount));
+  const progress = journey.steps.length ? Math.round((completedStepCount / journey.steps.length) * 100) : 0;
 
   return (
     <Card className="border-blue-100 bg-white shadow-sm" aria-labelledby="candidate-country-journey-title">
@@ -80,6 +83,11 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
       </CardHeader>
       <CardContent className="space-y-4 p-5">
         <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4" aria-labelledby="procedure-checklist-title">
+          <div className="mb-4 rounded-lg border border-blue-200 bg-white/80 p-3" aria-labelledby="checklist-progress-title">
+            <div className="flex flex-wrap items-center justify-between gap-2"><p id="checklist-progress-title" className="text-xs font-black uppercase tracking-[0.12em] text-blue-950">Progression du parcours</p><p className="text-sm font-black text-blue-900">{progress}% <span className="font-medium text-slate-600">({completedStepCount}/{journey.steps.length} étapes)</span></p></div>
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-blue-100" role="progressbar" aria-label={`Pourcentage d’accomplissement du parcours : ${progress}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full rounded-full bg-blue-700 transition-[width] duration-300" style={{ width: `${progress}%` }} /></div>
+            <p className="mt-2 text-xs leading-5 text-slate-600">Le pourcentage combine l’avancement officiel du dossier et les étapes que vous avez cochées dans votre checklist.</p>
+          </div>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-2"><ListChecks className="mt-0.5 h-5 w-5 text-blue-800" aria-hidden="true" /><div><h3 id="procedure-checklist-title" className="font-bold text-blue-950">Ma checklist de procédure</h3><p className="mt-1 text-sm leading-5 text-blue-900">Cochez uniquement les actions que vous avez personnellement vérifiées. Les étapes à venir restent verrouillées jusqu’à la validation du dossier.</p></div></div>
             {checklistQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-blue-700" aria-label="Mise à jour de la checklist" />}
