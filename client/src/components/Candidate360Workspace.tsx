@@ -244,7 +244,15 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   }, [data]);
 
   if (isLoading && !data) return <div className="py-12 text-center text-sm text-slate-500">Chargement du centre de gestion…</div>;
-  if (!data) return <div className="py-10 text-center text-sm text-rose-700">La fiche 360° n’a pas pu être chargée. Réessayez depuis la liste des candidats.</div>;
+  if (!data) return (
+    <div className="py-10 text-center text-sm text-rose-700">
+      <p>La fiche 360° n’a pas pu être chargée.</p>
+      <p className="mt-1 text-xs text-rose-600">{error?.message ?? "Réessayez depuis la liste des candidats."}</p>
+      <button type="button" className="mt-3 rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-800" onClick={() => void refresh()}>
+        Réessayer la fiche
+      </button>
+    </div>
+  );
 
   const operationalCase: any = data.operationalCase ?? {
     currentStatus: "qualifying",
