@@ -41,6 +41,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "emirats arabes unis": {
+    "country": "Émirats arabes unis",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "UAE Government — Tourist visa", "url": "https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/tourist-visa" },
+      { "label": "ICP — Issuance of a Visa", "url": "https://icp.gov.ae/en/services-details/?serviceid=64afe3c1035448005bd52e60" },
+      { "label": "UAE Government — Residence visa for studying", "url": "https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/residence-visa-for-studying-in-the-uae" },
+      { "label": "UAE Government — Work visa", "url": "https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/residence-visa-for-working-in-the-uae" }
+    ]
+  },
   "bresil": {
     "country": "Brésil",
     "verificationStatus": "verified",

@@ -408,3 +408,15 @@ L’Afrique du Sud est intégrée en trois variantes : Visitor’s Visa, Study V
   - Le travail est soumis à une autorisation préalable au Brésil initiée par l’entreprise sponsor, puis à la demande consulaire ; les titulaires doivent notamment se faire enregistrer auprès de la Polícia Federal dans les délais officiels.
 ### Règle d’intégration
 Le Brésil est intégré en trois variantes : VIVIS/visiteur, VITEM IV/études et VITEM V/travail, sans présenter VIVIS comme une autorisation d’emploi rémunéré.
+
+## Lot Émirats arabes unis — sources officielles consultées
+- **UAE Government — Tourist visa** : https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/tourist-visa
+  - Le visa touristique peut être demandé via ICP/GDRFA ou des canaux habilités ; les conditions varient selon la nationalité et le canal.
+- **ICP — Issuance of a Visa** : https://icp.gov.ae/en/services-details/?serviceid=64afe3c1035448005bd52e60
+  - Le service officiel encadre les permis d’entrée pour tourisme/visite, avec passeport, assurance, billet retour, durée et délai d’entrée.
+- **UAE Government — Residence visa for studying** : https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/residence-visa-for-studying-in-the-uae
+  - L’étudiant relève du parrainage d’un parent résident ou d’un établissement accrédité ; un certificat de l’université précisant la durée est requis.
+- **UAE Government — Work visa** : https://u.ae/en/information-and-services/visa-and-emirates-id/Types-of-visas/residence-visa-for-working-in-the-uae
+  - L’employeur demande le visa de travail standard ; les autorités distinguent aussi la Green visa selon la situation professionnelle.
+### Règle d’intégration
+Les Émirats arabes unis sont intégrés en trois variantes : Tourist/Visit, Student residence et Work residence. Les étapes renvoient aux autorités ICP/GDRFA et aux conditions de parrainage officielles.

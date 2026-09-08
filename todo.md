@@ -2946,3 +2946,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Brésil dans le catalogue détaillé avec interdiction d’emploi rémunéré sous VIVIS et autorisation préalable pour VITEM V.
 - [x] Ajouter les sources MRE au registre officiel.
 - [x] Valider la matrice Brésil avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Émirats arabes unis
+- [x] Contrôler les sources u.ae et ICP pour Tourist/Visit, Student residence et Work residence.
+- [x] Intégrer les variantes UAE dans le catalogue détaillé avec distinction permis d’entrée, parrainage étudiant et demande employeur.
+- [x] Ajouter les sources officielles UAE au registre partagé.
+- [x] Valider la matrice UAE avec les tests ciblés et TypeScript.
