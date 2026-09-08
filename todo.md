@@ -2887,3 +2887,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Serbie
 - [x] Contrôler les sources institutionnelles serbes pour visa C, visa D, études et travail/résidence.
 - [x] Intégrer les variantes Serbie dans le catalogue détaillé avec distinction visa C, visa D, portail Welcome to Serbia et permis unique de résidence/travail.
+
+## Audit officiel par lots — Türkiye
+- [x] Contrôler les sources institutionnelles turques pour visiteur, études, résidence et travail.
+- [x] Intégrer les variantes Türkiye dans le catalogue détaillé avec routage Visiteur, Études et Travail.
+- [x] Ajouter les sources MFA Türkiye, Presidency of Migration Management et Ministry of Labour au registre officiel.
+- [x] Valider la matrice Türkiye avec les tests ciblés et TypeScript.

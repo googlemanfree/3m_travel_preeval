@@ -433,5 +433,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "Confédération — Visas pour ressortissants étrangers", "url": "https://www.ch.ch/en/foreign-nationals-in-switzerland/entry-and-stay-in-switzerland/visas-for-foreign-nationals/" },
       { "label": "Représentation suisse — Visa, entrée et séjour", "url": "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland" }
     ]
+  },
+  "turkiye": {
+    "country": "Türkiye",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "MFA Türkiye — Visa information for foreigners", "url": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa" },
+      { "label": "MFA Türkiye — General information about visas", "url": "https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa" },
+      { "label": "Presidency of Migration Management — Residence permit types", "url": "https://en.goc.gov.tr/residence-permit-types" },
+      { "label": "Presidency of Migration Management — Work permit", "url": "https://en.goc.gov.tr/work-permit" },
+      { "label": "Ministry of Labour — Work permit evaluation documents", "url": "https://www.csgb.gov.tr/uigm/en/general-information/information-and-documents-required-in-the-work-permit-evaluation-process/" }
+    ]
   }
 };

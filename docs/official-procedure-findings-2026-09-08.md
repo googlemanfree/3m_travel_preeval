@@ -302,3 +302,14 @@ Le parcours Hongrie doit séparer visa C de court séjour, séjour d’études e
 ### Règle d’intégration
 
 Le parcours Slovaquie doit distinguer court séjour C, visa national D, résidence temporaire pour études et permis unique ou permis de travail. Un visa C ne doit pas être présenté comme un droit d’installation, d’études longues ou de travail. Les délais, traductions, authentifications et obligations après arrivée doivent rester liés à la variante et à la source officielle applicables.
+
+## Lot Türkiye — sources officielles consultées
+- **MFA Türkiye — General Information About Turkish Visas** : https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa
+  - Le MFA distingue les catégories Tourist/Business, Student–Education Visa et Working Visa. Les finalités études/travail nécessitent une démarche auprès des représentations turques ; les règles dépendent de la nationalité et de la finalité.
+  - Les visas de travail impliquent une demande auprès de la mission turque et une démarche de l’employeur auprès du ministère du Travail et de la Sécurité sociale. Le permis de travail approuvé a aussi une fonction de séjour selon les informations du MFA.
+  - Le court séjour est soumis au régime de nationalité applicable et ne doit pas être présenté comme un droit d’installation, d’études longues ou de travail.
+- **MFA Türkiye — Visa Information for Foreigners** : https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa
+  - La page officielle renvoie vers l’e-Visa pour les nationalités et motifs éligibles et vers les missions turques pour les autres cas ; elle précise que les personnes qui résident, travaillent ou étudient doivent vérifier les formalités de séjour et d’autorisation applicables.
+  - Les exigences changent selon le passeport et la finalité : le catalogue ne doit pas afficher une checklist universelle sans vérification par nationalité et poste compétent.
+### Règle d’intégration
+Tant que les sources officielles de résidence et les formalités complémentaires études/travail ne sont pas intégrées, Türkiye reste affichée avec une procédure à vérifier, sans étapes détaillées présentées comme garanties.

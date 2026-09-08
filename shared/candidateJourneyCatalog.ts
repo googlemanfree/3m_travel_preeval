@@ -595,6 +595,25 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("employer_route", "Parcours employeur", "Rassembler les pièces et suivre la voie de permis indiquée par l’autorité compétente.", ["Contrat", "Employeur", "Formulaires"], "https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work"),
     step("decision", "Décision et arrivée", "Suivre la décision, le visa éventuel et les formalités de séjour.", ["Décision", "Passeport", "Adresse"], "https://www.netherlandsworldwide.nl/visa-the-netherlands"),
   ]),
+  regional("Türkiye", "Visiteur", "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa", [
+    step("visa_check", "Vérifier le régime d’entrée", "Vérifier la nationalité, le passeport, la durée et l’éligibilité éventuelle à l’exemption ou à l’e-Visa sur les portails officiels.", ["Nationalité", "Passeport", "Dates", "Motif"], "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa"),
+    step("visa_application", "Demande de visa ou e-Visa", "Si nécessaire, utiliser l’e-Visa officiel ou déposer une demande auprès de la représentation turque compétente.", ["Formulaire", "Passeport", "Justificatifs", "Frais"], "https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa"),
+    step("entry_conditions", "Conditions d’entrée et de séjour", "Respecter la validité du passeport, l’assurance et les limites de séjour applicables ; un visa ne garantit pas l’entrée.", ["Passeport", "Assurance", "Hébergement", "Référence"], "https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa"),
+    step("decision", "Décision et entrée", "Suivre la décision, conserver les justificatifs et respecter la limite de séjour accordée.", ["Décision", "Passeport", "Notifications"], "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa"),
+  ]),
+  regional("Türkiye", "Études", "https://en.goc.gov.tr/residence-permit-types", [
+    step("admission", "Admission ou programme officiel", "Obtenir l’admission ou l’inscription dans un programme reconnu et réunir le document justifiant le motif d’études.", ["Admission", "Programme", "Passeport"], "https://en.goc.gov.tr/residence-permit-types"),
+    step("student_visa_check", "Vérifier le visa étudiant", "Déterminer auprès de la représentation turque si un visa étudiant/éducation est nécessaire avant l’entrée selon la nationalité et le programme.", ["Nationalité", "Admission", "Formulaire"], "https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa"),
+    step("residence_application", "Demande de résidence pour études", "Déposer la demande de résidence selon le motif et les conditions de l’autorité turque compétente.", ["Admission", "Assurance", "Ressources", "Adresse"], "https://en.goc.gov.tr/residence-permit-types"),
+    step("study_maintenance", "Maintien du statut étudiant", "Respecter les obligations du programme, du titre et du renouvellement ; un titre étudiant ne vaut pas automatiquement autorisation de travail.", ["Inscription", "Titre", "Échéances"], "https://en.goc.gov.tr/work-permit"),
+  ]),
+  regional("Türkiye", "Travail", "https://www.csgb.gov.tr/uigm/en/general-information/information-and-documents-required-in-the-work-permit-evaluation-process/", [
+    step("employment_basis", "Contrat et employeur", "Obtenir un contrat signé et confirmer l’employeur, le poste et les qualifications avant la demande.", ["Contrat", "Employeur", "Passeport", "Diplôme"], "https://www.csgb.gov.tr/uigm/en/general-information/information-and-documents-required-in-the-work-permit-evaluation-process/"),
+    step("visa_application", "Visa de travail auprès de la mission", "Déposer la demande de permis et de visa auprès de la représentation turque, sauf si la voie de demande intérieure est légalement applicable.", ["Formulaire", "Passeport", "Contrat", "Lettre employeur"], "https://www.mfa.gov.tr/general-information-about-turkish-visas.en.mfa"),
+    step("employer_submission", "Dossier employeur en ligne", "L’employeur transmet en ligne les documents requis au ministère du Travail et de la Sécurité sociale selon le système officiel.", ["Contrat", "Registre", "Documents employeur", "Diplôme"], "https://www.csgb.gov.tr/uigm/en/general-information/information-and-documents-required-in-the-work-permit-evaluation-process/"),
+    step("permit_decision", "Décision du permis", "Attendre la décision du ministère ; le permis de travail remplace le titre de séjour pendant sa validité selon les règles officielles.", ["Décision", "Permis", "Référence"], "https://en.goc.gov.tr/work-permit"),
+    step("arrival_registration", "Entrée et enregistrement", "Après l’entrée, respecter l’enregistrement auprès de la direction provinciale de la Migration Management et les conditions de l’emploi.", ["Adresse", "Permis", "Employeur", "Échéances"], "https://en.goc.gov.tr/work-permit"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -616,7 +635,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
