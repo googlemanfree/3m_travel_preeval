@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "nigeria": {
+    "country": "Nigeria",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "NIS — Tourism Visa F5A", "url": "https://immigration.gov.ng/info-center/tourism-visa-f5a/" },
+      { "label": "NIS — Student Visa R7A", "url": "https://immigration.gov.ng/info-center/student-visa-r7a/" },
+      { "label": "NIS — Temporary Work Permit R11", "url": "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/" }
+    ]
+  },
   "perou": {
     "country": "Pérou",
     "verificationStatus": "verified",

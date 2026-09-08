@@ -884,6 +884,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("documents", "Préparer les justificatifs autorisés", "Réunir passeport, formulaire, photos, justificatifs de l’activité et garanties ou lettres demandées par le consulat.", ["Passeport", "Formulaire", "Activité", "Garanties"], "https://www.gob.pe/institucion/embajada-del-peru-en-singapur/informes-publicaciones/4022248-visa-frequently-asked-questions"),
     step("decision_conditions", "Décision et activité autorisée", "Ne commencer aucune activité rémunérée avant la décision et l’autorisation correspondant à la catégorie retenue.", ["Décision", "Autorisation", "Activité", "Conditions"], "https://www.consulado.pe/es/londres/tramite/paginas/Visas.aspx"),
   ]),
+  regional("Nigeria", "Visiteur", "https://immigration.gov.ng/info-center/tourism-visa-f5a/", [
+    step("tourism_category", "Tourism Visa F5A", "Vérifier l’éligibilité au visa touristique à entrée unique et la durée de séjour autorisée de 30 jours.", ["F5A", "Tourisme", "Entrée", "Durée"], "https://immigration.gov.ng/info-center/tourism-visa-f5a/"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport valide, photo, billet retour, réservation d’hôtel ou adresse d’hôte et preuve de fonds.", ["Passeport", "Photo", "Billet", "Ressources"], "https://immigration.gov.ng/info-center/tourism-visa-f5a/"),
+    step("online_application", "Demande en ligne ou ambassade", "Déposer la demande par e-Visa ou ambassade, téléverser les exigences et payer les frais officiels.", ["e-Visa", "Ambassade", "Pièces", "Frais"], "https://immigration.gov.ng/info-center/tourism-visa-f5a/"),
+    step("no_employment", "Aucun emploi", "Respecter le statut touristique : le visa F5A ne permet pas l’emploi et n’est pas extensible selon la fiche NIS.", ["Statut", "Travail", "Séjour", "Conditions"], "https://immigration.gov.ng/info-center/tourism-visa-f5a/"),
+  ]),
+  regional("Nigeria", "Études", "https://immigration.gov.ng/info-center/student-visa-r7a/", [
+    step("admission", "Admission reconnue", "Obtenir la lettre d’admission d’un établissement éducatif nigérian accrédité.", ["Admission", "Établissement", "Programme", "Lettre"], "https://immigration.gov.ng/info-center/student-visa-r7a/"),
+    step("financial_support", "Frais et prise en charge", "Fournir la preuve du paiement minimal des frais ou du financement et les moyens de subsistance requis.", ["Frais", "Sponsor", "Ressources", "Relevés"], "https://immigration.gov.ng/info-center/student-visa-r7a/"),
+    step("institution_responsibility", "Responsabilité de l’établissement", "Obtenir la lettre d’acceptation de la responsabilité migratoire par l’établissement.", ["Institution", "Responsabilité", "Lettre", "Étudiant"], "https://immigration.gov.ng/info-center/student-visa-r7a/"),
+    step("regularization", "Visa et régularisation", "Déposer en ligne auprès de l’ambassade, payer les frais et suivre la régularisation du permis renouvelable indiqué par le NIS.", ["Ambassade", "Visa", "Permis", "Régularisation"], "https://immigration.gov.ng/info-center/student-visa-r7a/"),
+  ]),
+  regional("Nigeria", "Travail", "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/", [
+    step("host_approval", "Approbation de l’entreprise hôte", "L’entreprise hôte doit solliciter l’approbation avant toute demande de permis de travail temporaire.", ["Entreprise", "Hôte", "Approbation", "Projet"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
+    step("preapproval", "Pré-approbation de l’immigration", "Obtenir la Visa Authority Letter ou la pré-approbation du Comptroller General of Immigration.", ["Pré-approbation", "Lettre", "CGI", "Autorité"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
+    step("documents", "Pièces et demande", "Préparer passeport valide, billet de sortie et déposer la demande en ligne auprès de l’ambassade.", ["Passeport", "Billet", "Ambassade", "Demande"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
+    step("scope_and_validity", "Périmètre du permis", "Limiter l’activité aux services spécialisés ou au projet approuvé ; le permis R11 est prévu pour six mois à entrées multiples.", ["Projet", "Expert", "Six mois", "Conditions"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -905,7 +923,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "nigeria", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

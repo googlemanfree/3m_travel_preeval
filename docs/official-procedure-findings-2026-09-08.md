@@ -467,3 +467,13 @@ La Colombie est intégrée en trois variantes : Temporary Visitor, Temporary Stu
   - Les visas tourisme/affaires et les pièces varient selon la nationalité ; une activité rémunérée ne doit pas être traitée comme tourisme.
 ### Règle d’intégration
 Le Pérou est intégré avec les parcours Visiteur, Études et Travail/affaires sous réserve de vérification consulaire et migratoire. Les sources officielles accessibles couvrent clairement visite et études ; la voie Travail renvoie au contrôle consulaire officiel et ne reçoit aucune étape inventée.
+
+## Lot Nigeria — sources officielles consultées
+- Nigerian Immigration Service — Tourism Visa F5A : https://immigration.gov.ng/info-center/tourism-visa-f5a/
+  - Visa touristique à entrée unique ; validité de 90 jours à l’émission, séjour de 30 jours, aucun emploi autorisé.
+- Nigerian Immigration Service — Student Visa R7A : https://immigration.gov.ng/info-center/student-visa-r7a/
+  - Admission d’un établissement accrédité, paiement ou preuve de prise en charge, responsabilité de l’établissement et régularisation d’un permis renouvelable de deux ans selon la page officielle.
+- Nigerian Immigration Service — Temporary Work Permit R11 : https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/
+  - Approbation préalable du Comptroller General, lettre d’autorité, demande en ligne et tâches spécialisées/projet limité ; permis de travail de six mois à entrées multiples.
+### Règle d’intégration
+Le Nigeria est intégré en trois variantes : Tourism Visa F5A, Student Visa R7A et Temporary Work Permit R11, sans autoriser l’emploi sous F5A et avec pré-approbation obligatoire pour R11.

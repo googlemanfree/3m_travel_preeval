@@ -2982,3 +2982,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Pérou dans le catalogue détaillé en renvoyant les catégories professionnelles au contrôle consulaire officiel sans inventer d’étapes.
 - [x] Ajouter les sources officielles péruviennes au registre partagé.
 - [x] Valider la matrice Pérou avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Nigeria
+- [x] Contrôler les sources Nigerian Immigration Service pour Tourism Visa F5A, Student Visa R7A et Temporary Work Permit R11.
+- [x] Intégrer les variantes Nigeria dans le catalogue détaillé avec interdiction d’emploi sous F5A et pré-approbation obligatoire pour R11.
+- [x] Ajouter les sources NIS au registre officiel.
+- [x] Valider la matrice Nigeria avec les tests ciblés et TypeScript.
