@@ -204,3 +204,14 @@ Le parcours Irlande doit être séparé du parcours Schengen : un visa Schengen 
 ### Règle d’intégration
 
 Le parcours Grèce doit distinguer le visa Schengen court séjour du visa national et du permis de séjour. Pour les études, l’admission et les ressources sont des prérequis documentaires. Pour le travail, l’autorisation d’emploi et le contrat doivent précéder le visa et le permis, sans présenter la disponibilité d’un emploi ou l’obtention d’un visa comme garantie.
+
+## Croatie — dix-huitième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign and European Affairs — Visa** : https://mvep.gov.hr/consular-information-152362/visa-152363/152363. Le visa C couvre au plus 90 jours sur 180 ; la détention d’un visa ne garantit ni l’entrée ni le droit de travailler.
+- **Croatia Visa Application — crovisa.mvep.hr** : https://crovisa.mvep.hr/?lang=en. Le formulaire en ligne est la première étape, puis le dossier imprimé et les pièces sont remis à l’ambassade, au consulat ou au centre compétent.
+- **EU Immigration Portal — Student in Croatia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en. Les études universitaires relèvent d’un séjour temporaire, avec admission, ressources, assurance, preuve d’inscription et, selon le cas, visa D et biométrie.
+- **gov.hr — Visas** : https://gov.hr/en/visas/1216. La source officielle distingue visa A/C, dépôt personnel, documents d’entrée et limites du visa pour le travail.
+
+### Règle d’intégration
+
+Le parcours Croatie doit distinguer court séjour C, études avec séjour temporaire et travail soumis à une autorisation appropriée ; un visa de visite ne doit jamais être présenté comme une autorisation de travail ou d’installation.

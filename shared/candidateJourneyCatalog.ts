@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Croatie", "Visiteur", "https://mvep.gov.hr/consular-information-152362/visa-152363/152363", [
+    step("visa_c", "Vérifier le visa C", "Déterminer selon la nationalité et la durée si un visa court séjour C est requis pour la Croatie.", ["Nationalité", "Durée", "Motif"], "https://mvep.gov.hr/consular-information-152362/visa-152363/152363"),
+    step("application", "Formulaire crovisa", "Compléter le formulaire en ligne, l’imprimer et préparer le dépôt auprès de l’ambassade, du consulat ou du centre compétent.", ["Formulaire", "Passeport", "Rendez-vous"], "https://crovisa.mvep.hr/?lang=en"),
+    step("documents", "Pièces et assurance", "Réunir le motif du séjour, l’hébergement, l’assurance et les justificatifs demandés par la mission croate compétente.", ["Motif", "Hébergement", "Assurance"], "https://gov.hr/en/visas/1216"),
+    step("decision", "Décision et entrée", "Suivre la décision ; un visa ne garantit pas l’entrée et ne permet pas de travailler en Croatie.", ["Référence", "Notifications", "Documents"], "https://mvep.gov.hr/consular-information-152362/visa-152363/152363"),
+  ]),
+  regional("Croatie", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en", [
+    step("admission", "Admission universitaire", "Obtenir la preuve d’inscription dans un établissement d’enseignement supérieur croate.", ["Admission", "Programme", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en"),
+    step("temporary_stay", "Séjour temporaire études", "Préparer la demande de séjour temporaire avec ressources, assurance, document de voyage et pièces requises.", ["Passeport", "Ressources", "Assurance", "Casier"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en"),
+    step("visa_d", "Visa D si requis", "Si l’entrée le requiert après l’octroi du séjour, demander le visa D auprès de la mission croate compétente.", ["Décision", "Passeport", "Visa"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en"),
+    step("biometrics", "Arrivée et biométrie", "Enregistrer l’adresse et fournir les données biométriques auprès de la police compétente pour la carte de séjour.", ["Adresse", "Biométrie", "Carte"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en"),
+  ]),
+  regional("Croatie", "Travail", "https://mvep.gov.hr/consular-information-152362/visa-152363/152363", [
+    step("employer", "Emploi et autorisation", "Vérifier le contrat, l’employeur et l’autorisation de séjour et de travail applicable avant le départ.", ["Employeur", "Contrat", "Autorisation"], "https://gov.hr/en/visas/1216"),
+    step("visa", "Visa d’entrée si requis", "Déterminer avec la mission compétente si un visa D ou une autre formalité d’entrée est nécessaire après l’autorisation.", ["Passeport", "Autorisation", "Visa"], "https://mvep.gov.hr/consular-information-152362/visa-152363/152363"),
+    step("application", "Dépôt et pièces", "Déposer la demande et fournir les pièces employeur et personnelles demandées par l’autorité compétente.", ["Formulaire", "Contrat", "Assurance"], "https://gov.hr/en/visas/1216"),
+    step("registration", "Enregistrement et début autorisé", "Enregistrer le séjour et ne commencer l’activité qu’après confirmation de l’autorisation permettant légalement de travailler.", ["Décision", "Adresse", "Permis"], "https://mvep.gov.hr/consular-information-152362/visa-152363/152363"),
+  ]),
   regional("Grèce", "Visiteur", "https://www.mfa.gr/usa/en/services/visas/", [
     step("visa_schengen", "Vérifier le visa Schengen", "Déterminer selon la nationalité et la durée si un visa Schengen court séjour est requis pour la Grèce.", ["Nationalité", "Durée", "Motif"], "https://www.mfa.gr/usa/en/services/visas/"),
     step("documents", "Préparer les justificatifs", "Réunir passeport, motif, ressources, hébergement, assurance et pièces demandées par la mission grecque compétente.", ["Passeport", "Motif", "Ressources", "Assurance"], "https://www.mfa.gr/usa/en/services/visas/"),
@@ -436,7 +454,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

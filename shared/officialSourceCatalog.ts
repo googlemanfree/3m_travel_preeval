@@ -75,10 +75,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Croatie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires étrangères et européennes (MVEP) — visiteur, études, travail —",
-        "url": "https://mvep.gov.hr/"
-      }
+      { "label": "MVEP — Visa et séjour", "url": "https://mvep.gov.hr/consular-information-152362/visa-152363/152363" },
+      { "label": "Croatia Visa Application — crovisa", "url": "https://crovisa.mvep.hr/?lang=en" },
+      { "label": "gov.hr — Visas", "url": "https://gov.hr/en/visas/1216" },
+      { "label": "EU Immigration Portal — Student in Croatia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-croatia_en" }
     ]
   },
   "danemark": {
