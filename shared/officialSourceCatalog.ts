@@ -314,10 +314,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Pologne",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires étrangères de Pologne — Visiteur, études et travail —",
-        "url": "https://www.gov.pl/web/diplomacy/visas"
-      }
+      { "label": "Gov.pl — Informations générales visas", "url": "https://www.gov.pl/web/usa-en/visas---general-information" },
+      { "label": "Study.gov.pl — Demande de visa étudiant", "url": "https://study.gov.pl/visa-application" },
+      { "label": "Gov.pl — Visa national D", "url": "https://www.gov.pl/web/usa-en/d-type-national-visa" },
+      { "label": "EU Immigration Portal — Étudiant en Pologne", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-poland_en" }
     ]
   },
   "portugal": {

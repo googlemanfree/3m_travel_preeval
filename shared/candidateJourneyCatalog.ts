@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Pologne", "Visiteur", "https://www.gov.pl/web/usa-en/visas---general-information", [
+    step("visa_c", "Vérifier le visa C", "Déterminer si la Pologne est la destination unique ou principale et si le séjour reste dans la limite Schengen applicable.", ["Nationalité", "Itinéraire", "Dates"], "https://www.gov.pl/web/usa-en/visas---general-information"),
+    step("documents", "Préparer les justificatifs", "Réunir le formulaire, le passeport, la photo, l’assurance et les pièces de séjour demandées par le consulat compétent.", ["Formulaire", "Passeport", "Assurance", "Hébergement"], "https://www.gov.pl/web/usa-en/visas---general-information"),
+    step("appointment", "Rendez-vous et biométrie", "Réserver selon le canal consulaire officiel et déposer les éléments en personne lorsque requis.", ["e-Konsulat", "Rendez-vous", "Biométrie"], "https://secure2.e-konsulat.gov.pl/"),
+    step("decision", "Suivi de la demande", "Suivre la décision et respecter les conditions d’entrée ; le visa ne garantit pas l’admission à la frontière.", ["Référence", "Notifications"], "https://www.gov.pl/web/usa-en/visas---general-information"),
+  ]),
+  regional("Pologne", "Études", "https://study.gov.pl/visa-application", [
+    step("admission", "Admission dans un établissement", "Obtenir la confirmation d’admission et vérifier le statut de l’établissement et la durée des études.", ["Admission", "Programme", "Durée"], "https://study.gov.pl/visa-application"),
+    step("visa_d", "Visa national D", "Pour un séjour long, préparer une demande D et suivre les instructions de la représentation compétente.", ["Formulaire", "Passeport", "Photo", "Assurance"], "https://www.gov.pl/web/usa-en/d-type-national-visa"),
+    step("appointment", "Dépôt e-Konsulat", "Réserver le rendez-vous, imprimer et signer la demande, puis déposer les pièces et la biométrie selon les règles applicables.", ["e-Konsulat", "Admission", "Ressources"], "https://study.gov.pl/visa-application"),
+    step("residence", "Titre temporaire après arrivée", "Avant l’expiration du visa, vérifier la demande de titre temporaire auprès du voïvode compétent.", ["Adresse", "Inscription", "Titre"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-poland_en"),
+  ]),
+  regional("Pologne", "Travail", "https://www.gov.pl/web/usa-en/d-type-national-visa", [
+    step("work_authorisation", "Autorisation professionnelle", "Vérifier le permis de travail ou le justificatif de statut qui permet l’activité envisagée.", ["Employeur", "Permis", "Contrat"], "https://www.gov.pl/web/usa-en/d-type-national-visa"),
+    step("visa_d", "Visa national D", "Déposer la demande auprès de la mission compétente avec l’autorisation de travail lorsque celle-ci est requise.", ["Formulaire", "Passeport", "Assurance", "Permis"], "https://www.gov.pl/web/usa-en/d-type-national-visa"),
+    step("appointment", "Dépôt en personne", "Utiliser le canal de rendez-vous officiel et respecter la compétence territoriale du consulat.", ["e-Konsulat", "Rendez-vous", "Biométrie"], "https://secure2.e-konsulat.gov.pl/"),
+    step("employment", "Début d’activité autorisé", "Ne présenter le début de l’emploi qu’après confirmation du visa, du permis et des conditions du contrat.", ["Visa", "Permis", "Contrat"], "https://www.gov.pl/web/usa-en/d-type-national-visa"),
+  ]),
   regional("Autriche", "Visiteur", "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa", [
     step("visa_c", "Vérifier le visa C", "Pour un court séjour touristique, de visite ou d’affaires sans activité lucrative, vérifier le visa Schengen C et la durée autorisée.", ["Nationalité", "Dates", "Motif"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
     step("documents", "Préparer les justificatifs", "Réunir les pièces exactes demandées par la représentation autrichienne compétente.", ["Passeport", "Hébergement", "Ressources", "Assurance"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
@@ -292,7 +310,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

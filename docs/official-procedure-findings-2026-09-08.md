@@ -116,3 +116,14 @@ Pour le Portugal, le parcours doit distinguer court séjour, études et travail 
 ### Règle d’intégration
 
 Pour l’Autriche, l’interface doit distinguer court séjour Schengen C, séjour d’études et travail soumis à un titre/une autorisation. Les conditions exactes dépendent de la nationalité, de la durée, du programme, de la qualification et de la représentation compétente.
+
+## Pologne — dixième lot de sources institutionnelles consultées
+
+- **Ministère polonais — informations générales visas** : https://www.gov.pl/web/usa-en/visas---general-information. La source distingue visa Schengen C jusqu’à 90 jours sur 180, visa national D au-delà de 90 jours, compétence consulaire et biométrie.
+- **Study.gov.pl — demande de visa étudiant** : https://study.gov.pl/visa-application. La page officielle décrit le choix du consulat, le rendez-vous e-Konsulat, le dépôt imprimé et signé, les pièces d’études et la demande de titre temporaire après l’arrivée lorsque nécessaire.
+- **Ministère polonais — visa national D** : https://www.gov.pl/web/usa-en/d-type-national-visa. La source distingue les pièces étudiant et travail, dont l’admission, l’autorisation de travail lorsqu’elle est requise, l’assurance et les justificatifs financiers.
+- **EU Immigration Portal — Étudiant en Pologne** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-poland_en. La page distingue visa national et permis temporaire d’études, dépôt en personne, documents de l’établissement et autorité provinciale compétente.
+
+### Règle d’intégration
+
+Pour la Pologne, le parcours doit distinguer C court séjour et D national, puis séparer études et travail selon le poste compétent, l’admission, l’autorisation professionnelle et le titre de séjour. Les règles de compétence territoriale et les pièces exactes restent liées à la représentation polonaise du lieu de résidence.
