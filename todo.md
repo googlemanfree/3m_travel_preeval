@@ -2726,3 +2726,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Localiser `PageLoadingFallback` et borner l’attente à `LAZY_PAGE_TIMEOUT_MS` ; après expiration, l’écran devient récupérable au lieu de rester sans action.
 - [x] Ajouter les sorties « Recharger la page » et « Retour à l’accueil » après expiration, avec régression dédiée ; 17 tests ciblés et TypeScript passent.
 - [ ] Ajouter une régression et retester la fiche `3M-AGN-270002` avant de poursuivre paiement/protocole.
+
+## Paiement agence — rattachement dans la fiche 360°
+- [x] Vérifier en lecture seule la trace de validation et la lecture de l’onglet Paiements pour `3M-AGN-270002` : la trace existait mais n’était pas exposée par `getCandidate360`.
+- [x] Corriger le rattachement : `getCandidate360` construit désormais un `paymentSnapshot` agence à partir de `initialPaymentStatus` et du dernier `paymentAuditLogs`, sans insérer ni modifier de paiement.
+- [x] Ajouter une régression couvrant `latestAgencyPaymentAudit`, le statut agence `paid` et l’exposition dans `payments` ; 19 tests ciblés et TypeScript passent.
+- [ ] Retester l’onglet Paiements puis poursuivre le protocole uniquement après cohérence confirmée.

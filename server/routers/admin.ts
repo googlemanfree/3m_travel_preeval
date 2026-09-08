@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -3218,6 +3218,15 @@ export const adminRouter = router({
       ]);
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
+      const latestAgencyPaymentAudit = reference.source === "agency"
+        ? (await safeCollection(
+            db.select().from(paymentAuditLogs)
+              .where(and(eq(paymentAuditLogs.paymentId, reference.id), eq(paymentAuditLogs.candidateEmail, email)))
+              .orderBy(desc(paymentAuditLogs.createdAt)).limit(1),
+            [],
+            "agencyPaymentAudit",
+          ))[0] ?? null
+        : null;
       const paymentSnapshot = reference.source === "online" ? {
         status: (sourceRecord as typeof applications.$inferSelect).paymentStatus,
         amount: (sourceRecord as typeof applications.$inferSelect).paymentAmount,
@@ -3225,7 +3234,14 @@ export const adminRouter = router({
         method: (sourceRecord as typeof applications.$inferSelect).paymentMethod,
         reference: (sourceRecord as typeof applications.$inferSelect).paymentTransactionId,
         paidAt: (sourceRecord as typeof applications.$inferSelect).paymentDate,
-      } : null;
+      } : {
+        status: (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "paid" ? "SUCCESS" : (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+        amount: latestAgencyPaymentAudit?.amount ? Number.parseFloat(String(latestAgencyPaymentAudit.amount)) : 65000,
+        currency: "XAF",
+        method: latestAgencyPaymentAudit?.action === "confirmed" || latestAgencyPaymentAudit?.action === "confirmed_again" ? "AGENCE" : null,
+        reference: latestAgencyPaymentAudit?.details ?? null,
+        paidAt: latestAgencyPaymentAudit?.createdAt ?? null,
+      };
       const evaluationVersions = reference.source === "online"
         ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber))
         : [];

@@ -1,0 +1,3 @@
+Source : https://www.3mtravelagency.com/admin?candidate=3M-AGN-270002&verification=post-global-loader-fix
+
+Après le correctif du chargeur global, le dashboard admin public revient avec 32 dossiers. Le filtre `3M-AGN-270002` affiche une ligne unique : SIEWE TCHAKOUA Louis Valere, Luxembourg, source Agence, évaluation validée, activation Activé, statut Collecte Documents. La fiche 360° s’ouvre et affiche le bouton orange « Valider le paiement » ainsi que « Valider le paiement en agence ». Le paiement avait déjà été confirmé en lecture seule lors du retest précédent, mais aucun protocole n’a encore été envoyé ou déposé. Les clics doivent rester séparés : paiement confirmé, puis protocole soumis à confirmation avant envoi double.

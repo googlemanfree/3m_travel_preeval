@@ -134,3 +134,15 @@ describe("AdminGuard — bootstrap sans cookie", () => {
     expect(guard).toContain('navigate("/admin/login")');
   });
 });
+
+
+describe("paymentSnapshot agence dans la fiche 360", () => {
+  it("expose le statut initial agence et la trace paymentAuditLogs dans l’onglet Paiements", () => {
+    const adminRouter = readFileSync(new URL("../server/routers/admin.ts", import.meta.url), "utf8");
+    const block = adminRouter.slice(adminRouter.indexOf("  getCandidate360:"), adminRouter.indexOf("  updateCandidate360Workflow:"));
+    expect(block).toContain("latestAgencyPaymentAudit");
+    expect(block).toContain("initialPaymentStatus === \"paid\"");
+    expect(block).toContain("agencyPaymentAudit");
+    expect(block).toContain("payments: paymentSnapshot ? [paymentSnapshot] : []");
+  });
+});
