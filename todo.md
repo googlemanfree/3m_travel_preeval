@@ -2762,4 +2762,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une clause claire sur le caractère non remboursable des frais d’ouverture et de traitement, avec réserve « sauf disposition impérative contraire applicable au dossier » ; une revue juridique locale reste recommandée avant usage contractuel.
 - [x] Distinguer dans le reçu les frais administratifs avant soumission du protocole d’accord signé après contrat ou lettre d’invitation.
 - [x] Relier la validation du reçu et du paiement aux étapes suivantes sans promettre de contrat, de visa ou de résultat.
-- [ ] Vérifier les étapes post-contrat et les sources officielles par destination ; afficher « à vérifier » lorsqu’aucune source institutionnelle fiable n’est disponible.
+- [x] Ajouter les sources officielles vérifiées ADEM/Guichet pour le Luxembourg et IRCC pour le Canada, ainsi qu’un message « source à vérifier » pour les destinations non couvertes.
+- [ ] Compléter séparément la vérification institutionnelle des autres destinations et procédures avant de publier leurs étapes spécifiques.

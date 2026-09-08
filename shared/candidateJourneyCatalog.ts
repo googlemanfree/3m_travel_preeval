@@ -24,6 +24,8 @@ export type CandidateJourney = {
 };
 
 const CANADA = "https://www.canada.ca/fr/services/immigration-citoyennete.html";
+const CANADA_WORK = "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html";
+const ADEM = "https://adem.public.lu/en/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html";
 const QUEBEC = "https://www.quebec.ca/immigration";
 const LUXEMBOURG = "https://guichet.public.lu/fr/citoyens/immigration.html";
 const FRANCE = "https://france-visas.gouv.fr/";
@@ -33,7 +35,7 @@ const UK = "https://www.gov.uk/browse/visas-immigration";
 const USA = "https://travel.state.gov/content/travel/en/us-visas.html";
 
 const step = (id: string, label: string, description: string, requiredInputs: string[], sourceUrl: string): JourneyStep => ({ id, label, description, requiredInputs, documents: requiredInputs.map((input, index) => ({ id: `${id}-document-${index + 1}`, label: input, kind: "to_prepare", sourceUrl })), sourceUrl });
-const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: "Les étapes sont un guide de préparation. L’autorité compétente, l’employeur ou l’établissement décide de l’issue de la demande ; aucune obtention n’est garantie par 3M Travel & Services.", steps, officialSources: [sourceUrl] });
+const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: sourceUrl ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M Travel & Services." : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M Travel & Services ne présente pas ces étapes comme une règle consulaire établie.", steps, officialSources: sourceUrl ? [sourceUrl] : [] });
 
 export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
   common("Canada", "Visiteur", CANADA, [
@@ -50,7 +52,7 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
     step("permit", "Permis d’études", "Préparer la demande IRCC, la biométrie et les justificatifs demandés.", ["Passeport", "Lettre d’acceptation", "Preuve de fonds"], CANADA),
     step("decision", "Décision et arrivée", "Respecter les instructions de décision et les conditions du permis délivré.", ["Lettre de décision", "Documents d’arrivée"], CANADA),
   ]),
-  common("Canada", "Travailleur", CANADA, [
+  common("Canada", "Travailleur", CANADA_WORK, [
     step("evaluation", "Évaluation professionnelle", "Vérifier le métier, l’expérience, la langue et la cohérence du projet.", ["CV", "Diplômes", "Expérience"], CANADA),
     step("employer", "Employeur et offre d’emploi", "Documenter l’employeur, le poste, le lieu et les conditions de l’offre.", ["Offre d’emploi", "Contrat ou lettre employeur"], CANADA),
     step("authorization", "Autorisation de travail", "Identifier avec l’employeur le volet applicable : EIMT ou exemption, selon les règles officielles.", ["Référence EIMT ou exemption", "Détails du poste"], CANADA),
@@ -77,7 +79,7 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
     step("appointment", "Dépôt et biométrie", "Suivre les instructions du centre ou poste compétent pour le dépôt et la biométrie.", ["Rendez-vous", "Passeport"], LUXEMBOURG),
     step("decision", "Décision officielle", "Répondre aux demandes du poste et attendre la décision compétente.", ["Récépissé", "Notifications"], LUXEMBOURG),
   ]),
-  common("Luxembourg", "Travailleur", LUXEMBOURG, [
+  common("Luxembourg", "Travailleur", ADEM, [
     step("evaluation", "Évaluation professionnelle", "Vérifier diplôme, expérience et adéquation au métier visé.", ["CV", "Diplômes", "Expérience"], LUXEMBOURG),
     step("employer", "Employeur et contrat", "Le contrat et les démarches employeur doivent être confirmés avant la suite.", ["Contrat", "Identité employeur", "Poste"], LUXEMBOURG),
     step("adem", "Validation administrative", "Suivre l’autorisation ou la validation compétente avant l’arrivée, selon la procédure.", ["Autorisation", "Documents employeur"], LUXEMBOURG),
