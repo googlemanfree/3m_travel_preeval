@@ -314,6 +314,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "rwanda": {
+    "country": "Rwanda",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Rwanda DGIE — Visa under special arrangement", "url": "https://www.migration.gov.rw/our-services/visa-issued-under-special-arrangement" },
+      { "label": "Rwanda DGIE — Study and Research permits", "url": "https://www.migration.gov.rw/our-services/permit/study-research" },
+      { "label": "Rwanda DGIE — Employment permits", "url": "https://www.migration.gov.rw/our-services/permit/employment" }
+    ]
+  },
   "maroc": {
     "country": "Maroc",
     "verificationStatus": "verified",

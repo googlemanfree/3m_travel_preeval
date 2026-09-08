@@ -516,3 +516,12 @@ La Tanzanie est intégrée en trois variantes : Visiteur/Ordinary Visa, Études/
 Les visas ordinaires distinguent notamment tourisme, travail et étudiant. Le visa travail exige un contrat visé par le ministère de l’Emploi ; les études exigent admission/inscription et, selon le parcours, AMCI, établissement et régularisation du séjour. Le portail Accès Maroc sert à vérifier l’éligibilité eVisa/AEVM selon nationalité et motif. Le visiteur doit respecter l’inactivité professionnelle et les conditions de séjour applicables.
 ### Règle d’intégration
 Le Maroc est intégré en trois variantes : Visiteur, Études et Travail, avec contrôle eVisa/visa ordinaire, admission et régularisation étudiant, contrat visé pour emploi, sans inventer de durée ou de catégorie non publiée.
+
+## Lot Rwanda — sources officielles consultées
+- Directorate General of Immigration and Emigration — visa under special arrangement : https://www.migration.gov.rw/our-services/visa-issued-under-special-arrangement
+- DGIE — Study and Research permits : https://www.migration.gov.rw/our-services/permit/study-research
+- DGIE — Employment permits : https://www.migration.gov.rw/our-services/permit/employment
+### Faits vérifiables
+Les ressortissants de tous les pays peuvent recevoir un visa à l’arrivée sous les conditions officielles, tandis que les demandes en ligne ou auprès d’une mission sont possibles selon le statut. Le visa visiteur/touristique ne doit pas être utilisé pour travailler. Le permis étudiant exige notamment recommandation de l’école, parrainage et, pour les adultes, certificat de police. Les permis d’emploi dépendent de la catégorie et exigent contrat, qualifications, CV, police clearance et recommandation de l’employeur selon le cas.
+### Règle d’intégration
+Le Rwanda est intégré en trois variantes : Visiteur, Études/Study and Research et Travail/Employment, avec contrôle du visa à l’arrivée ou en ligne, interdiction d’emploi sous visiteur et exigences de permis par catégorie.

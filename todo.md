@@ -3012,3 +3012,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Maroc dans le catalogue détaillé avec contrôle eVisa/visa ordinaire, admission/AMCI et contrat visé par le Ministère de l’Emploi.
 - [x] Ajouter les sources officielles marocaines au registre partagé.
 - [x] Corriger l’assertion de source du parcours Études et valider les 21 tests ciblés avec TypeScript.
+
+## Audit officiel par lots — Rwanda
+- [x] Contrôler les sources DGIE pour visa Visiteur, Study and Research et Employment.
+- [x] Intégrer les variantes Rwanda dans le catalogue détaillé avec visa à l’arrivée/en ligne, interdiction d’emploi sous visiteur et permis par catégorie.
+- [x] Ajouter les sources DGIE au registre officiel.
+- [x] Valider la matrice Rwanda avec les tests ciblés et TypeScript.
