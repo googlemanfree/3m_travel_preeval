@@ -2687,4 +2687,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier la cause : les appels publics étaient regroupés dans un batch tRPC susceptible de produire une réponse partielle ; les routeurs observés (`customerReview`, `auth.me`) renvoient des JSON valides après isolation.
 - [x] Corriger le transport client avec `maxItems: 1` afin d’isoler chaque résultat tRPC et de laisser React Query réessayer l’appel concerné ; aucun fallback fictif ni masquage d’erreur persistante n’a été ajouté.
 - [x] Ajouter une régression Vitest vérifiant `maxItems: 1` et la protection contre les réponses batch manquantes ; 7 tests ciblés et TypeScript passent.
-- [ ] Vérifier l’accueil en navigation fraîche, confirmer l’absence d’erreur console et publier.
+- [x] Vérifier l’accueil en navigation fraîche sur `/?from_webdev=1` : rendu complet, réponses JSON valides, aucune erreur console observée ; correctif publié.
