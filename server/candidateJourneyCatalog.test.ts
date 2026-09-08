@@ -129,6 +129,9 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Rwanda", "Visiteur", "migration.gov.rw"],
       ["Rwanda", "Études", "migration.gov.rw"],
       ["Rwanda", "Travail", "migration.gov.rw"],
+      ["Éthiopie", "Visiteur", "evisa.gov.et"],
+      ["Éthiopie", "Études", "evisa.gov.et"],
+      ["Éthiopie", "Travail", "evisa.gov.et"],
     ] as const;
     for (const [country, visa, sourceHost] of cases) {
       const journey = getCandidateJourney(country, visa);

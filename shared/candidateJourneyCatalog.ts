@@ -992,6 +992,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("police_clearance", "Certificat de police", "Obtenir le certificat de police original du pays de résidence précédent pour la période demandée.", ["Police", "Résidence", "Certificat", "Dossier"], "https://www.migration.gov.rw/our-services/permit/employment"),
     step("permit_decision", "Dépôt et autorisation", "Déposer le permis selon la catégorie officielle et attendre la décision avant de commencer l’activité professionnelle.", ["Dépôt", "Décision", "Permis", "Emploi"], "https://www.migration.gov.rw/our-services/permit/employment"),
   ]),
+  regional("Éthiopie", "Visiteur", "https://www.evisa.gov.et/information", [
+    step("passport_requirements", "Vérifier le passeport", "Préparer un passeport valide au moins six mois après la date d’entrée prévue, une copie couleur et une photo au format demandé.", ["Passeport", "Six mois", "Copie", "Photo"], "https://www.evisa.gov.et/information"),
+    step("tourist_application", "Déposer l’eVisa touristique", "Utiliser exclusivement le portail officiel et vérifier la date d’arrivée prévue ; les frais d’eVisa ne sont pas remboursables.", ["eVisa", "Portail", "Date", "Frais"], "https://www.evisa.gov.et/information"),
+    step("arrival_validity", "Contrôler la validité", "Vérifier que l’eVisa est valide à partir de la date d’arrivée indiquée et respecter les décisions des autorités au point d’entrée.", ["Arrivée", "Validité", "Entrée", "Contrôle"], "https://www.evisa.gov.et/information"),
+    step("no_organization_work", "Respecter le statut touristique", "Ne pas exercer dans une organisation en Éthiopie avec un visa touristique ; une activité professionnelle exige une catégorie dédiée.", ["Tourisme", "Organisation", "Travail", "Restriction"], "https://www.evisa.gov.et/information"),
+  ]),
+  regional("Éthiopie", "Études", "https://www.evisa.gov.et/information/student-visa", [
+    step("institution_acceptance", "Admission dans un établissement", "Obtenir la lettre d’acceptation pour un cursus à temps plein dans un établissement d’enseignement reconnu.", ["Admission", "Cursus", "Établissement", "Acceptation"], "https://www.evisa.gov.et/information/student-visa"),
+    step("residency_confirmation", "Confirmer la résidence", "Joindre la confirmation de résidence exigée pour le Student Visa et vérifier les documents complémentaires applicables.", ["Résidence", "Confirmation", "Document", "Étudiant"], "https://www.evisa.gov.et/information/student-visa"),
+    step("passport_and_photo", "Préparer les pièces d’identité", "Fournir une photo récente et un passeport valide au moins six mois à compter de l’entrée prévue.", ["Photo", "Passeport", "Six mois", "Identité"], "https://www.evisa.gov.et/information/student-visa"),
+    step("student_decision", "Décision et statut étudiant", "Déposer et suivre la demande officielle puis respecter la validité et le statut accordés avant de commencer le cursus.", ["Dépôt", "Suivi", "Décision", "Statut"], "https://www.evisa.gov.et/information/student-visa"),
+  ]),
+  regional("Éthiopie", "Travail", "https://www.evisa.gov.et/information/FBusinessVisa", [
+    step("employer_reference", "Référence de l’entreprise", "Vérifier que l’organisation invitante est enregistrée et qu’elle a créé la référence requise sur le portail officiel.", ["Entreprise", "Référence", "Portail", "Invitation"], "https://www.evisa.gov.et/information"),
+    step("work_authorization", "Autorisation de travail", "Obtenir la lettre du ministère du Travail et des Affaires sociales confirmant l’octroi du work permit.", ["Ministère", "Travail", "Autorisation", "Lettre"], "https://www.evisa.gov.et/information/FBusinessVisa"),
+    step("company_documents", "Pièces de l’employeur", "Réunir la lettre de soutien de l’organisation, sa licence commerciale et son certificat TIN.", ["Soutien", "Licence", "TIN", "Employeur"], "https://www.evisa.gov.et/information/FBusinessVisa"),
+    step("employment_visa", "Déposer le Foreign Business Firm Employment Visa", "Fournir photo et passeport valides, déposer le WV officiel et attendre l’autorisation avant toute prise de poste.", ["Photo", "Passeport", "WV", "Décision"], "https://www.evisa.gov.et/information/FBusinessVisa"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -1013,7 +1031,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "rwanda", "rouanda", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "rwanda", "rouanda", "ethiopie", "ethiopia", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

@@ -525,3 +525,13 @@ Le Maroc est intégré en trois variantes : Visiteur, Études et Travail, avec c
 Les ressortissants de tous les pays peuvent recevoir un visa à l’arrivée sous les conditions officielles, tandis que les demandes en ligne ou auprès d’une mission sont possibles selon le statut. Le visa visiteur/touristique ne doit pas être utilisé pour travailler. Le permis étudiant exige notamment recommandation de l’école, parrainage et, pour les adultes, certificat de police. Les permis d’emploi dépendent de la catégorie et exigent contrat, qualifications, CV, police clearance et recommandation de l’employeur selon le cas.
 ### Règle d’intégration
 Le Rwanda est intégré en trois variantes : Visiteur, Études/Study and Research et Travail/Employment, avec contrôle du visa à l’arrivée ou en ligne, interdiction d’emploi sous visiteur et exigences de permis par catégorie.
+
+## Lot Éthiopie — sources officielles consultées
+- Ethiopian eVisa — informations générales : https://www.evisa.gov.et/information
+- Ethiopian eVisa — Student Visa : https://www.evisa.gov.et/information/student-visa
+- Ethiopian eVisa — Foreign Business Firm Employment Visa (WV) : https://www.evisa.gov.et/information/FBusinessVisa
+- Ethiopian eVisa — Residence Visa (IMV) : https://www.evisa.gov.et/information/residence-visa
+### Faits vérifiables
+Le portail officiel exige notamment un passeport valide six mois, une copie couleur du passeport et une photo ; le visa électronique prend effet à la date d’arrivée prévue et les frais ne sont pas remboursables. Le Student Visa exige une admission dans un établissement reconnu et une confirmation de résidence. Le WV exige une lettre de soutien de l’organisation invitante, une lettre du ministère du Travail attestant l’autorisation de travail, la licence de l’entreprise et son TIN. Le visa touristique ne doit pas être utilisé pour exercer dans une organisation en Éthiopie.
+### Règle d’intégration
+L’Éthiopie est intégrée en trois variantes : Visiteur/eVisa touristique, Études/Student Visa et Travail/Foreign Business Firm Employment Visa, avec contrôle du portail officiel et des autorisations préalables publiées.

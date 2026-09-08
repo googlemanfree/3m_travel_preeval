@@ -3018,3 +3018,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Rwanda dans le catalogue détaillé avec visa à l’arrivée/en ligne, interdiction d’emploi sous visiteur et permis par catégorie.
 - [x] Ajouter les sources DGIE au registre officiel.
 - [x] Valider la matrice Rwanda avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Éthiopie
+- [x] Contrôler les sources Ethiopian eVisa pour Visiteur, Student Visa et Foreign Business Firm Employment Visa.
+- [x] Intégrer les variantes Éthiopie dans le catalogue détaillé avec passeport six mois, admission reconnue et autorisation ministérielle de travail.
+- [x] Ajouter les sources Ethiopian eVisa au registre officiel.
+- [x] Valider la matrice Éthiopie avec les tests ciblés et TypeScript.

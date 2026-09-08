@@ -314,6 +314,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "ethiopie": {
+    "country": "Éthiopie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ethiopian eVisa — Information", "url": "https://www.evisa.gov.et/information" },
+      { "label": "Ethiopian eVisa — Student Visa", "url": "https://www.evisa.gov.et/information/student-visa" },
+      { "label": "Ethiopian eVisa — Foreign Business Firm Employment Visa", "url": "https://www.evisa.gov.et/information/FBusinessVisa" },
+      { "label": "Ethiopian eVisa — Residence Visa", "url": "https://www.evisa.gov.et/information/residence-visa" }
+    ]
+  },
   "rwanda": {
     "country": "Rwanda",
     "verificationStatus": "verified",
