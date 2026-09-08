@@ -20,6 +20,7 @@ import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
+import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -3260,9 +3261,21 @@ export const adminRouter = router({
       const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
         .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
+      const destination = (sourceRecord as any).destination ?? projectDetails.destination ?? null;
+      const candidateJourney = getCandidateJourney(destination, latestEvaluation?.visaType ?? null, procedureLabel);
+      const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null);
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         nextAction,
+        candidateJourney: {
+          country: candidateJourney.country,
+          visaType: candidateJourney.visaType,
+          title: candidateJourney.title,
+          disclaimer: candidateJourney.disclaimer,
+          officialSources: candidateJourney.officialSources,
+          currentStepIndex: currentJourneyStep,
+          steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < currentJourneyStep ? "completed" : index === currentJourneyStep ? "current" : "locked" })),
+        },
         metrics: { pendingDocuments, openTasks, unreadNotifications: notifications.filter((item) => !item.isRead).length, totalDocuments: operationalDocuments.length + legacyDocuments.length, totalMessages: messages.length },
         requirements,
         documents: [
