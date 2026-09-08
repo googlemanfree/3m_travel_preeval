@@ -259,3 +259,14 @@ Le parcours Estonie doit distinguer visa C Schengen, visa D, permis d’études 
 ### Règle d’intégration
 
 Le parcours Lettonie doit distinguer court séjour Schengen, études et permis de séjour, ainsi que les formalités de travail auprès de l’autorité migratoire compétente. Un visa visiteur ne doit pas être présenté comme un droit de travailler ou de s’installer.
+
+## Lituanie — vingt-troisième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign Affairs of Lithuania** : https://www.urm.lt/en. Source institutionnelle de référence pour les visas et les représentations ; la page générale doit être complétée par les services de Migration Department et les pages de mission compétente.
+- **Migration Department / MIGRIS** : https://www.migracija.lt/home?lang=en. Le portail officiel regroupe les visas, permis de séjour, lettres de médiation et obligations de l’employeur pour les ressortissants étrangers.
+- **EU Immigration Portal — Student in Lithuania** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en. Les études peuvent relever d’un visa national long séjour ou d’un permis temporaire ; admission, ressources, assurance, logement et dépôt MIGRIS sont vérifiés selon la situation.
+- **EU Immigration Portal — Employed worker in Lithuania** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en. Le travail peut nécessiter un visa national ou un permis temporaire, avec intervention de l’employeur, du service de l’emploi et du Migration Department ; les exigences dépendent du métier et de la durée.
+
+### Règle d’intégration
+
+Le parcours Lituanie doit distinguer court séjour Schengen, visa national, études et emploi. Pour les études, l’admission et la base de séjour doivent précéder la demande. Pour le travail, la médiation de l’employeur, l’éventuel permis ou la décision du service de l’emploi et le permis de séjour doivent être suivis séparément. Un visa visiteur ne doit pas être présenté comme un droit général de travailler ou de s’installer.

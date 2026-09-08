@@ -132,6 +132,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("visa_or_residence", "Visa D ou permis d’emploi", "Déposer la demande appropriée selon la durée, la base de séjour, les critères de salaire et les éventuels quotas.", ["Passeport", "Contrat", "Assurance", "Ressources"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa"),
     step("residence_registration", "Enregistrement après arrivée", "Après l’entrée, enregistrer la résidence et respecter les conditions liées à l’employeur et au permis.", ["Adresse", "Permis", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
   ]),
+  regional("Lituanie", "Visiteur", "https://www.urm.lt/en", [
+    step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité, la destination principale et la durée si un visa C est requis pour la Lituanie.", ["Nationalité", "Destination", "Durée"], "https://www.urm.lt/en"),
+    step("application", "Dépôt de la demande", "Remplir la demande et déposer les pièces auprès de la représentation ou du prestataire compétent.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.urm.lt/en"),
+    step("documents", "Pièces du court séjour", "Réunir le motif, l’hébergement, les ressources, l’assurance et les justificatifs demandés.", ["Motif", "Hébergement", "Ressources", "Assurance"], "https://www.urm.lt/en"),
+    step("decision", "Décision et entrée", "Suivre la décision ; un visa court séjour ne donne pas un droit général d’études, de travail ou d’installation.", ["Référence", "Notifications", "Documents"], "https://www.urm.lt/en"),
+  ]),
+  regional("Lituanie", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en", [
+    step("admission", "Admission dans un établissement reconnu", "Obtenir l’admission ou l’inscription et la lettre de médiation électronique de l’établissement si requise.", ["Admission", "Programme", "Médiation"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en"),
+    step("visa_or_residence", "Choisir visa national ou permis", "Déterminer selon la durée et le programme si un visa national long séjour ou un permis temporaire est approprié.", ["Visa D", "Permis", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en"),
+    step("migris", "Dépôt MIGRIS ou consulaire", "Remplir la demande et déposer les pièces, ressources, logement, assurance et antécédents selon la voie retenue.", ["MIGRIS", "Ressources", "Logement", "Assurance"], "https://www.migracija.lt/home?lang=en"),
+    step("registration", "Installation et maintien", "Déclarer la résidence après délivrance et respecter les conditions de maintien des études.", ["Adresse", "Permis", "Progression"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en"),
+  ]),
+  regional("Lituanie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en", [
+    step("employment_basis", "Vérifier la base d’emploi", "Déterminer si le poste relève d’un visa national, d’un permis temporaire et d’une décision ou d’un permis du service de l’emploi.", ["Employeur", "Poste", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en"),
+    step("employer", "Médiation et autorisation employeur", "Faire préparer par l’employeur la lettre de médiation et, si nécessaire, la décision du service de l’emploi ou le permis de travail.", ["Contrat", "Médiation", "Permis"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en"),
+    step("migris", "Demande visa ou permis", "Déposer la demande auprès de la représentation ou du Migration Department selon la durée et la base légale.", ["Passeport", "Contrat", "Assurance", "Ressources"], "https://www.migracija.lt/home?lang=en"),
+    step("registration", "Installation et suivi", "Déclarer la résidence et respecter les conditions liées à l’employeur, au poste et au permis.", ["Adresse", "Permis", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en"),
+  ]),
   regional("Lettonie", "Visiteur", "https://www.mfa.gov.lv/en/applying-visa", [
     step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité, la destination principale et la durée si un visa C est requis pour la Lettonie.", ["Nationalité", "Destination", "Durée"], "https://www.mfa.gov.lv/en/applying-visa"),
     step("application", "Dépôt de la demande", "Remplir le formulaire et déposer la demande auprès de la mission compétente avec biométrie et documents requis.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.mfa.gov.lv/en/applying-visa"),
@@ -526,7 +544,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie", "lettonie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

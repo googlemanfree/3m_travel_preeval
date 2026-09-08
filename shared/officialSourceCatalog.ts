@@ -239,10 +239,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Lituanie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Migration Department under the Ministry of the Interior — Visiteur, études, travail —",
-        "url": "https://www.migracija.lt/home?lang=en"
-      }
+      { "label": "Ministry of Foreign Affairs of Lithuania", "url": "https://www.urm.lt/en" },
+      { "label": "Migration Department / MIGRIS", "url": "https://www.migracija.lt/home?lang=en" },
+      { "label": "EU Immigration Portal — Student in Lithuania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-lithuania_en" },
+      { "label": "EU Immigration Portal — Employed worker in Lithuania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-lithuania_en" }
     ]
   },
   "luxembourg": {

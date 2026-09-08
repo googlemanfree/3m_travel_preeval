@@ -2867,3 +2867,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Lettonie
 - [x] Contrôler les sources institutionnelles lettones pour court séjour, études et travail.
 - [x] Intégrer les variantes Lettonie dans le catalogue détaillé avec distinction Schengen, permis de séjour et autorisation de travail.
+
+## Audit officiel par lots — Lituanie
+- [x] Contrôler les sources institutionnelles lituaniennes pour court séjour, visa national, études et travail.
+- [x] Intégrer les variantes Lituanie dans le catalogue détaillé avec distinction Schengen, visa national, MIGRIS, permis d’études et autorisation d’emploi.
