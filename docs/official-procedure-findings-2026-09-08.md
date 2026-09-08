@@ -440,3 +440,13 @@ Le Mexique est intégré en trois variantes : visiteur non lucratif jusqu’à 1
   - La demande est personnelle auprès du consulat de résidence ; le contrat doit être signé par l’employeur et comporter l’enregistrement RENURE, avec justificatifs, frais et entretien.
 ### Règle d’intégration
 L’Argentine est intégrée en trois variantes : Tourist Visa, Student Visa jusqu’à 365 jours et Working Visa, avec RENURE comme contrôle bloquant lorsque la catégorie l’exige.
+
+## Lot Chili — sources officielles consultées
+- **SERMIG — Tourists / Permanencia Transitoria** : https://serviciomigraciones.cl/en/permanencia-transitoria-permit/subcategories/tourists/
+  - La Permanencia Transitoria couvre notamment le tourisme jusqu’à 90 jours ; certains ressortissants doivent obtenir une autorisation ou un visa consulaire ; aucune activité rémunérée n’est permise sauf autorisation exceptionnelle.
+- **SERMIG — Students** : https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/students/
+  - La résidence temporaire étudiant se demande depuis l’étranger via le portail SERMIG ; admission, passeport, casier, photo, ressources et certificat d’inscription sont requis.
+- **SERMIG — Remunerated activities** : https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/remunerated-activities/
+  - La résidence temporaire pour activité rémunérée se demande depuis l’étranger et peut reposer sur contrat de travail, contrat de services ou offre formelle ; les contrats et pièces de l’employeur sont encadrés.
+### Règle d’intégration
+Le Chili est intégré en trois variantes : Permanencia Transitoria/Tourist, Residencia Temporal étudiant et Residencia Temporal pour activité rémunérée, avec portail SERMIG, documents apostillés/légalisés et interdiction d’emploi sous le statut transitoire sauf autorisation.

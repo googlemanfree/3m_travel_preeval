@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "chili": {
+    "country": "Chili",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "SERMIG — Tourists / Permanencia Transitoria", "url": "https://serviciomigraciones.cl/en/permanencia-transitoria-permit/subcategories/tourists/" },
+      { "label": "SERMIG — Students", "url": "https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/students/" },
+      { "label": "SERMIG — Remunerated activities", "url": "https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/remunerated-activities/" }
+    ]
+  },
   "argentine": {
     "country": "Argentine",
     "verificationStatus": "verified",

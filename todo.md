@@ -2964,3 +2964,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Argentine dans le catalogue détaillé avec entretien consulaire et contrôle RENURE lorsque requis.
 - [x] Ajouter les sources officielles de la Cancillería au registre partagé.
 - [x] Valider la matrice Argentine avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Chili
+- [x] Contrôler les sources SERMIG pour Permanencia Transitoria, Residencia Temporal étudiant et activité rémunérée.
+- [x] Intégrer les variantes Chili dans le catalogue détaillé avec portail SERMIG, documents apostillés/légalisés et limites de travail.
+- [x] Ajouter les sources officielles SERMIG au registre partagé.
+- [x] Valider la matrice Chili avec les tests ciblés et TypeScript.
