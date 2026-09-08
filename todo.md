@@ -2976,3 +2976,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Colombie dans le catalogue détaillé avec dépôt consulaire initial à l’étranger et interdiction d’emploi sous visiteur.
 - [x] Ajouter les sources officielles de la Cancillería au registre partagé.
 - [x] Valider la matrice Colombie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Pérou
+- [x] Contrôler les sources consulaires et gob.pe pour Visiteur, Études et Travail/affaires.
+- [x] Intégrer les variantes Pérou dans le catalogue détaillé en renvoyant les catégories professionnelles au contrôle consulaire officiel sans inventer d’étapes.
+- [x] Ajouter les sources officielles péruviennes au registre partagé.
+- [x] Valider la matrice Pérou avec les tests ciblés et TypeScript.

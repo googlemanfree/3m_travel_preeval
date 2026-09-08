@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "perou": {
+    "country": "Pérou",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Consulado del Perú — Tourist Visa", "url": "https://www.consulado.pe/es/londres/tramite/Paginas/Visas/Issuance-of-Tourist-Visa.aspx" },
+      { "label": "Consulado del Perú — Student Visa", "url": "https://www.consulado.pe/es/londres/tramite/paginas/Visas/Student-Visa.aspx" },
+      { "label": "Embajada del Perú — Visa FAQ", "url": "https://www.gob.pe/institucion/embajada-del-peru-en-singapur/informes-publicaciones/4022248-visa-frequently-asked-questions" }
+    ]
+  },
   "colombie": {
     "country": "Colombie",
     "verificationStatus": "verified",

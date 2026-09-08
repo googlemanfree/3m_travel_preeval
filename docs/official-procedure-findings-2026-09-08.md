@@ -457,3 +457,13 @@ Le Chili est intégré en trois variantes : Permanencia Transitoria/Tourist, Res
 - Cancillería — Temporary Worker’s Visa : https://www.cancilleria.gov.co/en/temporary-workers-visa
 ### Règle d’intégration
 La Colombie est intégrée en trois variantes : Temporary Visitor, Temporary Student et Temporary Worker, avec dépôt consulaire à l’étranger pour les premières demandes, formulaire officiel, passeport, preuves financières et pièces propres à chaque catégorie. Aucun emploi ne doit être déduit du statut visiteur.
+
+## Lot Pérou — sources officielles consultées
+- **Consulado del Perú — Tourist Visa** : https://www.consulado.pe/es/londres/tramite/Paginas/Visas/Issuance-of-Tourist-Visa.aspx
+  - Les conditions dépendent de la nationalité ; le portail consulaire officiel précise les exemptions, la demande en ligne et le dépôt auprès du consulat.
+- **Consulado del Perú — Student Visa** : https://www.consulado.pe/es/londres/tramite/paginas/Visas/Student-Visa.aspx
+  - L’établissement d’études doit coordonner la procédure avec Migraciones/DIGEMIN ; le visa étudiant indiqué par la page consulaire autorise jusqu’à 90 jours dans ce cadre.
+- **Embajada del Perú — Visa FAQ** : https://www.gob.pe/institucion/embajada-del-peru-en-singapur/informes-publicaciones/4022248-visa-frequently-asked-questions
+  - Les visas tourisme/affaires et les pièces varient selon la nationalité ; une activité rémunérée ne doit pas être traitée comme tourisme.
+### Règle d’intégration
+Le Pérou est intégré avec les parcours Visiteur, Études et Travail/affaires sous réserve de vérification consulaire et migratoire. Les sources officielles accessibles couvrent clairement visite et études ; la voie Travail renvoie au contrôle consulaire officiel et ne reçoit aucune étape inventée.
