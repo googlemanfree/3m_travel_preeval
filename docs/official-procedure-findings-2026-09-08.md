@@ -194,3 +194,13 @@ Pour la Tchéquie, le parcours doit distinguer visa C court séjour, visa D long
 ### Règle d’intégration
 
 Le parcours Irlande doit être séparé du parcours Schengen : un visa Schengen n’est pas présenté comme valable pour l’Irlande. Les branches visiteur, études et travail doivent distinguer C/D, AVATS, immigration et employment permit, avec les exigences exactes liées à la nationalité et au poste compétent.
+
+## Grèce — dix-septième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign Affairs — Visas** : https://www.mfa.gr/usa/en/services/visas/. La Grèce distingue le visa Schengen court séjour jusqu’à 90 jours sur 180 et le visa national long séjour ; la détention d’un visa ne garantit pas l’entrée, contrôlée à la frontière.
+- **EU Immigration Portal — Étudiant en Grèce** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en. La procédure repose sur l’admission, les ressources, les frais d’inscription, la demande auprès de l’ambassade/du consulat et un permis de séjour étudiant renouvelable.
+- **EU Immigration Portal — Travailleur salarié en Grèce** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en. Le parcours distingue visa national d’emploi, approbation de l’emploi selon les volumes/régions, contrat, demande de permis de séjour après l’arrivée et démarches auprès de l’administration décentralisée.
+
+### Règle d’intégration
+
+Le parcours Grèce doit distinguer le visa Schengen court séjour du visa national et du permis de séjour. Pour les études, l’admission et les ressources sont des prérequis documentaires. Pour le travail, l’autorisation d’emploi et le contrat doivent précéder le visa et le permis, sans présenter la disponibilité d’un emploi ou l’obtention d’un visa comme garantie.

@@ -2843,3 +2843,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Irlande
 - [x] Contrôler les sources institutionnelles irlandaises pour visiteur, études et travail.
 - [x] Intégrer les variantes Irlande dans le catalogue détaillé en distinguant visa C/D irlandais, AVATS, immigration et employment permit, hors Schengen.
+
+## Audit officiel par lots — Grèce
+- [x] Contrôler les sources institutionnelles grecques pour court séjour, études et travail salarié.
+- [x] Intégrer les variantes Grèce dans le catalogue détaillé avec distinction visa Schengen, visa national et permis de séjour.

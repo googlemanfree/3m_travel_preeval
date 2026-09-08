@@ -159,10 +159,9 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Grèce",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires Étrangères — Visiteur —",
-        "url": "https://www.mfa.gr/en/services/visas-for-foreigners-traveling-to-greece/"
-      }
+      { "label": "Ministry of Foreign Affairs — Visas", "url": "https://www.mfa.gr/usa/en/services/visas/" },
+      { "label": "EU Immigration Portal — Student in Greece", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en" },
+      { "label": "EU Immigration Portal — Employed worker in Greece", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en" }
     ]
   },
   "hongrie": {

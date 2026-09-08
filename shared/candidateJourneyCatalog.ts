@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Grèce", "Visiteur", "https://www.mfa.gr/usa/en/services/visas/", [
+    step("visa_schengen", "Vérifier le visa Schengen", "Déterminer selon la nationalité et la durée si un visa Schengen court séjour est requis pour la Grèce.", ["Nationalité", "Durée", "Motif"], "https://www.mfa.gr/usa/en/services/visas/"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport, motif, ressources, hébergement, assurance et pièces demandées par la mission grecque compétente.", ["Passeport", "Motif", "Ressources", "Assurance"], "https://www.mfa.gr/usa/en/services/visas/"),
+    step("appointment", "Dépôt et biométrie", "Déposer la demande selon les instructions de l’ambassade ou du consulat compétent et fournir les données requises.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://www.mfa.gr/usa/en/services/visas/"),
+    step("decision", "Décision et entrée", "Suivre la décision ; un visa ne garantit pas automatiquement l’entrée, qui reste contrôlée à la frontière.", ["Référence", "Notifications", "Documents"], "https://www.mfa.gr/usa/en/services/visas/"),
+  ]),
+  regional("Grèce", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en", [
+    step("admission", "Admission dans un établissement", "Obtenir l’acceptation dans un établissement d’enseignement supérieur et confirmer le programme suivi.", ["Admission", "Programme", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en"),
+    step("resources", "Ressources et inscription", "Préparer la preuve de ressources et le paiement des frais d’inscription lorsqu’il est requis.", ["Ressources", "Frais", "Admission"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en"),
+    step("visa", "Visa et permis d’études", "Déposer la demande de visa auprès de l’ambassade ou du consulat puis demander le permis de séjour selon la durée du cursus.", ["Passeport", "Admission", "Ressources"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en"),
+    step("renewal", "Suivi et renouvellement", "Respecter la durée du permis, les obligations de suivi académique et les conditions de renouvellement.", ["Permis", "Inscription", "Résultats"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-greece_en"),
+  ]),
+  regional("Grèce", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en", [
+    step("employer_approval", "Autorisation d’emploi", "Vérifier l’autorisation et les volumes d’admission applicables à la région et à la spécialité avant le visa.", ["Employeur", "Région", "Spécialité"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en"),
+    step("contract", "Contrat de travail", "Réunir le contrat signé et les justificatifs de l’employeur exigés pour l’approbation.", ["Contrat", "Employeur", "Rémunération"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en"),
+    step("national_visa", "Visa national d’emploi", "Déposer la demande de visa auprès de l’ambassade ou du consulat après l’approbation compétente.", ["Passeport", "Contrat", "Approbation"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en"),
+    step("residence", "Permis de séjour", "Après l’arrivée et avant l’expiration du visa, demander le permis auprès de l’administration décentralisée compétente.", ["Visa", "Assurance", "Contrat", "Frais"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-greece_en"),
+  ]),
   regional("Irlande", "Visiteur", "https://www.ireland.ie/en/dfa/visas-for-ireland/", [
     step("visa_need", "Vérifier le besoin de visa irlandais", "Déterminer selon la nationalité, la durée et le motif si une autorisation ou un visa irlandais est requis ; un visa Schengen n’est pas valable en Irlande.", ["Nationalité", "Motif", "Durée"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
     step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, ressources, assurance et les pièces demandées par l’Irish Immigration Service.", ["Passeport", "Motif", "Hébergement", "Ressources"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
@@ -418,7 +436,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
