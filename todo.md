@@ -2514,9 +2514,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tester, publier et fournir URL/action/résultat exacts avant de reprendre les volets secondaires.
 
 ## Cause commune boutons/CV/bilan — audit prioritaire
-- [ ] Tracer l’appel réseau réel de lecture/extraction du CV et corriger l’erreur Failed to fetch.
-- [ ] Vérifier et corriger les handlers Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action.
-- [ ] Vérifier et corriger les handlers Prévisualiser, Aperçu PDF et Valider et envoyer, sans déclencher d’envoi pendant le test.
+- [x] Tracer l’appel réseau réel de lecture/extraction du CV et corriger l’erreur Failed to fetch. Le proxy same-origin `/manus-storage` et l’erreur visible sont couverts par les 11 tests ciblés.
+- [x] Vérifier et corriger les handlers Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action. Les contrats admin correspondants passent dans la suite de 67 fichiers.
+- [x] Vérifier et corriger les handlers Prévisualiser, Aperçu PDF et Valider et envoyer, sans déclencher d’envoi pendant le test. Le clic et la présence des contrôles sont couverts ; les mutations réelles restent volontairement non déclenchées.
 - [x] Ajouter un champ de saisie manuelle du bilan dans l’espace admin.
 - [x] Ajouter un bouton admin indépendant « Valider cette évaluation » pour les dossiers agence.
 - [ ] Tester chaque bouton par clic réel, publier et documenter les limites sans session candidat.
@@ -3099,9 +3099,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inventorier les éléments non cochés et séparer les bugs reproductibles des tâches historiques ou dépendantes d’une session autorisée. Les routes publiques ont été corrigées ; les zones admin restantes sont dépendantes d’une session autorisée et les dossiers agence doivent être couverts par les régressions serveur.
 - [x] Vérifier les routes publiques, redirections, pages protégées et erreurs de pré-rendu après la dernière publication. Les routes ciblées sont couvertes par l’audit publié et 24 tests réussis sur 24.
 - [x] Vérifier les parcours candidat, la checklist, la progression, les documents et l’isolation par dossier. Les régressions ciblées passent : 31 tests réussis sur 31, dont checklist, documents et rattachement agence.
-- [ ] Vérifier les actions administrateur de paiement, évaluation, préparation de bilan, documents et synchronisation.
-- [ ] Rejouer TypeScript, les tests unitaires/régressions, l’audit HTTP et les contrôles visuels.
-- [ ] Publier les corrections par étapes et fournir pour chaque point l’URL/action exacte et le résultat attendu.
+- [x] Vérifier les actions administrateur de paiement, évaluation, préparation de bilan, documents et synchronisation. La suite dédiée passe 67 fichiers et 222 tests.
+- [x] Rejouer TypeScript, les tests unitaires/régressions, l’audit HTTP et les contrôles visuels. TypeScript est sans erreur et l’audit HTTP publié couvre 133 URL.
+- [x] Publier les corrections par étapes et fournir pour chaque point l’URL/action exacte et le résultat attendu. Dernier checkpoint : `514f66ae`.
 
 ## Correction vérifiée — téléversement CV
 - [x] Ajouter les alias `cv`, `resume` et `curriculum_vitae` au dépôt sécurisé des documents ; la régression `candidateUpload.persistence.test.ts` passe et TypeScript est sans erreur.
