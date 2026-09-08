@@ -161,3 +161,14 @@ Pour la Norvège, le parcours doit distinguer visa visiteur C, visa D d’entré
 ### Règle d’intégration
 
 Pour la Finlande, l’interface doit distinguer visa visiteur, permis d’études et permis fondé sur l’emploi, avec vérification de la durée, du type de formation, de l’employeur et de la représentation compétente. Les exigences exactes restent celles de Migri et du poste finlandais compétent.
+
+## Danemark — quatorzième lot de sources institutionnelles consultées
+
+- **Nyidanmark — Visa de court séjour** : https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa. La source distingue le visa Schengen jusqu’à 90 jours, les visites privées, touristiques, professionnelles et culturelles, ainsi que les règles particulières pour le Groenland et les Îles Féroé.
+- **Ministry of Foreign Affairs — Demande de visa** : https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/. La source précise la destination principale, la fenêtre de dépôt, les représentations et le fait qu’un visa Schengen ne permet pas de s’installer, travailler ou étudier au Danemark.
+- **Nyidanmark — Études** : https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study. La page distingue les études de base, l’enseignement supérieur, le doctorat, les écoles populaires, le travail lié aux études et la recherche d’emploi après diplôme.
+- **Nyidanmark — Portail de demande** : https://www.nyidanmark.dk/en-GB/You-want-to-apply. La page officielle sert de point d’entrée pour les visas, permis d’études, permis de travail et séjours de plus de 90 jours.
+
+### Règle d’intégration
+
+Pour le Danemark, le parcours doit distinguer visa Schengen de court séjour, permis de résidence/études et autorisation de travail. Un visa Schengen ne doit pas être présenté comme autorisant une installation, un travail ou des études longues ; les catégories exactes et les pièces doivent être confirmées par Nyidanmark et la mission compétente.

@@ -2831,3 +2831,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Finlande
 - [x] Contrôler les sources institutionnelles finlandaises pour visiteur, études et travail.
 - [x] Intégrer les variantes Finlande dans le catalogue détaillé avec distinction visa court séjour, permis d’études Migri et permis fondé sur l’emploi.
+
+## Audit officiel par lots — Danemark
+- [x] Contrôler les sources institutionnelles danoises pour court séjour, études et travail.
+- [x] Intégrer les variantes Danemark dans le catalogue détaillé avec distinction visa Schengen, permis Nyidanmark et autorités compétentes.

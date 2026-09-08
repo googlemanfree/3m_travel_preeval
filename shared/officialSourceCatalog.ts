@@ -85,6 +85,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Danemark",
     "verificationStatus": "verified",
     "sources": [
+      { "label": "Nyidanmark — Visa de court séjour", "url": "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa" },
+      { "label": "Nyidanmark — Études", "url": "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study" },
+      { "label": "Nyidanmark — Portail de demande", "url": "https://www.nyidanmark.dk/en-GB/You-want-to-apply" },
+      { "label": "Ministry of Foreign Affairs — Demande de visa", "url": "https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/" },
       {
         "label": "Danish Immigration Service and SIRI — visiteur, études, travail —",
         "url": "https://www.nyidanmark.dk/en-GB/"

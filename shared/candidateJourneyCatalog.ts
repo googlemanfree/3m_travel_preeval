@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Danemark", "Visiteur", "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa", [
+    step("visa_schengen", "Vérifier le visa Schengen", "Déterminer si le Danemark est la destination principale et si un visa court séjour est requis.", ["Nationalité", "Itinéraire", "Dates"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa"),
+    step("documents", "Préparer les justificatifs", "Réunir les pièces de visite, le passeport, l’assurance et les documents demandés par la mission compétente.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/"),
+    step("appointment", "Dépôt de la demande", "Déposer la demande auprès du canal ou de la représentation désignée par le Danemark dans le pays de résidence.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/"),
+    step("decision", "Suivi de décision", "Suivre la décision et respecter la limite du court séjour ; le visa ne permet pas de s’installer, travailler ou étudier longuement.", ["Référence", "Notifications"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa"),
+  ]),
+  regional("Danemark", "Études", "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study", [
+    step("admission", "Admission dans un établissement", "Obtenir l’admission dans le type d’enseignement concerné : supérieur, doctorat ou autre catégorie reconnue.", ["Admission", "Programme", "Durée"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study"),
+    step("permit", "Permis de résidence étudiant", "Demander le permis de résidence et, si applicable, le droit au travail lié aux études ; un visa Schengen ne suffit pas pour les études longues.", ["Passeport", "Admission", "Ressources"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study"),
+    step("application", "Dépôt et biométrie", "Compléter la demande auprès de Nyidanmark et suivre les instructions de dépôt et d’identification.", ["Formulaire", "Admission", "Biométrie"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply"),
+    step("residence", "Entrée et suivi du permis", "Après décision, respecter les limites du permis et les éventuelles règles de renouvellement ou de recherche d’emploi.", ["Décision", "Carte", "Renouvellement"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study"),
+  ]),
+  regional("Danemark", "Travail", "https://www.nyidanmark.dk/en-GB/You-want-to-apply", [
+    step("offer", "Offre et catégorie professionnelle", "Vérifier le contrat, le poste et le programme professionnel ou la liste applicable avant la demande.", ["Employeur", "Contrat", "Fonction"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply"),
+    step("permit", "Permis de travail et de résidence", "Déterminer le permis Nyidanmark/SIRI requis ; un visa Schengen ne permet pas de travailler au Danemark.", ["Passeport", "Salaire", "Qualification"], "https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/"),
+    step("application", "Dépôt de la demande", "Déposer la demande selon la catégorie, fournir les pièces employeur et accomplir l’identification auprès du canal compétent.", ["Formulaire", "Contrat", "Biométrie"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply"),
+    step("employment", "Début autorisé de l’activité", "Ne commencer le travail qu’après autorisation et selon les limites du permis délivré.", ["Permis", "Employeur", "Carte"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply"),
+  ]),
   regional("Finlande", "Visiteur", "https://migri.fi/en/visiting-finland", [
     step("visa_schengen", "Vérifier le court séjour", "Déterminer si un visa Schengen est requis et si la Finlande est la destination principale du voyage.", ["Nationalité", "Itinéraire", "Dates"], "https://migri.fi/en/visiting-finland"),
     step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, assurance et les pièces demandées par le poste compétent.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://migri.fi/en/visiting-finland"),
@@ -364,7 +382,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
