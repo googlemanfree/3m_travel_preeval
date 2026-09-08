@@ -2893,3 +2893,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Türkiye dans le catalogue détaillé avec routage Visiteur, Études et Travail.
 - [x] Ajouter les sources MFA Türkiye, Presidency of Migration Management et Ministry of Labour au registre officiel.
 - [x] Valider la matrice Türkiye avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Royaume-Uni
+- [x] Contrôler les sources GOV.UK pour Standard Visitor, Student visa et Skilled Worker visa.
+- [x] Intégrer les variantes Royaume-Uni dans le catalogue détaillé avec vérification ETA/visa, sponsor étudiant et Certificate of Sponsorship.
+- [x] Ajouter les sources GOV.UK au registre officiel et valider les 21 tests ciblés avec TypeScript.

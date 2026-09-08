@@ -614,6 +614,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("permit_decision", "Décision du permis", "Attendre la décision du ministère ; le permis de travail remplace le titre de séjour pendant sa validité selon les règles officielles.", ["Décision", "Permis", "Référence"], "https://en.goc.gov.tr/work-permit"),
     step("arrival_registration", "Entrée et enregistrement", "Après l’entrée, respecter l’enregistrement auprès de la direction provinciale de la Migration Management et les conditions de l’emploi.", ["Adresse", "Permis", "Employeur", "Échéances"], "https://en.goc.gov.tr/work-permit"),
   ]),
+  regional("Royaume-Uni", "Visiteur", "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa", [
+    step("visa_check", "Vérifier visa, ETA ou exemption", "Vérifier la nationalité et déterminer si une demande de Standard Visitor visa, une ETA ou une exemption s’applique.", ["Nationalité", "Passeport", "Motif", "Dates"], "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa"),
+    step("online_application", "Demande en ligne", "Remplir la demande officielle avant le voyage et fournir les informations sur le séjour et les ressources.", ["Formulaire", "Hébergement", "Ressources", "Historique"], "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa"),
+    step("biometrics", "Identité et justificatifs", "Prendre le rendez-vous requis dans un centre de visa et fournir passeport, biométrie et documents d’éligibilité.", ["Passeport", "Rendez-vous", "Biométrie", "Justificatifs"], "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa"),
+    step("decision", "Décision et séjour autorisé", "Suivre la décision et respecter uniquement les activités autorisées par le statut accordé.", ["Référence", "Notifications", "Conditions"], "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa"),
+  ]),
+  regional("Royaume-Uni", "Études", "https://www.gov.uk/student-visa", [
+    step("sponsor_admission", "Admission avec sponsor agréé", "Obtenir une place sur un cursus proposé par un sponsor étudiant agréé et le document de confirmation requis.", ["Admission", "Sponsor", "Programme", "Passeport"], "https://www.gov.uk/student-visa"),
+    step("eligibility", "Conditions financières et linguistiques", "Vérifier les conditions de ressources, d’anglais, d’âge et de consentement parental lorsqu’elles s’appliquent.", ["Ressources", "Anglais", "Identité", "Consentement"], "https://www.gov.uk/student-visa"),
+    step("online_application", "Demande de Student visa", "Déposer la demande dans la fenêtre officielle, payer les frais applicables et vérifier les modalités de séjour.", ["Formulaire", "Passeport", "Confirmation", "Frais"], "https://www.gov.uk/student-visa"),
+    step("identity_decision", "Identité et décision", "Fournir l’identité et les documents demandés, puis respecter les droits d’études et de travail indiqués dans la décision.", ["Biométrie", "Documents", "Décision", "Conditions"], "https://www.gov.uk/student-visa"),
+  ]),
+  regional("Royaume-Uni", "Travail", "https://www.gov.uk/skilled-worker-visa", [
+    step("confirmed_offer", "Offre d’emploi confirmée", "Obtenir une offre d’emploi dans un métier éligible auprès d’un employeur approuvé par le Home Office.", ["Employeur", "Poste", "Contrat", "Salaire"], "https://www.gov.uk/skilled-worker-visa"),
+    step("sponsorship", "Certificate of Sponsorship", "Faire confirmer par l’employeur le Certificate of Sponsorship et les informations du poste.", ["CoS", "Employeur", "Référence", "Poste"], "https://www.gov.uk/skilled-worker-visa"),
+    step("eligibility", "Éligibilité et anglais", "Vérifier le métier éligible, le salaire applicable et la preuve de connaissance de l’anglais selon le dossier.", ["Occupation", "Salaire", "Anglais", "Passeport"], "https://www.gov.uk/skilled-worker-visa"),
+    step("online_application", "Demande et identité", "Déposer la demande en ligne, fournir l’identité et les documents requis, puis attendre la décision.", ["Formulaire", "Biométrie", "Documents", "Décision"], "https://www.gov.uk/skilled-worker-visa"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -635,7 +653,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

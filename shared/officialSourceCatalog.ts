@@ -355,6 +355,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "IPC — Information Portal for Foreigners", "url": "https://ipc.gov.cz/en/" }
     ]
   },
+  "royaume uni": {
+    "country": "Royaume-Uni",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "GOV.UK — Standard Visitor visa", "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa" },
+      { "label": "GOV.UK — Student visa", "url": "https://www.gov.uk/student-visa" },
+      { "label": "GOV.UK — Skilled Worker visa", "url": "https://www.gov.uk/skilled-worker-visa" },
+      { "label": "UK Visas and Immigration — Général", "url": "https://www.gov.uk/browse/visas-immigration" }
+    ]
+  },
   "roumanie": {
     "country": "Roumanie",
     "verificationStatus": "verified",
@@ -363,16 +373,6 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "MAE Romania — Visa national D emploi", "url": "https://www.mae.ro/en/node/2054" },
       { "label": "EU Immigration Portal — Student in Romania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en" },
       { "label": "EU Immigration Portal — Employed worker in Romania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en" }
-    ]
-  },
-  "royaume uni": {
-    "country": "Royaume-Uni",
-    "verificationStatus": "verified",
-    "sources": [
-      {
-        "label": "UK Visas and Immigration (Home Office) — Général —",
-        "url": "https://www.gov.uk/browse/visas-immigration"
-      }
     ]
   },
   "serbie": {

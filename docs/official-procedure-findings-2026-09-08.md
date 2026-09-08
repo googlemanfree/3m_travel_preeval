@@ -313,3 +313,16 @@ Le parcours Slovaquie doit distinguer court séjour C, visa national D, résiden
   - Les exigences changent selon le passeport et la finalité : le catalogue ne doit pas afficher une checklist universelle sans vérification par nationalité et poste compétent.
 ### Règle d’intégration
 Tant que les sources officielles de résidence et les formalités complémentaires études/travail ne sont pas intégrées, Türkiye reste affichée avec une procédure à vérifier, sans étapes détaillées présentées comme garanties.
+
+## Lot Royaume-Uni — sources officielles consultées
+- **GOV.UK — Standard Visitor visa** : https://www.gov.uk/standard-visitor/apply-standard-visitor-visa
+  - La demande se fait en ligne puis exige un rendez-vous dans un centre de visa lorsque le visa est requis. La page distingue aussi l’ETA ou l’exemption selon la nationalité et limite le Standard Visitor à ses activités autorisées.
+  - Les pièces et données dépendent de la situation ; identité/biométrie et justificatifs sont fournis au rendez-vous.
+- **GOV.UK — Student visa** : https://www.gov.uk/student-visa
+  - Le candidat doit notamment avoir une place offerte par un sponsor étudiant agréé, satisfaire les conditions financières et linguistiques applicables, puis déposer la demande dans la fenêtre officielle.
+  - Les droits de séjour et de travail dépendent du visa accordé ; un visa étudiant ne doit pas être présenté comme une autorisation professionnelle générale.
+- **GOV.UK — Skilled Worker visa** : https://www.gov.uk/skilled-worker-visa
+  - Le parcours exige un employeur approuvé, un Certificate of Sponsorship, un emploi éligible, le salaire applicable et la preuve d’anglais selon le cas, puis une demande en ligne et une vérification d’identité/documents.
+  - Le candidat doit disposer d’une offre confirmée avant la demande ; le visa ne doit pas être présenté comme une promesse d’emploi.
+### Règle d’intégration
+Le Royaume-Uni peut être intégré en trois variantes distinctes : Standard Visitor/ETA selon la nationalité, Student visa et Skilled Worker visa. Les pièces, frais, délais et conditions détaillés doivent rester renvoyés aux pages GOV.UK et au dossier individuel.
