@@ -2702,3 +2702,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver et couvrir la garde existante : `MySpace` affiche le protocole après `paymentStatus === "SUCCESS"` et `signAgreement` refuse toute signature avant paiement. La vérification live post-validation reste ouverte.
 - [x] Vérifier la route `/evaluation-rapide-enhanced` : elle redirige vers `/#evaluation-multi`, et les régressions historiques `agencyUnificationAndPrimary404` passent ; la vérification publique directe reste recommandée.
 - [ ] Régressions ciblées et TypeScript passent ; exécuter ensuite les clics admin autorisés sur `3M-AGN-270002` et un dossier en ligne, sans paiement réel, puis publier les URL/actions exactes.
+
+## Régression post-validation hors ligne — rafraîchissement dashboard
+- [x] Après une validation hors ligne réussie, conserver la dernière fiche et la dernière liste connues pendant le refetch ; les faux états vides ne remplacent plus les données pendant les retries.
+- [x] Corriger le rafraîchissement : `placeholderData` et `retry: 2` sont appliqués à la liste et à la fiche, avec message explicite en cas d’échec ; la validation déjà enregistrée est conservée et le dossier agence est désormais journalisé côté agence.
+- [x] Ajouter une régression de conservation des données pendant refetch et d’erreur de synchronisation explicite ; 14 tests ciblés et TypeScript passent.
+- [ ] Retester la fiche `3M-AGN-270002` avant de poursuivre la validation paiement et le protocole.

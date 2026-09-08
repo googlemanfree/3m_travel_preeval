@@ -247,6 +247,14 @@ export const adminCandidateManagementRouter = router({
         evaluationReviewedBy: admin.email,
         evaluationReviewNote: traceNote,
       }).where(eq(candidates.id, candidate.id));
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (reference?.source === "agency") {
+        await db.update(agencyDossiers).set({
+          evaluationValidatedAt: reviewedAt,
+          evaluationValidatedBy: admin.email,
+          evaluationValidationNote: traceNote,
+        }).where(eq(agencyDossiers.id, reference.id));
+      }
       const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
       const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
       const notificationId = Number((notificationResult as any)[0]?.insertId || 0);

@@ -349,7 +349,11 @@ export function CandidateDetailModal({
 
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
-    { enabled: !!candidateId && !!sessionToken }
+    {
+      enabled: !!candidateId && !!sessionToken,
+      placeholderData: (previous) => previous,
+      retry: 2,
+    }
   );
   const candidate = data?.candidate;
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
@@ -1002,9 +1006,13 @@ export default function AdminDashboard() {
     destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
     sortBy,
   }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, sortBy]);
-  const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
+  const { data, isLoading, error: candidateListError, refetch } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
-    { enabled: !!sessionToken }
+    {
+      enabled: !!sessionToken,
+      placeholderData: (previous) => previous,
+      retry: 2,
+    }
   );
   useEffect(() => {
     if (!sessionToken) return;
@@ -2095,8 +2103,8 @@ export default function AdminDashboard() {
                   <tr>
                     <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                      <p>Aucun candidat trouvé</p>
-                      {hasCandidateFilters && (
+                      <p>{candidateListError ? "Impossible de synchroniser la liste. Réessayez dans quelques secondes." : isLoading ? "Chargement des dossiers…" : "Aucun candidat trouvé"}</p>
+                      {hasCandidateFilters && !candidateListError && (
                         <p className="text-xs mt-1">Essayez de modifier vos filtres</p>
                       )}
                     </td>

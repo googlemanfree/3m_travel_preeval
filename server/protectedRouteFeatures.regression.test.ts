@@ -85,3 +85,13 @@ it("expose une validation paiement directe pour les dossiers agence et en ligne"
   expect(managementSource).toContain("VALIDATION_MANUELLE");
   expect(managementSource).toContain("initialPaymentStatus: \"paid\"");
 });
+
+
+describe("rafraîchissement admin après validation hors ligne", () => {
+  it("conserve la dernière donnée connue pendant un refetch et distingue une erreur de synchronisation", () => {
+    const dashboard = readFileSync(new URL("../client/src/pages/AdminDashboard.tsx", import.meta.url), "utf8");
+    expect(dashboard).toContain("placeholderData: (previous) => previous");
+    expect(dashboard).toContain("retry: 2");
+    expect(dashboard).toContain("Impossible de synchroniser la liste");
+  });
+});
