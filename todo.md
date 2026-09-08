@@ -2771,3 +2771,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser chaque étape et son état entre espace candidat et back-office sans permettre de saut manuel non tracé : le catalogue partagé alimente les deux vues et les transitions admin legacy restent séquentielles et auditées.
 - [x] Lier les documents requis et les sources officielles au couple destination/procédure dans les checklists administratives et le parcours partagé, avec état explicite lorsqu’une source manque.
 - [x] Tester les parcours Canada, Luxembourg et une destination sans source vérifiée avant publication progressive.
+
+## Audit officiel par lots — Allemagne
+- [x] Contrôler les sources institutionnelles Allemagne pour les catégories visiteur/Schengen, études et travail/visa national.
+- [ ] Intégrer les variantes Allemagne dans le catalogue détaillé uniquement après validation des liens et de la mission compétente.
