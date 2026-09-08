@@ -46,5 +46,6 @@ describe("catalogue de parcours candidat pays-visa", () => {
     expect(component).toContain("DocumentPreviewModal");
     expect(component).toContain("setPreviewDocument");
     expect(component).toContain("Aperçu");
+    expect(component).toContain('officialRecord?.verificationStatus === "verified"');
   });
 });

@@ -27,7 +27,7 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
   const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
   const visaKey = normalize(`${visaType || ""} ${procedureLabel || ""}`);
   const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") ? "etudes" : "visiteur";
-  const catalogueProcedure = procedures107Complete.find((item) => normalize(item.name) === destinationKey && item.visaType === procedureKind);
+  const catalogueProcedure = officialRecord?.verificationStatus === "verified" ? procedures107Complete.find((item) => normalize(item.name) === destinationKey && item.visaType === procedureKind) : undefined;
   const journey: CandidateJourney = catalogueProcedure ? {
     ...baseJourney,
     title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
