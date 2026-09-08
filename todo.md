@@ -3030,3 +3030,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Maurice dans le catalogue détaillé avec interdiction d’emploi sous visiteur, Student Visa/Residence Permit et Work Permit/Occupation Permit.
 - [x] Fusionner l’entrée Maurice du registre officiel et supprimer le doublon de clé sans modifier les autres pays.
 - [x] Valider la matrice Maurice avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Algérie
+- [x] Contrôler les sources MFA, MESRS et AAPI pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Algérie dans le catalogue détaillé avec visa consulaire, plateforme Study in Algeria et TWP avant emploi.
+- [x] Ajouter les sources officielles algériennes au registre partagé.
+- [x] Valider la matrice Algérie avec les tests ciblés et TypeScript.

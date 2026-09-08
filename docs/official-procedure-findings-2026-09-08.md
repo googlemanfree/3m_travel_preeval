@@ -545,3 +545,12 @@ L’Éthiopie est intégrée en trois variantes : Visiteur/eVisa touristique, É
 Les visiteurs doivent déposer selon la voie officielle avec passeport, billet retour, moyens financiers et justificatifs d’hébergement ; le visa ne garantit pas l’admission et le visiteur ne peut exercer une activité rémunérée. Le parcours étudiant renvoie aux lignes directrices officielles pour Student Visa et Residence Permit. Pour l’emploi, un Residence Permit et un Work Permit sont requis ; l’Occupation Permit combine travail et résidence pour les catégories Investor, Professional et Self-Employed.
 ### Règle d’intégration
 Maurice est intégré en trois variantes : Visiteur, Études et Travail, avec interdiction d’emploi sous tourisme, Student Visa/Residence Permit selon les instructions officielles et Work Permit/Residence Permit ou Occupation Permit avant activité professionnelle.
+
+## Lot Algérie — sources officielles consultées
+- Ministère des Affaires étrangères — Entry visa to Algeria : https://www.mfa.gov.dz/services-for-foreigners/entry-visa-to-algeria
+- MESRS — Study in Algeria : https://studyinalgeria.mesrs.dz/
+- AAPI — Employment of Foreigners in Algeria : https://aapi.dz/en/emploi-des-etrangers-en-algerie-en/
+### Faits vérifiables
+Le MFA distingue visas touristique, étude, travail et travail temporaire ; la demande exige notamment passeport de six mois, photos, assurance voyage et justificatifs propres à la catégorie. Study in Algeria prévoit candidature, revue administrative MESRS, revue académique, inscription puis début des cours. L’AAPI distingue régime général, temporaire et exceptionnel ; le Temporary Work Permit est préalable au visa de travail et l’autorisation de travail correspond au contrat.
+### Règle d’intégration
+L’Algérie est intégrée en trois variantes : Visiteur, Études et Travail, avec contrôle consulaire, plateforme Study in Algeria et autorisation de travail/TWP avant emploi.

@@ -314,6 +314,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "algerie": {
+    "country": "Algérie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ministère algérien des Affaires étrangères — Entry visa", "url": "https://www.mfa.gov.dz/services-for-foreigners/entry-visa-to-algeria" },
+      { "label": "MESRS — Study in Algeria", "url": "https://studyinalgeria.mesrs.dz/" },
+      { "label": "AAPI — Employment of Foreigners in Algeria", "url": "https://aapi.dz/en/emploi-des-etrangers-en-algerie-en/" }
+    ]
+  },
   "maurice": {
     "country": "Maurice",
     "verificationStatus": "verified",
