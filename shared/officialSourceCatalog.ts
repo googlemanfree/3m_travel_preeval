@@ -219,10 +219,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Lettonie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires étrangères de la République de Lettonie — Visas, visiteur, études et travail —",
-        "url": "https://www.mfa.gov.lv/en/applying-visa"
-      }
+      { "label": "Latvian Ministry of Foreign Affairs — Applying for a visa", "url": "https://www.mfa.gov.lv/en/applying-visa" },
+      { "label": "Latvian Ministry of Foreign Affairs — Documents required", "url": "https://www.mfa.gov.lv/en/documents-required-apply-visa" },
+      { "label": "PMLP/OCMA — Residence permit", "url": "https://www.pmlp.gov.lv/en/residence-permit" },
+      { "label": "EU Immigration Portal — Employed worker in Latvia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-latvia_en" }
     ]
   },
   "liechtenstein": {

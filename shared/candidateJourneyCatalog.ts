@@ -132,6 +132,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("visa_or_residence", "Visa D ou permis d’emploi", "Déposer la demande appropriée selon la durée, la base de séjour, les critères de salaire et les éventuels quotas.", ["Passeport", "Contrat", "Assurance", "Ressources"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa"),
     step("residence_registration", "Enregistrement après arrivée", "Après l’entrée, enregistrer la résidence et respecter les conditions liées à l’employeur et au permis.", ["Adresse", "Permis", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
   ]),
+  regional("Lettonie", "Visiteur", "https://www.mfa.gov.lv/en/applying-visa", [
+    step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité, la destination principale et la durée si un visa C est requis pour la Lettonie.", ["Nationalité", "Destination", "Durée"], "https://www.mfa.gov.lv/en/applying-visa"),
+    step("application", "Dépôt de la demande", "Remplir le formulaire et déposer la demande auprès de la mission compétente avec biométrie et documents requis.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.mfa.gov.lv/en/applying-visa"),
+    step("documents", "Pièces du court séjour", "Réunir motif, hébergement, moyens, assurance et justificatifs supplémentaires demandés par la représentation.", ["Motif", "Hébergement", "Ressources", "Assurance"], "https://www.mfa.gov.lv/en/documents-required-apply-visa"),
+    step("decision", "Décision et entrée", "Suivre la décision ; le visa court séjour ne donne pas un droit général d’installation ou de travail.", ["Référence", "Notifications", "Documents"], "https://www.mfa.gov.lv/en/applying-visa"),
+  ]),
+  regional("Lettonie", "Études", "https://www.pmlp.gov.lv/en/residence-permit", [
+    step("admission", "Admission et motif d’études", "Obtenir l’admission ou la confirmation de l’établissement et vérifier la base de séjour applicable.", ["Admission", "Programme", "Inscription"], "https://www.pmlp.gov.lv/en/residence-permit"),
+    step("residence", "Permis de séjour pour études", "Déposer la demande auprès de l’autorité compétente avec les pièces liées aux études, aux ressources et à l’assurance.", ["Admission", "Ressources", "Assurance", "Passeport"], "https://www.pmlp.gov.lv/en/residence-permit"),
+    step("application", "Dépôt consulaire ou administratif", "Vérifier le lieu de dépôt selon la nationalité, la durée et la représentation compétente.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://www.mfa.gov.lv/en/applying-visa"),
+    step("registration", "Installation et maintien", "Respecter les formalités d’adresse et les conditions liées au maintien du permis d’études.", ["Adresse", "Permis", "Progression"], "https://www.pmlp.gov.lv/en/residence-permit"),
+  ]),
+  regional("Lettonie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-latvia_en", [
+    step("employment_basis", "Vérifier la base d’emploi", "Identifier le permis, le titre de séjour et les démarches employeur applicables au poste et à la durée.", ["Employeur", "Poste", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-latvia_en"),
+    step("employer", "Démarches de l’employeur", "Faire préparer par l’employeur les documents et autorisations nécessaires auprès de l’autorité lettone compétente.", ["Contrat", "Employeur", "Qualification"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-latvia_en"),
+    step("residence", "Permis de séjour ou visa", "Déposer la demande selon la durée et la base d’emploi, avec les pièces requises.", ["Passeport", "Contrat", "Ressources", "Assurance"], "https://www.pmlp.gov.lv/en/residence-permit"),
+    step("registration", "Installation et suivi", "Respecter les formalités d’arrivée et les conditions attachées au permis et à l’employeur.", ["Adresse", "Permis", "Employeur"], "https://www.pmlp.gov.lv/en/residence-permit"),
+  ]),
   regional("Slovénie", "Visiteur", "https://www.gov.si/en/topics/entry-and-residence/", [
     step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité et la durée si un visa Schengen est requis pour entrer en Slovénie.", ["Nationalité", "Durée", "Motif"], "https://www.gov.si/en/topics/entry-and-residence/"),
     step("application", "Formulaire de visa", "Remplir le formulaire officiel, l’imprimer et le déposer auprès de l’ambassade ou du centre compétent.", ["Formulaire", "Passeport", "Rendez-vous"], "https://www.gov.si/en/registries/services/electronic-visa-application-form/"),
@@ -508,7 +526,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie", "lettonie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

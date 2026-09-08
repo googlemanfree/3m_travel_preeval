@@ -248,3 +248,14 @@ Le parcours Slovénie doit distinguer court séjour Schengen, permis temporaire 
 ### Règle d’intégration
 
 Le parcours Estonie doit distinguer visa C Schengen, visa D, permis d’études et emploi de courte durée ou permis de travail. Un visa touristique ne doit pas être présenté comme un droit général de travailler ou d’étudier ; la mission diplomatique et le Police and Border Guard Board compétents doivent rester visibles.
+
+## Lettonie — vingt-deuxième lot de sources institutionnelles consultées
+
+- **Latvian Ministry of Foreign Affairs — Applying for a visa** : https://www.mfa.gov.lv/en/applying-visa. La demande de visa dépend de la catégorie et de la compétence consulaire ; le dossier doit suivre les règles de court séjour Schengen lorsque cette catégorie s’applique.
+- **Latvian Ministry of Foreign Affairs — Documents required to apply for a visa** : https://www.mfa.gov.lv/en/documents-required-apply-visa. Les pièces générales comprennent document de voyage, formulaire, photographie, assurance et justificatifs liés au motif, à l’hébergement et aux moyens.
+- **PMLP/OCMA — Residence permit** : https://www.pmlp.gov.lv/en/residence-permit. Un permis de séjour est nécessaire pour résider plus de 90 jours sur une période de six mois ; l’autorité compétente et le motif déterminent la procédure.
+- **EU Immigration Portal — Employed worker in Latvia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-latvia_en. Le travail d’un ressortissant de pays tiers repose sur les conditions de l’emploi, l’employeur et le permis ou titre de séjour correspondant.
+
+### Règle d’intégration
+
+Le parcours Lettonie doit distinguer court séjour Schengen, études et permis de séjour, ainsi que les formalités de travail auprès de l’autorité migratoire compétente. Un visa visiteur ne doit pas être présenté comme un droit de travailler ou de s’installer.

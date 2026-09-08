@@ -2863,3 +2863,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Estonie
 - [x] Contrôler les sources institutionnelles estoniennes pour court séjour, visa D, études et travail.
 - [x] Intégrer les variantes Estonie dans le catalogue détaillé avec distinction visa C, visa D, permis d’études et emploi court/emploi soumis à permis.
+
+## Audit officiel par lots — Lettonie
+- [x] Contrôler les sources institutionnelles lettones pour court séjour, études et travail.
+- [x] Intégrer les variantes Lettonie dans le catalogue détaillé avec distinction Schengen, permis de séjour et autorisation de travail.
