@@ -920,6 +920,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("entry_documents", "Pièces générales", "Préparer le formulaire, passeport, photos, billet retour, vaccination et les justificatifs supplémentaires exigés par la mission.", ["Formulaire", "Passeport", "Photos", "Billet"], "https://gis.gov.gh/permits-and-visas/"),
     step("application_decision", "Demande et décision", "Déposer auprès de la mission ghanéenne compétente et ne commencer l’activité qu’après la décision et les autorisations requises.", ["Mission", "Décision", "Autorisation", "Conditions"], "https://gis.gov.gh/permits-and-visas/"),
   ]),
+  regional("Kenya", "Visiteur", "https://etakenya.go.ke/how-to-apply", [
+    step("eta_exemption", "Vérifier l’exemption eTA", "Déterminer si le voyageur est exempté selon les règles officielles ou doit obtenir une eTA avant le départ.", ["Nationalité", "Exemption", "eTA", "Passeport"], "https://etakenya.go.ke/how-to-apply"),
+    step("eta_documents", "Préparer la demande eTA", "Réunir passeport valable au moins six mois, photo, contacts, itinéraire, réservation d’hébergement et moyen de paiement.", ["Passeport", "Photo", "Itinéraire", "Hébergement"], "https://etakenya.go.ke/how-to-apply"),
+    step("eta_application", "Déposer la demande eTA", "Soumettre la demande électronique officielle et attendre l’autorisation approuvée avant le début du voyage.", ["eTA", "Dépôt", "Paiement", "Approbation"], "https://etakenya.go.ke/how-to-apply"),
+    step("entry_conditions", "Respecter l’entrée", "Présenter l’autorisation et les pièces correspondantes à l’arrivée ; les documents additionnels dépendent du motif de voyage.", ["Entrée", "eTA", "Motif", "Contrôles"], "https://etakenya.go.ke/how-to-apply"),
+  ]),
+  regional("Kenya", "Études", "https://immigration.go.ke/students-pass/", [
+    step("institution_form", "Formulaire de l’établissement", "Faire remplir, signer et tamponner le Formulaire 30 par le personnel autorisé de l’établissement.", ["Formulaire 30", "Établissement", "Signature", "Tampon"], "https://immigration.go.ke/students-pass/"),
+    step("admission_documents", "Admission et programme", "Joindre la lettre de couverture détaillée indiquant le programme et sa durée, les certificats académiques et l’inscription.", ["Admission", "Programme", "Durée", "Certificats"], "https://immigration.go.ke/students-pass/"),
+    step("sponsor_and_funds", "Sponsor et ressources", "Fournir l’engagement du sponsor, sa pièce d’identité et la preuve de fonds ; ajouter les pièces du mineur si nécessaire.", ["Sponsor", "Ressources", "Passeport", "Mineur"], "https://immigration.go.ke/students-pass/"),
+    step("online_submission", "Demande et décision", "Téléverser les pièces requises, traduire les documents étrangers en anglais par un organisme autorisé et suivre la décision du Student’s Pass.", ["Téléversement", "Traduction", "Décision", "Pass"], "https://immigration.go.ke/students-pass/"),
+  ]),
+  regional("Kenya", "Travail", "https://immigration.go.ke/work-permits-and-passes/", [
+    step("permit_class", "Identifier le permis ou pass", "Déterminer la classe de work permit ou pass correspondant à l’activité et au profil professionnel.", ["Classe", "Permis", "Pass", "Activité"], "https://immigration.go.ke/work-permits-and-passes/"),
+    step("efns_application", "Dépôt sur eFNS", "Créer ou utiliser le compte eFNS et soumettre la demande de permis ou pass avec toutes les exigences téléversées.", ["eFNS", "Compte", "Demande", "Pièces"], "https://immigration.go.ke/work-permits-and-passes/"),
+    step("review_decision", "Instruction et émission", "Attendre le traitement des services d’immigration et ne pas commencer l’activité avant l’émission du permis approprié.", ["Instruction", "Décision", "Employeur", "Autorisation"], "https://immigration.go.ke/work-permits-and-passes/"),
+    step("endorsement", "Impression et endossement", "Imprimer le permis ou pass depuis eFNS après émission et le présenter au bureau d’immigration pour endossement.", ["Impression", "eFNS", "Endossement", "Permis"], "https://immigration.go.ke/work-permits-and-passes/"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -941,7 +959,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

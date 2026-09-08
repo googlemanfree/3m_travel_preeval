@@ -486,3 +486,13 @@ Le Nigeria est intégré en trois variantes : Tourism Visa F5A, Student Visa R7A
 Le Ghana distingue les visas délivrés hors du pays et les visas délivrés au Ghana ; une visa n’est pas une garantie d’entrée. Les demandes d’études exigent une lettre d’acceptation de l’établissement ghanéen et les demandes d’emploi un contrat ainsi qu’une preuve de quota d’emploi. L’emploi est restreint sous permis visiteur.
 ### Règle d’intégration
 Le Ghana est intégré en trois variantes : Visiteur, Études et Travail, avec contrôle du statut, lettre d’acceptation pour études, contrat/quota pour emploi et vérification des conditions d’entrée, sans inventer de sous-catégorie non publiée par GIS.
+
+## Lot Kenya — sources officielles consultées
+- Kenya Electronic Travel Authorisation — How to Apply : https://etakenya.go.ke/how-to-apply
+  - Tous les visiteurs doivent obtenir une eTA approuvée avant le voyage sauf exemptions officielles ; passeport, photo, contacts, itinéraire, hébergement et paiement sont requis.
+- Directorate of Immigration Services — Student’s Pass : https://immigration.go.ke/students-pass/
+  - Formulaire 30 signé par l’établissement, lettre de couverture, passeport, admission, preuves académiques et financières et autres pièces selon le cas.
+- Directorate of Immigration Services — Work Permits and Passes : https://immigration.go.ke/work-permits-and-passes/
+  - Les demandes de permis et passes se font en ligne via eFNS et les documents sont téléversés puis le permis imprimé pour endossement.
+### Règle d’intégration
+Le Kenya est intégré en trois variantes : eTA Visiteur, Student’s Pass et Work Permit/Pass, avec exemptions eTA contrôlées selon les règles officielles et dépôt eFNS pour études/travail.

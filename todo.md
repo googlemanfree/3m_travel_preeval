@@ -2994,3 +2994,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Ghana dans le catalogue détaillé avec lettre d’acceptation étudiant, contrat/quota d’emploi et restriction du travail sous visiteur.
 - [x] Ajouter les sources GIS au registre officiel.
 - [x] Valider la matrice Ghana avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Kenya
+- [x] Contrôler les sources Kenya eTA et Directorate of Immigration Services pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Kenya dans le catalogue détaillé avec exemptions eTA, Student’s Pass et dépôt eFNS pour permis de travail.
+- [x] Fusionner l’entrée Kenya du registre officiel et supprimer le doublon de clé sans modifier les autres pays.
+- [x] Valider la matrice Kenya avec les tests ciblés et TypeScript.

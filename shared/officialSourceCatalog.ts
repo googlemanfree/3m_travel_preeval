@@ -318,10 +318,9 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Kenya",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Department of Immigration Services — Études —",
-        "url": "https://immigration.go.ke/students-pass/"
-      }
+      { "label": "Kenya eTA — How to Apply", "url": "https://etakenya.go.ke/how-to-apply" },
+      { "label": "Directorate of Immigration Services — Student’s Pass", "url": "https://immigration.go.ke/students-pass/" },
+      { "label": "Directorate of Immigration Services — Work Permits and Passes", "url": "https://immigration.go.ke/work-permits-and-passes/" }
     ]
   },
   "lettonie": {
