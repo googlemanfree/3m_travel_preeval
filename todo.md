@@ -2851,3 +2851,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Croatie
 - [x] Contrôler les sources institutionnelles croates pour court séjour, études et travail.
 - [x] Intégrer les variantes Croatie dans le catalogue détaillé avec distinction visa C, séjour temporaire études et autorisation de travail.
+
+## Audit officiel par lots — Roumanie
+- [x] Contrôler les sources institutionnelles roumaines pour court séjour, études et travail.
+- [x] Intégrer les variantes Roumanie dans le catalogue détaillé avec distinction visa Schengen C, visa national D, permis étudiant et autorisation de travail.

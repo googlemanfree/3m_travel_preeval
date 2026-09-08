@@ -215,3 +215,14 @@ Le parcours Grèce doit distinguer le visa Schengen court séjour du visa nation
 ### Règle d’intégration
 
 Le parcours Croatie doit distinguer court séjour C, études avec séjour temporaire et travail soumis à une autorisation appropriée ; un visa de visite ne doit jamais être présenté comme une autorisation de travail ou d’installation.
+
+## Roumanie — dix-neuvième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign Affairs — Visas** : http://www.mae.ro/en/node/2035. Depuis le 31 mars 2024, la Roumanie applique l’acquis Schengen et délivre des visas uniformes de court séjour ; le séjour court reste limité à 90 jours sur 180 et le visa ne garantit pas l’entrée.
+- **Ministry of Foreign Affairs — Long-stay visa D** : https://www.mae.ro/en/node/2054. Le visa D d’emploi repose sur l’autorisation et la demande employeur via WorkinRomania.gov.ro, avec catégories et durées spécifiques.
+- **EU Immigration Portal — Student in Romania** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en. Les études requièrent notamment admission/lettre d’acceptation, visa D et, au-delà de 90 jours, permis de séjour temporaire auprès de l’IGI.
+- **EU Immigration Portal — Employed worker in Romania** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en. Le travail requiert en principe une autorisation de travail, un visa D/AM et, au-delà de 90 jours, un permis de séjour temporaire ; l’autorisation est liée à l’employeur et aux quotas applicables.
+
+### Règle d’intégration
+
+Le parcours Roumanie doit distinguer visa Schengen C court séjour, visa national D, admission et séjour étudiant, ainsi que l’autorisation de travail et le permis de séjour. Aucune entrée avec un visa de visite ne doit être présentée comme un droit de travailler ou de s’installer.

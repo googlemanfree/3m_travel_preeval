@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Roumanie", "Visiteur", "http://www.mae.ro/en/node/2035", [
+    step("visa_c", "Vérifier le visa Schengen C", "Déterminer selon la nationalité et la destination principale si un visa Schengen court séjour est requis pour la Roumanie.", ["Nationalité", "Destination principale", "Durée"], "http://www.mae.ro/en/node/2035"),
+    step("application", "Préparer la demande", "Réunir le motif, le passeport, les moyens, l’hébergement, l’assurance et les pièces demandées par le poste compétent.", ["Passeport", "Motif", "Ressources", "Assurance"], "http://www.mae.ro/en/node/2035"),
+    step("submission", "Dépôt et biométrie", "Déposer la demande auprès de la représentation compétente et fournir les données requises.", ["Formulaire", "Rendez-vous", "Biométrie"], "http://www.mae.ro/en/node/2035"),
+    step("decision", "Décision et entrée", "Suivre la décision ; le visa ne garantit pas l’entrée et ne permet pas de changer le motif du séjour.", ["Référence", "Notifications", "Documents"], "http://www.mae.ro/en/node/2035"),
+  ]),
+  regional("Roumanie", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en", [
+    step("admission", "Lettre d’acceptation", "Obtenir l’admission et la lettre d’acceptation du ministère compétent pour le programme d’études.", ["Admission", "Lettre", "Programme"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en"),
+    step("visa_d", "Visa long séjour études", "Déposer la demande de visa D avec ressources, assurance, casier et preuve d’inscription ou d’acceptation.", ["Passeport", "Ressources", "Assurance", "Casier"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en"),
+    step("residence", "Permis de séjour temporaire", "Après l’arrivée, demander le permis auprès de l’Inspectorat général pour l’immigration si le séjour dépasse 90 jours.", ["Visa", "Adresse", "Inscription"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en"),
+    step("renewal", "Suivi et renouvellement", "Maintenir l’inscription, les ressources et les conditions de séjour pour tout renouvellement.", ["Permis", "Inscription", "Ressources"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en"),
+  ]),
+  regional("Roumanie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en", [
+    step("work_authorisation", "Autorisation de travail", "L’employeur demande l’autorisation auprès de l’Inspectorat général pour l’immigration, selon les exemptions et quotas applicables.", ["Employeur", "Contrat", "Autorisation"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en"),
+    step("visa_d", "Visa D/AM", "Après l’autorisation, déposer dans le délai applicable la demande de visa long séjour emploi auprès de la mission roumaine.", ["Autorisation", "Passeport", "Casier"], "https://www.mae.ro/en/node/2054"),
+    step("contract", "Contrat individuel", "Conclure le contrat individuel de travail conformément à l’autorisation et aux conditions approuvées.", ["Contrat", "Employeur", "Salaire"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en"),
+    step("residence", "Permis de séjour", "Après l’entrée, demander le permis temporaire auprès de l’Inspectorat territorial pour la durée du contrat.", ["Visa", "Contrat", "Assurance", "Adresse"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en"),
+  ]),
   regional("Croatie", "Visiteur", "https://mvep.gov.hr/consular-information-152362/visa-152363/152363", [
     step("visa_c", "Vérifier le visa C", "Déterminer selon la nationalité et la durée si un visa court séjour C est requis pour la Croatie.", ["Nationalité", "Durée", "Motif"], "https://mvep.gov.hr/consular-information-152362/visa-152363/152363"),
     step("application", "Formulaire crovisa", "Compléter le formulaire en ligne, l’imprimer et préparer le dépôt auprès de l’ambassade, du consulat ou du centre compétent.", ["Formulaire", "Passeport", "Rendez-vous"], "https://crovisa.mvep.hr/?lang=en"),
@@ -454,7 +472,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

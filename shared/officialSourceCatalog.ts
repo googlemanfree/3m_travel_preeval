@@ -359,10 +359,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Roumanie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires Étrangères de Roumanie (MAE) — Visas (visiteur, études, travail) —",
-        "url": "http://www.mae.ro/en/node/2035"
-      }
+      { "label": "MAE Romania — Visas et Schengen", "url": "http://www.mae.ro/en/node/2035" },
+      { "label": "MAE Romania — Visa national D emploi", "url": "https://www.mae.ro/en/node/2054" },
+      { "label": "EU Immigration Portal — Student in Romania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-romania_en" },
+      { "label": "EU Immigration Portal — Employed worker in Romania", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-romania_en" }
     ]
   },
   "royaume uni": {

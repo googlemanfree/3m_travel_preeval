@@ -59,6 +59,7 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Irlande", "Travail", "irishimmigration.ie"],
       ["Grèce", "Travail", "home-affairs.ec.europa.eu"],
       ["Croatie", "Travail", "mvep.gov.hr"],
+      ["Roumanie", "Travail", "home-affairs.ec.europa.eu"],
     ] as const;
     for (const [country, visa, sourceHost] of cases) {
       const journey = getCandidateJourney(country, visa);
