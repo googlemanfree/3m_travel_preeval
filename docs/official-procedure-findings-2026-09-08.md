@@ -368,3 +368,13 @@ Le Japon est intégré en trois variantes : court séjour/visiteur, Student et W
   - Le candidat doit disposer d’une offre d’emploi à temps plein d’un employeur accrédité, d’au moins 30 heures hebdomadaires, et satisfaire les exigences de compétences, qualification/expérience, santé et caractère.
 ### Règle d’intégration
 La Nouvelle-Zélande est intégrée en trois variantes : Visitor Visa/NZeTA selon éligibilité, Student visa et Accredited Employer Work Visa. Aucun visa visiteur ne doit être présenté comme une autorisation de travail.
+
+## Lot Corée du Sud — sources officielles consultées
+- **Korea Visa Portal — Visa Navigator et catégories officielles** : https://www.visa.go.kr/
+  - Le portail officiel permet de sélectionner la nationalité, le motif (court séjour, études, emploi) et la durée, puis de consulter les catégories et procédures correspondantes. Il distingue notamment C-3 court séjour, D-2 études et de nombreuses catégories E de travail.
+- **HiKorea — portail officiel de l’immigration** : https://www.hikorea.go.kr/Main.pt?locale=en
+  - Le portail est le point d’accès officiel pour les démarches d’immigration et de séjour ; les demandes et formalités dépendent de la catégorie retenue.
+- **Ministry of Justice — E-Visa Center** : https://www.immigration.go.kr/immigration_eng/2098/subview.do
+  - Le centre e-Visa traite certaines catégories précises, notamment certains talents, étudiants internationaux et groupes touristiques ; il ne doit pas être présenté comme une voie universelle.
+### Règle d’intégration
+La Corée du Sud est intégrée en trois variantes : court séjour C-3 à qualifier via Visa Navigator, études D-2/D-4 selon le programme et travail dans la catégorie officielle correspondant au poste. Le portail Visa Navigator reste obligatoire pour ne pas afficher une catégorie inadéquate.

@@ -704,6 +704,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("skills_evidence", "Compétences et qualifications", "Fournir les preuves d’expérience ou de qualification, d’enregistrement professionnel, de santé et de caractère selon le poste.", ["Expérience", "Diplôme", "Santé", "Casier"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
     step("online_application", "Demande AEWV et décision", "Utiliser le lien de demande transmis par l’employeur, fournir les pièces et respecter les conditions du visa accordé.", ["Lien", "Formulaire", "Contrat", "Décision"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
   ]),
+  regional("Corée du Sud", "Visiteur", "https://www.visa.go.kr/", [
+    step("visa_navigator", "Visa Navigator — court séjour", "Sélectionner la nationalité, le motif et la durée dans le Visa Navigator afin d’identifier la catégorie C-3 ou l’exemption applicable.", ["Nationalité", "Motif", "Durée", "Passeport"], "https://www.visa.go.kr/"),
+    step("documents", "Pièces selon la catégorie", "Préparer le formulaire, passeport, photo et justificatifs exigés par la mission ou la catégorie sélectionnée.", ["Formulaire", "Passeport", "Photo", "Justificatifs"], "https://www.visa.go.kr/"),
+    step("submission", "Dépôt auprès de la mission", "Déposer la demande selon les instructions de la représentation compétente et suivre les modalités officielles.", ["Mission", "Rendez-vous", "Dépôt", "Référence"], "https://www.visa.go.kr/"),
+    step("decision_entry", "Décision et entrée", "Suivre la décision et respecter la durée et le motif autorisés ; ne pas utiliser un court séjour pour travailler ou étudier sans catégorie adaptée.", ["Décision", "Conditions", "Durée", "Entrée"], "https://www.visa.go.kr/"),
+  ]),
+  regional("Corée du Sud", "Études", "https://www.visa.go.kr/", [
+    step("visa_navigator", "Identifier D-2 ou D-4", "Utiliser le Visa Navigator pour distinguer les études universitaires D-2 de la formation ou langue D-4 selon le programme.", ["Programme", "Établissement", "Durée", "Nationalité"], "https://www.visa.go.kr/"),
+    step("admission", "Admission dans l’établissement", "Obtenir l’admission et les documents de l’établissement nécessaires à la catégorie de visa retenue.", ["Admission", "Programme", "Établissement", "Passeport"], "https://www.visa.go.kr/"),
+    step("application", "Demande de visa étudiant", "Préparer le formulaire, photo, passeport et justificatifs financiers/académiques selon les instructions de la mission.", ["Formulaire", "Photo", "Ressources", "Diplômes"], "https://www.visa.go.kr/"),
+    step("decision_residence", "Décision et séjour", "Suivre la décision et effectuer les formalités de séjour auprès de HiKorea lorsqu’elles sont requises.", ["Décision", "HiKorea", "Statut", "Échéances"], "https://www.hikorea.go.kr/Main.pt?locale=en"),
+  ]),
+  regional("Corée du Sud", "Travail", "https://www.visa.go.kr/", [
+    step("work_category", "Catégorie de travail", "Identifier la catégorie officielle correspondant au poste, par exemple E-1 à E-7, via le Visa Navigator et les instructions compétentes.", ["Poste", "Employeur", "Qualification", "Activité"], "https://www.visa.go.kr/"),
+    step("employer_documents", "Documents employeur et candidat", "Réunir contrat, recommandation ou documents d’employeur et preuves de qualification selon la catégorie.", ["Contrat", "Employeur", "Diplôme", "Expérience"], "https://www.visa.go.kr/"),
+    step("application", "Demande auprès de la mission", "Déposer la demande avec les formulaires et pièces de la catégorie, puis suivre la délivrance ou le numéro de visa.", ["Formulaire", "Passeport", "Photo", "Référence"], "https://www.visa.go.kr/"),
+    step("residence_conditions", "Séjour et conditions", "Après la décision, respecter le statut de séjour et les formalités HiKorea ; exercer uniquement l’activité autorisée.", ["Décision", "HiKorea", "Statut", "Employeur"], "https://www.hikorea.go.kr/Main.pt?locale=en"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -725,7 +743,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

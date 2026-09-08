@@ -2922,3 +2922,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Nouvelle-Zélande dans le catalogue détaillé avec contrôle visiteur authentique, offre d’études et employeur accrédité.
 - [x] Ajouter les sources Immigration New Zealand au registre officiel et supprimer le doublon de clé existant.
 - [x] Valider la matrice Nouvelle-Zélande avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Corée du Sud
+- [x] Contrôler les sources Visa Portal, HiKorea et Ministry of Justice pour court séjour, études et travail.
+- [x] Intégrer les variantes Corée du Sud dans le catalogue détaillé avec Visa Navigator obligatoire et catégories C-3, D-2/D-4 et E.
+- [x] Ajouter les sources officielles coréennes au registre partagé.
+- [x] Valider la matrice Corée du Sud avec les tests ciblés et TypeScript.

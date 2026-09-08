@@ -71,6 +71,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       }
     ]
   },
+  "coree du sud": {
+    "country": "Corée du Sud",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Korea Visa Portal — Visa Navigator", "url": "https://www.visa.go.kr/" },
+      { "label": "HiKorea — Immigration and stay portal", "url": "https://www.hikorea.go.kr/Main.pt?locale=en" },
+      { "label": "Ministry of Justice — E-Visa Center", "url": "https://www.immigration.go.kr/immigration_eng/2098/subview.do" }
+    ]
+  },
   "croatie": {
     "country": "Croatie",
     "verificationStatus": "verified",
