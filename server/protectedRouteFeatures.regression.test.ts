@@ -104,3 +104,12 @@ describe("session admin persistante après mutation", () => {
     expect(adminRouter).toContain("admin = await requireValidAdminSession(input.sessionToken)");
   });
 });
+
+describe("fallback client session admin périmée", () => {
+  it("nettoie les jetons locaux et redirige vers la connexion sur UNAUTHORIZED", () => {
+    const dashboard = readFileSync(new URL("../client/src/pages/AdminDashboard.tsx", import.meta.url), "utf8");
+    expect(dashboard).toContain('localStorage.removeItem("adminSessionToken")');
+    expect(dashboard).toContain('sessionStorage.removeItem("adminSessionToken")');
+    expect(dashboard).toContain('navigate("/admin/login")');
+  });
+});

@@ -2708,3 +2708,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le rafraîchissement : `placeholderData` et `retry: 2` sont appliqués à la liste et à la fiche, avec message explicite en cas d’échec ; la validation déjà enregistrée est conservée et le dossier agence est désormais journalisé côté agence.
 - [x] Ajouter une régression de conservation des données pendant refetch et d’erreur de synchronisation explicite ; 14 tests ciblés et TypeScript passent.
 - [ ] Retester la fiche `3M-AGN-270002` avant de poursuivre la validation paiement et le protocole.
+- [x] Ajouter un fallback client pour nettoyer les jetons admin périmés et rediriger vers `/admin/login` sur 401 ; 16 tests ciblés et TypeScript passent.

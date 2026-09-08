@@ -1018,6 +1018,17 @@ export default function AdminDashboard() {
     if (!sessionToken) return;
     void trpcUtils.admin.listCandidates.reset();
   }, [sessionToken, trpcUtils]);
+  useEffect(() => {
+    const message = candidateListError?.message?.toLowerCase() ?? "";
+    const unauthorized = candidateListError?.data?.code === "UNAUTHORIZED" || message.includes("session invalide") || message.includes("session expirée") || message.includes("session administrateur requise");
+    if (!unauthorized) return;
+    localStorage.removeItem("adminSessionToken");
+    sessionStorage.removeItem("adminSessionToken");
+    localStorage.removeItem("adminType");
+    localStorage.removeItem("adminName");
+    toast({ title: "Session administrateur expirée", description: "Reconnectez-vous pour reprendre le pilotage des dossiers.", variant: "destructive" });
+    navigate("/admin/login");
+  }, [candidateListError, navigate, toast]);
   const { data: pendingPaymentApplications = [] } = trpc.application.listApplications.useQuery({
     paymentStatus: "PENDING",
     limit: 100,
