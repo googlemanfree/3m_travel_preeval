@@ -722,6 +722,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("application", "Demande auprès de la mission", "Déposer la demande avec les formulaires et pièces de la catégorie, puis suivre la délivrance ou le numéro de visa.", ["Formulaire", "Passeport", "Photo", "Référence"], "https://www.visa.go.kr/"),
     step("residence_conditions", "Séjour et conditions", "Après la décision, respecter le statut de séjour et les formalités HiKorea ; exercer uniquement l’activité autorisée.", ["Décision", "HiKorea", "Statut", "Employeur"], "https://www.hikorea.go.kr/Main.pt?locale=en"),
   ]),
+  regional("Inde", "Visiteur", "https://indianvisaonline.gov.in/evisa/tvoa.html", [
+    step("eligibility", "Vérifier l’éligibilité e-Visa", "Vérifier la nationalité, le motif, le passeport et la catégorie e-Tourist ou la demande régulière applicable.", ["Nationalité", "Motif", "Passeport", "Durée"], "https://indianvisaonline.gov.in/evisa/tvoa.html"),
+    step("online_application", "Demande e-Visa en ligne", "Remplir la demande et téléverser la photo récente et la page biographique du passeport selon les spécifications officielles.", ["Formulaire", "Photo", "Passeport", "Itinéraire"], "https://indianvisaonline.gov.in/evisa/tvoa.html"),
+    step("fee_eta", "Paiement et ETA", "Payer les frais officiels, attendre l’Electronic Travel Authorization et vérifier son statut accordé avant le voyage.", ["Paiement", "ETA", "E-mail", "Statut"], "https://indianvisaonline.gov.in/evisa/tvoa.html"),
+    step("arrival", "Voyage et contrôle d’entrée", "Imprimer l’ETA et la présenter au point d’immigration autorisé, avec le même passeport utilisé pour la demande.", ["ETA", "Passeport", "Point d’entrée", "Biométrie"], "https://indianvisaonline.gov.in/evisa/tvoa.html"),
+  ]),
+  regional("Inde", "Études", "https://indianvisaonline.gov.in/visa/visa-provision.html", [
+    step("admission", "Admission dans un établissement indien", "Obtenir la preuve d’admission requise pour la catégorie Student ou e-Student adaptée au programme.", ["Admission", "Établissement", "Programme", "Passeport"], "https://indianvisaonline.gov.in/visa/visa-provision.html"),
+    step("visa_category", "Choisir Student ou e-Student", "Vérifier dans les provisions officielles si la durée et le programme permettent l’e-Student ou nécessitent une demande régulière.", ["Durée", "Catégorie", "Nationalité", "Programme"], "https://indianvisaonline.gov.in/visa/visa-provision.html"),
+    step("application", "Demande et pièces", "Déposer le formulaire en ligne avec admission, passeport et pièces ; imprimer et signer la demande régulière lorsque nécessaire.", ["Formulaire", "Admission", "Passeport", "Signature"], "https://indianvisaonline.gov.in/visa/"),
+    step("submission_decision", "Dépôt et décision", "Déposer auprès du centre ou de la mission indienne compétente et respecter les formalités d’enregistrement si elles s’appliquent.", ["Mission", "Rendez-vous", "Décision", "Enregistrement"], "https://indianvisaonline.gov.in/visa/"),
+  ]),
+  regional("Inde", "Travail", "https://indianvisaonline.gov.in/visa/visa-provision.html", [
+    step("employment_proof", "Preuve d’emploi", "Obtenir une nomination ou un contrat et les preuves d’emploi exigées pour la catégorie Employment.", ["Employeur", "Contrat", "Poste", "Durée"], "https://indianvisaonline.gov.in/visa/visa-provision.html"),
+    step("visa_category", "Vérifier la catégorie Employment", "Confirmer la catégorie, la durée et les conditions selon l’emploi et la nationalité du candidat.", ["Catégorie", "Durée", "Qualification", "Nationalité"], "https://indianvisaonline.gov.in/visa/visa-provision.html"),
+    step("regular_application", "Demande régulière", "Remplir, imprimer et signer le formulaire, puis joindre passeport, preuve d’emploi et justificatifs demandés.", ["Formulaire", "Signature", "Passeport", "Contrat"], "https://indianvisaonline.gov.in/visa/"),
+    step("mission_decision", "Dépôt auprès de la mission", "Déposer au centre de visa ou à la mission indienne compétente et suivre la décision ainsi que les formalités de séjour.", ["IVAC", "Mission", "Décision", "Séjour"], "https://indianvisaonline.gov.in/visa/"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -743,7 +761,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

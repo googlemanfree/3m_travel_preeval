@@ -432,6 +432,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Employed worker in Slovenia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovenia_en" }
     ]
   },
+  "inde": {
+    "country": "Inde",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Government of India — e-Visa", "url": "https://indianvisaonline.gov.in/evisa/tvoa.html" },
+      { "label": "India Visa Online — visa provisions", "url": "https://indianvisaonline.gov.in/visa/visa-provision.html" },
+      { "label": "India Visa Online — regular visa application", "url": "https://indianvisaonline.gov.in/visa/" }
+    ]
+  },
   "suede": {
     "country": "Suède",
     "verificationStatus": "verified",

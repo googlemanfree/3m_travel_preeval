@@ -378,3 +378,13 @@ La Nouvelle-Zélande est intégrée en trois variantes : Visitor Visa/NZeTA selo
   - Le centre e-Visa traite certaines catégories précises, notamment certains talents, étudiants internationaux et groupes touristiques ; il ne doit pas être présenté comme une voie universelle.
 ### Règle d’intégration
 La Corée du Sud est intégrée en trois variantes : court séjour C-3 à qualifier via Visa Navigator, études D-2/D-4 selon le programme et travail dans la catégorie officielle correspondant au poste. Le portail Visa Navigator reste obligatoire pour ne pas afficher une catégorie inadéquate.
+
+## Lot Inde — sources officielles consultées
+- **Government of India — e-Visa** : https://indianvisaonline.gov.in/evisa/tvoa.html
+  - Le parcours e-Visa comprend dépôt en ligne, téléversement de la photo et du passeport, paiement, réception de l’ETA puis présentation de l’ETA à l’arrivée. Le portail distingue e-Tourist, e-Student et d’autres sous-catégories, selon l’éligibilité.
+- **India Visa Online — visa provisions** : https://indianvisaonline.gov.in/visa/visa-provision.html
+  - Le registre officiel distingue notamment Tourist, Employment et Student ; le visa Employment repose sur une preuve d’emploi et le Student sur une preuve d’admission dans un établissement indien.
+- **India Visa Online — regular visa application** : https://indianvisaonline.gov.in/visa/
+  - Pour la demande régulière, le formulaire est rempli en ligne puis imprimé et signé, avec passeport et pièces, avant dépôt au centre de visa ou à la mission indienne compétente.
+### Règle d’intégration
+L’Inde est intégrée en trois variantes : e-Tourist/visiteur selon éligibilité, Student/e-Student selon admission et Employment selon preuve d’emploi. Le catalogue distingue e-Visa et demande régulière et renvoie à la mission compétente pour les exigences nationales.

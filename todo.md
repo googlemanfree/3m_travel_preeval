@@ -2928,3 +2928,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Corée du Sud dans le catalogue détaillé avec Visa Navigator obligatoire et catégories C-3, D-2/D-4 et E.
 - [x] Ajouter les sources officielles coréennes au registre partagé.
 - [x] Valider la matrice Corée du Sud avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Inde
+- [x] Contrôler les sources Government of India pour e-Tourist, Student/e-Student et Employment.
+- [x] Intégrer les variantes Inde dans le catalogue détaillé en distinguant e-Visa et demande régulière.
+- [x] Ajouter les sources indiennes au registre officiel et réparer la clé Suède déplacée lors de l’insertion.
+- [x] Valider la matrice Inde avec les tests ciblés et TypeScript.
