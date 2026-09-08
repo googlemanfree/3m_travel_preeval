@@ -270,3 +270,14 @@ Le parcours Lettonie doit distinguer court séjour Schengen, études et permis d
 ### Règle d’intégration
 
 Le parcours Lituanie doit distinguer court séjour Schengen, visa national, études et emploi. Pour les études, l’admission et la base de séjour doivent précéder la demande. Pour le travail, la médiation de l’employeur, l’éventuel permis ou la décision du service de l’emploi et le permis de séjour doivent être suivis séparément. Un visa visiteur ne doit pas être présenté comme un droit général de travailler ou de s’installer.
+
+## Bulgarie — vingt-quatrième lot de sources institutionnelles consultées
+
+- **Bulgarian Ministry of Foreign Affairs — Visa for Bulgaria** : https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria. Depuis le 31 mars 2024, la Bulgarie délivre des visas uniformes Schengen pour les courts séjours, dans la limite de 90 jours sur 180 ; les visas C et D restent juridiquement distincts.
+- **Bulgarian MFA — Visa application forms** : https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-application-forms. Les formulaires et les représentations compétentes doivent être utilisés selon la nationalité et le motif.
+- **EU Immigration Portal — Student in Bulgaria** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en. Les études nécessitent un visa D et un permis de séjour ; admission, logement, assurance et ressources sont des éléments de la demande.
+- **EU Immigration Portal — Employed worker in Bulgaria** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en. Le travail peut nécessiter une approbation de permis unique, un visa D et un permis unique ou titre de séjour ; l’employeur intervient et un test du marché du travail peut s’appliquer.
+
+### Règle d’intégration
+
+Le parcours Bulgarie doit distinguer visa C Schengen de court séjour, visa D de long séjour, permis de séjour étudiant et permis unique de travail. Un visa C ne doit jamais être présenté comme un droit de travailler, d’étudier à long terme ou de s’installer. Les exigences de permis et l’intervention de l’employeur doivent être affichées seulement dans la variante Travail.

@@ -45,10 +45,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Bulgarie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires étrangères de la République de Bulgarie — Visiteur, Études, Travail —",
-        "url": "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"
-      }
+      { "label": "Bulgarian Ministry of Foreign Affairs — Visa for Bulgaria", "url": "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria" },
+      { "label": "Bulgarian MFA — Visa application forms", "url": "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-application-forms" },
+      { "label": "EU Immigration Portal — Student in Bulgaria", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en" },
+      { "label": "EU Immigration Portal — Employed worker in Bulgaria", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en" }
     ]
   },
   "canada": {

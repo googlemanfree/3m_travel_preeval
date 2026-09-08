@@ -2871,3 +2871,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Lituanie
 - [x] Contrôler les sources institutionnelles lituaniennes pour court séjour, visa national, études et travail.
 - [x] Intégrer les variantes Lituanie dans le catalogue détaillé avec distinction Schengen, visa national, MIGRIS, permis d’études et autorisation d’emploi.
+
+## Audit officiel par lots — Bulgarie
+- [x] Contrôler les sources institutionnelles bulgares pour court séjour Schengen, visa D, études et travail.
+- [x] Intégrer les variantes Bulgarie dans le catalogue détaillé avec distinction visa C, visa D, permis d’études et permis unique de travail.

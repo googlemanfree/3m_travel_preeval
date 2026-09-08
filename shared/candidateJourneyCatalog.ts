@@ -132,6 +132,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("visa_or_residence", "Visa D ou permis d’emploi", "Déposer la demande appropriée selon la durée, la base de séjour, les critères de salaire et les éventuels quotas.", ["Passeport", "Contrat", "Assurance", "Ressources"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa"),
     step("residence_registration", "Enregistrement après arrivée", "Après l’entrée, enregistrer la résidence et respecter les conditions liées à l’employeur et au permis.", ["Adresse", "Permis", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
   ]),
+  regional("Bulgarie", "Visiteur", "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria", [
+    step("visa_c", "Vérifier le visa C Schengen", "Déterminer selon la nationalité et la durée si un visa uniforme Schengen C est requis pour la Bulgarie.", ["Nationalité", "Destination", "Durée"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"),
+    step("application", "Dépôt de la demande", "Remplir le formulaire et déposer la demande auprès de la représentation ou du centre compétent avec biométrie.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-application-forms"),
+    step("documents", "Pièces du court séjour", "Réunir motif, hébergement, ressources, assurance et justificatifs demandés par la représentation.", ["Motif", "Hébergement", "Ressources", "Assurance"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"),
+    step("decision", "Décision et entrée", "Suivre la décision ; le visa C ne donne pas un droit général d’étudier, de travailler ou de s’installer.", ["Référence", "Notifications", "Documents"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"),
+  ]),
+  regional("Bulgarie", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en", [
+    step("admission", "Admission dans un établissement", "Obtenir l’admission à un programme reconnu avant de demander le visa de long séjour.", ["Admission", "Programme", "Inscription"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en"),
+    step("visa_d", "Visa national D", "Déposer la demande de visa D auprès de l’ambassade ou du consulat compétent avec les pièces d’études.", ["Visa D", "Passeport", "Admission", "Ressources"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"),
+    step("residence", "Permis de séjour", "Après l’arrivée, demander le permis de séjour auprès de la Migration Directorate selon la durée du programme.", ["Visa D", "Logement", "Assurance", "Ressources"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en"),
+    step("registration", "Adresse et maintien", "Notifier l’adresse et respecter les conditions de maintien des études et du permis.", ["Adresse", "Permis", "Progression"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-bulgaria_en"),
+  ]),
+  regional("Bulgarie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en", [
+    step("single_permit", "Approbation du permis unique", "L’employeur vérifie la procédure auprès de l’Employment Agency et de la Migration Directorate avant l’arrivée.", ["Employeur", "Poste", "Contrat", "Test du marché"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en"),
+    step("visa_d", "Visa national D", "Après l’approbation, déposer la demande de visa D auprès de la représentation bulgare compétente.", ["Visa D", "Passeport", "Approbation", "Assurance"], "https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria"),
+    step("residence", "Permis unique ou séjour", "Après l’arrivée, obtenir le permis unique ou le titre de séjour auprès de la Migration Directorate.", ["Permis", "Contrat", "Logement", "Ressources"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en"),
+    step("registration", "Adresse et suivi employeur", "Notifier l’adresse et respecter les conditions liées à l’employeur, au poste et à la durée autorisée.", ["Adresse", "Employeur", "Permis"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-bulgaria_en"),
+  ]),
   regional("Lituanie", "Visiteur", "https://www.urm.lt/en", [
     step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité, la destination principale et la durée si un visa C est requis pour la Lituanie.", ["Nationalité", "Destination", "Durée"], "https://www.urm.lt/en"),
     step("application", "Dépôt de la demande", "Remplir la demande et déposer les pièces auprès de la représentation ou du prestataire compétent.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.urm.lt/en"),
@@ -544,7 +562,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
