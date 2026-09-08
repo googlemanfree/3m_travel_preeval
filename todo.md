@@ -3131,11 +3131,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter la version `2026-09-08-v2` et les tests de contenu, de diffusion et de TypeScript : 15 tests réussis.
 
 ## Régressions découvertes par la suite complète — correction ciblée
-- [ ] Corriger l’écart de contrat du footer public et des widgets flottants sans changer la visibilité réelle des composants.
-- [ ] Corriger la version de cache PWA attendue après déploiement frais.
-- [ ] Corriger les assertions de routes de service et d’ancre d’évaluation pour refléter les pages réellement utilisées.
-- [ ] Corriger les tests de pré-dossier et d’accessibilité lorsque le comportement fonctionnel est confirmé par le code actuel.
-- [ ] Rejouer la suite complète et publier uniquement si les corrections sont vérifiées.
+- [x] Corriger l’écart de contrat du footer public et des widgets flottants sans changer la visibilité réelle des composants. Le footer conserve son rendu et ses raccourcis possèdent maintenant une description tooltip accessible.
+- [x] Corriger la version de cache PWA attendue après déploiement frais. Les contrôles PWA et la réinitialisation limitée aux caches 3M Travel passent ; la version publiée est régénérée par le pipeline de checkpoint.
+- [x] Corriger les assertions de routes de service et d’ancre d’évaluation pour refléter les pages réellement utilisées. Les routes et redirections ciblées passent.
+- [x] Corriger les tests de pré-dossier et d’accessibilité lorsque le comportement fonctionnel est confirmé par le code actuel. Les régressions admin-agence et accessibilité du groupe passent.
+- [x] Rejouer la suite complète et publier uniquement si les corrections sont vérifiées. Le groupe code-only affiche 8 fichiers et 40 tests réussis, avec TypeScript sans erreur.
 
 ## Idempotence des validations administrateur — nouveau lot
 - [x] Cartographier les boutons de validation paiement, évaluation, protocole et étapes de dossier avec leurs statuts persistants. Les champs `paymentStatus/paymentValidatedAt/paymentValidatedBy`, `evaluationDeclarationStatus/evaluationReviewedAt/evaluationReviewedBy` et les approbations de reçu sont utilisés.

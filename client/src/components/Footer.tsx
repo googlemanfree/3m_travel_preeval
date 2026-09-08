@@ -117,7 +117,7 @@ function NewsletterSignup({ language }: { language: Language }) {
 
 function FooterShortcut({ link, language, onTrack }: FooterShortcutProps) {
   const descriptionId = `footer-shortcut-${link.key}`;
-  return <Link href={link.href} aria-label={link.label[language]} onClick={() => onTrack(link)} className={FOOTER_SHORTCUT_CLASS}><span>{link.label[language]}</span><span aria-hidden="true" className="ml-1 text-blue-100 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">↗</span></Link>;
+  return <Link href={link.href} aria-label={link.label[language]} aria-describedby={descriptionId} onClick={() => onTrack(link)} className={FOOTER_SHORTCUT_CLASS}><span>{link.label[language]}</span><span id={descriptionId} role="tooltip" className="sr-only">{link.description[language]}</span><span aria-hidden="true" className="ml-1 text-blue-100 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">↗</span></Link>;
 }
 
 export default function Footer() {

@@ -32,7 +32,8 @@ describe("transparence publique et footer consolidé", () => {
     const home = read("client/src/pages/Home.tsx");
     const legalFooter = read("client/src/components/FooterLegal.tsx");
     expect(app).toContain("{showPublicFooter && <FooterLegal />}");
-    expect(app).toContain('const showPublicFooter = !location.startsWith("/admin")');
+    expect(app).toContain('const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/")');
+    expect(app).toContain("const showPublicFooter = !isAdminRoute");
     expect(home).not.toContain("<FooterLegal />");
     expect(home).not.toContain('<footer id="contact"');
     expect(legalFooter).toContain("return <Footer />");
