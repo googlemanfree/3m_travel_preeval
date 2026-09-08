@@ -3075,3 +3075,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser la barre après chaque coche, décochage et actualisation sans contourner les étapes verrouillées.
 - [x] Ajouter les tests du calcul, de l’accessibilité et du rendu. TypeScript et 14 tests ciblés passent.
 - [x] Publier et documenter l’URL/action exacte de vérification.
+
+## Test complet checklist et barre de progression
+- [x] Vérifier TypeScript, la compilation et les tests de régression checklist/parcours : TypeScript sans erreur et 14 tests ciblés réussis.
+- [x] Vérifier l’isolation par dossier, le verrouillage séquentiel et la persistance des états via la régression procedureChecklist et les tests documentaires.
+- [x] Vérifier le rendu public, l’accès sans session et la barre progressbar accessible : session publique sans blocage et session candidate réelle affichant 41 % (7/17 étapes).
+- [x] Vérifier le parcours candidat après coche, décochage et actualisation par les tests automatisés et la session réelle en lecture seule. La mutation manuelle n’a pas été déclenchée sur le compte réel afin de préserver ses données.
+- [x] Publier le bilan exact du test complet avec les limites liées aux sessions authentifiées.
