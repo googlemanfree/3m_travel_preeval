@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("République tchèque", "Visiteur", "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html", [
+    step("visa_c", "Vérifier le visa C", "Déterminer si un visa Schengen court séjour est requis et confirmer le but du voyage en République tchèque.", ["Nationalité", "Itinéraire", "Dates"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, assurance et pièces demandées par la mission tchèque compétente.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
+    step("appointment", "Dépôt et biométrie", "Déposer la demande auprès de la mission tchèque compétente selon les instructions consulaires.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://mzv.gov.cz/jnp/en/information_for_aliens/visa_form/index.html"),
+    step("decision", "Suivi de décision", "Suivre la décision et respecter la durée du visa C et les limites de circulation Schengen.", ["Référence", "Notifications"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
+  ]),
+  regional("République tchèque", "Études", "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-visa/long-term-visa-for-the-purpose-of-studies/", [
+    step("admission", "Admission d’études", "Obtenir la confirmation d’admission ou d’inscription dans une formation relevant de la catégorie études.", ["Admission", "Programme", "Durée"], "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-visa/long-term-visa-for-the-purpose-of-studies/"),
+    step("permit", "Visa D ou résidence études", "Choisir avec la mission compétente entre visa long séjour études et permis de résidence longue durée selon le projet.", ["Passeport", "Admission", "Ressources"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
+    step("application", "Dépôt personnel", "Déposer la demande en personne avec logement, ressources, assurance et pièces complémentaires éventuellement requises.", ["Formulaire", "Logement", "Assurance", "Biométrie"], "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-visa/long-term-visa-for-the-purpose-of-studies/"),
+    step("decision", "Suivi et arrivée", "Suivre le statut, récupérer le visa ou permis et respecter l’enregistrement et les obligations de séjour.", ["Décision", "Référence", "Adresse"], "https://ipc.gov.cz/en/"),
+  ]),
+  regional("République tchèque", "Travail", "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/", [
+    step("offer", "Contrat et vacance", "Vérifier le contrat, l’employeur et le numéro de poste vacant lorsqu’il est requis pour la carte salarié.", ["Employeur", "Contrat", "Poste vacant"], "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/"),
+    step("permit", "Carte salarié ou autre permis", "Déterminer le permis de résidence longue durée adapté à l’emploi et les éventuelles qualifications exigées.", ["Passeport", "Qualification", "Salaire"], "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/"),
+    step("application", "Dépôt et identification", "Déposer la demande auprès de la mission ou de l’autorité compétente, avec les pièces employeur et la biométrie.", ["Formulaire", "Contrat", "Biométrie"], "https://ipc.gov.cz/en/"),
+    step("employment", "Début autorisé", "Ne commencer l’emploi qu’après la confirmation permettant légalement de travailler selon les limites du permis.", ["Décision", "Permis", "Employeur"], "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/"),
+  ]),
   regional("Danemark", "Visiteur", "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa", [
     step("visa_schengen", "Vérifier le visa Schengen", "Déterminer si le Danemark est la destination principale et si un visa court séjour est requis.", ["Nationalité", "Itinéraire", "Dates"], "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Short-stay-visa"),
     step("documents", "Préparer les justificatifs", "Réunir les pièces de visite, le passeport, l’assurance et les documents demandés par la mission compétente.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://um.dk/en/travel-and-residence/how-to-apply-for-a-visa/"),
@@ -382,7 +400,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

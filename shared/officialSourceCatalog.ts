@@ -349,10 +349,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "République tchèque",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministerstvo vnitra České republiky — Visiteur, études, travail et séjour —",
-        "url": "https://ipc.gov.cz/en/"
-      }
+      { "label": "MZV — Types de visas C et D", "url": "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html" },
+      { "label": "IPC — Visa long séjour études", "url": "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-visa/long-term-visa-for-the-purpose-of-studies/" },
+      { "label": "IPC — Employee Card", "url": "https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/" },
+      { "label": "IPC — Information Portal for Foreigners", "url": "https://ipc.gov.cz/en/" }
     ]
   },
   "roumanie": {

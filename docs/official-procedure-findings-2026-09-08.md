@@ -172,3 +172,14 @@ Pour la Finlande, l’interface doit distinguer visa visiteur, permis d’étude
 ### Règle d’intégration
 
 Pour le Danemark, le parcours doit distinguer visa Schengen de court séjour, permis de résidence/études et autorisation de travail. Un visa Schengen ne doit pas être présenté comme autorisant une installation, un travail ou des études longues ; les catégories exactes et les pièces doivent être confirmées par Nyidanmark et la mission compétente.
+
+## Tchéquie — quinzième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign Affairs — Types of visas** : https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html. La source distingue visas Schengen C jusqu’à 90 jours, visas long séjour D, permis de résidence longue durée et finalités études/emploi.
+- **Information Portal for Foreigners — Visa long séjour études** : https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-visa/long-term-visa-for-the-purpose-of-studies/. La source décrit admission, preuves de logement et ressources, assurance, dépôt personnel auprès d’une mission et suivi de la demande.
+- **Information Portal for Foreigners — Employee Card** : https://ipc.gov.cz/en/visa-and-residence-permit-types/third-country-nationals/long-term-residence-permits/employee-card/. La carte salarié est un permis de résidence longue durée pour travailler ; l’offre, l’employeur, le numéro de vacance lorsque requis et les pièces professionnelles doivent être vérifiés.
+- **Information Portal for Foreigners** : https://ipc.gov.cz/en/. Le portail du ministère de l’Intérieur fournit les catégories, formulaires, statuts et changements réglementaires à contrôler avant toute publication.
+
+### Règle d’intégration
+
+Pour la Tchéquie, le parcours doit distinguer visa C court séjour, visa D long séjour et permis de résidence longue durée pour études ou emploi. Les délais, frais, preuves d’assurance, logement, admission et autorisation de travail doivent rester liés à la catégorie exacte et à la mission compétente.

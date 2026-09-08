@@ -2835,3 +2835,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Danemark
 - [x] Contrôler les sources institutionnelles danoises pour court séjour, études et travail.
 - [x] Intégrer les variantes Danemark dans le catalogue détaillé avec distinction visa Schengen, permis Nyidanmark et autorités compétentes.
+
+## Audit officiel par lots — Tchéquie
+- [x] Contrôler les sources institutionnelles tchèques pour court séjour, études et travail.
+- [x] Intégrer les variantes Tchéquie dans le catalogue détaillé avec distinction visa C, visa D et permis de résidence longue durée.
