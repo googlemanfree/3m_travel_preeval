@@ -4,7 +4,7 @@
  */
 
 import { publicProcedure, router } from "../_core/trpc";
-import { requireValidAdminSession } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
@@ -1400,12 +1400,16 @@ export const adminRouter = router({
        source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
        destination: z.string().trim().min(1).max(100).optional(),
        sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority"),
-       limit: z.number().int().min(1).max(200).default(100),
+              limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
     }))
-    .query(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-
+    .query(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -2215,9 +2219,13 @@ export const adminRouter = router({
       sessionToken: z.string(),
       candidateId: z.string(), // Format: "online_123" ou "agency_456"
     }))
-    .query(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-
+    .query(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -2559,7 +2567,7 @@ export const adminRouter = router({
       offset: z.number().int().min(0).default(0),
     }))
     .query(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       try {

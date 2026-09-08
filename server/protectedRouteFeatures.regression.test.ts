@@ -95,3 +95,12 @@ describe("rafraîchissement admin après validation hors ligne", () => {
     expect(dashboard).toContain("Impossible de synchroniser la liste");
   });
 });
+
+
+describe("session admin persistante après mutation", () => {
+  it("préfère le cookie HttpOnly valide pour la liste et la fiche aux jetons locaux obsolètes", () => {
+    const adminRouter = readFileSync(new URL("../server/routers/admin.ts", import.meta.url), "utf8");
+    expect(adminRouter).toContain("requireAdminSessionFromCookie(ctx.req.headers.cookie)");
+    expect(adminRouter).toContain("admin = await requireValidAdminSession(input.sessionToken)");
+  });
+});
