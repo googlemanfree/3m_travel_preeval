@@ -2695,3 +2695,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Simplifier le parcours avec `confirmPaymentForCandidate` : référence facultative, trace `VALIDATION_MANUELLE`, conseiller et horodatage ; aucune saisie de code secret n’est requise.
 - [x] Ajouter une régression couvrant le bouton direct, la mutation agence/en ligne et le statut `initialPaymentStatus: "paid"`; 8 tests ciblés et TypeScript passent.
 - [ ] Tester sur un dossier de test sans confirmer un paiement réel, puis publier avec l’action exacte de vérification.
+
+## Nouveau lot — validation hors ligne, protocole et route d’évaluation
+- [x] Corriger le rattachement de validation hors ligne pour les dossiers agence et en ligne : la mutation accepte désormais `agency_<id>`/`online_<id>` et les interfaces transmettent `candidate.id`, avec résolution serveur du compte rattaché. Le clic live sur `3M-AGN-270002` reste à exécuter.
+- [x] Ajouter un éditeur admin du protocole et une mutation de double diffusion : contenu/objet éditables, dépôt dans le flux documentaire du dossier et e-mail, avec garde serveur de paiement confirmé. Le clic d’envoi réel et la réception SMTP restent à vérifier.
+- [x] Conserver et couvrir la garde existante : `MySpace` affiche le protocole après `paymentStatus === "SUCCESS"` et `signAgreement` refuse toute signature avant paiement. La vérification live post-validation reste ouverte.
+- [x] Vérifier la route `/evaluation-rapide-enhanced` : elle redirige vers `/#evaluation-multi`, et les régressions historiques `agencyUnificationAndPrimary404` passent ; la vérification publique directe reste recommandée.
+- [ ] Régressions ciblées et TypeScript passent ; exécuter ensuite les clics admin autorisés sur `3M-AGN-270002` et un dossier en ligne, sans paiement réel, puis publier les URL/actions exactes.

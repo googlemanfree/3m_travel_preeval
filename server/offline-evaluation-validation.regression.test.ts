@@ -38,3 +38,23 @@ describe("validation d’évaluation hors ligne", () => {
     expect(editorSource).toContain("Valider et envoyer");
   });
 });
+
+describe("rattachement des dossiers agence", () => {
+  it("résout une fiche agence via sa référence composite et son e-mail candidat", () => {
+    expect(routerSource).toContain('candidateId: z.string().regex(/^(online|agency)_\\d+$/)');
+    expect(routerSource).toContain("resolveCandidateIdForAdmin(input.candidateId)");
+    expect(routerSource).toContain("Compte candidat introuvable pour ce dossier");
+    expect(workspaceSource).toContain("candidateId: candidate.id");
+    expect(dashboardSource).toContain("candidateId: candidate.id");
+  });
+
+  it("prépare un protocole éditable avec garde de paiement et double diffusion", () => {
+    expect(routerSource).toContain("sendAgreementProtocol");
+    expect(routerSource).toContain("paymentConfirmed");
+    expect(routerSource).toContain("Le protocole ne peut être envoyé qu’après confirmation du paiement.");
+    expect(routerSource).toContain("agencyDossierDocuments");
+    expect(routerSource).toContain("sendGenericEmail");
+    expect(workspaceSource).toContain("agreementContent");
+    expect(workspaceSource).toContain("Envoyer par e-mail et déposer");
+  });
+});

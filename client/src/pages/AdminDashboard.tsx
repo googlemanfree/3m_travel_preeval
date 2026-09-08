@@ -533,7 +533,7 @@ export function CandidateDetailModal({
                   isReviewing={reviewEvaluationMutation.isPending}
                   onReview={(decision, note) => reviewEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, decision, note })}
                   onOpenEditor={() => setEvaluationEditorOpen(true)}
-                  onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, channel, note })}
+                  onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel, note })}
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
                 <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">

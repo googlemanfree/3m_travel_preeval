@@ -2,11 +2,13 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
+import { sendEmail as sendGenericEmail } from "../_core/email";
+import { storagePut } from "../storage";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -43,6 +45,10 @@ type AdminCandidate = {
   avatarVerificationReason?: string | null;
   avatarFaceCount: number;
 };
+
+function escapeAgreementHtml(value: string): string {
+  return value.replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#39;" })[character] ?? character);
+}
 
 function toUiScoreBand(badge: string | null): "excellent" | "bon" | "moyen" | "faible" {
   if (badge === "eligible") return "excellent";
@@ -219,7 +225,7 @@ export const adminCandidateManagementRouter = router({
   validateOfflineEvaluation: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
-      candidateId: z.number().int().positive(),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
       channel: z.enum(["appel", "agence", "email"]),
       note: z.string().trim().max(1000).optional(),
     }))
@@ -227,8 +233,10 @@ export const adminCandidateManagementRouter = router({
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
-      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
+      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier. Vérifiez le rattachement par e-mail avant de valider l’évaluation." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier." });
       const reviewedAt = new Date();
       const channelLabel = input.channel === "appel" ? "appel téléphonique" : input.channel === "agence" ? "bureau en agence" : "e-mail";
       const traceNote = `Évaluation validée hors ligne — canal : ${channelLabel} ; conseiller : ${admin.email} ; date : ${reviewedAt.toISOString()}.${input.note?.trim() ? ` Note : ${input.note.trim()}` : ""}`;
@@ -784,6 +792,60 @@ export const adminCandidateManagementRouter = router({
       });
 
       return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt };
+    }),
+  sendAgreementProtocol: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      subject: z.string().trim().min(5).max(255).optional(),
+      content: z.string().trim().min(50).max(12000),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+      let email = "";
+      let fullName = "";
+      let dossierNumber = input.candidateId;
+      let paymentConfirmed = false;
+      let agencyDossierId: number | null = null;
+      let applicationId: number | null = null;
+      if (reference.source === "agency") {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        email = dossier.email;
+        fullName = dossier.fullName;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        paymentConfirmed = dossier.initialPaymentStatus === "paid";
+        agencyDossierId = dossier.id;
+      } else {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        email = application.email;
+        fullName = application.fullName;
+        dossierNumber = application.dossierNumber;
+        paymentConfirmed = application.paymentStatus === "SUCCESS";
+        applicationId = application.id;
+      }
+      if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
+      const paragraphs = input.content.split(/\\n\\s*\\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\\n/g, "<br>")}</p>`).join("");
+      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#10234f;line-height:1.6"><h1>3M Travel &amp; Services</h1><p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p><p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p>${paragraphs}<p style="font-size:12px;color:#64748b">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p></body></html>`;
+      const storageKey = `agreements/${reference.source}/${reference.id}/${Date.now()}-protocole.html`;
+      const stored = await storagePut(storageKey, Buffer.from(html, "utf8"), "text/html; charset=utf-8");
+      if (agencyDossierId) {
+        await db.insert(agencyDossierDocuments).values({ dossierId: agencyDossierId, documentType: "protocole_accord", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "admin_upload", uploadedBy: admin.email, verificationStatus: "verified", verificationComment: "Protocole préparé et validé par l’administrateur avant diffusion." });
+      } else if (applicationId) {
+        await db.insert(clientDocuments).values({ evaluationId: applicationId, candidateEmail: email, documentType: "other", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "manual_admin", uploadedByAdmin: admin.email, receivedByAdmin: true, status: "verified", verificationStatus: "approved", verifiedByAdmin: admin.email, verifiedAt: new Date(), adminNotes: "Protocole éditable préparé par l’administrateur et déposé après paiement confirmé." });
+      }
+      try {
+        await sendGenericEmail({ to: email, subject: input.subject?.trim() || `Protocole d’accord — ${dossierNumber}`, html });
+      } catch (error) {
+        console.error("[Agreement] Email delivery failed", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le protocole a été déposé dans l’espace client, mais l’e-mail n’a pas pu être envoyé. Relancez l’envoi après vérification SMTP." });
+      }
+      return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
     }),
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
