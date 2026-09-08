@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
@@ -450,7 +450,7 @@ export const adminCandidateManagementRouter = router({
 
   reviewPortrait: publicProcedure
     .input(z.object({
-      candidateId: z.string().regex(/^(online|agency)_\\d+$/),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
       decision: z.enum(["approve", "reject", "request_new"]),
       reason: z.string().trim().max(500).optional(),
     }))
@@ -719,6 +719,72 @@ export const adminCandidateManagementRouter = router({
       return { success: true, adminEmail: admin.email, emailSent };
     }),
 
+  confirmPaymentForCandidate: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      paymentReference: z.string().trim().max(255).optional(),
+      confirmedAmount: z.number().int().nonnegative().max(100000000).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+      const validatedAt = new Date();
+      const referenceLabel = input.paymentReference?.trim() || "VALIDATION_MANUELLE";
+      const amount = input.confirmedAmount ?? 65000;
+      let dossierNumber: string;
+      let candidateEmail: string;
+      let fullName: string;
+      let alreadyConfirmed = false;
+
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        alreadyConfirmed = application.paymentStatus === "SUCCESS";
+        dossierNumber = application.dossierNumber;
+        candidateEmail = application.email;
+        fullName = application.fullName;
+        await db.update(applications).set({
+          paymentStatus: "SUCCESS",
+          paymentDate: application.paymentDate ?? validatedAt,
+          paymentMethod: application.paymentMethod || "VALIDATION_AGENCE",
+          paymentTransactionId: application.paymentTransactionId || referenceLabel,
+          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
+          paymentConfirmedAmount: application.paymentConfirmedAmount ?? amount,
+          paymentValidatedAt: application.paymentValidatedAt ?? validatedAt,
+          paymentValidatedBy: application.paymentValidatedBy ?? (admin.email || "Administrateur"),
+        }).where(eq(applications.id, application.id));
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        alreadyConfirmed = dossier.initialPaymentStatus === "paid";
+        dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
+        candidateEmail = dossier.email;
+        fullName = dossier.fullName;
+        const auditNote = `[Paiement confirmé] ${referenceLabel} · ${admin.email || "Administrateur"} · ${validatedAt.toISOString()}`;
+        await db.update(agencyDossiers).set({
+          initialPaymentStatus: "paid",
+          lastStatusChangeAt: dossier.lastStatusChangeAt ?? validatedAt,
+          lastStatusChangeBy: dossier.lastStatusChangeBy ?? (admin.email || "Administrateur"),
+          adminNotes: dossier.adminNotes ? `${dossier.adminNotes}\n${auditNote}` : auditNote,
+        }).where(eq(agencyDossiers.id, dossier.id));
+      }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: alreadyConfirmed ? "confirmed_again" : "confirmed",
+        paymentId: reference.id,
+        candidateEmail,
+        amount: `${amount} XAF`,
+        details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.`,
+      });
+
+      return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt };
+    }),
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

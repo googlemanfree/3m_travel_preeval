@@ -74,3 +74,14 @@ it("isole les réponses tRPC publiques pour éviter les résultats batch manquan
   expect(mainSource).toContain("maxItems: 1");
   expect(mainSource).toContain("Missing result");
 });
+
+
+it("expose une validation paiement directe pour les dossiers agence et en ligne", () => {
+  const dashboardSource = readFileSync(new URL("../client/src/pages/AdminDashboard.tsx", import.meta.url), "utf8");
+  const managementSource = readFileSync(new URL("./routers/adminCandidateManagement.ts", import.meta.url), "utf8");
+  expect(dashboardSource).toContain("confirmPaymentForCandidate");
+  expect(dashboardSource).toContain("Valider le paiement");
+  expect(managementSource).toContain("confirmPaymentForCandidate");
+  expect(managementSource).toContain("VALIDATION_MANUELLE");
+  expect(managementSource).toContain("initialPaymentStatus: \"paid\"");
+});

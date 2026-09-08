@@ -426,6 +426,17 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Validation hors ligne impossible", description: err.message, variant: "destructive" }),
   });
+  const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: result.alreadyConfirmed ? "Paiement déjà confirmé" : "Paiement confirmé",
+        description: `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
+      });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Validation du paiement impossible", description: err.message, variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
@@ -577,6 +588,15 @@ export function CandidateDetailModal({
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Validation manuelle guidée</p>
+                    <Button
+                      type="button"
+                      onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
+                      disabled={confirmPaymentForCandidateMutation.isPending}
+                      className="mt-2 w-full bg-amber-600 text-white hover:bg-amber-700"
+                    >
+                      {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
+                    </Button>
+                    <p className="mt-1 text-xs leading-5 text-amber-900">Un clic confirme le paiement manuel avec la trace « VALIDATION_MANUELLE ». Aucune saisie de code secret n’est requise.</p>
                     {nextAdminStatus ? (
                       <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
                         <CheckCircle className="mr-2 h-4 w-4" />Valider l’étape suivante : {STATUS_CONFIG[nextAdminStatus].label}

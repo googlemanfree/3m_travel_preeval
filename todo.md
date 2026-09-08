@@ -2688,3 +2688,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le transport client avec `maxItems: 1` afin d’isoler chaque résultat tRPC et de laisser React Query réessayer l’appel concerné ; aucun fallback fictif ni masquage d’erreur persistante n’a été ajouté.
 - [x] Ajouter une régression Vitest vérifiant `maxItems: 1` et la protection contre les réponses batch manquantes ; 7 tests ciblés et TypeScript passent.
 - [x] Vérifier l’accueil en navigation fraîche sur `/?from_webdev=1` : rendu complet, réponses JSON valides, aucune erreur console observée ; correctif publié.
+
+## Paiement admin — validation simple
+- [x] Reproduire le blocage signalé sur la fiche affichée : le panneau proposait une validation d’étape générale mais pas un clic paiement direct clairement associé ; la capture utilisateur confirme le cas agence.
+- [x] Localiser la mutation `application.adminUpdatePaymentStatus`, le panneau `AdminPaymentManagement` et le rattachement `agency_`/`online_`; le nouveau chemin résout directement l’application ou le dossier agence.
+- [x] Simplifier le parcours avec `confirmPaymentForCandidate` : référence facultative, trace `VALIDATION_MANUELLE`, conseiller et horodatage ; aucune saisie de code secret n’est requise.
+- [x] Ajouter une régression couvrant le bouton direct, la mutation agence/en ligne et le statut `initialPaymentStatus: "paid"`; 8 tests ciblés et TypeScript passent.
+- [ ] Tester sur un dossier de test sans confirmer un paiement réel, puis publier avec l’action exacte de vérification.
