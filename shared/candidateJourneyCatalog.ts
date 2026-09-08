@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Norvège", "Visiteur", "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/", [
+    step("visa_c", "Vérifier le visa visiteur C", "Déterminer si la Norvège est la destination principale du séjour Schengen et si un visa est requis.", ["Nationalité", "Itinéraire", "Dates"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
+    step("documents", "Préparer les justificatifs", "Réunir le formulaire, le passeport, l’assurance, l’itinéraire et les pièces exigées par la checklist officielle.", ["Formulaire", "Passeport", "Assurance", "Hébergement"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
+    step("appointment", "Enregistrement et dépôt", "Enregistrer la demande en ligne, payer les frais applicables et déposer les documents avec biométrie lorsque requis.", ["Portail", "Rendez-vous", "Biométrie"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
+    step("decision", "Suivi de la décision", "Suivre la décision auprès du consulat ou du centre compétent et respecter les limites du visa.", ["Référence", "Notifications"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
+  ]),
+  regional("Norvège", "Études", "https://www.udi.no/en/", [
+    step("admission", "Admission et catégorie d’études", "Vérifier l’admission et la catégorie de permis d’études applicable auprès de l’UDI.", ["Admission", "Programme", "Durée"], "https://www.udi.no/en/"),
+    step("permit", "Permis de séjour pour études", "Pour un séjour long, demander le permis de séjour approprié ; ne pas confondre le visa D d’entrée avec le permis.", ["Passeport", "Ressources", "Assurance"], "https://www.udi.no/en/word-definitions/entry-visas-d-visas/"),
+    step("application", "Dépôt et biométrie", "Compléter la demande numérique, utiliser la checklist personnalisée et déposer les pièces au centre ou auprès de la mission compétente.", ["Formulaire", "Checklist UDI", "Rendez-vous"], "https://www.udi.no/en/word-definitions/entry-visas-d-visas/"),
+    step("residence", "Entrée et carte de séjour", "Après décision favorable, suivre les instructions d’entrée et de délivrance de la carte de résidence.", ["Décision", "Carte", "Adresse"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/"),
+  ]),
+  regional("Norvège", "Travail", "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/", [
+    step("offer", "Offre et catégorie de travail", "Vérifier le contrat, la catégorie d’emploi et le besoin de permis de travail ou de séjour.", ["Employeur", "Contrat", "Qualification"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/"),
+    step("permit", "Permis UDI", "Déterminer le permis de séjour pour travail applicable ; un visa D seul ne confère pas les droits du permis.", ["Passeport", "Contrat", "Ressources"], "https://www.udi.no/en/word-definitions/entry-visas-d-visas/"),
+    step("application", "Dépôt de la demande", "Enregistrer la demande, réunir la checklist personnalisée et déposer les documents auprès de la mission ou du centre compétent.", ["Formulaire", "Checklist UDI", "Biométrie"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/"),
+    step("employment", "Début autorisé de l’activité", "Ne commencer l’emploi qu’après délivrance du permis et selon les limites de la décision.", ["Permis", "Contrat", "Carte"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/"),
+  ]),
   regional("Suède", "Visiteur", "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/", [
     step("visa_schengen", "Vérifier le visa Schengen", "Déterminer si un visa est requis et si la Suède est la destination principale du court séjour.", ["Nationalité", "Itinéraire", "Dates"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
     step("documents", "Préparer les justificatifs", "Réunir les pièces demandées par la mission suédoise ou le pays Schengen représentant la Suède.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
@@ -328,7 +346,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

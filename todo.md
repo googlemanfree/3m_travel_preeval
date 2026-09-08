@@ -2823,3 +2823,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Suède
 - [x] Contrôler les sources institutionnelles suédoises pour court séjour, études et travail.
 - [x] Intégrer les variantes Suède dans le catalogue détaillé avec distinction visa Schengen, permis d’études et permis de travail/résidence.
+
+## Audit officiel par lots — Norvège
+- [x] Contrôler les sources institutionnelles norvégiennes pour visiteur, études et travail/permis de séjour.
+- [x] Intégrer les variantes Norvège dans le catalogue détaillé en distinguant visa C, visa D limité et permis UDI études/travail.

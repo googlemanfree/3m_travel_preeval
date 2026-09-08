@@ -138,3 +138,14 @@ Pour la Pologne, le parcours doit distinguer C court séjour et D national, puis
 ### Règle d’intégration
 
 Pour la Suède, l’interface doit distinguer visa Schengen de court séjour, permis d’études et permis de travail/résidence. Les délais, exigences financières et exceptions doivent être confirmés par la Swedish Migration Agency et la mission compétente avant d’être affichés comme applicables.
+
+## Norvège — douzième lot de sources institutionnelles consultées
+
+- **UDI — Visa D et entrée** : https://www.udi.no/en/word-definitions/entry-visas-d-visas/. La source distingue le visa C de court séjour et le visa D d’entrée lié à certaines demandes de permis ; le visa D ne confère pas à lui seul les droits d’un permis de séjour.
+- **Norway.no — Visa visiteur** : https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/. La source distingue la destination principale Schengen, l’enregistrement en ligne, le dépôt des documents, les données biométriques et la décision.
+- **Norway.no — Permis de séjour** : https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/. La source indique qu’un permis est nécessaire pour la plupart des emplois et des séjours de plus de 90 jours, avec dépôt et carte de résidence après décision.
+- **UDI** : https://www.udi.no/en/. Le portail institutionnel reste la référence pour les catégories d’études et de travail, leurs checklists personnalisées et les demandes de permis.
+
+### Règle d’intégration
+
+Pour la Norvège, le parcours doit distinguer visa visiteur C, visa D d’entrée limité et permis de séjour pour études ou travail. Les droits ne doivent jamais être déduits du seul visa D ; les checklists UDI et la mission compétente déterminent les pièces et le dépôt.

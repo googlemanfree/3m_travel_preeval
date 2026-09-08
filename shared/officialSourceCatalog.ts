@@ -284,10 +284,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Norvège",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Direction norvégienne de l'immigration (UDI) — Visiteur —",
-        "url": "https://www.udi.no/en/want-to-apply/visit-and-holiday/visitors-visa-to-norway/"
-      }
+      { "label": "UDI — Visa D et entrée", "url": "https://www.udi.no/en/word-definitions/entry-visas-d-visas/" },
+      { "label": "Norway.no — Visa visiteur", "url": "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/" },
+      { "label": "Norway.no — Permis de séjour", "url": "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/" },
+      { "label": "UDI — Portail des demandes", "url": "https://www.udi.no/en/" }
     ]
   },
   "nouvelle zelande": {
