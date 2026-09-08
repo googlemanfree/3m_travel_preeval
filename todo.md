@@ -2741,3 +2741,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Vérifier que MySpace fusionne les documents agence dans la liste du dossier connecté.
 - [ ] Ajouter une régression sur l’isolement des documents agence par e-mail/dossier.
 - [ ] Vérifier en session client la visibilité et la signature du protocole après paiement confirmé.
+
+## Reçu professionnel de paiement initial — frais d’ouverture et de traitement
+- [x] Auditer le flux actuel de reçu, de génération PDF et de notification e-mail du paiement initial.
+- [x] Ajouter au reçu le logo et les coordonnées vérifiées de 3M Travel & Services.
+- [x] Détailler les frais d’ouverture, de traitement et de soumission auprès d’agences de placement.
+- [x] Encadrer la formulation sur l’issue de la recherche d’emploi sans garantie de contrat ni de résultat.
+- [ ] Tester en session admin réelle la génération PDF, l’envoi SMTP et le dépôt éventuel dans l’espace client, sans modifier le paiement existant.

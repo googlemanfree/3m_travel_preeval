@@ -19,6 +19,7 @@ import { caseApplicants, caseStatusHistory, cases, clientNotifications, document
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
+import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -751,10 +752,25 @@ export const applicationRouter = router({
       }
 
       try {
+        const receiptInput = {
+          dossierNumber: application.dossierNumber,
+          fullName: application.fullName,
+          email: application.email,
+          amount: Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000),
+          currency: application.paymentCurrency ?? "XAF",
+          paymentDate: application.paymentDate ?? application.paymentValidatedAt ?? new Date(),
+          paymentMethod: application.paymentMethod || "Validation administrative",
+          paymentReference: application.paymentTransactionId,
+          validatedBy: application.paymentValidatedBy || ctx.user.email || "Administrateur",
+          destination: application.destination,
+          visaType: application.visaType,
+        };
+        const receiptPdf = await buildPaymentReceiptPdf(receiptInput);
         await sendGenericEmail({
           to: application.email,
-          subject: `Confirmation de paiement — Dossier ${application.dossierNumber}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1e293b"><h2 style="color:#123a7a">Paiement validé</h2><p>Bonjour ${application.fullName},</p><p>Votre paiement de <strong>${Number(application.paymentAmount ?? 65000).toLocaleString("fr-FR")} ${application.paymentCurrency ?? "XAF"}</strong> a été validé pour le dossier <strong>${application.dossierNumber}</strong>.</p><p>La suite du dossier reste pilotée par un conseiller 3M Travel & Services. Consultez votre espace client pour les prochaines étapes et les documents disponibles.</p><p><a href="https://www.3mtravelagency.com/mon-espace" style="display:inline-block;background:#123a7a;color:white;padding:12px 18px;border-radius:6px;text-decoration:none">Accéder à mon espace</a></p><p style="font-size:12px;color:#64748b">Cet e-mail confirme une validation administrative ; il ne constitue pas une émission de billet, de visa ou de réservation fournisseur.</p></div>`,
+          subject: `Reçu de confirmation de paiement — Dossier ${application.dossierNumber}`,
+          html: buildPaymentReceiptEmailHtml(receiptInput),
+          attachments: [{ filename: `Recu-paiement-${application.dossierNumber}.pdf`, content: receiptPdf, contentType: "application/pdf" }],
         });
       } catch (error) {
         console.error("payment receipt delivery failed", { applicationId: application.id, error });

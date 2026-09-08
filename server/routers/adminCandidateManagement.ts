@@ -9,6 +9,7 @@ import { requireAdminSessionFromCookie, requireValidAdminSession } from "./admin
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
+import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -801,6 +802,79 @@ export const adminCandidateManagementRouter = router({
 
       return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt };
     }),
+  sendPaymentReceiptForCandidate: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      deliveryMode: z.enum(["initial", "resend"]).default("initial"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+      let email = "";
+      let fullName = "";
+      let dossierNumber = input.candidateId;
+      let amount = 65000;
+      let currency = "XAF";
+      let paymentDate = new Date();
+      let paymentMethod = "Validation administrative";
+      let paymentReference: string | null = null;
+      let destination: string | null = null;
+      let visaType: string | null = null;
+
+      if (reference.source === "agency") {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu ne peut être envoyé qu’après confirmation du paiement." });
+        email = dossier.email;
+        fullName = dossier.fullName;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        paymentDate = dossier.lastStatusChangeAt ?? dossier.updatedAt ?? dossier.createdAt ?? paymentDate;
+        paymentMethod = "Paiement en agence / validation administrative";
+        destination = dossier.destination;
+        visaType = dossier.visaType;
+        const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
+        if (latestAudit?.amount) amount = Number(String(latestAudit.amount).replace(/[^0-9]/g, "")) || amount;
+        paymentReference = latestAudit?.details?.includes("·") ? "Validation manuelle / agence" : null;
+      } else {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu ne peut être envoyé qu’après confirmation du paiement." });
+        email = application.email;
+        fullName = application.fullName;
+        dossierNumber = application.dossierNumber;
+        amount = Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? amount);
+        currency = application.paymentCurrency ?? currency;
+        paymentDate = application.paymentDate ?? application.paymentValidatedAt ?? paymentDate;
+        paymentMethod = application.paymentMethod || paymentMethod;
+        paymentReference = application.paymentTransactionId;
+        destination = application.destination;
+        visaType = application.visaType;
+      }
+      if (!email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+
+      const receiptInput = { dossierNumber, fullName, email, amount, currency, paymentDate, paymentMethod, paymentReference, validatedBy: admin.email || "Administrateur", destination, visaType };
+      try {
+        const receiptPdf = await buildPaymentReceiptPdf(receiptInput);
+        await sendGenericEmail({
+          to: email,
+          subject: `Reçu de confirmation de paiement — Dossier ${dossierNumber}`,
+          html: buildPaymentReceiptEmailHtml(receiptInput),
+          attachments: [{ filename: `Recu-paiement-${dossierNumber}.pdf`, content: receiptPdf, contentType: "application/pdf" }],
+        });
+      } catch (error) {
+        console.error("[Payment Receipt] Delivery failed", { dossierNumber, error });
+        await db.insert(paymentAuditLogs).values({ adminName: admin.email || "Administrateur", adminEmail: admin.email || "", action: "receipt_failed", paymentId: reference.id, candidateEmail: email, amount: `${amount} ${currency}`, details: `Échec d’envoi du reçu PDF pour ${dossierNumber}.` });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le reçu PDF n’a pas pu être envoyé. Vérifiez le service e-mail et réessayez." });
+      }
+      await db.insert(paymentAuditLogs).values({ adminName: admin.email || "Administrateur", adminEmail: admin.email || "", action: input.deliveryMode === "resend" ? "receipt_resent" : "receipt_sent", paymentId: reference.id, candidateEmail: email, amount: `${amount} ${currency}`, details: `${input.deliveryMode === "resend" ? "Reçu PDF renvoyé" : "Reçu PDF envoyé"} pour ${dossierNumber}.` });
+      return { success: true, dossierNumber, email, deliveryMode: input.deliveryMode };
+    }),
+
   sendAgreementProtocol: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
