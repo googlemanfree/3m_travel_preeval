@@ -2910,3 +2910,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Australie dans le catalogue détaillé avec vérification de l’éligibilité, CoE/OSHC et visa de travail adapté.
 - [x] Enrichir le registre officiel avec les pages Home Affairs spécifiques aux trois variantes.
 - [x] Valider la matrice Australie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Japon
+- [x] Contrôler les sources MOFA pour court séjour, visa étudiant et travail/séjour long.
+- [x] Intégrer les variantes Japon dans le catalogue détaillé avec distinction court séjour, Student et Work/Long-term stay.
+- [x] Ajouter les sources MOFA au registre officiel et rappeler le rôle du Certificate of Eligibility.
+- [x] Valider la matrice Japon avec les tests ciblés et TypeScript.

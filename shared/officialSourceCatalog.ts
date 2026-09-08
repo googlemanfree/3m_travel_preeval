@@ -195,6 +195,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       }
     ]
   },
+  "japon": {
+    "country": "Japon",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ministry of Foreign Affairs of Japan — VISA", "url": "https://www.mofa.go.jp/j_info/visit/visa/index.html" },
+      { "label": "MOFA — General visa: Student", "url": "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html" },
+      { "label": "MOFA — Work or Long-term stay", "url": "https://www.mofa.go.jp/j_info/visit/visa/long/index.html" }
+    ]
+  },
   "italie": {
     "country": "Italie",
     "verificationStatus": "verified",

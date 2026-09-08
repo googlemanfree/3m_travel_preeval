@@ -668,6 +668,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("sponsor_or_nomination", "Sponsor ou nomination si requis", "Réunir la nomination, le sponsor ou les éléments de points exigés par la sous-classe retenue.", ["Employeur", "Nomination", "Invitation", "Référence"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
     step("online_application", "Demande et décision", "Déposer la demande selon Home Affairs, fournir les pièces et respecter les conditions du visa accordé.", ["ImmiAccount", "Passeport", "Santé", "Décision"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
   ]),
+  regional("Japon", "Visiteur", "https://www.mofa.go.jp/j_info/visit/visa/index.html", [
+    step("short_stay_check", "Vérifier le court séjour", "Vérifier la nationalité, la durée et le motif ; le court séjour ne couvre pas le travail rémunéré.", ["Nationalité", "Motif", "Durée", "Passeport"], "https://www.mofa.go.jp/j_info/visit/visa/index.html"),
+    step("mission_requirements", "Instructions de la mission compétente", "Consulter l’ambassade, le consulat ou le centre compétent pour les documents et le mode de dépôt applicables au lieu de résidence.", ["Mission", "Formulaire", "Photo", "Pièces"], "https://www.mofa.go.jp/j_info/visit/visa/index.html"),
+    step("application", "Dépôt de la demande", "Préparer les pièces et déposer la demande auprès de la mission, d’une agence accréditée, d’un centre ou en ligne si autorisé.", ["Passeport", "Itinéraire", "Justificatifs", "Rendez-vous"], "https://www.mofa.go.jp/j_info/visit/visa/index.html"),
+    step("decision_entry", "Décision et entrée", "Suivre la décision ; le visa est une condition d’entrée mais ne garantit pas la permission d’atterrir, accordée au contrôle frontalier.", ["Décision", "Visa", "Passeport", "Conditions"], "https://www.mofa.go.jp/j_info/visit/visa/index.html"),
+  ]),
+  regional("Japon", "Études", "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html", [
+    step("school_admission", "Admission et activité d’études", "Obtenir l’admission dans un établissement et confirmer la nature du programme étudiant.", ["Admission", "Programme", "Établissement", "Passeport"], "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html"),
+    step("coe", "Certificate of Eligibility", "Obtenir en principe le COE délivré par l’autorité régionale de l’Immigration Services Agency avant la demande de visa.", ["COE", "Établissement", "Identité", "Programme"], "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html"),
+    step("visa_application", "Demande de visa étudiant", "Présenter passeport, formulaire, photo et COE à la mission compétente ; des pièces additionnelles peuvent dépendre de la nationalité.", ["Passeport", "Formulaire", "Photo", "COE"], "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html"),
+    step("decision_entry", "Décision et statut de résidence", "Suivre la décision et respecter le statut de résidence étudiant accordé après l’entrée.", ["Décision", "Visa", "Statut", "Échéances"], "https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html"),
+  ]),
+  regional("Japon", "Travail", "https://www.mofa.go.jp/j_info/visit/visa/long/index.html", [
+    step("work_category", "Catégorie professionnelle", "Identifier la catégorie officielle correspondant à l’activité : ingénieur, services spécialisés, chercheur, travailleur qualifié, etc.", ["Poste", "Employeur", "Qualification", "Activité"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
+    step("coe", "Certificate of Eligibility", "Obtenir en principe le COE auprès de l’autorité régionale de l’Immigration Services Agency avant la demande de visa long séjour.", ["COE", "Employeur", "Contrat", "Qualification"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
+    step("visa_application", "Demande auprès de la mission", "Présenter les documents de la catégorie retenue, le passeport, le formulaire, la photo et le COE lorsque requis.", ["Passeport", "Formulaire", "Photo", "COE"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
+    step("decision_entry", "Décision et statut autorisé", "Suivre la décision et exercer uniquement l’activité correspondant au statut de résidence accordé.", ["Décision", "Visa", "Statut", "Employeur"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -689,7 +707,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

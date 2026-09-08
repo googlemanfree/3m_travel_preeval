@@ -347,3 +347,14 @@ Les États-Unis sont intégrés en trois variantes distinctes : Visitor B-1/B-2,
   - Le ministère indique que le type de visa de travail dépend de la durée, du métier et souvent des listes de compétences ; le sélecteur officiel doit déterminer les catégories adaptées avant de présenter une voie précise.
 ### Règle d’intégration
 L’Australie est intégrée en trois variantes : Visitor subclass 600/ETA/eVisitor selon éligibilité, Student subclass 500 et Travail à sélectionner par le visa finder officiel. Aucun visa visiteur ne doit être présenté comme un droit de travailler.
+
+## Lot Japon — sources officielles consultées
+- **Ministry of Foreign Affairs of Japan — VISA** : https://www.mofa.go.jp/j_info/visit/visa/index.html
+  - Les exigences dépendent de la nationalité, du motif et de la mission diplomatique compétente. Le court séjour couvre notamment tourisme, affaires et visites jusqu’à 90 jours sans activité rémunérée ; le visa ne garantit pas l’entrée.
+  - Les demandes sont préparées avec les documents requis puis déposées auprès de la mission compétente, d’une agence accréditée, d’un centre ou en ligne lorsque la mission l’autorise.
+- **MOFA — General visa: Student** : https://www.mofa.go.jp/j_info/visit/visa/long/visa6.html
+  - Le parcours étudiant exige passeport, formulaire, photo et en principe un Certificate of Eligibility (COE) délivré par l’autorité régionale de l’Immigration Services Agency ; les exigences additionnelles dépendent de la nationalité.
+- **MOFA — Work or Long-term stay** : https://www.mofa.go.jp/j_info/visit/visa/long/index.html
+  - Le Japon distingue de nombreuses catégories de travail et de long séjour, notamment Engineer/Specialist in Humanities/International Services, Specified Skilled Worker, Professor, Researcher et autres catégories officielles. Le COE est en principe requis avant la demande de visa pour un séjour long ou un travail rémunéré.
+### Règle d’intégration
+Le Japon est intégré en trois variantes : court séjour/visiteur, Student et Work/Long-term stay. Les catégories de travail ne sont pas fusionnées ; la nature exacte de l’activité et le COE restent déterminants, avec renvoi à la mission diplomatique compétente.
