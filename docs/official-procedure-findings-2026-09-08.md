@@ -62,3 +62,14 @@ Pour la Belgique, le parcours peut distinguer court séjour Schengen, études de
 ### Règle d’intégration
 
 Pour la Suisse, le parcours doit distinguer court séjour Schengen, séjour national de plus de 90 jours et travail soumis à autorisation cantonale. Pour les pays tiers, aucune étape ne doit présenter un emploi comme acquis : l’employeur, l’autorité cantonale et, le cas échéant, le visa conditionnent la suite. Les modalités exactes doivent renvoyer à l’autorité cantonale et à la représentation compétente.
+
+## Pays-Bas — cinquième lot de sources institutionnelles consultées
+
+- **IND — Court séjour, vacances ou visite** : https://ind.nl/en/short-stay/short-stay-holiday-or-business-visa. La page officielle oriente les personnes venant jusqu’à 90 jours vers un questionnaire IND adapté au motif et à la situation.
+- **IND — Études** : https://ind.nl/en/residence-permits/study. La page indique qu’un titre de séjour est nécessaire pour étudier, faire un stage ou travailler dans le cadre concerné, avec des exigences à lire selon le programme.
+- **Government.nl — Venir travailler aux Pays-Bas** : https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work. Le questionnaire officiel sert à déterminer si un visa, un titre de séjour et/ou un permis de travail est requis.
+- **NetherlandsWorldwide — Visa for the Netherlands** : https://www.netherlandsworldwide.nl/visa-the-netherlands. La page officielle invite à vérifier le besoin et le type de visa, explique la demande et le suivi, et renvoie aux documents, au lieu de dépôt, à l’assurance et aux autres conditions applicables.
+
+### Règle d’intégration
+
+Pour les Pays-Bas, le produit peut distinguer court séjour jusqu’à 90 jours, études avec titre de séjour adapté et travail soumis à la vérification visa/titre/permis. Les questionnaires officiels doivent rester la référence pour les documents et actions exacts ; aucune exigence détaillée ne doit être généralisée depuis une page de synthèse.

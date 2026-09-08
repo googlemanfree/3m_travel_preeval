@@ -2787,3 +2787,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Suisse
 - [x] Contrôler les sources institutionnelles Suisse pour court séjour Schengen, séjour national et travail soumis à autorisation cantonale.
 - [ ] Intégrer les variantes Suisse dans le catalogue détaillé avec renvoi à l’autorité cantonale et à la représentation compétente.
+
+## Audit officiel par lots — Pays-Bas
+- [x] Contrôler les sources institutionnelles Pays-Bas pour court séjour, études et travail.
+- [ ] Intégrer les variantes Pays-Bas dans le catalogue détaillé selon le visa, le titre de séjour et le permis éventuellement requis.
