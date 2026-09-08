@@ -63,6 +63,17 @@ describe("Centre documentaire par dossier", () => {
     expect(agencyUpload).toContain("Notification document non envoyée");
   });
 
+  it("fusionne les documents agence dans l’espace client sans élargir la source de rattachement", () => {
+    const candidateSource = readProjectFile("server/routers/candidate.ts");
+    const clientPage = readProjectFile("client/src/pages/MySpace.tsx");
+    expect(candidateSource).toContain("where(eq(agencyDossiers.email, ctx.candidate.email))");
+    expect(candidateSource).toContain("where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))");
+    expect(candidateSource).toContain("agencyDocuments");
+    expect(clientPage).toContain("const agencyDocuments = dossierData?.data?.agencyDocuments || []");
+    expect(clientPage).toContain('id: `agency-${document.id}`');
+    expect(clientPage).toContain("document.documentUrl || null");
+  });
+
   it("permet des corrections ciblées uniquement sur les documents refusés", () => {
     const adminSource = readProjectFile("server/routers/agencyDossierDocuments.ts");
     const candidateSource = readProjectFile("server/routers/candidate.ts");

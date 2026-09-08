@@ -288,7 +288,21 @@ export default function MySpace() {
   }
 
   const app = dossierData?.data?.application;
-  const documents = dossierData?.data?.documents || [];
+  const candidateDocuments = dossierData?.data?.documents || [];
+  const agencyDocuments = dossierData?.data?.agencyDocuments || [];
+  const documents = [
+    ...candidateDocuments,
+    ...agencyDocuments.map((document: any) => ({
+      id: `agency-${document.id}`,
+      type: document.documentType || "Document agence",
+      name: document.documentName || "Document remis par l’agence",
+      url: document.documentUrl || null,
+      status: document.verificationStatus === "verified" ? "verified" : document.verificationStatus === "rejected" ? "rejected" : "pending",
+      rejectionReason: document.verificationComment || undefined,
+      source: "agency",
+      uploadedAt: document.createdAt,
+    })),
+  ];
   const messages = dossierData?.data?.messages || [];
   const evaluationReportPdfUrl = dossierData?.data?.evaluationReportPdfUrl || app?.evaluationReportPdfUrl || null;
   const candidateName = candidate?.fullName || "Candidat";

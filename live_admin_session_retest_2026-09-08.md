@@ -9,3 +9,5 @@ Aucun paiement, activation supplémentaire, signature ou envoi de protocole n’
 Le chargement initial a brièvement affiché l’écran de synchronisation, puis le tableau complet est apparu. La liste et la fiche sont donc récupérables après le correctif ; le clic de paiement reste à confirmer séparément.
 
 Source : observation directe du domaine public dans le navigateur connecté le 2026-09-08.
+
+Nouvelle passe après reconnexion : sur `https://www.3mtravelagency.com/admin?candidate=3M-AGN-270002&verification=after-relogin`, le dashboard affiche `Total 32`, `5 dossiers en ligne` et `12 dossiers agence`, avec les lignes de dossiers visibles. La session est effectivement active dans cette passe ; aucune mutation n’a été exécutée pendant ce contrôle.
