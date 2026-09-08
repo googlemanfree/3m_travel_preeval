@@ -21,6 +21,9 @@ export interface PaymentReceiptInput {
   validatedBy: string;
   destination?: string | null;
   visaType?: string | null;
+  receiptApprovedAt?: Date | null;
+  receiptSignatureLabel?: string | null;
+  receiptSignatureHash?: string | null;
 }
 
 function escapeHtml(value: unknown) {
@@ -113,29 +116,47 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
   pdf.setFont("helvetica", "bold");
   pdf.text("Objet des frais", margin, 160);
   pdf.setFont("helvetica", "normal");
-  const objectText = "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation/soumission du profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail, selon le projet et l’éligibilité du candidat.";
+  const objectText = "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation/soumission du profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail, selon le projet et l’éligibilité du candidat. Ces frais sont non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences déjà réalisées avant la soumission.";
   let y = 168;
   pdf.splitTextToSize(objectText, contentWidth).forEach((line) => { pdf.text(line, margin, y); y += 5; });
 
   pdf.setFont("helvetica", "bold");
   pdf.text("Information importante", margin, y + 8);
   pdf.setFont("helvetica", "normal");
-  const importantText = "La recherche peut aboutir ou ne pas aboutir. Si une première soumission n’aboutit pas, des soumissions complémentaires ou une réorientation peuvent être envisagées avec le candidat jusqu’à l’aboutissement ou la clôture convenue du mandat, selon l’éligibilité, les postes disponibles et les conditions applicables. Ce reçu ne constitue pas une garantie d’emploi, de contrat de travail, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.";
-  y += 16;
-  pdf.splitTextToSize(importantText, contentWidth).forEach((line) => { pdf.text(line, margin, y); y += 5; });
+  pdf.setFontSize(9);
+  const importantText = "La recherche peut aboutir ou non. Les frais d’ouverture et de traitement sont non remboursables après le début des diligences, sauf disposition impérative contraire applicable au dossier. Ce reçu ne garantit ni emploi, ni contrat de travail, ni visa, ni résultat. Après obtention d’un contrat de travail ou d’une lettre d’invitation et validation du projet, un protocole d’accord distinct devra être signé pour lancer la procédure complète de visa. Toute prestation ou tout frais supplémentaire fera l’objet d’un accord distinct.";
+  y += 14;
+  pdf.splitTextToSize(importantText, contentWidth).forEach((line) => { pdf.text(line, margin, y); y += 4.3; });
 
+  const traceY = 235;
+  pdf.setTextColor(30, 41, 59);
+  pdf.setFontSize(11);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Traçabilité", margin, y + 8);
+  pdf.text("Traçabilité", margin, traceY);
   pdf.setFont("helvetica", "normal");
-  y += 16;
-  pdf.text(`Référence de paiement : ${input.paymentReference || "Validation manuelle / agence"}`, margin, y);
-  pdf.text(`Conseiller validateur : ${input.validatedBy}`, margin, y + 5);
+  pdf.setFontSize(8.5);
+  pdf.text(`Référence de paiement : ${input.paymentReference || "Validation manuelle / agence"}`, margin, traceY + 9);
+  pdf.text(`Conseiller validateur : ${input.validatedBy}`, margin, traceY + 14);
+  if (input.receiptApprovedAt && input.receiptSignatureLabel && input.receiptSignatureHash) {
+    const signatureY = traceY + 21;
+    pdf.setFillColor(239, 246, 255);
+    pdf.setDrawColor(37, 99, 235);
+    pdf.roundedRect(margin, signatureY, contentWidth, 18, 3, 3, "FD");
+    pdf.setTextColor(30, 64, 175);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8.5);
+    pdf.text("Reçu validé électroniquement par l’agence", margin + 6, signatureY + 7);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.text(`${input.receiptSignatureLabel} · ${input.receiptApprovedAt.toLocaleString("fr-FR")}`, margin + 6, signatureY + 12);
+    pdf.text(`Empreinte : ${input.receiptSignatureHash.slice(0, 24)}…`, margin + 6, signatureY + 16);
+  }
 
   pdf.setTextColor(71, 85, 105);
   pdf.setFontSize(8);
-  pdf.text(AGENCY.registration, margin, 276);
-  pdf.text("Reçu administratif — à conserver avec les échanges et justificatifs du dossier.", margin, 282);
-  pdf.text("Les décisions d’employeurs, d’agences partenaires et d’autorités restent indépendantes de 3M Travel & Services.", margin, 287);
+  pdf.text(AGENCY.registration, margin, 282);
+  pdf.text("Reçu administratif — à conserver avec les échanges et justificatifs du dossier.", margin, 287);
+  pdf.text("Les décisions d’employeurs, d’agences partenaires et d’autorités restent indépendantes de 3M Travel & Services.", margin, 292);
 
   return Buffer.from(pdf.output("arraybuffer"));
 }
@@ -143,7 +164,10 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
 export function buildPaymentReceiptEmailHtml(input: PaymentReceiptInput) {
   const formattedAmount = formatPaymentAmount(input.amount, input.currency);
   const paymentDate = input.paymentDate.toLocaleString("fr-FR");
-  return `<!doctype html><html lang="fr"><body style="margin:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1e293b"><div style="max-width:680px;margin:24px auto;background:#fff;border:1px solid #dbe5f1;border-radius:16px;overflow:hidden"><div style="background:#071b3d;padding:24px 28px;color:#fff"><div style="font-size:22px;font-weight:700">${escapeHtml(AGENCY.name)}</div><div style="margin-top:6px;color:#dbeafe;font-size:13px">Mobilité internationale · Accompagnement humain</div></div><div style="padding:28px"><h1 style="margin:0;color:#071b3d;font-size:22px">Reçu de confirmation de paiement</h1><p>Bonjour ${escapeHtml(input.fullName)},</p><p>Nous vous confirmons l’enregistrement de votre paiement de <strong>${formattedAmount}</strong> pour le dossier <strong>${escapeHtml(input.dossierNumber)}</strong>.</p><div style="margin:20px 0;padding:16px;border:1px solid #bbf7d0;border-radius:10px;background:#ecfdf5;color:#065f46"><strong>Frais concernés :</strong><br/>Ouverture du dossier, traitement administratif et préparation/soumission de votre profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail.<br/><span style="font-size:13px">Paiement confirmé le ${paymentDate} · ${escapeHtml(input.paymentMethod)}</span></div><p>La recherche peut aboutir ou ne pas aboutir. Si une première soumission n’aboutit pas, des soumissions complémentaires ou une réorientation peuvent être envisagées avec vous jusqu’à l’aboutissement ou la clôture convenue du mandat, selon votre éligibilité, les postes disponibles et les conditions applicables.</p><p style="padding:14px;background:#fff7ed;border-left:4px solid #d97706;font-size:13px"><strong>Information importante :</strong> ce reçu ne constitue pas une garantie d’emploi, de contrat de travail, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.</p><p>Votre dossier reste suivi par un conseiller 3M Travel &amp; Services. Consultez votre espace candidat pour les prochaines étapes et les documents disponibles.</p><p><a href="https://www.3mtravelagency.com/mon-espace?section=dossier" style="display:inline-block;background:#123a7a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">Accéder à mon espace</a></p><hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0"/><p style="font-size:12px;color:#64748b">${AGENCY.address} · ${AGENCY.phone} · ${AGENCY.email}<br/>${AGENCY.registration}</p></div></div></body></html>`;
+  const approvalHtml = input.receiptApprovedAt && input.receiptSignatureLabel && input.receiptSignatureHash
+    ? `<div style="margin:18px 0;padding:14px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff;color:#1e3a8a"><strong>Reçu validé électroniquement par l’agence</strong><br/><span style="font-size:12px">${escapeHtml(input.receiptSignatureLabel)} · ${escapeHtml(input.receiptApprovedAt.toLocaleString("fr-FR"))}</span><br/><span style="font-size:11px">Empreinte : ${escapeHtml(input.receiptSignatureHash.slice(0, 24))}…</span></div>`
+    : "";
+  return `<!doctype html><html lang="fr"><body style="margin:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1e293b"><div style="max-width:680px;margin:24px auto;background:#fff;border:1px solid #dbe5f1;border-radius:16px;overflow:hidden"><div style="background:#071b3d;padding:24px 28px;color:#fff"><div style="font-size:22px;font-weight:700">${escapeHtml(AGENCY.name)}</div><div style="margin-top:6px;color:#dbeafe;font-size:13px">Mobilité internationale · Accompagnement humain</div></div><div style="padding:28px"><h1 style="margin:0;color:#071b3d;font-size:22px">Reçu de confirmation de paiement</h1><p>Bonjour ${escapeHtml(input.fullName)},</p><p>Nous vous confirmons l’enregistrement de votre paiement de <strong>${formattedAmount}</strong> pour le dossier <strong>${escapeHtml(input.dossierNumber)}</strong>.</p><div style="margin:20px 0;padding:16px;border:1px solid #bbf7d0;border-radius:10px;background:#ecfdf5;color:#065f46"><strong>Frais concernés :</strong><br/>Ouverture du dossier, traitement administratif et préparation/soumission de votre profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail.<br/><span style="font-size:13px">Paiement confirmé le ${paymentDate} · ${escapeHtml(input.paymentMethod)}</span></div><p>La recherche peut aboutir ou ne pas aboutir. Si une première soumission n’aboutit pas, des soumissions complémentaires ou une réorientation peuvent être envisagées avec vous jusqu’à l’aboutissement ou la clôture convenue du mandat, selon votre éligibilité, les postes disponibles et les conditions applicables.</p><p style="padding:14px;background:#fff7ed;border-left:4px solid #d97706;font-size:13px"><strong>Information importante :</strong> ce reçu ne constitue pas une garantie d’emploi, de contrat de travail, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.</p>  <p>Les frais d’ouverture et de traitement sont non remboursables après le début des diligences administratives et de préparation, sauf disposition impérative contraire applicable au dossier. Après obtention d’un contrat de travail ou d’une lettre d’invitation et validation du projet, un protocole d’accord distinct devra être signé pour lancer la procédure complète de visa.</p>${approvalHtml}<p>Votre dossier reste suivi par un conseiller 3M Travel &amp; Services. Consultez votre espace candidat pour les prochaines étapes et les documents disponibles.</p><p><a href="https://www.3mtravelagency.com/mon-espace?section=dossier" style="display:inline-block;background:#123a7a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">Accéder à mon espace</a></p><hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0"/><p style="font-size:12px;color:#64748b">${AGENCY.address} · ${AGENCY.phone} · ${AGENCY.email}<br/>${AGENCY.registration}</p></div></div></body></html>`;
 }
 
 export const PAYMENT_RECEIPT_AGENCY = AGENCY;

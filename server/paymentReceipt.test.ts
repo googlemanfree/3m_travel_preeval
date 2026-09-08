@@ -24,6 +24,8 @@ describe("Payment receipt professional delivery", () => {
     expect(html).toContain("Ouverture du dossier, traitement administratif");
     expect(html).toContain("agences de placement partenaires");
     expect(html).toContain("recherche d’un contrat de travail");
+    expect(html).toContain("non remboursables");
+    expect(html).toContain("protocole d’accord distinct");
     expect(html).toContain("ne constitue pas une garantie d’emploi");
     expect(html).toContain("mon-espace?section=dossier");
     expect(html).not.toContain("IA");
@@ -47,6 +49,35 @@ describe("Payment receipt professional delivery", () => {
       validatedBy: "aureoldonfack@gmail.com",
     });
     expect(html).toContain("65 000 XAF");
+  });
+
+  it("renders the electronic agency approval stamp when the receipt is signed", () => {
+    const html = buildPaymentReceiptEmailHtml({
+      dossierNumber: "3M-AGN-270002",
+      fullName: "SIEWE TCHAKOUA Louis Valere",
+      email: "louistchakoua4@gmail.com",
+      amount: 65000,
+      currency: "XAF",
+      paymentDate: new Date("2026-09-08T10:52:19Z"),
+      paymentMethod: "Agence",
+      validatedBy: "aureoldonfack@gmail.com",
+      receiptApprovedAt: new Date("2026-09-08T12:12:49Z"),
+      receiptSignatureLabel: "3M Travel & Services · aureoldonfack@gmail.com",
+      receiptSignatureHash: "abcdef1234567890abcdef1234567890",
+    });
+    expect(html).toContain("non remboursables");
+    expect(html).toContain("3M Travel &amp; Services");
+  });
+
+  it("requires an approval record before the admin receipt send mutation", () => {
+    const candidateRouter = fs.readFileSync(path.join(projectRoot, "server/routers/adminCandidateManagement.ts"), "utf8");
+    const candidateWorkspace = fs.readFileSync(path.join(projectRoot, "client/src/components/Candidate360Workspace.tsx"), "utf8");
+    const approvalGuardIndex = candidateRouter.indexOf("Le reçu doit être validé et signé par un administrateur avant son envoi.");
+    const sendIndex = candidateRouter.indexOf("sendGenericEmail({", approvalGuardIndex);
+    expect(approvalGuardIndex).toBeGreaterThan(-1);
+    expect(sendIndex).toBeGreaterThan(approvalGuardIndex);
+    expect(candidateRouter).toContain("receipt_approved_signed");
+    expect(candidateWorkspace).toContain("Valider et signer");
   });
 
   it("attaches the generated PDF in both online and candidate receipt flows", () => {

@@ -1801,6 +1801,22 @@ export const paymentAuditLogs = mysqlTable("payment_audit_logs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const paymentReceiptApprovals = mysqlTable("payment_receipt_approvals", {
+  id: int("id").autoincrement().primaryKey(),
+  source: mysqlEnum("source", ["online", "agency"]).notNull(),
+  paymentId: int("paymentId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 50 }).notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  amount: varchar("amount", { length: 50 }).notNull(),
+  currency: varchar("currency", { length: 10 }).notNull(),
+  approvedByName: varchar("approvedByName", { length: 255 }).notNull(),
+  approvedByEmail: varchar("approvedByEmail", { length: 320 }).notNull(),
+  approvedAt: timestamp("approvedAt").defaultNow().notNull(),
+  signatureLabel: varchar("signatureLabel", { length: 255 }).notNull(),
+  signatureHash: varchar("signatureHash", { length: 128 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const savedTravelPlans = mysqlTable("saved_travel_plans", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

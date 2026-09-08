@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -750,6 +750,10 @@ export const applicationRouter = router({
       if (!application.email) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier" });
       }
+      const [approval] = await db.select().from(paymentReceiptApprovals).where(and(eq(paymentReceiptApprovals.source, "online"), eq(paymentReceiptApprovals.paymentId, application.id), eq(paymentReceiptApprovals.candidateEmail, application.email))).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1);
+      if (!approval) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu doit être validé et signé par un administrateur avant son envoi" });
+      }
 
       try {
         const receiptInput = {
@@ -764,6 +768,9 @@ export const applicationRouter = router({
           validatedBy: application.paymentValidatedBy || ctx.user.email || "Administrateur",
           destination: application.destination,
           visaType: application.visaType,
+          receiptApprovedAt: approval.approvedAt,
+          receiptSignatureLabel: approval.signatureLabel,
+          receiptSignatureHash: approval.signatureHash,
         };
         const receiptPdf = await buildPaymentReceiptPdf(receiptInput);
         await sendGenericEmail({

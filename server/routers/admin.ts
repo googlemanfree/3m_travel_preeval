@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -3227,6 +3227,14 @@ export const adminRouter = router({
             "agencyPaymentAudit",
           ))[0] ?? null
         : null;
+      const latestReceiptApproval = await safeCollection(
+        db.select().from(paymentReceiptApprovals)
+          .where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, email)))
+          .orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1),
+        [],
+        "paymentReceiptApproval",
+      );
+      const receiptApproval = latestReceiptApproval[0] ?? null;
       const paymentSnapshot = reference.source === "online" ? {
         status: (sourceRecord as typeof applications.$inferSelect).paymentStatus,
         amount: (sourceRecord as typeof applications.$inferSelect).paymentAmount,
@@ -3234,6 +3242,7 @@ export const adminRouter = router({
         method: (sourceRecord as typeof applications.$inferSelect).paymentMethod,
         reference: (sourceRecord as typeof applications.$inferSelect).paymentTransactionId,
         paidAt: (sourceRecord as typeof applications.$inferSelect).paymentDate,
+        receiptApproval: receiptApproval ? { id: receiptApproval.id, approvedByName: receiptApproval.approvedByName, approvedByEmail: receiptApproval.approvedByEmail, approvedAt: receiptApproval.approvedAt, signatureLabel: receiptApproval.signatureLabel, signatureHash: receiptApproval.signatureHash } : null,
       } : {
         status: (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "paid" ? "SUCCESS" : (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
         amount: latestAgencyPaymentAudit?.amount ? Number.parseFloat(String(latestAgencyPaymentAudit.amount)) : 65000,
@@ -3241,6 +3250,7 @@ export const adminRouter = router({
         method: latestAgencyPaymentAudit?.action === "confirmed" || latestAgencyPaymentAudit?.action === "confirmed_again" ? "AGENCE" : null,
         reference: latestAgencyPaymentAudit?.details ?? null,
         paidAt: latestAgencyPaymentAudit?.createdAt ?? null,
+        receiptApproval: receiptApproval ? { id: receiptApproval.id, approvedByName: receiptApproval.approvedByName, approvedByEmail: receiptApproval.approvedByEmail, approvedAt: receiptApproval.approvedAt, signatureLabel: receiptApproval.signatureLabel, signatureHash: receiptApproval.signatureHash } : null,
       };
       const evaluationVersions = reference.source === "online"
         ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber))

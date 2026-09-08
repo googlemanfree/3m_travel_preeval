@@ -2755,3 +2755,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Normaliser les espaces de groupement français pour afficher `65 000 XAF` dans le PDF et l’e-mail.
 - [x] Ajouter une régression Vitest interdisant les séparateurs insécables et le rendu `65 /000 XAF`.
 - [x] Régénérer le PDF de contrôle, vérifier le texte extrait et inspecter visuellement le logo, le design et les mentions légales.
+
+## Reçu validé et signé par l’agence — nouvelle exigence
+- [x] Ajouter une validation explicite du reçu par un administrateur après confirmation du paiement.
+- [x] Intégrer une signature électronique traçable de 3M Travel & Services dans le reçu validé.
+- [x] Ajouter une clause claire sur le caractère non remboursable des frais d’ouverture et de traitement, avec réserve « sauf disposition impérative contraire applicable au dossier » ; une revue juridique locale reste recommandée avant usage contractuel.
+- [x] Distinguer dans le reçu les frais administratifs avant soumission du protocole d’accord signé après contrat ou lettre d’invitation.
+- [x] Relier la validation du reçu et du paiement aux étapes suivantes sans promettre de contrat, de visa ou de résultat.
+- [ ] Vérifier les étapes post-contrat et les sources officielles par destination ; afficher « à vérifier » lorsqu’aucune source institutionnelle fiable n’est disponible.

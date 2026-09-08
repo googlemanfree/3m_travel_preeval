@@ -71,6 +71,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   });
   const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
+  const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation();
   const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
 
   // Transformer les applications en paiements
@@ -191,6 +192,18 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
     setReceiptEmailPayment(payment);
     setReceiptEmailAction(action);
+  };
+
+  const handleApproveReceipt = async () => {
+    if (!receiptEmailPayment) return;
+    try {
+      await approvePaymentReceiptMutation.mutateAsync({ sessionToken: "", candidateId: `online_${receiptEmailPayment.id}` });
+      toast.success("Reçu validé et signé", { description: `La validation électronique est enregistrée pour ${receiptEmailPayment.dossierNumber}.` });
+      await refetch();
+      await refetchAuditLogs();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "La validation du reçu a échoué");
+    }
   };
 
   const handleConfirmReceiptEmail = async () => {
@@ -836,10 +849,14 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
               {receiptEmailPayment ? `Un e-mail réel sera ${receiptEmailAction === "resend" ? "renvoyé" : "envoyé"} à ${receiptEmailPayment.email} pour le dossier ${receiptEmailPayment.dossierNumber}. Cette action sera journalisée.` : ""}
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-700">Confirmez uniquement si le paiement est déjà validé et si l’adresse affichée est correcte. {receiptEmailAction === "resend" ? "Cette relance fait suite à un échec de remise enregistré." : ""} Cet e-mail ne crée aucune réservation ni émission fournisseur.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setReceiptEmailPayment(null); setReceiptEmailAction("initial"); }} disabled={sendPaymentReceiptMutation.isPending}>Annuler</Button>
-            <Button onClick={handleConfirmReceiptEmail} disabled={sendPaymentReceiptMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
+           <p className="text-sm text-slate-700">Le paiement doit être validé avant cette étape. Le reçu est ensuite validé et signé électroniquement par l’agence avant l’envoi. Les frais d’ouverture et de traitement sont non remboursables après le début des diligences, sauf disposition impérative contraire applicable au dossier.</p>
+           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Si le reçu n’a pas encore été approuvé, commencez par enregistrer la validation électronique. Aucun e-mail ne sera envoyé pendant cette action.</div>
+           <DialogFooter>
+             <Button variant="outline" onClick={() => { setReceiptEmailPayment(null); setReceiptEmailAction("initial"); }} disabled={sendPaymentReceiptMutation.isPending || approvePaymentReceiptMutation.isPending}>Annuler</Button>
+             <Button variant="outline" onClick={handleApproveReceipt} disabled={sendPaymentReceiptMutation.isPending || approvePaymentReceiptMutation.isPending} className="border-blue-300 text-blue-800">
+               {approvePaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Validation…</> : <><CheckCircle2 className="mr-2 h-4 w-4" />Valider et signer</>}
+             </Button>
+             <Button onClick={handleConfirmReceiptEmail} disabled={sendPaymentReceiptMutation.isPending || approvePaymentReceiptMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
               {sendPaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />{receiptEmailAction === "resend" ? "Confirmer le renvoi" : "Confirmer l’envoi"}</>}
             </Button>
           </DialogFooter>

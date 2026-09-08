@@ -1,8 +1,9 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
+import crypto from "node:crypto";
 import { z } from "zod";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
@@ -49,6 +50,10 @@ type AdminCandidate = {
 
 function escapeAgreementHtml(value: string): string {
   return value.replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#39;" })[character] ?? character);
+}
+
+function createReceiptSignatureHash(input: { source: "online" | "agency"; paymentId: number; dossierNumber: string; candidateEmail: string; amount: string; currency: string; approvedByEmail: string; approvedAt: Date }) {
+  return crypto.createHash("sha256").update(JSON.stringify(input)).digest("hex");
 }
 
 function toUiScoreBand(badge: string | null): "excellent" | "bon" | "moyen" | "faible" {
@@ -802,6 +807,51 @@ export const adminCandidateManagementRouter = router({
 
       return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt };
     }),
+  approvePaymentReceipt: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().optional().default(""),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+      let dossierNumber = input.candidateId;
+      let candidateEmail = "";
+      let amount = "65000";
+      let currency = "XAF";
+      if (reference.source === "agency") {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        candidateEmail = dossier.email;
+        const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
+        amount = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") || amount : amount;
+      } else {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
+        dossierNumber = application.dossierNumber;
+        candidateEmail = application.email;
+        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
+        currency = application.paymentCurrency ?? currency;
+      }
+      if (!candidateEmail) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+
+      const approvedAt = new Date();
+      const approvedByEmail = admin.email || "Administrateur";
+      const approvedByName = approvedByEmail;
+      const signatureLabel = `3M Travel & Services · ${approvedByName}`;
+      const signatureHash = createReceiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount, currency, approvedByEmail, approvedAt });
+      const [approval] = await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount: `${amount} ${currency}`, currency, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash }).$returningId();
+      await db.insert(paymentAuditLogs).values({ adminName: approvedByName, adminEmail: approvedByEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail, amount: `${amount} ${currency}`, details: `Reçu validé et signé électroniquement pour ${dossierNumber}. Empreinte ${signatureHash}.` });
+      return { success: true, approvalId: Number(approval?.id ?? 0), dossierNumber, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash };
+    }),
+
   sendPaymentReceiptForCandidate: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
@@ -856,8 +906,10 @@ export const adminCandidateManagementRouter = router({
         visaType = application.visaType;
       }
       if (!email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+      const [approval] = await db.select().from(paymentReceiptApprovals).where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, email))).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1);
+      if (!approval) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu doit être validé et signé par un administrateur avant son envoi." });
 
-      const receiptInput = { dossierNumber, fullName, email, amount, currency, paymentDate, paymentMethod, paymentReference, validatedBy: admin.email || "Administrateur", destination, visaType };
+      const receiptInput = { dossierNumber, fullName, email, amount, currency, paymentDate, paymentMethod, paymentReference, validatedBy: admin.email || "Administrateur", destination, visaType, receiptApprovedAt: approval.approvedAt, receiptSignatureLabel: approval.signatureLabel, receiptSignatureHash: approval.signatureHash };
       try {
         const receiptPdf = await buildPaymentReceiptPdf(receiptInput);
         await sendGenericEmail({
