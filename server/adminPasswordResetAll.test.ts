@@ -31,7 +31,7 @@ describe("Réinitialisation globale des mots de passe admin", () => {
 
   it("affiche l’action de reset dans le tableau admin principal avec la session réelle", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
-    expect(dashboard).toContain('sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken")');
+    expect(dashboard).toContain('localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken")');
     expect(dashboard).toContain("resetAllPasswordsMutation");
     expect(dashboard).toContain("Réinitialiser par e-mail");
     expect(dashboard).toContain("handleResetAllPasswords");

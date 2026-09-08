@@ -14,7 +14,7 @@ describe("poste de pilotage administrateur", () => {
     expect(source).toContain("Poste de pilotage dossier 360°");
     expect(source).toContain("Décision de procédure");
     expect(source).toContain("Contrôler les documents");
-    expect(source).toContain("Valider un paiement");
+    expect(source).toContain("Valider le paiement en agence");
     expect(source).toContain("Suivre les envois e-mail");
   });
 

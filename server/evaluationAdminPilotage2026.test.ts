@@ -104,8 +104,8 @@ describe("reprise et aperçu du bilan", () => {
 
   it("résout un compte candidat admin vers son application liée", () => {
     const router = read("server/routers/unifiedRequests.ts");
-    expect(router).toContain("const [candidateAccount] = await db.select({ id: candidates.id })");
-    expect(router).toContain("eq(applications.candidateId, candidateAccount.id)");
+    expect(router).toContain("const [linkedApplication] = await db.select().from(applications).where(applicationWhere).orderBy(desc(applications.createdAt)).limit(1)");
+    expect(router).toContain("const applicationWhere = sourceEvaluation.candidateId");
     expect(router).toContain("orderBy(desc(applications.createdAt)).limit(1)");
   });
 

@@ -19,7 +19,7 @@ describe("communication de bilan contrôlée", () => {
     expect(editorSource).toContain("Canada — bilan et prochaines étapes");
     expect(editorSource).toContain("Luxembourg — bilan et pièces à préparer");
     expect(editorSource).toContain("Europe — orientation et plan d’action");
-    expect(editorSource).toContain("Aperçu e-mail exact");
+    expect(editorSource).toContain("Aperçu exact de l’e-mail");
   });
 
   it("expose des modèles français et anglais et une impression sans envoi", () => {
@@ -44,7 +44,7 @@ describe("communication de bilan contrôlée", () => {
     expect(previewBlock).toContain("requiresManualValidation: true");
     expect(previewBlock).toContain("recipient: application.email");
     expect(previewBlock).not.toContain("sendEmail(");
-    expect(readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Aperçu exact de l’e-mail d’évaluation");
+    expect(readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Aperçu exact de l’e-mail");
   });
 
   it("n’autorise une livraison planifiée qu’après validation humaine explicite", () => {

@@ -11,7 +11,7 @@ describe("préparation manuelle du bilan", () => {
   it("met l’éditeur au premier plan après le clic depuis la fiche dossier", () => {
     expect(dashboard).toContain("<Dialog open={!evaluationEditorOpen}");
     expect(dashboard).toContain("onOpenEditor={() => setEvaluationEditorOpen(true)}");
-    expect(dashboard).toContain("sourceType=\"candidate\"");
+    expect(dashboard).toContain("sourceType={evaluationEditorSourceType}");
     expect(dashboard).toContain("Chargement de l’espace de préparation du bilan");
   });
 

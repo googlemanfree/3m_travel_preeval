@@ -33,7 +33,7 @@ describe("déclaration d’évaluation préalable", () => {
     expect(register).toContain('evaluationAlreadyCompleted: "no"');
     expect(register).toContain('evaluationAlreadyCompleted: form.evaluationAlreadyCompleted === "yes"');
     expect(candidateRouter).toContain("evaluationAlreadyCompleted: z.boolean().default(false)");
-    expect(candidateRouter).toContain("resolveEvaluationDeclaration(input.evaluationAlreadyCompleted)");
+    expect(candidateRouter).toContain('evaluationDeclarationStatus: "pending_validation"');
     expect(adminRouter).toContain("evaluationDeclarationStatus: candidates.evaluationDeclarationStatus");
     expect(adminRouter).toContain("evaluationReviewedAt: account.evaluationReviewedAt");
     expect(adminRouter).toContain('source: "ACCOUNT_ONLY" as const');
@@ -48,7 +48,7 @@ describe("déclaration d’évaluation préalable", () => {
 
     expect(adminManagement).toContain("reviewEvaluationDeclaration");
     expect(adminManagement).toContain('decision: z.enum(["validate", "refuse", "request_correction"])');
-    expect(adminManagement).toContain("L’évaluation déclarée doit être validée manuellement avant l’ouverture du dossier.");
+    expect(adminManagement).toContain("Ce candidat n’a pas déclaré d’évaluation externe à vérifier.");
     expect(adminManagement).toContain("evaluationReviewedBy: admin.email");
     expect(adminDashboard).toContain("evaluationBlocksActivation");
     expect(evaluationPanel).toContain("Valider l’évaluation");

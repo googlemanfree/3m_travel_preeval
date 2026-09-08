@@ -19,7 +19,8 @@ describe("workflow de revue humaine des évaluations", () => {
     expect(source).toContain("requireValidAdminSession");
     expect(source).toContain("saveEvaluationReviewDraft");
     expect(source).toContain("validateAndSendEvaluationResponse");
-    expect(source).toContain('action: "validated"');
+    expect(source).toContain('"validated_pending_second_review"');
+    expect(source).toContain('"validated"');
     expect(source).toContain('action: "response_sent"');
     expect(source).toContain("sendValidatedEvaluationResponseEmail");
   });

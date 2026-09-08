@@ -378,16 +378,23 @@ export const candidateRouter = router({
           .limit(1)
         : [undefined];
       const priorEvaluationFields = input.evaluationAlreadyCompleted
-        ? {
-            dossierStatus: "documents" as const,
-            evaluationDeclarationStatus: "validated" as const,
-            evaluationDeclaredAt: new Date(),
-            evaluationReviewedAt: priorDeliveredEvaluation?.reviewedAt ?? new Date(),
-            evaluationReviewedBy: null,
-            evaluationReviewNote: priorDeliveredEvaluation
-              ? "Évaluation déjà reçue et rapprochée lors de la création du compte."
-              : "Évaluation déjà reçue déclarée lors de l’inscription ; validation enregistrée pour permettre la suite du dossier.",
-          }
+        ? priorDeliveredEvaluation
+          ? {
+              dossierStatus: "documents" as const,
+              evaluationDeclarationStatus: "validated" as const,
+              evaluationDeclaredAt: new Date(),
+              evaluationReviewedAt: priorDeliveredEvaluation.reviewedAt,
+              evaluationReviewedBy: null,
+              evaluationReviewNote: "Évaluation déjà reçue et rapprochée lors de la création du compte.",
+            }
+          : {
+              dossierStatus: "nouveau" as const,
+              evaluationDeclarationStatus: "pending_validation" as const,
+              evaluationDeclaredAt: new Date(),
+              evaluationReviewedAt: null,
+              evaluationReviewedBy: null,
+              evaluationReviewNote: "Évaluation déjà reçue déclarée lors de l’inscription ; validation humaine requise avant l’ouverture du dossier.",
+            }
         : resolveEvaluationDeclaration(false);
 
       const portraitProof = verifyPortraitProof(input.portraitVerificationToken, input.email.toLowerCase());

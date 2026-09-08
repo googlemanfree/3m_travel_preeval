@@ -38,7 +38,7 @@ describe("redirection Google et suivi candidat", () => {
   it("réduit les raccourcis aux services actifs et maintient le suivi du dossier accessible", () => {
     const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(navigation).toContain("visibleQuickLinks");
-    expect(navigation).toContain('setLocation("/mon-espace?section=dossier")');
+    expect(navigation).toContain('{ href: "/mon-dossier", label: "Mon dossier"');
     expect(navigation).toContain("!compact &&");
   });
 

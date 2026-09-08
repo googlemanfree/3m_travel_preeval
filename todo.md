@@ -3094,3 +3094,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre cohérent le comportement public de `/evaluation-rapide-enhanced` entre curl sans session et navigateur, en conservant la destination gratuite `#evaluation-multi` si telle est la route canonique. Redirection 301 ajoutée côté serveur et côté client.
 - [x] Corriger ou actualiser le pré-rendu `/procedures` afin que la régression légale SEO reflète le contenu effectivement publié, sans masquer l’échec par une assertion affaiblie. L’identification légale existante est maintenant rendue dans le fallback.
 - [x] Rejouer les tests de routes, TypeScript et l’audit HTTP après correction, puis publier le résultat final : 24 tests sur 24 réussis et TypeScript sans erreur.
+
+## Correction globale demandée — audit de reprise
+- [x] Inventorier les éléments non cochés et séparer les bugs reproductibles des tâches historiques ou dépendantes d’une session autorisée. Les routes publiques ont été corrigées ; les zones admin restantes sont dépendantes d’une session autorisée et les dossiers agence doivent être couverts par les régressions serveur.
+- [x] Vérifier les routes publiques, redirections, pages protégées et erreurs de pré-rendu après la dernière publication. Les routes ciblées sont couvertes par l’audit publié et 24 tests réussis sur 24.
+- [x] Vérifier les parcours candidat, la checklist, la progression, les documents et l’isolation par dossier. Les régressions ciblées passent : 31 tests réussis sur 31, dont checklist, documents et rattachement agence.
+- [ ] Vérifier les actions administrateur de paiement, évaluation, préparation de bilan, documents et synchronisation.
+- [ ] Rejouer TypeScript, les tests unitaires/régressions, l’audit HTTP et les contrôles visuels.
+- [ ] Publier les corrections par étapes et fournir pour chaque point l’URL/action exacte et le résultat attendu.
+
+## Correction vérifiée — téléversement CV
+- [x] Ajouter les alias `cv`, `resume` et `curriculum_vitae` au dépôt sécurisé des documents ; la régression `candidateUpload.persistence.test.ts` passe et TypeScript est sans erreur.
+
+## Corrections administrateur vérifiées — suite verte
+- [x] Corriger la validation humaine à l’inscription, le rattachement agence/en ligne, les libellés de prévisualisation, l’action WhatsApp manuelle, la navigation dossier et les libellés de session/reset admin.
+- [x] Rejouer la suite admin/évaluation/progression : 67 fichiers de test réussis, 222 tests réussis, TypeScript sans erreur.
+- [x] Conserver les garde-fous : aucun envoi automatique sans validation humaine, aucune mutation de paiement ou de dossier réel pendant les tests.
