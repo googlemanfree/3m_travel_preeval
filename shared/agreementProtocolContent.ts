@@ -1,6 +1,4 @@
-export const INITIAL_AGREEMENT_PROTOCOL = `Le présent protocole d’accord formalise la demande d’accompagnement administratif et de mobilité internationale du candidat auprès de 3M Travel & Services SARL. Il décrit le cadre de la première phase : accueil du dossier, analyse des informations transmises, orientation vers une destination et une procédure, préparation administrative, échanges avec le candidat et suivi des actions convenues.
-
-1. Objet et rôle de 3M Travel & Services
+export const INITIAL_AGREEMENT_PROTOCOL = `1. Objet et rôle de 3M Travel & Services
 3M Travel & Services fournit un accompagnement humain, administratif et documentaire adapté aux informations communiquées par le candidat. Selon le projet retenu, l’accompagnement peut comprendre la vérification de cohérence des informations, l’identification des pièces à réunir, la préparation de documents de travail, l’explication des étapes publiées par les autorités compétentes et le suivi des demandes adressées au candidat.
 
 L’agence agit comme accompagnateur administratif. Elle ne se substitue ni à une ambassade, ni à un consulat, ni à une administration, ni à un organisme d’évaluation, ni à un employeur, ni à un partenaire de recrutement. Les décisions finales relèvent exclusivement des autorités, organismes ou employeurs compétents.

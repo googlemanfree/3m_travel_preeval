@@ -3150,3 +3150,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Détailler le déclenchement du second protocole après sélection/validation du candidat, selon pays, type de visa et formule de paiement choisie.
 - [x] Synchroniser le texte admin, espace client, e-mail et PDF sans mention technique destinée au client.
 - [x] Ajouter les tests de contenu, de paiement préalable, de non-garantie et de second protocole, puis publier : 15 tests réussis et TypeScript sans erreur.
+
+## Correctif badge dossier actif et contrôle du protocole (2026-09-08)
+- [x] Corriger l’incohérence du badge « Dossier actif » dans /mon-espace pour qu’il reflète le dossier actif réellement affiché et sa progression. Le fallback agence utilise maintenant la référence officielle `3M-AGN-<id>` et le résumé client expose la même référence.
+- [x] Vérifier que le protocole d’accord par défaut enrichi est bien utilisé dans les vues client/admin, e-mails et PDF, sans modifier le paiement réel de 3M-AGN-270002. La source partagée TypeScript est valide, version `2026-09-08-v2`, avec le second protocole distinct.

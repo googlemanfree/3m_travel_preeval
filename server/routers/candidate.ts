@@ -1531,7 +1531,7 @@ export const candidateRouter = router({
 
     const application = app[0] ?? ({
       id: historicalAgencyDossier.id,
-      dossierNumber: `3M-AG-${historicalAgencyDossier.id}`,
+      dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, "0")}`,
       candidateId: ctx.candidate.id,
       fullName: historicalAgencyDossier.fullName,
       email: historicalAgencyDossier.email,
@@ -2040,6 +2040,15 @@ export const candidateRouter = router({
     ]);
 
     const activeApp = appRows[0] || null;
+    const [activeAgencyDossier] = await db
+      .select()
+      .from(agencyDossiers)
+      .where(eq(agencyDossiers.email, candidate.email))
+      .orderBy(desc(agencyDossiers.createdAt))
+      .limit(1);
+    const activeAgencyDossierNumber = activeAgencyDossier
+      ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
+      : null;
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
       ...document,
       documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
@@ -2080,8 +2089,8 @@ export const candidateRouter = router({
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
-        dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || "N/A",
-        dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || "evaluation",
+        dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || "N/A",
+        dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || activeAgencyDossier?.status || "evaluation",
         evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
         evaluationDeclaredAt: candidate.evaluationDeclaredAt,
         evaluationReviewedAt: candidate.evaluationReviewedAt,
