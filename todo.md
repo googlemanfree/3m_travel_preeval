@@ -3112,11 +3112,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver les garde-fous : aucun envoi automatique sans validation humaine, aucune mutation de paiement ou de dossier réel pendant les tests.
 
 ## Enrichissement du protocole d’accord — 3M-AGN-270002
-- [ ] Remplacer le brouillon court admin par un protocole initial détaillé, rassurant et transparent, sans promesse de visa, d’emploi ou de décision.
-- [ ] Synchroniser la version envoyée, déposée dans l’espace client, imprimable et PDF avec le même contenu validé.
-- [ ] Décrire explicitement la sélection du candidat et le déclenchement d’un second protocole adapté au pays, au type de visa et à la formule/prestation choisie.
-- [ ] Conserver les garde-fous : paiement confirmé avant signature, frais distincts des frais officiels, obligations du candidat, limites de responsabilité et traçabilité du conseiller.
-- [ ] Ajouter les tests de cohérence des copies client/admin/PDF et publier après validation TypeScript et régressions.
+- [x] Remplacer le brouillon court admin par un protocole initial détaillé, rassurant et transparent, sans promesse de visa, d’emploi ou de décision.
+- [x] Synchroniser la version envoyée, déposée dans l’espace client, imprimable et PDF avec le même contenu validé.
+- [x] Décrire explicitement la sélection du candidat et le déclenchement d’un second protocole adapté au pays, au type de visa et à la formule/prestation choisie.
+- [x] Conserver les garde-fous : paiement confirmé avant signature, frais distincts des frais officiels, obligations du candidat, limites de responsabilité et traçabilité du conseiller.
+- [x] Ajouter les tests de cohérence des copies client/admin/PDF et publier après validation TypeScript et régressions : 15 tests dédiés réussis, TypeScript sans erreur, checkpoint `42b78110`.
 
 ## Protocole d’accord enrichi — vérifié
 - [x] Remplacer les copies courtes du protocole dans Candidate360Workspace, MySpace et EvaluationSpace par une rédaction détaillée et cohérente.
