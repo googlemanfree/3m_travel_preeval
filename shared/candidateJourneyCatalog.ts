@@ -204,6 +204,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("residence", "Permis de séjour ou visa", "Déposer la demande selon la durée et la base d’emploi, avec les pièces requises.", ["Passeport", "Contrat", "Ressources", "Assurance"], "https://www.pmlp.gov.lv/en/residence-permit"),
     step("registration", "Installation et suivi", "Respecter les formalités d’arrivée et les conditions attachées au permis et à l’employeur.", ["Adresse", "Permis", "Employeur"], "https://www.pmlp.gov.lv/en/residence-permit"),
   ]),
+  regional("Serbie", "Visiteur", "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements", [
+    step("visa_check", "Vérifier le droit d’entrée", "Vérifier la nationalité, les exemptions éventuelles et si une demande de visa est nécessaire avant l’entrée en Serbie.", ["Nationalité", "Passeport", "Durée"], "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements"),
+    step("visa_c", "Visa C court séjour", "Si requis, déposer une demande de visa C pour tourisme, affaires ou autre séjour jusqu’à 90 jours dans une période de 180 jours.", ["Formulaire", "Motif", "Hébergement", "Ressources", "Assurance"], "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements"),
+    step("portal_application", "Dépôt auprès de la mission ou du portail", "Déposer personnellement la demande auprès de l’ambassade/du consulat ou via le portail officiel lorsque la voie électronique est disponible.", ["Rendez-vous", "Biométrie", "Pièces", "Référence"], "http://welcometoserbia.gov.rs/home"),
+    step("decision", "Décision et entrée", "Suivre la décision et respecter les limites du visa C ; ce visa ne constitue pas en principe une base d’installation ou de travail.", ["Décision", "Passeport", "Conditions"], "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements"),
+  ]),
+  regional("Serbie", "Études", "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements", [
+    step("education_basis", "Admission et motif études", "Obtenir l’admission et réunir les documents justifiant l’éducation comme motif de séjour.", ["Admission", "Programme", "Passeport"], "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements"),
+    step("visa_d", "Visa D si requis", "Vérifier le visa D de long séjour pour entrer et séjourner entre 90 et 180 jours lorsque le régime de visa l’impose.", ["Formulaire", "Admission", "Assurance", "Ressources"], "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements"),
+    step("temporary_residence", "Résidence temporaire", "Déposer la demande de résidence temporaire par la voie officielle applicable et respecter les obligations de séjour et d’adresse.", ["Titre", "Logement", "Assurance", "Ressources"], "http://welcometoserbia.gov.rs/home"),
+    step("study_maintenance", "Maintien du statut étudiant", "Respecter les conditions d’inscription, de présence, de renouvellement et les limites éventuelles du travail pendant les études.", ["Inscription", "Échéances", "Titre"], "http://welcometoserbia.gov.rs/home"),
+  ]),
+  regional("Serbie", "Travail", "http://welcometoserbia.gov.rs/residence-and-work-permit", [
+    step("employment_basis", "Offre et base d’emploi", "Obtenir un contrat ou une autre base de travail et déterminer si un visa D ou une demande directe de permis s’applique.", ["Employeur", "Contrat", "Poste", "Qualification"], "http://welcometoserbia.gov.rs/residence-and-work-permit"),
+    step("visa_d_or_permit", "Visa D ou permis unique", "Selon le cas, demander un visa D fondé sur l’emploi ou un permis unique temporaire de résidence et de travail via le portail officiel.", ["Visa D", "Permis", "Employeur", "Formulaire"], "http://welcometoserbia.gov.rs/residence-and-work-permit"),
+    step("labour_market", "Vérifications employeur", "L’employeur accomplit les vérifications de marché du travail lorsque cette exigence s’applique à la base d’emploi.", ["Vacance", "Employeur", "Confirmation"], "http://welcometoserbia.gov.rs/residence-and-work-permit"),
+    step("arrival_registration", "Entrée et suivi du permis", "Après décision, respecter l’entrée, la déclaration d’adresse, les conditions de l’employeur et le renouvellement du titre.", ["Décision", "Adresse", "Titre", "Échéance"], "http://welcometoserbia.gov.rs/home"),
+  ]),
   regional("Slovaquie", "Visiteur", "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr", [
     step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité, la destination principale et la durée si un visa C est requis pour la Slovaquie.", ["Nationalité", "Destination", "Durée"], "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr"),
     step("application", "Dépôt de la demande", "Déposer la demande auprès de la mission diplomatique, du centre de visa ou du représentant compétent avec biométrie et justificatifs.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr"),
@@ -598,7 +616,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

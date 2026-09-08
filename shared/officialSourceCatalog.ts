@@ -375,6 +375,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       }
     ]
   },
+  "serbie": {
+    "country": "Serbie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ministry of Foreign Affairs — Visa requirements", "url": "https://www.mfa.gov.rs/en/citizens/travel-serbia/visa-requirements" },
+      { "label": "Welcome to Serbia — Portail officiel des étrangers", "url": "http://welcometoserbia.gov.rs/home" },
+      { "label": "Welcome to Serbia — Residence and work permit", "url": "http://welcometoserbia.gov.rs/residence-and-work-permit" },
+      { "label": "Welcome to Serbia — Visa C/D et permis", "url": "http://welcometoserbia.gov.rs/visa-d" }
+    ]
+  },
   "senegal": {
     "country": "Sénégal",
     "verificationStatus": "verified",

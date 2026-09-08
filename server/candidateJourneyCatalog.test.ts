@@ -60,6 +60,7 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Grèce", "Travail", "home-affairs.ec.europa.eu"],
       ["Croatie", "Travail", "mvep.gov.hr"],
       ["Slovaquie", "Travail", "home-affairs.ec.europa.eu"],
+      ["Serbie", "Travail", "welcometoserbia.gov.rs"],
       ["Roumanie", "Travail", "home-affairs.ec.europa.eu"],
       ["Slovénie", "Travail", "europa.eu"],
       ["Estonie", "Travail", "europa.eu"],
