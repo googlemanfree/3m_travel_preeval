@@ -673,6 +673,9 @@ export const applicationRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
       const isValidated = input.paymentStatus === "SUCCESS";
+      if (isValidated && application.paymentStatus === "SUCCESS" && application.paymentValidatedAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Le paiement est déjà confirmé par ${application.paymentValidatedBy || "un conseiller"} le ${new Date(application.paymentValidatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n’est nécessaire.` });
+      }
       if (isValidated) {
         // La validation conseiller peut être faite sans référence saisie : cela couvre les paiements en agence et les validations manuelles documentées.
         // Une référence Orange Money déjà connue est conservée lorsqu’elle existe ; sinon la trace VALIDATION_MANUELLE est enregistrée.

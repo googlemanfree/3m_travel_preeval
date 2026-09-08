@@ -244,6 +244,9 @@ export const adminCandidateManagementRouter = router({
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier. Vérifiez le rattachement par e-mail avant de valider l’évaluation." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier." });
+      if (candidate.evaluationDeclarationStatus === "validated" || candidate.evaluationReviewedAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Cette évaluation est déjà validée par ${candidate.evaluationReviewedBy || "un conseiller"} le ${candidate.evaluationReviewedAt ? new Date(candidate.evaluationReviewedAt).toLocaleString("fr-FR") : "à une date enregistrée"}.` });
+      }
       const reviewedAt = new Date();
       const channelLabel = input.channel === "appel" ? "appel téléphonique" : input.channel === "agence" ? "bureau en agence" : "e-mail";
       const traceNote = `Évaluation validée hors ligne — canal : ${channelLabel} ; conseiller : ${admin.email} ; date : ${reviewedAt.toISOString()}.${input.note?.trim() ? ` Note : ${input.note.trim()}` : ""}`;
@@ -283,6 +286,9 @@ export const adminCandidateManagementRouter = router({
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (candidate.evaluationDeclarationStatus === "not_declared") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Ce candidat n’a pas déclaré d’évaluation externe à vérifier." });
+      }
+      if (candidate.evaluationDeclarationStatus === "validated" && input.decision === "validate") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Cette évaluation est déjà validée par ${candidate.evaluationReviewedBy || "un conseiller"} le ${candidate.evaluationReviewedAt ? new Date(candidate.evaluationReviewedAt).toLocaleString("fr-FR") : "à une date enregistrée"}.` });
       }
       if (input.decision !== "validate" && !input.note?.trim()) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Une note de correction ou de refus est requise." });

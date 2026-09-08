@@ -627,6 +627,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
                               </Button>
                             </>
                           )}
+                          {payment.paymentStatus === "SUCCESS" && <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800" title="Ce paiement est déjà confirmé ; aucune seconde validation n’est nécessaire."><CheckCircle2 className="h-3.5 w-3.5" /> Validé · {payment.validatedBy || "conseiller"}</span>}
                           {payment.paymentStatus === "SUCCESS" && (
                             payment.paymentReceiptDelivery?.status === "failed" ? (
                               <Button

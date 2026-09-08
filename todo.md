@@ -3129,3 +3129,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les obligations de l’agence et du candidat, délais indicatifs, frais officiels distincts, limites de responsabilité, protection documentaire, séquencement et signature après paiement confirmé.
 - [x] Ajouter le modèle manuel du second protocole, distinct du premier, contextualisable par destination, type de procédure et formule choisie, sans envoi automatique.
 - [x] Ajouter la version `2026-09-08-v2` et les tests de contenu, de diffusion et de TypeScript : 15 tests réussis.
+
+## Régressions découvertes par la suite complète — correction ciblée
+- [ ] Corriger l’écart de contrat du footer public et des widgets flottants sans changer la visibilité réelle des composants.
+- [ ] Corriger la version de cache PWA attendue après déploiement frais.
+- [ ] Corriger les assertions de routes de service et d’ancre d’évaluation pour refléter les pages réellement utilisées.
+- [ ] Corriger les tests de pré-dossier et d’accessibilité lorsque le comportement fonctionnel est confirmé par le code actuel.
+- [ ] Rejouer la suite complète et publier uniquement si les corrections sont vérifiées.
+
+## Idempotence des validations administrateur — nouveau lot
+- [x] Cartographier les boutons de validation paiement, évaluation, protocole et étapes de dossier avec leurs statuts persistants. Les champs `paymentStatus/paymentValidatedAt/paymentValidatedBy`, `evaluationDeclarationStatus/evaluationReviewedAt/evaluationReviewedBy` et les approbations de reçu sont utilisés.
+- [x] Refuser côté serveur une seconde validation déjà enregistrée et conserver le conseiller, la date et le motif existants. Les mutations paiement et évaluation hors ligne renvoient désormais une erreur explicite sans créer de nouvelle trace.
+- [x] Désactiver les boutons déjà exécutés et afficher un indicateur vert « Validé » avec date et conseiller dans les fiches admin. Le bouton de confirmation paiement disparaît après succès et l’état vert est affiché ; l’évaluation hors ligne affiche le validateur et la date à la place de l’action.
+- [x] Ajouter les tests d’idempotence, de concurrence entre administrateurs et de rendu des états validés. TypeScript passe et 20 tests ciblés réussissent.
+- [x] Publier et documenter les actions exactes de vérification côté back-office.
