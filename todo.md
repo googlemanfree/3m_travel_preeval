@@ -2774,24 +2774,28 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Audit officiel par lots — Allemagne
 - [x] Contrôler les sources institutionnelles Allemagne pour les catégories visiteur/Schengen, études et travail/visa national.
-- [ ] Intégrer les variantes Allemagne dans le catalogue détaillé uniquement après validation des liens et de la mission compétente.
+- [x] Intégrer les variantes Allemagne dans le catalogue détaillé avec les liens audités ; les branches non couvertes restent conditionnées à la mission compétente.
 
 ## Audit officiel par lots — France
 - [x] Contrôler les sources institutionnelles France-Visas et Diplomatie pour visiteur, études et professionnel.
-- [ ] Intégrer les variantes France dans le catalogue détaillé uniquement avec la branche et le poste compétent appropriés.
+- [x] Intégrer les variantes France dans le catalogue détaillé avec renvoi au visa wizard et au poste compétent.
 
 ## Audit officiel par lots — Belgique
 - [x] Contrôler les sources institutionnelles Belgique pour court séjour, études et travail soumis au permis unique.
-- [ ] Intégrer les variantes Belgique dans le catalogue détaillé selon la région compétente et le poste consulaire applicable.
+- [x] Intégrer les variantes Belgique dans le catalogue détaillé avec renvoi à la région compétente et au poste consulaire applicable.
 
 ## Audit officiel par lots — Suisse
 - [x] Contrôler les sources institutionnelles Suisse pour court séjour Schengen, séjour national et travail soumis à autorisation cantonale.
-- [ ] Intégrer les variantes Suisse dans le catalogue détaillé avec renvoi à l’autorité cantonale et à la représentation compétente.
+- [x] Intégrer les variantes Suisse dans le catalogue détaillé avec renvoi à l’autorité cantonale et à la représentation compétente.
 
 ## Audit officiel par lots — Pays-Bas
 - [x] Contrôler les sources institutionnelles Pays-Bas pour court séjour, études et travail.
-- [ ] Intégrer les variantes Pays-Bas dans le catalogue détaillé selon le visa, le titre de séjour et le permis éventuellement requis.
+- [x] Intégrer les variantes Pays-Bas dans le catalogue détaillé selon le visa, le titre de séjour et le permis éventuellement requis.
 
 ## Intégration des variantes détaillées — premier lot européen
 - [x] Ajouter les parcours détaillés France, Belgique, Suisse et Pays-Bas à partir des sources auditées, sans modifier les parcours Canada/Luxembourg. L’Allemagne reste sur le catalogue source vérifié, sans variante détaillée publiée tant que la branche compétente n’est pas explicitement qualifiée.
 - [x] Ajouter une régression qui vérifie les étapes spécifiques des cinq destinations européennes couvertes et leur source officielle.
+
+## Intégration des variantes détaillées — Allemagne
+- [x] Ajouter les parcours Allemagne Visiteur, Études et Travail à partir des sources Auswärtiges Amt et Federal Foreign Office.
+- [x] Ajouter une régression sur la sélection Allemagne et le maintien du fallback pour les catégories non qualifiées.

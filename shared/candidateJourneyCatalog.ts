@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Allemagne", "Visiteur", "https://www.auswaertiges-amt.de/en/visa-service/215870-215870", [
+    step("visa_type", "Vérifier le type de visa", "Déterminer si le séjour relève d’un court séjour Schengen ou d’un visa national selon la durée et le motif.", ["Nationalité", "Motif", "Durée"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
+    step("application", "Préparer la demande", "Utiliser les instructions du poste allemand compétent et réunir les justificatifs propres au motif.", ["Formulaire", "Passeport", "Justificatifs"], "https://www.germany.info/us-en/service/visa"),
+    step("appointment", "Dépôt et biométrie", "Déposer la demande auprès de la représentation ou du prestataire indiqué.", ["Rendez-vous", "Biométrie si demandée", "Preuve de dépôt"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
+    step("decision", "Suivi de la décision", "Suivre uniquement les notifications de la représentation compétente.", ["Référence", "Notifications"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
+  ]),
+  regional("Allemagne", "Études", "https://www.germany.info/us-en/service/visa", [
+    step("admission", "Admission ou inscription", "Obtenir l’admission et vérifier le type de séjour correspondant à la formation.", ["Admission", "Inscription", "Parcours académique"], "https://www.germany.info/us-en/service/visa"),
+    step("funds", "Ressources et assurance", "Préparer les justificatifs financiers, d’assurance et de logement exigés pour le séjour.", ["Ressources", "Assurance", "Logement"], "https://www.germany.info/us-en/service/visa"),
+    step("national_visa", "Visa national étudiant", "Déposer la demande selon les instructions de la mission allemande compétente.", ["Formulaire", "Passeport", "Admission", "Rendez-vous"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
+    step("arrival", "Formalités après arrivée", "Respecter les formalités de séjour indiquées après la décision et l’entrée.", ["Adresse", "Titre", "Enregistrement"], "https://www.germany.info/us-en/service/visa"),
+  ]),
+  regional("Allemagne", "Travail", "https://www.germany.info/us-en/service/visa/employment-visa-922292", [
+    step("employment", "Employeur et emploi", "Documenter l’employeur, le poste, la qualification et la durée de l’activité.", ["Contrat", "Employeur", "Diplômes", "Expérience"], "https://www.germany.info/us-en/service/visa/employment-visa-922292"),
+    step("qualification", "Qualification et autorisation", "Vérifier si une reconnaissance ou une autorisation professionnelle est requise avant la demande.", ["Reconnaissance si requise", "Autorisation", "Contrat"], "https://www.germany.info/us-en/service/visa/employment-visa-922292"),
+    step("national_visa", "Visa national de travail", "Déposer la demande auprès de la représentation allemande compétente avec les pièces indiquées.", ["Formulaire", "Passeport", "Contrat", "Rendez-vous"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
+    step("residence", "Séjour et installation", "Suivre les formalités de séjour et les conditions fixées par la décision.", ["Adresse", "Titre", "Assurance"], "https://www.germany.info/us-en/service/visa/employment-visa-922292"),
+  ]),
   regional("France", "Visiteur", "https://france-visas.gouv.fr/en/", [
     step("visa_wizard", "Vérification France-Visas", "Utiliser le visa wizard pour vérifier le besoin de visa, le type de séjour et le poste compétent.", ["Situation", "Nationalité", "Motif et dates"], "https://france-visas.gouv.fr/en/"),
     step("online_application", "Demande en ligne", "Compléter la demande officielle et rassembler les justificatifs indiqués par le visa wizard.", ["Formulaire", "Justificatifs du séjour"], "https://france-visas.gouv.fr/en/"),
@@ -202,7 +220,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
