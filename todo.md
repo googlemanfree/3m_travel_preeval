@@ -3143,3 +3143,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Désactiver les boutons déjà exécutés et afficher un indicateur vert « Validé » avec date et conseiller dans les fiches admin. Le bouton de confirmation paiement disparaît après succès et l’état vert est affiché ; l’évaluation hors ligne affiche le validateur et la date à la place de l’action.
 - [x] Ajouter les tests d’idempotence, de concurrence entre administrateurs et de rendu des états validés. TypeScript passe et 20 tests ciblés réussissent.
 - [x] Publier et documenter les actions exactes de vérification côté back-office.
+
+## Nouvelle passe de rédaction du protocole — 3M-AGN-270002
+- [x] Vérifier le contenu actuellement publié dans la source partagée du protocole.
+- [x] Renforcer le protocole initial avec un objet, un périmètre d’accompagnement, les rôles, les délais indicatifs et les limites clairement expliquées.
+- [x] Détailler le déclenchement du second protocole après sélection/validation du candidat, selon pays, type de visa et formule de paiement choisie.
+- [x] Synchroniser le texte admin, espace client, e-mail et PDF sans mention technique destinée au client.
+- [x] Ajouter les tests de contenu, de paiement préalable, de non-garantie et de second protocole, puis publier : 15 tests réussis et TypeScript sans erreur.
