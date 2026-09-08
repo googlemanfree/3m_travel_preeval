@@ -3054,3 +3054,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Ouganda dans le catalogue détaillé avec demande en ligne, passeport de six mois, approbation/biométrie et sponsor organisationnel.
 - [x] Ajouter les sources DCIC et le portail e-Visa au registre officiel.
 - [x] Valider la matrice Ouganda avec les tests ciblés et TypeScript.
+
+## Finalisation européenne — nouveau périmètre demandé
+- [x] Geler l’extension hors Europe et conserver uniquement les destinations européennes déjà auditées.
+- [x] Auditer la couverture des sources officielles et des parcours européens détaillés déjà intégrés.
+- [x] Corriger uniquement les incohérences européennes restantes sans supprimer de données ni de routes. Aucun écart bloquant n’a été trouvé lors de l’audit ; aucune suppression n’a été effectuée.
+- [x] Rejouer les tests ciblés, TypeScript et les contrôles de routage pour la version européenne finale.
+- [x] Publier le périmètre européen final et fournir les URL/actions exactes de vérification.

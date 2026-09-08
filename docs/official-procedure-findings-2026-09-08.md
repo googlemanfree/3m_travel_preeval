@@ -573,3 +573,13 @@ La Tunisie est intégrée avec des étapes vérifiables pour Visiteur et Études
 Le Tourist Visa est une entrée unique pouvant aller jusqu’à trois mois, avec demande en ligne, passeport de six mois, itinéraire, photo et hébergement ; l’approbation doit être utilisée dans les 90 jours et la biométrie intervient avec les pièces et la lettre d’approbation. Le Student Pass concerne les étrangers inscrits dans un établissement et exige notamment carte étudiante, admission, lettre de soutien, preuve de paiement et passeport de six mois. Le Work Permit permet de vivre et travailler et doit être sponsorisé par une organisation ou entreprise dotée d’un code organisationnel.
 ### Règle d’intégration
 L’Ouganda est intégré en trois variantes : Tourist Visa, Student Pass et Work Permit, avec portail officiel, documents obligatoires, approbation et biométrie avant finalisation.
+## Audit final du périmètre européen — 2026-09-08
+
+Le périmètre retenu comprend les destinations européennes déjà détaillées dans le catalogue : Allemagne, Autriche, Belgique, Bulgarie, Croatie, Danemark, Espagne, Estonie, Finlande, France, Grèce, Hongrie, Irlande, Lettonie, Lituanie, Norvège, Pologne, Portugal, Roumanie, Royaume-Uni, Serbie, Slovaquie, Slovénie, Suède, Suisse et Türkiye.
+
+Contrôles exécutés :
+- Registre officialSourceCatalog.ts inspecté pour les pays européens et leurs liens institutionnels.
+- Doublons de clés pays recherchés : aucun doublon européen signalé par le contrôle.
+- URLs du registre contrôlées : les liens vérifiés sont en HTTPS.
+- Parcours candidateJourneyCatalog.ts contrôlés : les destinations européennes détaillées possèdent les variantes Visiteur, Études et Travail, avec sources attachées.
+- Aucun nouveau lot hors Europe n’est ajouté dans cette phase de finalisation.
