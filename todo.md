@@ -3082,3 +3082,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le rendu public, l’accès sans session et la barre progressbar accessible : session publique sans blocage et session candidate réelle affichant 41 % (7/17 étapes).
 - [x] Vérifier le parcours candidat après coche, décochage et actualisation par les tests automatisés et la session réelle en lecture seule. La mutation manuelle n’a pas été déclenchée sur le compte réel afin de préserver ses données.
 - [x] Publier le bilan exact du test complet avec les limites liées aux sessions authentifiées.
+
+## Audit complet des routes du site
+- [x] Inventorier toutes les routes déclarées côté client et serveur, avec leur statut public/protégé. Le sitemap expose 133 URL publiques ; les routes applicatives et API principales sont également recensées.
+- [x] Tester les routes publiques et les redirections sur le domaine de prévisualisation et le domaine public. Les 133 URL du sitemap répondent HTTP 200 sur les deux domaines ; `/evaluation-primaire` redirige vers `/#evaluation-multi`.
+- [x] Tester les routes protégées sans session et relever les comportements attendus ou bloquants. Les shells protégés répondent HTTP 200 ; l’espace candidat affiche l’accès à la connexion sans session. Les mutations admin n’ont pas été exécutées avec une session non autorisée.
+- [x] Vérifier les erreurs 404, 500, erreurs console et échecs réseau associés aux routes. Anomalie confirmée : `/evaluation-rapide-enhanced` renvoie HTTP 404 par curl ; le navigateur avec session aboutit à `/#evaluation-multi`. Les journaux récents ne montrent pas d’erreur serveur active, mais contiennent 2 erreurs historiques de compilation et des traces réseau anciennes.
+- [x] Publier un rapport exact des routes testées, résultats, anomalies et limites d’accès dans `docs/routes-audit-2026-09-08.md`. La suite de régression de routes a produit 23 tests réussis sur 24 ; l’échec restant concerne l’attente de la mention légale dans le pré-rendu `/procedures`, qui n’est pas injectée dans ce fallback.
