@@ -389,10 +389,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Slovaquie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires étrangères et européennes de la République slovaque — Visiteur, études, travail —",
-        "url": "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr"
-      }
+      { "label": "Ministère slovaque — Visas pour entrer en République slovaque", "url": "https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr" },
+      { "label": "Ministère de l’Intérieur — Visa national", "url": "https://www.minv.sk/?application-for-national-visa-1" },
+      { "label": "EU Immigration Portal — Étudiant en Slovaquie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovakia_en" },
+      { "label": "EU Immigration Portal — Travailleur salarié en Slovaquie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovakia_en" }
     ]
   },
   "slovenie": {

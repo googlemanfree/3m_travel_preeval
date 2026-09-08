@@ -59,6 +59,7 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Irlande", "Travail", "irishimmigration.ie"],
       ["Grèce", "Travail", "home-affairs.ec.europa.eu"],
       ["Croatie", "Travail", "mvep.gov.hr"],
+      ["Slovaquie", "Travail", "home-affairs.ec.europa.eu"],
       ["Roumanie", "Travail", "home-affairs.ec.europa.eu"],
       ["Slovénie", "Travail", "europa.eu"],
       ["Estonie", "Travail", "europa.eu"],

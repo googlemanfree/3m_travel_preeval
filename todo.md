@@ -2879,3 +2879,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Hongrie
 - [x] Contrôler les sources institutionnelles hongroises pour court séjour Schengen, études et travail.
 - [x] Intégrer les variantes Hongrie dans le catalogue détaillé avec distinction visa C, Enter Hungary, titre d’études et permis unique/autorisation d’emploi.
+
+## Audit officiel par lots — Slovaquie
+- [x] Contrôler les sources institutionnelles slovaques pour court séjour, visa national, études et travail.
+- [x] Intégrer les variantes Slovaquie dans le catalogue détaillé avec distinction visa C, visa D, résidence temporaire études et permis unique/permis de travail.

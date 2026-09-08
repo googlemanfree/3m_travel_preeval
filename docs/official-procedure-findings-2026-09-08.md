@@ -291,3 +291,14 @@ Le parcours Bulgarie doit distinguer visa C Schengen de court séjour, visa D de
 ### Règle d’intégration
 
 Le parcours Hongrie doit séparer visa C de court séjour, séjour d’études et travail salarié soumis à titre ou permis approprié. Un court séjour ne doit jamais être présenté comme un droit de travailler, d’étudier à long terme ou de s’installer. Les démarches Enter Hungary, l’admission et l’employeur doivent apparaître uniquement dans les variantes concernées.
+
+## Slovaquie — vingt-sixième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign and European Affairs of the Slovak Republic — Visas for foreigners** : https://www.mzv.sk/en/services/information-for-foreigners/visas-for-foreigners-to-enter-sr. Le visa C Schengen couvre en principe un séjour jusqu’à 90 jours sur 180 ; au-delà, un visa national D ou un permis de séjour peut être nécessaire. La représentation compétente dépend de la destination principale et de la résidence.
+- **Ministry of Interior — Application for national visa** : https://www.minv.sk/?application-for-national-visa-1. Le visa national slovaque concerne notamment des séjours de plus de trois mois, avec formulaire officiel, document justifiant le but du séjour et assurance ; l’ambassade ou la Police des frontières compétente statue selon le cas.
+- **EU Immigration Portal — Student in Slovakia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-slovakia_en. Les études supposent l’inscription dans un établissement et un séjour temporaire pour études ; l’application personnelle, les traductions/authentifications et le signalement après arrivée sont des éléments à vérifier.
+- **EU Immigration Portal — Employed worker in Slovakia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-slovakia_en. Le travail peut relever d’un permis unique, d’un permis de travail avec résidence temporaire ou d’une exemption ; l’employeur et le Labour Office interviennent, notamment pour la vacance et la confirmation d’emploi.
+
+### Règle d’intégration
+
+Le parcours Slovaquie doit distinguer court séjour C, visa national D, résidence temporaire pour études et permis unique ou permis de travail. Un visa C ne doit pas être présenté comme un droit d’installation, d’études longues ou de travail. Les délais, traductions, authentifications et obligations après arrivée doivent rester liés à la variante et à la source officielle applicables.
