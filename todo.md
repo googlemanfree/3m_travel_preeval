@@ -2988,3 +2988,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Nigeria dans le catalogue détaillé avec interdiction d’emploi sous F5A et pré-approbation obligatoire pour R11.
 - [x] Ajouter les sources NIS au registre officiel.
 - [x] Valider la matrice Nigeria avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Ghana
+- [x] Contrôler les sources Ghana Immigration Service pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Ghana dans le catalogue détaillé avec lettre d’acceptation étudiant, contrat/quota d’emploi et restriction du travail sous visiteur.
+- [x] Ajouter les sources GIS au registre officiel.
+- [x] Valider la matrice Ghana avec les tests ciblés et TypeScript.

@@ -477,3 +477,12 @@ Le Pérou est intégré avec les parcours Visiteur, Études et Travail/affaires 
   - Approbation préalable du Comptroller General, lettre d’autorité, demande en ligne et tâches spécialisées/projet limité ; permis de travail de six mois à entrées multiples.
 ### Règle d’intégration
 Le Nigeria est intégré en trois variantes : Tourism Visa F5A, Student Visa R7A et Temporary Work Permit R11, sans autoriser l’emploi sous F5A et avec pré-approbation obligatoire pour R11.
+
+## Lot Ghana — sources officielles consultées
+- Ghana Immigration Service — Visas : https://gis.gov.gh/visas/
+- Ghana Immigration Service — Permits and Visas : https://gis.gov.gh/permits-and-visas/
+- Ghana Immigration Service — Visa/Permit Extension : https://gis.gov.gh/service/visa-permit-extension/
+### Faits vérifiables
+Le Ghana distingue les visas délivrés hors du pays et les visas délivrés au Ghana ; une visa n’est pas une garantie d’entrée. Les demandes d’études exigent une lettre d’acceptation de l’établissement ghanéen et les demandes d’emploi un contrat ainsi qu’une preuve de quota d’emploi. L’emploi est restreint sous permis visiteur.
+### Règle d’intégration
+Le Ghana est intégré en trois variantes : Visiteur, Études et Travail, avec contrôle du statut, lettre d’acceptation pour études, contrat/quota pour emploi et vérification des conditions d’entrée, sans inventer de sous-catégorie non publiée par GIS.

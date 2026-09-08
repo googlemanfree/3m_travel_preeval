@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "ghana": {
+    "country": "Ghana",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ghana Immigration Service — Visas", "url": "https://gis.gov.gh/visas/" },
+      { "label": "Ghana Immigration Service — Permits and Visas", "url": "https://gis.gov.gh/permits-and-visas/" },
+      { "label": "Ghana Immigration Service — Visa/Permit Extension", "url": "https://gis.gov.gh/service/visa-permit-extension/" }
+    ]
+  },
   "nigeria": {
     "country": "Nigeria",
     "verificationStatus": "verified",

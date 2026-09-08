@@ -902,6 +902,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("documents", "Pièces et demande", "Préparer passeport valide, billet de sortie et déposer la demande en ligne auprès de l’ambassade.", ["Passeport", "Billet", "Ambassade", "Demande"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
     step("scope_and_validity", "Périmètre du permis", "Limiter l’activité aux services spécialisés ou au projet approuvé ; le permis R11 est prévu pour six mois à entrées multiples.", ["Projet", "Expert", "Six mois", "Conditions"], "https://immigration.gov.ng/info-center/temporary-work-permit-6-months-r11/"),
   ]),
+  regional("Ghana", "Visiteur", "https://gis.gov.gh/visas/", [
+    step("visa_status", "Vérifier le régime de visa", "Déterminer si la nationalité est exemptée, soumise à visa consulaire, ou éligible à une procédure d’arrivée selon le régime GIS.", ["Nationalité", "Exemption", "Visa", "GIS"], "https://gis.gov.gh/visas/"),
+    step("documents", "Préparer les justificatifs d’entrée", "Réunir passeport valable au moins six mois, photos récentes, itinéraire ou billet retour et certificat international de vaccination contre la fièvre jaune.", ["Passeport", "Photos", "Billet", "Vaccination"], "https://gis.gov.gh/permits-and-visas/"),
+    step("application", "Demande auprès de la mission ou du GIS", "Déposer auprès de la mission ghanéenne compétente ou suivre la procédure officielle d’arrivée lorsque celle-ci s’applique.", ["Mission", "GIS", "Demande", "Frais"], "https://gis.gov.gh/visas/"),
+    step("visitor_limits", "Conditions du permis visiteur", "Respecter la durée et les conditions d’entrée ; l’emploi est restreint sous permis visiteur et toute extension suit une demande GIS distincte.", ["Séjour", "Travail", "Extension", "Conditions"], "https://gis.gov.gh/service/visa-permit-extension/"),
+  ]),
+  regional("Ghana", "Études", "https://gis.gov.gh/permits-and-visas/", [
+    step("institution_letter", "Lettre de l’établissement", "Obtenir une lettre de l’établissement au Ghana indiquant le but des études et une lettre d’acceptation.", ["Établissement", "Acceptation", "Programme", "Lettre"], "https://gis.gov.gh/permits-and-visas/"),
+    step("financial_support", "Moyens financiers", "Fournir la lettre de la mission ou de l’établissement indiquant les moyens financiers disponibles pendant le séjour.", ["Ressources", "Sponsor", "Séjour", "Preuve"], "https://gis.gov.gh/permits-and-visas/"),
+    step("entry_documents", "Pièces d’entrée", "Préparer passeport, photos, billet retour, certificat de vaccination et autres pièces générales exigées par GIS.", ["Passeport", "Photos", "Billet", "Vaccination"], "https://gis.gov.gh/permits-and-visas/"),
+    step("application_decision", "Demande et décision", "Déposer auprès de la mission compétente, payer les frais et respecter le statut accordé pour les études.", ["Mission", "Frais", "Décision", "Études"], "https://gis.gov.gh/visas/"),
+  ]),
+  regional("Ghana", "Travail", "https://gis.gov.gh/permits-and-visas/", [
+    step("employment_contract", "Contrat d’emploi", "Obtenir un contrat de travail et vérifier que l’emploi proposé correspond à la demande d’emploi officielle.", ["Contrat", "Employeur", "Poste", "Travail"], "https://gis.gov.gh/permits-and-visas/"),
+    step("employment_quota", "Quota d’emploi", "Fournir la preuve du Grant of Employment Quota au Ghana avant de présenter la demande.", ["Quota", "Employeur", "Autorisation", "Preuve"], "https://gis.gov.gh/permits-and-visas/"),
+    step("entry_documents", "Pièces générales", "Préparer le formulaire, passeport, photos, billet retour, vaccination et les justificatifs supplémentaires exigés par la mission.", ["Formulaire", "Passeport", "Photos", "Billet"], "https://gis.gov.gh/permits-and-visas/"),
+    step("application_decision", "Demande et décision", "Déposer auprès de la mission ghanéenne compétente et ne commencer l’activité qu’après la décision et les autorisations requises.", ["Mission", "Décision", "Autorisation", "Conditions"], "https://gis.gov.gh/permits-and-visas/"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -923,7 +941,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "nigeria", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
