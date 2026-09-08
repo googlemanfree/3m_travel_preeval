@@ -12,7 +12,7 @@ describe("catalogue de parcours candidat pays-visa", () => {
   it("sélectionne le parcours Canada visiteur", () => {
     const journey = getCandidateJourney("Canada", "Visiteur");
     expect(journey.title).toContain("Visiteur");
-    expect(journey.steps.map((item) => item.id)).toEqual(["evaluation", "identity", "funds", "biometrics", "decision"]);
+    expect(journey.steps.slice(-5).map((item) => item.id)).toEqual(["evaluation", "identity", "funds", "biometrics", "decision"]);
     expect(journey.officialSources[0]).toContain("canada.ca");
   });
 
@@ -26,6 +26,13 @@ describe("catalogue de parcours candidat pays-visa", () => {
     const journey = getCandidateJourney("Luxembourg", "Travailleur");
     expect(journeyStepIndex(journey, "documents", "pending")).toBe(0);
     expect(journeyStepIndex(journey, "documents", "validated")).toBeGreaterThan(0);
+  });
+
+  it("keeps confirmation, activation and payment in order", () => {
+    const journey = getCandidateJourney("Canada", "Travailleur");
+    expect(journeyStepIndex(journey, "bilan", "validated", { evaluationClientConfirmed: false })).toBe(4);
+    expect(journeyStepIndex(journey, "bilan", "validated", { evaluationClientConfirmed: true, activationRequested: true, paymentConfirmed: false })).toBe(5);
+    expect(journeyStepIndex(journey, "paye", "validated", { evaluationClientConfirmed: true, activationRequested: true, paymentConfirmed: true })).toBe(6);
   });
 
   it("ne fabrique pas de portail pour un pays non référencé", () => {

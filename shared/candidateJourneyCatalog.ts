@@ -141,13 +141,20 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
   ]), officialSources: officialSource ? [officialSource] : [] };
 }
 
-export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: string | null, evaluationStatus?: string | null) {
+export type JourneyMilestones = {
+  evaluationClientConfirmed?: boolean;
+  activationRequested?: boolean;
+  paymentConfirmed?: boolean;
+};
+
+export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: string | null, evaluationStatus?: string | null, milestones?: JourneyMilestones) {
   const status = normalize(dossierStatus);
   if (evaluationStatus !== "validated" && journey.steps[0]) return 0;
   if (is(status, "nouveau", "evaluation", "en evaluation")) return 1;
-  if (is(status, "bilan")) return 4;
+  if (is(status, "bilan")) return milestones?.evaluationClientConfirmed ? 5 : 4;
+  if (milestones?.activationRequested && !milestones.paymentConfirmed) return 5;
+  if (milestones?.paymentConfirmed || is(status, "paye", "payment")) return 6;
   if (is(status, "attente paiement", "en attente paiement", "paiement")) return 5;
-  if (is(status, "paye", "payment")) return 6;
   if (is(status, "document", "documents")) return 7;
   if (is(status, "soumis", "en cours", "recrutement", "adem")) return 9;
   if (is(status, "contrat")) return 10;

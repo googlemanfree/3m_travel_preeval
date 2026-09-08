@@ -13,10 +13,13 @@ type Props = {
   procedureLabel?: string | null;
   dossierStatus?: string | null;
   evaluationStatus?: string | null;
+  evaluationClientConfirmed?: boolean;
+  activationRequested?: boolean;
+  paymentConfirmed?: boolean;
   documents?: Array<{ documentName?: string | null; documentType?: string | null; documentUrl?: string | null; verificationStatus?: string | null }>;
 };
 
-export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, documents = [] }: Props) {
+export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, evaluationClientConfirmed, activationRequested, paymentConfirmed, documents = [] }: Props) {
   const [previewDocument, setPreviewDocument] = useState<{ title: string; url: string; fileType: string } | null>(null);
   const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
   const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -30,7 +33,7 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
     title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
     steps: catalogueProcedure.steps.map((label, index) => ({ id: `${catalogueProcedure.id}-${index + 1}`, label, description: "Étape de préparation issue du guide de procédure associé. Vérifiez toujours la version et les exigences du portail institutionnel.", requiredInputs: catalogueProcedure.requiredDocuments.flatMap((group) => group.documents).slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2), documents: catalogueProcedure.requiredDocuments.flatMap((group) => group.documents).slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2).map((input, documentIndex) => ({ id: `${catalogueProcedure.id}-${index + 1}-document-${documentIndex + 1}`, label: input, kind: "to_prepare" as const, sourceUrl: baseJourney.officialSources[0] ?? "" })), sourceUrl: baseJourney.officialSources[0] ?? "" })),
   } : baseJourney;
-  const currentIndex = journeyStepIndex(journey, dossierStatus, evaluationStatus);
+  const currentIndex = journeyStepIndex(journey, dossierStatus, evaluationStatus, { evaluationClientConfirmed, activationRequested, paymentConfirmed });
   const normalizedDocument = (value: string | null | undefined) => normalize(value).replace(/document|piece|justificatif/g, "").trim();
   const documentsForStep = (stepDocuments: JourneyDocument[]) => documents.filter((document) => stepDocuments.some((expected) => {
     const expectedKey = normalizedDocument(expected.label);
