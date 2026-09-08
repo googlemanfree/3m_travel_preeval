@@ -496,3 +496,13 @@ Le Ghana est intégré en trois variantes : Visiteur, Études et Travail, avec c
   - Les demandes de permis et passes se font en ligne via eFNS et les documents sont téléversés puis le permis imprimé pour endossement.
 ### Règle d’intégration
 Le Kenya est intégré en trois variantes : eTA Visiteur, Student’s Pass et Work Permit/Pass, avec exemptions eTA contrôlées selon les règles officielles et dépôt eFNS pour études/travail.
+
+## Lot Tanzanie — sources officielles consultées
+- Tanzania Immigration Department — eVisa Guidelines : https://visa.immigration.go.tz/guidelines
+- Tanzania Immigration Department — Ordinary Visa : https://www.immigration.go.tz/index.php/types-of-visa/ordinary-visa
+- Tanzania Immigration Department — Student Visa : https://www.immigration.go.tz/index.php/types-of-visa/student-visa
+- Tanzania Immigration e-Services — Residence Permit : https://eservices.immigration.go.tz/online/web/permit
+### Faits vérifiables
+La demande de visa peut être effectuée en ligne sur le portail officiel ou à l’arrivée lorsque la catégorie et la nationalité le permettent ; le passeport doit être valide au moins six mois avec une page vierge et les visiteurs doivent présenter un billet retour. Le portail prévoit le suivi de la demande et la notification Visa Grant Notice, qui ne constitue pas à elle seule une garantie d’entrée. Les demandes de séjour étudiant et de permis de résidence/travail doivent suivre les services officiels d’immigration.
+### Règle d’intégration
+La Tanzanie est intégrée en trois variantes : Visiteur/Ordinary Visa, Études/Student Visa et Travail/Résidence-Permit, avec contrôle de catégorie, dépôt officiel et vérification des restrictions de nationalité ou de referral visa sans inventer d’étapes non publiées.

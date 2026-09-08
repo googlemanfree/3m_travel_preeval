@@ -938,6 +938,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("review_decision", "Instruction et émission", "Attendre le traitement des services d’immigration et ne pas commencer l’activité avant l’émission du permis approprié.", ["Instruction", "Décision", "Employeur", "Autorisation"], "https://immigration.go.ke/work-permits-and-passes/"),
     step("endorsement", "Impression et endossement", "Imprimer le permis ou pass depuis eFNS après émission et le présenter au bureau d’immigration pour endossement.", ["Impression", "eFNS", "Endossement", "Permis"], "https://immigration.go.ke/work-permits-and-passes/"),
   ]),
+  regional("Tanzanie", "Visiteur", "https://visa.immigration.go.tz/guidelines", [
+    step("visa_category", "Choisir la catégorie officielle", "Sélectionner la catégorie adaptée à la visite et vérifier les règles de nationalité, d’exemption ou de referral visa.", ["Catégorie", "Nationalité", "Exemption", "Referral"], "https://visa.immigration.go.tz/guidelines"),
+    step("documents", "Préparer les pièces", "Réunir passeport valide au moins six mois avec page vierge, photo, billet retour et justificatifs requis.", ["Passeport", "Photo", "Billet", "Pièces"], "https://visa.immigration.go.tz/guidelines"),
+    step("online_application", "Déposer la demande officielle", "Déposer en ligne sur le portail officiel ou à l’arrivée uniquement lorsque la catégorie et la nationalité le permettent.", ["eVisa", "Portail", "Arrivée", "Paiement"], "https://visa.immigration.go.tz/guidelines"),
+    step("grant_and_entry", "Grant Notice et entrée", "Suivre la demande, attendre la notification officielle et présenter les conditions d’entrée ; le Visa Grant Notice ne garantit pas à lui seul l’admission.", ["Suivi", "Notification", "Entrée", "Contrôle"], "https://visa.immigration.go.tz/guidelines"),
+  ]),
+  regional("Tanzanie", "Études", "https://www.immigration.go.tz/index.php/types-of-visa/student-visa", [
+    step("student_category", "Vérifier le Student Visa", "Confirmer que le projet académique ou de recherche relève de la catégorie Student Visa publiée par l’Immigration Department.", ["Études", "Recherche", "Catégorie", "Institution"], "https://www.immigration.go.tz/index.php/types-of-visa/student-visa"),
+    step("institution_documents", "Préparer les documents institutionnels", "Réunir l’admission et les pièces de l’établissement selon les exigences officielles en vigueur.", ["Admission", "Établissement", "Programme", "Pièces"], "https://visa.immigration.go.tz/guidelines"),
+    step("online_submission", "Dépôt et paiement", "Créer la demande officielle, téléverser la photo et les justificatifs, payer les frais et soumettre le dossier.", ["Portail", "Téléversement", "Paiement", "Soumission"], "https://visa.immigration.go.tz/guidelines"),
+    step("decision_and_status", "Décision et statut étudiant", "Suivre la notification et respecter le statut accordé avant de commencer les études ou toute activité connexe.", ["Décision", "Notification", "Statut", "Conditions"], "https://www.immigration.go.tz/index.php/types-of-visa/student-visa"),
+  ]),
+  regional("Tanzanie", "Travail", "https://eservices.immigration.go.tz/online/web/permit", [
+    step("permit_category", "Identifier le permis de résidence", "Déterminer la classe de résidence et de travail correspondant à l’emploi ou à l’activité prévue.", ["Résidence", "Travail", "Classe", "Activité"], "https://eservices.immigration.go.tz/online/web/permit"),
+    step("employer_documents", "Préparer les justificatifs", "Réunir contrat, pièces de l’employeur et autres documents exigés par l’Immigration Department pour la classe choisie.", ["Contrat", "Employeur", "Pièces", "Classe"], "https://eservices.immigration.go.tz/online/web/permit"),
+    step("online_permit", "Déposer le permis en ligne", "Créer un compte sur l’e-Service officiel, déposer la demande, payer les frais et suivre l’instruction.", ["Compte", "Dépôt", "Paiement", "Suivi"], "https://eservices.immigration.go.tz/online/web/permit"),
+    step("approval_before_work", "Décision avant activité", "Attendre l’émission du permis approprié et ne commencer l’activité qu’après l’autorisation officielle.", ["Décision", "Permis", "Autorisation", "Emploi"], "https://eservices.immigration.go.tz/online/web/permit"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -959,7 +977,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

@@ -3000,3 +3000,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Kenya dans le catalogue détaillé avec exemptions eTA, Student’s Pass et dépôt eFNS pour permis de travail.
 - [x] Fusionner l’entrée Kenya du registre officiel et supprimer le doublon de clé sans modifier les autres pays.
 - [x] Valider la matrice Kenya avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Tanzanie
+- [x] Contrôler les sources Tanzania Immigration pour Ordinary Visa, Student Visa et permis de résidence/travail.
+- [x] Intégrer les variantes Tanzanie dans le catalogue détaillé avec contrôle de catégorie, referral visa, Visa Grant Notice et e-Services de permis.
+- [x] Ajouter les sources Immigration Department et e-Services au registre officiel.
+- [x] Valider la matrice Tanzanie avec les tests ciblés et TypeScript.

@@ -314,6 +314,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "tanzanie": {
+    "country": "Tanzanie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Tanzania Immigration — eVisa Guidelines", "url": "https://visa.immigration.go.tz/guidelines" },
+      { "label": "Tanzania Immigration — Student Visa", "url": "https://www.immigration.go.tz/index.php/types-of-visa/student-visa" },
+      { "label": "Tanzania Immigration e-Services — Residence Permit", "url": "https://eservices.immigration.go.tz/online/web/permit" }
+    ]
+  },
   "kenya": {
     "country": "Kenya",
     "verificationStatus": "verified",
