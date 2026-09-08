@@ -52,3 +52,13 @@ Pour la France, le produit peut publier la séquence portail → demande → ren
 ### Règle d’intégration
 
 Pour la Belgique, le parcours peut distinguer court séjour Schengen, études de plus de 90 jours et travail salarié soumis au permis unique. La région compétente, le poste consulaire et la nationalité de l’intéressé peuvent modifier les pièces et les modalités ; l’interface doit donc renvoyer vers la source et afficher les exigences exactes sans les généraliser.
+
+## Suisse — quatrième lot de sources institutionnelles consultées
+
+- **SEM — Working in Switzerland** : https://www.sem.admin.ch/sem/en/home/overview-arbeit.html. La page indique qu’un ressortissant étranger ne peut pas travailler sans autorisation. Pour les ressortissants de pays tiers, l’employeur doit déposer la demande, les permis sont limités et les candidats doivent en général être hautement qualifiés ; une inscription auprès de l’autorité du lieu de résidence est requise avant de commencer l’emploi.
+- **Représentation suisse / SEM — Visa, entrée et séjour** : https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland. La page distingue le visa Schengen jusqu’à 90 jours, le visa national au-delà de 90 jours soumis à l’autorité cantonale, et les autorisations cantonales nécessaires pour le travail.
+- **Confédération suisse — Visas pour ressortissants étrangers** : https://www.ch.ch/en/foreign-nationals-in-switzerland/entry-and-stay-in-switzerland/visas-for-foreign-nationals/. Cette page est institutionnelle, mais l’extraction textuelle disponible était minimale ; elle doit être utilisée comme point d’entrée et non comme source détaillée isolée.
+
+### Règle d’intégration
+
+Pour la Suisse, le parcours doit distinguer court séjour Schengen, séjour national de plus de 90 jours et travail soumis à autorisation cantonale. Pour les pays tiers, aucune étape ne doit présenter un emploi comme acquis : l’employeur, l’autorité cantonale et, le cas échéant, le visa conditionnent la suite. Les modalités exactes doivent renvoyer à l’autorité cantonale et à la représentation compétente.

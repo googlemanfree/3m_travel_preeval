@@ -2783,3 +2783,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Belgique
 - [x] Contrôler les sources institutionnelles Belgique pour court séjour, études et travail soumis au permis unique.
 - [ ] Intégrer les variantes Belgique dans le catalogue détaillé selon la région compétente et le poste consulaire applicable.
+
+## Audit officiel par lots — Suisse
+- [x] Contrôler les sources institutionnelles Suisse pour court séjour Schengen, séjour national et travail soumis à autorisation cantonale.
+- [ ] Intégrer les variantes Suisse dans le catalogue détaillé avec renvoi à l’autorité cantonale et à la représentation compétente.
