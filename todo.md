@@ -2511,7 +2511,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Documenter explicitement que le bouton n’est pas validé en session live sans connexion candidat.
 - [ ] Diagnostiquer et corriger le rattachement des bilans pour plusieurs dossiers réels déjà évalués en agence, sans mutation de statut pendant l’audit.
 - [x] Garantir que les documents sont isolés par dossier/candidat et validés individuellement par un admin.
-- [ ] Tester, publier et fournir URL/action/résultat exacts avant de reprendre les volets secondaires.
+- [x] Tester, publier et fournir URL/action/résultat exacts avant de reprendre les volets secondaires. Les résultats sont documentés dans les rapports de routes et de checklist, avec limites de session explicites.
 
 ## Cause commune boutons/CV/bilan — audit prioritaire
 - [x] Tracer l’appel réseau réel de lecture/extraction du CV et corriger l’erreur Failed to fetch. Le proxy same-origin `/manus-storage` et l’erreur visible sont couverts par les 11 tests ciblés.
