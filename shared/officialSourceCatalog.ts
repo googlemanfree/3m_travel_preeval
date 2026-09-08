@@ -108,10 +108,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Estonie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Politsei- ja Piirivalveamet (Police and Border Guard Board) — Travail, études et séjour —",
-        "url": "https://www.politsei.ee/en"
-      }
+      { "label": "Estonian Ministry of Foreign Affairs — Schengen visa", "url": "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa" },
+      { "label": "Estonian Ministry of Foreign Affairs — Long-stay D visa", "url": "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa" },
+      { "label": "Police and Border Guard Board — Residence permit for study", "url": "https://www.politsei.ee/en/instructions/residence-permit-for-study" },
+      { "label": "EU Immigration Portal — Employed worker in Estonia", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en" }
     ]
   },
   "etats unis": {

@@ -237,3 +237,14 @@ Le parcours Roumanie doit distinguer visa Schengen C court séjour, visa nationa
 ### Règle d’intégration
 
 Le parcours Slovénie doit distinguer court séjour Schengen, permis temporaire d’études et permis unique de travail. Les personnes UE/EEE et les ressortissants de pays tiers ne doivent pas recevoir les mêmes exigences ; le poste diplomatique ou l’unité administrative compétente doit rester visible.
+
+## Estonie — vingt-et-unième lot de sources institutionnelles consultées
+
+- **Ministry of Foreign Affairs — Schengen visa** : https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa. Le visa C couvre un court séjour jusqu’à 90 jours sur 180 ; la demande relève de la destination principale et le dépôt se fait en personne auprès de la représentation compétente.
+- **Ministry of Foreign Affairs — Visa D** : https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa. Le visa D peut couvrir jusqu’à 365 jours selon le motif et la demande se fait en personne ; les pièces varient selon études, emploi et autre motif.
+- **Police and Border Guard Board — Residence permit for study** : https://www.politsei.ee/en/instructions/residence-permit-for-study. Les études à temps plein dans un établissement reconnu peuvent nécessiter un permis de séjour d’études pour les ressortissants de pays tiers ; admission, ressources, assurance et enregistrement de résidence sont contrôlés.
+- **EU Immigration Portal — Employed worker in Estonia** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en. Le travail peut reposer sur un enregistrement d’emploi de courte durée ou un permis temporaire d’emploi ; l’employeur et le Police and Border Guard Board interviennent, avec des critères de salaire et éventuellement de quota.
+
+### Règle d’intégration
+
+Le parcours Estonie doit distinguer visa C Schengen, visa D, permis d’études et emploi de courte durée ou permis de travail. Un visa touristique ne doit pas être présenté comme un droit général de travailler ou d’étudier ; la mission diplomatique et le Police and Border Guard Board compétents doivent rester visibles.

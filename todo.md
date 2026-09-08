@@ -2859,3 +2859,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Slovénie
 - [x] Contrôler les sources institutionnelles slovènes pour court séjour, études et travail.
 - [x] Intégrer les variantes Slovénie dans le catalogue détaillé avec distinction Schengen, permis d’études et permis unique de travail, en séparant UE/EEE et pays tiers.
+
+## Audit officiel par lots — Estonie
+- [x] Contrôler les sources institutionnelles estoniennes pour court séjour, visa D, études et travail.
+- [x] Intégrer les variantes Estonie dans le catalogue détaillé avec distinction visa C, visa D, permis d’études et emploi court/emploi soumis à permis.

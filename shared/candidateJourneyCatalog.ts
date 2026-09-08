@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Estonie", "Visiteur", "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa", [
+    step("visa_c", "Vérifier le visa Schengen C", "Déterminer si l’Estonie est la destination principale et si un visa C est requis pour un séjour de 90 jours maximum sur 180.", ["Nationalité", "Destination principale", "Durée"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa"),
+    step("application", "Dépôt auprès de la représentation compétente", "Remplir, imprimer et déposer la demande en personne auprès de la représentation estonienne ou de l’État représentant l’Estonie.", ["Formulaire", "Passeport", "Rendez-vous", "Biométrie"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa"),
+    step("documents", "Pièces du court séjour", "Réunir motif, hébergement, moyens, assurance médicale Schengen et justificatifs complémentaires demandés.", ["Motif", "Hébergement", "Ressources", "Assurance"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa"),
+    step("decision", "Décision et entrée", "Suivre la décision ; le visa C ne constitue pas un permis général d’études, de travail ou d’installation.", ["Référence", "Notifications", "Documents"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-schengen-visa"),
+  ]),
+  regional("Estonie", "Études", "https://www.politsei.ee/en/instructions/residence-permit-for-study", [
+    step("admission", "Admission à temps plein", "Choisir un établissement reconnu et obtenir la confirmation d’admission ou d’inscription au programme.", ["Admission", "Programme", "Inscription"], "https://www.politsei.ee/en/instructions/residence-permit-for-study"),
+    step("visa_d", "Visa D si nécessaire", "Déterminer avec la représentation compétente si un visa long séjour D est requis avant l’entrée.", ["Passeport", "Formulaire", "Assurance", "Ressources"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa"),
+    step("residence", "Permis de séjour pour études", "Déposer la demande auprès de la représentation ou du Police and Border Guard Board selon la situation juridique d’entrée.", ["Admission", "Assurance", "Ressources", "Casier"], "https://www.politsei.ee/en/instructions/residence-permit-for-study"),
+    step("registration", "Installation et maintien", "S’installer, enregistrer la résidence et maintenir les études à temps plein pour conserver le permis.", ["Adresse", "Permis", "Progression"], "https://www.politsei.ee/en/instructions/residence-permit-for-study"),
+  ]),
+  regional("Estonie", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en", [
+    step("employment_basis", "Choisir la base d’emploi", "Déterminer si l’emploi relève d’un enregistrement de courte durée ou d’un permis temporaire de séjour pour emploi.", ["Employeur", "Poste", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
+    step("short_term_registration", "Enregistrement emploi court", "Pour un emploi temporaire, l’employeur doit enregistrer l’emploi auprès du Police and Border Guard Board avant le début du travail.", ["Employeur", "Contrat", "Enregistrement"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
+    step("visa_or_residence", "Visa D ou permis d’emploi", "Déposer la demande appropriée selon la durée, la base de séjour, les critères de salaire et les éventuels quotas.", ["Passeport", "Contrat", "Assurance", "Ressources"], "https://vm.ee/en/consular-visa-and-travel-information/visa-information/application-long-stay-d-visa"),
+    step("residence_registration", "Enregistrement après arrivée", "Après l’entrée, enregistrer la résidence et respecter les conditions liées à l’employeur et au permis.", ["Adresse", "Permis", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-estonia_en"),
+  ]),
   regional("Slovénie", "Visiteur", "https://www.gov.si/en/topics/entry-and-residence/", [
     step("visa_c", "Vérifier le court séjour Schengen", "Déterminer selon la nationalité et la durée si un visa Schengen est requis pour entrer en Slovénie.", ["Nationalité", "Durée", "Motif"], "https://www.gov.si/en/topics/entry-and-residence/"),
     step("application", "Formulaire de visa", "Remplir le formulaire officiel, l’imprimer et le déposer auprès de l’ambassade ou du centre compétent.", ["Formulaire", "Passeport", "Rendez-vous"], "https://www.gov.si/en/registries/services/electronic-visa-application-form/"),
@@ -490,7 +508,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "roumanie", "slovenie", "estonie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
