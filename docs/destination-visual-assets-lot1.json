@@ -1,0 +1,106 @@
+{
+  "generated_at": "2026-09-09",
+  "license_note": "Each item retains Wikimedia Commons attribution metadata.",
+  "assets": {
+    "canada": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-canada.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:122_-_Toronto_-_Septembre_2009.jpg",
+      "source_title": "File:122 - Toronto - Septembre 2009.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/122_-_Toronto_-_Septembre_2009.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 16700,
+      "height": 4478,
+      "artist": "Martin St-Amant (<a href=\"//commons.wikimedia.org/wiki/User:S23678\" title=\"User:S23678\">S23678</a>)",
+      "license": "CC BY-SA 3.0"
+    },
+    "luxembourg": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-luxembourg.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Luxembourg,_pont_Adolphe_et_City_Skyliner_(1).jpg",
+      "source_title": "File:Luxembourg, pont Adolphe et City Skyliner (1).jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Luxembourg%2C_pont_Adolphe_et_City_Skyliner_%281%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 5431,
+      "height": 3621,
+      "artist": "<a href=\"//commons.wikimedia.org/wiki/User:GilPe\" title=\"User:GilPe\">GilPe</a>",
+      "license": "CC BY-SA 3.0"
+    },
+    "france": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-france.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Eiffel_Tower_from_Champ-de-Mars,_Paris_26_May_2017.jpg",
+      "source_title": "File:Eiffel Tower from Champ-de-Mars, Paris 26 May 2017.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Eiffel_Tower_from_Champ-de-Mars%2C_Paris_26_May_2017.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 5600,
+      "height": 3971,
+      "artist": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/7138083@N04\">xiquinhosilva</a> from Cacau",
+      "license": "CC BY 2.0"
+    },
+    "belgium": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-belgium.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:GRAND_PLACE_AT_NIGHT_-_BRUSSELS_-_BELGIUM.jpg",
+      "source_title": "File:GRAND PLACE AT NIGHT - BRUSSELS - BELGIUM.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/23/GRAND_PLACE_AT_NIGHT_-_BRUSSELS_-_BELGIUM.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 3146,
+      "height": 4435,
+      "artist": "<a href=\"//commons.wikimedia.org/wiki/User:KLOTZ\" title=\"User:KLOTZ\">JERRYE AND ROY KLOTZ MD</a>",
+      "license": "CC BY-SA 3.0"
+    },
+    "germany": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-germany.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Tyskland_Berlin,_allmänt_-_Nordiska_museet_-_NMAx.0032526.tif",
+      "source_title": "File:Tyskland Berlin, allmänt - Nordiska museet - NMAx.0032526.tif",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/93/Tyskland_Berlin%2C_allm%C3%A4nt_-_Nordiska_museet_-_NMAx.0032526.tif?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 5504,
+      "height": 5662,
+      "artist": "<bdi><a href=\"https://en.wikipedia.org/wiki/en:Karl_W._Gullers\" class=\"extiw\" title=\"w:en:Karl W. Gullers\"><span title=\"Swedish photographer (1916-1998)\">K.W. Gullers</span></a></bdi>",
+      "license": "CC BY-SA 4.0"
+    },
+    "switzerland": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-switzerland.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:034_Creux_du_Van_and_Swiss_Alps_with_snow_at_Sunset_Photo_by_Giles_Laurent.jpg",
+      "source_title": "File:034 Creux du Van and Swiss Alps with snow at Sunset Photo by Giles Laurent.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/034_Creux_du_Van_and_Swiss_Alps_with_snow_at_Sunset_Photo_by_Giles_Laurent.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 8640,
+      "height": 5760,
+      "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Giles_Laurent\" title=\"User:Giles Laurent\">Giles Laurent</a>",
+      "license": "CC BY-SA 4.0"
+    },
+    "united-kingdom": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-united-kingdom.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Big_Ben_Westminster_Pier_Victoria_Embankment_River_Thames_City_of_Westminster_London_01.jpg",
+      "source_title": "File:Big Ben Westminster Pier Victoria Embankment River Thames City of Westminster London 01.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Big_Ben_Westminster_Pier_Victoria_Embankment_River_Thames_City_of_Westminster_London_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 4513,
+      "height": 3499,
+      "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Acabashi\" title=\"User:Acabashi\">Acabashi</a>",
+      "license": "CC BY-SA 4.0"
+    },
+    "united-states": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-united-states.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:New_York_City_skyline_with_Statue_of_Liberty_at_dusk_aerial_2018.jpg",
+      "source_title": "File:New York City skyline with Statue of Liberty at dusk aerial 2018.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/New_York_City_skyline_with_Statue_of_Liberty_at_dusk_aerial_2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 6247,
+      "height": 4167,
+      "artist": "<a href=\"//commons.wikimedia.org/wiki/User:SebastianBlumeArt\" title=\"User:SebastianBlumeArt\">SebastianBlumeArt</a>",
+      "license": "CC BY-SA 4.0"
+    },
+    "australia": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-australia.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Sydney_(AU),_Harbour_Bridge_--_2019_--_2114.jpg",
+      "source_title": "File:Sydney (AU), Harbour Bridge -- 2019 -- 2114.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Sydney_%28AU%29%2C_Harbour_Bridge_--_2019_--_2114.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 6720,
+      "height": 4480,
+      "artist": "<bdi><a href=\"https://www.wikidata.org/wiki/Q34788025\" class=\"extiw\" title=\"d:Q34788025\"><span title=\"German photographer and mathematician\">Dietmar Rabich</span></a></bdi>",
+      "license": "CC BY-SA 4.0"
+    },
+    "italy": {
+      "file": "/home/ubuntu/webdev-static-assets/destination-italy.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Rome_(IT),_Forum_Romanum_--_2013_--_3398.jpg",
+      "source_title": "File:Rome (IT), Forum Romanum -- 2013 -- 3398.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Rome_%28IT%29%2C_Forum_Romanum_--_2013_--_3398.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "width": 5160,
+      "height": 2128,
+      "artist": "<bdi><a href=\"https://www.wikidata.org/wiki/Q34788025\" class=\"extiw\" title=\"d:Q34788025\"><span title=\"German photographer and mathematician\">Dietmar Rabich</span></a></bdi>",
+      "license": "CC BY-SA 4.0"
+    }
+  }
+}

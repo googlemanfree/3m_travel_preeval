@@ -2472,13 +2472,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Lot 1 — 10 destinations prioritaires
 - [x] Vérifier les sources officielles pour Canada, Luxembourg, France, Belgique, Allemagne, Suisse, Royaume-Uni, États-Unis, Australie et Italie.
-- [ ] Enrichir les fiches du lot avec contenu vérifié et visuels décoratifs premium.
-- [ ] Tester les routes, sources, images et rendu responsive du lot.
+- [x] Enrichir les fiches du lot avec contenu vérifié et visuels décoratifs premium. Les dix fiches du lot 1 utilisent désormais un visuel dédié avec attribution conservée.
+- [x] Tester les routes, sources, images et rendu responsive du lot. Les dix routes répondent HTTP 200 ; tests ciblés, contrôle HTTP des assets et captures desktop/mobile passent.
 - [x] Publier la couche sources du lot après vérification et fournir les URL/actions exactes. La collecte d’images reste reportée.
 
 ## Autorisation d’exécution autonome — lot 1 destinations
-- [ ] Réaliser le lot 1 complet jusqu’à publication sans nouvelle demande de confirmation intermédiaire, sauf blocage technique ou source officielle introuvable.
-- [ ] Collecter des visuels spécifiques autorisés pour les 10 destinations et les rattacher aux fiches.
+- [x] Réaliser le lot 1 complet jusqu’à publication sans nouvelle demande de confirmation intermédiaire, sauf blocage technique ou source officielle introuvable. Le lot est publié sans toucher aux dossiers administratifs.
+- [x] Collecter des visuels spécifiques autorisés pour les 10 destinations et les rattacher aux fiches. Les assets Wikimedia et leurs licences sont consignés dans le manifeste versionné.
 - [x] Vérifier l’intégrité des sources et signaler les lacunes sans inventer. Les réponses HTTP atypiques sont documentées sans les présenter comme une absence de source.
 - [x] Tester puis publier la couche sources du lot 1 et documenter les URL/actions exactes. Les dix routes représentatives répondent HTTP 200 ; les images restent reportées.
 
@@ -3160,3 +3160,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Contrôler les liens HTTPS institutionnels, les doublons et les destinations sans source fiable. Aucun doublon ni source manquante détecté ; les réponses réseau atypiques sont documentées.
 - [x] Corriger uniquement les contenus et liens officiellement vérifiés ; ne pas collecter d’images décoratives dans cette passe. Trois références officielles ont été actualisées.
 - [x] Tester un échantillon des routes destinations et publier avec des URL/actions de vérification exactes. 14 tests ciblés et TypeScript passent.
+
+## Collecte visuelle autorisée — lot 1 (option B)
+- [x] Collecter dix visuels premium autorisés, un par destination prioritaire, sans utiliser de filigrane.
+- [x] Copier les assets dans `/home/ubuntu/webdev-static-assets/` et documenter leur provenance/licence.
+- [x] Rattacher chaque visuel à la fiche correspondante sans modifier les données de dossier candidat.
+- [x] Tester le rendu desktop/mobile des dix fiches et publier le lot après vérification.
