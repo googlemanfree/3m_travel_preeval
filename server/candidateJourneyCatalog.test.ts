@@ -35,6 +35,12 @@ describe("catalogue de parcours candidat pays-visa", () => {
     expect(journeyStepIndex(journey, "paye", "validated", { evaluationClientConfirmed: true, activationRequested: true, paymentConfirmed: true })).toBe(6);
   });
 
+  it("mappe contrat et visa aux étapes post-traitement", () => {
+    const journey = getCandidateJourney("Luxembourg", "Travailleur");
+    expect(journeyStepIndex(journey, "contrat_obtenu", "validated")).toBeGreaterThan(journeyStepIndex(journey, "soumis_agences", "validated"));
+    expect(journeyStepIndex(journey, "visa_approuve", "validated")).toBeGreaterThan(journeyStepIndex(journey, "contrat_obtenu", "validated"));
+  });
+
   it("ne fabrique pas de portail pour un pays non référencé", () => {
     const journey = getCandidateJourney("Destination à vérifier", "Visiteur");
     expect(journey.officialSources).toEqual([]);
