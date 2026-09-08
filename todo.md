@@ -3024,3 +3024,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Éthiopie dans le catalogue détaillé avec passeport six mois, admission reconnue et autorisation ministérielle de travail.
 - [x] Ajouter les sources Ethiopian eVisa au registre officiel.
 - [x] Valider la matrice Éthiopie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Maurice
+- [x] Contrôler les sources Passport and Immigration Office et Defence and Home Affairs pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Maurice dans le catalogue détaillé avec interdiction d’emploi sous visiteur, Student Visa/Residence Permit et Work Permit/Occupation Permit.
+- [x] Fusionner l’entrée Maurice du registre officiel et supprimer le doublon de clé sans modifier les autres pays.
+- [x] Valider la matrice Maurice avec les tests ciblés et TypeScript.

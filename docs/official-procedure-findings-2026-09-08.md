@@ -535,3 +535,13 @@ Le Rwanda est intégré en trois variantes : Visiteur, Études/Study and Researc
 Le portail officiel exige notamment un passeport valide six mois, une copie couleur du passeport et une photo ; le visa électronique prend effet à la date d’arrivée prévue et les frais ne sont pas remboursables. Le Student Visa exige une admission dans un établissement reconnu et une confirmation de résidence. Le WV exige une lettre de soutien de l’organisation invitante, une lettre du ministère du Travail attestant l’autorisation de travail, la licence de l’entreprise et son TIN. Le visa touristique ne doit pas être utilisé pour exercer dans une organisation en Éthiopie.
 ### Règle d’intégration
 L’Éthiopie est intégrée en trois variantes : Visiteur/eVisa touristique, Études/Student Visa et Travail/Foreign Business Firm Employment Visa, avec contrôle du portail officiel et des autorisations préalables publiées.
+
+## Lot Maurice — sources officielles consultées
+- Passport and Immigration Office — Application for Visa : https://passport.govmu.org/passport/?page_id=620
+- Passport and Immigration Office — Occupation Permit : https://passport.govmu.org/passport/?page_id=626
+- Passport and Immigration Office — Residence Permit for Employment : https://passport.govmu.org/passport/?page_id=557
+- Defence and Home Affairs — Residence Permit and Visa : https://dha.govmu.org/Pages/Services/Residence-Permit-and-Visa.aspx
+### Faits vérifiables
+Les visiteurs doivent déposer selon la voie officielle avec passeport, billet retour, moyens financiers et justificatifs d’hébergement ; le visa ne garantit pas l’admission et le visiteur ne peut exercer une activité rémunérée. Le parcours étudiant renvoie aux lignes directrices officielles pour Student Visa et Residence Permit. Pour l’emploi, un Residence Permit et un Work Permit sont requis ; l’Occupation Permit combine travail et résidence pour les catégories Investor, Professional et Self-Employed.
+### Règle d’intégration
+Maurice est intégré en trois variantes : Visiteur, Études et Travail, avec interdiction d’emploi sous tourisme, Student Visa/Residence Permit selon les instructions officielles et Work Permit/Residence Permit ou Occupation Permit avant activité professionnelle.

@@ -314,6 +314,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "maurice": {
+    "country": "Maurice",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Mauritius Passport and Immigration Office — Application for Visa", "url": "https://passport.govmu.org/passport/?page_id=620" },
+      { "label": "Mauritius Passport and Immigration Office — Occupation Permit", "url": "https://passport.govmu.org/passport/?page_id=626" },
+      { "label": "Mauritius Passport and Immigration Office — Residence Permit for Employment", "url": "https://passport.govmu.org/passport/?page_id=557" },
+      { "label": "Mauritius Defence and Home Affairs — Residence Permit and Visa", "url": "https://dha.govmu.org/Pages/Services/Residence-Permit-and-Visa.aspx" }
+    ]
+  },
   "ethiopie": {
     "country": "Éthiopie",
     "verificationStatus": "verified",
@@ -418,16 +428,6 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       {
         "label": "Identità — Visiteur (Schengen) —",
         "url": "https://identita.gov.mt/central-visa-unit-main-page/"
-      }
-    ]
-  },
-  "maurice": {
-    "country": "Maurice",
-    "verificationStatus": "verified",
-    "sources": [
-      {
-        "label": "Passport and Immigration Office — visiteur, études, travail —",
-        "url": "https://passport.govmu.org/passport/"
       }
     ]
   },
