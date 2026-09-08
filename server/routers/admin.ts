@@ -198,9 +198,17 @@ export function countryChecklistFor(destination?: string | null) {
 
 export function procedureChecklistFor(procedureType?: string | null, destination?: string | null) {
   const countryDocuments = countryChecklistFor(destination);
-  const template = procedureType ? PROCEDURE_DOCUMENT_CHECKLISTS[procedureType] : undefined;
+  const normalizedProcedure = String(procedureType || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const procedureKey = normalizedProcedure.includes("travail") || normalizedProcedure.includes("work") || normalizedProcedure.includes("worker") ? "work_permit"
+    : normalizedProcedure.includes("etude") || normalizedProcedure.includes("study") ? "study_permit"
+      : normalizedProcedure.includes("visiteur") || normalizedProcedure.includes("visitor") || normalizedProcedure.includes("touris") ? "visitor_visa"
+        : normalizedProcedure.includes("permanent") || normalizedProcedure.includes("residence") || normalizedProcedure.includes("residence permanente") ? "permanent_residence"
+          : normalizedProcedure.includes("famille") || normalizedProcedure.includes("family") ? "family_reunification"
+            : normalizedProcedure.includes("evisa") || normalizedProcedure.includes("electronique") || normalizedProcedure.includes("electronic") ? "evisa"
+              : procedureType && procedureType in PROCEDURE_DOCUMENT_CHECKLISTS ? procedureType : undefined;
+  const template = procedureKey ? PROCEDURE_DOCUMENT_CHECKLISTS[procedureKey] : undefined;
   const unique = new Map([...countryDocuments, ...(template?.documents ?? [])].map((item) => [item.documentType.toLowerCase(), item]));
-  return { label: template?.label ?? "Procédure standard", documents: Array.from(unique.values()) };
+  return { label: template?.label ?? (procedureType?.trim() || "Procédure standard"), documents: Array.from(unique.values()) };
 }
 
 export function parseCandidate360Labels(value: string | null | undefined) {
@@ -3525,7 +3533,7 @@ export const adminRouter = router({
       sessionToken: z.string().min(1),
       candidateId: z.string().min(1),
       destination: z.string().trim().min(2).max(100).optional(),
-      procedureType: z.enum(["permanent_residence", "work_permit", "study_permit", "visitor_visa", "family_reunification", "evisa"]).optional(),
+      procedureType: z.string().trim().max(120).optional(),
       customDocuments: z.array(z.string().trim().min(2).max(120)).max(12).optional(),
     }))
     .mutation(async ({ input }) => {
