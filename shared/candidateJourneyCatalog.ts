@@ -740,6 +740,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("regular_application", "Demande régulière", "Remplir, imprimer et signer le formulaire, puis joindre passeport, preuve d’emploi et justificatifs demandés.", ["Formulaire", "Signature", "Passeport", "Contrat"], "https://indianvisaonline.gov.in/visa/"),
     step("mission_decision", "Dépôt auprès de la mission", "Déposer au centre de visa ou à la mission indienne compétente et suivre la décision ainsi que les formalités de séjour.", ["IVAC", "Mission", "Décision", "Séjour"], "https://indianvisaonline.gov.in/visa/"),
   ]),
+  regional("Afrique du Sud", "Visiteur", "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/", [
+    step("visitor_category", "Choisir la Visitor’s Visa", "Vérifier la durée et le motif du séjour afin de distinguer le court séjour, le séjour de plus de 90 jours ou une autre catégorie officielle.", ["Motif", "Durée", "Passeport", "Nationalité"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("documents", "Préparer les pièces", "Réunir formulaire, passeport, justificatifs du séjour et toute pièce exigée par la mission compétente.", ["Formulaire", "Passeport", "Hébergement", "Ressources"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("submission", "Dépôt de la demande", "Déposer selon les instructions de la représentation sud-africaine ou du service officiel disponible.", ["Mission", "Rendez-vous", "Dépôt", "Référence"], "https://ehome.dha.gov.za/epermit/home"),
+    step("decision_conditions", "Décision et conditions", "Respecter la durée et le motif de la Visitor’s Visa accordée ; une autorisation de visite ne vaut pas autorisation générale de travail.", ["Décision", "Durée", "Conditions", "Entrée"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+  ]),
+  regional("Afrique du Sud", "Études", "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/", [
+    step("study_admission", "Admission aux études", "Obtenir l’admission ou l’inscription dans l’établissement d’enseignement sud-africain concerné.", ["Admission", "Établissement", "Programme", "Passeport"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("study_visa", "Vérifier la Study Visa", "Confirmer que la catégorie Study Visa correspond à la durée et au programme envisagés.", ["Durée", "Programme", "Catégorie", "Nationalité"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("application", "Demande et pièces", "Préparer le formulaire, passeport, admission et justificatifs exigés par la mission compétente.", ["Formulaire", "Passeport", "Admission", "Justificatifs"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("decision_conditions", "Décision et séjour étudiant", "Suivre la décision et respecter les conditions de la Study Visa pendant le séjour.", ["Décision", "Conditions", "Études", "Échéances"], "https://ehome.dha.gov.za/epermit/home"),
+  ]),
+  regional("Afrique du Sud", "Travail", "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/", [
+    step("work_category", "Choisir la catégorie de travail", "Identifier General Work, Critical Skills ou Intra-Company Transfer selon le poste et la situation professionnelle.", ["Poste", "Employeur", "Compétences", "Transfert"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("qualification_employer", "Preuves employeur et qualification", "Réunir l’offre, les qualifications, l’expérience et les éléments exigés pour la catégorie retenue.", ["Contrat", "Diplôme", "Expérience", "Employeur"], "https://www.dha.gov.za/images/notices/8october24/General_Work_Visa_requirements_-_8_Oct_2028.pdf"),
+    step("application", "Demande auprès de la mission", "Déposer la demande avec les formulaires et pièces officiels, sans confondre les catégories de travail.", ["Formulaire", "Passeport", "Pièces", "Mission"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
+    step("decision_conditions", "Décision et respect du statut", "Suivre la décision et exercer uniquement l’activité autorisée par la catégorie accordée.", ["Décision", "Statut", "Employeur", "Conditions"], "https://www.dha.gov.za/images/notices/8october24/General_Work_Visa_requirements_-_8_Oct_2028.pdf"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -761,7 +779,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

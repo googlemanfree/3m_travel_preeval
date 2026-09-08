@@ -71,6 +71,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       }
     ]
   },
+  "afrique du sud": {
+    "country": "Afrique du Sud",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "DIRCO — Visa/permit types & requirements", "url": "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/" },
+      { "label": "Department of Home Affairs — eVisa/ePermit", "url": "https://ehome.dha.gov.za/epermit/home" },
+      { "label": "DHA — General Work Visa requirements", "url": "https://www.dha.gov.za/images/notices/8october24/General_Work_Visa_requirements_-_8_Oct_2028.pdf" }
+    ]
+  },
   "coree du sud": {
     "country": "Corée du Sud",
     "verificationStatus": "verified",

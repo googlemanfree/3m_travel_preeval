@@ -388,3 +388,13 @@ La Corée du Sud est intégrée en trois variantes : court séjour C-3 à qualif
   - Pour la demande régulière, le formulaire est rempli en ligne puis imprimé et signé, avec passeport et pièces, avant dépôt au centre de visa ou à la mission indienne compétente.
 ### Règle d’intégration
 L’Inde est intégrée en trois variantes : e-Tourist/visiteur selon éligibilité, Student/e-Student selon admission et Employment selon preuve d’emploi. Le catalogue distingue e-Visa et demande régulière et renvoie à la mission compétente pour les exigences nationales.
+
+## Lot Afrique du Sud — sources officielles consultées
+- **DIRCO — Visa/permit types & requirements** : https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/
+  - Les catégories officielles distinguent Visitor’s Visa, Study Visa, General Work Visa, Critical Skills Work Visa, Intra-Company Transfer et autres voies ; le type doit correspondre au motif réel.
+- **Department of Home Affairs — eVisa/ePermit** : https://ehome.dha.gov.za/epermit/home
+  - Le service eVisa officiel permet de déposer les informations, suivre le statut et recevoir une décision selon l’éligibilité et la catégorie disponible.
+- **DHA — General Work Visa requirements** : https://www.dha.gov.za/images/notices/8october24/General_Work_Visa_requirements_-_8_Oct_2028.pdf
+  - Les exigences de travail sont documentées par le Department of Home Affairs ; elles doivent être vérifiées avec la catégorie et la mission compétente.
+### Règle d’intégration
+L’Afrique du Sud est intégrée en trois variantes : Visitor’s Visa, Study Visa et Work Visa. Le catalogue conserve les distinctions General Work, Critical Skills et Intra-Company Transfer sans les présenter comme interchangeables.

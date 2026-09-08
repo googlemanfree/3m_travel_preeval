@@ -2934,3 +2934,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Inde dans le catalogue détaillé en distinguant e-Visa et demande régulière.
 - [x] Ajouter les sources indiennes au registre officiel et réparer la clé Suède déplacée lors de l’insertion.
 - [x] Valider la matrice Inde avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Afrique du Sud
+- [x] Contrôler les sources DIRCO et DHA pour Visitor’s Visa, Study Visa et Work Visa.
+- [x] Intégrer les variantes Afrique du Sud dans le catalogue détaillé en distinguant General Work, Critical Skills et Intra-Company Transfer.
+- [x] Ajouter les sources sud-africaines au registre officiel et réparer la clé Corée du Sud déplacée lors de l’insertion.
+- [x] Valider la matrice Afrique du Sud avec les tests ciblés et TypeScript.
