@@ -758,6 +758,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("application", "Demande auprès de la mission", "Déposer la demande avec les formulaires et pièces officiels, sans confondre les catégories de travail.", ["Formulaire", "Passeport", "Pièces", "Mission"], "https://dirco.gov.za/washingtondc/types-of-visas-and-requirements/"),
     step("decision_conditions", "Décision et respect du statut", "Suivre la décision et exercer uniquement l’activité autorisée par la catégorie accordée.", ["Décision", "Statut", "Employeur", "Conditions"], "https://www.dha.gov.za/images/notices/8october24/General_Work_Visa_requirements_-_8_Oct_2028.pdf"),
   ]),
+  regional("Brésil", "Visiteur", "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa", [
+    step("visitor_category", "Vérifier VIVIS et l’exemption", "Déterminer selon la nationalité si VIVIS ou une exemption s’applique au séjour jusqu’à 90 jours et au motif annoncé.", ["Nationalité", "Motif", "Durée", "Passeport"], "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa"),
+    step("documents", "Préparer les documents", "Réunir formulaire, passeport, photo, preuve de résidence et ressources ainsi que les pièces liées au motif.", ["Formulaire", "Passeport", "Photo", "Ressources"], "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa"),
+    step("consular_submission", "Dépôt consulaire ou e-Visa", "Suivre le canal indiqué pour la nationalité et le consulat compétent, notamment le portail VFS lorsqu’il est officiellement imposé.", ["Consulat", "VFS", "Rendez-vous", "Référence"], "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa"),
+    step("decision_conditions", "Décision et interdiction d’emploi", "Respecter la durée et le motif accordés ; VIVIS n’autorise pas l’emploi rémunéré au Brésil.", ["Décision", "Durée", "Conditions", "Entrée"], "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa"),
+  ]),
+  regional("Brésil", "Études", "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv", [
+    step("study_program", "Programme et catégorie VITEM IV", "Confirmer que le cursus, l’échange, le stage ou la langue relève du Student Visa VITEM IV et vérifier la durée.", ["Programme", "Établissement", "Durée", "Nationalité"], "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv"),
+    step("online_form", "Formulaire en ligne et pièces", "Remplir le formulaire électronique, téléverser les documents et préparer les originaux requis par la mission.", ["Formulaire", "Passeport", "Photo", "Admission"], "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv"),
+    step("signature_submission", "Impression, signature et dépôt", "Imprimer et signer le reçu/formulaire puis transmettre les originaux selon les instructions de la représentation compétente.", ["Signature", "Originaux", "Dépôt", "Mission"], "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv"),
+    step("decision_conditions", "Décision et conditions étudiant", "Suivre la décision et respecter les conditions de séjour ; le visa étudiant n’est pas une autorisation générale de travail.", ["Décision", "Séjour", "Études", "Conditions"], "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv"),
+  ]),
+  regional("Brésil", "Travail", "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v", [
+    step("sponsor_authorization", "Autorisation préalable au Brésil", "L’entreprise sponsor doit initier au Brésil la demande d’autorisation préalable auprès du ministère compétent.", ["Sponsor", "Employeur", "Autorisation", "Contrat"], "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v"),
+    step("qualification", "Qualification et activité compatible", "Vérifier que les qualifications ou l’expérience correspondent à l’activité et à la catégorie VITEM V retenue.", ["Diplôme", "Expérience", "Poste", "Activité"], "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v"),
+    step("consular_application", "Demande consulaire après accord", "Après transmission de l’autorisation au consulat, déposer la demande avec formulaire, passeport, photo et pièces officielles.", ["Autorisation", "Formulaire", "Passeport", "Photo"], "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v"),
+    step("federal_registration", "Décision et enregistrement", "Après l’entrée, respecter l’enregistrement auprès de la Polícia Federal dans le délai officiel et les conditions du statut.", ["Décision", "Entrée", "Polícia Federal", "Statut"], "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -779,7 +797,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

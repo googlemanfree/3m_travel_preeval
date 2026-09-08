@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "bresil": {
+    "country": "Brésil",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "MRE — Types of Visa", "url": "https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa" },
+      { "label": "MRE — Student Visa VITEM IV", "url": "https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv" },
+      { "label": "MRE — Work Visa VITEM V", "url": "https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v" }
+    ]
+  },
   "bulgarie": {
     "country": "Bulgarie",
     "verificationStatus": "verified",

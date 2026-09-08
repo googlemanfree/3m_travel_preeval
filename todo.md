@@ -2940,3 +2940,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Afrique du Sud dans le catalogue détaillé en distinguant General Work, Critical Skills et Intra-Company Transfer.
 - [x] Ajouter les sources sud-africaines au registre officiel et réparer la clé Corée du Sud déplacée lors de l’insertion.
 - [x] Valider la matrice Afrique du Sud avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Brésil
+- [x] Contrôler les sources MRE pour VIVIS/visiteur, VITEM IV/études et VITEM V/travail.
+- [x] Intégrer les variantes Brésil dans le catalogue détaillé avec interdiction d’emploi rémunéré sous VIVIS et autorisation préalable pour VITEM V.
+- [x] Ajouter les sources MRE au registre officiel.
+- [x] Valider la matrice Brésil avec les tests ciblés et TypeScript.

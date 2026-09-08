@@ -398,3 +398,13 @@ L’Inde est intégrée en trois variantes : e-Tourist/visiteur selon éligibili
   - Les exigences de travail sont documentées par le Department of Home Affairs ; elles doivent être vérifiées avec la catégorie et la mission compétente.
 ### Règle d’intégration
 L’Afrique du Sud est intégrée en trois variantes : Visitor’s Visa, Study Visa et Work Visa. Le catalogue conserve les distinctions General Work, Critical Skills et Intra-Company Transfer sans les présenter comme interchangeables.
+
+## Lot Brésil — sources officielles consultées
+- **MRE — Types of Visa** : https://www.gov.br/mre/pt-br/consulado-los-angeles/english/visas/types-of-visa
+  - Le type de visa dépend du motif. VIVIS couvre les visites jusqu’à 90 jours et interdit l’emploi rémunéré au Brésil ; les séjours d’études de plus de 90 jours relèvent de VITEM IV et le travail de VITEM V ou d’une catégorie correspondante.
+- **MRE — Student Visa VITEM IV** : https://www.gov.br/mre/pt-br/embaixada-helsinque/consular-services/student-visa-vitem-iv
+  - Le parcours étudiant couvre études régulières, échanges, stages et langues ; il passe par formulaire en ligne, téléchargement des pièces, impression/signature et dépôt des originaux selon la mission.
+- **MRE — Work Visa VITEM V** : https://www.gov.br/mre/pt-br/embaixada-varsovia/visto-de-trabalho-vitem-v
+  - Le travail est soumis à une autorisation préalable au Brésil initiée par l’entreprise sponsor, puis à la demande consulaire ; les titulaires doivent notamment se faire enregistrer auprès de la Polícia Federal dans les délais officiels.
+### Règle d’intégration
+Le Brésil est intégré en trois variantes : VIVIS/visiteur, VITEM IV/études et VITEM V/travail, sans présenter VIVIS comme une autorisation d’emploi rémunéré.
