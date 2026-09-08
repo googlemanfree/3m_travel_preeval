@@ -2775,3 +2775,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Allemagne
 - [x] Contrôler les sources institutionnelles Allemagne pour les catégories visiteur/Schengen, études et travail/visa national.
 - [ ] Intégrer les variantes Allemagne dans le catalogue détaillé uniquement après validation des liens et de la mission compétente.
+
+## Audit officiel par lots — France
+- [x] Contrôler les sources institutionnelles France-Visas et Diplomatie pour visiteur, études et professionnel.
+- [ ] Intégrer les variantes France dans le catalogue détaillé uniquement avec la branche et le poste compétent appropriés.
+
+## Audit officiel par lots — Belgique
+- [x] Contrôler les sources institutionnelles Belgique pour court séjour, études et travail soumis au permis unique.
+- [ ] Intégrer les variantes Belgique dans le catalogue détaillé selon la région compétente et le poste consulaire applicable.
