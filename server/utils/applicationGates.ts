@@ -16,6 +16,7 @@ type ApplicationGateRecord = {
   cvUrl?: string | null;
   hasCv?: boolean;
   evaluationDeliveryStatus?: string | null;
+  evaluationClientConfirmed?: boolean;
 };
 
 export function assertApplicationCanEnterStatus(application: ApplicationGateRecord, nextStatus: string): void {
@@ -32,11 +33,23 @@ export function assertApplicationCanEnterStatus(application: ApplicationGateReco
       message: "L’évaluation doit être validée et remise au candidat avant de passer à l’étape suivante.",
     });
   }
+  if (nextStatus === "en_attente_paiement" && !application.evaluationClientConfirmed) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Le candidat doit confirmer la réception et la compréhension du bilan avant de demander le paiement d’ouverture.",
+    });
+  }
   if (!APPLICATION_PROCESSING_STATUSES.has(nextStatus)) return;
   if (application.evaluationDeliveryStatus !== "sent") {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "Aucun dossier ne peut être traité avant l’évaluation validée et remise au candidat.",
+    });
+  }
+  if (!application.evaluationClientConfirmed) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "La confirmation du bilan par le candidat est obligatoire avant le traitement du dossier.",
     });
   }
   if (!application.agreementSigned) {
