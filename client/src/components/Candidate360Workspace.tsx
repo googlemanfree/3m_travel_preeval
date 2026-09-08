@@ -121,7 +121,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
-    { enabled: Boolean(sessionToken && candidate.id) },
+    {
+      enabled: Boolean(sessionToken && candidate.id),
+      placeholderData: (previous) => previous,
+      retry: 2,
+    },
   );
 
   const dossierProgress = useMemo(() => {
@@ -239,8 +243,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     return documents.find((document: any) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.fileName ?? "").toLowerCase().includes("cv")) ?? data?.cvDocument ?? null;
   }, [data]);
 
-  if (isLoading) return <div className="py-12 text-center text-sm text-slate-500">Chargement du centre de gestion…</div>;
-  if (error || !data) return <div className="py-10 text-center text-sm text-rose-700">La fiche 360° n’a pas pu être chargée. Réessayez depuis la liste des candidats.</div>;
+  if (isLoading && !data) return <div className="py-12 text-center text-sm text-slate-500">Chargement du centre de gestion…</div>;
+  if (!data) return <div className="py-10 text-center text-sm text-rose-700">La fiche 360° n’a pas pu être chargée. Réessayez depuis la liste des candidats.</div>;
 
   const operationalCase: any = data.operationalCase ?? {
     currentStatus: "qualifying",
@@ -311,7 +315,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {error && <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Synchronisation en cours : les dernières données connues restent affichées pendant la nouvelle tentative.</div>}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-blue-800">Action rapide</p>

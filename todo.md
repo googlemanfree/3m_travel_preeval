@@ -2709,3 +2709,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une régression de conservation des données pendant refetch et d’erreur de synchronisation explicite ; 14 tests ciblés et TypeScript passent.
 - [ ] Retester la fiche `3M-AGN-270002` avant de poursuivre la validation paiement et le protocole.
 - [x] Ajouter un fallback client pour nettoyer les jetons admin périmés et rediriger vers `/admin/login` sur 401 ; 16 tests ciblés et TypeScript passent.
+
+## Régression fiche 360° — ouverture du contrôle paiement
+- [x] Après ouverture du contrôle « Valider le paiement » sur `3M-AGN-270002`, conserver les dernières données de la fiche 360° pendant le refetch au lieu d’afficher un faux état d’erreur.
+- [x] Identifier et corriger le refetch : `getCandidate360` utilise désormais `placeholderData` et `retry: 2`, avec indication de synchronisation non bloquante.
+- [x] Ajouter la couverture de conservation de fiche pendant refetch dans les régressions ciblées ; 16 tests passent et TypeScript est valide.
+- [ ] Retester le contrôle puis confirmer le paiement uniquement après retour d’une fiche stable.
