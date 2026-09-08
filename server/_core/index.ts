@@ -130,6 +130,10 @@ async function startServer() {
     res.set({ "Cache-Control": "public, max-age=3600" });
     return res.redirect(301, "/#evaluation-multi");
   });
+  app.get("/evaluation-rapide-enhanced", (_req, res) => {
+    res.set({ "Cache-Control": "public, max-age=3600" });
+    return res.redirect(301, "/#evaluation-multi");
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
