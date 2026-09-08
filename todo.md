@@ -3154,3 +3154,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif badge dossier actif et contrôle du protocole (2026-09-08)
 - [x] Corriger l’incohérence du badge « Dossier actif » dans /mon-espace pour qu’il reflète le dossier actif réellement affiché et sa progression. Le fallback agence utilise maintenant la référence officielle `3M-AGN-<id>` et le résumé client expose la même référence.
 - [x] Vérifier que le protocole d’accord par défaut enrichi est bien utilisé dans les vues client/admin, e-mails et PDF, sans modifier le paiement réel de 3M-AGN-270002. La source partagée TypeScript est valide, version `2026-09-08-v2`, avec le second protocole distinct.
+
+## Audit des sources officielles des destinations — périmètre approuvé
+- [x] Cartographier les pages destinations et les sources officielles déjà présentes. Audit : 91 procédures cataloguées et 107 sources déclarées.
+- [x] Contrôler les liens HTTPS institutionnels, les doublons et les destinations sans source fiable. Aucun doublon ni source manquante détecté ; les réponses réseau atypiques sont documentées.
+- [x] Corriger uniquement les contenus et liens officiellement vérifiés ; ne pas collecter d’images décoratives dans cette passe. Trois références officielles ont été actualisées.
+- [x] Tester un échantillon des routes destinations et publier avec des URL/actions de vérification exactes. 14 tests ciblés et TypeScript passent.

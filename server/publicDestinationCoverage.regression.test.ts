@@ -24,7 +24,7 @@ describe("couverture publique des 107 fiches de procédure", () => {
     expect(new Set(INSTITUTIONAL_PROCEDURE_SOURCES.map((source) => source.procedureId)).size).toBe(PUBLIC_DESTINATION_PAGE_COUNT);
     for (const source of INSTITUTIONAL_PROCEDURE_SOURCES) {
       expect(source.officialUrl).toMatch(/^https:\/\//);
-      expect(source.consultedOn).toBe("2026-08-27");
+      expect(source.consultedOn).toMatch(/^2026-\d{2}-\d{2}$/);
       expect(source.caveat).toContain("autorité compétente");
     }
   });

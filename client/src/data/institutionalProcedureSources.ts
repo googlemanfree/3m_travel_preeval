@@ -150,9 +150,9 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "bulgarie-travail",
-    "officialUrl": "https://www.az.government.bg/pages/au-predostaviane-na-razreshenie-za-dostup-do-pazara-na-truda-na-na-rabotnici-gravdani-ot-treti-durvavi/",
-    "sourceTitle": "Permis de travail pour les ressortissants de pays tiers - Agence pour l'emploi",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://www.mi.government.bg/en/general/naemane-na-slujiteli-grajdani-na-drugi-darjavi/",
+    "sourceTitle": "Hiring employees who are foreign nationals - Ministère de l’Intérieur de Bulgarie",
+    "consultedOn": "2026-09-09",
     "preparationPoints": [
       "Demande de permis de travail par l'employeur bulgare",
       "Sollicitation d'un visa de type D au consulat",
@@ -286,9 +286,9 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "dubai-evisa",
-    "officialUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id/tourist-visa",
-    "sourceTitle": "Visa touristique - Portail officiel du gouvernement des Émirats arabes unis",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://www.moet.gov.ae/en/-/travel-requirements-for-the-uae-tourist-visa",
+    "sourceTitle": "Travel Requirements for the UAE - Tourist Visa - Ministère de l’Économie des Émirats arabes unis",
+    "consultedOn": "2026-09-09",
     "preparationPoints": [
       "Demande via un sponsor agréé (compagnie aérienne, hôtel ou agence)",
       "Passeport valide et photographie en couleur",
@@ -1199,9 +1199,9 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "turquie-evisa",
-    "officialUrl": "https://www.evisa.gov.tr/fr/",
-    "sourceTitle": "République de Türkiye Système de Demande de Visa Électronique",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://www.evisa.gov.tr/en/tour/",
+    "sourceTitle": "e-Visa - Ministère des Affaires étrangères de la République de Türkiye",
+    "consultedOn": "2026-09-09",
     "preparationPoints": [
       "Paiement par carte bancaire (Visa, Mastercard ou UnionPay) avec 3D Secure",
       "Usage limité aux séjours touristiques ou commerciaux uniquement"
