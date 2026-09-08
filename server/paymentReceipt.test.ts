@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { buildPaymentReceiptEmailHtml } from "./utils/paymentReceipt";
+import { buildPaymentReceiptEmailHtml, formatPaymentAmount } from "./utils/paymentReceipt";
 
 const projectRoot = path.resolve(__dirname, "..");
 
@@ -27,6 +27,26 @@ describe("Payment receipt professional delivery", () => {
     expect(html).toContain("ne constitue pas une garantie d’emploi");
     expect(html).toContain("mon-espace?section=dossier");
     expect(html).not.toContain("IA");
+  });
+
+  it("normalizes French grouping spaces for PDF-safe monetary display", () => {
+    const formatted = formatPaymentAmount(65000, "XAF");
+    expect(formatted).toBe("65 000 XAF");
+    expect(formatted).not.toContain("\\u00A0");
+    expect(formatted).not.toContain("\\u202F");
+    expect(formatted).not.toContain("/");
+
+    const html = buildPaymentReceiptEmailHtml({
+      dossierNumber: "3M-AGN-270002",
+      fullName: "SIEWE TCHAKOUA Louis Valere",
+      email: "louistchakoua4@gmail.com",
+      amount: 65000,
+      currency: "XAF",
+      paymentDate: new Date("2026-09-08T10:52:19Z"),
+      paymentMethod: "Agence",
+      validatedBy: "aureoldonfack@gmail.com",
+    });
+    expect(html).toContain("65 000 XAF");
   });
 
   it("attaches the generated PDF in both online and candidate receipt flows", () => {

@@ -2747,5 +2747,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter au reçu le logo et les coordonnées vérifiées de 3M Travel & Services.
 - [x] Détailler les frais d’ouverture, de traitement et de soumission auprès d’agences de placement.
 - [x] Encadrer la formulation sur l’issue de la recherche d’emploi sans garantie de contrat ni de résultat.
-- [ ] Tester en session admin réelle la génération PDF, l’envoi SMTP et le dépôt éventuel dans l’espace client, sans modifier le paiement existant.
-- [ ] Corriger la condition d’affichage live du bouton de reçu pour tout paiement agence confirmé, puis retester le DOM publié.
+- [x] Tester en session admin réelle la génération PDF, l’envoi SMTP et le dépôt éventuel dans l’espace client, sans modifier le paiement existant.
+- [x] Corriger la condition d’affichage live du bouton de reçu pour tout paiement agence confirmé, puis retester le DOM publié.
+- [x] Utiliser exclusivement le compte opérateur DOMFACK SOUMO WILLY AUREOL pour tous les tests admin et envois de notification.
+
+## Correction du format monétaire du reçu PDF
+- [x] Normaliser les espaces de groupement français pour afficher `65 000 XAF` dans le PDF et l’e-mail.
+- [x] Ajouter une régression Vitest interdisant les séparateurs insécables et le rendu `65 /000 XAF`.
+- [x] Régénérer le PDF de contrôle, vérifier le texte extrait et inspecter visuellement le logo, le design et les mentions légales.

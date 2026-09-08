@@ -27,6 +27,15 @@ function escapeHtml(value: unknown) {
   return String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#039;" })[character] ?? character);
 }
 
+/**
+ * jsPDF/Helvetica can render French non-breaking grouping spaces inconsistently.
+ * Normalize them to ordinary spaces so amounts such as 65 000 XAF remain readable.
+ */
+export function formatPaymentAmount(amount: number, currency: string) {
+  const groupedAmount = new Intl.NumberFormat("fr-FR", { useGrouping: true }).format(amount).replace(/[\u00A0\u202F]/g, " ");
+  return `${groupedAmount} ${currency}`;
+}
+
 async function loadLogoDataUri() {
   try {
     const response = await fetch(AGENCY.logoUrl, { signal: AbortSignal.timeout(7000) });
@@ -46,7 +55,7 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
   const margin = 18;
   const width = 210;
   const contentWidth = width - margin * 2;
-  const formattedAmount = `${input.amount.toLocaleString("fr-FR")} ${input.currency}`;
+  const formattedAmount = formatPaymentAmount(input.amount, input.currency);
   const paymentDate = input.paymentDate.toLocaleString("fr-FR");
 
   pdf.setFillColor(7, 27, 61);
@@ -132,7 +141,7 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
 }
 
 export function buildPaymentReceiptEmailHtml(input: PaymentReceiptInput) {
-  const formattedAmount = `${input.amount.toLocaleString("fr-FR")} ${input.currency}`;
+  const formattedAmount = formatPaymentAmount(input.amount, input.currency);
   const paymentDate = input.paymentDate.toLocaleString("fr-FR");
   return `<!doctype html><html lang="fr"><body style="margin:0;background:#f3f6fb;font-family:Arial,sans-serif;color:#1e293b"><div style="max-width:680px;margin:24px auto;background:#fff;border:1px solid #dbe5f1;border-radius:16px;overflow:hidden"><div style="background:#071b3d;padding:24px 28px;color:#fff"><div style="font-size:22px;font-weight:700">${escapeHtml(AGENCY.name)}</div><div style="margin-top:6px;color:#dbeafe;font-size:13px">Mobilité internationale · Accompagnement humain</div></div><div style="padding:28px"><h1 style="margin:0;color:#071b3d;font-size:22px">Reçu de confirmation de paiement</h1><p>Bonjour ${escapeHtml(input.fullName)},</p><p>Nous vous confirmons l’enregistrement de votre paiement de <strong>${formattedAmount}</strong> pour le dossier <strong>${escapeHtml(input.dossierNumber)}</strong>.</p><div style="margin:20px 0;padding:16px;border:1px solid #bbf7d0;border-radius:10px;background:#ecfdf5;color:#065f46"><strong>Frais concernés :</strong><br/>Ouverture du dossier, traitement administratif et préparation/soumission de votre profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail.<br/><span style="font-size:13px">Paiement confirmé le ${paymentDate} · ${escapeHtml(input.paymentMethod)}</span></div><p>La recherche peut aboutir ou ne pas aboutir. Si une première soumission n’aboutit pas, des soumissions complémentaires ou une réorientation peuvent être envisagées avec vous jusqu’à l’aboutissement ou la clôture convenue du mandat, selon votre éligibilité, les postes disponibles et les conditions applicables.</p><p style="padding:14px;background:#fff7ed;border-left:4px solid #d97706;font-size:13px"><strong>Information importante :</strong> ce reçu ne constitue pas une garantie d’emploi, de contrat de travail, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.</p><p>Votre dossier reste suivi par un conseiller 3M Travel &amp; Services. Consultez votre espace candidat pour les prochaines étapes et les documents disponibles.</p><p><a href="https://www.3mtravelagency.com/mon-espace?section=dossier" style="display:inline-block;background:#123a7a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">Accéder à mon espace</a></p><hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0"/><p style="font-size:12px;color:#64748b">${AGENCY.address} · ${AGENCY.phone} · ${AGENCY.email}<br/>${AGENCY.registration}</p></div></div></body></html>`;
 }
