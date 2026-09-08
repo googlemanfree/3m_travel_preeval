@@ -314,6 +314,16 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "maroc": {
+    "country": "Maroc",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Accès Maroc — eVisa/AEVM", "url": "https://www.acces-maroc.ma/" },
+      { "label": "Consulat.ma — Visas ordinaires", "url": "https://consulat.ma/fr/visas-ordinaires" },
+      { "label": "Ministère des Affaires étrangères — FAQ séjour", "url": "https://diplomatie.ma/fr/faq" },
+      { "label": "Ministère des Affaires étrangères — Visiter/étudier au Maroc", "url": "https://diplomatie.ma/fr/visiter-le-maroc" }
+    ]
+  },
   "tanzanie": {
     "country": "Tanzanie",
     "verificationStatus": "verified",

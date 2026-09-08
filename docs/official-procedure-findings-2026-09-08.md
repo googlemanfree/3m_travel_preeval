@@ -506,3 +506,13 @@ Le Kenya est intégré en trois variantes : eTA Visiteur, Student’s Pass et Wo
 La demande de visa peut être effectuée en ligne sur le portail officiel ou à l’arrivée lorsque la catégorie et la nationalité le permettent ; le passeport doit être valide au moins six mois avec une page vierge et les visiteurs doivent présenter un billet retour. Le portail prévoit le suivi de la demande et la notification Visa Grant Notice, qui ne constitue pas à elle seule une garantie d’entrée. Les demandes de séjour étudiant et de permis de résidence/travail doivent suivre les services officiels d’immigration.
 ### Règle d’intégration
 La Tanzanie est intégrée en trois variantes : Visiteur/Ordinary Visa, Études/Student Visa et Travail/Résidence-Permit, avec contrôle de catégorie, dépôt officiel et vérification des restrictions de nationalité ou de referral visa sans inventer d’étapes non publiées.
+
+## Lot Maroc — sources officielles consultées
+- Accès Maroc — portail officiel de vérification eVisa/AEVM : https://www.acces-maroc.ma/
+- Consulat.ma — Visas ordinaires : https://consulat.ma/fr/visas-ordinaires
+- Ministère des Affaires étrangères — FAQ séjour et titre de séjour : https://diplomatie.ma/fr/faq
+- Ministère des Affaires étrangères — Visiter/étudier au Maroc : https://diplomatie.ma/fr/visiter-le-maroc
+### Faits vérifiables
+Les visas ordinaires distinguent notamment tourisme, travail et étudiant. Le visa travail exige un contrat visé par le ministère de l’Emploi ; les études exigent admission/inscription et, selon le parcours, AMCI, établissement et régularisation du séjour. Le portail Accès Maroc sert à vérifier l’éligibilité eVisa/AEVM selon nationalité et motif. Le visiteur doit respecter l’inactivité professionnelle et les conditions de séjour applicables.
+### Règle d’intégration
+Le Maroc est intégré en trois variantes : Visiteur, Études et Travail, avec contrôle eVisa/visa ordinaire, admission et régularisation étudiant, contrat visé pour emploi, sans inventer de durée ou de catégorie non publiée.

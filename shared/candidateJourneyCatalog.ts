@@ -956,6 +956,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("online_permit", "Déposer le permis en ligne", "Créer un compte sur l’e-Service officiel, déposer la demande, payer les frais et suivre l’instruction.", ["Compte", "Dépôt", "Paiement", "Suivi"], "https://eservices.immigration.go.tz/online/web/permit"),
     step("approval_before_work", "Décision avant activité", "Attendre l’émission du permis approprié et ne commencer l’activité qu’après l’autorisation officielle.", ["Décision", "Permis", "Autorisation", "Emploi"], "https://eservices.immigration.go.tz/online/web/permit"),
   ]),
+  regional("Maroc", "Visiteur", "https://consulat.ma/fr/visas-ordinaires", [
+    step("eligibility", "Vérifier l’éligibilité", "Contrôler sur Accès Maroc si la nationalité et le motif relèvent d’une exemption, d’un eVisa/AEVM ou d’un visa ordinaire.", ["Nationalité", "Motif", "eVisa", "Visa"], "https://www.acces-maroc.ma/"),
+    step("documents", "Préparer les pièces tourisme", "Réunir formulaire, deux photos, document d’identité ou de séjour, passeport, preuve de ressources et justificatifs de transport/hébergement selon le dépôt.", ["Formulaire", "Photos", "Passeport", "Ressources"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("consular_submission", "Dépôt consulaire", "Déposer auprès de la mission compétente, fournir l’assurance, la réservation ou le titre de transport lorsque demandé et acquitter les droits.", ["Consulat", "Assurance", "Réservation", "Droits"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("visitor_conditions", "Respecter le statut visiteur", "Respecter les conditions d’inactivité professionnelle et de séjour ; toute installation longue doit suivre la régularisation auprès des services compétents.", ["Séjour", "Inactivité", "Régularisation", "Conditions"], "https://diplomatie.ma/fr/faq"),
+  ]),
+  regional("Maroc", "Études", "https://consulat.ma/fr/visas-ordinaires", [
+    step("admission", "Admission ou inscription", "Obtenir l’attestation d’inscription ou de bourse et l’admission dans un établissement marocain reconnu.", ["Admission", "Inscription", "Bourse", "Établissement"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("amci_route", "Vérifier la voie AMCI", "Lorsque le parcours relève de la coopération ou d’une bourse, vérifier la notification et la liste AMCI auprès des autorités compétentes.", ["AMCI", "Bourse", "Liste", "Autorité"], "https://diplomatie.ma/fr/visiter-le-maroc"),
+    step("consular_documents", "Préparer le dossier étudiant", "Réunir formulaire, photos, passeport, admission, prise en charge ou moyens de subsistance et les engagements de séjour requis.", ["Formulaire", "Passeport", "Admission", "Ressources"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("residence_regularization", "Régulariser le séjour", "Après l’arrivée et l’hébergement, demander la carte de séjour auprès du service compétent de la Sûreté Nationale selon les instructions officielles.", ["Arrivée", "Hébergement", "Carte", "Séjour"], "https://diplomatie.ma/fr/faq"),
+  ]),
+  regional("Maroc", "Travail", "https://consulat.ma/fr/visas-ordinaires", [
+    step("employment_contract", "Contrat visé", "Obtenir un contrat de travail dûment visé par le Ministère de l’Emploi, exigé pour la demande de visa travail.", ["Contrat", "Emploi", "Visa", "Ministère"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("documents", "Préparer les pièces", "Réunir formulaire, photos, pièce d’identité ou titre de séjour, passeport et copie des pages d’identité et de validité.", ["Formulaire", "Photos", "Passeport", "Copies"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("consular_submission", "Dépôt de la demande", "Déposer la demande auprès de la mission consulaire compétente et suivre toute instruction complémentaire officielle.", ["Consulat", "Dépôt", "Instruction", "Référence"], "https://consulat.ma/fr/visas-ordinaires"),
+    step("authorization_before_work", "Autorisation avant emploi", "Ne commencer l’activité qu’après obtention de la décision et des autorisations de séjour et de travail applicables.", ["Décision", "Séjour", "Travail", "Autorisation"], "https://diplomatie.ma/fr/faq"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -977,7 +995,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

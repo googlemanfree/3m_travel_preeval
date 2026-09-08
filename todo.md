@@ -3006,3 +3006,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Tanzanie dans le catalogue détaillé avec contrôle de catégorie, referral visa, Visa Grant Notice et e-Services de permis.
 - [x] Ajouter les sources Immigration Department et e-Services au registre officiel.
 - [x] Valider la matrice Tanzanie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Maroc
+- [x] Contrôler les sources Accès Maroc, Consulat.ma et diplomatie.ma pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Maroc dans le catalogue détaillé avec contrôle eVisa/visa ordinaire, admission/AMCI et contrat visé par le Ministère de l’Emploi.
+- [x] Ajouter les sources officielles marocaines au registre partagé.
+- [x] Corriger l’assertion de source du parcours Études et valider les 21 tests ciblés avec TypeScript.
