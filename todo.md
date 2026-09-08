@@ -2819,3 +2819,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Pologne
 - [x] Contrôler les sources institutionnelles polonaises pour court séjour, études et visa national D travail.
 - [x] Intégrer les variantes Pologne dans le catalogue détaillé avec dépendance au consulat, à e-Konsulat, à l’admission et à l’autorisation professionnelle.
+
+## Audit officiel par lots — Suède
+- [x] Contrôler les sources institutionnelles suédoises pour court séjour, études et travail.
+- [x] Intégrer les variantes Suède dans le catalogue détaillé avec distinction visa Schengen, permis d’études et permis de travail/résidence.

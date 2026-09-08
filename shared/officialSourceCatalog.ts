@@ -404,10 +404,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Suède",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Migrationsverket — visite —",
-        "url": "https://www.migrationsverket.se/en/you-want-to-apply/visiting-sweden.html"
-      }
+      { "label": "Government.se — Information sur les visas", "url": "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/" },
+      { "label": "Migrationsverket — Études supérieures", "url": "https://www.migrationsverket.se/en/you-want-to-apply/study/higher-education.html" },
+      { "label": "EU Immigration Portal — Étudiant en Suède", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-sweden_en" },
+      { "label": "EU Immigration Portal — Travailleur hautement qualifié en Suède", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en" }
     ]
   },
   "suisse": {

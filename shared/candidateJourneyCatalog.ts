@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Suède", "Visiteur", "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/", [
+    step("visa_schengen", "Vérifier le visa Schengen", "Déterminer si un visa est requis et si la Suède est la destination principale du court séjour.", ["Nationalité", "Itinéraire", "Dates"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
+    step("documents", "Préparer les justificatifs", "Réunir les pièces demandées par la mission suédoise ou le pays Schengen représentant la Suède.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
+    step("appointment", "Dépôt de demande", "Déposer la demande auprès de l’ambassade, du consulat ou du représentant compétent selon le lieu de résidence.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
+    step("decision", "Suivi de décision", "Suivre la décision et respecter la durée et les conditions indiquées par l’autorité compétente.", ["Référence", "Notifications"], "https://www.government.se/government-policy/migration-and-asylum/information-on-visas/"),
+  ]),
+  regional("Suède", "Études", "https://www.migrationsverket.se/en/you-want-to-apply/study/higher-education.html", [
+    step("admission", "Admission finale", "Obtenir l’admission finale à un programme à temps plein et vérifier les éventuels frais exigibles.", ["Admission", "Programme", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-sweden_en"),
+    step("permit", "Permis d’études", "Pour des études de plus de trois mois, demander le permis de séjour avant le départ lorsque requis.", ["Passeport", "Assurance", "Ressources"], "https://www.migrationsverket.se/en/you-want-to-apply/study/higher-education.html"),
+    step("application", "Dépôt auprès de la Migration Agency", "Déposer en ligne ou auprès de la représentation compétente avec les documents exigés.", ["Formulaire", "Admission", "Preuves financières"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-sweden_en"),
+    step("study_rights", "Droits pendant les études", "Vérifier les conditions d’activité et de renouvellement liées au permis obtenu.", ["Permis", "Inscription", "Renouvellement"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-sweden_en"),
+  ]),
+  regional("Suède", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en", [
+    step("offer", "Offre d’emploi écrite", "Vérifier l’offre, les conditions d’emploi et les obligations de l’employeur avant la demande.", ["Offre", "Salaire", "Conditions"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en"),
+    step("permit", "Permis de travail et de séjour", "Déterminer le permis applicable, notamment les voies générales, carte bleue ou transfert intra-groupe si pertinent.", ["Employeur", "Qualification", "Passeport"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en"),
+    step("application", "Dépôt de la demande", "Déposer en ligne auprès de la Migration Agency ou auprès de la représentation compétente depuis le pays autorisé.", ["Formulaire", "Contrat", "Pièces"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en"),
+    step("employment", "Début autorisé de l’emploi", "Ne commencer l’activité qu’après délivrance du permis et selon ses limites de profession/employeur.", ["Permis", "Contrat", "Employeur"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en"),
+  ]),
   regional("Pologne", "Visiteur", "https://www.gov.pl/web/usa-en/visas---general-information", [
     step("visa_c", "Vérifier le visa C", "Déterminer si la Pologne est la destination unique ou principale et si le séjour reste dans la limite Schengen applicable.", ["Nationalité", "Itinéraire", "Dates"], "https://www.gov.pl/web/usa-en/visas---general-information"),
     step("documents", "Préparer les justificatifs", "Réunir le formulaire, le passeport, la photo, l’assurance et les pièces de séjour demandées par le consulat compétent.", ["Formulaire", "Passeport", "Assurance", "Hébergement"], "https://www.gov.pl/web/usa-en/visas---general-information"),
@@ -310,7 +328,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

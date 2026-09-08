@@ -127,3 +127,14 @@ Pour l’Autriche, l’interface doit distinguer court séjour Schengen C, séjo
 ### Règle d’intégration
 
 Pour la Pologne, le parcours doit distinguer C court séjour et D national, puis séparer études et travail selon le poste compétent, l’admission, l’autorisation professionnelle et le titre de séjour. Les règles de compétence territoriale et les pièces exactes restent liées à la représentation polonaise du lieu de résidence.
+
+## Suède — onzième lot de sources institutionnelles consultées
+
+- **Government.se — visas** : https://www.government.se/government-policy/migration-and-asylum/information-on-visas/. La source distingue le visa Schengen de court séjour, la compétence de l’ambassade/du consulat et le rôle de la Swedish Migration Agency.
+- **Migrationsverket — études supérieures** : https://www.migrationsverket.se/en/you-want-to-apply/study/higher-education.html. La procédure exige notamment admission finale, passeport, ressources et assurance pour un permis d’études lorsque le séjour dépasse trois mois.
+- **EU Immigration Portal — Étudiant en Suède** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-sweden_en. La page décrit le permis d’études, l’admission, les ressources, l’assurance et les règles d’activité pendant les études.
+- **EU Immigration Portal — Travailleur hautement qualifié en Suède** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/highly-qualified-worker-sweden_en. La procédure exige une offre écrite, des conditions d’emploi conformes, un permis de travail/résidence et un dépôt auprès de la Migration Agency ou de la représentation compétente.
+
+### Règle d’intégration
+
+Pour la Suède, l’interface doit distinguer visa Schengen de court séjour, permis d’études et permis de travail/résidence. Les délais, exigences financières et exceptions doivent être confirmés par la Swedish Migration Agency et la mission compétente avant d’être affichés comme applicables.
