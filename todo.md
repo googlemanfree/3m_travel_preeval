@@ -2680,7 +2680,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un spinner et un état désactivé sur les boutons de connexion/inscription lorsqu’une action est en cours ; `pendingAction` et `Loader2` sont couverts par régression.
 - [x] Ajouter un lien « Mot de passe oublié ? » ou « Besoin d’aide ? » sous les options de connexion ; il ouvre `/forgot-password`.
 - [x] Optimiser la carte d’accès sur mobile avec marges, padding et tailles de texte adaptés aux petits écrans ; rendu contrôlé en viewport 390×844.
-- [ ] Vérifier les clics et le rendu mobile sur `/mon-espace?section=dossier` sans session, puis publier.
+- [x] Vérifier les clics et le rendu mobile sur `/mon-espace?section=dossier` sans session, puis publier. Capture mobile 375×812 réussie ; connexion, inscription, aide et retour accueil sont visibles sans blocage.
 
 ## Accueil — erreurs tRPC et réseau
 - [x] Reproduire et documenter le flux signalé sur `/?from_webdev=1` ; le symptôme historique est confirmé par le rapport utilisateur et la navigation fraîche post-correction ne le reproduit plus.
