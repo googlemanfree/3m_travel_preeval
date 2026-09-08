@@ -2799,3 +2799,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Intégration des variantes détaillées — Allemagne
 - [x] Ajouter les parcours Allemagne Visiteur, Études et Travail à partir des sources Auswärtiges Amt et Federal Foreign Office.
 - [x] Ajouter une régression sur la sélection Allemagne et le maintien du fallback pour les catégories non qualifiées.
+
+## Audit officiel par lots — Espagne
+- [x] Contrôler les sources institutionnelles espagnoles pour visiteur, études et travail salarié.
+- [x] Intégrer les variantes Espagne dans le catalogue détaillé avec dépendance au visa wizard, à la nationalité et à la circonscription consulaire.

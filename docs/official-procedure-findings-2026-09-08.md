@@ -73,3 +73,13 @@ Pour la Suisse, le parcours doit distinguer court séjour Schengen, séjour nati
 ### Règle d’intégration
 
 Pour les Pays-Bas, le produit peut distinguer court séjour jusqu’à 90 jours, études avec titre de séjour adapté et travail soumis à la vérification visa/titre/permis. Les questionnaires officiels doivent rester la référence pour les documents et actions exacts ; aucune exigence détaillée ne doit être généralisée depuis une page de synthèse.
+
+## Espagne — sixième lot de sources institutionnelles consultées
+
+- **Visas nationaux — Ministerio de Asuntos Exteriores** : https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx. La page distingue les séjours de plus de 90 jours pour travail, études ou résidence, décrit la préparation des pièces, le rendez-vous, le dépôt personnel, la preuve de réception et le suivi de décision.
+- **Visa d’études — Consulat général d’Espagne** : https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx. La page distingue les durées et catégories d’études, renvoie aux pièces exactes de la formation et impose de vérifier la circonscription consulaire et les modalités de dépôt.
+- **Visa salarié — Consulat général d’Espagne** : https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx. La page indique notamment le contrat, le permis initial de résidence et de travail, les pièces personnelles, le délai lié à la décision favorable, le dépôt auprès du poste compétent et les formalités après arrivée selon le titre.
+
+### Règle d’intégration
+
+Pour l’Espagne, l’interface peut distinguer visiteur/court séjour, études et travail salarié, mais le visa wizard, la nationalité, la durée, la circonscription consulaire et le type de titre déterminent les pièces exactes. Aucun délai, montant ou document observé dans une circonscription ne doit être généralisé à tous les candidats.

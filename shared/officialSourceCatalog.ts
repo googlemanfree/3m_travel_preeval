@@ -95,10 +95,9 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Espagne",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministerio de Asuntos Exteriores, Unión Europea y Cooperación — Visado Schengen (Visiteur) et Visas Nationaux (Études, Travail) —",
-        "url": "https://www.exteriores.gob.es/es/ServiciosAlCiudadano/Paginas/Servicios-consulares.aspx"
-      }
+      { "label": "Ministerio de Asuntos Exteriores — Visas nationales", "url": "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx" },
+      { "label": "Consulat d’Espagne — Visa d’études", "url": "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx" },
+      { "label": "Consulat d’Espagne — Visa salarié", "url": "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx" }
     ]
   },
   "estonie": {

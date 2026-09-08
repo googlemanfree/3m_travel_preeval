@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Espagne", "Visiteur", "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx", [
+    step("visa_type", "Vérifier le type de séjour", "Déterminer si le séjour relève d’un court séjour Schengen ou d’un visa national selon la durée, la nationalité et le motif.", ["Nationalité", "Motif", "Dates"], "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx"),
+    step("documents", "Préparer les justificatifs", "Utiliser la catégorie officielle et la circonscription consulaire pour réunir les pièces exactes.", ["Formulaire", "Passeport", "Justificatifs"], "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx"),
+    step("appointment", "Rendez-vous et dépôt", "Prendre rendez-vous, déposer personnellement le dossier et fournir la biométrie si demandée.", ["Rendez-vous", "Dossier complet", "Preuve de dépôt"], "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx"),
+    step("decision", "Suivi de la décision", "Conserver la preuve de réception et suivre la demande dans le canal consulaire officiel.", ["Référence", "Notifications"], "https://www.exteriores.gob.es/Embajadas/seul/en/ServiciosConsulares/Paginas/Consular/Visados-nacionales-Informacion-general.aspx"),
+  ]),
+  regional("Espagne", "Études", "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx", [
+    step("admission", "Admission ou programme autorisé", "Obtenir l’admission et vérifier la durée, le type de formation et les conditions propres au programme.", ["Admission", "Programme", "Durée"], "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx"),
+    step("student_documents", "Pièces étudiantes", "Réunir les pièces listées par le consulat : ressources, assurance et documents complémentaires selon la durée.", ["Ressources", "Assurance", "Certificat médical si requis", "Casier si requis"], "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx"),
+    step("application", "Demande et dépôt", "Déposer la demande dans la circonscription compétente, selon les modalités publiées par le poste.", ["Formulaire", "Passeport", "Rendez-vous"], "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx"),
+    step("decision", "Décision et arrivée", "Suivre la décision, ne pas acheter les billets avant l’octroi et accomplir les formalités du titre délivré.", ["Preuve de dépôt", "Décision", "Adresse"], "https://www.exteriores.gob.es/Consulados/losangeles/en/ServiciosConsulares/Paginas/Consular/Visado-de-estudios.aspx"),
+  ]),
+  regional("Espagne", "Travail", "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx", [
+    step("work_permit", "Permis initial et contrat", "Vérifier la décision favorable relative au permis initial de résidence et de travail et le contrat visé.", ["Permis initial", "Contrat", "Employeur"], "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx"),
+    step("documents", "Pièces personnelles", "Préparer passeport, casier judiciaire, certificat médical et traductions/légalisations lorsque requises.", ["Passeport", "Casier judiciaire si requis", "Certificat médical", "Traductions"], "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx"),
+    step("application", "Dépôt dans le délai consulaire", "Déposer la demande auprès du poste compétent dans le délai lié à la décision favorable.", ["Formulaire", "Rendez-vous", "Preuve de dépôt"], "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx"),
+    step("arrival", "Formalités après arrivée", "Respecter les formalités de sécurité sociale et de titre de séjour indiquées pour le contrat et la décision.", ["Décision", "Adresse", "Titre ou carte"], "https://www.exteriores.gob.es/Consulados/miami/en/ServiciosConsulares/Paginas/Consular/Visado-de-trabajo-por-cuenta-ajena.aspx"),
+  ]),
   regional("Allemagne", "Visiteur", "https://www.auswaertiges-amt.de/en/visa-service/215870-215870", [
     step("visa_type", "Vérifier le type de visa", "Déterminer si le séjour relève d’un court séjour Schengen ou d’un visa national selon la durée et le motif.", ["Nationalité", "Motif", "Durée"], "https://www.auswaertiges-amt.de/en/visa-service/215870-215870"),
     step("application", "Préparer la demande", "Utiliser les instructions du poste allemand compétent et réunir les justificatifs propres au motif.", ["Formulaire", "Passeport", "Justificatifs"], "https://www.germany.info/us-en/service/visa"),
@@ -220,7 +238,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
