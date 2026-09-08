@@ -62,6 +62,25 @@ export const caseTasks = mysqlTable("case_tasks", { id: int("id").autoincrement(
 export const caseAdminNotes = mysqlTable("case_admin_notes", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), adminId: int("adminId"), note: text("note").notNull(), isPrivate: boolean("isPrivate").notNull().default(true), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_admin_notes_case_created").on(table.caseId, table.createdAt)]);
 export const caseActivityLogs = mysqlTable("case_activity_logs", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), actorRole: mysqlEnum("actorRole", ["candidate", "admin", "system"]).notNull(), actorId: int("actorId"), actionType: varchar("actionType", { length: 100 }).notNull(), entityType: varchar("entityType", { length: 100 }).notNull(), entityId: varchar("entityId", { length: 100 }), description: text("description"), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_activity_logs_case_created").on(table.caseId, table.createdAt)]);
 
+/** Progression interactive des étapes visibles dans l’espace candidat. Une ligne correspond à un dossier précis. */
+export const procedureChecklistProgress = mysqlTable("procedure_checklist_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierKey: varchar("dossierKey", { length: 64 }).notNull().unique(),
+  candidateId: int("candidateId").notNull(),
+  destination: varchar("destination", { length: 100 }),
+  visaType: varchar("visaType", { length: 100 }),
+  completedStepIds: text("completedStepIds").notNull(),
+  updatedByRole: mysqlEnum("updatedByRole", ["candidate", "admin", "system"]).notNull().default("candidate"),
+  updatedById: int("updatedById"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_checklist_progress_candidate").on(table.candidateId, table.updatedAt),
+  index("idx_checklist_progress_destination").on(table.destination, table.visaType),
+]);
+export type ProcedureChecklistProgress = typeof procedureChecklistProgress.$inferSelect;
+export type InsertProcedureChecklistProgress = typeof procedureChecklistProgress.$inferInsert;
+
 /**
  * Couche opérationnelle transverse : une entrée par demande cliente, quel que soit
  * son formulaire d’origine. Les données source restent dans leurs tables métier.

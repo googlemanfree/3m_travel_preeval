@@ -3061,3 +3061,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger uniquement les incohérences européennes restantes sans supprimer de données ni de routes. Aucun écart bloquant n’a été trouvé lors de l’audit ; aucune suppression n’a été effectuée.
 - [x] Rejouer les tests ciblés, TypeScript et les contrôles de routage pour la version européenne finale.
 - [x] Publier le périmètre européen final et fournir les URL/actions exactes de vérification.
+
+## Checklist interactive des parcours — nouveau lot
+- [x] Cartographier l’affichage actuel des étapes et la source de progression côté client/admin : CandidateCountryJourney et EvaluationSpace côté client, statuts et documents du dossier côté serveur.
+- [x] Ajouter une checklist interactive par dossier et par procédure, sans mélange entre candidats.
+- [x] Persister les validations d’étapes avec contrôle du séquencement bloquant et synchronisation admin/client.
+- [x] Ajouter les tests de mutation, d’isolation, de droits et de rendu de la checklist. TypeScript et 14 tests ciblés passent ; l’espace protégé redirige correctement les visiteurs non connectés.
+- [x] Publier la checklist et documenter l’URL/action exacte ainsi que le résultat attendu.

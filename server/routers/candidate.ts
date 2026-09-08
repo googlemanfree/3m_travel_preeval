@@ -29,6 +29,8 @@ import {
   savedDestinationComparisons,
   candidateEmailChangeRequests,
 } from "../../drizzle/schema";
+import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
+import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
@@ -217,6 +219,52 @@ export const DOSSIER_STEPS = [
   { key: "approuve",    label: "Visa approuvé",         desc: "Félicitations ! Votre visa a été approuvé." },
   { key: "refuse",      label: "Dossier refusé",        desc: "Votre dossier a été refusé. Contactez-nous." },
 ] as const;
+
+type CandidateProcedureContext = {
+  dossierKey: string;
+  candidateId: number;
+  destination: string;
+  visaType: string;
+  dossierStatus: string;
+};
+
+async function resolveCandidateProcedureContext(db: any, candidate: Candidate): Promise<CandidateProcedureContext | null> {
+  const [onlineApplication] = await db.select().from(applications)
+    .where(eq(applications.candidateId, candidate.id))
+    .orderBy(desc(applications.createdAt))
+    .limit(1);
+  if (onlineApplication) {
+    return {
+      dossierKey: onlineApplication.dossierNumber || `online-${onlineApplication.id}`,
+      candidateId: candidate.id,
+      destination: onlineApplication.destination || candidate.destination || "autre",
+      visaType: onlineApplication.visaType || "Visiteur",
+      dossierStatus: onlineApplication.dossierStatus || candidate.dossierStatus || "nouveau",
+    };
+  }
+  const [agencyDossier] = await db.select().from(agencyDossiers)
+    .where(eq(agencyDossiers.email, candidate.email))
+    .orderBy(desc(agencyDossiers.createdAt))
+    .limit(1);
+  if (!agencyDossier) return null;
+  return {
+    dossierKey: `3M-AG-${agencyDossier.id.toString().padStart(4, "0")}`,
+    candidateId: candidate.id,
+    destination: agencyDossier.destination || candidate.destination || "autre",
+    visaType: agencyDossier.visaType || "Visiteur",
+    dossierStatus: agencyDossier.status || candidate.dossierStatus || "nouveau",
+  };
+}
+
+function parseChecklistStepIds(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
@@ -1583,6 +1631,60 @@ export const candidateRouter = router({
    * Aucun détail n’est renvoyé si le numéro ne correspond pas à son e-mail ou
    * à son identifiant candidat.
    */
+  getProcedureChecklist: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const context = await resolveCandidateProcedureContext(db, ctx.candidate);
+    if (!context) return { success: false, data: null };
+    const [progress] = await db.select().from(procedureChecklistProgress)
+      .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
+      .limit(1);
+    const journey = getCandidateJourney(context.destination, context.visaType, context.visaType);
+    const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {});
+    return {
+      success: true,
+      data: {
+        dossierKey: context.dossierKey,
+        destination: context.destination,
+        visaType: context.visaType,
+        completedStepIds: parseChecklistStepIds(progress?.completedStepIds),
+        currentIndex,
+        stepCount: journey.steps.length,
+        updatedAt: progress?.updatedAt ?? null,
+      },
+    };
+  }),
+
+  updateProcedureChecklist: candidateProcedure
+    .input(z.object({ stepId: z.string().trim().min(1).max(160), checked: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const context = await resolveCandidateProcedureContext(db, ctx.candidate);
+      if (!context) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier candidat introuvable." });
+      const journey = getCandidateJourney(context.destination, context.visaType, context.visaType);
+      const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
+      const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
+      if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });
+      const persistedStepId = `checklist-${stepIndex}`;
+      const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {});
+      if (input.checked && stepIndex > currentIndex) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape sera disponible après validation des étapes précédentes." });
+      }
+      const [existing] = await db.select().from(procedureChecklistProgress)
+        .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
+        .limit(1);
+      const completed = new Set(parseChecklistStepIds(existing?.completedStepIds));
+      if (input.checked) completed.add(persistedStepId); else completed.delete(persistedStepId);
+      const completedStepIds = JSON.stringify(Array.from(completed));
+      if (existing) {
+        await db.update(procedureChecklistProgress).set({ completedStepIds, destination: context.destination, visaType: context.visaType, updatedByRole: "candidate", updatedById: ctx.candidate.id }).where(and(eq(procedureChecklistProgress.id, existing.id), eq(procedureChecklistProgress.candidateId, context.candidateId)));
+      } else {
+        await db.insert(procedureChecklistProgress).values({ dossierKey: context.dossierKey, candidateId: context.candidateId, destination: context.destination, visaType: context.visaType, completedStepIds, updatedByRole: "candidate", updatedById: ctx.candidate.id });
+      }
+      return { success: true, completedStepIds: Array.from(completed), message: input.checked ? "Étape cochée dans votre suivi." : "Étape retirée de votre suivi." };
+    }),
+
   getDossierByNumber: candidateProcedure
     .input(z.object({ dossierNumber: z.string().trim().min(4).max(32) }))
     .query(async ({ ctx, input }) => {
