@@ -2748,3 +2748,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Détailler les frais d’ouverture, de traitement et de soumission auprès d’agences de placement.
 - [x] Encadrer la formulation sur l’issue de la recherche d’emploi sans garantie de contrat ni de résultat.
 - [ ] Tester en session admin réelle la génération PDF, l’envoi SMTP et le dépôt éventuel dans l’espace client, sans modifier le paiement existant.
+- [ ] Corriger la condition d’affichage live du bouton de reçu pour tout paiement agence confirmé, puis retester le DOM publié.
