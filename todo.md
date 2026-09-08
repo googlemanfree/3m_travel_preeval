@@ -2712,6 +2712,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Régression fiche 360° — ouverture du contrôle paiement
 - [x] Après ouverture du contrôle « Valider le paiement » sur `3M-AGN-270002`, conserver les dernières données de la fiche 360° pendant le refetch au lieu d’afficher un faux état d’erreur.
-- [x] Identifier et corriger le refetch : `getCandidate360` utilise désormais `placeholderData` et `retry: 2`, avec indication de synchronisation non bloquante.
-- [x] Ajouter la couverture de conservation de fiche pendant refetch dans les régressions ciblées ; 16 tests passent et TypeScript est valide.
+- [x] Identifier et corriger le refetch : `getCandidate360` utilise désormais le cookie HttpOnly prioritaire, `placeholderData` et `retry: 2`, avec indication de synchronisation non bloquante.
+- [x] Ajouter la couverture de conservation de fiche et du fallback cookie de getCandidate360 ; 17 tests ciblés passent et TypeScript est valide.
 - [ ] Retester le contrôle puis confirmer le paiement uniquement après retour d’une fiche stable.

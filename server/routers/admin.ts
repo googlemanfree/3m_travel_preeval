@@ -3165,8 +3165,13 @@ export const adminRouter = router({
 
   getCandidate360: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
+    .query(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const reference = parseAdminCandidateReference(input.candidateId);

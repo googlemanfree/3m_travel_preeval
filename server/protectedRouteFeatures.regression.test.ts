@@ -113,3 +113,12 @@ describe("fallback client session admin périmée", () => {
     expect(dashboard).toContain('navigate("/admin/login")');
   });
 });
+
+describe("fiche 360 agence après ouverture du paiement", () => {
+  it("utilise le cookie HttpOnly avant le jeton local pour getCandidate360", () => {
+    const adminRouter = readFileSync(new URL("../server/routers/admin.ts", import.meta.url), "utf8");
+    const block = adminRouter.slice(adminRouter.indexOf("  getCandidate360:"), adminRouter.indexOf("  updateCandidate360Workflow:"));
+    expect(block).toContain("requireAdminSessionFromCookie(ctx.req.headers.cookie)");
+    expect(block).toContain("requireValidAdminSession(input.sessionToken)");
+  });
+});
