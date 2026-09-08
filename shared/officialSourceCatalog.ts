@@ -194,10 +194,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Italie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministero degli Affari Esteri e della Cooperazione Internazionale — Visiteur, Études, Travail —",
-        "url": "https://vistoperitalia.esteri.it/"
-      }
+      { "label": "Visa for Italy — portail officiel", "url": "http://vistoperitalia.esteri.it/home/en" },
+      { "label": "Consulat d’Italie — Visas d’entrée", "url": "https://consnewyork.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/visas-to-enter-italy/" },
+      { "label": "Consulat d’Italie — Instructions pour les visas", "url": "https://conssanfrancisco.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/instructions-for-visas/" },
+      { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
   "kenya": {

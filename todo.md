@@ -2803,3 +2803,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Espagne
 - [x] Contrôler les sources institutionnelles espagnoles pour visiteur, études et travail salarié.
 - [x] Intégrer les variantes Espagne dans le catalogue détaillé avec dépendance au visa wizard, à la nationalité et à la circonscription consulaire.
+
+## Audit officiel par lots — Italie
+- [x] Contrôler les sources institutionnelles italiennes pour court séjour, études et travail salarié.
+- [x] Intégrer les variantes Italie dans le catalogue détaillé avec dépendance au portail Visa for Italy, au poste compétent et, pour le travail, à l’autorisation employeur/quotas.

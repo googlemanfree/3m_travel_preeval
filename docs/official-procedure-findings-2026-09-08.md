@@ -83,3 +83,14 @@ Pour les Pays-Bas, le produit peut distinguer court séjour jusqu’à 90 jours,
 ### Règle d’intégration
 
 Pour l’Espagne, l’interface peut distinguer visiteur/court séjour, études et travail salarié, mais le visa wizard, la nationalité, la durée, la circonscription consulaire et le type de titre déterminent les pièces exactes. Aucun délai, montant ou document observé dans une circonscription ne doit être généralisé à tous les candidats.
+
+## Italie — septième lot de sources institutionnelles consultées
+
+- **Visa for Italy — portail officiel** : http://vistoperitalia.esteri.it/home/en. Le portail officiel sert à vérifier le besoin de visa selon la nationalité, la durée et le motif ; l’extraction automatique n’a pas fourni de contenu exploitable, il reste donc un point d’entrée officiel et non une source détaillée isolée.
+- **Ministère italien / Consulat — visas d’entrée** : https://consnewyork.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/visas-to-enter-italy/. La page distingue tourisme, études et travail et rappelle que la liste des pièces dépend de la catégorie et de la situation.
+- **Ministère italien / Consulat — instructions** : https://conssanfrancisco.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/instructions-for-visas/. La page distingue court séjour Schengen et visa national, prévoit le rendez-vous, le dépôt des pièces, le suivi et, pour les séjours de plus de 90 jours, les formalités de permis de séjour selon le cas.
+- **EU Immigration Portal — travail salarié en Italie** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en. La procédure décrit l’autorisation de travail demandée par l’employeur, le visa avant l’entrée et la demande de permis de séjour dans les huit jours suivant l’arrivée ; les quotas annuels et les autorités compétentes restent déterminants.
+
+### Règle d’intégration
+
+Pour l’Italie, le parcours doit distinguer court séjour, études et travail. Les pièces et les modalités de dépôt doivent être renvoyées au portail Visa for Italy et au poste compétent. Pour le travail, l’autorisation de l’employeur et le régime de quotas doivent être confirmés avant de présenter une étape comme applicable.
