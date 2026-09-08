@@ -2827,3 +2827,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Norvège
 - [x] Contrôler les sources institutionnelles norvégiennes pour visiteur, études et travail/permis de séjour.
 - [x] Intégrer les variantes Norvège dans le catalogue détaillé en distinguant visa C, visa D limité et permis UDI études/travail.
+
+## Audit officiel par lots — Finlande
+- [x] Contrôler les sources institutionnelles finlandaises pour visiteur, études et travail.
+- [x] Intégrer les variantes Finlande dans le catalogue détaillé avec distinction visa court séjour, permis d’études Migri et permis fondé sur l’emploi.

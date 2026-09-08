@@ -149,3 +149,15 @@ Pour la Suède, l’interface doit distinguer visa Schengen de court séjour, pe
 ### Règle d’intégration
 
 Pour la Norvège, le parcours doit distinguer visa visiteur C, visa D d’entrée limité et permis de séjour pour études ou travail. Les droits ne doivent jamais être déduits du seul visa D ; les checklists UDI et la mission compétente déterminent les pièces et le dépôt.
+
+## Finlande — treizième lot de sources institutionnelles consultées
+
+- **Migri — Visiter la Finlande** : https://migri.fi/en/visiting-finland. La source distingue le visa de court séjour et rappelle qu’un permis de séjour peut être nécessaire même pour certains travaux courts.
+- **Migri — Permis de séjour pour études** : https://migri.fi/en/residence-permit-application-for-studies. La page précise les conditions de séjour d’études et exclut les formations principalement à distance ne nécessitant pas de résidence en Finlande.
+- **Migri — Permis de séjour pour personne employée** : https://migri.fi/en/residence-permit-for-an-employed-person. La source décrit la demande fondée sur un emploi auprès d’un employeur finlandais ou opérant en Finlande.
+- **Study in Finland — Permis étudiant** : https://www.studyinfinland.fi/admissions/student-residence-permit. La page officielle d’orientation confirme le besoin habituel d’un permis pour les études de plus de 90 jours et renvoie vers l’Immigration Service.
+- **Ministry for Foreign Affairs / Finland Abroad** : https://um.fi/frontpage et https://finlandabroad.fi/web/usa/residence-permits-to-finland. Ces pages encadrent les représentations et les demandes de permis depuis l’étranger.
+
+### Règle d’intégration
+
+Pour la Finlande, l’interface doit distinguer visa visiteur, permis d’études et permis fondé sur l’emploi, avec vérification de la durée, du type de formation, de l’employeur et de la représentation compétente. Les exigences exactes restent celles de Migri et du poste finlandais compétent.

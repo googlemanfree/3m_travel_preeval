@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Finlande", "Visiteur", "https://migri.fi/en/visiting-finland", [
+    step("visa_schengen", "Vérifier le court séjour", "Déterminer si un visa Schengen est requis et si la Finlande est la destination principale du voyage.", ["Nationalité", "Itinéraire", "Dates"], "https://migri.fi/en/visiting-finland"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, assurance et les pièces demandées par le poste compétent.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://migri.fi/en/visiting-finland"),
+    step("appointment", "Dépôt et biométrie", "Enregistrer la demande et déposer les documents selon les instructions de la représentation finlandaise compétente.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://finlandabroad.fi/web/usa/frontpage"),
+    step("decision", "Suivi de décision", "Suivre la décision et respecter la durée du court séjour autorisée.", ["Référence", "Notifications"], "https://migri.fi/en/visiting-finland"),
+  ]),
+  regional("Finlande", "Études", "https://migri.fi/en/residence-permit-application-for-studies", [
+    step("admission", "Admission d’études", "Obtenir la place d’études et vérifier que la formation nécessite une résidence en Finlande.", ["Admission", "Programme", "Durée"], "https://www.studyinfinland.fi/admissions/student-residence-permit"),
+    step("permit", "Permis de séjour étudiant", "Demander le permis Migri pour les études de plus de 90 jours, avec ressources et assurance lorsque requis.", ["Passeport", "Ressources", "Assurance"], "https://migri.fi/en/residence-permit-application-for-studies"),
+    step("application", "Dépôt de la demande", "Déposer la demande auprès de Migri et suivre les instructions de vérification d’identité auprès du poste compétent.", ["Formulaire", "Admission", "Biométrie"], "https://finlandabroad.fi/web/usa/residence-permits-to-finland"),
+    step("residence", "Entrée et carte de séjour", "Après décision favorable, suivre les instructions d’entrée et de délivrance de la carte.", ["Décision", "Carte", "Adresse"], "https://migri.fi/en/residence-permit-application-for-studies"),
+  ]),
+  regional("Finlande", "Travail", "https://migri.fi/en/residence-permit-for-an-employed-person", [
+    step("offer", "Emploi et employeur", "Vérifier le contrat et l’employeur finlandais ou opérant en Finlande avant la demande.", ["Employeur", "Contrat", "Fonction"], "https://migri.fi/en/residence-permit-for-an-employed-person"),
+    step("permit", "Permis fondé sur l’emploi", "Déterminer le type de permis de séjour et les éventuelles conditions liées au marché du travail.", ["Passeport", "Qualification", "Salaire"], "https://migri.fi/en/residence-permit-for-an-employed-person"),
+    step("application", "Dépôt auprès de Migri", "Déposer la demande, fournir les pièces et accomplir la vérification d’identité auprès du poste compétent.", ["Formulaire", "Contrat", "Biométrie"], "https://finlandabroad.fi/web/usa/residence-permits-to-finland"),
+    step("employment", "Début autorisé de l’emploi", "Ne commencer l’activité qu’après délivrance du permis et selon les limites de la décision.", ["Permis", "Employeur", "Carte"], "https://migri.fi/en/residence-permit-for-an-employed-person"),
+  ]),
   regional("Norvège", "Visiteur", "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/", [
     step("visa_c", "Vérifier le visa visiteur C", "Déterminer si la Norvège est la destination principale du séjour Schengen et si un visa est requis.", ["Nationalité", "Itinéraire", "Dates"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
     step("documents", "Préparer les justificatifs", "Réunir le formulaire, le passeport, l’assurance, l’itinéraire et les pièces exigées par la checklist officielle.", ["Formulaire", "Passeport", "Assurance", "Hébergement"], "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/"),
@@ -346,7 +364,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

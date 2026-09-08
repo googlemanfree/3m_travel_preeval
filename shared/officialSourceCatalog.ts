@@ -124,10 +124,11 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Finlande",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Maahanmuuttovirasto (Migri) — études —",
-        "url": "https://migri.fi/en/studying-in-finland"
-      }
+      { "label": "Migri — Visiter la Finlande", "url": "https://migri.fi/en/visiting-finland" },
+      { "label": "Migri — Permis de séjour pour études", "url": "https://migri.fi/en/residence-permit-application-for-studies" },
+      { "label": "Migri — Permis pour personne employée", "url": "https://migri.fi/en/residence-permit-for-an-employed-person" },
+      { "label": "Ministry for Foreign Affairs — Finlande", "url": "https://um.fi/frontpage" },
+      { "label": "Finland Abroad — Permis de séjour", "url": "https://finlandabroad.fi/web/usa/residence-permits-to-finland" }
     ]
   },
   "france": {
