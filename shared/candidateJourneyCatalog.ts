@@ -35,7 +35,24 @@ const UK = "https://www.gov.uk/browse/visas-immigration";
 const USA = "https://travel.state.gov/content/travel/en/us-visas.html";
 
 const step = (id: string, label: string, description: string, requiredInputs: string[], sourceUrl: string): JourneyStep => ({ id, label, description, requiredInputs, documents: requiredInputs.map((input, index) => ({ id: `${id}-document-${index + 1}`, label: input, kind: "to_prepare", sourceUrl })), sourceUrl });
-const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: sourceUrl ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M Travel & Services." : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M Travel & Services ne présente pas ces étapes comme une règle consulaire établie.", steps, officialSources: sourceUrl ? [sourceUrl] : [] });
+
+const coreStages = (sourceUrl: string): JourneyStep[] => [
+  step("cv_submission", "Soumission du CV", "Le candidat dépose un CV exploitable et lisible pour ouvrir l’analyse du projet.", ["CV exploitable"], ""),
+  step("cv_review", "Traitement du CV", "Un conseiller vérifie la lisibilité, la cohérence et les éléments utiles du CV.", ["CV contrôlé"], ""),
+  step("profile_treatment", "Traitement du profil", "Le profil est rapproché du projet, du pays et du type de procédure choisi.", ["Profil candidat", "Projet et destination"], ""),
+  step("evaluation_delivery", "Bilan d’évaluation", "Le bilan est préparé, relu et envoyé par l’administration dans l’espace candidat et par e-mail.", ["Bilan d’évaluation"], ""),
+  step("candidate_confirmation", "Confirmation du bilan par le candidat", "Le candidat confirme qu’il a reçu et compris le bilan avant toute demande d’activation.", ["Confirmation du bilan"], ""),
+  step("opening_payment", "Paiement des frais d’ouverture", "Après confirmation du bilan, les frais d’ouverture et de traitement sont demandés et validés par l’administration.", ["Preuve ou référence de paiement"], ""),
+  step("supporting_documents", "Pièces justificatives de la procédure", "Le candidat dépose uniquement les documents listés pour le pays et la procédure sélectionnés.", ["Pièces justificatives listées"], sourceUrl),
+  step("profile_processing", "Traitement du profil après pièces", "Le conseiller contrôle la complétude et prépare le profil selon les exigences documentées.", ["Profil complété", "Documents contrôlés"], ""),
+  step("partner_submission", "Soumission aux partenaires ou agences", "Lorsque le mandat le prévoit, le profil est soumis aux partenaires autorisés avec traçabilité de l’action.", ["Dossier de soumission"], ""),
+  step("contract_wait", "Attente d’une réponse employeur ou partenaire", "Une offre, une lettre de travail ou une décision partenaire n’est jamais garantie et doit être enregistrée lorsqu’elle existe.", ["Contrat ou lettre de travail si disponible"], ""),
+  step("admin_processing", "Traitement administratif", "Les documents reçus sont contrôlés avant toute démarche auprès de l’autorité compétente.", ["Documents contractuels", "Pièces administratives"], ""),
+  step("consular_submission", "Soumission consulaire", "La demande est préparée et soumise selon le portail et les instructions officielles de la destination.", ["Formulaires consulaires", "Rendez-vous ou preuve de soumission"], sourceUrl),
+  step("decision", "Suivi de la décision", "Le candidat suit les notifications officielles et transmet toute demande complémentaire à l’administration.", ["Référence de demande", "Notification officielle"], sourceUrl),
+];
+
+const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: sourceUrl ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M Travel & Services." : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M Travel & Services ne présente pas ces étapes comme une règle consulaire établie.", steps: [...coreStages(sourceUrl), ...steps], officialSources: sourceUrl ? [sourceUrl] : [] });
 
 export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
   common("Canada", "Visiteur", CANADA, [
@@ -127,10 +144,14 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
 export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: string | null, evaluationStatus?: string | null) {
   const status = normalize(dossierStatus);
   if (evaluationStatus !== "validated" && journey.steps[0]) return 0;
-  if (is(status, "nouveau", "evaluation", "en evaluation")) return 0;
-  if (is(status, "bilan", "paye", "paiement")) return Math.min(1, journey.steps.length - 1);
-  if (is(status, "document", "documents")) return Math.min(2, journey.steps.length - 1);
-  if (is(status, "soumis", "en cours", "recrutement", "adem")) return Math.min(3, journey.steps.length - 1);
-  if (is(status, "approuve", "visa")) return journey.steps.length - 1;
+  if (is(status, "nouveau", "evaluation", "en evaluation")) return 1;
+  if (is(status, "bilan")) return 4;
+  if (is(status, "attente paiement", "en attente paiement", "paiement")) return 5;
+  if (is(status, "paye", "payment")) return 6;
+  if (is(status, "document", "documents")) return 7;
+  if (is(status, "soumis", "en cours", "recrutement", "adem")) return 9;
+  if (is(status, "contrat")) return 10;
+  if (is(status, "visa", "consulaire")) return 12;
+  if (is(status, "approuve")) return journey.steps.length - 1;
   return Math.min(1, journey.steps.length - 1);
 }

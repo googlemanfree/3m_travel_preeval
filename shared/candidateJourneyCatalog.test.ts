@@ -4,6 +4,21 @@ import { getCandidateJourney } from "./candidateJourneyCatalog";
 describe("candidate journey official sources", () => {
   it("uses the official Canada work source for worker journeys", () => {
     const journey = getCandidateJourney("Canada", "Travailleur");
+    expect(journey.steps.slice(0, 13).map((step) => step.id)).toEqual([
+      "cv_submission",
+      "cv_review",
+      "profile_treatment",
+      "evaluation_delivery",
+      "candidate_confirmation",
+      "opening_payment",
+      "supporting_documents",
+      "profile_processing",
+      "partner_submission",
+      "contract_wait",
+      "admin_processing",
+      "consular_submission",
+      "decision",
+    ]);
     expect(journey.steps.map((step) => step.label)).toContain("Autorisation de travail");
     expect(journey.officialSources).toContain("https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html");
     expect(journey.disclaimer).toContain("source institutionnelle");

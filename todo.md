@@ -2764,3 +2764,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Relier la validation du reçu et du paiement aux étapes suivantes sans promettre de contrat, de visa ou de résultat.
 - [x] Ajouter les sources officielles vérifiées ADEM/Guichet pour le Luxembourg et IRCC pour le Canada, ainsi qu’un message « source à vérifier » pour les destinations non couvertes.
 - [ ] Compléter séparément la vérification institutionnelle des autres destinations et procédures avant de publier leurs étapes spécifiques.
+
+## Parcours mondial séquencé par pays et procédure
+- [x] Auditer les statuts, étapes, documents requis et sources officielles déjà présents.
+- [x] Définir une chaîne canonique bloquante : CV, traitement CV/profil, bilan, validation admin, confirmation client, paiement d’ouverture, pièces justificatives, traitement, soumission partenaire éventuelle, contrat éventuel, traitement administratif, soumission consulaire et suivi de décision.
+- [ ] Synchroniser chaque étape et son état entre espace candidat et back-office sans permettre de saut manuel non tracé.
+- [ ] Lier les documents requis et les sources officielles au couple destination/procédure, avec état explicite lorsqu’une source manque.
+- [x] Tester les parcours Canada, Luxembourg et une destination sans source vérifiée avant publication progressive.
