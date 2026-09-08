@@ -15,10 +15,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Australie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Department of Home Affairs — Visas (visiteur, études, travail) —",
-        "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing"
-      }
+      { "label": "Department of Home Affairs — Visitor visa subclass 600", "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas" },
+      { "label": "Department of Home Affairs — Student visa subclass 500", "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500" },
+      { "label": "Department of Home Affairs — Explore visa options for working", "url": "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx" },
+      { "label": "Department of Home Affairs — Visa listing", "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing" }
     ]
   },
   "autriche": {

@@ -2904,3 +2904,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes États-Unis dans le catalogue détaillé avec DS-160, SEVIS/I-20 et pétition employeur comme points bloquants.
 - [x] Enrichir le registre officiel avec les pages Visitor Visa, Student Visa, Temporary Worker et Visa Wizard.
 - [x] Valider la matrice États-Unis avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Australie
+- [x] Contrôler les sources Home Affairs pour Visitor subclass 600, Student subclass 500 et la sélection officielle de visa de travail.
+- [x] Intégrer les variantes Australie dans le catalogue détaillé avec vérification de l’éligibilité, CoE/OSHC et visa de travail adapté.
+- [x] Enrichir le registre officiel avec les pages Home Affairs spécifiques aux trois variantes.
+- [x] Valider la matrice Australie avec les tests ciblés et TypeScript.

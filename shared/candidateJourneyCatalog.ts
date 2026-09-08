@@ -650,6 +650,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("ds160", "DS-160 et rendez-vous", "Après approbation, remplir le DS-160, payer les frais applicables et prendre le rendez-vous consulaire.", ["DS-160", "Pétition", "Passeport", "Rendez-vous"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
     step("decision_entry", "Décision et admission", "Fournir biométrie et pièces, suivre la décision et comprendre que l’admission finale relève du CBP au port d’entrée.", ["Biométrie", "Décision", "I-797", "I-94"], "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html"),
   ]),
+  regional("Australie", "Visiteur", "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas", [
+    step("visa_option", "Vérifier la sous-classe", "Vérifier la nationalité et déterminer si la sous-classe 600, l’ETA 601 ou l’eVisitor 651 est adaptée.", ["Nationalité", "Passeport", "Motif", "Dates"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas"),
+    step("genuine_visitor", "Visiteur authentique", "Démontrer une visite temporaire, des ressources suffisantes et l’intention de respecter les conditions ; le travail est interdit.", ["Ressources", "Projet de séjour", "Retour", "Hébergement"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas"),
+    step("online_application", "Demande Home Affairs", "Préparer les documents d’identité et justificatifs, puis déposer la demande selon le canal officiel.", ["Passeport", "Traductions", "Justificatifs", "ImmiAccount"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas"),
+    step("decision_conditions", "Décision et conditions", "Suivre la décision et respecter la durée et les conditions figurant dans la notification de visa.", ["Décision", "Conditions", "Assurance", "Référence"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas"),
+  ]),
+  regional("Australie", "Études", "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500", [
+    step("course_enrolment", "Inscription à un cursus éligible", "Choisir un cursus éligible et obtenir une Confirmation of Enrolment (CoE) valide.", ["Admission", "CoE", "CRICOS", "Passeport"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500"),
+    step("health_cover", "Couverture et conditions étudiant", "Préparer l’OSHC, les justificatifs de santé/caractère et les dispositions de bien-être pour un mineur si nécessaire.", ["OSHC", "Santé", "Casier", "Welfare"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500"),
+    step("online_application", "Demande de Student visa 500", "Déposer la demande en ligne avec le CoE et les documents requis selon les règles applicables au dossier.", ["ImmiAccount", "CoE", "Ressources", "Documents"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500"),
+    step("decision_obligations", "Décision et obligations", "Suivre la décision et respecter les conditions du visa, dont les limites de travail et de séjour.", ["Décision", "Conditions", "Études", "Échéances"], "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500"),
+  ]),
+  regional("Australie", "Travail", "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx", [
+    step("work_finder", "Sélection officielle de la voie", "Utiliser le visa finder Home Affairs selon la durée, le métier, la qualification et le besoin éventuel de sponsor.", ["Métier", "Durée", "Qualification", "Sponsor"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
+    step("occupation_check", "Vérifier la profession et les conditions", "Confirmer que la profession, les compétences et la voie sélectionnée satisfont les exigences de la sous-classe concernée.", ["Occupation", "Compétences", "Évaluation", "Anglais"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
+    step("sponsor_or_nomination", "Sponsor ou nomination si requis", "Réunir la nomination, le sponsor ou les éléments de points exigés par la sous-classe retenue.", ["Employeur", "Nomination", "Invitation", "Référence"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
+    step("online_application", "Demande et décision", "Déposer la demande selon Home Affairs, fournir les pièces et respecter les conditions du visa accordé.", ["ImmiAccount", "Passeport", "Santé", "Décision"], "https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -671,7 +689,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

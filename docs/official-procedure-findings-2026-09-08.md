@@ -336,3 +336,14 @@ Le Royaume-Uni peut être intégré en trois variantes distinctes : Standard Vis
   - La catégorie de travail dépend de l’emploi ; la plupart des demandes exigent une pétition employeur approuvée par USCIS avant la demande de visa. La suite comprend DS-160, rendez-vous, biométrie/entretien et pièces liées à la pétition.
 ### Règle d’intégration
 Les États-Unis sont intégrés en trois variantes distinctes : Visitor B-1/B-2, Student F/M et Temporary Worker. Les catégories ne doivent pas être mélangées ; la pétition employeur, le SEVP/SEVIS et les instructions du poste compétent restent bloquants selon la variante.
+
+## Lot Australie — sources officielles consultées
+- **Department of Home Affairs — Visitor visa subclass 600, Tourist stream** : https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas
+  - Le visa couvre tourisme, croisière ou visite familiale ; il impose l’intention de visiter seulement, des ressources suffisantes et l’interdiction de travailler. L’éligibilité éventuelle aux sous-classes ETA/eVisitor doit être vérifiée selon le passeport.
+  - La demande hors Australie se fait selon ImmiAccount et les justificatifs d’identité, de ressources et de visiteur authentique.
+- **Department of Home Affairs — Student visa subclass 500** : https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500
+  - Le candidat doit être inscrit à un cursus éligible et disposer d’une Confirmation of Enrolment (CoE), d’une couverture OSHC et des justificatifs requis. La demande se fait en ligne et les droits de travail sont ceux du visa accordé.
+- **Department of Home Affairs — Explore visa options for working in Australia** : https://immi.homeaffairs.gov.au/Visa-subsite/Pages/work/explore-visa-options-work.aspx
+  - Le ministère indique que le type de visa de travail dépend de la durée, du métier et souvent des listes de compétences ; le sélecteur officiel doit déterminer les catégories adaptées avant de présenter une voie précise.
+### Règle d’intégration
+L’Australie est intégrée en trois variantes : Visitor subclass 600/ETA/eVisitor selon éligibilité, Student subclass 500 et Travail à sélectionner par le visa finder officiel. Aucun visa visiteur ne doit être présenté comme un droit de travailler.
