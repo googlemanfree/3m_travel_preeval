@@ -812,6 +812,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("consular_application", "Dépôt consulaire", "Prendre rendez-vous auprès de la représentation compétente et déposer le dossier complet en personne.", ["Rendez-vous", "Consulat", "Dépôt", "Décision"], "https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/115-temporary-resident-visa"),
     step("inm_card_conditions", "Entrée, carte et activité autorisée", "Après l’entrée, effectuer les formalités auprès de l’INM et ne travailler que selon l’autorisation accordée.", ["Entrée", "INM", "Carte", "Employeur"], "https://consulmex.sre.gob.mx/leamington/index.php/non-mexicans/visas/115-temporary-resident-visa"),
   ]),
+  regional("Argentine", "Visiteur", "https://cancilleria.gob.ar/en/services/visa/tourist-visa", [
+    step("tourist_category", "Vérifier la catégorie touristique", "Déterminer selon la nationalité si un visa est requis et confirmer la durée maximale de 90 jours.", ["Nationalité", "Motif", "Durée", "Passeport"], "https://cancilleria.gob.ar/en/services/visa/tourist-visa"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport, photos, formulaire signé, ressources, réservation aller-retour, hébergement ou invitation.", ["Passeport", "Photos", "Formulaire", "Ressources"], "https://cancilleria.gob.ar/en/services/visa/tourist-visa"),
+    step("consular_application", "Dépôt personnel et entretien", "Prendre rendez-vous auprès du consulat compétent, déposer les originaux et copies, payer les frais et passer l’entretien.", ["Consulat", "Rendez-vous", "Frais", "Entretien"], "https://cancilleria.gob.ar/en/services/visa/tourist-visa"),
+    step("decision_conditions", "Décision et séjour", "Respecter la décision consulaire et la durée autorisée ; la satisfaction des exigences ne garantit pas l’octroi.", ["Décision", "Entrée", "Durée", "Conditions"], "https://cancilleria.gob.ar/en/services/visa/tourist-visa"),
+  ]),
+  regional("Argentine", "Études", "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days", [
+    step("study_program", "Programme d’études", "Obtenir le programme et l’acceptation d’un établissement argentin pour des études de moins de 365 jours.", ["Programme", "Admission", "Établissement", "Durée"], "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days"),
+    step("renure_registration", "Contrôle RENURE", "Vérifier que l’établissement est enregistré auprès du National Registry of Petitioners (RENURE) et qu’il a transmis les données de l’étudiant.", ["RENURE", "Établissement", "Données", "Référence"], "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days"),
+    step("documents", "Préparer les pièces et ressources", "Réunir passeport, photos, formulaire signé, ressources, casier lorsque requis et autorisation parentale pour un mineur.", ["Passeport", "Photos", "Ressources", "Casier"], "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days"),
+    step("consular_application", "Dépôt personnel et décision", "Déposer au consulat de résidence, payer les frais, passer l’entretien et respecter la décision rendue.", ["Consulat", "Dépôt", "Frais", "Entretien"], "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days"),
+  ]),
+  regional("Argentine", "Travail", "https://www.cancilleria.gob.ar/en/services/working-visa", [
+    step("employment_contract", "Contrat et employeur", "Obtenir un contrat signé avec l’employeur et vérifier l’inscription de l’entreprise au RENURE.", ["Contrat", "Employeur", "RENURE", "Poste"], "https://www.cancilleria.gob.ar/en/services/working-visa"),
+    step("background_documents", "Pièces personnelles et antécédents", "Préparer passeport, photos, preuve d’adresse, certificat de bonne conduite apostillé ou légalisé et déclaration requise.", ["Passeport", "Adresse", "Casier", "Légalisation"], "https://www.cancilleria.gob.ar/en/services/working-visa"),
+    step("consular_application", "Demande personnelle au consulat", "Déposer dans le consulat du lieu de résidence, signer le contrat devant le consul, payer les frais et passer l’entretien.", ["Consulat", "Contrat", "Frais", "Entretien"], "https://www.cancilleria.gob.ar/en/services/working-visa"),
+    step("decision_conditions", "Décision et activité autorisée", "Respecter la décision et les conditions de la Working Visa ; les autorités peuvent demander des pièces supplémentaires.", ["Décision", "Employeur", "Statut", "Conditions"], "https://www.cancilleria.gob.ar/en/services/working-visa"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -833,7 +851,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

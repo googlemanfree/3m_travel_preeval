@@ -430,3 +430,13 @@ Les Émirats arabes unis sont intégrés en trois variantes : Tourist/Visit, Stu
   - La résidence temporaire couvre plus de 180 jours et moins de quatre ans, avec formulaire, passeport, photo, frais et justificatifs correspondant à la catégorie ; les activités rémunérées nécessitent l’autorisation migratoire appropriée.
 ### Règle d’intégration
 Le Mexique est intégré en trois variantes : visiteur non lucratif jusqu’à 180 jours, résident temporaire étudiant et résident temporaire avec autorisation de travail selon la catégorie et la décision de l’INM.
+
+## Lot Argentine — sources officielles consultées
+- **Cancillería — Tourist Visa** : https://cancilleria.gob.ar/en/services/visa/tourist-visa
+  - Le visa touristique autorise jusqu’à 90 jours ; la demande est personnelle, déposée auprès d’un consulat, avec passeport, formulaire signé, ressources, itinéraire, frais et entretien.
+- **Cancillería — Student Visa 365 days** : https://cancilleria.gob.ar/en/services/visas/student-visa-365-days
+  - Le visa étudiant couvre les études de moins de 365 jours ; l’établissement doit déposer les données et être enregistré auprès du RENURE, avec programme, ressources et pièces personnelles.
+- **Cancillería — Working Visa** : https://www.cancilleria.gob.ar/en/services/working-visa
+  - La demande est personnelle auprès du consulat de résidence ; le contrat doit être signé par l’employeur et comporter l’enregistrement RENURE, avec justificatifs, frais et entretien.
+### Règle d’intégration
+L’Argentine est intégrée en trois variantes : Tourist Visa, Student Visa jusqu’à 365 jours et Working Visa, avec RENURE comme contrôle bloquant lorsque la catégorie l’exige.

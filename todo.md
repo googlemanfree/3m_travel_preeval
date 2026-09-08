@@ -2958,3 +2958,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Mexique dans le catalogue détaillé avec seuil de 180 jours, carte INM et autorisation migratoire de travail.
 - [x] Ajouter les sources SRE/Consulados de México au registre officiel.
 - [x] Valider la matrice Mexique avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Argentine
+- [x] Contrôler les sources Cancillería pour Tourist Visa, Student Visa jusqu’à 365 jours et Working Visa.
+- [x] Intégrer les variantes Argentine dans le catalogue détaillé avec entretien consulaire et contrôle RENURE lorsque requis.
+- [x] Ajouter les sources officielles de la Cancillería au registre partagé.
+- [x] Valider la matrice Argentine avec les tests ciblés et TypeScript.

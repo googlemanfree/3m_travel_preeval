@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "argentine": {
+    "country": "Argentine",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Cancillería — Tourist Visa", "url": "https://cancilleria.gob.ar/en/services/visa/tourist-visa" },
+      { "label": "Cancillería — Student Visa 365 days", "url": "https://cancilleria.gob.ar/en/services/visas/student-visa-365-days" },
+      { "label": "Cancillería — Working Visa", "url": "https://www.cancilleria.gob.ar/en/services/working-visa" }
+    ]
+  },
   "mexique": {
     "country": "Mexique",
     "verificationStatus": "verified",
