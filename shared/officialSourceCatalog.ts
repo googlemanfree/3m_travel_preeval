@@ -179,10 +179,11 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Irlande",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Department of Foreign Affairs — Visas —",
-        "url": "https://www.ireland.ie/en/dfa/visas-for-ireland/"
-      }
+      { "label": "Department of Foreign Affairs — Visas for Ireland", "url": "https://www.ireland.ie/en/dfa/visas-for-ireland/" },
+      { "label": "Irish Immigration — Études long séjour", "url": "https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/" },
+      { "label": "Irish Immigration — Travail", "url": "https://www.irishimmigration.ie/coming-to-work-in-ireland/" },
+      { "label": "Department of Enterprise — Employment Permits", "url": "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/" },
+      { "label": "AVATS — Demande de visa/préclearance", "url": "https://www.visas.inis.gov.ie/avats/onlinehome.aspx" }
     ]
   },
   "islande": {

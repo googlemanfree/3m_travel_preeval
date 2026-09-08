@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Irlande", "Visiteur", "https://www.ireland.ie/en/dfa/visas-for-ireland/", [
+    step("visa_need", "Vérifier le besoin de visa irlandais", "Déterminer selon la nationalité, la durée et le motif si une autorisation ou un visa irlandais est requis ; un visa Schengen n’est pas valable en Irlande.", ["Nationalité", "Motif", "Durée"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
+    step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, ressources, assurance et les pièces demandées par l’Irish Immigration Service.", ["Passeport", "Motif", "Hébergement", "Ressources"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
+    step("avats", "Demande AVATS", "Compléter la demande en ligne AVATS, imprimer le résumé, signer et suivre le lieu de dépôt indiqué.", ["Formulaire", "Résumé AVATS", "Frais"], "https://www.visas.inis.gov.ie/avats/onlinehome.aspx"),
+    step("decision", "Décision et entrée", "Suivre la décision et comprendre qu’un visa autorise le voyage mais ne garantit pas l’entrée, décidée au contrôle frontalier.", ["Référence", "Notifications", "Documents"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
+  ]),
+  regional("Irlande", "Études", "https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/", [
+    step("admission", "Admission et inscription", "Obtenir la lettre d’inscription et vérifier la durée de la formation et les exigences applicables aux ressortissants non-EEE/non-suisses.", ["Admission", "Programme", "Durée"], "https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/"),
+    step("visa_type", "Choisir C ou D études", "Distinguer le court séjour C pour une formation jusqu’à 90 jours du visa D pour une étude de plus de trois mois.", ["Nationalité", "Durée", "Admission"], "https://www.ireland.ie/en/dfa/visas-for-ireland/"),
+    step("avats", "Demande et pièces", "Compléter AVATS, payer les frais applicables et envoyer les pièces exigées ; l’envoi des documents ne garantit pas l’acceptation.", ["Formulaire", "Frais", "Pièces"], "https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/"),
+    step("arrival", "Arrivée et permission", "Présenter les documents au contrôle et respecter la permission d’entrée, la durée autorisée et l’enregistrement lorsque requis.", ["Passeport", "Visa", "Enregistrement"], "https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/"),
+  ]),
+  regional("Irlande", "Travail", "https://www.irishimmigration.ie/coming-to-work-in-ireland/", [
+    step("permit", "Employment permit ou permission", "Vérifier l’autorisation de travail requise avant le visa, selon la nationalité, la durée et le type d’emploi.", ["Nationalité", "Emploi", "Durée"], "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/"),
+    step("contract", "Contrat et éligibilité", "Réunir le contrat signé, les informations employeur et les éléments de qualification exigés par le type de permis.", ["Employeur", "Contrat", "Qualification"], "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/"),
+    step("visa", "Visa C ou D puis AVATS", "Selon la durée, demander le visa irlandais approprié via AVATS après obtention ou vérification du permis d’emploi.", ["Permit", "Formulaire", "Frais"], "https://www.irishimmigration.ie/coming-to-work-in-ireland/"),
+    step("registration", "Entrée et enregistrement", "Après l’arrivée, respecter la permission accordée et l’enregistrement requis pour un séjour de plus de 90 jours.", ["Visa", "Permission", "Enregistrement"], "https://www.irishimmigration.ie/coming-to-work-in-ireland/"),
+  ]),
   regional("République tchèque", "Visiteur", "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html", [
     step("visa_c", "Vérifier le visa C", "Déterminer si un visa Schengen court séjour est requis et confirmer le but du voyage en République tchèque.", ["Nationalité", "Itinéraire", "Dates"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
     step("documents", "Préparer les justificatifs", "Réunir passeport, motif, hébergement, assurance et pièces demandées par la mission tchèque compétente.", ["Passeport", "Motif", "Hébergement", "Assurance"], "https://mzv.gov.cz/jnp/en/information_for_aliens/types_of_visas/index.html"),
@@ -400,7 +418,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

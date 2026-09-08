@@ -183,3 +183,14 @@ Pour le Danemark, le parcours doit distinguer visa Schengen de court séjour, pe
 ### Règle d’intégration
 
 Pour la Tchéquie, le parcours doit distinguer visa C court séjour, visa D long séjour et permis de résidence longue durée pour études ou emploi. Les délais, frais, preuves d’assurance, logement, admission et autorisation de travail doivent rester liés à la catégorie exacte et à la mission compétente.
+
+## Irlande — seizième lot de sources institutionnelles consultées
+
+- **Department of Foreign Affairs — Visas for Ireland** : https://www.ireland.ie/en/dfa/visas-for-ireland/. La source rappelle que l’Irlande n’est pas dans Schengen, distingue court séjour C et long séjour D, et renvoie à AVATS, au poste compétent et aux pièces par catégorie.
+- **Irish Immigration — Études long séjour** : https://www.irishimmigration.ie/coming-to-study-in-ireland/what-are-my-study-visa-options/how-to-apply-for-long-term-study-visa/. La procédure comprend demande AVATS, frais, pièces justificatives et contrôle à l’arrivée ; l’obtention n’est pas garantie.
+- **Irish Immigration — Travail** : https://www.irishimmigration.ie/coming-to-work-in-ireland/. Un non-EEE doit disposer d’un employment permit ou d’une permission adaptée et, selon sa nationalité, d’un visa ; au-delà de 90 jours, l’enregistrement est requis.
+- **Department of Enterprise — Employment Permits** : https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/. La source officielle encadre les catégories de permis, le contrat signé, la demande en ligne et les délais de dépôt.
+
+### Règle d’intégration
+
+Le parcours Irlande doit être séparé du parcours Schengen : un visa Schengen n’est pas présenté comme valable pour l’Irlande. Les branches visiteur, études et travail doivent distinguer C/D, AVATS, immigration et employment permit, avec les exigences exactes liées à la nationalité et au poste compétent.
