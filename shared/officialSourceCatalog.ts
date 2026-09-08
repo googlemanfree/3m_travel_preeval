@@ -314,6 +314,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "EU Immigration Portal — Travail salarié en Italie", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-italy_en" }
     ]
   },
+  "tunisie": {
+    "country": "Tunisie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Ministère tunisien des Affaires étrangères — visas et services consulaires", "url": "https://www.diplomatie.gov.tn/" },
+      { "label": "Ministère tunisien de l’Intérieur — carte de séjour pour étrangers", "url": "https://services.interieur.gov.tn/wap/fr/docs/demarches/05.html" },
+      { "label": "Ministère tunisien de l’Emploi — emploi des étrangers", "url": "https://www.emploi.gov.tn/fr/131/emploi-des-etrangers-en-tunisie" }
+    ]
+  },
   "algerie": {
     "country": "Algérie",
     "verificationStatus": "verified",

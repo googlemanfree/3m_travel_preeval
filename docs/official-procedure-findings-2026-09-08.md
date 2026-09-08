@@ -554,3 +554,12 @@ Maurice est intégré en trois variantes : Visiteur, Études et Travail, avec in
 Le MFA distingue visas touristique, étude, travail et travail temporaire ; la demande exige notamment passeport de six mois, photos, assurance voyage et justificatifs propres à la catégorie. Study in Algeria prévoit candidature, revue administrative MESRS, revue académique, inscription puis début des cours. L’AAPI distingue régime général, temporaire et exceptionnel ; le Temporary Work Permit est préalable au visa de travail et l’autorisation de travail correspond au contrat.
 ### Règle d’intégration
 L’Algérie est intégrée en trois variantes : Visiteur, Études et Travail, avec contrôle consulaire, plateforme Study in Algeria et autorisation de travail/TWP avant emploi.
+
+## Lot Tunisie — sources officielles consultées
+- Ministère des Affaires étrangères — portail visa et services consulaires : https://www.diplomatie.gov.tn/
+- Ministère de l’Intérieur — carte de séjour pour étrangers : https://services.interieur.gov.tn/wap/fr/docs/demarches/05.html
+- Ministère de l’Emploi — Emploi des étrangers : https://www.emploi.gov.tn/fr/131/emploi-des-etrangers-en-tunisie
+### Faits vérifiables
+Le portail MAE fournit les informations et services consulaires pour les visas d’entrée. Le service e-Intérieur exige une entrée légale et, pour une activité rémunérée, un contrat de travail visé ou une attestation de non-soumission ; pour les études, une attestation de scolarité/inscription, revenus, passeport, hébergement et formulaire visa-carte de séjour. La page Emploi des étrangers n’a pas été extraite ; ses détails opérationnels restent à confirmer directement auprès du ministère.
+### Règle d’intégration
+La Tunisie est intégrée avec des étapes vérifiables pour Visiteur et Études. Le parcours Travail est présenté uniquement comme une vérification officielle de contrat visé/carte de séjour et renvoie au ministère de l’Emploi tant que la source détaillée n’est pas lisible ; aucune étape de travail non vérifiée n’est ajoutée.

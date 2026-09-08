@@ -3036,3 +3036,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Algérie dans le catalogue détaillé avec visa consulaire, plateforme Study in Algeria et TWP avant emploi.
 - [x] Ajouter les sources officielles algériennes au registre partagé.
 - [x] Valider la matrice Algérie avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Tunisie
+- [x] Contrôler les sources MAE, e-Intérieur et ministère de l’Emploi pour Visiteur, Études et Travail.
+- [x] Intégrer les variantes Tunisie avec étapes vérifiables de visa, carte de séjour, inscription et contrat visé ; signaler le renvoi ministériel lorsque la page détaillée n’est pas lisible.
+- [x] Ajouter les sources officielles tunisiennes au registre partagé.
+- [x] Valider la matrice Tunisie avec les tests ciblés et TypeScript.
