@@ -281,3 +281,13 @@ Le parcours Lituanie doit distinguer court séjour Schengen, visa national, étu
 ### Règle d’intégration
 
 Le parcours Bulgarie doit distinguer visa C Schengen de court séjour, visa D de long séjour, permis de séjour étudiant et permis unique de travail. Un visa C ne doit jamais être présenté comme un droit de travailler, d’étudier à long terme ou de s’installer. Les exigences de permis et l’intervention de l’employeur doivent être affichées seulement dans la variante Travail.
+
+## Hongrie — vingt-cinquième lot de sources institutionnelles consultées
+
+- **Hungarian Ministry of Foreign Affairs — General Information for Entering Hungary** : https://konzinfo.mfa.gov.hu/en/how-apply-visa. La Hongrie distingue le court séjour Schengen jusqu’à 90 jours sur 180 des séjours de plus de 90 jours relevant du droit national ; les visas et titres de séjour ne doivent pas être confondus.
+- **EU Immigration Portal — Student in Hungary** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-hungary_en. Les études requièrent une admission, un titre de séjour pour études et, selon le cas, une procédure d’entrée/visa ; la plateforme Enter Hungary et l’autorité compétente interviennent dans certaines demandes.
+- **EU Immigration Portal — Employed worker in Hungary** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-hungary_en. Le travail salarié repose en principe sur une autorisation d’emploi ou un permis unique, avec visa d’entrée lorsque nécessaire, intervention de l’employeur et contrôle éventuel du marché du travail.
+
+### Règle d’intégration
+
+Le parcours Hongrie doit séparer visa C de court séjour, séjour d’études et travail salarié soumis à titre ou permis approprié. Un court séjour ne doit jamais être présenté comme un droit de travailler, d’étudier à long terme ou de s’installer. Les démarches Enter Hungary, l’admission et l’employeur doivent apparaître uniquement dans les variantes concernées.

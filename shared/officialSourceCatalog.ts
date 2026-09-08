@@ -168,10 +168,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Hongrie",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "National Directorate-General for Aliens Policing (OIF) — Visiteur, Études, Travail —",
-        "url": "https://oif.gov.hu/"
-      }
+      { "label": "Hungarian MFA — General Information for Entering Hungary", "url": "https://konzinfo.mfa.gov.hu/en/how-apply-visa" },
+      { "label": "EU Immigration Portal — Student in Hungary", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-hungary_en" },
+      { "label": "EU Immigration Portal — Employed worker in Hungary", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-hungary_en" },
+      { "label": "National Directorate-General for Aliens Policing — Enter Hungary", "url": "https://oif.gov.hu/" }
     ]
   },
   "irlande": {
