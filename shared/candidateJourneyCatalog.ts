@@ -686,6 +686,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("visa_application", "Demande auprès de la mission", "Présenter les documents de la catégorie retenue, le passeport, le formulaire, la photo et le COE lorsque requis.", ["Passeport", "Formulaire", "Photo", "COE"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
     step("decision_entry", "Décision et statut autorisé", "Suivre la décision et exercer uniquement l’activité correspondant au statut de résidence accordé.", ["Décision", "Visa", "Statut", "Employeur"], "https://www.mofa.go.jp/j_info/visit/visa/long/index.html"),
   ]),
+  regional("Nouvelle-Zélande", "Visiteur", "https://www.immigration.govt.nz/visas/visitor-visa/", [
+    step("visa_or_nzeta", "Vérifier Visa ou NZeTA", "Déterminer selon la nationalité si un Visitor Visa ou une NZeTA est nécessaire pour le séjour projeté.", ["Nationalité", "Passeport", "Motif", "Dates"], "https://www.immigration.govt.nz/visas/visitor-visa/"),
+    step("genuine_intentions", "Visiteur authentique et ressources", "Démontrer le motif temporaire, les ressources ou le sponsor acceptable et la capacité à quitter la Nouvelle-Zélande.", ["Ressources", "Hébergement", "Retour", "Sponsor"], "https://www.immigration.govt.nz/visas/visitor-visa/"),
+    step("online_application", "Demande Immigration New Zealand", "Déposer la demande en ligne avec identité, photo, justificatifs financiers, itinéraire et traductions si requises.", ["Formulaire", "Passeport", "Photo", "Justificatifs"], "https://www.immigration.govt.nz/visas/visitor-visa/"),
+    step("decision_conditions", "Décision et conditions", "Suivre la décision et respecter la durée, les conditions de séjour et l’interdiction de travailler.", ["Décision", "Conditions", "Durée", "Référence"], "https://www.immigration.govt.nz/visas/visitor-visa/"),
+  ]),
+  regional("Nouvelle-Zélande", "Études", "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/", [
+    step("offer_of_place", "Offre d’un établissement agréé", "Choisir un établissement et obtenir l’offre de place nécessaire pour la demande de visa étudiant.", ["Admission", "Offre", "Programme", "Passeport"], "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/"),
+    step("student_option", "Choisir la catégorie étudiant", "Déterminer le visa étudiant adapté au cursus, à sa durée et aux règles de travail ou de voyage applicables.", ["Cursus", "Durée", "Fonds", "Conditions"], "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/"),
+    step("online_application", "Demande en ligne", "Déposer une demande complète avec l’offre, les pièces justificatives et les informations nécessaires avant le voyage.", ["Formulaire", "Offre", "Ressources", "Documents"], "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/"),
+    step("decision_obligations", "Décision et obligations étudiant", "Suivre la décision et respecter les conditions du visa, notamment les droits de travail autorisés.", ["Décision", "Conditions", "Études", "Échéances"], "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/"),
+  ]),
+  regional("Nouvelle-Zélande", "Travail", "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/", [
+    step("accredited_employer", "Employeur accrédité", "Obtenir une offre d’emploi actuelle d’un employeur accrédité pour l’AEWV.", ["Employeur", "Accréditation", "Poste", "Offre"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
+    step("job_offer", "Offre d’au moins 30 heures", "Vérifier que l’offre est à temps plein, au moins 30 heures par semaine, avec le job check et les conditions conformes.", ["Contrat", "30 heures", "Job check", "Salaire"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
+    step("skills_evidence", "Compétences et qualifications", "Fournir les preuves d’expérience ou de qualification, d’enregistrement professionnel, de santé et de caractère selon le poste.", ["Expérience", "Diplôme", "Santé", "Casier"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
+    step("online_application", "Demande AEWV et décision", "Utiliser le lien de demande transmis par l’employeur, fournir les pièces et respecter les conditions du visa accordé.", ["Lien", "Formulaire", "Contrat", "Décision"], "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -707,7 +725,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

@@ -81,6 +81,9 @@ describe("catalogue de parcours candidat pays-visa", () => {
       ["Japon", "Visiteur", "mofa.go.jp"],
       ["Japon", "Études", "mofa.go.jp"],
       ["Japon", "Travail", "mofa.go.jp"],
+      ["Nouvelle-Zélande", "Visiteur", "immigration.govt.nz"],
+      ["Nouvelle-Zélande", "Études", "immigration.govt.nz"],
+      ["Nouvelle-Zélande", "Travail", "immigration.govt.nz"],
     ] as const;
     for (const [country, visa, sourceHost] of cases) {
       const journey = getCandidateJourney(country, visa);

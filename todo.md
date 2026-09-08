@@ -2916,3 +2916,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Japon dans le catalogue détaillé avec distinction court séjour, Student et Work/Long-term stay.
 - [x] Ajouter les sources MOFA au registre officiel et rappeler le rôle du Certificate of Eligibility.
 - [x] Valider la matrice Japon avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Nouvelle-Zélande
+- [x] Contrôler les sources Immigration New Zealand pour Visitor Visa/NZeTA, études et Accredited Employer Work Visa.
+- [x] Intégrer les variantes Nouvelle-Zélande dans le catalogue détaillé avec contrôle visiteur authentique, offre d’études et employeur accrédité.
+- [x] Ajouter les sources Immigration New Zealand au registre officiel et supprimer le doublon de clé existant.
+- [x] Valider la matrice Nouvelle-Zélande avec les tests ciblés et TypeScript.

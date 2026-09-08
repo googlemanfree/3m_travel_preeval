@@ -294,6 +294,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       }
     ]
   },
+  "nouvelle zelande": {
+    "country": "Nouvelle-Zélande",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Immigration New Zealand — Visitor Visa", "url": "https://www.immigration.govt.nz/visas/visitor-visa/" },
+      { "label": "Immigration New Zealand — Visas for studying", "url": "https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/" },
+      { "label": "Immigration New Zealand — Accredited Employer Work Visa", "url": "https://www.immigration.govt.nz/visas/accredited-employer-work-visa/" }
+    ]
+  },
   "norvege": {
     "country": "Norvège",
     "verificationStatus": "verified",
@@ -302,16 +311,6 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "Norway.no — Visa visiteur", "url": "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/visitors-visa/" },
       { "label": "Norway.no — Permis de séjour", "url": "https://www.norway.no/en/usa/services-info/visitors-visa-res-permit/res-permit/" },
       { "label": "UDI — Portail des demandes", "url": "https://www.udi.no/en/" }
-    ]
-  },
-  "nouvelle zelande": {
-    "country": "Nouvelle-Zélande",
-    "verificationStatus": "verified",
-    "sources": [
-      {
-        "label": "Immigration New Zealand — Visiteur —",
-        "url": "https://www.immigration.govt.nz/visas/visitor-visa"
-      }
     ]
   },
   "pays bas": {

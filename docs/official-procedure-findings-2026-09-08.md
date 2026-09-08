@@ -358,3 +358,13 @@ L’Australie est intégrée en trois variantes : Visitor subclass 600/ETA/eVisi
   - Le Japon distingue de nombreuses catégories de travail et de long séjour, notamment Engineer/Specialist in Humanities/International Services, Specified Skilled Worker, Professor, Researcher et autres catégories officielles. Le COE est en principe requis avant la demande de visa pour un séjour long ou un travail rémunéré.
 ### Règle d’intégration
 Le Japon est intégré en trois variantes : court séjour/visiteur, Student et Work/Long-term stay. Les catégories de travail ne sont pas fusionnées ; la nature exacte de l’activité et le COE restent déterminants, avec renvoi à la mission diplomatique compétente.
+
+## Lot Nouvelle-Zélande — sources officielles consultées
+- **Immigration New Zealand — Visitor Visa** : https://www.immigration.govt.nz/visas/visitor-visa/
+  - Le visa visiteur permet le séjour temporaire et jusqu’à trois mois d’études, mais pas le travail ; une NZeTA peut remplacer le visa selon la nationalité. Le demandeur doit démontrer ses intentions authentiques, ses ressources et son départ.
+- **Immigration New Zealand — Visas for studying in New Zealand** : https://www.immigration.govt.nz/study/study-visas/visas-for-studying-in-new-zealand/
+  - Au-delà de trois mois d’études, un visa étudiant est requis. Le parcours passe par une offre de place d’un établissement agréé puis une demande en ligne avec conditions de fonds, de voyage et de visa.
+- **Immigration New Zealand — Accredited Employer Work Visa** : https://www.immigration.govt.nz/visas/accredited-employer-work-visa/
+  - Le candidat doit disposer d’une offre d’emploi à temps plein d’un employeur accrédité, d’au moins 30 heures hebdomadaires, et satisfaire les exigences de compétences, qualification/expérience, santé et caractère.
+### Règle d’intégration
+La Nouvelle-Zélande est intégrée en trois variantes : Visitor Visa/NZeTA selon éligibilité, Student visa et Accredited Employer Work Visa. Aucun visa visiteur ne doit être présenté comme une autorisation de travail.
