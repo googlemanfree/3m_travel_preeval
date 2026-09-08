@@ -2791,3 +2791,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Pays-Bas
 - [x] Contrôler les sources institutionnelles Pays-Bas pour court séjour, études et travail.
 - [ ] Intégrer les variantes Pays-Bas dans le catalogue détaillé selon le visa, le titre de séjour et le permis éventuellement requis.
+
+## Intégration des variantes détaillées — premier lot européen
+- [x] Ajouter les parcours détaillés France, Belgique, Suisse et Pays-Bas à partir des sources auditées, sans modifier les parcours Canada/Luxembourg. L’Allemagne reste sur le catalogue source vérifié, sans variante détaillée publiée tant que la branche compétente n’est pas explicitement qualifiée.
+- [x] Ajouter une régression qui vérifie les étapes spécifiques des cinq destinations européennes couvertes et leur source officielle.

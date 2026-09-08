@@ -41,6 +41,21 @@ describe("catalogue de parcours candidat pays-visa", () => {
     expect(journeyStepIndex(journey, "visa_approuve", "validated")).toBeGreaterThan(journeyStepIndex(journey, "contrat_obtenu", "validated"));
   });
 
+  it("sélectionne les variantes détaillées du premier lot européen", () => {
+    const cases = [
+      ["France", "Études", "france-visas.gouv.fr"],
+      ["Belgique", "Travail", "home-affairs.ec.europa.eu"],
+      ["Suisse", "Travail", "sem.admin.ch"],
+      ["Pays-Bas", "Visiteur", "netherlandsworldwide.nl"],
+    ] as const;
+    for (const [country, visa, sourceHost] of cases) {
+      const journey = getCandidateJourney(country, visa);
+      expect(journey.steps.length).toBeGreaterThan(15);
+      expect(journey.steps.some((step) => step.sourceUrl.includes(sourceHost))).toBe(true);
+      expect(journey.officialSources[0]).toContain(sourceHost);
+    }
+  });
+
   it("ne fabrique pas de portail pour un pays non référencé", () => {
     const journey = getCandidateJourney("Destination à vérifier", "Visiteur");
     expect(journey.officialSources).toEqual([]);

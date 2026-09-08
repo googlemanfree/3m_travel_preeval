@@ -111,6 +111,78 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
   ]),
 ];
 
+const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
+
+const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("France", "Visiteur", "https://france-visas.gouv.fr/en/", [
+    step("visa_wizard", "Vérification France-Visas", "Utiliser le visa wizard pour vérifier le besoin de visa, le type de séjour et le poste compétent.", ["Situation", "Nationalité", "Motif et dates"], "https://france-visas.gouv.fr/en/"),
+    step("online_application", "Demande en ligne", "Compléter la demande officielle et rassembler les justificatifs indiqués par le visa wizard.", ["Formulaire", "Justificatifs du séjour"], "https://france-visas.gouv.fr/en/"),
+    step("appointment", "Rendez-vous et dépôt", "Prendre rendez-vous puis déposer le dossier complet avec les documents exigés.", ["Rendez-vous", "Passeport", "Récépissé/CERFA"], "https://us.diplomatie.gouv.fr/en/applying-for-a-visa"),
+    step("tracking", "Suivi de la demande", "Suivre la demande dans le canal officiel et récupérer le passeport selon les instructions du poste.", ["Référence de demande", "Notifications"], "https://us.diplomatie.gouv.fr/en/applying-for-a-visa"),
+  ]),
+  regional("France", "Études", "https://france-visas.gouv.fr/en/etudiant", [
+    step("admission", "Admission ou inscription", "Obtenir l’admission dans l’établissement et vérifier si la procédure Études en France s’applique à la nationalité.", ["Lettre d’admission", "Inscription", "Parcours académique"], "https://france-visas.gouv.fr/en/etudiant"),
+    step("visa_wizard", "Visa étudiant adapté", "Utiliser le visa wizard pour distinguer le séjour court ou long et la liste exacte des pièces.", ["Type de formation", "Durée", "Ressources"], "https://france-visas.gouv.fr/en/etudiant"),
+    step("application", "Demande et dépôt", "Compléter la demande, prendre rendez-vous et déposer le dossier auprès du poste ou centre compétent.", ["Formulaire", "Justificatifs", "Rendez-vous"], "https://france-visas.gouv.fr/en/"),
+    step("arrival", "Suivi et formalités après arrivée", "Suivre la décision et accomplir les formalités de validation ou de séjour indiquées pour le visa délivré.", ["Décision", "Adresse", "Formalités d’arrivée"], "https://france-visas.gouv.fr/en/etudiant"),
+  ]),
+  regional("France", "Travail", "https://france-visas.gouv.fr/en/motif-professionnel", [
+    step("category", "Qualification du motif professionnel", "Identifier la situation : salarié, détachement, mobilité intra-groupe, indépendant ou autre catégorie.", ["Contrat ou mission", "Employeur", "Durée"], "https://france-visas.gouv.fr/en/motif-professionnel"),
+    step("authorization", "Autorisation applicable", "Vérifier les formalités préalables propres à l’activité et au séjour auprès du portail officiel.", ["Autorisation si requise", "Documents employeur"], "https://france-visas.gouv.fr/en/motif-professionnel"),
+    step("application", "Demande et dépôt", "Compléter la demande officielle, prendre rendez-vous et déposer les pièces auprès du poste compétent.", ["Formulaire", "Passeport", "Justificatifs professionnels"], "https://us.diplomatie.gouv.fr/en/applying-for-a-visa"),
+    step("tracking", "Suivi de la décision", "Suivre la demande officielle et respecter les conditions du titre délivré.", ["Référence", "Décision"], "https://france-visas.gouv.fr/en/"),
+  ]),
+  regional("Belgique", "Visiteur", "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay", [
+    step("purpose", "Motif et destination principale", "Vérifier que la Belgique est l’État de destination principale et préparer les justificatifs du séjour.", ["Motif", "Itinéraire", "Hébergement", "Moyens financiers"], "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay"),
+    step("short_stay", "Court séjour Schengen", "Respecter la limite de 90 jours sur toute période de 180 jours et les conditions d’entrée applicables.", ["Passeport", "Assurance médicale", "Justificatifs de retour"], "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay"),
+    step("submission", "Demande et dépôt", "Déposer la demande auprès du poste ou centre compétent selon la résidence et la destination principale.", ["Formulaire", "Rendez-vous", "Biométrie si demandée"], "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay"),
+    step("decision", "Suivi de la décision", "Suivre la décision officielle et respecter la durée autorisée.", ["Récépissé", "Notifications"], "https://dofi.ibz.be/en/themes/third-country-nationals/short-stay"),
+  ]),
+  regional("Belgique", "Études", "https://dofi.ibz.be/en/themes/third-country-nationals/study", [
+    step("admission", "Admission dans un établissement reconnu", "Obtenir l’admission et vérifier la catégorie d’études et la durée du séjour.", ["Admission", "Inscription", "Établissement reconnu"], "https://dofi.ibz.be/en/themes/third-country-nationals/study"),
+    step("residence", "Séjour de plus de 90 jours", "Préparer la demande de séjour et les pièces déterminées par la catégorie et l’autorité compétente.", ["Passeport", "Ressources", "Assurance", "Logement"], "https://dofi.ibz.be/en/themes/third-country-nationals/study"),
+    step("visa", "Visa D si requis", "Suivre les instructions du poste diplomatique et les formalités avant l’entrée.", ["Formulaire", "Décision", "Rendez-vous ou dépôt"], "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa"),
+    step("arrival", "Formalités communales", "Effectuer les démarches locales requises après l’arrivée selon le titre délivré.", ["Adresse", "Titre ou annexe", "Enregistrement"], "https://dofi.ibz.be/en/themes/third-country-nationals/study"),
+  ]),
+  regional("Belgique", "Travail", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en", [
+    step("employer", "Employeur et poste", "L’employeur introduit la demande selon la région où il est établi.", ["Contrat", "Employeur", "Région compétente"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en"),
+    step("single_permit", "Permis unique", "La région et l’Office des étrangers examinent respectivement le travail et le séjour.", ["Formulaire", "Contrat", "Certificat médical", "Casier judiciaire"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en"),
+    step("visa_d", "Visa D après autorisation", "Après la décision de permis unique, demander le visa D auprès du poste compétent.", ["Annexe 46/47", "Passeport", "Biométrie"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en"),
+    step("municipality", "Enregistrement après arrivée", "S’enregistrer auprès de la commune et suivre la délivrance du titre.", ["Adresse", "Enregistrement communal", "Titre"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/employed-worker-belgium_en"),
+  ]),
+  regional("Suisse", "Visiteur", "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland", [
+    step("visa_type", "Type de séjour", "Distinguer le court séjour Schengen jusqu’à 90 jours du séjour national au-delà de 90 jours.", ["Motif", "Durée", "Nationalité"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+    step("schengen_application", "Demande Schengen", "Préparer et déposer la demande selon le poste ou centre compétent.", ["Formulaire", "Passeport", "Justificatifs"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+    step("decision", "Suivi officiel", "Suivre la décision et respecter les conditions d’entrée et de séjour.", ["Référence", "Notifications"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+  ]),
+  regional("Suisse", "Études", "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland", [
+    step("national_visa", "Visa national si séjour supérieur à 90 jours", "Vérifier l’autorisation de l’autorité cantonale pour le lieu de résidence prévu.", ["Admission", "Durée", "Autorité cantonale"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+    step("application", "Demande et documents", "Préparer la demande avec l’établissement et la représentation compétente.", ["Admission", "Passeport", "Ressources", "Logement"], "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html"),
+    step("arrival", "Enregistrement local", "Suivre les formalités cantonales après l’entrée selon le titre délivré.", ["Adresse", "Titre", "Enregistrement"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+  ]),
+  regional("Suisse", "Travail", "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html", [
+    step("employer", "Employeur et contrat", "L’employeur et l’autorité compétente doivent confirmer l’autorisation avant le départ.", ["Contrat", "Qualification", "Employeur"], "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html"),
+    step("cantonal_authorization", "Autorisation cantonale", "Pour un ressortissant de pays tiers, l’autorisation relève de l’autorité cantonale et les permis sont limités.", ["Demande employeur", "Qualification", "Autorisation"], "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html"),
+    step("visa", "Visa si requis", "Déposer le visa après délivrance des autorisations nécessaires, lorsque la nationalité l’exige.", ["Autorisation", "Passeport", "Formulaire"], "https://www.schweiz-vereinigteskoenigreich.eda.admin.ch/en/visa-entry-to-and-residence-in-switzerland"),
+    step("registration", "Enregistrement avant emploi", "S’enregistrer auprès de la commune dans le délai applicable avant de commencer l’activité.", ["Adresse", "Permis", "Déclaration employeur"], "https://www.sem.admin.ch/sem/en/home/overview-arbeit.html"),
+  ]),
+  regional("Pays-Bas", "Visiteur", "https://www.netherlandsworldwide.nl/visa-the-netherlands", [
+    step("visa_check", "Vérifier le besoin de visa", "Utiliser le portail officiel pour déterminer le type de visa et le lieu de demande.", ["Nationalité", "Motif", "Dates"], "https://www.netherlandsworldwide.nl/visa-the-netherlands"),
+    step("application", "Demande de court séjour", "Préparer les justificatifs et déposer la demande selon le poste compétent.", ["Formulaire", "Passeport", "Hébergement", "Assurance"], "https://ind.nl/en/short-stay/short-stay-holiday-or-business-visa"),
+    step("tracking", "Suivi de la demande", "Suivre le statut et récupérer le passeport selon les instructions officielles.", ["Référence", "Notifications"], "https://www.netherlandsworldwide.nl/visa-the-netherlands"),
+  ]),
+  regional("Pays-Bas", "Études", "https://ind.nl/en/residence-permits/study", [
+    step("programme", "Programme d’études", "Vérifier le programme et les conditions de l’établissement avant la demande de séjour.", ["Admission", "Programme", "Passeport"], "https://ind.nl/en/residence-permits/study"),
+    step("residence", "Titre de séjour étudiant", "Lire les exigences propres au programme et au titre de séjour applicable.", ["Admission", "Ressources", "Assurance", "Logement"], "https://ind.nl/en/residence-permits/study"),
+    step("decision", "Décision et installation", "Suivre la décision IND et respecter les formalités d’arrivée et de séjour.", ["Décision", "Adresse", "Titre"], "https://ind.nl/en/residence-permits/study"),
+  ]),
+  regional("Pays-Bas", "Travail", "https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work", [
+    step("permit_check", "Vérifier visa, séjour et permis de travail", "Le questionnaire gouvernemental détermine les autorisations à vérifier selon le profil et l’emploi.", ["Contrat", "Employeur", "Nationalité", "Durée"], "https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work"),
+    step("employer_route", "Parcours employeur", "Rassembler les pièces et suivre la voie de permis indiquée par l’autorité compétente.", ["Contrat", "Employeur", "Formulaires"], "https://www.government.nl/faq/checklist-coming-to-the-nederlands-for-work"),
+    step("decision", "Décision et arrivée", "Suivre la décision, le visa éventuel et les formalités de séjour.", ["Décision", "Passeport", "Adresse"], "https://www.netherlandsworldwide.nl/visa-the-netherlands"),
+  ]),
+];
+
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const is = (value: string, ...terms: string[]) => terms.some((term) => value.includes(normalize(term)));
 
@@ -128,6 +200,13 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[6];
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[5];
     return CANDIDATE_JOURNEYS[7];
+  }
+  const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas"].find((candidate) => countryKey.includes(candidate));
+  if (detailedCountry) {
+    const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
+    const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
+    if (verifiedJourney) return verifiedJourney;
   }
   const source = is(country, "france") ? FRANCE : is(country, "belgique", "belgium") ? BELGIUM : is(country, "allemagne", "germany") ? GERMANY : is(country, "royaume", "uk", "angleterre") ? UK : is(country, "etats-unis", "usa", "united states") ? USA : null;
   const displayCountry = destination?.trim() || "Destination à confirmer";
