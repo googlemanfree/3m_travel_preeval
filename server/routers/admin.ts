@@ -3190,23 +3190,31 @@ export const adminRouter = router({
           ? (await db.select().from(applications).where(eq(applications.candidateId, agencyCandidateId)).orderBy(desc(applications.createdAt)).limit(1))[0]
             ?? (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]
           : (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]) ?? null;
+      const safeCollection = async <T>(query: PromiseLike<T>, fallback: T, label: string): Promise<T> => {
+        try {
+          return await query;
+        } catch (error) {
+          console.error(`[getCandidate360:${label}] optional query failed`, error instanceof Error ? error.message : "unknown error");
+          return fallback;
+        }
+      };
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
-        db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
-        db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
+        safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)), [], "requirements"),
+        safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)), [], "caseDocuments"),
         linkedApplication
-          ? db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100)
+          ? safeCollection(db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100), [], "clientDocuments")
           : Promise.resolve([]),
-        db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)),
-        db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)),
-        db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)),
-        db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)),
-        candidateRecord ? db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30) : Promise.resolve([]),
-        candidateRecord ? db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
-        candidateRecord ? db.select().from(documentClarificationRequests).where(eq(documentClarificationRequests.candidateId, candidateRecord.id)).orderBy(desc(documentClarificationRequests.createdAt)).limit(30) : Promise.resolve([]),
-        candidateRecord ? db.select().from(documentClarificationEvents).where(eq(documentClarificationEvents.candidateId, candidateRecord.id)).orderBy(asc(documentClarificationEvents.createdAt)).limit(150) : Promise.resolve([]),
-        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)),
-        db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30),
-        db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1),
+        safeCollection(db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)), [], "tasks"),
+        safeCollection(db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)), [], "notes"),
+        safeCollection(db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)), [], "statusHistory"),
+        safeCollection(db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)), [], "activityLogs"),
+        candidateRecord ? safeCollection(db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30), [], "notifications") : Promise.resolve([]),
+        candidateRecord ? safeCollection(db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30), [], "messages") : Promise.resolve([]),
+        candidateRecord ? safeCollection(db.select().from(documentClarificationRequests).where(eq(documentClarificationRequests.candidateId, candidateRecord.id)).orderBy(desc(documentClarificationRequests.createdAt)).limit(30), [], "clarifications") : Promise.resolve([]),
+        candidateRecord ? safeCollection(db.select().from(documentClarificationEvents).where(eq(documentClarificationEvents.candidateId, candidateRecord.id)).orderBy(asc(documentClarificationEvents.createdAt)).limit(150), [], "clarificationEvents") : Promise.resolve([]),
+        safeCollection(db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)), [], "advisors"),
+        safeCollection(db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30), [], "requestHistory"),
+        safeCollection(db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1), [], "evaluations"),
       ]);
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
