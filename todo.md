@@ -2807,3 +2807,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Italie
 - [x] Contrôler les sources institutionnelles italiennes pour court séjour, études et travail salarié.
 - [x] Intégrer les variantes Italie dans le catalogue détaillé avec dépendance au portail Visa for Italy, au poste compétent et, pour le travail, à l’autorisation employeur/quotas.
+
+## Audit officiel par lots — Portugal
+- [x] Contrôler les sources institutionnelles portugaises pour court séjour, études et travail/recherche d’emploi.
+- [x] Intégrer les variantes Portugal dans le catalogue détaillé avec dépendance au portail des visas, à AIMA et au poste compétent.

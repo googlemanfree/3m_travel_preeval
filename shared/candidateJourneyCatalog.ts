@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Portugal", "Visiteur", "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa", [
+    step("visa_type", "Vérifier le type de séjour", "Distinguer court séjour Schengen, séjour temporaire et visa de résidence selon la durée et le motif.", ["Nationalité", "Dates", "Motif"], "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa"),
+    step("documents", "Préparer les justificatifs", "Réunir les pièces générales et les pièces propres à la catégorie auprès du poste compétent.", ["Formulaire", "Passeport", "Assurance", "Ressources"], "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa"),
+    step("appointment", "Dépôt en personne", "Prendre le rendez-vous officiel et déposer la demande selon la compétence territoriale du consulat.", ["Rendez-vous", "Dossier complet", "Entretien si requis"], "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa"),
+    step("decision", "Suivi et décision", "Suivre la demande dans le canal officiel et respecter les conditions de la décision.", ["Référence", "Notifications"], "https://vistos.mne.gov.pt/en/"),
+  ]),
+  regional("Portugal", "Études", "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en", [
+    step("admission", "Admission dans un établissement", "Obtenir l’admission dans un établissement reconnu avant la demande de visa de résidence.", ["Admission", "Programme", "Durée"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en"),
+    step("residence_visa", "Visa de résidence étudiant", "Déposer la demande auprès de l’ambassade ou du consulat du pays d’origine ou de résidence.", ["Passeport", "Admission", "Ressources", "Assurance"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en"),
+    step("permit", "Permis de séjour", "Après l’entrée, vérifier la demande de permis de séjour auprès de l’autorité compétente et les documents propres au niveau d’études.", ["Adresse", "Inscription", "Permis"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en"),
+    step("decision", "Suivi du titre", "Conserver les preuves de dépôt et suivre la validité et le renouvellement du permis selon la décision.", ["Récépissé", "Titre", "Renouvellement"], "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa"),
+  ]),
+  regional("Portugal", "Travail", "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa", [
+    step("visa_type", "Choisir le visa de travail", "Vérifier si le projet relève d’un séjour temporaire, d’une résidence ou d’un régime de recherche d’emploi qualifié.", ["Offre ou projet", "Durée", "Qualification"], "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa"),
+    step("employer_documents", "Préparer les éléments professionnels", "Réunir le contrat ou les documents professionnels et les justificatifs demandés par le poste compétent.", ["Contrat", "Employeur", "Qualifications"], "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa"),
+    step("application", "Visa et dépôt", "Déposer la demande auprès du poste compétent selon les modalités et la catégorie publiées.", ["Formulaire", "Passeport", "Assurance", "Ressources"], "https://vistos.mne.gov.pt/en/"),
+    step("residence", "Formalités après arrivée", "Pour un visa de résidence, vérifier la demande de permis auprès d’AIMA et ne pas présenter l’emploi comme acquis avant les autorisations.", ["Entrée", "Adresse", "Permis de séjour"], "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa"),
+  ]),
   regional("Italie", "Visiteur", "https://consnewyork.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/visas-to-enter-italy/", [
     step("visa_check", "Vérifier le besoin de visa", "Utiliser Visa for Italy selon la nationalité, la durée et le motif du séjour.", ["Nationalité", "Dates", "Motif"], "http://vistoperitalia.esteri.it/home/en"),
     step("documents", "Préparer les pièces", "Réunir les documents indiqués pour tourisme, visite ou autre motif auprès du poste compétent.", ["Passeport", "Réservation", "Hébergement ou invitation si requis"], "https://consnewyork.esteri.it/en/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/visti/visas-to-enter-italy/"),
@@ -256,7 +274,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

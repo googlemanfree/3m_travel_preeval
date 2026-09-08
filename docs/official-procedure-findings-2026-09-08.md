@@ -94,3 +94,14 @@ Pour l’Espagne, l’interface peut distinguer visiteur/court séjour, études 
 ### Règle d’intégration
 
 Pour l’Italie, le parcours doit distinguer court séjour, études et travail. Les pièces et les modalités de dépôt doivent être renvoyées au portail Visa for Italy et au poste compétent. Pour le travail, l’autorisation de l’employeur et le régime de quotas doivent être confirmés avant de présenter une étape comme applicable.
+
+## Portugal — huitième lot de sources institutionnelles consultées
+
+- **Ministère portugais — portail des visas** : https://vistos.mne.gov.pt/en/. Le portail rappelle la nécessité de choisir le visa adapté et publie les informations générales d’entrée et de séjour.
+- **Ministère portugais — types de visas nationaux** : https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa. La page distingue le séjour temporaire, le visa de résidence et le visa de recherche d’emploi qualifié, selon la durée et le motif.
+- **Consulat du Portugal — visas** : https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa. La page distingue court séjour Schengen et visas nationaux, précise le dépôt en personne, la compétence territoriale, les pièces générales et les catégories études/travail.
+- **EU Immigration Portal — Étudiant au Portugal** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en. La procédure décrit l’admission, le visa de résidence, la demande de permis de séjour et les justificatifs selon le niveau d’études.
+
+### Règle d’intégration
+
+Pour le Portugal, le parcours doit distinguer court séjour, études et travail ou recherche d’emploi. Les documents et délais exacts doivent rester liés au portail portugais, au poste compétent et à l’autorité AIMA ; aucune ancienne appellation administrative ou exigence générale ne doit être affichée comme universelle sans vérification actuelle.

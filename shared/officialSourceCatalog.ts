@@ -324,10 +324,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Portugal",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Ministère des Affaires Étrangères (Portal Diplomático) — Visiteur, études et travail —",
-        "url": "https://vistos.mne.gov.pt/"
-      }
+      { "label": "Ministère portugais — Portail des visas", "url": "https://vistos.mne.gov.pt/en/" },
+      { "label": "Ministère portugais — Types de visas nationaux", "url": "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa" },
+      { "label": "Consulat du Portugal — Visas", "url": "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa" },
+      { "label": "EU Immigration Portal — Étudiant au Portugal", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-portugal_en" }
     ]
   },
   "qatar": {
