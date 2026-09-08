@@ -2970,3 +2970,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les variantes Chili dans le catalogue détaillé avec portail SERMIG, documents apostillés/légalisés et limites de travail.
 - [x] Ajouter les sources officielles SERMIG au registre partagé.
 - [x] Valider la matrice Chili avec les tests ciblés et TypeScript.
+
+## Audit officiel par lots — Colombie
+- [x] Contrôler les sources Cancillería pour Temporary Visitor, Temporary Student et Temporary Worker.
+- [x] Intégrer les variantes Colombie dans le catalogue détaillé avec dépôt consulaire initial à l’étranger et interdiction d’emploi sous visiteur.
+- [x] Ajouter les sources officielles de la Cancillería au registre partagé.
+- [x] Valider la matrice Colombie avec les tests ciblés et TypeScript.

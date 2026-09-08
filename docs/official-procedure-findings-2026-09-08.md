@@ -450,3 +450,10 @@ L’Argentine est intégrée en trois variantes : Tourist Visa, Student Visa jus
   - La résidence temporaire pour activité rémunérée se demande depuis l’étranger et peut reposer sur contrat de travail, contrat de services ou offre formelle ; les contrats et pièces de l’employeur sont encadrés.
 ### Règle d’intégration
 Le Chili est intégré en trois variantes : Permanencia Transitoria/Tourist, Residencia Temporal étudiant et Residencia Temporal pour activité rémunérée, avec portail SERMIG, documents apostillés/légalisés et interdiction d’emploi sous le statut transitoire sauf autorisation.
+
+## Lot Colombie — sources officielles consultées
+- Cancillería — Temporary Visitor’s Visa : https://www.cancilleria.gov.co/en/temporary-visitors-visa-0
+- Cancillería — Temporary Student’s Visa : https://www.cancilleria.gov.co/en/temporary-students-visa-0
+- Cancillería — Temporary Worker’s Visa : https://www.cancilleria.gov.co/en/temporary-workers-visa
+### Règle d’intégration
+La Colombie est intégrée en trois variantes : Temporary Visitor, Temporary Student et Temporary Worker, avec dépôt consulaire à l’étranger pour les premières demandes, formulaire officiel, passeport, preuves financières et pièces propres à chaque catégorie. Aucun emploi ne doit être déduit du statut visiteur.

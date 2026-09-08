@@ -41,6 +41,15 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
       { "label": "SPF Affaires étrangères — Visa D", "url": "https://canada.diplomatie.belgium.be/en/visa/visa-belgium/long-stay-visa-d-visa" }
     ]
   },
+  "colombie": {
+    "country": "Colombie",
+    "verificationStatus": "verified",
+    "sources": [
+      { "label": "Cancillería — Temporary Visitor’s Visa", "url": "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0" },
+      { "label": "Cancillería — Temporary Student’s Visa", "url": "https://www.cancilleria.gov.co/en/temporary-students-visa-0" },
+      { "label": "Cancillería — Temporary Worker’s Visa", "url": "https://www.cancilleria.gov.co/en/temporary-workers-visa" }
+    ]
+  },
   "chili": {
     "country": "Chili",
     "verificationStatus": "verified",

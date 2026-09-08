@@ -848,6 +848,24 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
     step("employer_documents", "Pièces de l’employeur et candidat", "Fournir passeport, casier, photo, contrat ou offre, preuve de liquidité et documents de l’employeur selon sa forme juridique.", ["Passeport", "Casier", "Employeur", "Liquidité"], "https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/remunerated-activities/"),
     step("contract_follow_up", "Entrée et suivi contractuel", "Après l’entrée, respecter les délais de présentation du contrat notarié ou de son enregistrement lorsque la voie choisie l’exige.", ["Entrée", "Contrat", "Notaire", "Délai"], "https://serviciomigraciones.cl/en/residencia-temporal-permit/subcategories/remunerated-activities/"),
   ]),
+  regional("Colombie", "Visiteur", "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0", [
+    step("visitor_activity", "Motif visiteur temporaire", "Vérifier que le motif relève d’une activité autorisée sans relation de travail et préparer la description du séjour.", ["Motif", "Activité", "Durée", "Description"], "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0"),
+    step("documents", "Préparer les justificatifs", "Réunir formulaire DP-FO-67 signé, passeport, photos, preuves d’activité, ressources, invitation éventuelle et billet de sortie.", ["Formulaire", "Passeport", "Photos", "Ressources"], "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0"),
+    step("consular_application", "Dépôt consulaire", "Pour une première demande, déposer auprès d’un consulat colombien à l’étranger et suivre l’étude de la demande.", ["Consulat", "Dépôt", "Référence", "Frais"], "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0"),
+    step("no_employment", "Aucune relation de travail", "Respecter le statut visiteur : aucune relation de travail ne peut être exercée sous cette catégorie.", ["Statut", "Travail", "Conditions", "Séjour"], "https://www.cancilleria.gov.co/en/temporary-visitors-visa-0"),
+  ]),
+  regional("Colombie", "Études", "https://www.cancilleria.gov.co/en/temporary-students-visa-0", [
+    step("admission", "Admission dans un établissement reconnu", "Obtenir le certificat du programme, du nombre d’heures et l’admission ou le paiement d’inscription dans un établissement reconnu.", ["Admission", "Programme", "Heures", "Établissement"], "https://www.cancilleria.gov.co/en/temporary-students-visa-0"),
+    step("institution_proof", "Vérifier l’existence de l’établissement", "Joindre le certificat d’existence et de représentation légale délivré par l’autorité éducative compétente.", ["Existence", "Représentation", "Éducation", "Certificat"], "https://www.cancilleria.gov.co/en/temporary-students-visa-0"),
+    step("documents", "Préparer les pièces et ressources", "Réunir formulaire DP-FO-67 signé par le candidat, passeport, photos et preuves de solvabilité.", ["Formulaire", "Passeport", "Photos", "Ressources"], "https://www.cancilleria.gov.co/en/temporary-students-visa-0"),
+    step("consular_decision", "Dépôt et décision", "Déposer la demande selon le canal officiel, payer les frais et respecter la décision et les conditions du visa étudiant.", ["Consulat", "Frais", "Décision", "Études"], "https://www.cancilleria.gov.co/en/temporary-students-visa-0"),
+  ]),
+  regional("Colombie", "Travail", "https://www.cancilleria.gov.co/en/temporary-workers-visa", [
+    step("employment_contract", "Contrat et employeur", "Obtenir un contrat ou résumé de contrat signé et authentifié par les parties devant notaire ou consul colombien.", ["Contrat", "Employeur", "Signature", "Authentification"], "https://www.cancilleria.gov.co/en/temporary-workers-visa"),
+    step("employer_status", "Existence légale de l’employeur", "Fournir le certificat d’existence et de représentation légale récent lorsque l’employeur est une personne morale.", ["Employeur", "Existence", "Représentation", "Certificat"], "https://www.cancilleria.gov.co/en/temporary-workers-visa"),
+    step("qualification", "Qualification et pièces personnelles", "Préparer passeport, photos, qualification ou preuve d’expérience, et permis professionnel lorsque l’activité réglementée l’exige.", ["Passeport", "Photos", "Qualification", "Permis"], "https://www.cancilleria.gov.co/en/temporary-workers-visa"),
+    step("consular_application", "Demande et décision", "Pour une première demande, déposer au consulat à l’étranger, payer les frais et suivre la décision de la Cancillería.", ["Consulat", "Frais", "Décision", "Travail"], "https://www.cancilleria.gov.co/en/temporary-workers-visa"),
+  ]),
 ];
 
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -869,7 +887,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
