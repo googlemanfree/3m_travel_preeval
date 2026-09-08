@@ -25,10 +25,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Autriche",
     "verificationStatus": "verified",
     "sources": [
-      {
-        "label": "Federal Ministry for European and International Affairs (BMEIA) — Visiteur, études, travail —",
-        "url": "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"
-      }
+      { "label": "BMEIA — Visa et entrée/séjour", "url": "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa" },
+      { "label": "BMEIA — Étudier en Autriche", "url": "https://www.bmeia.gv.at/en/austrian-embassy-baku/travels-to-austria/study-in-austria" },
+      { "label": "Migration.gv.at — Travailleurs hautement qualifiés", "url": "https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/very-highly-qualified-workers/" },
+      { "label": "EU Immigration Portal — Étudiant en Autriche", "url": "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-austria_en" }
     ]
   },
   "belgique": {

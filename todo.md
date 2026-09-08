@@ -2811,3 +2811,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit officiel par lots — Portugal
 - [x] Contrôler les sources institutionnelles portugaises pour court séjour, études et travail/recherche d’emploi.
 - [x] Intégrer les variantes Portugal dans le catalogue détaillé avec dépendance au portail des visas, à AIMA et au poste compétent.
+
+## Audit officiel par lots — Autriche
+- [x] Contrôler les sources institutionnelles autrichiennes pour court séjour, études et travail qualifié.
+- [x] Intégrer les variantes Autriche dans le catalogue détaillé avec distinction visa C, visa D et titre de séjour/autorisation de travail.

@@ -114,6 +114,24 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
 const regional = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => common(country, visaType, sourceUrl, steps);
 
 const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
+  regional("Autriche", "Visiteur", "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa", [
+    step("visa_c", "Vérifier le visa C", "Pour un court séjour touristique, de visite ou d’affaires sans activité lucrative, vérifier le visa Schengen C et la durée autorisée.", ["Nationalité", "Dates", "Motif"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+    step("documents", "Préparer les justificatifs", "Réunir les pièces exactes demandées par la représentation autrichienne compétente.", ["Passeport", "Hébergement", "Ressources", "Assurance"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+    step("appointment", "Dépôt et biométrie", "Prendre rendez-vous dans le canal officiel et déposer personnellement le dossier si requis.", ["Formulaire", "Rendez-vous", "Biométrie"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+    step("decision", "Suivi de décision", "Suivre la demande auprès de la représentation compétente et respecter les conditions de la décision.", ["Référence", "Notifications"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+  ]),
+  regional("Autriche", "Études", "https://www.bmeia.gv.at/en/austrian-embassy-baku/travels-to-austria/study-in-austria", [
+    step("admission", "Admission ou inscription", "Obtenir l’admission dans l’établissement et confirmer la durée du programme.", ["Admission", "Programme", "Durée"], "https://www.bmeia.gv.at/en/austrian-embassy-baku/travels-to-austria/study-in-austria"),
+    step("visa_type", "Choisir visa C ou D", "Vérifier selon la durée si un visa C, un visa D ou un titre de séjour est nécessaire.", ["Durée", "Nationalité", "Programme"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+    step("application", "Dépôt de la demande", "Présenter le dossier auprès de la représentation compétente avec les documents exigés.", ["Passeport", "Admission", "Ressources", "Assurance"], "https://www.bmeia.gv.at/en/austrian-embassy-baku/travels-to-austria/study-in-austria"),
+    step("permit", "Titre de séjour et activité", "Vérifier le titre de séjour et toute autorisation nécessaire ; l’activité professionnelle pendant les études n’est pas automatique.", ["Titre", "Autorisation de travail si applicable"], "https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-austria_en"),
+  ]),
+  regional("Autriche", "Travail", "https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/very-highly-qualified-workers/", [
+    step("qualification", "Vérifier la voie de travail", "Déterminer si le projet relève d’une carte de séjour, d’un régime de travailleurs qualifiés ou d’un visa de recherche d’emploi.", ["Qualification", "Offre", "Nationalité"], "https://www.migration.gv.at/en/"),
+    step("authorisation", "Autorisation et titre", "Réunir les conditions d’autorisation de travail et de résidence applicables à la catégorie retenue.", ["Employeur", "Qualification", "Contrat"], "https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/very-highly-qualified-workers/"),
+    step("application", "Dépôt auprès de l’autorité compétente", "Déposer la demande auprès de la représentation ou de l’autorité compétente selon le dossier.", ["Formulaire", "Passeport", "Pièces"], "https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa"),
+    step("employment", "Début d’activité autorisé", "Ne présenter le début du travail qu’après obtention des autorisations et du titre requis.", ["Titre", "Autorisation", "Contrat"], "https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/very-highly-qualified-workers/"),
+  ]),
   regional("Portugal", "Visiteur", "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa", [
     step("visa_type", "Vérifier le type de séjour", "Distinguer court séjour Schengen, séjour temporaire et visa de résidence selon la durée et le motif.", ["Nationalité", "Dates", "Motif"], "https://vistos.mne.gov.pt/en/national-visas/general-information/type-of-visa"),
     step("documents", "Préparer les justificatifs", "Réunir les pièces générales et les pièces propres à la catégorie auprès du poste compétent.", ["Formulaire", "Passeport", "Assurance", "Ressources"], "https://newark.consuladoportugal.mne.gov.pt/en/consular-matters/visa"),
@@ -274,7 +292,7 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[7];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
-  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal"].find((candidate) => countryKey.includes(candidate));
+  const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche"].find((candidate) => countryKey.includes(candidate));
   if (detailedCountry) {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);

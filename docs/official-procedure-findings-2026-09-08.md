@@ -105,3 +105,14 @@ Pour l’Italie, le parcours doit distinguer court séjour, études et travail. 
 ### Règle d’intégration
 
 Pour le Portugal, le parcours doit distinguer court séjour, études et travail ou recherche d’emploi. Les documents et délais exacts doivent rester liés au portail portugais, au poste compétent et à l’autorité AIMA ; aucune ancienne appellation administrative ou exigence générale ne doit être affichée comme universelle sans vérification actuelle.
+
+## Autriche — neuvième lot de sources institutionnelles consultées
+
+- **BMEIA — Visa** : https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa. La source distingue le visa Schengen C pour tourisme/visite/affaires sans activité lucrative jusqu’à 90 jours sur 180 et les autres catégories de séjour.
+- **BMEIA — Études en Autriche** : https://www.bmeia.gv.at/en/austrian-embassy-baku/travels-to-austria/study-in-austria. La page officielle décrit les besoins de visa selon la durée et le programme d’études, à confirmer auprès de la représentation compétente.
+- **Migration.gv.at — travailleurs hautement qualifiés** : https://www.migration.gv.at/en/types-of-immigration/permanent-immigration/very-highly-qualified-workers/. Le portail fédéral décrit le régime de travailleurs qualifiés et le visa de recherche d’emploi lorsque les conditions sont remplies.
+- **EU Immigration Portal — Étudiant en Autriche** : https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-austria_en. La source précise que l’emploi pendant les études exige une autorisation et que le but principal doit rester les études.
+
+### Règle d’intégration
+
+Pour l’Autriche, l’interface doit distinguer court séjour Schengen C, séjour d’études et travail soumis à un titre/une autorisation. Les conditions exactes dépendent de la nationalité, de la durée, du programme, de la qualification et de la représentation compétente.
