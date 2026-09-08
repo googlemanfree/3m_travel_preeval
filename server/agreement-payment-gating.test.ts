@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { assertApplicationCanEnterStatus } from "./utils/applicationGates";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(resolve(root, file), "utf8");
 
 describe("agreement and payment gating contracts", () => {
+  it("bloque réellement le paiement et le traitement sans confirmation client", () => {
+    const base = { agreementSigned: true, paymentStatus: "SUCCESS", evaluationDeliveryStatus: "sent", hasCv: true, evaluationClientConfirmed: false };
+    expect(() => assertApplicationCanEnterStatus(base, "en_attente_paiement")).toThrow("confirmer la réception");
+    expect(() => assertApplicationCanEnterStatus(base, "paye")).toThrow("confirmation du bilan");
+    expect(() => assertApplicationCanEnterStatus({ ...base, evaluationClientConfirmed: true }, "paye")).not.toThrow();
+  });
   it("renders a mandatory protocol signature flow in the candidate space", () => {
     const source = read("client/src/pages/MySpace.tsx");
     expect(source).toContain("Protocole d’accord de service");

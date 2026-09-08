@@ -2735,11 +2735,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Protocole agence — lecture côté espace client
 - [ ] Vérifier que le protocole `protocole_accord` du dossier agence `270002` est lu par la route espace client après paiement confirmé.
-- [ ] Corriger la lecture des documents agence pour inclure le protocole dans le dossier du candidat, sans mélange entre dossiers.
-- [ ] Ajouter une régression garantissant que le protocole agence est visible après paiement et reste non signable avant paiement confirmé.
+- [x] Corriger la lecture des documents agence pour inclure le protocole dans le dossier du candidat, sans mélange entre dossiers.
+- [x] Ajouter une régression garantissant que le protocole agence est visible après paiement et reste non signable avant paiement confirmé.
 - [ ] Retester le dossier client `3M-AGN-270002` avec son compte et publier l’action exacte de vérification.
-- [ ] Vérifier que MySpace fusionne les documents agence dans la liste du dossier connecté.
-- [ ] Ajouter une régression sur l’isolement des documents agence par e-mail/dossier.
+- [x] Vérifier que MySpace fusionne les documents agence dans la liste du dossier connecté par régression et inspection du flux.
+- [x] Ajouter une régression sur l’isolement des documents agence par e-mail/dossier.
 - [ ] Vérifier en session client la visibilité et la signature du protocole après paiement confirmé.
 
 ## Reçu professionnel de paiement initial — frais d’ouverture et de traitement
