@@ -124,6 +124,12 @@ const trpcClient = trpc.createClient({
       // est correct et conforme à la documentation officielle.
       // @ts-expect-error - faux positif TypeScript, voir commentaire ci-dessus
       transformer: superjson,
+      // Les réponses groupées pouvaient être partielles lorsqu’un endpoint
+      // public échouait : tRPC signalait alors « Missing result » ou une
+      // transformation impossible pour les autres appels de l’accueil.
+      // Une requête par lot isole chaque résultat et laisse React Query
+      // réessayer uniquement l’appel concerné.
+      maxItems: 1,
       headers() {
         const isAdminRoute = window.location.pathname.startsWith("/admin");
         // 1. Jeton administrateur : uniquement dans l’espace admin, afin de ne

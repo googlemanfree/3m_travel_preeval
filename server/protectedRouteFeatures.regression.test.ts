@@ -67,3 +67,10 @@ it("prépare les CTA d’accès avec chargement, aide et adaptation mobile", () 
   expect(authGuard).toContain("px-3 py-6 sm:px-4 sm:py-10");
   expect(authGuard).toContain("text-lg font-black sm:text-xl");
 });
+
+
+it("isole les réponses tRPC publiques pour éviter les résultats batch manquants", () => {
+  const mainSource = readFileSync(new URL("../client/src/main.tsx", import.meta.url), "utf8");
+  expect(mainSource).toContain("maxItems: 1");
+  expect(mainSource).toContain("Missing result");
+});

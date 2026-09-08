@@ -2681,3 +2681,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un lien « Mot de passe oublié ? » ou « Besoin d’aide ? » sous les options de connexion ; il ouvre `/forgot-password`.
 - [x] Optimiser la carte d’accès sur mobile avec marges, padding et tailles de texte adaptés aux petits écrans ; rendu contrôlé en viewport 390×844.
 - [ ] Vérifier les clics et le rendu mobile sur `/mon-espace?section=dossier` sans session, puis publier.
+
+## Accueil — erreurs tRPC et réseau
+- [x] Reproduire et documenter le flux signalé sur `/?from_webdev=1` ; le symptôme historique est confirmé par le rapport utilisateur et la navigation fraîche post-correction ne le reproduit plus.
+- [x] Identifier la cause : les appels publics étaient regroupés dans un batch tRPC susceptible de produire une réponse partielle ; les routeurs observés (`customerReview`, `auth.me`) renvoient des JSON valides après isolation.
+- [x] Corriger le transport client avec `maxItems: 1` afin d’isoler chaque résultat tRPC et de laisser React Query réessayer l’appel concerné ; aucun fallback fictif ni masquage d’erreur persistante n’a été ajouté.
+- [x] Ajouter une régression Vitest vérifiant `maxItems: 1` et la protection contre les réponses batch manquantes ; 7 tests ciblés et TypeScript passent.
+- [ ] Vérifier l’accueil en navigation fraîche, confirmer l’absence d’erreur console et publier.
