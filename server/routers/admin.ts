@@ -3271,7 +3271,11 @@ export const adminRouter = router({
         .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
       const destination = (sourceRecord as any).destination ?? projectDetails.destination ?? null;
       const candidateJourney = getCandidateJourney(destination, latestEvaluation?.visaType ?? null, procedureLabel);
-      const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null);
+      const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
+        evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
+        activationRequested: Boolean((sourceRecord as any).activationRequestedAt),
+        paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
+      });
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         nextAction,
