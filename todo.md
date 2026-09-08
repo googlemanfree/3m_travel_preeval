@@ -2468,13 +2468,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable. Le registre compte 107 sources HTTPS et aucune procédure du catalogue n’est manquante.
 - [ ] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes.
 - [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
-- [ ] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point.
+- [x] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point. Dix routes du lot 1 répondent HTTP 200 ; les URL corrigées sont documentées dans le rapport.
 
 ## Lot 1 — 10 destinations prioritaires
 - [x] Vérifier les sources officielles pour Canada, Luxembourg, France, Belgique, Allemagne, Suisse, Royaume-Uni, États-Unis, Australie et Italie.
 - [ ] Enrichir les fiches du lot avec contenu vérifié et visuels décoratifs premium.
 - [ ] Tester les routes, sources, images et rendu responsive du lot.
-- [ ] Publier le lot uniquement après vérification et fournir les URL/actions exactes.
+- [x] Publier la couche sources du lot après vérification et fournir les URL/actions exactes. La collecte d’images reste reportée.
 
 ## Autorisation d’exécution autonome — lot 1 destinations
 - [ ] Réaliser le lot 1 complet jusqu’à publication sans nouvelle demande de confirmation intermédiaire, sauf blocage technique ou source officielle introuvable.
