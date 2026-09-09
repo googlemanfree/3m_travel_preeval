@@ -37,3 +37,7 @@ Conclusion technique : l’erreur historique « Compte candidat introuvable » n
 ## Régressions publiques et protocole à contrôler
 
 Le routeur client contient encore une redirection de `/evaluation-rapide-enhanced` vers `/#evaluation-multi`. La source partagée du protocole est la version enrichie `AGREEMENT_PROTOCOL_VERSION = 2026-09-08-v2`, avec un modèle initial détaillé et un modèle distinct de second protocole. Le contrôle du badge `Aucun dossier actif` pour `aureoldonfack@gmail.com` nécessite une session client authentifiée ; aucun statut n’a été modifié pendant cet audit.
+
+## Vérification live du filtre Dossiers
+
+Sur `https://www.3mtravelagency.com/admin`, avec une session administrateur active, la saisie `test` dans le champ « Rechercher par nom, email, n° dossier, destination... » a réduit la liste à 4 résultats visibles : `COMPTE-1140001`, `EVAL-AG-420001`, `EVAL-DRAFT-2026-1223` et `3M-AGN-420001`. La liste initiale affichait 36 dossiers. Aucun clic de mutation n’a été effectué.
