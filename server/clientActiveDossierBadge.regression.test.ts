@@ -9,13 +9,15 @@ describe("badge de dossier actif côté client", () => {
     const source = read("server/routers/candidate.ts");
     expect(source).toContain("dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, \"0\")}`");
     expect(source).toContain("const activeAgencyDossierNumber = activeAgencyDossier");
-    expect(source).toContain("activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || \"N/A\"");
+    expect(source).toContain("dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || \"N/A\"");
   });
 
   it("conserve le badge branché sur la donnée dossier relue par tRPC", () => {
     const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(navigation).toContain("trpc.candidate.getMyDossierData.useQuery");
-    expect(navigation).toContain("dossierQuery.data?.data?.application?.dossierNumber");
+    expect(navigation).toContain("dossierPayload?.candidate?.dossierNumber");
+    expect(navigation).toContain("dossierPayload?.activeDossier?.dossierNumber");
+    expect(navigation).toContain("dossierPayload?.application?.dossierNumber");
     expect(navigation).toContain("Aucun dossier actif");
   });
 });

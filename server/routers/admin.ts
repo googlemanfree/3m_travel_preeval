@@ -1423,19 +1423,23 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        // Une recherche doit porter sur tout le lot disponible, pas seulement sur les N dossiers récents.
+        // Sinon un dossier de test plus ancien peut rester invisible même si son nom/référence correspond.
+        const sourceLimit = input.search?.trim() ? 5000 : input.limit;
+
         // Récupérer les dossiers en ligne (table applications)
         const onlineApps = await db
           .select()
           .from(applications)
           .orderBy(desc(applications.createdAt))
-          .limit(input.limit);
+          .limit(sourceLimit);
 
         // Récupérer les dossiers agence (table agencyDossiers)
         const agencyApps = await db
           .select()
           .from(agencyDossiers)
           .orderBy(desc(agencyDossiers.createdAt))
-          .limit(input.limit);
+          .limit(sourceLimit);
         const caseRows = await db
           .select({ legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
           .from(cases)
@@ -1646,7 +1650,8 @@ export const adminRouter = router({
             ("searchableFolderCodes" in c && c.searchableFolderCodes.some((code) => code.toLowerCase().includes(query))) ||
             c.fullName?.toLowerCase().includes(query) ||
             c.email?.toLowerCase().includes(query) ||
-            c.destinationCountry?.toLowerCase().includes(query)
+            c.destinationCountry?.toLowerCase().includes(query) ||
+            c.projectType?.toLowerCase().includes(query)
           );
         }
 

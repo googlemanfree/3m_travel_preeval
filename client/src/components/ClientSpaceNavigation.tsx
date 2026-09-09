@@ -108,7 +108,11 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     onError: () => toast.error("Le relevé n’a pas pu être généré. Veuillez réessayer."),
   });
 
-  const dossierNumber = dossierQuery.data?.data?.application?.dossierNumber ?? null;
+  const dossierPayload = dossierQuery.data?.data;
+  const dossierNumber = dossierPayload?.candidate?.dossierNumber
+    ?? dossierPayload?.activeDossier?.dossierNumber
+    ?? dossierPayload?.application?.dossierNumber
+    ?? null;
   const visibleQuickLinks = quickLinks.filter((link) => {
     if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
     if (["Réserver un vol", "Vols favoris"].includes(link.label)) return Boolean(requestsQuery.data?.length);

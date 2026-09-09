@@ -94,13 +94,13 @@ async function resolveCandidateIdForAdmin(candidateId: string) {
     const [application] = await db.select({ candidateId: applications.candidateId, email: applications.email }).from(applications).where(eq(applications.id, reference.id)).limit(1);
     if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
     if (application.candidateId) return application.candidateId;
-    const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, application.email)).limit(1);
+    const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${application.email}))`).limit(1);
     return candidate?.id ?? null;
   }
 
   const [dossier] = await db.select({ email: agencyDossiers.email }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
   if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
-  const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+  const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${dossier.email}))`).limit(1);
   return candidate?.id ?? null;
 }
 
@@ -240,24 +240,27 @@ export const adminCandidateManagementRouter = router({
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
       const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
-      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier. Vérifiez le rattachement par e-mail avant de valider l’évaluation." });
-      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
-      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier." });
-      if (candidate.evaluationDeclarationStatus === "validated" || candidate.evaluationReviewedAt) {
+      const [candidate] = candidateId
+        ? await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1)
+        : [null];
+      if (!candidate && reference?.source !== "agency") {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour ce dossier. Vérifiez le rattachement par e-mail avant de valider l’évaluation." });
+      }
+      if (candidate && (candidate.evaluationDeclarationStatus === "validated" || candidate.evaluationReviewedAt)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `Cette évaluation est déjà validée par ${candidate.evaluationReviewedBy || "un conseiller"} le ${candidate.evaluationReviewedAt ? new Date(candidate.evaluationReviewedAt).toLocaleString("fr-FR") : "à une date enregistrée"}.` });
+      }
+      if (!candidate && reference?.source === "agency") {
+        const [agencyDossier] = await db.select({ evaluationValidatedAt: agencyDossiers.evaluationValidatedAt, evaluationValidatedBy: agencyDossiers.evaluationValidatedBy }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!agencyDossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (agencyDossier.evaluationValidatedAt) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `Cette évaluation agence est déjà validée par ${agencyDossier.evaluationValidatedBy || "un conseiller"} le ${new Date(agencyDossier.evaluationValidatedAt).toLocaleString("fr-FR")}.` });
+        }
       }
       const reviewedAt = new Date();
       const channelLabel = input.channel === "appel" ? "appel téléphonique" : input.channel === "agence" ? "bureau en agence" : "e-mail";
       const traceNote = `Évaluation validée hors ligne — canal : ${channelLabel} ; conseiller : ${admin.email} ; date : ${reviewedAt.toISOString()}.${input.note?.trim() ? ` Note : ${input.note.trim()}` : ""}`;
-      await db.update(candidates).set({
-        evaluationDeclarationStatus: "validated",
-        evaluationDeclaredAt: candidate.evaluationDeclaredAt ?? reviewedAt,
-        evaluationReviewedAt: reviewedAt,
-        evaluationReviewedBy: admin.email,
-        evaluationReviewNote: traceNote,
-      }).where(eq(candidates.id, candidate.id));
-      const reference = parseAdminCandidateReference(input.candidateId);
       if (reference?.source === "agency") {
         await db.update(agencyDossiers).set({
           evaluationValidatedAt: reviewedAt,
@@ -265,11 +268,20 @@ export const adminCandidateManagementRouter = router({
           evaluationValidationNote: traceNote,
         }).where(eq(agencyDossiers.id, reference.id));
       }
-      const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
-      const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
-      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
-      await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: visibleMessage, isRead: false });
-      return { success: true, reviewedAt, reviewedBy: admin.email, channel: input.channel };
+      if (candidate) {
+        await db.update(candidates).set({
+          evaluationDeclarationStatus: "validated",
+          evaluationDeclaredAt: candidate.evaluationDeclaredAt ?? reviewedAt,
+          evaluationReviewedAt: reviewedAt,
+          evaluationReviewedBy: admin.email,
+          evaluationReviewNote: traceNote,
+        }).where(eq(candidates.id, candidate.id));
+        const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
+        const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: visibleMessage, isRead: false });
+      }
+      return { success: true, reviewedAt, reviewedBy: admin.email, channel: input.channel, candidateLinked: Boolean(candidate) };
     }),
   reviewEvaluationDeclaration: publicProcedure
     .input(z.object({
