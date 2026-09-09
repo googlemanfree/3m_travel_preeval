@@ -55,6 +55,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lockedPaymentId, setLockedPaymentId] = useState<number | null>(null);
   const [adminNote, setAdminNote] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState("");
@@ -223,6 +224,8 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   };
 
   const handleConfirmPayment = (payment: Payment) => {
+    if (lockedPaymentId === payment.id || isProcessing) return;
+    setLockedPaymentId(payment.id);
     setSelectedPayment(payment);
     setPaymentReference(payment.transactionId || "");
     setConfirmedAmount(String(payment.confirmedAmount ?? payment.expectedAmount ?? payment.amount));
@@ -232,6 +235,8 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   };
 
   const handleCancelPayment = (payment: Payment) => {
+    if (lockedPaymentId === payment.id || isProcessing) return;
+    setLockedPaymentId(payment.id);
     setSelectedPayment(payment);
     setActionType('cancel');
     setConfirmDialogOpen(true);
@@ -283,7 +288,8 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
       refetch();
       refetchAuditLogs();
     } catch (error) {
-      toast.error("Une erreur s'est produite lors du traitement du paiement");
+      setLockedPaymentId(null);
+      toast.error(error instanceof Error ? error.message : "Une erreur s'est produite lors du traitement du paiement");
     } finally {
       setIsProcessing(false);
     }
@@ -610,10 +616,10 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
                                 title={payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? "Valider le paiement en agence" : "Confirmer le paiement"}
                                 aria-label={payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? `Valider le paiement en agence du dossier ${payment.dossierNumber}` : `Confirmer le paiement du dossier ${payment.dossierNumber}`}
                                 className="text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors"
-                                disabled={isProcessing}
+                                disabled={isProcessing || lockedPaymentId === payment.id}
                               >
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span className="hidden xl:inline">{payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? "Valider agence" : "Valider"}</span>
+                                {lockedPaymentId === payment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                <span className="hidden xl:inline">{lockedPaymentId === payment.id ? "Traitement…" : payment.paymentMethod?.toLowerCase().includes("agency") || payment.paymentMethod?.toLowerCase().includes("agence") ? "Valider agence" : "Valider"}</span>
                               </Button>
                               <Button
                                 onClick={() => handleCancelPayment(payment)}
@@ -621,9 +627,9 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
                                 size="sm"
                                 title="Annuler le paiement"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-                                disabled={isProcessing}
+                                disabled={isProcessing || lockedPaymentId === payment.id}
                               >
-                                <XCircle className="w-4 h-4" />
+                                {lockedPaymentId === payment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                               </Button>
                             </>
                           )}

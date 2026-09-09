@@ -3166,3 +3166,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Copier les assets dans `/home/ubuntu/webdev-static-assets/` et documenter leur provenance/licence.
 - [x] Rattacher chaque visuel à la fiche correspondante sans modifier les données de dossier candidat.
 - [x] Tester le rendu desktop/mobile des dix fiches et publier le lot après vérification.
+
+## Verrouillage immédiat des actions admin — priorité utilisateur
+- [x] Désactiver immédiatement les boutons de validation/action dès le départ de chaque mutation admin, avec indicateur de chargement. Paiements, Candidate360 et placement disposent de verrous locaux en plus de `isPending`.
+- [x] Maintenir un état définitif « Déjà validé » ou disabled pour paiement, évaluation hors ligne, confirmation conseiller, étape suivante et autres actions idempotentes. Le serveur conserve l’idempotence paiement/évaluation ; l’interface affiche les états déjà validés.
+- [x] Vérifier la légitimité et le comportement des boutons Enregistrer l’organisation, Préparer le profil, Confirmer la soumission et Générer l’accès vérifié. Ces actions restent légitimes, sont verrouillées au clic et se réarment uniquement en cas d’erreur.
+- [x] Ajouter les régressions UI/serveur et effectuer un clic réel non destructif en session admin, sans toucher à un paiement réel. Les régressions et TypeScript passent ; le clic live reste non exécuté car la session actuelle reçoit « Accès refusé — administrateurs requis », documenté dans `docs/admin-action-lock-live-check-2026-09-09.md`.
