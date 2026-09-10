@@ -3249,3 +3249,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le mapping du type déclaré côté candidat vers les catégories admin `cv`, `passport`, `permit`, `diploma` et autres catégories reconnues, au lieu de `other` par défaut.
 - [x] Faire remonter les documents catégorisés vers les cases de pièces requises et la section CV exploitable, avec statut et téléchargement isolés par dossier.
 - [x] Ajouter les régressions et tester avec un fichier contrôlé sans modifier les documents réels de `3M-AGN-270002`.
+
+## Propagation cache du routage Candidate360 — observation live
+- [x] Incrémenter le cache PWA après le test public qui sert encore l’ancien bouton global Documents, puis revalider le routage interne.
