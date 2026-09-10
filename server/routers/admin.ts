@@ -21,6 +21,7 @@ import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "d
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
   const raw = String(value ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
@@ -49,6 +50,16 @@ export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): 
 }
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
+
+function parseAdminChecklistStepIds(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Masque les coordonnées dans les aperçus de remise consultés au back-office. */
 export function redactEmailPreviewHtml(contentPreviewHtml: string | null | undefined) {
@@ -3336,6 +3347,16 @@ export const adminRouter = router({
             "agencyDossierDocuments",
           )
         : [];
+      const progressCandidateId = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).candidateId : agencyCandidateId;
+      const checklistProgressRows = progressCandidateId ? await safeCollection(
+        db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, operationalCase.caseNumber), eq(procedureChecklistProgress.candidateId, progressCandidateId))).limit(1),
+        [],
+        "procedureChecklistProgress",
+      ) : [];
+      const checklistProgress = checklistProgressRows[0] ?? null;
+      const persistedJourneyStepIds = new Set(parseAdminChecklistStepIds(checklistProgress?.completedStepIds));
+      let persistedJourneyIndex = 0;
+      while (persistedJourneyStepIds.has(`checklist-${persistedJourneyIndex}`)) persistedJourneyIndex += 1;
       const agencyCvDocument = agencyDocuments.find((document) => normalizeAdminDocumentType(document.documentType, document.documentName) === "cv") ?? null;
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
@@ -3388,6 +3409,7 @@ export const adminRouter = router({
         activationRequested: Boolean((sourceRecord as any).activationRequestedAt),
         paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
       });
+      const effectiveJourneyStep = Math.min(Math.max(currentJourneyStep, persistedJourneyIndex), Math.max(0, candidateJourney.steps.length - 1));
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         evaluationDeclarationStatus: reference.source === "agency"
@@ -3413,8 +3435,9 @@ export const adminRouter = router({
           title: candidateJourney.title,
           disclaimer: candidateJourney.disclaimer,
           officialSources: candidateJourney.officialSources,
-          currentStepIndex: currentJourneyStep,
-          steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < currentJourneyStep ? "completed" : index === currentJourneyStep ? "current" : "locked" })),
+          currentStepIndex: effectiveJourneyStep,
+          completedStepIds: Array.from(persistedJourneyStepIds),
+          steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < effectiveJourneyStep || persistedJourneyStepIds.has(`checklist-${index}`) ? "completed" : index === effectiveJourneyStep ? "current" : "locked" })),
         },
         metrics: { pendingDocuments, openTasks, unreadNotifications: notifications.filter((item) => !item.isRead).length, totalDocuments: operationalDocuments.length + legacyDocuments.length + agencyDocuments.length, totalMessages: messages.length },
         requirements,
@@ -3505,6 +3528,64 @@ export const adminRouter = router({
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
+    }),
+
+  updateCandidateJourneyStep: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      stepId: z.string().trim().min(1).max(160),
+      checked: z.boolean(),
+      comment: z.string().trim().max(1000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
+      const source = sourceRecord as any;
+      const candidateId = reference.source === "online"
+        ? source.candidateId
+        : (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, source.email)).limit(1))[0]?.id ?? null;
+      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cette étape." });
+      const destination = source.destination || "autre";
+      const visaType = source.visaType || "Visiteur";
+      const journey = getCandidateJourney(destination, visaType, visaType);
+      const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
+      const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
+      if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });
+      const dossierKey = reference.source === "online" ? (source.dossierNumber || `online-${reference.id}`) : `3M-AG-${reference.id.toString().padStart(4, "0")}`;
+      const [existing] = await db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, dossierKey), eq(procedureChecklistProgress.candidateId, candidateId))).limit(1);
+      const completed = new Set(parseAdminChecklistStepIds(existing?.completedStepIds));
+      const baseIndex = journeyStepIndex(journey, source.dossierStatus || source.status || "nouveau", null, {
+        evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
+        activationRequested: Boolean(source.activationRequestedAt),
+        paymentConfirmed: source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid",
+      });
+      for (let index = 0; index < baseIndex; index += 1) completed.add(`checklist-${index}`);
+      const contiguousCount = (() => { let index = 0; while (completed.has(`checklist-${index}`)) index += 1; return index; })();
+      if (input.checked) {
+        const nextAllowedIndex = Math.max(baseIndex, contiguousCount);
+        if (stepIndex > nextAllowedIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord les étapes précédentes dans l’ordre." });
+        if (stepIndex >= 4 && !source.evaluationClientConfirmedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
+        if (stepIndex >= 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant cette étape." });
+        completed.add(`checklist-${stepIndex}`);
+      } else {
+        const highest = Math.max(-1, ...Array.from(completed).map((value) => Number(value.replace("checklist-", ""))).filter(Number.isFinite));
+        if (stepIndex !== highest || stepIndex < baseIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seule la dernière étape ajoutée peut être annulée." });
+        completed.delete(`checklist-${stepIndex}`);
+      }
+      const completedStepIds = JSON.stringify(Array.from(completed).sort((left, right) => Number(left.replace("checklist-", "")) - Number(right.replace("checklist-", ""))));
+      if (existing) await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
+      else await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: input.checked ? "journey_step_completed" : "journey_step_reopened", entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${input.checked ? "Étape validée" : "Étape rouverte"} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` ${input.comment}` : ""}` });
+      return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? "Étape validée et prochaine étape débloquée." : "Dernière étape rouverte." };
     }),
 
   updateCandidate360Workflow: publicProcedure
