@@ -8,7 +8,7 @@ const read = (file: string) => readFileSync(resolve(root, file), "utf8");
 
 describe("agreement and payment gating contracts", () => {
   it("bloque réellement le paiement et le traitement sans confirmation client", () => {
-    const base = { agreementSigned: true, paymentStatus: "SUCCESS", evaluationDeliveryStatus: "sent", hasCv: true, evaluationClientConfirmed: false };
+    const base = { agreementSigned: true, paymentStatus: "SUCCESS", paymentValidatedAt: new Date(), paymentValidatedBy: "aureoldonfack@gmail.com", evaluationDeliveryStatus: "sent", hasCv: true, evaluationClientConfirmed: false };
     expect(() => assertApplicationCanEnterStatus(base, "en_attente_paiement")).toThrow("confirmer la réception");
     expect(() => assertApplicationCanEnterStatus(base, "paye")).toThrow("confirmation du bilan");
     expect(() => assertApplicationCanEnterStatus({ ...base, evaluationClientConfirmed: true }, "paye")).not.toThrow();
@@ -27,7 +27,7 @@ describe("agreement and payment gating contracts", () => {
     const gate = read("server/utils/applicationGates.ts");
     expect(gate).toContain("APPLICATION_PROCESSING_STATUSES = new Set");
     expect(gate).toContain("Le protocole d’accord doit être signé");
-    expect(gate).toContain("Le paiement doit être confirmé");
+    expect(gate).toContain("Le paiement doit être validé par un administrateur");
     expect(source).toContain("agreementRequired: isValidated && !application.agreementSigned");
     expect(source).toContain("assertApplicationCanEnterStatus(application, input.dossierStatus)");
   });
@@ -60,6 +60,7 @@ describe("agreement and payment gating contracts", () => {
     expect(clientSpace).toContain("Protocole d’accord obligatoire");
     expect(clientSpace).toContain("Signer le protocole d’accord");
     expect(clientSpace).toContain("signAgreementProtocol");
+    expect(read("server/routers/candidate.ts")).toContain("LOWER(${applications.email}) = LOWER(${ctx.candidate.email})");
   });
 
   it("exposes the agreement state next to payment status in admin", () => {

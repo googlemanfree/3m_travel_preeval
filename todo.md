@@ -3272,3 +3272,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher un badge coloré selon le statut du paiement tout en conservant son menu d’édition inline.
 - [x] Afficher un badge coloré selon l’étape de procédure tout en conservant son menu d’édition inline.
 - [x] Ajouter les régressions, vérifier TypeScript et publier la présentation mise à jour.
+
+## Lot groupé prioritaire — vérification et nouvelles fonctions
+- [ ] Vérifier par clic réel l’activation conditionnée au paiement sur les entrées agence, pré-dossier et en ligne, sans modifier de dossier réel non autorisé.
+- [ ] Vérifier par clic réel le bouton « Contrôler les documents », le mapping CV/catégories, le suivi dossier et le panneau de bilan COMPTE-1260001.
+- [ ] Auditer globalement les boutons du Pilotage et documenter leurs états pending, succès, erreur et rafraîchissement.
+- [ ] Ajouter une corbeille réversible admin pour comptes mal créés ou doublons, avec récapitulatif et confirmation avant déplacement.
+- [ ] Rendre les 17 étapes du Parcours synchronisé actionnables par l’admin avec séquence et prérequis serveur.
+- [ ] Auditer et corriger le flux de signature du protocole côté client et admin, avec paiement confirmé obligatoire.
+- [ ] Permettre le changement de destination côté admin avec synchronisation vers l’espace client et traçabilité.
+- [ ] Ajouter les tests, preuves de clic réel disponibles et publication finale de ce lot.

@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
@@ -1312,7 +1312,10 @@ export const candidateRouter = router({
         .where(
           and(
             eq(applications.dossierNumber, input.dossierNumber),
-            eq(applications.candidateId, ctx.candidate.id)
+            or(
+              eq(applications.candidateId, ctx.candidate.id),
+              sql`LOWER(${applications.email}) = LOWER(${ctx.candidate.email})`
+            )
           )
         )
         .limit(1);
