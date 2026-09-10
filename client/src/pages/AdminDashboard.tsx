@@ -983,7 +983,20 @@ export default function AdminDashboard() {
   const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
   const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
   const confirmInlinePaymentMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation();
+  const archiveDuplicateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
+    onSuccess: (result) => { toast({ title: "Dossier placé dans la corbeille", description: `${result.reference} est masqué de la liste active et reste restaurable.` }); void trpcUtils.admin.listCandidates.invalidate(); },
+    onError: (error) => toast({ title: "Mise en corbeille impossible", description: error.message, variant: "destructive" }),
+  });
   const trpcUtils = trpc.useUtils();
+
+  const archiveCandidateFromTable = useCallback((candidate: { id?: string; folderCode?: string; fullName?: string; email?: string; source?: string }) => {
+    if (!candidate.id) return;
+    const recap = `Récapitulatif de la mise en corbeille réversible\\n\\nDossier : ${candidate.folderCode ?? "—"}\\nCandidat : ${candidate.fullName ?? "—"}\\nE-mail : ${candidate.email ?? "—"}\\nSource : ${candidate.source ?? "—"}`;
+    if (!window.confirm(`${recap}\\n\\nAucune suppression définitive ne sera effectuée. Confirmer l’ouverture de la corbeille ?`)) return;
+    const reason = window.prompt("Motif obligatoire (doublon, compte mal créé, autre) :", "Doublon à vérifier");
+    if (!reason || reason.trim().length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
+    archiveDuplicateMutation.mutate({ sessionToken, candidateId: candidate.id, reason: reason.trim(), confirmation: "CORBEILLE" });
+  }, [archiveDuplicateMutation, sessionToken, toast]);
 
   const queueInlineChange = useCallback((candidateId: string, field: "paymentStatus" | "procedureStep", value: string) => {
     setPendingInlineChanges((current) => ({ ...current, [candidateId]: { ...current[candidateId], [field]: value } }));
@@ -2258,17 +2271,33 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 hover:bg-blue-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCandidateId(candidate.id);
-                          }}
-                        >
-                          <Eye className="w-3.5 h-3.5 text-blue-600" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 hover:bg-blue-100"
+                            aria-label={`Ouvrir la fiche de ${candidate.fullName}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCandidateId(candidate.id);
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5 text-blue-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 hover:bg-rose-100"
+                            aria-label={`Mettre ${candidate.fullName} à la corbeille`}
+                            disabled={archiveDuplicateMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              archiveCandidateFromTable(candidate);
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

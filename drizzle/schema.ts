@@ -223,6 +223,9 @@ export const candidates = mysqlTable("candidates", {
   avatarVerificationReason: varchar("avatarVerificationReason", { length: 255 }),
   avatarFaceCount: int("avatarFaceCount").default(0).notNull(),
   avatarVerifiedAt: timestamp("avatarVerifiedAt"),
+  deletedAt: timestamp("deletedAt"),
+  deletedBy: varchar("deletedBy", { length: 320 }),
+  deletionReason: text("deletionReason"),
   // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
@@ -555,6 +558,9 @@ export const applications = mysqlTable("applications", {
   adminAssignedTo: varchar("adminAssignedTo", { length: 255 }),
   lastStatusUpdateAt: timestamp("lastStatusUpdateAt"),
   lastStatusUpdatedBy: varchar("lastStatusUpdatedBy", { length: 255 }),
+  deletedAt: timestamp("deletedAt"),
+  deletedBy: varchar("deletedBy", { length: 320 }),
+  deletionReason: text("deletionReason"),
   
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),

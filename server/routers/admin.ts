@@ -1494,17 +1494,19 @@ export const adminRouter = router({
         // Sinon un dossier de test plus ancien peut rester invisible même si son nom/référence correspond.
         const sourceLimit = input.search?.trim() ? 5000 : input.limit;
 
-        // Récupérer les dossiers en ligne (table applications)
+        // Récupérer les dossiers en ligne (table applications), hors corbeille
         const onlineApps = await db
           .select()
           .from(applications)
+          .where(isNull(applications.deletedAt))
           .orderBy(desc(applications.createdAt))
           .limit(sourceLimit);
 
-        // Récupérer les dossiers agence (table agencyDossiers)
+        // Récupérer les dossiers agence (table agencyDossiers), hors corbeille
         const agencyApps = await db
           .select()
           .from(agencyDossiers)
+          .where(isNull(agencyDossiers.deletedAt))
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(sourceLimit);
         const caseRows = await db
@@ -1537,6 +1539,7 @@ export const adminRouter = router({
             verificationExpiresAt: candidates.verificationExpiresAt,
           })
           .from(candidates)
+          .where(isNull(candidates.deletedAt))
           .limit(10000);
         const activationLogs = await db
           .select({
@@ -3528,6 +3531,34 @@ export const adminRouter = router({
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
+    }),
+
+  archiveDuplicateRecord: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), reason: z.string().trim().min(8).max(500), confirmation: z.literal("CORBEILLE") }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const parsed = /^(account|online|agency)_(\\d+)$/.exec(input.candidateId.trim());
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence de dossier non prise en charge." });
+      const source = parsed[1];
+      const id = Number(parsed[2]);
+      if (source === "account") {
+        const [record] = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat actif introuvable." });
+        await db.update(candidates).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(candidates.id, id));
+        return { success: true, source, id, reference: `COMPTE-${String(id).padStart(5, "0")}`, message: "Compte placé dans la corbeille réversible." };
+      }
+      if (source === "online") {
+        const [record] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber }).from(applications).where(and(eq(applications.id, id), isNull(applications.deletedAt))).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne actif introuvable." });
+        await db.update(applications).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(applications.id, id));
+        return { success: true, source, id, reference: record.dossierNumber, message: "Dossier placé dans la corbeille réversible." };
+      }
+      const [record] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
+      if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence actif introuvable." });
+      await db.update(agencyDossiers).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(agencyDossiers.id, id));
+      return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: "Dossier placé dans la corbeille réversible." };
     }),
 
   updateCandidateDestination: publicProcedure
