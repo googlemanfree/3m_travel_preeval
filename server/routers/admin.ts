@@ -3561,6 +3561,22 @@ export const adminRouter = router({
       return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: "Dossier placé dans la corbeille réversible." };
     }),
 
+  restoreArchivedRecord: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), confirmation: z.literal("RESTAURER") }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const parsed = /^(account|online|agency)_(\\d+)$/.exec(input.candidateId.trim());
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence archivée non prise en charge." });
+      const source = parsed[1];
+      const id = Number(parsed[2]);
+      if (source === "account") await db.update(candidates).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(candidates.id, id));
+      else if (source === "online") await db.update(applications).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(applications.id, id));
+      else await db.update(agencyDossiers).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(agencyDossiers.id, id));
+      return { success: true, source, id, message: "Enregistrement restauré dans la liste active." };
+    }),
+
   updateCandidateDestination: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),

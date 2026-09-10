@@ -30,5 +30,12 @@ describe("tableau dossiers — contrôles inline groupés et corbeille", () => {
     expect(trash).toContain("showTrash");
     expect(trash).toContain("restoreMutation");
     expect(trash).toContain("Tapez SUPPRIMER pour confirmer");
+    const adminRouter = read("server/routers/admin.ts");
+    expect(adminRouter).toContain("archiveDuplicateRecord");
+    expect(adminRouter).toContain("restoreArchivedRecord");
+    expect(adminRouter).toContain('confirmation: z.literal("CORBEILLE")');
+    expect(adminRouter).toContain('confirmation: z.literal("RESTAURER")');
+    expect(adminRouter).toContain("deletedAt: new Date()");
+    expect(adminRouter).toContain("deletedAt: null");
   });
 });
