@@ -234,7 +234,16 @@ export default function EvaluationSpace() {
     );
   }
 
-  const { candidate: cProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const { candidate: rawCProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const cProfile = {
+    ...rawCProfile,
+    dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
+      ? rawCProfile.dossierNumber
+      : activeDossier?.dossierNumber
+        || ((rawCProfile.dossierStatus !== "nouveau" || rawCProfile.evaluationDeclarationStatus === "validated")
+          ? `COMPTE-${rawCProfile.id}`
+          : "N/A"),
+  };
   const workflow = dashboardData.workflow;
   const portraitIsMissing = !cProfile.avatarUrl;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
