@@ -7,7 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, candidates, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans } from "../../drizzle/schema";
+import { evaluations, users, applications, candidates, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, paymentAuditLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { eq, desc, like, or, and } from "drizzle-orm";
@@ -1099,11 +1099,14 @@ export const adminRouter = router({
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
           if (input.newStatus !== "PENDING_48H") {
             const [linkedCandidate] = await db.select({ evaluationDeclarationStatus: candidates.evaluationDeclarationStatus, evaluationReviewedAt: candidates.evaluationReviewedAt }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
-            const [linkedApplication] = await db.select({ paymentStatus: applications.paymentStatus, evaluationDeliveryStatus: applications.evaluationDeliveryStatus }).from(applications).where(eq(applications.email, dossier.email)).orderBy(desc(applications.createdAt)).limit(1);
+            const [linkedApplication] = await db.select({ paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, paymentValidatedBy: applications.paymentValidatedBy, evaluationDeliveryStatus: applications.evaluationDeliveryStatus }).from(applications).where(eq(applications.email, dossier.email)).orderBy(desc(applications.createdAt)).limit(1);
+            const [confirmedAgencyPayment] = await db.select({ id: paymentAuditLogs.id }).from(paymentAuditLogs)
+              .where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email), eq(paymentAuditLogs.action, "confirmed")))
+              .orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
             const evaluationValidated = linkedApplication?.evaluationDeliveryStatus === "sent" || (linkedCandidate?.evaluationDeclarationStatus === "validated" && Boolean(linkedCandidate.evaluationReviewedAt));
-            const paymentConfirmed = dossier.initialPaymentStatus === "paid" || linkedApplication?.paymentStatus === "SUCCESS";
+            const paymentConfirmed = Boolean(confirmedAgencyPayment) || (linkedApplication?.paymentStatus === "SUCCESS" && Boolean(linkedApplication.paymentValidatedAt) && Boolean(linkedApplication.paymentValidatedBy?.trim()));
             if (!evaluationValidated || !paymentConfirmed) {
-              throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le dossier agence ne peut pas passer en traitement sans évaluation validée et paiement confirmé." });
+              throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le dossier agence ne peut pas passer en traitement : l’évaluation doit être validée et le paiement doit être validé par un administrateur." });
             }
           }
           await db.update(agencyDossiers)

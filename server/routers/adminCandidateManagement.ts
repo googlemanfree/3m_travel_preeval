@@ -413,16 +413,25 @@ export const adminCandidateManagementRouter = router({
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel." });
       }
-      const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus }).from(applications)
+      const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, paymentValidatedBy: applications.paymentValidatedBy }).from(applications)
         .where(eq(applications.candidateId, candidate.id))
         .orderBy(desc(applications.createdAt))
         .limit(1);
-      const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
-        .where(and(isNull(agencyDossiers.deletedAt), eq(agencyDossiers.email, candidate.email), eq(agencyDossiers.initialPaymentStatus, "paid")))
+      const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers)
+        .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})`, eq(agencyDossiers.initialPaymentStatus, "paid")))
         .orderBy(desc(agencyDossiers.createdAt))
         .limit(1);
-      if (latestApplication?.paymentStatus !== "SUCCESS" && !paidAgencyDossier) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être confirmé avant l’ouverture du dossier officiel." });
+      let agencyPaymentValidated = false;
+      if (paidAgencyDossier) {
+        const [confirmedAudit] = await db.select({ id: paymentAuditLogs.id }).from(paymentAuditLogs)
+          .where(and(eq(paymentAuditLogs.paymentId, paidAgencyDossier.id), eq(paymentAuditLogs.candidateEmail, paidAgencyDossier.email), eq(paymentAuditLogs.action, "confirmed")))
+          .orderBy(desc(paymentAuditLogs.createdAt))
+          .limit(1);
+        agencyPaymentValidated = Boolean(confirmedAudit);
+      }
+      const onlinePaymentValidated = latestApplication?.paymentStatus === "SUCCESS" && Boolean(latestApplication.paymentValidatedAt) && Boolean(latestApplication.paymentValidatedBy?.trim());
+      if (!onlinePaymentValidated && !agencyPaymentValidated) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel." });
       }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.

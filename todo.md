@@ -3223,3 +3223,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Privilégier le bouton « Suivre ce dossier » avec une référence liée au compte plutôt qu’une recherche manuelle incohérente. Le formulaire manuel est masqué lorsqu’un dossier associé est disponible.
 - [x] Auditer et corriger le pipeline CV PDF : téléversement candidat, stockage, rattachement au dossier, affichage et téléchargement dans Candidate360/Documents. Le type `cv`, le `candidateId`, le dossier agence et `cvDocument` sont maintenant alignés et isolés.
 - [ ] Ajouter les régressions et tester une recherche de suivi réelle ainsi qu’un téléversement PDF avec un compte de test contrôlé, sans modifier de dossier réel. 9 tests ciblés et TypeScript passent ; la recherche live a été vérifiée antérieurement, mais aucun nouveau téléversement n’a été effectué faute de session fictive disponible.
+
+## Audit exhaustif Pilotage et activation conditionnée au paiement — priorité business
+- [ ] Cartographier tous les boutons d’action du Pilotage et de Candidate360, avec mutation, état pending, succès, erreur et mise à jour visible.
+- [ ] Corriger tous les boutons muets ou sans retour clair, sans supprimer les actions existantes.
+- [ ] Imposer côté serveur qu’aucune activation de dossier agence, pré-dossier ou inscription en ligne ne puisse aboutir sans paiement validé par un administrateur.
+- [ ] Afficher un message explicite et réarmer le bouton lors de toute tentative d’activation sans paiement validé.
+- [ ] Ajouter les régressions par parcours et effectuer des clics réels non destructifs avant publication.
+
+## Panneau bilan après validation hors ligne — COMPTE-1260001
+- [x] Identifier la source de validation hors ligne, du brouillon et du rattachement d’évaluation pour le dossier COMPTE-1260001. La résolution agence par e-mail normalisé alimente désormais `getEvaluationDelivery` et `offlineEvaluation`.
+- [x] Afficher « Bilan déjà validé hors ligne » avec date et conseiller lorsque l’évaluation/bilan est déjà validé, et désactiver l’action redondante. Les actions de préparation, approbation, programmation et diffusion sont disabled.
+- [x] Remplacer « Dossier d’évaluation introuvable » par une explication exploitable lorsque le bilan hors ligne existe mais qu’aucun dossier actif n’est encore ouvert. Le message demande de vérifier le CV et le rattachement du pré-dossier.
+- [ ] Ajouter les régressions et tester l’ouverture du panneau par clic réel contrôlé, sans créer de dossier ni paiement. 4 tests ciblés et TypeScript passent ; le clic live sur COMPTE-1260001 reste à rejouer après publication.

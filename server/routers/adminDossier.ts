@@ -1,7 +1,7 @@
 import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { getDb } from '../db';
-import { agencyDossiers, applications, candidates } from '../../drizzle/schema';
+import { agencyDossiers, applications, candidates, paymentAuditLogs } from '../../drizzle/schema';
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { sendDossierConfirmationEmail } from '../emailService';
 import { assertApplicationCanEnterStatus } from '../utils/applicationGates';
@@ -59,18 +59,27 @@ export const adminDossierRouter = router({
         }
         const [latestApplication] = await db.select({
           paymentStatus: applications.paymentStatus,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          paymentValidatedBy: applications.paymentValidatedBy,
           evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
         }).from(applications)
           .where(eq(applications.candidateId, candidate.id))
           .orderBy(desc(applications.createdAt))
           .limit(1);
-        const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
-          .where(and(isNull(agencyDossiers.deletedAt), eq(agencyDossiers.email, candidate.email), eq(agencyDossiers.initialPaymentStatus, "paid")))
+        const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers)
+          .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})`, eq(agencyDossiers.initialPaymentStatus, "paid")))
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(1);
-        const agencyPaymentConfirmed = Boolean(paidAgencyDossier);
+        let agencyPaymentConfirmed = false;
+        if (paidAgencyDossier) {
+          const [confirmedAudit] = await db.select({ id: paymentAuditLogs.id }).from(paymentAuditLogs)
+            .where(and(eq(paymentAuditLogs.paymentId, paidAgencyDossier.id), eq(paymentAuditLogs.candidateEmail, paidAgencyDossier.email), eq(paymentAuditLogs.action, "confirmed")))
+            .orderBy(desc(paymentAuditLogs.createdAt))
+            .limit(1);
+          agencyPaymentConfirmed = Boolean(confirmedAudit);
+        }
         const evaluationValidated = (candidate.evaluationDeclarationStatus === 'validated' && Boolean(candidate.evaluationReviewedAt)) || latestApplication?.evaluationDeliveryStatus === 'sent';
-        const paymentConfirmed = latestApplication?.paymentStatus === 'SUCCESS' || agencyPaymentConfirmed;
+        const paymentConfirmed = (latestApplication?.paymentStatus === 'SUCCESS' && Boolean(latestApplication.paymentValidatedAt) && Boolean(latestApplication.paymentValidatedBy?.trim())) || agencyPaymentConfirmed;
         if (!evaluationValidated || !paymentConfirmed) {
           return { success: false, error: 'Création bloquée : l’évaluation doit être validée et le paiement confirmé avant l’ouverture du dossier officiel.' };
         }

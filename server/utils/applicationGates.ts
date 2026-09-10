@@ -13,6 +13,8 @@ export const APPLICATION_PROCESSING_STATUSES = new Set([
 type ApplicationGateRecord = {
   agreementSigned: boolean;
   paymentStatus: string;
+  paymentValidatedAt?: Date | string | null;
+  paymentValidatedBy?: string | null;
   cvUrl?: string | null;
   hasCv?: boolean;
   evaluationDeliveryStatus?: string | null;
@@ -58,10 +60,10 @@ export function assertApplicationCanEnterStatus(application: ApplicationGateReco
       message: "Le protocole d’accord doit être signé avant le passage du dossier en traitement.",
     });
   }
-  if (application.paymentStatus !== "SUCCESS") {
+  if (application.paymentStatus !== "SUCCESS" || !application.paymentValidatedAt || !application.paymentValidatedBy?.trim()) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "Le paiement doit être confirmé avant le passage du dossier en traitement.",
+      message: "Le paiement doit être validé par un administrateur avant le passage du dossier en traitement.",
     });
   }
 }
