@@ -3179,3 +3179,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le filtre de recherche de l’onglet Dossiers et ajouter une régression sur la saisie `test`. Une recherche charge maintenant jusqu’à 5 000 dossiers avant filtrage ; la procédure et la régression couvrent aussi la destination et le type de procédure.
 - [x] Rechercher en base tous les candidats, comptes, dossiers et pré-dossiers correspondant à `test`, `qa`, `e2e`, `invalid.test` ou `example.com`, produire la liste complète et exclure explicitement les dossiers réels protégés ; aucune suppression. Rapport : `docs/test-account-inventory-2026-09-09.md`. Aucun compte protégé n’a été touché.
 - [x] Contrôler `/evaluation-rapide-enhanced`, le badge de dossier actif du compte `aureoldonfack@gmail.com` et la version finale enrichie du protocole. Redirection HTTP 301 confirmée ; badge corrigé par source candidat/agence mais session client spécifique non rejouée ; protocole v2 confirmé.
+
+## Correctif validation hors ligne affichée après succès
+- [x] Propager les métadonnées de validation d’évaluation dans les lignes et détails admin pour que Candidate360 utilise l’état serveur frais. Les branches en ligne, agence et compte transmettent désormais les champs de validateur et horodatage.
+- [x] Remplacer le bouton hors ligne du panneau pré-dossier par un état « Déjà validée » lorsque le statut est validé.
+- [x] Ajouter les régressions ciblées et vérifier la fiche TEST INTERNE sans mutation réelle. 4 tests de verrouillage, 3 de recherche, 2 de rattachement agence et TypeScript passent ; aucune mutation n’a été exécutée.

@@ -23,6 +23,13 @@ describe("Verrouillage des actions admin", () => {
     expect(source).toContain("Soumission confirmée");
   });
 
+  it("remplace le bouton pré-dossier par un état définitif après validation", () => {
+    const source = read("client/src/components/AdminPreDossierEvaluationPanel.tsx");
+    expect(source).toContain("{validated ? (");
+    expect(source).toContain("Évaluation déjà validée");
+    expect(source).toContain("disabled={isOfflineValidating}");
+  });
+
   it("protège l’évaluation hors ligne et les actions Candidate360 pendant mutation", () => {
     const source = read("client/src/components/Candidate360Workspace.tsx");
     expect(source).toContain("actionLocks.offlineEvaluation");

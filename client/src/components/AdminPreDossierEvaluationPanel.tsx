@@ -57,7 +57,14 @@ export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt,
             <p className="text-sm font-semibold text-slate-800">Évaluation réalisée hors ligne</p>
             <p className="mt-1 text-sm leading-6 text-slate-700">Validez simplement une évaluation faite par téléphone, en agence ou par e-mail. Le conseiller et la date sont tracés, sans envoyer de bilan.</p>
           </div>
-          <Button type="button" variant="outline" onClick={() => setOfflineOpen(true)} className="shrink-0 border-emerald-300 text-emerald-800 hover:bg-emerald-50">Valider l’évaluation hors ligne</Button>
+          {validated ? (
+            <div className="flex shrink-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800" role="status">
+              <span aria-hidden="true">✓</span>
+              <span>Évaluation déjà validée{reviewedBy ? ` par ${reviewedBy}` : ""}{reviewedAt ? ` le ${new Date(reviewedAt).toLocaleString("fr-FR")}` : ""}</span>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" disabled={isOfflineValidating} onClick={() => setOfflineOpen(true)} className="shrink-0 border-emerald-300 text-emerald-800 hover:bg-emerald-50">Valider l’évaluation hors ligne</Button>
+          )}
         </div>
       )}
       {onOpenEditor && (
