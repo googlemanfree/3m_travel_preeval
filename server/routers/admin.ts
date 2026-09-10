@@ -17,7 +17,7 @@ import { createEvisaCommunicationSnapshot } from "../services/evisaCommunication
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
-import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
@@ -2346,6 +2346,22 @@ export const adminRouter = router({
           if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
           const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
           const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
+          // Un compte déjà activé (dossierStatus != "nouveau") reste accessible via son ancienne
+          // référence COMPTE-, mais son dossier réel vit désormais dans agencyDossiers : on résout
+          // cette référence pour éviter de réafficher l'action Ouvrir et activer comme si elle
+          // restait possible, ce qui provoquait un refus serveur systématique et confus pour l'admin.
+          let linkedAgencyDossierReference: string | null = null;
+          let linkedAgencyDossierDestination: string | null = null;
+          if (account.dossierStatus !== "nouveau") {
+            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination }).from(agencyDossiers)
+              .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
+              .orderBy(desc(agencyDossiers.createdAt))
+              .limit(1);
+            if (linkedDossier) {
+              linkedAgencyDossierReference = `3M-AGN-${String(linkedDossier.id).padStart(4, "0")}`;
+              linkedAgencyDossierDestination = linkedDossier.destination;
+            }
+          }
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
@@ -2361,6 +2377,8 @@ export const adminRouter = router({
               status: "PENDING_48H",
               internalStatus: account.dossierStatus,
               source: "ACCOUNT_ONLY" as const,
+              linkedAgencyDossierReference,
+              linkedAgencyDossierDestination,
               emailHistory,
               scoringTotal: null,
               scoringBadge: null,
