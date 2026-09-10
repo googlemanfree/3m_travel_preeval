@@ -3254,11 +3254,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Incrémenter le cache PWA après le test public qui sert encore l’ancien bouton global Documents, puis revalider le routage interne.
 
 ## Tableau Dossiers — paiement et étape de procédure inline
-- [ ] Ajouter une colonne « Statut du paiement » alimentée par l’état réel du dossier.
-- [ ] Ajouter une colonne « Étape de la procédure » alimentée par l’étape réelle du parcours.
-- [ ] Permettre la modification inline de ces deux états avec mutations sécurisées, confirmations si nécessaire et retours visuels.
-- [ ] Conserver les garde-fous serveur, notamment l’interdiction d’activer un dossier sans paiement validé par un administrateur.
-- [ ] Ajouter les régressions, tester le tableau publié et publier la correction.
+- [x] Ajouter une colonne « Statut du paiement » alimentée par l’état réel du dossier.
+- [x] Ajouter une colonne « Étape de la procédure » alimentée par l’étape réelle du parcours.
+- [x] Permettre la modification inline de ces deux états avec mutations sécurisées, confirmations si nécessaire et retours visuels.
+- [x] Conserver les garde-fous serveur, notamment l’interdiction d’activer un dossier sans paiement validé par un administrateur.
+- [x] Ajouter les régressions, tester le tableau publié et publier la correction.
 
 ## Pilotage admin — propositions validées 1, 2, 3, 4 et 7
 - [x] Ajouter une vue de parcours par étapes et des filtres rapides dans le Pilotage.

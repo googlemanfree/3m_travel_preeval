@@ -1199,6 +1199,36 @@ export const adminRouter = router({
       }
     }),
 
+  updateDossierPaymentState: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      status: z.enum(["PENDING", "FAILED", "CANCELLED", "NOT_PAID"]),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide." });
+      if (input.status === "NOT_PAID") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Utilisez l’état En attente ou la validation de paiement pour conserver une traçabilité financière." });
+      }
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus === "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste." });
+        await db.update(applications).set({ paymentStatus: input.status as any, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || admin.email || "Admin" }).where(eq(applications.id, reference.id));
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus === "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste." });
+        const agencyStatus = input.status === "PENDING" ? "pending" : "unknown";
+        await db.update(agencyDossiers).set({ initialPaymentStatus: agencyStatus as any, lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.fullName || admin.email || "Admin" }).where(eq(agencyDossiers.id, reference.id));
+      }
+      return { success: true, status: input.status, validatedBy: admin.email || admin.fullName || "Admin" };
+    }),
+
   /**
    * Modifier les donnees d'une application (par l'admin)
    */

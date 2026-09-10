@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const candidate360 = readFileSync(resolve(process.cwd(), "client/src/components/Candidate360Workspace.tsx"), "utf8");
 const dashboard = readFileSync(resolve(process.cwd(), "client/src/pages/AdminDashboard.tsx"), "utf8");
+const adminRouter = readFileSync(resolve(process.cwd(), "server/routers/admin.ts"), "utf8");
 
  describe("options professionnelles du Pilotage", () => {
   it("affiche l’action suivante et les prérequis de cohérence", () => {
@@ -28,5 +29,15 @@ const dashboard = readFileSync(resolve(process.cwd(), "client/src/pages/AdminDas
     for (const label of ["Évaluations à traiter", "Bilans / paiement", "Documents", "Soumission", "Visa accordé"]) {
       expect(dashboard).toContain(label);
     }
+  });
+
+  it("expose les colonnes inline de paiement et de procédure avec garde-fous", () => {
+    expect(dashboard).toContain("Statut du paiement de");
+    expect(dashboard).toContain("Étape de la procédure de");
+    expect(dashboard).toContain("window.confirm");
+    expect(dashboard).toContain("confirmInlinePaymentMutation");
+    expect(dashboard).toContain("updateInlineProcedureMutation");
+    expect(adminRouter).toContain("updateDossierPaymentState");
+    expect(adminRouter).toContain("Un paiement déjà confirmé ne peut pas être rétrogradé");
   });
 });

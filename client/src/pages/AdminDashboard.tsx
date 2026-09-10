@@ -144,6 +144,8 @@ interface Candidate {
   lastStatusUpdateAt?: Date | string | null;
   evaluationScheduledAt?: Date | string | null;
   dueAt?: Date | string | null;
+  paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
+  procedureStep?: string;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -182,6 +184,8 @@ const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: R
 };
 
 const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
+const PAYMENT_STATUS_LABELS: Record<string, string> = { SUCCESS: "Payé", PENDING: "En attente", FAILED: "Échec", CANCELLED: "Annulé", NOT_PAID: "Non payé" };
+const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation à traiter", PUBLISHED: "Bilan / paiement", DOCUMENTS_CHECK: "Collecte documents", SUBMITTED: "Soumission consulaire", APPROVED: "Visa accordé" };
 
 function getNextAdminStatus(status?: string): AdminStatus | null {
   const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
@@ -972,6 +976,18 @@ export default function AdminDashboard() {
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const { toast } = useToast();
+  const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation({
+    onSuccess: () => { toast({ title: "Statut de paiement mis à jour", description: "La liste va être resynchronisée." }); void refetch(); },
+    onError: (error) => toast({ title: "Modification du paiement impossible", description: error.message, variant: "destructive" }),
+  });
+  const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation({
+    onSuccess: (result) => { toast({ title: "Étape mise à jour", description: result.message }); void refetch(); },
+    onError: (error) => toast({ title: "Modification de l’étape impossible", description: error.message, variant: "destructive" }),
+  });
+  const confirmInlinePaymentMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
+    onSuccess: () => { toast({ title: "Paiement confirmé", description: "La validation est enregistrée par l’administrateur." }); void refetch(); },
+    onError: (error) => toast({ title: "Confirmation du paiement impossible", description: error.message, variant: "destructive" }),
+  });
   const trpcUtils = trpc.useUtils();
   const updateKanbanStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -2131,6 +2147,8 @@ export default function AdminDashboard() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Source</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Activation</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Paiement</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Étape de la procédure</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
@@ -2141,7 +2159,7 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 9 }).map((_, j) => (
+                      {Array.from({ length: 11 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
@@ -2150,7 +2168,7 @@ export default function AdminDashboard() {
                   ))
                 ) : candidates.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={11} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>{candidateListError ? "Impossible de synchroniser la liste. Réessayez dans quelques secondes." : isLoading ? "Chargement des dossiers…" : "Aucun candidat trouvé"}</p>
                       {hasCandidateFilters && !candidateListError && (
@@ -2185,6 +2203,27 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3">
                         <ActivationBadge status={candidate.activationStatus} />
+                      </td>
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                        <select aria-label={`Statut du paiement de ${candidate.fullName}`} value={candidate.paymentStatus ?? "NOT_PAID"} disabled={confirmInlinePaymentMutation.isPending || updateDossierPaymentStateMutation.isPending} onChange={(event) => {
+                          const nextStatus = event.target.value as keyof typeof PAYMENT_STATUS_LABELS;
+                          if (nextStatus === (candidate.paymentStatus ?? "NOT_PAID")) return;
+                          if (!window.confirm(`Confirmer le changement du paiement de ${candidate.fullName} vers « ${PAYMENT_STATUS_LABELS[nextStatus]} » ?`)) return;
+                          if (nextStatus === "SUCCESS") confirmInlinePaymentMutation.mutate({ sessionToken, candidateId: candidate.id });
+                          else updateDossierPaymentStateMutation.mutate({ sessionToken, candidateId: candidate.id, status: nextStatus as "PENDING" | "FAILED" | "CANCELLED" | "NOT_PAID" });
+                        }} className={`h-9 rounded-md border px-2 text-xs font-semibold ${candidate.paymentStatus === "SUCCESS" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : candidate.paymentStatus === "PENDING" ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-300 bg-white text-slate-700"}`}>
+                          {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                        <select aria-label={`Étape de la procédure de ${candidate.fullName}`} value={candidate.procedureStep ?? candidate.status} disabled={updateInlineProcedureMutation.isPending} onChange={(event) => {
+                          const nextStatus = event.target.value as AdminStatus;
+                          if (nextStatus === (candidate.procedureStep ?? candidate.status)) return;
+                          if (!window.confirm(`Confirmer le passage de ${candidate.fullName} à l’étape « ${PROCEDURE_STEP_LABELS[nextStatus] ?? nextStatus} » ?`)) return;
+                          updateInlineProcedureMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus: nextStatus, notifyClient: false });
+                        }} className="h-9 max-w-[170px] rounded-md border border-blue-200 bg-blue-50 px-2 text-xs font-semibold text-blue-800">
+                          {Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
