@@ -297,6 +297,17 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     label: "Définir la prochaine action",
     description: "Aucune action n’est encore planifiée pour ce dossier. Ajoutez une étape de traitement ou une échéance.",
   };
+  const paymentSnapshot: any = data.payments?.[0] ?? null;
+  const agreementState: any = (data as any).agreement ?? (data as any).protocol ?? null;
+  const coherenceChecks = [
+    { label: "CV exploitable", ok: Boolean(candidateCv?.documentUrl), detail: candidateCv?.fileName || "Aucun CV rattaché" },
+    { label: "Évaluation validée", ok: evaluationAlreadyValidated, detail: evaluationAlreadyValidated ? `Validée par ${evaluationValidatedBy}` : "Validation conseiller requise" },
+    { label: "Paiement confirmé", ok: paymentSnapshot?.status === "SUCCESS" || paymentSnapshot?.status === "completed" || paymentSnapshot?.status === "paid", detail: paymentSnapshot?.status ? `État : ${paymentSnapshot.status}` : "Aucun paiement confirmé" },
+    { label: "Protocole", ok: Boolean(agreementState?.signedAt || agreementState?.agreementSignedAt), detail: agreementState?.signedAt || agreementState?.agreementSignedAt ? "Signé" : "À vérifier avant la suite" },
+    { label: "Pièces requises", ok: pendingRequirements.length === 0, detail: pendingRequirements.length ? `${pendingRequirements.length} pièce(s) à compléter` : "Checklist complète" },
+  ];
+  const dueState = operationalCase.dueAt ? (new Date(operationalCase.dueAt).getTime() < Date.now() ? "overdue" : new Date(operationalCase.dueAt).getTime() - Date.now() <= 24 * 60 * 60 * 1000 ? "soon" : "scheduled") : "unset";
+  const nextActionTarget: Props["initialTab"] = /document|pièce/i.test(`${nextAction.label} ${nextAction.description}`) ? "documents" : /paiement|protocole/i.test(`${nextAction.label} ${nextAction.description}`) ? "payments" : /bilan|évaluation/i.test(`${nextAction.label} ${nextAction.description}`) ? "evaluation" : /message|relance|échange/i.test(`${nextAction.label} ${nextAction.description}`) ? "messages" : "overview";
   const labelsList = labels.split(",").map((value) => value.trim()).filter(Boolean);
   // Tout candidat affiché dans le centre 360° peut recevoir une première évaluation ;
   // l’identifiant interne est la seule condition nécessaire côté UI.
@@ -597,6 +608,27 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-700 p-2.5 text-white"><Gauge className="h-5 w-5" /></div><div><div className="flex flex-wrap items-center gap-2"><h4 className="text-lg font-bold text-slate-950">Pilotage du dossier</h4><StateBadge status={workflowStatus} /><Badge className={priority === "urgent" ? "border-rose-200 bg-rose-50 text-rose-800" : priority === "high" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-700"}>{PRIORITY_LABELS[priority]}</Badge></div><p className="mt-1 max-w-2xl text-sm text-slate-600">Modifiez les paramètres, préparez les relances et enregistrez une seule mise à jour synchronisée pour l’espace candidat.</p></div></div>
               <div className="grid grid-cols-2 gap-2 sm:flex"><Button type="button" variant="outline" onClick={() => setQuickMessageOpen(true)} className="gap-2"><Mail className="h-4 w-4" />Message</Button><Button type="button" variant="outline" disabled={!pendingRequirements.length || documentReminderMutation.isPending || actionLocks.documentReminder} onClick={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }} className="gap-2"><Bell className="h-4 w-4" />Relancer pièces</Button></div>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+              <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4" aria-label="Action suivante du dossier">
+                <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Action suivante</p><p className="mt-1 text-base font-bold text-slate-950">{nextAction.label}</p></div><Badge className="border-blue-200 bg-white text-blue-800">{STATUS_LABELS[workflowStatus] ?? workflowStatus}</Badge></div>
+                <p className="mt-2 text-sm leading-5 text-slate-700">{nextAction.description}</p>
+                <Button type="button" size="sm" variant="outline" className="mt-3 border-blue-300 bg-white text-blue-800 hover:bg-blue-100" onClick={() => setActiveTab(nextActionTarget)}>Ouvrir l’espace concerné <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                <p className="mt-3 text-xs font-semibold text-blue-800">Les conditions ci-dessous doivent être satisfaites avant toute progression.</p>
+              </div>
+              <div className={`rounded-xl border p-4 ${dueState === "overdue" ? "border-rose-200 bg-rose-50" : dueState === "soon" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"}`} aria-label="Échéance du dossier">
+                <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Échéance de traitement</p><Badge className={dueState === "overdue" ? "border-rose-200 bg-white text-rose-800" : dueState === "soon" ? "border-amber-200 bg-white text-amber-800" : "border-slate-200 bg-white text-slate-700"}>{dueState === "overdue" ? "En retard" : dueState === "soon" ? "À traiter sous 24 h" : dueState === "scheduled" ? "Planifiée" : "Non définie"}</Badge></div>
+                <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(operationalCase.dueAt)}</p>
+                <p className="mt-1 text-xs text-slate-600">Une échéance dépassée nécessite une revue humaine et une note de suivi.</p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4" aria-label="Contrôle de cohérence avant action">
+              <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contrôle de cohérence avant action</p><h4 className="mt-1 text-base font-bold text-slate-950">Prérequis de progression</h4></div><Badge className={coherenceChecks.every((check) => check.ok) ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}>{coherenceChecks.filter((check) => check.ok).length}/{coherenceChecks.length} validés</Badge></div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">{coherenceChecks.map((check) => <div key={check.label} className={`rounded-lg border p-3 ${check.ok ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50/60"}`}><div className="flex items-center gap-2">{check.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-700" /> : <CircleAlert className="h-4 w-4 text-amber-700" />}<p className="text-sm font-semibold text-slate-900">{check.label}</p></div><p className="mt-1 text-xs leading-4 text-slate-600">{check.detail}</p></div>)}</div>
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-label="Activité récente du dossier">
+              <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Journal d’activité</p><h4 className="mt-1 text-base font-bold text-slate-950">Dernières actions du dossier</h4></div><Badge className="border-slate-200 bg-white text-slate-700">{(data.activity ?? []).length} événement(s)</Badge></div>
+              {(data.activity ?? []).length ? <div className="mt-3 grid gap-2 md:grid-cols-2">{(data.activity ?? []).slice(0, 4).map((item: any, index: number) => <div key={`${item.createdAt}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3"><div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold text-slate-800">{item.description || "Action enregistrée"}</p><span className="shrink-0 text-[11px] text-slate-500">{formatDate(item.createdAt)}</span></div><p className="mt-1 text-xs text-slate-500">Acteur : {item.actor || "administration"}</p></div>)}</div> : <p className="mt-3 text-sm text-slate-500">Aucune activité récente n’est encore enregistrée pour ce dossier.</p>}
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">

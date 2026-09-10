@@ -1557,6 +1557,7 @@ export const adminRouter = router({
           };
           return mapping[status] || "PENDING_48H";
         };
+        const paymentStatusForAgency = (status: string): "NOT_PAID" | "PENDING" | "SUCCESS" => status === "paid" ? "SUCCESS" : status === "pending" ? "PENDING" : "NOT_PAID";
 
         // Normaliser les dossiers en ligne
         const normalizedOnline = onlineApps.map(app => ({
@@ -1592,6 +1593,8 @@ export const adminRouter = router({
           lastStatusUpdateAt: app.lastStatusUpdateAt ?? app.updatedAt,
           evaluationScheduledAt: app.evaluationScheduledAt ?? null,
           dueAt: dueAtByLegacyReference.get(`online:${app.id}`) ?? null,
+          paymentStatus: app.paymentStatus,
+          procedureStep: mapDossierStatus(app.dossierStatus),
         }));
 
         // Normaliser les dossiers agence
@@ -1624,6 +1627,8 @@ export const adminRouter = router({
           lastStatusUpdateAt: app.updatedAt,
           evaluationScheduledAt: null,
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
+          paymentStatus: paymentStatusForAgency(app.initialPaymentStatus),
+          procedureStep: mapAgencyStatus(app.status),
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
@@ -1663,6 +1668,8 @@ export const adminRouter = router({
             lastStatusUpdateAt: candidate.updatedAt,
             evaluationScheduledAt: null,
             dueAt: null,
+            paymentStatus: "NOT_PAID" as const,
+            procedureStep: mapDossierStatus(candidate.dossierStatus),
           }));
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.

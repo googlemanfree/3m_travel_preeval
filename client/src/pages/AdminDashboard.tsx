@@ -2114,6 +2114,10 @@ export default function AdminDashboard() {
             </Select>
             {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
           </div>
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2" aria-label="Filtres rapides par étape">
+            <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
+            {[['PENDING_48H', 'Évaluations à traiter'], ['PUBLISHED', 'Bilans / paiement'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Soumission'], ['APPROVED', 'Visa accordé']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
+          </div>
         </div>
 
         {/* Tableau */}
