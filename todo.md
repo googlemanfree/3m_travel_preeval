@@ -3192,10 +3192,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Bug live badge candidat confirmé
 - [x] Aligner le badge « Dossier actif » sur la même source de vérité que la progression/checklist réellement affichée pour `aureoldonfack@gmail.com`. Le composant utilise maintenant `getClientDashboardSummary`, la même requête autorisée qui fournit la progression, avec priorité à `candidate.dossierNumber`, au dossier actif et aux applications.
 - [x] Vérifier que la référence affichée n’est plus `N/A` lorsque le résumé actif existe et que « Suivre mon dossier » ouvre le dossier correspondant. Le badge et la progression partagent désormais le même résumé serveur ; la confirmation visuelle publiée reste à rejouer.
-- [ ] Tester en session candidate réelle puis publier l’URL et le résultat exacts, sans modifier de statut, paiement ou document. Tests code : 12/12 et TypeScript passent ; la session live actuelle doit être rechargée après publication.
+- [x] Tester en session candidate réelle puis publier l’URL et le résultat exacts, sans modifier de statut, paiement ou document. Sur `/mon-espace?section=dossier&cacheBust=b4b10c51-final`, le badge et la carte affichent `COMPTE-1440001`; un clic réel sur « Suivre mon dossier » ouvre `/mon-dossier`.
 
 ## Régression cache PWA du badge candidat
-- [ ] Incrémenter le cache PWA et vérifier que le bundle publié contient le branchement getClientDashboardSummary, puis revalider le badge en session candidate. Le cache passe en v39, TypeScript et 14 régressions passent ; la vérification live du bundle reste à effectuer après publication.
+- [x] Incrémenter le cache PWA et vérifier que le bundle publié contient le branchement getClientDashboardSummary, puis revalider le badge en session candidate. Le cache v39 est actif ; la session candidate publiée affiche `COMPTE-1440001` dans le badge et la carte, avec redirection de suivi vérifiée.
 - [x] Aligner aussi la carte « Référence » de ClientDashboard sur `getClientDashboardSummary.candidate.dossierNumber` afin d’éviter une incohérence badge `COMPTE-1440001` / carte `N/A`. TypeScript et 14 régressions passent.
 - [x] Ajouter dans getClientDashboardSummary le fallback `COMPTE-<candidate.id>` pour les comptes suivis sans dossierNumber, afin que la carte de statut ne diverge plus du badge. TypeScript et 14 régressions passent.
 - [x] Corriger EvaluationSpace, composant réellement rendu par /mon-espace, pour utiliser la référence active ou `COMPTE-<id>` lorsque le profil est suivi. TypeScript et 5 régressions ciblées passent.
