@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -979,6 +980,7 @@ export default function AdminDashboard() {
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
+  const [showArchiveView, setShowArchiveView] = useState(false);
   const { toast } = useToast();
   const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
   const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
@@ -988,6 +990,11 @@ export default function AdminDashboard() {
     onError: (error) => toast({ title: "Mise en corbeille impossible", description: error.message, variant: "destructive" }),
   });
   const trpcUtils = trpc.useUtils();
+  const archivedRecordsQuery = trpc.admin.listArchivedRecords.useQuery({ sessionToken }, { enabled: showArchiveView });
+  const restoreArchivedMutation = trpc.admin.restoreArchivedRecord.useMutation({
+    onSuccess: () => { toast({ title: "Archive restaurée", description: "L’enregistrement est de nouveau visible dans la liste active." }); void archivedRecordsQuery.refetch(); void trpcUtils.admin.listCandidates.invalidate(); },
+    onError: (error) => toast({ title: "Restauration impossible", description: error.message, variant: "destructive" }),
+  });
 
   const archiveCandidateFromTable = useCallback((candidate: { id?: string; folderCode?: string; fullName?: string; email?: string; source?: string }) => {
     if (!candidate.id) return;
@@ -2161,7 +2168,7 @@ export default function AdminDashboard() {
               </SelectContent>
             </Select>
             {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
-            <Button type="button" variant="outline" onClick={() => navigate("/admin/agency-dossiers?showTrash=false")} className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="h-4 w-4" />Corbeille / doublons</Button>
+            <Button type="button" variant="outline" onClick={() => setShowArchiveView(true)} className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="h-4 w-4" />Corbeille / doublons</Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2" aria-label="Filtres rapides par étape">
             <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
@@ -2169,6 +2176,17 @@ export default function AdminDashboard() {
           </div>
           {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => void saveInlineChanges()} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
         </div>
+
+        <Dialog open={showArchiveView} onOpenChange={setShowArchiveView}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader><DialogTitle>Corbeille réversible — doublons et comptes mal créés</DialogTitle><DialogDescription>Les enregistrements archivés restent restaurables. Aucune suppression physique n’est effectuée.</DialogDescription></DialogHeader>
+            <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+              {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
+              {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
+              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => { if (window.confirm(`Restaurer ${record.reference} dans la liste active ?`)) restoreArchivedMutation.mutate({ sessionToken, candidateId: record.candidateId, confirmation: "RESTAURER" }); }}>Restaurer</Button></div>)}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Tableau */}
         <Card className="admin-glass-table border-0 overflow-hidden hover:-translate-y-0.5" aria-busy={isLoading}>

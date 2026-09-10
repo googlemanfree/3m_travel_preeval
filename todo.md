@@ -3277,7 +3277,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Vérifier par clic réel l’activation conditionnée au paiement sur les entrées agence, pré-dossier et en ligne, sans modifier de dossier réel non autorisé.
 - [ ] Vérifier par clic réel le bouton « Contrôler les documents », le mapping CV/catégories, le suivi dossier et le panneau de bilan COMPTE-1260001.
 - [ ] Auditer globalement les boutons du Pilotage et documenter leurs états pending, succès, erreur et rafraîchissement.
-- [ ] Ajouter une corbeille réversible admin pour comptes mal créés ou doublons, avec récapitulatif et confirmation avant déplacement.
+- [x] Ajouter une corbeille réversible admin pour comptes mal créés ou doublons, avec récapitulatif et confirmation avant déplacement.
 - [ ] Rendre les 17 étapes du Parcours synchronisé actionnables par l’admin avec séquence et prérequis serveur.
 - [ ] Auditer et corriger le flux de signature du protocole côté client et admin, avec paiement confirmé obligatoire.
 - [ ] Permettre le changement de destination côté admin avec synchronisation vers l’espace client et traçabilité.
@@ -3286,4 +3286,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctifs tableau Dossiers confirmés en live
 - [x] Réparer l’ouverture des selects Paiement et Étape de la procédure sur les lignes du tableau.
 - [x] Remplacer les mutations immédiates par un panier de modifications et un bouton centralisé d’enregistrement groupé avec récapitulatif.
-- [ ] Rendre la corbeille réversible des doublons visible et accessible depuis le tableau Dossiers, sans suppression définitive.
+- [x] Rendre la corbeille réversible des doublons visible et accessible depuis le tableau Dossiers, sans suppression définitive.

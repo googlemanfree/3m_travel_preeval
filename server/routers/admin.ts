@@ -3577,6 +3577,25 @@ export const adminRouter = router({
       return { success: true, source, id, message: "Enregistrement restauré dans la liste active." };
     }),
 
+  listArchivedRecords: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().optional() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [accountRows, onlineRows, agencyRows] = await Promise.all([
+        db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, deletedAt: candidates.deletedAt, deletedBy: candidates.deletedBy, deletionReason: candidates.deletionReason }).from(candidates).where(isNotNull(candidates.deletedAt)).limit(500),
+        db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, deletedAt: applications.deletedAt, deletedBy: applications.deletedBy, deletionReason: applications.deletionReason }).from(applications).where(isNotNull(applications.deletedAt)).limit(500),
+        db.select({ id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, deletedAt: agencyDossiers.deletedAt, deletedBy: agencyDossiers.deletedBy, deletionReason: agencyDossiers.deletionReason }).from(agencyDossiers).where(isNotNull(agencyDossiers.deletedAt)).limit(500),
+      ]);
+      const query = input.search?.toLowerCase();
+      return [
+        ...accountRows.map((row) => ({ candidateId: `account_${row.id}`, reference: `COMPTE-${String(row.id).padStart(5, "0")}`, source: "account", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
+        ...onlineRows.map((row) => ({ candidateId: `online_${row.id}`, reference: row.dossierNumber, source: "online", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
+        ...agencyRows.map((row) => ({ candidateId: `agency_${row.id}`, reference: `3M-AGN-${String(row.id).padStart(4, "0")}`, source: "agency", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
+      ].filter((row) => !query || `${row.reference} ${row.fullName} ${row.email}`.toLowerCase().includes(query));
+    }),
+
   updateCandidateDestination: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),

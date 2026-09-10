@@ -25,7 +25,8 @@ describe("tableau dossiers — contrôles inline groupés et corbeille", () => {
   it("expose un accès à la corbeille réversible existante", () => {
     const source = read("client/src/pages/AdminDashboard.tsx");
     expect(source).toContain("Corbeille / doublons");
-    expect(source).toContain("/admin/agency-dossiers?showTrash=false");
+    expect(source).toContain("setShowArchiveView(true)");
+    expect(source).toContain("listArchivedRecords");
     const trash = read("client/src/pages/AdminAgencyDossiers.tsx");
     expect(trash).toContain("showTrash");
     expect(trash).toContain("restoreMutation");
