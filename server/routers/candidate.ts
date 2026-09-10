@@ -2073,6 +2073,14 @@ export const candidateRouter = router({
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
       : null;
+    const candidateHasTrackedDossier = Boolean((candidate as any).dossierNumber)
+      || candidate.dossierStatus !== "nouveau"
+      || candidate.evaluationDeclarationStatus === "validated";
+    const dashboardDossierNumber = activeApp?.dossierNumber
+      || (candidate as any).dossierNumber
+      || activeAgencyDossierNumber
+      || (candidateHasTrackedDossier ? `COMPTE-${candidate.id}` : null)
+      || "N/A";
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
       ...document,
       documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
@@ -2113,7 +2121,7 @@ export const candidateRouter = router({
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
-        dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || "N/A",
+        dossierNumber: dashboardDossierNumber,
         dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || activeAgencyDossier?.status || "evaluation",
         evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
         evaluationDeclaredAt: candidate.evaluationDeclaredAt,
