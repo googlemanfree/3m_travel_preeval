@@ -3267,3 +3267,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher clairement les échéances, retards et dossiers à traiter en priorité.
 - [x] Ajouter un contrôle de cohérence avant action pour les prérequis CV, évaluation, paiement, protocole et documents.
 - [x] Ajouter les régressions, vérifier visuellement et publier sans modifier les dossiers réels.
+
+## Badges dynamiques du tableau Dossiers
+- [x] Afficher un badge coloré selon le statut du paiement tout en conservant son menu d’édition inline.
+- [x] Afficher un badge coloré selon l’étape de procédure tout en conservant son menu d’édition inline.
+- [x] Ajouter les régressions, vérifier TypeScript et publier la présentation mise à jour.

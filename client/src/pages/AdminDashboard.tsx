@@ -185,7 +185,9 @@ const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: R
 
 const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
 const PAYMENT_STATUS_LABELS: Record<string, string> = { SUCCESS: "Payé", PENDING: "En attente", FAILED: "Échec", CANCELLED: "Annulé", NOT_PAID: "Non payé" };
+const PAYMENT_STATUS_BADGE_CLASSES: Record<string, string> = { SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-800", PENDING: "border-amber-200 bg-amber-50 text-amber-800", FAILED: "border-rose-200 bg-rose-50 text-rose-800", CANCELLED: "border-slate-300 bg-slate-100 text-slate-700", NOT_PAID: "border-slate-300 bg-white text-slate-700" };
 const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation à traiter", PUBLISHED: "Bilan / paiement", DOCUMENTS_CHECK: "Collecte documents", SUBMITTED: "Soumission consulaire", APPROVED: "Visa accordé" };
+const PROCEDURE_STEP_BADGE_CLASSES: Record<string, string> = { PENDING_48H: "border-violet-200 bg-violet-50 text-violet-800", PUBLISHED: "border-amber-200 bg-amber-50 text-amber-800", DOCUMENTS_CHECK: "border-blue-200 bg-blue-50 text-blue-800", SUBMITTED: "border-indigo-200 bg-indigo-50 text-indigo-800", APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800" };
 
 function getNextAdminStatus(status?: string): AdminStatus | null {
   const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
@@ -2205,25 +2207,21 @@ export default function AdminDashboard() {
                         <ActivationBadge status={candidate.activationStatus} />
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <select aria-label={`Statut du paiement de ${candidate.fullName}`} value={candidate.paymentStatus ?? "NOT_PAID"} disabled={confirmInlinePaymentMutation.isPending || updateDossierPaymentStateMutation.isPending} onChange={(event) => {
-                          const nextStatus = event.target.value as keyof typeof PAYMENT_STATUS_LABELS;
-                          if (nextStatus === (candidate.paymentStatus ?? "NOT_PAID")) return;
-                          if (!window.confirm(`Confirmer le changement du paiement de ${candidate.fullName} vers « ${PAYMENT_STATUS_LABELS[nextStatus]} » ?`)) return;
-                          if (nextStatus === "SUCCESS") confirmInlinePaymentMutation.mutate({ sessionToken, candidateId: candidate.id });
-                          else updateDossierPaymentStateMutation.mutate({ sessionToken, candidateId: candidate.id, status: nextStatus as "PENDING" | "FAILED" | "CANCELLED" | "NOT_PAID" });
-                        }} className={`h-9 rounded-md border px-2 text-xs font-semibold ${candidate.paymentStatus === "SUCCESS" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : candidate.paymentStatus === "PENDING" ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-300 bg-white text-slate-700"}`}>
-                          {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
+                        <div className="flex min-w-[128px] flex-col items-start gap-1">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PAYMENT_STATUS_BADGE_CLASSES[candidate.paymentStatus ?? "NOT_PAID"] ?? PAYMENT_STATUS_BADGE_CLASSES.NOT_PAID}`}>{PAYMENT_STATUS_LABELS[candidate.paymentStatus ?? "NOT_PAID"] ?? "Non payé"}</span>
+                          <select aria-label={`Modifier le statut du paiement de ${candidate.fullName}`} value={candidate.paymentStatus ?? "NOT_PAID"} disabled={confirmInlinePaymentMutation.isPending || updateDossierPaymentStateMutation.isPending} onChange={(event) => {
+                            const nextStatus = event.target.value as keyof typeof PAYMENT_STATUS_LABELS;
+                            if (nextStatus === (candidate.paymentStatus ?? "NOT_PAID")) return;
+                            if (!window.confirm(`Confirmer le changement du paiement de ${candidate.fullName} vers « ${PAYMENT_STATUS_LABELS[nextStatus]} » ?`)) return;
+                            if (nextStatus === "SUCCESS") confirmInlinePaymentMutation.mutate({ sessionToken, candidateId: candidate.id });
+                            else updateDossierPaymentStateMutation.mutate({ sessionToken, candidateId: candidate.id, status: nextStatus as "PENDING" | "FAILED" | "CANCELLED" | "NOT_PAID" });
+                          }} className="h-7 w-full rounded-md border border-slate-200 bg-white px-1.5 text-[11px] font-semibold text-slate-600">
+                            {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                          </select>
+                        </div>
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <select aria-label={`Étape de la procédure de ${candidate.fullName}`} value={candidate.procedureStep ?? candidate.status} disabled={updateInlineProcedureMutation.isPending} onChange={(event) => {
-                          const nextStatus = event.target.value as AdminStatus;
-                          if (nextStatus === (candidate.procedureStep ?? candidate.status)) return;
-                          if (!window.confirm(`Confirmer le passage de ${candidate.fullName} à l’étape « ${PROCEDURE_STEP_LABELS[nextStatus] ?? nextStatus} » ?`)) return;
-                          updateInlineProcedureMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus: nextStatus, notifyClient: false });
-                        }} className="h-9 max-w-[170px] rounded-md border border-blue-200 bg-blue-50 px-2 text-xs font-semibold text-blue-800">
-                          {Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
+                        {(() => { const procedureStep = candidate.procedureStep ?? candidate.status; return <div className="flex min-w-[160px] flex-col items-start gap-1"><span className={`inline-flex max-w-[180px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>{PROCEDURE_STEP_LABELS[procedureStep] ?? procedureStep}</span><select aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} value={procedureStep} disabled={updateInlineProcedureMutation.isPending} onChange={(event) => { const nextStatus = event.target.value as AdminStatus; if (nextStatus === procedureStep) return; if (!window.confirm(`Confirmer le passage de ${candidate.fullName} à l’étape « ${PROCEDURE_STEP_LABELS[nextStatus] ?? nextStatus} » ?`)) return; updateInlineProcedureMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus: nextStatus, notifyClient: false }); }} className="h-7 w-full rounded-md border border-slate-200 bg-white px-1.5 text-[11px] font-semibold text-slate-600">{Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>; })()}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />

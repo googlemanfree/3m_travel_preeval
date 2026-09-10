@@ -32,8 +32,10 @@ const adminRouter = readFileSync(resolve(process.cwd(), "server/routers/admin.ts
   });
 
   it("expose les colonnes inline de paiement et de procédure avec garde-fous", () => {
-    expect(dashboard).toContain("Statut du paiement de");
-    expect(dashboard).toContain("Étape de la procédure de");
+    expect(dashboard).toContain("Modifier le statut du paiement de");
+    expect(dashboard).toContain("Modifier l’étape de la procédure de");
+    expect(dashboard).toContain("PAYMENT_STATUS_BADGE_CLASSES");
+    expect(dashboard).toContain("PROCEDURE_STEP_BADGE_CLASSES");
     expect(dashboard).toContain("window.confirm");
     expect(dashboard).toContain("confirmInlinePaymentMutation");
     expect(dashboard).toContain("updateInlineProcedureMutation");
