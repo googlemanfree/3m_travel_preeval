@@ -12,6 +12,7 @@ describe("badge de dossier actif côté client", () => {
     expect(source).toContain("dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || \"N/A\"");
     expect(source).toContain("const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)");
     expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`");
+    expect(source).toContain("const PORTRAIT_DASHBOARD_PATHS = new Set([\"candidate.getClientDashboardSummary\", \"candidate.getMyDossierData\"]);");
   });
 
   it("conserve le badge branché sur la donnée dossier relue par tRPC", () => {

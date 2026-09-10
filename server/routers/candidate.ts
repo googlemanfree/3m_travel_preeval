@@ -182,7 +182,7 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
 // Le tableau de bord doit rester accessible pour afficher l’avertissement et permettre
 // la reprise de l’onboarding ; les ressources documentaires restent protégées.
-const PORTRAIT_DASHBOARD_PATHS = new Set(["candidate.getClientDashboardSummary"]);
+const PORTRAIT_DASHBOARD_PATHS = new Set(["candidate.getClientDashboardSummary", "candidate.getMyDossierData"]);
 // Contrat de la requête de synthèse consommée par l’espace candidat après actualisation.
 export const CANDIDATE_DASHBOARD_CONTRACT = "candidate.getClientDashboardSummary";
 
