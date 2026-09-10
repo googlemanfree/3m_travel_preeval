@@ -981,6 +981,7 @@ export default function AdminDashboard() {
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
   const [showArchiveView, setShowArchiveView] = useState(false);
+  const [archiveSearch, setArchiveSearch] = useState("");
   const { toast } = useToast();
   const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
   const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
@@ -990,7 +991,7 @@ export default function AdminDashboard() {
     onError: (error) => toast({ title: "Mise en corbeille impossible", description: error.message, variant: "destructive" }),
   });
   const trpcUtils = trpc.useUtils();
-  const archivedRecordsQuery = trpc.admin.listArchivedRecords.useQuery({ sessionToken }, { enabled: showArchiveView });
+  const archivedRecordsQuery = trpc.admin.listArchivedRecords.useQuery({ sessionToken, search: archiveSearch || undefined }, { enabled: showArchiveView });
   const restoreArchivedMutation = trpc.admin.restoreArchivedRecord.useMutation({
     onSuccess: () => { toast({ title: "Archive restaurée", description: "L’enregistrement est de nouveau visible dans la liste active." }); void archivedRecordsQuery.refetch(); void trpcUtils.admin.listCandidates.invalidate(); },
     onError: (error) => toast({ title: "Restauration impossible", description: error.message, variant: "destructive" }),
@@ -2180,6 +2181,7 @@ export default function AdminDashboard() {
         <Dialog open={showArchiveView} onOpenChange={setShowArchiveView}>
           <DialogContent className="max-w-4xl">
             <DialogHeader><DialogTitle>Corbeille réversible — doublons et comptes mal créés</DialogTitle><DialogDescription>Les enregistrements archivés restent restaurables. Aucune suppression physique n’est effectuée.</DialogDescription></DialogHeader>
+            <Input value={archiveSearch} onChange={(event) => setArchiveSearch(event.target.value)} placeholder="Rechercher une référence, un nom ou un e-mail…" aria-label="Rechercher dans la corbeille" />
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
               {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
