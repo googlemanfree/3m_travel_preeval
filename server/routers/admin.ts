@@ -22,6 +22,32 @@ import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificat
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 
+export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
+  const raw = String(value ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  const name = String(fileName ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  const aliases: Record<string, (typeof ADMIN_DOCUMENT_TYPES)[number]> = {
+    cv: "cv", resume: "cv", curriculum_vitae: "cv", curriculumvitae: "cv",
+    passeport: "passeport", passport: "passeport",
+    diplome: "diplome", diploma: "diplome", education_documents: "diplome",
+    releve_notes: "releve_notes", transcript: "releve_notes", educational_transcript: "releve_notes",
+    photo: "photo", photo_identite: "photo",
+    justificatif_domicile: "justificatif_domicile", proof_of_residence: "justificatif_domicile",
+    extrait_naissance: "extrait_naissance", birth_certificate: "extrait_naissance",
+    casier_judiciaire: "casier_judiciaire", police_clearance: "casier_judiciaire",
+    justificatif_paiement: "justificatif_paiement", payment_proof: "justificatif_paiement",
+    autre: "autre", autres: "autre", other: "autre",
+  };
+  const explicit = aliases[raw];
+  if (explicit && explicit !== "autre") return explicit;
+  if (explicit === "autre" || !raw) {
+    if (/cv|resume|curriculum/i.test(name)) return "cv";
+    if (/passeport|passport/i.test(name)) return "passeport";
+    if (/releve|transcript/i.test(name)) return "releve_notes";
+    if (/diplom|diplome|licence|attestation|certificat|certificate/i.test(name)) return "diplome";
+  }
+  return explicit ?? "autre";
+}
+
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
 /** Masque les coordonnées dans les aperçus de remise consultés au back-office. */
@@ -2669,13 +2695,13 @@ export const adminRouter = router({
 
         const documents = [
           ...clientRows.map(({ document: doc, evaluationCandidateId, evaluationFullName, evaluationEmail, applicationCandidateId, applicationDossierNumber }: any) => ({
-            id: doc.id, source: "client" as const, candidateId: evaluationCandidateId ?? applicationCandidateId ?? null, candidateEmail: doc.candidateEmail || evaluationEmail || null, dossierNumber: evaluationCandidateId ? (dossierByCandidate.get(evaluationCandidateId) || `EVAL-${doc.evaluationId}`) : (applicationDossierNumber || `EVAL-${doc.evaluationId}`), candidateName: evaluationFullName || doc.candidateEmail || evaluationEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+            id: doc.id, source: "client" as const, candidateId: evaluationCandidateId ?? applicationCandidateId ?? null, candidateEmail: doc.candidateEmail || evaluationEmail || null, dossierNumber: evaluationCandidateId ? (dossierByCandidate.get(evaluationCandidateId) || `EVAL-${doc.evaluationId}`) : (applicationDossierNumber || `EVAL-${doc.evaluationId}`), candidateName: evaluationFullName || doc.candidateEmail || evaluationEmail || "N/A", documentType: normalizeAdminDocumentType(doc.documentType, doc.documentName), documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
           })),
           ...candidateRows.map((doc) => ({
-            id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
+            id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: normalizeAdminDocumentType(doc.fileType, doc.fileName), documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
           })),
           ...agencyDocumentRows.map((doc) => ({
-            id: doc.id, source: "agency" as const, candidateId: null, candidateEmail: doc.candidateEmail, dossierNumber: `3M-AGN-${String(doc.dossierNumber).padStart(4, "0")}`, candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.verificationStatus === "verified" ? "verified" : doc.verificationStatus === "rejected" ? "rejected" : "pending", verificationStatus: doc.verificationStatus === "verified" ? "approved" : doc.verificationStatus === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.verificationComment, receiptNumber: null, replacesId: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
+            id: doc.id, source: "agency" as const, candidateId: null, candidateEmail: doc.candidateEmail, dossierNumber: `3M-AGN-${String(doc.dossierNumber).padStart(4, "0")}`, candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: normalizeAdminDocumentType(doc.documentType, doc.documentName), documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.verificationStatus === "verified" ? "verified" : doc.verificationStatus === "rejected" ? "rejected" : "pending", verificationStatus: doc.verificationStatus === "verified" ? "approved" : doc.verificationStatus === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.verificationComment, receiptNumber: null, replacesId: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
           })),
         ];
         const normalizedSearch = input.search?.trim().toLowerCase();
@@ -3273,7 +3299,7 @@ export const adminRouter = router({
             "agencyDossierDocuments",
           )
         : [];
-      const agencyCvDocument = agencyDocuments.find((document) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.documentName ?? "").toLowerCase().includes("cv")) ?? null;
+      const agencyCvDocument = agencyDocuments.find((document) => normalizeAdminDocumentType(document.documentType, document.documentName) === "cv") ?? null;
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
       const latestAgencyPaymentAudit = reference.source === "agency"
@@ -3363,7 +3389,7 @@ export const adminRouter = router({
           })),
           ...agencyDocuments.map((document) => ({
             id: `agency-${document.id}`,
-            documentType: document.documentType,
+            documentType: normalizeAdminDocumentType(document.documentType, document.documentName),
             fileName: document.documentName,
             uploadedAt: document.createdAt,
             uploadedByRole: document.source === "candidate_upload" ? "candidate" : document.source === "admin_upload" ? "admin" : "agency",
@@ -3383,7 +3409,7 @@ export const adminRouter = router({
             documentUrl: document.documentUrl,
             source: document.source,
           })),
-          ...((reference.source === "online" && (sourceRecord as typeof applications.$inferSelect).cvUrl && ![...operationalDocuments, ...legacyDocuments].some((document: any) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.documentName ?? document.fileName ?? "").toLowerCase().includes("cv"))) ? [{
+          ...((reference.source === "online" && (sourceRecord as typeof applications.$inferSelect).cvUrl && ![...operationalDocuments, ...legacyDocuments].some((document: any) => normalizeAdminDocumentType(document.documentType, document.documentName ?? document.fileName) === "cv")) ? [{
             id: `application-cv-${reference.id}`,
             documentType: "cv",
             fileName: "CV du candidat",

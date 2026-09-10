@@ -47,6 +47,7 @@ type Props = {
   sessionToken: string;
   candidate: CandidateSummary;
   onRefresh: () => void;
+  initialTab?: "overview" | "evaluation" | "documents" | "payments" | "messages" | "history";
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -91,7 +92,7 @@ function StateBadge({ status }: { status: string }) {
   return <Badge className={styles[status] ?? "bg-slate-50 text-slate-700 border-slate-200"}>{STATUS_LABELS[status] ?? status}</Badge>;
 }
 
-export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Props) {
+export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview" }: Props) {
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState("new");
@@ -123,6 +124,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<{ documentTitle: string; documentUrl: string; fileType?: string } | null>(null);
   const [actionLocks, setActionLocks] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<Props["initialTab"]>(initialTab);
   const [lockedTaskId, setLockedTaskId] = useState<number | null>(null);
   const lockAction = (key: string) => setActionLocks((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setActionLocks((current) => ({ ...current, [key]: false }));
@@ -148,6 +150,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     const value = totalRequirements ? Math.max(stageValue, Math.min(95, Math.round((stageValue * 0.7) + (documentsPercent * 0.3)))) : stageValue;
     return { value, currentLabel: STATUS_LABELS[data.operationalCase.currentStatus] ?? data.operationalCase.currentStatus, documentsLabel: totalRequirements ? `${completedRequirements}/${totalRequirements} pièce(s) validée(s)` : "Checklist à créer" };
   }, [data]);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     if (!data?.operationalCase) return;
@@ -188,7 +194,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
       unlockAction("deadline");
       await refresh();
     },
-    onError: (mutationError) => toast.error("Échéance impossible à enregistrer", { description: mutationError.message }),
+    onError: (mutationError) => { unlockAction("deadline"); toast.error("Échéance impossible à enregistrer", { description: mutationError.message }); },
   });
   const createTaskMutation = trpc.admin.addCandidate360Task.useMutation({
     onSuccess: async () => {
@@ -206,10 +212,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   });
   const countryChecklistMutation = trpc.admin.createCountryDocumentChecklist.useMutation({
     onSuccess: async (result) => {
+      unlockAction("checklist");
       toast.success("Checklist créée", { description: `${result.added} pièce(s) ajoutée(s) · ${result.procedure} · ${result.country}.` });
       await refresh();
     },
-    onError: (mutationError) => toast.error("Checklist impossible", { description: mutationError.message }),
+    onError: (mutationError) => { unlockAction("checklist"); toast.error("Checklist impossible", { description: mutationError.message }); },
   });
   const evaluationReminderMutation = trpc.unifiedRequests.sendEvaluationReminder.useMutation({
     onSuccess: async (result) => { unlockAction("evaluationReminder"); toast.success("Relance envoyée", { description: result.message }); await refresh(); },
@@ -224,7 +231,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     onError: (mutationError) => { unlockAction("agreementProtocol"); toast.error("Envoi du protocole impossible", { description: mutationError.message }); },
   });
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation({
-    onSuccess: async (result) => { toast.success("Reçu validé et signé", { description: `Validation électronique enregistrée pour ${result.dossierNumber}.` }); await refresh(); },
+    onSuccess: async (result) => { unlockAction("approveReceipt"); toast.success("Reçu validé et signé", { description: `Validation électronique enregistrée pour ${result.dossierNumber}.` }); await refresh(); },
     onError: (mutationError) => { unlockAction("approveReceipt"); toast.error("Validation du reçu impossible", { description: mutationError.message }); },
   });
   const paymentReceiptMutation = trpc.adminCandidateManagement.sendPaymentReceiptForCandidate.useMutation({
@@ -236,17 +243,18 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     onError: (mutationError) => { unlockAction("documentReminder"); toast.error("Relance impossible", { description: mutationError.message }); },
   });
   const clarificationDeadlineMutation = trpc.admin.updateDocumentClarificationDeadline.useMutation({
-    onSuccess: async () => { toast.success("Échéance interne enregistrée"); await refresh(); },
-    onError: (mutationError) => toast.error("Échéance impossible à enregistrer", { description: mutationError.message }),
+    onSuccess: async () => { unlockAction("clarificationDeadline"); toast.success("Échéance interne enregistrée"); await refresh(); },
+    onError: (mutationError) => { unlockAction("clarificationDeadline"); toast.error("Échéance impossible à enregistrer", { description: mutationError.message }); },
   });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
     onSuccess: async (result) => {
+      unlockAction("message");
       toast.success(selectedClarification ? "Réponse de clarification envoyée" : "Message enregistré", { description: result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
       setOutboundMessage("");
       setSelectedClarification(null);
       await refresh();
     },
-    onError: (mutationError) => toast.error("Envoi impossible", { description: mutationError.message }),
+    onError: (mutationError) => { unlockAction("message"); toast.error("Envoi impossible", { description: mutationError.message }); },
   });
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);
@@ -553,7 +561,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         ))}
       </section>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
           <TabsTrigger value="evaluation" className="text-xs">Évaluation</TabsTrigger>

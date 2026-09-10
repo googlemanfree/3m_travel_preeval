@@ -3236,3 +3236,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher « Bilan déjà validé hors ligne » avec date et conseiller lorsque l’évaluation/bilan est déjà validé, et désactiver l’action redondante. Les actions de préparation, approbation, programmation et diffusion sont disabled.
 - [x] Remplacer « Dossier d’évaluation introuvable » par une explication exploitable lorsque le bilan hors ligne existe mais qu’aucun dossier actif n’est encore ouvert. Le message demande de vérifier le CV et le rattachement du pré-dossier.
 - [ ] Ajouter les régressions et tester l’ouverture du panneau par clic réel contrôlé, sans créer de dossier ni paiement. 4 tests ciblés et TypeScript passent ; le clic live sur COMPTE-1260001 reste à rejouer après publication.
+
+## Audit complémentaire des actions Pilotage signalées par l’utilisateur
+- [ ] Auditer les actions Documents du Pilotage : clic, pending, toast, erreur et rafraîchissement.
+- [ ] Auditer les actions Vols du Pilotage : clic, pending, toast, erreur et rafraîchissement.
+- [ ] Auditer les actions E-mails du Pilotage : clic, pending, toast, erreur et rafraîchissement.
+- [ ] Auditer dans Candidate360 « Annuler la dernière validation », « Contrôler les documents » et « Enregistrer la décision ».
+- [ ] Intégrer tout nouveau bouton muet signalé en production dans une correction et une régression ciblée.
+
+## Routage Documents et catégorisation des pièces candidat — priorité utilisateur
+- [x] Faire ouvrir « Contrôler les documents » dans l’onglet Documents de la même fiche Candidate360, sans fermer la fiche.
+- [x] Corriger le mapping du type déclaré côté candidat vers les catégories admin `cv`, `passport`, `permit`, `diploma` et autres catégories reconnues, au lieu de `other` par défaut.
+- [x] Faire remonter les documents catégorisés vers les cases de pièces requises et la section CV exploitable, avec statut et téléchargement isolés par dossier.
+- [x] Ajouter les régressions et tester avec un fichier contrôlé sans modifier les documents réels de `3M-AGN-270002`.

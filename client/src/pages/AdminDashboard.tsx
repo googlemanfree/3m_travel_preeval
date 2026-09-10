@@ -343,6 +343,7 @@ export function CandidateDetailModal({
   const [preDossierActivationError, setPreDossierActivationError] = useState<string | null>(null);
   const [paymentConfirmedOptimistically, setPaymentConfirmedOptimistically] = useState(false);
   const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
+  const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
   const sessionToken = typeof window !== "undefined"
@@ -580,6 +581,7 @@ export function CandidateDetailModal({
                   void refetch();
                   onStatusUpdated();
                 }}
+                initialTab={candidate360Tab}
               />
             )}
 
@@ -659,7 +661,7 @@ export function CandidateDetailModal({
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Centres de traitement</p>
                 <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
                 <div className="mt-4 grid gap-2">
-                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("documents", candidate.folderCode)}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
+                  <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
                   <Button className="justify-start bg-amber-600 text-white hover:bg-amber-700" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
                 </div>
