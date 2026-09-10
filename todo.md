@@ -3199,3 +3199,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Aligner aussi la carte « Référence » de ClientDashboard sur `getClientDashboardSummary.candidate.dossierNumber` afin d’éviter une incohérence badge `COMPTE-1440001` / carte `N/A`. TypeScript et 14 régressions passent.
 - [x] Ajouter dans getClientDashboardSummary le fallback `COMPTE-<candidate.id>` pour les comptes suivis sans dossierNumber, afin que la carte de statut ne diverge plus du badge. TypeScript et 14 régressions passent.
 - [x] Corriger EvaluationSpace, composant réellement rendu par /mon-espace, pour utiliser la référence active ou `COMPTE-<id>` lorsque le profil est suivi. TypeScript et 5 régressions ciblées passent.
+
+## Erreur silencieuse d’activation Candidate360 — priorité utilisateur
+- [x] Afficher l’erreur serveur de la mutation d’activation dans un toast ou message inline lisible, notamment lorsqu’un dossier actif existe déjà. La modale affiche maintenant le message exact et l’instruction de fermer/archiver l’ancien dossier.
+- [x] Réarmer le bouton de confirmation et fermer ou maintenir utilisable la modale après échec, avec spinner uniquement pendant la requête. L’état `isPending` ne dure que pendant la mutation et le bouton redevient cliquable après refus.
+- [x] Vérifier les handlers d’erreur des actions Candidate360 de paiement, évaluation et protocole afin qu’aucun refus serveur ne soit silencieux. Une régression statique couvre activation, paiement, évaluation hors ligne, protocole et reçu ; 6 tests ciblés et TypeScript passent.
+- [ ] Ajouter les régressions ciblées et rejouer le clic réel sur `COMPTE-1260001` sans créer, archiver ou modifier de dossier.

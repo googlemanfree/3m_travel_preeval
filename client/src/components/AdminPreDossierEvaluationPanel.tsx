@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { Button } from "@/components/ui/button";
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";

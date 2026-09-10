@@ -340,6 +340,7 @@ export function CandidateDetailModal({
   const [preDossierVisaType, setPreDossierVisaType] = useState("");
   const [preDossierNotes, setPreDossierNotes] = useState("");
   const [preDossierConfirmationOpen, setPreDossierConfirmationOpen] = useState(false);
+  const [preDossierActivationError, setPreDossierActivationError] = useState<string | null>(null);
   const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
@@ -395,12 +396,17 @@ export function CandidateDetailModal({
 
   const activatePreDossierMutation = trpc.adminCandidateManagement.activatePreDossierAccount.useMutation({
     onSuccess: (result) => {
+      setPreDossierActivationError(null);
       setPreDossierConfirmationOpen(false);
       toast({ title: "Dossier activé", description: result.emailSent ? "Le dossier est actif dans l’espace client et la confirmation a été envoyée." : "Le dossier est actif dans l’espace client ; la confirmation e-mail devra être relancée." });
       onStatusUpdated();
       onClose();
     },
-    onError: (err) => toast({ title: "Activation impossible", description: err.message, variant: "destructive" }),
+    onError: (err) => {
+      const message = err.message || "Le dossier n’a pas pu être activé. Vérifiez l’état du dossier et réessayez.";
+      setPreDossierActivationError(message);
+      toast({ title: "Activation impossible", description: message, variant: "destructive" });
+    },
   });
   const isPreDossierActivationDisabled = !preDossierDestination.trim()
     || !preDossierVisaType.trim()
@@ -658,15 +664,23 @@ export function CandidateDetailModal({
           <Button variant="outline" onClick={onClose}>Fermer</Button>
           <p className="hidden text-xs text-slate-500 md:block">Toutes les actions sont journalisées dans l’historique du dossier.</p>
         </DialogFooter>
-        <AlertDialog open={preDossierConfirmationOpen} onOpenChange={setPreDossierConfirmationOpen}>
+        <AlertDialog open={preDossierConfirmationOpen} onOpenChange={(open) => { setPreDossierConfirmationOpen(open); if (!open) setPreDossierActivationError(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmer l’ouverture du dossier ?</AlertDialogTitle>
               <AlertDialogDescription>Le compte de {candidate?.fullName} deviendra un dossier actif pour {preDossierDestination || "la destination choisie"}. Le client pourra suivre son dossier et recevra une confirmation lorsque l’envoi e-mail est disponible.</AlertDialogDescription>
+              {preDossierActivationError && (
+                <div role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                  <strong>Activation refusée :</strong> {preDossierActivationError}
+                  {preDossierActivationError.toLowerCase().includes("dossier actif") && (
+                    <p className="mt-1 text-xs text-rose-700">Ce candidat possède déjà un dossier actif. Fermez ou archivez l’ancien dossier avant d’en ouvrir un nouveau.</p>
+                  )}
+                </div>
+              )}
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={activatePreDossierMutation.isPending}>Annuler</AlertDialogCancel>
-              <AlertDialogAction disabled={activatePreDossierMutation.isPending || !candidate?.internalId} onClick={(event) => { event.preventDefault(); if (candidate?.internalId) activatePreDossierMutation.mutate({ sessionToken, candidateId: candidate.internalId, destination: preDossierDestination.trim(), visaType: preDossierVisaType.trim(), adminNotes: preDossierNotes.trim() || undefined }); }}>{activatePreDossierMutation.isPending ? "Activation…" : "Confirmer l’activation"}</AlertDialogAction>
+              <AlertDialogAction disabled={activatePreDossierMutation.isPending || !candidate?.internalId} onClick={(event) => { event.preventDefault(); setPreDossierActivationError(null); if (candidate?.internalId) activatePreDossierMutation.mutate({ sessionToken, candidateId: candidate.internalId, destination: preDossierDestination.trim(), visaType: preDossierVisaType.trim(), adminNotes: preDossierNotes.trim() || undefined }); }}>{activatePreDossierMutation.isPending ? "Activation…" : "Confirmer l’activation"}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

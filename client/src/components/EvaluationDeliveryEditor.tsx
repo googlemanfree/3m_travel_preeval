@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CalendarClock, Clock3, Download, Eye, FilePenLine, FileText, GitCompareArrows, History, Loader2, Mail, MessageCircle, Printer, RefreshCw, Save, Send, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
