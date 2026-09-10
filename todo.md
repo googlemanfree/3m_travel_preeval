@@ -3193,3 +3193,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Aligner le badge « Dossier actif » sur la même source de vérité que la progression/checklist réellement affichée pour `aureoldonfack@gmail.com`. Le composant utilise maintenant `getClientDashboardSummary`, la même requête autorisée qui fournit la progression, avec priorité à `candidate.dossierNumber`, au dossier actif et aux applications.
 - [x] Vérifier que la référence affichée n’est plus `N/A` lorsque le résumé actif existe et que « Suivre mon dossier » ouvre le dossier correspondant. Le badge et la progression partagent désormais le même résumé serveur ; la confirmation visuelle publiée reste à rejouer.
 - [ ] Tester en session candidate réelle puis publier l’URL et le résultat exacts, sans modifier de statut, paiement ou document. Tests code : 12/12 et TypeScript passent ; la session live actuelle doit être rechargée après publication.
+
+## Régression cache PWA du badge candidat
+- [ ] Incrémenter le cache PWA et vérifier que le bundle publié contient le branchement getClientDashboardSummary, puis revalider le badge en session candidate. Le cache passe en v39, TypeScript et 14 régressions passent ; la vérification live du bundle reste à effectuer après publication.

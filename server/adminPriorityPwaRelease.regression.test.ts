@@ -13,7 +13,7 @@ describe("révision PWA du poste administrateur", () => {
   });
 
   it("préserve le réseau d’abord pour les navigations et purge les anciens caches", () => {
-    expect(serviceWorker).toContain("3m-travel-pwa-v38-admin-bilan-online-reference");
+    expect(serviceWorker).toContain("3m-travel-pwa-v39-dashboard-summary-badge");
     expect(serviceWorker).toContain("keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))");
     expect(serviceWorker).toContain("if (event.request.mode === 'navigate')");
     expect(serviceWorker).toContain("fetch(event.request)");
