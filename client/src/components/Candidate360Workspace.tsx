@@ -165,9 +165,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     setChecklistProcedure(procedureFromEvaluationContext(context));
   }, [data?.evaluationContext]);
 
-  const evaluationAlreadyValidated = candidate.evaluationDeclarationStatus === "validated" || Boolean(candidate.evaluationReviewedAt || candidate.evaluationValidatedAt);
-  const evaluationValidatedBy = candidate.evaluationReviewedBy || candidate.evaluationValidatedBy || "un conseiller";
-  const evaluationValidatedAt = candidate.evaluationReviewedAt || candidate.evaluationValidatedAt;
+  const evaluationAlreadyValidated = data?.evaluationDeclarationStatus === "validated" || Boolean(data?.evaluationReviewedAt || data?.evaluationValidatedAt) || candidate.evaluationDeclarationStatus === "validated" || Boolean(candidate.evaluationReviewedAt || candidate.evaluationValidatedAt);
+  const evaluationValidatedBy = data?.evaluationReviewedBy || data?.evaluationValidatedBy || candidate.evaluationReviewedBy || candidate.evaluationValidatedBy || "un conseiller";
+  const evaluationValidatedAt = data?.evaluationReviewedAt || data?.evaluationValidatedAt || candidate.evaluationReviewedAt || candidate.evaluationValidatedAt;
   const refresh = async () => {
     await utils.admin.getCandidate360.invalidate({ sessionToken, candidateId: candidate.id });
     onRefresh();

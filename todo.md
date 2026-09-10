@@ -3184,3 +3184,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Propager les métadonnées de validation d’évaluation dans les lignes et détails admin pour que Candidate360 utilise l’état serveur frais. Les branches en ligne, agence et compte transmettent désormais les champs de validateur et horodatage.
 - [x] Remplacer le bouton hors ligne du panneau pré-dossier par un état « Déjà validée » lorsque le statut est validé.
 - [x] Ajouter les régressions ciblées et vérifier la fiche TEST INTERNE sans mutation réelle. 4 tests de verrouillage, 3 de recherche, 2 de rattachement agence et TypeScript passent ; aucune mutation n’a été exécutée.
+
+## Alignement état serveur Candidate360
+- [x] Exposer les métadonnées de validation dans getCandidate360 et les prioriser dans le calcul disabled du bouton hors ligne. TypeScript et les régressions ciblées passent.
+- [ ] Rejouer la fiche TEST INTERNE après publication et confirmer que le bouton est disabled ou remplacé par « Évaluation déjà validée ».

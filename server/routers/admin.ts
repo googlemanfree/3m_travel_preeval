@@ -3317,6 +3317,22 @@ export const adminRouter = router({
       });
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
+        evaluationDeclarationStatus: reference.source === "agency"
+          ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedAt ? "validated" : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"))
+          : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"),
+        evaluationDeclaredAt: candidateRecord?.evaluationDeclaredAt ?? null,
+        evaluationReviewedAt: reference.source === "agency"
+          ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedAt ?? candidateRecord?.evaluationReviewedAt ?? null)
+          : (candidateRecord?.evaluationReviewedAt ?? null),
+        evaluationReviewedBy: reference.source === "agency"
+          ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedBy ?? candidateRecord?.evaluationReviewedBy ?? null)
+          : (candidateRecord?.evaluationReviewedBy ?? null),
+        evaluationValidatedAt: reference.source === "agency"
+          ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedAt ?? null)
+          : (candidateRecord?.evaluationReviewedAt ?? null),
+        evaluationValidatedBy: reference.source === "agency"
+          ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedBy ?? null)
+          : (candidateRecord?.evaluationReviewedBy ?? null),
         nextAction,
         candidateJourney: {
           country: candidateJourney.country,
