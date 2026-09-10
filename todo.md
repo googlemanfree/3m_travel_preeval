@@ -3298,3 +3298,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une fenêtre de confirmation récapitulant les changements Paiement/Étape avant l’enregistrement central.
 - [ ] Vérifier le blocage séquentiel des étapes par paiement sur un dossier autorisé, sans mutation réelle non confirmée.
 - [x] Ajouter les régressions, tester TypeScript et publier.
+
+## Parcours synchronisé — déverrouillage automatique et contenu par visa
+- [x] Ajouter le déverrouillage automatique d’une étape lorsque ses prérequis serveur documentés sont réunis.
+- [x] Conserver le forçage manuel admin d’une étape avec traçabilité, sans permettre de contourner les blocages non autorisables.
+- [x] Adapter les 17 étapes côté client au pays et au type de visa réellement choisis, depuis le catalogue institutionnel existant.
+- [x] Ajouter les régressions de transitions automatique/manuelle et de sélection du parcours par visa, puis publier.

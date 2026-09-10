@@ -226,6 +226,9 @@ type CandidateProcedureContext = {
   destination: string;
   visaType: string;
   dossierStatus: string;
+  evaluationClientConfirmed?: boolean;
+  activationRequested?: boolean;
+  paymentConfirmed?: boolean;
 };
 
 async function resolveCandidateProcedureContext(db: any, candidate: Candidate): Promise<CandidateProcedureContext | null> {
@@ -240,6 +243,9 @@ async function resolveCandidateProcedureContext(db: any, candidate: Candidate): 
       destination: onlineApplication.destination || candidate.destination || "autre",
       visaType: onlineApplication.visaType || "Visiteur",
       dossierStatus: onlineApplication.dossierStatus || candidate.dossierStatus || "nouveau",
+      evaluationClientConfirmed: Boolean(onlineApplication.evaluationClientConfirmedAt),
+      activationRequested: Boolean(onlineApplication.activationRequestedAt),
+      paymentConfirmed: onlineApplication.paymentStatus === "SUCCESS",
     };
   }
   const [agencyDossier] = await db.select().from(agencyDossiers)
@@ -253,6 +259,9 @@ async function resolveCandidateProcedureContext(db: any, candidate: Candidate): 
     destination: agencyDossier.destination || candidate.destination || "autre",
     visaType: agencyDossier.visaType || "Visiteur",
     dossierStatus: agencyDossier.status || candidate.dossierStatus || "nouveau",
+    evaluationClientConfirmed: Boolean(agencyDossier.evaluationValidatedAt),
+    activationRequested: false,
+    paymentConfirmed: agencyDossier.initialPaymentStatus === "paid",
   };
 }
 
@@ -1674,7 +1683,11 @@ export const candidateRouter = router({
       .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
       .limit(1);
     const journey = getCandidateJourney(context.destination, context.visaType, context.visaType);
-    const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {});
+    const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {
+      evaluationClientConfirmed: context.evaluationClientConfirmed,
+      activationRequested: context.activationRequested,
+      paymentConfirmed: context.paymentConfirmed,
+    });
     return {
       success: true,
       data: {
@@ -1701,7 +1714,11 @@ export const candidateRouter = router({
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });
       const persistedStepId = `checklist-${stepIndex}`;
-      const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {});
+      const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {
+      evaluationClientConfirmed: context.evaluationClientConfirmed,
+      activationRequested: context.activationRequested,
+      paymentConfirmed: context.paymentConfirmed,
+    });
       if (input.checked && stepIndex > currentIndex) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape sera disponible après validation des étapes précédentes." });
       }
