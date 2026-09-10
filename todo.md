@@ -3188,3 +3188,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Alignement état serveur Candidate360
 - [x] Exposer les métadonnées de validation dans getCandidate360 et les prioriser dans le calcul disabled du bouton hors ligne. TypeScript et les régressions ciblées passent.
 - [x] Rejouer la fiche TEST INTERNE après publication et confirmer que le bouton est disabled ou remplacé par « Évaluation déjà validée ». Vérification publiée : l’état vert est visible avec conseiller/date et aucun bouton « Valider l’évaluation hors ligne » n’existe dans le DOM.
+
+## Bug live badge candidat confirmé
+- [x] Aligner le badge « Dossier actif » sur la même source de vérité que la progression/checklist réellement affichée pour `aureoldonfack@gmail.com`. `getMyDossierData` expose désormais un fallback dossier candidat avec référence `COMPTE-1440001` lorsque le compte a un statut suivi ou une évaluation validée.
+- [x] Vérifier que la référence affichée n’est plus `N/A` lorsque le résumé actif existe et que « Suivre mon dossier » ouvre le dossier correspondant. Le contrat serveur et le lien `/mon-dossier` sont alignés ; la confirmation visuelle publiée reste à rejouer.
+- [ ] Tester en session candidate réelle puis publier l’URL et le résultat exacts, sans modifier de statut, paiement ou document. Tests code : 12/12 et TypeScript passent ; la session live actuelle doit être rechargée après publication.

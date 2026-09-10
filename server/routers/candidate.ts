@@ -1525,37 +1525,59 @@ export const candidateRouter = router({
       .orderBy(desc(agencyDossiers.createdAt))
       .limit(1);
 
-    if (!app.length && !historicalAgencyDossier) {
+    const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)
+      || ctx.candidate.dossierStatus !== "nouveau"
+      || ctx.candidate.evaluationDeclarationStatus === "validated";
+    if (!app.length && !historicalAgencyDossier && !candidateHasTrackedDossier) {
       return { success: false, message: "Aucun dossier trouvé", data: null };
     }
 
-    const application = app[0] ?? ({
-      id: historicalAgencyDossier.id,
-      dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, "0")}`,
+    const candidateDossierFallback = {
+      id: ctx.candidate.id,
+      dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`,
       candidateId: ctx.candidate.id,
-      fullName: historicalAgencyDossier.fullName,
-      email: historicalAgencyDossier.email,
-      whatsappNumber: historicalAgencyDossier.phone,
-      destination: "autre",
-      formulaChosen: "integral",
-      dossierStatus: historicalAgencyDossier.status === "documents_requis"
-        ? "en_attente_documents"
-        : historicalAgencyDossier.status === "soumis"
-          ? "soumis_agences"
-          : historicalAgencyDossier.status === "approuve"
-            ? "visa_approuve"
-            : historicalAgencyDossier.status === "refuse"
-              ? "refuse"
-              : historicalAgencyDossier.status === "en_cours"
-                ? "en_evaluation"
-                : "nouveau",
+      fullName: ctx.candidate.fullName,
+      email: ctx.candidate.email,
+      whatsappNumber: ctx.candidate.phone,
+      destination: ctx.candidate.destination || "autre",
+      formulaChosen: ctx.candidate.formulaChosen || "integral",
+      dossierStatus: ctx.candidate.dossierStatus || "evaluation",
       agreementSigned: false,
       paymentStatus: "non_paye",
       scoringTotal: null,
       evaluationScore: null,
-      createdAt: historicalAgencyDossier.createdAt,
-      updatedAt: historicalAgencyDossier.updatedAt,
-    } as any);
+      createdAt: ctx.candidate.createdAt,
+      updatedAt: ctx.candidate.updatedAt,
+    } as any;
+
+    const application = app[0]
+      ?? (historicalAgencyDossier ? ({
+        id: historicalAgencyDossier.id,
+        dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, "0")}`,
+        candidateId: ctx.candidate.id,
+        fullName: historicalAgencyDossier.fullName,
+        email: historicalAgencyDossier.email,
+        whatsappNumber: historicalAgencyDossier.phone,
+        destination: historicalAgencyDossier.destination || ctx.candidate.destination || "autre",
+        formulaChosen: "integral",
+        dossierStatus: historicalAgencyDossier.status === "documents_requis"
+          ? "en_attente_documents"
+          : historicalAgencyDossier.status === "soumis"
+            ? "soumis_agences"
+            : historicalAgencyDossier.status === "approuve"
+              ? "visa_approuve"
+              : historicalAgencyDossier.status === "refuse"
+                ? "refuse"
+                : historicalAgencyDossier.status === "en_cours"
+                  ? "en_evaluation"
+                  : "nouveau",
+        agreementSigned: false,
+        paymentStatus: "non_paye",
+        scoringTotal: null,
+        evaluationScore: null,
+        createdAt: historicalAgencyDossier.createdAt,
+        updatedAt: historicalAgencyDossier.updatedAt,
+      } as any) : candidateDossierFallback);
 
     const persistedStatusHistory = app[0]
       ? await db.select().from(applicationStatusHistory)
@@ -1620,6 +1642,7 @@ export const candidateRouter = router({
         messages,
         statusHistory,
         dossierStatus: application.dossierStatus,
+
         agreementSigned: application.agreementSigned,
         paymentStatus: application.paymentStatus,
         scoringTotal: application.scoringTotal,
@@ -1628,6 +1651,7 @@ export const candidateRouter = router({
           fullName: ctx.candidate.fullName,
           email: ctx.candidate.email,
           avatarUrl: ctx.candidate.avatarUrl,
+          dossierNumber: application.dossierNumber,
         },
       },
     };

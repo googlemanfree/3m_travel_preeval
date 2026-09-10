@@ -10,6 +10,8 @@ describe("badge de dossier actif côté client", () => {
     expect(source).toContain("dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, \"0\")}`");
     expect(source).toContain("const activeAgencyDossierNumber = activeAgencyDossier");
     expect(source).toContain("dossierNumber: activeApp?.dossierNumber || (candidate as any).dossierNumber || activeAgencyDossierNumber || \"N/A\"");
+    expect(source).toContain("const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)");
+    expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`");
   });
 
   it("conserve le badge branché sur la donnée dossier relue par tRPC", () => {
