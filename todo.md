@@ -3196,3 +3196,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Régression cache PWA du badge candidat
 - [ ] Incrémenter le cache PWA et vérifier que le bundle publié contient le branchement getClientDashboardSummary, puis revalider le badge en session candidate. Le cache passe en v39, TypeScript et 14 régressions passent ; la vérification live du bundle reste à effectuer après publication.
+- [x] Aligner aussi la carte « Référence » de ClientDashboard sur `getClientDashboardSummary.candidate.dossierNumber` afin d’éviter une incohérence badge `COMPTE-1440001` / carte `N/A`. TypeScript et 14 régressions passent.

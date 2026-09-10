@@ -134,6 +134,12 @@ export default function ClientDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
+  // Le résumé dashboard est la source autorisée et partagée pour la référence et la progression,
+  // y compris avant la vérification portrait.
+  const { data: dashboardSummary } = trpc.candidate.getClientDashboardSummary.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
 
   // Récupérer les documents
   const { data: documentsData } = trpc.candidate.getMyDocuments.useQuery(
@@ -369,7 +375,10 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     const paymentStatus = dossierData?.data?.paymentStatus ?? dossierData?.data?.application?.paymentStatus;
-    const officialNumber = dossierData?.data?.application?.dossierNumber;
+    const officialNumber = dashboardSummary?.candidate?.dossierNumber
+      || dossierData?.data?.application?.dossierNumber
+      || dossierData?.data?.candidate?.dossierNumber
+      || null;
     if (paymentStatus === "SUCCESS" && officialNumber && typeof window !== "undefined") {
       const notificationKey = `3m-payment-confirmed-${officialNumber}`;
       if (!sessionStorage.getItem(notificationKey)) {
