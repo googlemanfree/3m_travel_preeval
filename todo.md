@@ -3278,9 +3278,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Vérifier par clic réel le bouton « Contrôler les documents », le mapping CV/catégories, le suivi dossier et le panneau de bilan COMPTE-1260001.
 - [ ] Auditer globalement les boutons du Pilotage et documenter leurs états pending, succès, erreur et rafraîchissement.
 - [x] Ajouter une corbeille réversible admin pour comptes mal créés ou doublons, avec récapitulatif et confirmation avant déplacement.
-- [ ] Rendre les 17 étapes du Parcours synchronisé actionnables par l’admin avec séquence et prérequis serveur.
-- [ ] Auditer et corriger le flux de signature du protocole côté client et admin, avec paiement confirmé obligatoire.
-- [ ] Permettre le changement de destination côté admin avec synchronisation vers l’espace client et traçabilité.
+- [x] Rendre les 17 étapes du Parcours synchronisé actionnables par l’admin avec séquence et prérequis serveur.
+- [x] Auditer et corriger le flux de signature du protocole côté client et admin, avec paiement confirmé obligatoire.
+- [x] Permettre le changement de destination côté admin avec synchronisation vers l’espace client et traçabilité.
 - [ ] Ajouter les tests, preuves de clic réel disponibles et publication finale de ce lot.
 
 ## Correctifs tableau Dossiers confirmés en live
