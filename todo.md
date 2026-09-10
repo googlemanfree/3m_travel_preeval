@@ -3187,4 +3187,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Alignement état serveur Candidate360
 - [x] Exposer les métadonnées de validation dans getCandidate360 et les prioriser dans le calcul disabled du bouton hors ligne. TypeScript et les régressions ciblées passent.
-- [ ] Rejouer la fiche TEST INTERNE après publication et confirmer que le bouton est disabled ou remplacé par « Évaluation déjà validée ».
+- [x] Rejouer la fiche TEST INTERNE après publication et confirmer que le bouton est disabled ou remplacé par « Évaluation déjà validée ». Vérification publiée : l’état vert est visible avec conseiller/date et aucun bouton « Valider l’évaluation hors ligne » n’existe dans le DOM.
