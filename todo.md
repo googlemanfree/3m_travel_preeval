@@ -3304,3 +3304,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Conserver le forçage manuel admin d’une étape avec traçabilité, sans permettre de contourner les blocages non autorisables.
 - [x] Adapter les 17 étapes côté client au pays et au type de visa réellement choisis, depuis le catalogue institutionnel existant.
 - [x] Ajouter les régressions de transitions automatique/manuelle et de sélection du parcours par visa, puis publier.
+
+## Verrouillage visuel des étapes Candidate360
+- [x] Afficher une icône cadenas sur chaque étape bloquée.
+- [x] Ajouter une infobulle indiquant la condition manquante de l’étape bloquée.
+- [x] Laisser le bouton de progression visible mais grisé, avec un message explicatif, tant que les prérequis ne sont pas remplis.
