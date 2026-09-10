@@ -62,6 +62,7 @@ import {
   ArrowDownUp,
   Timer,
   X,
+  Trash2,
 } from "lucide-react";
 import {
   BarChart,
@@ -977,20 +978,36 @@ export default function AdminDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
+  const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
   const { toast } = useToast();
-  const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation({
-    onSuccess: () => { toast({ title: "Statut de paiement mis à jour", description: "La liste va être resynchronisée." }); void refetch(); },
-    onError: (error) => toast({ title: "Modification du paiement impossible", description: error.message, variant: "destructive" }),
-  });
-  const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation({
-    onSuccess: (result) => { toast({ title: "Étape mise à jour", description: result.message }); void refetch(); },
-    onError: (error) => toast({ title: "Modification de l’étape impossible", description: error.message, variant: "destructive" }),
-  });
-  const confirmInlinePaymentMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
-    onSuccess: () => { toast({ title: "Paiement confirmé", description: "La validation est enregistrée par l’administrateur." }); void refetch(); },
-    onError: (error) => toast({ title: "Confirmation du paiement impossible", description: error.message, variant: "destructive" }),
-  });
+  const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
+  const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
+  const confirmInlinePaymentMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation();
   const trpcUtils = trpc.useUtils();
+
+  const queueInlineChange = useCallback((candidateId: string, field: "paymentStatus" | "procedureStep", value: string) => {
+    setPendingInlineChanges((current) => ({ ...current, [candidateId]: { ...current[candidateId], [field]: value } }));
+  }, []);
+
+  const saveInlineChanges = useCallback(async () => {
+    const entries = Object.entries(pendingInlineChanges);
+    if (!entries.length) return;
+    if (!window.confirm(`Enregistrer les modifications de ${entries.length} dossier${entries.length > 1 ? "s" : ""} ?`)) return;
+    try {
+      for (const [candidateId, change] of entries) {
+        if (change.paymentStatus) {
+          if (change.paymentStatus === "SUCCESS") await confirmInlinePaymentMutation.mutateAsync({ sessionToken, candidateId });
+          else await updateDossierPaymentStateMutation.mutateAsync({ sessionToken, candidateId, status: change.paymentStatus as "PENDING" | "FAILED" | "CANCELLED" | "NOT_PAID" });
+        }
+        if (change.procedureStep) await updateInlineProcedureMutation.mutateAsync({ sessionToken, candidateId, newStatus: change.procedureStep, notifyClient: false });
+      }
+      setPendingInlineChanges({});
+      toast({ title: "Modifications enregistrées", description: `${entries.length} dossier${entries.length > 1 ? "s" : ""} mis à jour.` });
+      await trpcUtils.admin.listCandidates.invalidate();
+    } catch (error) {
+      toast({ title: "Enregistrement groupé incomplet", description: error instanceof Error ? error.message : "Une modification n’a pas pu être enregistrée.", variant: "destructive" });
+    }
+  }, [confirmInlinePaymentMutation, pendingInlineChanges, sessionToken, toast, trpcUtils, updateDossierPaymentStateMutation, updateInlineProcedureMutation]);
   const updateKanbanStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
       toast({ title: "Dossier déplacé", description: result.message + (result.notificationSent ? " — Client notifié par e-mail." : "") });
@@ -2131,11 +2148,13 @@ export default function AdminDashboard() {
               </SelectContent>
             </Select>
             {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
+            <Button type="button" variant="outline" onClick={() => navigate("/admin/agency-dossiers?showTrash=false")} className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="h-4 w-4" />Corbeille / doublons</Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2" aria-label="Filtres rapides par étape">
             <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
             {[['PENDING_48H', 'Évaluations à traiter'], ['PUBLISHED', 'Bilans / paiement'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Soumission'], ['APPROVED', 'Visa accordé']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
           </div>
+          {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => void saveInlineChanges()} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
         </div>
 
         {/* Tableau */}
@@ -2207,21 +2226,10 @@ export default function AdminDashboard() {
                         <ActivationBadge status={candidate.activationStatus} />
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex min-w-[128px] flex-col items-start gap-1">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PAYMENT_STATUS_BADGE_CLASSES[candidate.paymentStatus ?? "NOT_PAID"] ?? PAYMENT_STATUS_BADGE_CLASSES.NOT_PAID}`}>{PAYMENT_STATUS_LABELS[candidate.paymentStatus ?? "NOT_PAID"] ?? "Non payé"}</span>
-                          <select aria-label={`Modifier le statut du paiement de ${candidate.fullName}`} value={candidate.paymentStatus ?? "NOT_PAID"} disabled={confirmInlinePaymentMutation.isPending || updateDossierPaymentStateMutation.isPending} onChange={(event) => {
-                            const nextStatus = event.target.value as keyof typeof PAYMENT_STATUS_LABELS;
-                            if (nextStatus === (candidate.paymentStatus ?? "NOT_PAID")) return;
-                            if (!window.confirm(`Confirmer le changement du paiement de ${candidate.fullName} vers « ${PAYMENT_STATUS_LABELS[nextStatus]} » ?`)) return;
-                            if (nextStatus === "SUCCESS") confirmInlinePaymentMutation.mutate({ sessionToken, candidateId: candidate.id });
-                            else updateDossierPaymentStateMutation.mutate({ sessionToken, candidateId: candidate.id, status: nextStatus as "PENDING" | "FAILED" | "CANCELLED" | "NOT_PAID" });
-                          }} className="h-7 w-full rounded-md border border-slate-200 bg-white px-1.5 text-[11px] font-semibold text-slate-600">
-                            {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                          </select>
-                        </div>
+                        {(() => { const pendingPayment = pendingInlineChanges[candidate.id]?.paymentStatus; const paymentStatus = pendingPayment ?? candidate.paymentStatus ?? "NOT_PAID"; return <div className="flex min-w-[128px] flex-col items-start gap-1"><span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PAYMENT_STATUS_BADGE_CLASSES[paymentStatus] ?? PAYMENT_STATUS_BADGE_CLASSES.NOT_PAID}`}>{PAYMENT_STATUS_LABELS[paymentStatus] ?? "Non payé"}{pendingPayment && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={paymentStatus} onValueChange={(value) => queueInlineChange(candidate.id, "paymentStatus", value)}><SelectTrigger aria-label={`Modifier le statut du paiement de ${candidate.fullName}`} className="h-8 w-full min-w-[128px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        {(() => { const procedureStep = candidate.procedureStep ?? candidate.status; return <div className="flex min-w-[160px] flex-col items-start gap-1"><span className={`inline-flex max-w-[180px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>{PROCEDURE_STEP_LABELS[procedureStep] ?? procedureStep}</span><select aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} value={procedureStep} disabled={updateInlineProcedureMutation.isPending} onChange={(event) => { const nextStatus = event.target.value as AdminStatus; if (nextStatus === procedureStep) return; if (!window.confirm(`Confirmer le passage de ${candidate.fullName} à l’étape « ${PROCEDURE_STEP_LABELS[nextStatus] ?? nextStatus} » ?`)) return; updateInlineProcedureMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus: nextStatus, notifyClient: false }); }} className="h-7 w-full rounded-md border border-slate-200 bg-white px-1.5 text-[11px] font-semibold text-slate-600">{Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>; })()}
+                        {(() => { const currentStep = candidate.procedureStep ?? candidate.status; const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep; const procedureStep = pendingStep ?? currentStep; return <div className="flex min-w-[160px] flex-col items-start gap-1"><span className={`inline-flex max-w-[180px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>{PROCEDURE_STEP_LABELS[procedureStep] ?? procedureStep}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}><SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
