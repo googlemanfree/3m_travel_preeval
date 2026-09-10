@@ -3309,3 +3309,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une icône cadenas sur chaque étape bloquée.
 - [x] Ajouter une infobulle indiquant la condition manquante de l’étape bloquée.
 - [x] Laisser le bouton de progression visible mais grisé, avec un message explicatif, tant que les prérequis ne sont pas remplis.
+
+## Correctif schéma profil candidat observé pendant la vérification
+- [x] Ajouter les colonnes d’évaluation validée manquantes à `candidates`, redémarrer le serveur et confirmer TypeScript sans erreur.
