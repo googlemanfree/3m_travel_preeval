@@ -3264,6 +3264,16 @@ export const adminRouter = router({
         safeCollection(db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30), [], "requestHistory"),
         safeCollection(db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1), [], "evaluations"),
       ]);
+      const agencyDocuments = reference.source === "agency"
+        ? await safeCollection(
+            db.select().from(agencyDossierDocuments)
+              .where(eq(agencyDossierDocuments.dossierId, reference.id))
+              .orderBy(desc(agencyDossierDocuments.createdAt)),
+            [],
+            "agencyDossierDocuments",
+          )
+        : [];
+      const agencyCvDocument = agencyDocuments.find((document) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.documentName ?? "").toLowerCase().includes("cv")) ?? null;
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
       const latestAgencyPaymentAudit = reference.source === "agency"
@@ -3343,7 +3353,7 @@ export const adminRouter = router({
           currentStepIndex: currentJourneyStep,
           steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < currentJourneyStep ? "completed" : index === currentJourneyStep ? "current" : "locked" })),
         },
-        metrics: { pendingDocuments, openTasks, unreadNotifications: notifications.filter((item) => !item.isRead).length, totalDocuments: operationalDocuments.length + legacyDocuments.length, totalMessages: messages.length },
+        metrics: { pendingDocuments, openTasks, unreadNotifications: notifications.filter((item) => !item.isRead).length, totalDocuments: operationalDocuments.length + legacyDocuments.length + agencyDocuments.length, totalMessages: messages.length },
         requirements,
         documents: [
           ...operationalDocuments.map((document) => ({
@@ -3351,7 +3361,18 @@ export const adminRouter = router({
             documentUrl: document.fileKey ? `/manus-storage/${document.fileKey}` : null,
             source: document.uploadedByRole === "candidate" ? "online" : document.uploadedByRole === "agency" ? "scanned_agency" : "manual_admin",
           })),
-          ...legacyDocuments.filter((document) => !operationalDocuments.some((operational) => operational.fileName === document.documentName)).map((document) => ({
+          ...agencyDocuments.map((document) => ({
+            id: `agency-${document.id}`,
+            documentType: document.documentType,
+            fileName: document.documentName,
+            uploadedAt: document.createdAt,
+            uploadedByRole: document.source === "candidate_upload" ? "candidate" : document.source === "admin_upload" ? "admin" : "agency",
+            reviewStatus: document.verificationStatus,
+            reviewNote: document.verificationComment,
+            documentUrl: document.documentUrl,
+            source: document.source,
+          })),
+          ...legacyDocuments.filter((document) => !operationalDocuments.some((operational) => operational.fileName === document.documentName) && !agencyDocuments.some((agency) => agency.documentName === document.documentName)).map((document) => ({
             id: `legacy-${document.id}`,
             documentType: document.documentType,
             fileName: document.documentName,
@@ -3374,7 +3395,17 @@ export const adminRouter = router({
             source: "online",
           }] : []),
         ],
-        cvDocument: reference.source === "online" && (sourceRecord as typeof applications.$inferSelect).cvUrl ? {
+        cvDocument: agencyCvDocument ? {
+          id: `agency-cv-${agencyCvDocument.id}`,
+          documentType: agencyCvDocument.documentType,
+          fileName: agencyCvDocument.documentName,
+          documentUrl: agencyCvDocument.documentUrl,
+          uploadedAt: agencyCvDocument.createdAt,
+          uploadedByRole: agencyCvDocument.source === "candidate_upload" ? "candidate" : "admin",
+          reviewStatus: agencyCvDocument.verificationStatus,
+          reviewNote: agencyCvDocument.verificationComment,
+          source: agencyCvDocument.source,
+        } : reference.source === "online" && (sourceRecord as typeof applications.$inferSelect).cvUrl ? {
           id: `application-cv-${reference.id}`,
           documentType: "cv",
           fileName: "CV du candidat",

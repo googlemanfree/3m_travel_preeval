@@ -20,19 +20,19 @@ export interface CandidateInfo {
 /** Lit le token depuis localStorage (persistant) ou sessionStorage (session) */
 function readToken(): string | null {
   try {
-    const expiresAt = Number(localStorage.getItem(EXPIRY_KEY) ?? sessionStorage.getItem(EXPIRY_KEY) ?? "0");
+    const expiresAt = Number(sessionStorage.getItem(EXPIRY_KEY) ?? localStorage.getItem(EXPIRY_KEY) ?? "0");
     if (!expiresAt || expiresAt <= Date.now()) {
       localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CANDIDATE_KEY); localStorage.removeItem(EXPIRY_KEY);
       sessionStorage.removeItem(STORAGE_KEY); sessionStorage.removeItem(CANDIDATE_KEY); sessionStorage.removeItem(EXPIRY_KEY);
       return null;
     }
-    return localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
+    return sessionStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
   } catch { return null; }
 }
 
 function readCandidate(): CandidateInfo | null {
   try {
-    const raw = localStorage.getItem(CANDIDATE_KEY) ?? sessionStorage.getItem(CANDIDATE_KEY);
+    const raw = sessionStorage.getItem(CANDIDATE_KEY) ?? localStorage.getItem(CANDIDATE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
@@ -69,6 +69,6 @@ export function useCandidateAuth() {
 /** Récupère le token candidat depuis localStorage ou sessionStorage (pour les appels tRPC directs) */
 export function getCandidateToken(): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
+    return sessionStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
   } catch { return null; }
 }

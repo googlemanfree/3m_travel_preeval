@@ -3205,3 +3205,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réarmer le bouton de confirmation et fermer ou maintenir utilisable la modale après échec, avec spinner uniquement pendant la requête. L’état `isPending` ne dure que pendant la mutation et le bouton redevient cliquable après refus.
 - [x] Vérifier les handlers d’erreur des actions Candidate360 de paiement, évaluation et protocole afin qu’aucun refus serveur ne soit silencieux. Une régression statique couvre activation, paiement, évaluation hors ligne, protocole et reçu ; 6 tests ciblés et TypeScript passent.
 - [ ] Ajouter les régressions ciblées et rejouer le clic réel sur `COMPTE-1260001` sans créer, archiver ou modifier de dossier.
+
+## Synchronisation paiement Candidate360 — priorité utilisateur
+- [ ] Vérifier en lecture seule le nombre et les statuts des paiements liés à `3M-AGN-270002`, sans supprimer ni modifier l’enregistrement original du 8 septembre.
+- [ ] Aligner le panneau « Validation manuelle guidée » sur le vrai paiement Frais de dossier `success`, avec état déjà validé et invalidation après mutation.
+- [ ] Garantir un toast de succès ou d’échec après chaque clic de validation paiement et vérifier les actions voisines Candidate360.
+- [ ] Ajouter les régressions et rejouer un clic réel autorisé sans créer de doublon ni modifier le dossier réel sans confirmation explicite.
+
+## Finalisation synchronisation paiement réel Candidate360
+- [ ] Relever les lignes exactes de paiement et d’audit de `3M-AGN-270002`, distinguer la validation originale du 8 septembre d’une trace `confirmed_again`, sans supprimer.
+- [ ] Finaliser l’affichage « Paiement déjà confirmé » dans la fiche Candidate360 à partir de `payments[0].status`, avec toast succès/échec et rafraîchissement.
+- [ ] Ajouter ou compléter les régressions sur paiement SUCCESS, double clic et retour d’erreur.
+- [ ] Après publication, rejouer uniquement un clic réel autorisé et fournir le résultat ; toute suppression d’un doublon reste soumise à confirmation explicite.
+
+## Bugs publics suivi candidat et CV PDF — priorité utilisateur
+- [x] Isoler le préremplissage du formulaire de suivi afin qu’un numéro de dossier ne soit jamais combiné avec l’e-mail d’un autre compte. Priorité à `sessionStorage`, nettoyage à la connexion et couple dossier/e-mail issu de la même application.
+- [x] Privilégier le bouton « Suivre ce dossier » avec une référence liée au compte plutôt qu’une recherche manuelle incohérente. Le formulaire manuel est masqué lorsqu’un dossier associé est disponible.
+- [x] Auditer et corriger le pipeline CV PDF : téléversement candidat, stockage, rattachement au dossier, affichage et téléchargement dans Candidate360/Documents. Le type `cv`, le `candidateId`, le dossier agence et `cvDocument` sont maintenant alignés et isolés.
+- [ ] Ajouter les régressions et tester une recherche de suivi réelle ainsi qu’un téléversement PDF avec un compte de test contrôlé, sans modifier de dossier réel. 9 tests ciblés et TypeScript passent ; la recherche live a été vérifiée antérieurement, mais aucun nouveau téléversement n’a été effectué faute de session fictive disponible.

@@ -785,6 +785,9 @@ export const adminCandidateManagementRouter = router({
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
         if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
         alreadyConfirmed = application.paymentStatus === "SUCCESS";
+        if (alreadyConfirmed) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement du dossier ${application.dossierNumber} est déjà confirmé. Aucune seconde validation n’est nécessaire.` });
+        }
         dossierNumber = application.dossierNumber;
         candidateEmail = application.email;
         fullName = application.fullName;
@@ -802,6 +805,9 @@ export const adminCandidateManagementRouter = router({
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
         if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
         alreadyConfirmed = dossier.initialPaymentStatus === "paid";
+        if (alreadyConfirmed) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement du dossier 3M-AGN-${reference.id.toString().padStart(4, "0")} est déjà confirmé. Aucune seconde validation n’est nécessaire.` });
+        }
         dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
         candidateEmail = dossier.email;
         fullName = dossier.fullName;

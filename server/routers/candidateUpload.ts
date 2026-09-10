@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import multer from "multer";
 import { storagePut } from "../storage";
 import { randomBytes } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidateFiles, candidates, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
@@ -315,7 +315,8 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       if (candidate.dossierStatus === "nouveau" || candidate.dossierStatus === "evaluation") {
         await db.update(candidates).set({ dossierStatus: "documents" }).where(eq(candidates.id, candidateId));
       }
-      const [agencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossiers.createdAt)).limit(1);
+      const normalizedCandidateEmail = candidate.email.trim().toLowerCase();
+      const [agencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(sql`LOWER(TRIM(${agencyDossiers.email})) = ${normalizedCandidateEmail}`).orderBy(desc(agencyDossiers.createdAt)).limit(1);
       let dossierNumber = `COMPTE-${candidateId.toString().padStart(5, "0")}`;
       if (agencyDossier) {
         const insertResult = await db.insert(agencyDossierDocuments).values({

@@ -57,6 +57,9 @@ export default function Login() {
 
   const loginMutation = trpc.candidate.login.useMutation({
     onSuccess: (data) => {
+      sessionStorage.removeItem("3m_candidate_token");
+      sessionStorage.removeItem("3m_candidate_info");
+      sessionStorage.removeItem("3m_candidate_session_expires_at");
       const storage = localStorage;
       const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
       storage.setItem("3m_candidate_token", data.token);
@@ -108,6 +111,9 @@ export default function Login() {
 
   const consumeGoogleOAuthMutation = trpc.candidate.consumeGoogleOAuth.useMutation({
     onSuccess: (data) => {
+      sessionStorage.removeItem("3m_candidate_token");
+      sessionStorage.removeItem("3m_candidate_info");
+      sessionStorage.removeItem("3m_candidate_session_expires_at");
       const storage = localStorage;
       const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
       storage.setItem("3m_candidate_token", data.token);

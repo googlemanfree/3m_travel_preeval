@@ -341,6 +341,7 @@ export function CandidateDetailModal({
   const [preDossierNotes, setPreDossierNotes] = useState("");
   const [preDossierConfirmationOpen, setPreDossierConfirmationOpen] = useState(false);
   const [preDossierActivationError, setPreDossierActivationError] = useState<string | null>(null);
+  const [paymentConfirmedOptimistically, setPaymentConfirmedOptimistically] = useState(false);
   const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
@@ -357,6 +358,8 @@ export function CandidateDetailModal({
     }
   );
   const candidate = data?.candidate;
+  const paymentSnapshot = (data as { payments?: Array<{ status?: string | null; validatedBy?: string | null; validatedAt?: string | Date | null; paidAt?: string | Date | null; amount?: number | null; currency?: string | null }> } | undefined)?.payments?.[0];
+  const paymentAlreadyConfirmed = paymentConfirmedOptimistically || ["SUCCESS", "success", "completed", "paye"].includes(String(paymentSnapshot?.status ?? ""));
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
   const previousAdminStatus = getPreviousAdminStatus(candidate?.status);
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
@@ -438,6 +441,7 @@ export function CandidateDetailModal({
   });
   const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
     onSuccess: (result) => {
+      setPaymentConfirmedOptimistically(true);
       toast({
         title: result.alreadyConfirmed ? "Paiement déjà confirmé" : "Paiement confirmé",
         description: `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
@@ -447,6 +451,10 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Validation du paiement impossible", description: err.message, variant: "destructive" }),
   });
+
+  useEffect(() => {
+    setPaymentConfirmedOptimistically(false);
+  }, [candidateId]);
 
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
@@ -598,15 +606,25 @@ export function CandidateDetailModal({
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Validation manuelle guidée</p>
-                    <Button
-                      type="button"
-                      onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
-                      disabled={confirmPaymentForCandidateMutation.isPending}
-                      className="mt-2 w-full bg-amber-600 text-white hover:bg-amber-700"
-                    >
-                      {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
-                    </Button>
-                    <p className="mt-1 text-xs leading-5 text-amber-900">Un clic confirme le paiement manuel avec la trace « VALIDATION_MANUELLE ». Aucune saisie de code secret n’est requise.</p>
+                    {paymentAlreadyConfirmed ? (
+                      <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status">
+                        <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Paiement déjà confirmé</div>
+                        <p className="mt-1 text-xs font-normal text-emerald-800">
+                          {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Le paiement Frais de dossier est déjà au statut SUCCESS."}
+                          {paymentSnapshot?.validatedAt ? ` · ${new Date(paymentSnapshot.validatedAt).toLocaleString("fr-FR")}` : ""}
+                        </p>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
+                        disabled={confirmPaymentForCandidateMutation.isPending}
+                        className="mt-2 w-full bg-amber-600 text-white hover:bg-amber-700"
+                      >
+                        {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
+                      </Button>
+                    )}
+                    <p className="mt-1 text-xs leading-5 text-amber-900">Un paiement au statut SUCCESS est automatiquement considéré comme déjà confirmé. Aucune seconde validation ni saisie de code secret n’est requise.</p>
                     {nextAdminStatus ? (
                       <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
                         <CheckCircle className="mr-2 h-4 w-4" />Valider l’étape suivante : {STATUS_CONFIG[nextAdminStatus].label}

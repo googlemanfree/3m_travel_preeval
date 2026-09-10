@@ -71,7 +71,7 @@ export default function DocumentUploadPage() {
     setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'uploading', progress: 20 } : d)));
 
     try {
-      const token = localStorage.getItem('3m_candidate_token') || sessionStorage.getItem('3m_candidate_token');
+      const token = sessionStorage.getItem('3m_candidate_token') || localStorage.getItem('3m_candidate_token');
       const formData = new FormData();
       formData.append('file', doc.file);
       formData.append('fileType', SERVER_FILE_TYPE[doc.type] || 'autre');

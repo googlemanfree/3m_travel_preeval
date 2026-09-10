@@ -179,16 +179,19 @@ export default function MonDossier() {
     retry: false,
   });
 
-  useEffect(() => {
-    const activeDossierNumber = myDossierQuery.data?.data?.application?.dossierNumber;
-    const candidateEmail = candidate?.email;
-    if (!autoTrackingEnabled || credentials || !activeDossierNumber || !candidateEmail) return;
+  const associatedApplication = myDossierQuery.data?.data?.application;
+  const associatedDossierNumber = associatedApplication?.dossierNumber ?? "";
+  const associatedEmail = associatedApplication?.email ?? candidate?.email ?? "";
+  const hasAssociatedDossier = Boolean(associatedDossierNumber && associatedEmail);
 
-    setDossierNumber(activeDossierNumber);
-    setEmail(candidateEmail);
-    setCredentials({ dossierNumber: activeDossierNumber, email: candidateEmail });
+  useEffect(() => {
+    if (!autoTrackingEnabled || credentials || !associatedDossierNumber || !associatedEmail) return;
+
+    setDossierNumber(associatedDossierNumber);
+    setEmail(associatedEmail);
+    setCredentials({ dossierNumber: associatedDossierNumber, email: associatedEmail });
     setSubmitted(true);
-  }, [autoTrackingEnabled, candidate?.email, credentials, myDossierQuery.data?.data?.application?.dossierNumber]);
+  }, [autoTrackingEnabled, associatedDossierNumber, associatedEmail, credentials]);
 
   const sendMessageMutation = trpc.application.sendCandidateMessage.useMutation({
     onSuccess: () => {
@@ -272,7 +275,7 @@ export default function MonDossier() {
             </div>
           ) : null}
 
-          {isAuthenticated && myDossierQuery.data?.data?.application?.dossierNumber ? (
+          {isAuthenticated && hasAssociatedDossier ? (
             <div className="mb-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center shadow-sm sm:flex-row sm:text-left">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Dossier associé à votre compte</p>
@@ -283,13 +286,11 @@ export default function MonDossier() {
                 variant="outline"
                 className="border-blue-200 text-blue-800 hover:bg-blue-50"
                 onClick={() => {
-                  const activeDossierNumber = myDossierQuery.data?.data?.application?.dossierNumber;
-                  const candidateEmail = candidate?.email;
-                  if (!activeDossierNumber || !candidateEmail) return;
+                  if (!associatedDossierNumber || !associatedEmail) return;
                   setAutoTrackingEnabled(true);
-                  setDossierNumber(activeDossierNumber);
-                  setEmail(candidateEmail);
-                  setCredentials({ dossierNumber: activeDossierNumber, email: candidateEmail });
+                  setDossierNumber(associatedDossierNumber);
+                  setEmail(associatedEmail);
+                  setCredentials({ dossierNumber: associatedDossierNumber, email: associatedEmail });
                   setSubmitted(true);
                 }}
               >
@@ -299,7 +300,7 @@ export default function MonDossier() {
           ) : null}
 
           {/* Formulaire de connexion */}
-          {!submitted || error ? (
+          {(!hasAssociatedDossier && (!submitted || error)) ? (
             <Card className="max-w-md mx-auto shadow-lg border-0">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">

@@ -39,4 +39,16 @@ describe("Verrouillage des actions admin", () => {
     expect(source).toContain("actionLocks.addTask");
     expect(source).toContain("actionLocks.agreementProtocol");
   });
+
+  it("synchronise la validation manuelle sur SUCCESS et refuse une seconde validation serveur", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    const router = read("server/routers/adminCandidateManagement.ts");
+    expect(dashboard).toContain("const paymentSnapshot =");
+    expect(dashboard).toContain("paymentAlreadyConfirmed");
+    expect(dashboard).toContain("Paiement déjà confirmé");
+    expect(dashboard).toContain("setPaymentConfirmedOptimistically(true)");
+    expect(router).toContain("Le paiement du dossier");
+    expect(router).toContain("Aucune seconde validation n’est nécessaire");
+    expect(router).toContain('code: "PRECONDITION_FAILED"');
+  });
 });
