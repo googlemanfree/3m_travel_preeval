@@ -2234,7 +2234,7 @@ export default function AdminDashboard() {
                   candidates.map((candidate) => (
                     <tr
                       key={candidate.id}
-                      className="hover:bg-blue-50/40 transition-colors cursor-pointer"
+                      className={`transition-colors cursor-pointer ${pendingInlineChanges[candidate.id] ? "bg-amber-50/90 hover:bg-amber-100/90 ring-1 ring-inset ring-amber-200" : "hover:bg-blue-50/40"}`}
                       onClick={() => setSelectedCandidateId(candidate.id)}
                     >
                       <td className="px-4 py-3">

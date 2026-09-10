@@ -3287,3 +3287,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réparer l’ouverture des selects Paiement et Étape de la procédure sur les lignes du tableau.
 - [x] Remplacer les mutations immédiates par un panier de modifications et un bouton centralisé d’enregistrement groupé avec récapitulatif.
 - [x] Rendre la corbeille réversible des doublons visible et accessible depuis le tableau Dossiers, sans suppression définitive.
+
+## Parcours 17 étapes et lignes en attente
+- [x] Vérifier et compléter l’action admin séquentielle des 17 étapes Candidate360 avec prérequis serveur.
+- [x] Mettre en évidence visuellement les lignes du tableau Dossiers ayant des modifications Paiement/Étape en attente d’enregistrement.
+- [x] Ajouter les régressions, tester TypeScript et publier ces deux ajustements.
