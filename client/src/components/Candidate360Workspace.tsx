@@ -104,6 +104,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDueAt, setTaskDueAt] = useState("");
   const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "Canada");
+  const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [checklistProcedure, setChecklistProcedure] = useState("permanent_residence");
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
   const [outboundMessage, setOutboundMessage] = useState("");
@@ -162,6 +163,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     setAdvisorId(data.operationalCase.assignedAdminId ? String(data.operationalCase.assignedAdminId) : "unassigned");
     setLabels((data.operationalCase.labels ?? []).join(", "));
     setDueAt(data.operationalCase.dueAt ? new Date(data.operationalCase.dueAt).toISOString().slice(0, 16) : "");
+    setDestinationDraft(data.operationalCase.countryTarget || candidate.destinationCountry || "");
   }, [data]);
 
   useEffect(() => {
@@ -187,6 +189,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       await refresh();
     },
     onError: (mutationError) => { unlockAction("workflow"); toast.error("Mise à jour impossible", { description: mutationError.message }); },
+  });
+  const destinationMutation = trpc.admin.updateCandidateDestination.useMutation({
+    onSuccess: async (result) => { unlockAction("destination"); toast.success(result.changed ? "Destination synchronisée" : "Destination déjà à jour", { description: result.changed ? `La destination « ${result.destination} » est maintenant visible dans le dossier candidat.` : "Aucune modification nécessaire." }); await refresh(); },
+    onError: (mutationError) => { unlockAction("destination"); toast.error("Destination impossible à modifier", { description: mutationError.message }); },
   });
   const journeyStepMutation = trpc.admin.updateCandidateJourneyStep.useMutation({
     onSuccess: async (result) => { unlockAction("journeyStep"); toast.success(result.message, { description: "La progression est synchronisée avec l’espace candidat." }); await refresh(); },
@@ -591,7 +597,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <div>
               <div className="flex flex-wrap items-center gap-2"><Badge className="border-blue-200 bg-white text-blue-800">Contexte de la demande</Badge>{data.evaluationContext?.projectType && <Badge variant="secondary">{data.evaluationContext.projectType}</Badge>}</div>
               <h4 className="mt-3 text-lg font-bold text-slate-950">{data.evaluationContext?.destinationCountry || candidate.destinationCountry || "Destination à préciser"} <span className="font-normal text-slate-400">·</span> {data.evaluationContext?.procedureLabel || candidate.projectType || "Procédure à qualifier"}</h4>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Le conseiller retrouve le pays et la procédure sélectionnés lors de l’évaluation afin d’adapter immédiatement la checklist, les liens officiels et les relances.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Le conseiller retrouve le pays et la procédure sélectionnés lors de l’évaluation afin d’adapter immédiatement la checklist, les liens officiels et les relances.</p><div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><Label htmlFor="candidate360-destination">Destination synchronisée</Label><Input id="candidate360-destination" value={destinationDraft} onChange={(event) => setDestinationDraft(event.target.value)} placeholder="Ex. Luxembourg" className="mt-1 bg-white" /></div><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" disabled={!destinationDraft.trim() || destinationMutation.isPending || actionLocks.destination} onClick={() => { if (!window.confirm("Confirmer la modification de destination et sa synchronisation vers l’espace candidat ?")) return; lockAction("destination"); destinationMutation.mutate({ sessionToken, candidateId: candidate.id, destination: destinationDraft.trim() }); }}>{destinationMutation.isPending ? "Synchronisation…" : "Synchroniser la destination"}</Button></div>
               {data.evaluationContext?.submittedAt && <p className="mt-2 text-xs text-slate-500">Évaluation transmise le {formatDate(data.evaluationContext.submittedAt)}</p>}
             </div>
             <div className="rounded-xl border border-white/80 bg-white/85 p-4 shadow-sm">

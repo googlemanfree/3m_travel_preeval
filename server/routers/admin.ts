@@ -3530,6 +3530,42 @@ export const adminRouter = router({
       };
     }),
 
+  updateCandidateDestination: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      destination: z.string().trim().min(2).max(100),
+      comment: z.string().trim().max(1000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
+      const previousDestination = String((sourceRecord as any).destination ?? operationalCase.countryTarget ?? "");
+      if (previousDestination.trim().toLowerCase() === input.destination.trim().toLowerCase()) return { success: true, destination: input.destination.trim(), changed: false };
+      if (reference.source === "online") {
+        await db.update(applications).set({ destination: input.destination.trim().toLowerCase() as any, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || admin.email }).where(eq(applications.id, reference.id));
+      } else {
+        await db.update(agencyDossiers).set({ destination: input.destination.trim(), lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.email || admin.fullName }).where(eq(agencyDossiers.id, reference.id));
+      }
+      await db.update(cases).set({ countryTarget: input.destination.trim() }).where(eq(cases.id, operationalCase.id));
+      const candidateId = reference.source === "online" ? (sourceRecord as any).candidateId : (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, (sourceRecord as any).email)).limit(1))[0]?.id;
+      if (candidateId) {
+        const normalizedDestination = input.destination.trim().toLowerCase();
+        const candidateDestination = normalizedDestination.includes("canada") ? "canada" : normalizedDestination.includes("luxembourg") ? "luxembourg" : normalizedDestination.includes("pologne") ? "pologne" : normalizedDestination.includes("europe") ? "europe" : normalizedDestination.includes("golfe") ? "golfe" : "autre";
+        await db.update(candidates).set({ destination: candidateDestination as any }).where(eq(candidates.id, candidateId));
+      }
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "destination_updated", entityType: "case", entityId: String(operationalCase.id), description: `Destination modifiée de « ${previousDestination || "non définie"} » vers « ${input.destination.trim()} ».${input.comment ? ` ${input.comment}` : ""}` });
+      return { success: true, destination: input.destination.trim(), previousDestination, changed: true };
+    }),
+
   updateCandidateJourneyStep: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),

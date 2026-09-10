@@ -17,6 +17,15 @@ describe("pilotage paiement, activation et étapes officielles", () => {
     expect(source).toContain('role="progressbar"');
   });
 
+  it("bloque l’activation pré-dossier sans paiement validé par un admin sur les deux sources", () => {
+    const source = readFileSync(resolve(process.cwd(), "server/routers/adminCandidateManagement.ts"), "utf8");
+    expect(source).toContain("activatePreDossierAccount");
+    expect(source).toContain("candidate.evaluationDeclarationStatus !== \"validated\"");
+    expect(source).toContain("onlinePaymentValidated");
+    expect(source).toContain("agencyPaymentValidated");
+    expect(source).toContain("Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.");
+  });
+
   it("conserve le formulaire admin de gestion des étapes avec portail officiel et étapes", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/components/AdminEvisaCatalogueManager.tsx"), "utf8");
     expect(source).toContain("Ajouter un pays");
