@@ -83,7 +83,7 @@ type DateFilter = "all" | "7" | "30" | "older";
 export default function ClientSpaceNavigation({ compact = false }: { compact?: boolean }) {
   const [, setLocation] = useLocation();
   const { candidate } = useCandidateAuth();
-  const dossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, { enabled: Boolean(candidate) });
+  const dossierQuery = trpc.candidate.getClientDashboardSummary.useQuery(undefined, { enabled: Boolean(candidate) });
   const requestsQuery = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled: Boolean(candidate) });
   const hotelRequestsQuery = trpc.tourism.myRequests.useQuery(undefined, { enabled: Boolean(candidate) });
   const loyaltyQuery = trpc.flightBooking.getMyLoyalty.useQuery(undefined, { enabled: Boolean(candidate) });
@@ -108,10 +108,10 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     onError: () => toast.error("Le relevé n’a pas pu être généré. Veuillez réessayer."),
   });
 
-  const dossierPayload = dossierQuery.data?.data;
+  const dossierPayload = dossierQuery.data;
   const dossierNumber = dossierPayload?.candidate?.dossierNumber
     ?? dossierPayload?.activeDossier?.dossierNumber
-    ?? dossierPayload?.application?.dossierNumber
+    ?? dossierPayload?.applications?.[0]?.dossierNumber
     ?? null;
   const visibleQuickLinks = quickLinks.filter((link) => {
     if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
