@@ -982,6 +982,7 @@ export default function AdminDashboard() {
   const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [archiveSearch, setArchiveSearch] = useState("");
+  const [showPendingSaveConfirm, setShowPendingSaveConfirm] = useState(false);
   const { toast } = useToast();
   const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
   const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
@@ -2175,9 +2176,27 @@ export default function AdminDashboard() {
             <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
             {[['PENDING_48H', 'Évaluations à traiter'], ['PUBLISHED', 'Bilans / paiement'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Soumission'], ['APPROVED', 'Visa accordé']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
           </div>
-          {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => void saveInlineChanges()} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
+          {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => setShowPendingSaveConfirm(true)} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
         </div>
 
+        <Dialog open={showPendingSaveConfirm} onOpenChange={setShowPendingSaveConfirm}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Confirmer l’enregistrement groupé</DialogTitle>
+              <DialogDescription>Vérifiez les modifications en attente avant leur persistance définitive.</DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
+              {Object.entries(pendingInlineChanges).map(([candidateId, changes]) => {
+                const candidate = candidates.find((item) => String(item.id) === candidateId);
+                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep}</strong></p>}</div></div>;
+              })}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowPendingSaveConfirm(false)} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Retour aux modifications</Button>
+              <Button type="button" onClick={() => { setShowPendingSaveConfirm(false); void saveInlineChanges(); }} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">Confirmer et enregistrer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={showArchiveView} onOpenChange={setShowArchiveView}>
           <DialogContent className="max-w-4xl">
             <DialogHeader><DialogTitle>Corbeille réversible — doublons et comptes mal créés</DialogTitle><DialogDescription>Les enregistrements archivés restent restaurables. Aucune suppression physique n’est effectuée.</DialogDescription></DialogHeader>

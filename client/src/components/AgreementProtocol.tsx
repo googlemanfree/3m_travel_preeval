@@ -46,11 +46,13 @@ export default function AgreementProtocol({
   const [acceptsTerms, setAcceptsTerms] = useState(false);
   const [acceptsData, setAcceptsData] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
+  const [signError, setSignError] = useState<string | null>(null);
   const [signed, setSigned] = useState(false);
   const [signedAt, setSignedAt] = useState<Date | null>(null);
 
   const signMutation = trpc.application.signAgreement.useMutation({
     onSuccess: () => {
+      setSignError(null);
       const now = new Date();
       setSignedAt(now);
       setSigned(true);
@@ -58,7 +60,8 @@ export default function AgreementProtocol({
       setTimeout(() => onSigned(), 2000);
     },
     onError: (err: { message: string }) => {
-      toast.error("Erreur lors de la signature : " + err.message);
+      setSignError(err.message || "La signature n’a pas pu être enregistrée. Vérifiez que le paiement est confirmé.");
+      toast.error("Erreur lors de la signature : " + (err.message || "opération refusée"));
       setIsSigning(false);
     },
   });
@@ -72,6 +75,7 @@ export default function AgreementProtocol({
       toast.error("Veuillez cocher toutes les cases pour continuer.");
       return;
     }
+    setSignError(null);
     setIsSigning(true);
     signMutation.mutate({ applicationId, signatureName: signatureName.trim() });
   };
@@ -440,6 +444,8 @@ export default function AgreementProtocol({
                     </Label>
                   </div>
                 </div>
+
+                {signError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"><strong>Signature non enregistrée :</strong> {signError}<p className="mt-1 text-xs">Le bouton est de nouveau disponible après correction du prérequis.</p></div>}
 
                 {/* Boutons */}
                 <div className="flex gap-3 pt-2">

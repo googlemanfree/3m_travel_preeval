@@ -3292,3 +3292,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier et compléter l’action admin séquentielle des 17 étapes Candidate360 avec prérequis serveur.
 - [x] Mettre en évidence visuellement les lignes du tableau Dossiers ayant des modifications Paiement/Étape en attente d’enregistrement.
 - [x] Ajouter les régressions, tester TypeScript et publier ces deux ajustements.
+
+## Signature protocole, confirmation groupée et séquencement paiement
+- [x] Auditer et corriger le flux de signature du protocole côté client et admin avec retours explicites.
+- [x] Ajouter une fenêtre de confirmation récapitulant les changements Paiement/Étape avant l’enregistrement central.
+- [ ] Vérifier le blocage séquentiel des étapes par paiement sur un dossier autorisé, sans mutation réelle non confirmée.
+- [x] Ajouter les régressions, tester TypeScript et publier.
