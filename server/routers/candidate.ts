@@ -30,7 +30,7 @@ import {
   candidateEmailChangeRequests,
 } from "../../drizzle/schema";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
-import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
@@ -1693,7 +1693,7 @@ export const candidateRouter = router({
     const [progress] = await db.select().from(procedureChecklistProgress)
       .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
       .limit(1);
-    const journey = getCandidateJourney(context.destination, context.visaType, context.visaType);
+    const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
     const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {
       evaluationClientConfirmed: context.evaluationClientConfirmed,
       activationRequested: context.activationRequested,
@@ -1720,7 +1720,7 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const context = await resolveCandidateProcedureContext(db, ctx.candidate);
       if (!context) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier candidat introuvable." });
-      const journey = getCandidateJourney(context.destination, context.visaType, context.visaType);
+      const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
       const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });

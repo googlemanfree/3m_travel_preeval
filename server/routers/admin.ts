@@ -20,7 +20,7 @@ import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
-import { getCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
@@ -3424,7 +3424,7 @@ export const adminRouter = router({
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
         .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
       const destination = (sourceRecord as any).destination ?? projectDetails.destination ?? null;
-      const candidateJourney = getCandidateJourney(destination, latestEvaluation?.visaType ?? null, procedureLabel);
+      const candidateJourney = getEnrichedCandidateJourney(destination, latestEvaluation?.visaType ?? null, procedureLabel);
       const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
         evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
         activationRequested: Boolean((sourceRecord as any).activationRequestedAt),
@@ -3676,7 +3676,7 @@ export const adminRouter = router({
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cette étape." });
       const destination = source.destination || "autre";
       const visaType = source.visaType || "Visiteur";
-      const journey = getCandidateJourney(destination, visaType, visaType);
+      const journey = getEnrichedCandidateJourney(destination, visaType, visaType);
       const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });

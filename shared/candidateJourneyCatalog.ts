@@ -1,3 +1,6 @@
+import { procedures107Complete } from "../client/src/data/procedures107Complete";
+import { OFFICIAL_SOURCE_CATALOG } from "./officialSourceCatalog";
+
 export type JourneyDocument = {
   id: string;
   label: string;
@@ -1119,6 +1122,45 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     step("appointment", "Dépôt ou soumission officielle", "Suivre le portail et le poste compétent pour le rendez-vous, le dépôt et la biométrie.", ["Rendez-vous", "Biométrie si demandée"], officialSource),
     step("decision", "Décision de l’autorité", "Consulter uniquement les notifications du portail ou du poste compétent.", ["Référence de demande", "Notifications"], officialSource),
   ]), officialSources: officialSource ? [officialSource] : [] };
+}
+
+const destinationCatalogKey = (value: string | null | undefined): string =>
+  normalize(value).replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Same journey as getCandidateJourney, but overridden with the curated 107-procedure
+ * catalogue's own step list whenever a verified official source exists for that
+ * country + procedure type. This is what both the candidate space and the admin
+ * "Parcours synchronisé" panel must call so the two stay identical for every
+ * country and every procedure type.
+ */
+export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
+  const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
+  const destinationKey = destinationCatalogKey(destination);
+  const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
+  const visaKey = destinationCatalogKey(`${visaType || ""} ${procedureLabel || ""}`);
+  const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") ? "etudes" : "visiteur";
+  const catalogueProcedure = officialRecord?.verificationStatus === "verified"
+    ? procedures107Complete.find((item) => destinationCatalogKey(item.name) === destinationKey && item.visaType === procedureKind)
+    : undefined;
+  if (!catalogueProcedure) return baseJourney;
+  const documentPool = catalogueProcedure.requiredDocuments.flatMap((group) => group.documents);
+  const sourceUrl = baseJourney.officialSources[0] ?? "";
+  return {
+    ...baseJourney,
+    title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
+    steps: catalogueProcedure.steps.map((label, index) => {
+      const requiredInputs = documentPool.slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2);
+      return {
+        id: `${catalogueProcedure.id}-${index + 1}`,
+        label,
+        description: "Étape de préparation issue du guide de procédure associé. Vérifiez toujours la version et les exigences du portail institutionnel.",
+        requiredInputs,
+        documents: requiredInputs.map((input, documentIndex) => ({ id: `${catalogueProcedure.id}-${index + 1}-document-${documentIndex + 1}`, label: input, kind: "to_prepare" as const, sourceUrl })),
+        sourceUrl,
+      };
+    }),
+  };
 }
 
 export type JourneyMilestones = {

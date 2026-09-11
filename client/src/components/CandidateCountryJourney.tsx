@@ -3,8 +3,7 @@ import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, MapPinne
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
-import { getCandidateJourney, journeyStepIndex, type CandidateJourney, type JourneyDocument } from "@shared/candidateJourneyCatalog";
-import { procedures107Complete } from "@/data/procedures107Complete";
+import { getEnrichedCandidateJourney, journeyStepIndex, type JourneyDocument } from "@shared/candidateJourneyCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "@shared/officialSourceCatalog";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,18 +33,10 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
     },
     onError: (error) => toast({ title: "Checklist non sauvegardée", description: error.message, variant: "destructive" }),
   });
-  const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
+  const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel);
   const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const destinationKey = normalize(destination);
   const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
-  const visaKey = normalize(`${visaType || ""} ${procedureLabel || ""}`);
-  const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") ? "etudes" : "visiteur";
-  const catalogueProcedure = officialRecord?.verificationStatus === "verified" ? procedures107Complete.find((item) => normalize(item.name) === destinationKey && item.visaType === procedureKind) : undefined;
-  const journey: CandidateJourney = catalogueProcedure ? {
-    ...baseJourney,
-    title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
-    steps: catalogueProcedure.steps.map((label, index) => ({ id: `${catalogueProcedure.id}-${index + 1}`, label, description: "Étape de préparation issue du guide de procédure associé. Vérifiez toujours la version et les exigences du portail institutionnel.", requiredInputs: catalogueProcedure.requiredDocuments.flatMap((group) => group.documents).slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2), documents: catalogueProcedure.requiredDocuments.flatMap((group) => group.documents).slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2).map((input, documentIndex) => ({ id: `${catalogueProcedure.id}-${index + 1}-document-${documentIndex + 1}`, label: input, kind: "to_prepare" as const, sourceUrl: baseJourney.officialSources[0] ?? "" })), sourceUrl: baseJourney.officialSources[0] ?? "" })),
-  } : baseJourney;
   const currentIndex = journeyStepIndex(journey, dossierStatus, evaluationStatus, { evaluationClientConfirmed, activationRequested, paymentConfirmed });
   const normalizedDocument = (value: string | null | undefined) => normalize(value).replace(/document|piece|justificatif/g, "").trim();
   const documentsForStep = (stepDocuments: JourneyDocument[]) => documents.filter((document) => stepDocuments.some((expected) => {
