@@ -1775,7 +1775,7 @@ function PricingSection() {
       features: [
         "Traitement prioritaire du dossier",
         "Suivi personnalisé dédié",
-        "Réponse sous 24h garantie",
+        "Réponse sous 24h",
         "Accompagnement complet",
         "Sans frais supplémentaires",
       ],
@@ -1804,22 +1804,22 @@ function PricingSection() {
       highlight: true,
     },
     {
-      id: "garanti",
+      id: "differe",
       icon: <Shield className="w-7 h-7" />,
-      badge: "Zéro risque",
-      title: "Permis Garanti",
-      subtitle: "Paiement après succès",
+      badge: "Sur éligibilité",
+      title: "Paiement Différé",
+      subtitle: "Part des honoraires réglée en fin de dossier",
       color: "from-[#059669] to-[#047857]",
       borderColor: "border-emerald-500/40",
       badgeBg: "bg-emerald-400 text-emerald-900",
       textAccent: "text-emerald-300",
-      description: "Réglez nos honoraires d'agence UNIQUEMENT après succès et obtention effective de votre visa.",
+      description: "Sous réserve d'éligibilité vérifiée, une partie de nos honoraires d'agence est réglée en fin de suivi. La décision de visa reste exclusivement du ressort des autorités compétentes.",
       features: [
-        "Honoraires payés après obtention du visa",
-        "Zéro risque financier pour vous",
+        "Éligibilité vérifiée avant proposition",
+        "Part des honoraires réglée en fin de dossier",
         "Engagement total de notre équipe",
-        "Suivi jusqu'à l'obtention du visa",
-        "Conditions d'éligibilité à vérifier",
+        "Suivi jusqu'à la décision finale",
+        "Conditions d'éligibilité à confirmer",
       ],
       cta: "Vérifier mon éligibilité",
       highlight: false,
@@ -1848,7 +1848,7 @@ function PricingSection() {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
           >
-            Tarifs & Garanties
+            Nos Formules Tarifaires
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
@@ -1910,7 +1910,7 @@ function PricingSection() {
                   className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
                     plan.highlight
                       ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
-                      : plan.id === "garanti"
+                      : plan.id === "differe"
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                       : "bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
                   }`}
