@@ -84,7 +84,7 @@ export default function Register() {
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
     const passwordValid = form.password.length >= 8 && /[A-Z]/.test(form.password) && /[0-9]/.test(form.password);
     const passwordMatch = form.password === form.confirmPassword;
-    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch && Boolean(portrait);
+    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch;
     setIsFormValid(isValid as boolean);
   }, [form, portrait]);
 
@@ -476,10 +476,10 @@ export default function Register() {
             >
               <Button
                 type="submit"
-                disabled={registerMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}
+                disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}
                 className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {registerMutation.isPending || isUploadingPortrait ? (
+                {registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait ? (
                   <span className="flex items-center justify-center gap-2" role="status" aria-live="polite" aria-atomic="true">
                     <motion.span
                       animate={{ rotate: 360 }}
@@ -491,7 +491,7 @@ export default function Register() {
                     <motion.span
                       animate={{ opacity: [0.55, 1, 0.55] }}
                       transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
-                    >{isUploadingPortrait ? "Vérification et envoi du portrait..." : "Création de votre espace en cours..."}</motion.span>
+                    >{duplicatePreflightMutation.isPending ? "Vérification des doublons..." : isUploadingPortrait ? "Vérification et envoi du portrait..." : "Création de votre espace en cours..."}</motion.span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
