@@ -3320,3 +3320,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Ajouter une tentative contrôlée de doublon, les régressions et publier sans créer de nouveau doublon réel.
 
 - [x] Afficher côté candidat le conflit de doublon avec la référence existante et un lien vers la connexion.
+
+## Pré-vérification inscription avant portrait
+- [x] Exposer une pré-vérification non créatrice des doublons avant le téléversement du portrait.
+- [x] Afficher immédiatement la référence existante et le lien de connexion côté candidat.
+- [ ] Tester cette tentative live sans créer de compte et publier le correctif.

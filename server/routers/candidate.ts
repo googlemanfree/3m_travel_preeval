@@ -41,6 +41,7 @@ import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossi
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
+import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -346,6 +347,16 @@ export const candidateRouter = router({
       return { success: true, message: "Si un compte existe avec cet email, un lien de vérification a été envoyé." };
     }),
 
+
+  // ── Pré-vérification d’inscription (lecture seule) ─────────────────────────
+  checkRegistrationDuplicate: publicProcedure
+    .input(z.object({ fullName: z.string().min(2, "Nom requis"), email: z.string().email("Email invalide") }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const duplicates = await findPotentialDuplicates(db, { email: normalizeDuplicateEmail(input.email), fullName: input.fullName });
+      return { hasDuplicate: duplicates.length > 0, message: duplicates.length ? duplicateConflictMessage(duplicates) : null, matches: duplicates.map(({ source, reference, fullName, email }) => ({ source, reference, fullName, email })) };
+    }),
 
   // ── Inscription ────────────────────────────────────────────────────────────
   register: publicProcedure

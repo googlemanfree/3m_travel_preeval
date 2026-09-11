@@ -88,6 +88,8 @@ export default function Register() {
     setIsFormValid(isValid as boolean);
   }, [form, portrait]);
 
+  const duplicatePreflightMutation = trpc.candidate.checkRegistrationDuplicate.useMutation();
+
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
       // Afficher l'animation de succès
@@ -142,6 +144,19 @@ export default function Register() {
       toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
+    try {
+      const preflight = await duplicatePreflightMutation.mutateAsync({ fullName: form.fullName, email: form.email });
+      if (preflight.hasDuplicate) {
+        const message = preflight.message ?? "Un compte ou dossier proche existe déjà.";
+        setDuplicateConflict(message);
+        toast.error("Création bloquée avant le téléversement du portrait.");
+        return;
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Impossible de vérifier les doublons.");
+      return;
+    }
+
     if (!portrait) {
       toast.error("Un portrait humain vérifié est obligatoire pour finaliser l’inscription.");
       return;
