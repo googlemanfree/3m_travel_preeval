@@ -9,6 +9,7 @@ import { z } from "zod";
 import { applications } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 
 /**
  * Générer un numéro de dossier unique : 3M-YYYY-NNNN
@@ -41,12 +42,15 @@ export const applicationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        const cleanEmail = normalizeDuplicateEmail(input.email);
+        const duplicates = await findPotentialDuplicates(db, { email: cleanEmail, fullName: input.fullName });
+        if (duplicates.length > 0) throw new TRPCError({ code: "CONFLICT", message: duplicateConflictMessage(duplicates) });
         const dossierNumber = generateDossierNumber();
 
         const result = await db.insert(applications).values({
           dossierNumber,
           fullName: input.fullName,
-          email: input.email,
+          email: cleanEmail,
           whatsappNumber: input.whatsappNumber,
           destination: input.destination,
           formulaChosen: input.formulaChosen,

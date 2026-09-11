@@ -11,6 +11,7 @@ import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory, candidate
 import { eq, and, or, like, desc, isNull, isNotNull, sql } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
+import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 
 export const agencyDossierRouter = router({
   /**
@@ -43,9 +44,12 @@ export const agencyDossierRouter = router({
       }
 
       try {
+        const cleanEmail = normalizeDuplicateEmail(input.email);
+        const duplicates = await findPotentialDuplicates(db, { email: cleanEmail, fullName: input.fullName });
+        if (duplicates.length > 0) throw new TRPCError({ code: "CONFLICT", message: duplicateConflictMessage(duplicates) });
         const result = await db.insert(agencyDossiers).values({
           fullName: input.fullName,
-          email: input.email,
+          email: cleanEmail,
           phone: input.phone,
           dateOfBirth: input.dateOfBirth,
           nationality: input.nationality,

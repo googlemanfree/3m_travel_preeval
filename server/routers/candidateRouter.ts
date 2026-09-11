@@ -10,6 +10,7 @@ import { z } from "zod";
 import { candidates, candidateFiles, candidateMessages } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 
 export const candidateRouter = router({
   /**
@@ -28,18 +29,10 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        // Vérifier que l'email n'existe pas
-        const existing = await db
-          .select()
-          .from(candidates)
-          .where(eq(candidates.email, input.email))
-          .limit(1);
-
-        if (existing.length > 0) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Cet email est déjà utilisé",
-          });
+        const cleanEmail = normalizeDuplicateEmail(input.email);
+        const duplicates = await findPotentialDuplicates(db, { email: cleanEmail, fullName: input.fullName });
+        if (duplicates.length > 0) {
+          throw new TRPCError({ code: "CONFLICT", message: duplicateConflictMessage(duplicates) });
         }
 
         // Hasher le mot de passe
@@ -48,7 +41,7 @@ export const candidateRouter = router({
         // Créer le candidat
         await db.insert(candidates).values({
           fullName: input.fullName,
-          email: input.email,
+          email: cleanEmail,
           phone: input.phone,
           passwordHash,
           destination: input.destination,
