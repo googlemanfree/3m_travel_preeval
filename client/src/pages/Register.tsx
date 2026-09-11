@@ -55,6 +55,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
   const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
+  const [duplicateConflict, setDuplicateConflict] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -106,11 +107,12 @@ export default function Register() {
       navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
     },
     onError: (err) => {
-      // Améliorer la gestion des erreurs
-      if (err.message.includes("existe déjà")) {
-        toast.error("Un compte existe déjà avec cet email. Veuillez vous connecter ou utiliser un autre email.");
+      const message = err.message || "Erreur lors de la création du compte.";
+      if (message.includes("Création bloquée") || message.includes("existe déjà") || message.includes("doublon")) {
+        setDuplicateConflict(message);
+        toast.error("Création bloquée : un compte existant correspond à ces informations.");
       } else {
-        toast.error(err.message || "Erreur lors de la création du compte.");
+        toast.error(message);
       }
     },
   });
@@ -261,7 +263,10 @@ export default function Register() {
                   type="email"
                   placeholder="jean@exemple.com"
                   value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  onChange={e => {
+                    setDuplicateConflict(null);
+                    setForm(f => ({ ...f, email: e.target.value }));
+                  }}
                   autoComplete="email"
                   aria-invalid={isEmailInvalid}
                   aria-describedby={isEmailInvalid ? "email-error" : undefined}
@@ -283,6 +288,26 @@ export default function Register() {
                   >
                     <AlertCircle className="w-3 h-3 flex-shrink-0" />
                     Email invalide
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {duplicateConflict && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"
+                    role="alert"
+                  >
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                      <div>
+                        <p className="font-semibold">Création bloquée : un compte ou dossier proche existe déjà.</p>
+                        <p className="mt-1">{duplicateConflict}</p>
+                        <Link href="/login" className="mt-2 inline-flex font-semibold text-blue-700 underline">Accéder à la connexion</Link>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
