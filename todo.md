@@ -3325,3 +3325,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Exposer une pré-vérification non créatrice des doublons avant le téléversement du portrait.
 - [x] Afficher immédiatement la référence existante et le lien de connexion côté candidat.
 - [ ] Tester cette tentative live sans créer de compte et publier le correctif.
+
+## Correctif GitHub af7eeed — activation déjà active
+- [x] Récupérer et relire le commit `af7eeed` sans écraser les travaux locaux en cours.
+- [x] Exécuter TypeScript et les tests ciblés d’activation, puis vérifier les garde-fous paiement et l’état déjà actif.
+- [ ] Publier le correctif validé et documenter la vérification exacte.

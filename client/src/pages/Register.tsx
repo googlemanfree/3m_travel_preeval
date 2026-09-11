@@ -476,7 +476,7 @@ export default function Register() {
             >
               <Button
                 type="submit"
-                disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}
+                disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}
                 className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait ? (
