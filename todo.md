@@ -3370,5 +3370,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Synchronisation des commits 4fc9ed5 et 4fb2ce1
 - [x] Synchroniser et relire les commits GitHub 4fc9ed5 et 4fb2ce1 concernant le parcours interne/officiel et l’aria-label du bouton Valider des documents
 - [x] Exécuter TypeScript et les tests ciblés sur le parcours synchronisé et la validation documentaire
-- [ ] Publier un checkpoint uniquement si les contrôles sont verts
-- [ ] Documenter les URLs/actions exactes de vérification
+- [x] Publier un checkpoint uniquement si les contrôles sont verts
+- [x] Documenter les URLs/actions exactes de vérification
