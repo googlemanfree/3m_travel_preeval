@@ -3341,3 +3341,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Récupérer et relire le filtre « Mes dossiers » par conseiller et le retour assignedToAdmin pour les dossiers agence.
 - [x] Récupérer et relire la sélection multiple des dossiers avec action groupée « Mettre à la corbeille ».
 - [ ] Exécuter TypeScript/tests ciblés et publier les trois commits validés.
+
+## Correctif GitHub 8722572 — regex corbeille et checklist
+- [x] Récupérer et relire les quatre corrections de regex d’identifiant numérique.
+- [x] Exécuter TypeScript et les tests de corbeille/restauration et checklist admin/candidat.
+- [ ] Publier le correctif validé et documenter le résultat.
