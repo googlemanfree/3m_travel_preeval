@@ -3420,5 +3420,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser origin/main et récupérer le commit 963ce91
 - [x] Relire shared/procedureSeo.ts, server/publicPrerender.ts, CountryDetailPage.tsx et Home.tsx
 - [x] Exécuter TypeScript et les tests ciblés pages procédures, accueil et SEO
-- [ ] Vérifier le rendu des routes SEO prioritaires et de l’accueil
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Vérifier le rendu des routes SEO prioritaires et de l’accueil
+- [x] Publier uniquement si tous les contrôles sont verts
