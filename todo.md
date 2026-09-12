@@ -3317,16 +3317,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Bloquer ou avertir lors d’une inscription avec e-mail normalisé déjà existant, avec lien vers le compte existant.
 - [x] Appliquer le même contrôle aux pré-dossiers en ligne et aux créations agence.
 - [x] Détecter les noms très proches avec un avertissement explicite et éviter toute création silencieuse.
-- [ ] Ajouter une tentative contrôlée de doublon, les régressions et publier sans créer de nouveau doublon réel.
+- [x] Ajouter une tentative contrôlée de doublon, les régressions et publier sans créer de nouveau doublon réel.
 
 - [x] Afficher côté candidat le conflit de doublon avec la référence existante et un lien vers la connexion.
 
 ## Pré-vérification inscription avant portrait
 - [x] Exposer une pré-vérification non créatrice des doublons avant le téléversement du portrait.
 - [x] Afficher immédiatement la référence existante et le lien de connexion côté candidat.
-- [ ] Tester cette tentative live sans créer de compte et publier le correctif.
+- [x] Tester cette tentative live sans créer de compte et publier le correctif.
 
 ## Correctif GitHub af7eeed — activation déjà active
 - [x] Récupérer et relire le commit `af7eeed` sans écraser les travaux locaux en cours.
 - [x] Exécuter TypeScript et les tests ciblés d’activation, puis vérifier les garde-fous paiement et l’état déjà actif.
-- [ ] Publier le correctif validé et documenter la vérification exacte.
+- [x] Publier le correctif validé et documenter la vérification exacte.
+
+## Correctifs GitHub bd27a8d et de887eb
+- [x] Récupérer et relire bd27a8d : renommer le forfait Tarifs et retirer la promesse de garantie.
+- [x] Récupérer et relire de887eb : enregistrer `/accessibilite` dans PUBLIC_PAGES pour supprimer le 404 serveur.
+- [x] Exécuter TypeScript/tests et publier les deux correctifs validés.
