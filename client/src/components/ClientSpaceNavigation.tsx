@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { BedDouble, CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, ShieldCheck, WifiOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -113,6 +115,10 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     ?? dossierPayload?.activeDossier?.dossierNumber
     ?? dossierPayload?.applications?.[0]?.dossierNumber
     ?? null;
+  const isAgencyDossierNumber = typeof dossierNumber === "string" && dossierNumber.startsWith("3M-AGN-");
+  const legacyEvaluationNumber = dossierPayload?.activeDossier?.dossierNumber && dossierPayload.activeDossier.dossierNumber !== dossierNumber
+    ? dossierPayload.activeDossier.dossierNumber
+    : null;
   const visibleQuickLinks = quickLinks.filter((link) => {
     if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
     if (["Réserver un vol", "Vols favoris"].includes(link.label)) return Boolean(requestsQuery.data?.length);
@@ -143,7 +149,19 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
             <p className="mt-1 text-sm text-slate-600">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
-              {dossierNumber ? <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
+              {dossierNumber ? (
+                legacyEvaluationNumber ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}, anciennement référencé ${legacyEvaluationNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
+                    </TooltipTrigger>
+                    <TooltipContent>Ancienne référence d’évaluation : {legacyEvaluationNumber}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
+                )
+              ) : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
+              {isAgencyDossierNumber && <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">Dossier Agence</Badge>}
             </div>
           </div>
           <a href="/mon-dossier" className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-800 px-5 font-bold text-white hover:bg-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">

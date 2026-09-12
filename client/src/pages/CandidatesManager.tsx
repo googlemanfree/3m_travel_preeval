@@ -38,6 +38,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -482,19 +484,29 @@ export default function CandidatesManager() {
     onSuccess: ({ recipientEmail }) => toast.success(`E-mail de confirmation renvoyé à ${recipientEmail}.`),
     onError: error => toast.error(error.message || "Impossible de renvoyer l’e-mail de confirmation."),
   });
+  const [csvPreview, setCsvPreview] = useState<{ csv: string; count: number; headers: string[]; rows: string[][] } | null>(null);
   const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
     onSuccess: ({ csv, count }) => {
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `candidats-3m-${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success(`${count} candidat(s) exporté(s).`);
+      const lines = csv.replace(/^﻿/, "").split(/\r?\n/).filter((line) => line.length > 0);
+      const parseCsvLine = (line: string) => line.match(/("([^"]|"")*"|[^,]*)(,|$)/g)?.filter((_, index, array) => index < array.length - 1).map((cell) => cell.replace(/,$/, "").replace(/^"|"$/g, "").replace(/""/g, '"')) ?? [];
+      const headers = lines[0] ? parseCsvLine(lines[0]) : [];
+      const rows = lines.slice(1, 11).map(parseCsvLine);
+      setCsvPreview({ csv, count, headers, rows });
     },
     onError: exportError => toast.error(exportError.message || "Impossible d’exporter les candidats."),
   });
+  const downloadCsvPreview = () => {
+    if (!csvPreview) return;
+    const blob = new Blob([csvPreview.csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `candidats-3m-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${csvPreview.count} candidat(s) exporté(s).`);
+    setCsvPreview(null);
+  };
   const candidates = (data?.candidates ?? []).map(candidate => ({
     ...candidate,
     createdAt: new Date(candidate.createdAt).toISOString(),
@@ -941,6 +953,34 @@ export default function CandidatesManager() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
       />
+
+      <Dialog open={Boolean(csvPreview)} onOpenChange={(open) => { if (!open) setCsvPreview(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Aperçu de l’export ({csvPreview?.count ?? 0} candidat(s))</DialogTitle>
+            <DialogDescription>Vérifiez les premières lignes avant de télécharger le fichier CSV complet.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-auto rounded-lg border border-slate-200">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 bg-slate-50">
+                <tr>{csvPreview?.headers.map((header, index) => <th key={index} className="whitespace-nowrap border-b border-slate-200 px-3 py-2 font-semibold text-slate-700">{header}</th>)}</tr>
+              </thead>
+              <tbody>
+                {csvPreview?.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="odd:bg-white even:bg-slate-50/60">
+                    {row.map((cell, cellIndex) => <td key={cellIndex} className="max-w-[220px] truncate border-b border-slate-100 px-3 py-1.5 text-slate-600" title={cell}>{cell}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {csvPreview && csvPreview.count > csvPreview.rows.length && <p className="text-xs text-slate-500">Aperçu limité aux {csvPreview.rows.length} premières lignes sur {csvPreview.count}.</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCsvPreview(null)}>Annuler</Button>
+            <Button type="button" onClick={downloadCsvPreview}><Download className="mr-2 h-4 w-4" />Télécharger le CSV complet</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

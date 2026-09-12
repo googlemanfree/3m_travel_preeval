@@ -1016,6 +1016,9 @@ export const adminCandidateManagementRouter = router({
     <p style="font-size:12px;color:#64748b">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>
     ${paragraphs}
     <p style="font-size:12px;color:#64748b;margin-top:24px;">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p>
+    <div style="text-align:center;margin-top:28px;">
+      <a href="${siteUrl}/mon-espace" style="display:inline-block;background:#1E3A8A;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;">Accéder à mon espace</a>
+    </div>
   </div>
   <div style="background:#f8faff;padding:20px 32px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;">
     <p style="margin:0 0 4px;">3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>

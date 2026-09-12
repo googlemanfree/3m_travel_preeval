@@ -465,6 +465,10 @@ export async function sendDossierConfirmationEmail(
               </a>
             </p>
           </div>
+          <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0 0 4px;">3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+            <p style="margin: 0;">Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
+          </div>
         </div>
             `,
     });
