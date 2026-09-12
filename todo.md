@@ -3360,4 +3360,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif GitHub 1b11d3b — synchronisation pays et type de visa
 - [x] Récupérer et relire 1b11d3b et le merge 6487631.
 - [x] Vérifier TypeScript, la mutation de destination/visaType et le rendu Candidate360/parcours.
-- [ ] Exécuter les tests concernés et publier le correctif validé.
+- [x] Exécuter les tests concernés et publier le correctif validé.
+
+## Correctif GitHub 2f7e036 — lecture CV et validation des documents
+- [x] Récupérer et relire 2f7e036 et le merge dd2c93a.
+- [x] Vérifier TypeScript, les retentatives de lecture CV et la validation des documents client/agency/caseDocuments.
+- [ ] Exécuter les tests concernés, publier et retester l’extraction CV en direct sur 3M-AGN-120001 sans mutation métier.
