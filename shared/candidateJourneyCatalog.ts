@@ -1146,20 +1146,30 @@ export function getEnrichedCandidateJourney(destination?: string | null, visaTyp
   if (!catalogueProcedure) return baseJourney;
   const documentPool = catalogueProcedure.requiredDocuments.flatMap((group) => group.documents);
   const sourceUrl = baseJourney.officialSources[0] ?? "";
+  // Les 13 premières étapes du parcours de base sont le traitement interne d’une
+  // agence de mobilité internationale (réception du CV jusqu’au suivi de décision) ;
+  // elles doivent toujours précéder les étapes officielles propres au pays/visa,
+  // sans quoi le client ne voit plus que la procédure externe et perd la
+  // traçabilité du traitement de son dossier par l’agence. journeyStepIndex()
+  // suppose ces 13 positions fixes : elles ne doivent pas être réordonnées ici.
+  const internalAgencySteps = baseJourney.steps.slice(0, 13);
   return {
     ...baseJourney,
     title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
-    steps: catalogueProcedure.steps.map((label, index) => {
-      const requiredInputs = documentPool.slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2);
-      return {
-        id: `${catalogueProcedure.id}-${index + 1}`,
-        label,
-        description: "Étape de préparation issue du guide de procédure associé. Vérifiez toujours la version et les exigences du portail institutionnel.",
-        requiredInputs,
-        documents: requiredInputs.map((input, documentIndex) => ({ id: `${catalogueProcedure.id}-${index + 1}-document-${documentIndex + 1}`, label: input, kind: "to_prepare" as const, sourceUrl })),
-        sourceUrl,
-      };
-    }),
+    steps: [
+      ...internalAgencySteps,
+      ...catalogueProcedure.steps.map((label, index) => {
+        const requiredInputs = documentPool.slice(index === 0 ? 0 : Math.max(0, index - 1) * 2, index === catalogueProcedure.steps.length - 1 ? undefined : index * 2 + 2);
+        return {
+          id: `${catalogueProcedure.id}-${index + 1}`,
+          label,
+          description: "Étape de préparation issue du guide de procédure associé. Vérifiez toujours la version et les exigences du portail institutionnel.",
+          requiredInputs,
+          documents: requiredInputs.map((input, documentIndex) => ({ id: `${catalogueProcedure.id}-${index + 1}-document-${documentIndex + 1}`, label: input, kind: "to_prepare" as const, sourceUrl })),
+          sourceUrl,
+        };
+      }),
+    ],
   };
 }
 
