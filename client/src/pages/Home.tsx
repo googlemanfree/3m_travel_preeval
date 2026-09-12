@@ -600,6 +600,34 @@ export default function Home() {
 
       <ProfileVerificationModule />
 
+      {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
+      <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-6">Procédures les plus demandées depuis Yaoundé</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {[
+              { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },
+              { href: "/procedures/canada-etudes", flag: "🇨🇦", label: "Canada — Études" },
+              { href: "/procedures/france-etudes", flag: "🇫🇷", label: "Études en France" },
+              { href: "/procedures/allemagne-travail", flag: "🇩🇪", label: "Allemagne — Travail" },
+              { href: "/evisas", flag: "🌍", label: "e-Visa" },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-4 text-center transition-colors hover:border-blue-300 hover:bg-blue-50"
+              >
+                <span className="text-2xl" aria-hidden="true">{item.flag}</span>
+                <span className="text-xs font-bold text-slate-800">{item.label}</span>
+              </a>
+            ))}
+          </div>
+          <p className="mt-4 text-center">
+            <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Voir les 107 procédures par destination →</a>
+          </p>
+        </div>
+      </section>
+
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
       <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">

@@ -1,16 +1,18 @@
 import React from 'react';
 import { useRoute } from 'wouter';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle, CalendarDays } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle, CalendarDays, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated } from '@/lib/publicDestinationCatalog';
 import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
 import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
 import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
+import { getProcedureDisplayTitle, getProcedureFaqItems } from '@shared/procedureSeo';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
 import { trpc } from '@/lib/trpc';
@@ -37,6 +39,16 @@ export default function CountryDetailPage() {
   );
 
   const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    if (!country) return;
+    const displayTitle = getProcedureDisplayTitle(country);
+    document.title = `${displayTitle} à Yaoundé | 3M Travel & Services`;
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
+      "content",
+      `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M Travel & Services.`,
+    );
+  }, [country]);
 
   useEffect(() => {
     if (countryId) {
@@ -172,9 +184,9 @@ export default function CountryDetailPage() {
                     </Badge>
                   )}
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{country.name}</h1>
+                <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{getProcedureDisplayTitle(country)}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
-                  <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel — {country.visaType}
+                  <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel & Services — accompagnement depuis Yaoundé
                 </p>
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-blue-200">
                   <CalendarDays className="w-3.5 h-3.5" /> Dernière mise à jour : {pageUpdatedAt}
@@ -287,6 +299,21 @@ export default function CountryDetailPage() {
                   </div>
                 ))}
               </div>
+            </Card>
+
+            {/* FAQ */}
+            <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl">
+              <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 mb-2">
+                <HelpCircle className="w-6 h-6 text-blue-700" /> Questions fréquentes
+              </h2>
+              <Accordion type="single" collapsible className="mt-2">
+                {getProcedureFaqItems(country).map((item, idx) => (
+                  <AccordionItem key={idx} value={`faq-${idx}`}>
+                    <AccordionTrigger className="text-left font-semibold text-slate-900">{item.question}</AccordionTrigger>
+                    <AccordionContent className="text-slate-600 leading-relaxed">{item.answer}</AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </Card>
           </div>
 

@@ -1,10 +1,31 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
+import { getProcedureDisplayTitle, getProcedureFaqItems } from "@shared/procedureSeo";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
 import { COMPANY_PROFILE } from "../client/src/lib/companyContacts";
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
+
+const LOCAL_BUSINESS_STRUCTURED_DATA = {
+  "@type": "LocalBusiness",
+  "@id": `${OFFICIAL_SITE_ORIGIN}/#localbusiness`,
+  name: COMPANY_PROFILE.legalName,
+  url: COMPANY_PROFILE.website,
+  email: COMPANY_PROFILE.publicEmail,
+  telephone: COMPANY_PROFILE.offices.cameroon.phoneDisplay,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: COMPANY_PROFILE.offices.cameroon.addressLines.join(", "),
+    addressLocality: "Yaoundé",
+    addressCountry: "CM",
+  },
+  areaServed: { "@type": "City", name: "Yaoundé" },
+  identifier: [
+    { "@type": "PropertyValue", propertyID: "RC", value: COMPANY_PROFILE.legalIdentifiers.registration },
+    { "@type": "PropertyValue", propertyID: "NIU", value: COMPANY_PROFILE.legalIdentifiers.taxpayerId },
+  ],
+};
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
@@ -36,12 +57,13 @@ const procedureMetaForPath = (path: string): PublicMeta | undefined => {
   if (!procedure) return undefined;
 
   const projectLabel = procedure.visaType === "etudes" ? "études" : procedure.visaType === "visiteur" ? "visiteur" : "travail";
+  const displayTitle = getProcedureDisplayTitle(procedure);
   return {
-    title: `Procédure ${procedure.name} | ${SITE}`,
-    description: `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, à vérifier auprès des autorités compétentes.`,
-    heading: `Procédure ${procedure.name}`,
-    lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}.`,
-    keywords: [`visa ${procedure.name}`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "3M Travel"],
+    title: `${displayTitle} à Yaoundé | ${SITE}`,
+    description: `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, accompagné depuis Yaoundé et à vérifier auprès des autorités compétentes.`,
+    heading: `${displayTitle} à Yaoundé`,
+    lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}, avec un accompagnement 3M Travel & Services depuis Yaoundé.`,
+    keywords: [`visa ${procedure.name}`, `${projectLabel} ${procedure.name} Yaoundé`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "3M Travel"],
   };
 };
 
@@ -202,9 +224,15 @@ export function composePublicPrerender(template: string, url: string) {
           { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
           breadcrumb,
         ] }
-      : article
-        ? { "@context": "https://schema.org", "@graph": [article, breadcrumb] }
-        : breadcrumb;
+      : procedurePage && procedureDetail
+        ? { "@context": "https://schema.org", "@graph": [
+            { "@type": "FAQPage", mainEntity: getProcedureFaqItems(procedureDetail.procedure).map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+            LOCAL_BUSINESS_STRUCTURED_DATA,
+            breadcrumb,
+          ] }
+        : article
+          ? { "@context": "https://schema.org", "@graph": [article, breadcrumb] }
+          : breadcrumb;
   const structuredDataTag = structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : "";
   const head = [
     `<title>${esc(current.title)}</title>`,
@@ -242,7 +270,8 @@ export function composePublicPrerender(template: string, url: string) {
       ? `<p><a href="${esc(consular.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(consular.officialPortalLabel || "Consulter le portail institutionnel")}</a></p>`
       : `<p>Le portail institutionnel associé est en cours de vérification. Ne transmettez aucun paiement ou document à un tiers sans contrôle préalable.</p>`;
     const institutionalSection = institutionalSource ? `<h2>Repères institutionnels</h2>${institutionalSource.preparationPoints.length ? `<ul>${institutionalSource.preparationPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>` : ""}<p>${esc(institutionalSource.caveat)}</p><p><a href="${esc(institutionalSource.officialUrl)}" target="_blank" rel="noopener noreferrer">${esc(institutionalSource.sourceTitle)}</a> · Dernière vérification de la source : ${esc(institutionalSource.consultedOn)}.</p>` : "";
-    return `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier pour ${esc(procedure.name)}</h2><p>${esc(procedure.detailedDescription)}</p><h2>Étapes de préparation</h2><ol>${steps}</ol><h2>Documents à préparer</h2><ul>${documents}</ul>${institutionalSection}<h2>Guides et sources associés</h2>${guides || primaryGuide ? `<ul>${primaryGuide}${guides}</ul>` : "<p>Le guide détaillé est en cours de consolidation ; consultez le portail institutionnel lorsqu’il est vérifié.</p>"}${officialPortal}<p>Les exigences applicables, les délais et les décisions relèvent des autorités et partenaires compétents ; ils sont à confirmer avant toute démarche.</p><p><a href="/?project=${projectQuery}&amp;destination=${encodeURIComponent(procedure.id)}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>`;
+    const faqSection = `<section aria-labelledby="seo-procedure-faq"><h2 id="seo-procedure-faq">Questions fréquentes</h2><dl>${getProcedureFaqItems(procedure).map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section>`;
+    return `<section aria-label="Détails de la procédure"><h2>Préparer votre dossier pour ${esc(procedure.name)}</h2><p>${esc(procedure.detailedDescription)}</p><h2>Étapes de préparation</h2><ol>${steps}</ol><h2>Documents à préparer</h2><ul>${documents}</ul>${institutionalSection}<h2>Guides et sources associés</h2>${guides || primaryGuide ? `<ul>${primaryGuide}${guides}</ul>` : "<p>Le guide détaillé est en cours de consolidation ; consultez le portail institutionnel lorsqu’il est vérifié.</p>"}${officialPortal}${faqSection}<p>Identification légale : ${LEGAL}</p><p>Les exigences applicables, les délais et les décisions relèvent des autorités et partenaires compétents ; ils sont à confirmer avant toute démarche.</p><p><a href="/?project=${projectQuery}&amp;destination=${encodeURIComponent(procedure.id)}#evaluation-multi">Commencer l’évaluation protégée</a> · <a href="/procedures">Retourner à l’annuaire</a> · <a href="/contact">Contacter 3M Travel</a></p></section>`;
   })() : "";
   const procedureFaqFallback = path === "/procedures" ? `<section aria-labelledby="seo-procedures-faq"><h2 id="seo-procedures-faq">Questions fréquentes</h2><dl>${PUBLIC_FAQ_ITEMS.map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section><p>Identification légale : ${LEGAL}</p>` : "";
   const routeContent = routeSpecificPrerender(path);
