@@ -3366,3 +3366,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Récupérer et relire 2f7e036 et le merge dd2c93a.
 - [x] Vérifier TypeScript, les retentatives de lecture CV et la validation des documents client/agency/caseDocuments.
 - [ ] Exécuter les tests concernés, publier et retester l’extraction CV en direct sur 3M-AGN-120001 sans mutation métier.
+
+## Synchronisation des commits 4fc9ed5 et 4fb2ce1
+- [ ] Synchroniser et relire les commits GitHub 4fc9ed5 et 4fb2ce1 concernant le parcours interne/officiel et l’aria-label du bouton Valider des documents
+- [ ] Exécuter TypeScript et les tests ciblés sur le parcours synchronisé et la validation documentaire
+- [ ] Publier un checkpoint uniquement si les contrôles sont verts
+- [ ] Documenter les URLs/actions exactes de vérification
