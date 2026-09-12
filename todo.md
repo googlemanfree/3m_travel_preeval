@@ -3350,4 +3350,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif GitHub b42a77c — archivage automatique du pré-dossier lié
 - [x] Récupérer et relire b42a77c et le merge 5a3662f.
 - [x] Vérifier TypeScript, CandidateDetailModal, l’archivage réversible et la navigation vers le dossier agence.
-- [ ] Exécuter les tests concernés et publier le correctif validé.
+- [x] Exécuter les tests concernés et publier le correctif validé.
+
+## Correctif GitHub ec8d1e0 — dialogues, conseiller et échéances
+- [x] Récupérer et relire ec8d1e0 et le merge bd6c1ed.
+- [x] Vérifier les dialogues in-app de corbeille, l’assignation/reassignation conseiller et le filtre Mes dossiers des échéances.
+- [ ] Exécuter TypeScript/tests ciblés et publier le correctif validé.
