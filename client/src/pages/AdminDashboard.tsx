@@ -379,6 +379,9 @@ export function CandidateDetailModal({
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
   const evaluationEditorSourceType = candidate?.source === "ACCOUNT_ONLY" ? "candidate" : candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
+  const archivePreDossierMutation = trpc.admin.archiveDuplicateRecord.useMutation({
+    onError: (error) => toast({ title: "Nettoyage du pré-dossier impossible", description: `Le dossier lié reste consultable, mais l’ancien pré-dossier n’a pas pu être archivé : ${error.message}`, variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
@@ -593,15 +596,37 @@ export function CandidateDetailModal({
                       {!(candidate as any)?.linkedAgencyDossierReference && " Recherchez ce candidat dans l’onglet Dossiers pour retrouver son dossier actif."}
                     </p>
                     {(candidate as any)?.linkedAgencyDossierReference && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="mt-3 bg-emerald-700 hover:bg-emerald-800"
-                        onClick={() => { setCandidate360Tab("overview"); onNavigateToCandidate?.(`agency_${(candidate as any).linkedAgencyDossierId}`); }}
-                        aria-label={`Ouvrir le dossier actif ${(candidate as any).linkedAgencyDossierReference}`}
-                      >
-                        Ouvrir le dossier {(candidate as any).linkedAgencyDossierReference}
-                      </Button>
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={archivePreDossierMutation.isPending}
+                          className="mt-3 bg-emerald-700 hover:bg-emerald-800"
+                          onClick={async () => {
+                            const linkedReference = (candidate as any).linkedAgencyDossierReference;
+                            const linkedId = (candidate as any).linkedAgencyDossierId;
+                            const folderCode = candidate?.folderCode;
+                            try {
+                              await archivePreDossierMutation.mutateAsync({
+                                sessionToken,
+                                candidateId,
+                                reason: `Pré-dossier obsolète : dossier agence ${linkedReference} déjà ouvert et suivi.`,
+                                confirmation: "CORBEILLE",
+                              });
+                              toast({ title: "Pré-dossier archivé", description: `${folderCode} a été placé dans la corbeille réversible ; le dossier actif ${linkedReference} reste consultable.` });
+                              onStatusUpdated();
+                            } catch {
+                              // Le pré-dossier reste actif ; l’admin peut quand même consulter le dossier lié.
+                            }
+                            setCandidate360Tab("overview");
+                            onNavigateToCandidate?.(`agency_${linkedId}`);
+                          }}
+                          aria-label={`Ouvrir le dossier actif ${(candidate as any).linkedAgencyDossierReference} et archiver ce pré-dossier`}
+                        >
+                          {archivePreDossierMutation.isPending ? "Archivage du pré-dossier…" : `Ouvrir le dossier ${(candidate as any).linkedAgencyDossierReference}`}
+                        </Button>
+                        <p className="mt-2 text-xs text-emerald-800">L’ouverture archive automatiquement ce pré-dossier (réversible depuis la corbeille) puisque le dossier actif est déjà suivi.</p>
+                      </>
                     )}
                   </section>
                 )}
