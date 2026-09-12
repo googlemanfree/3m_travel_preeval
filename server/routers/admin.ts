@@ -2352,6 +2352,7 @@ export const adminRouter = router({
           // restait possible, ce qui provoquait un refus serveur systématique et confus pour l'admin.
           let linkedAgencyDossierReference: string | null = null;
           let linkedAgencyDossierDestination: string | null = null;
+          let linkedAgencyDossierId: number | null = null;
           if (account.dossierStatus !== "nouveau") {
             const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination }).from(agencyDossiers)
               .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
@@ -2360,6 +2361,7 @@ export const adminRouter = router({
             if (linkedDossier) {
               linkedAgencyDossierReference = `3M-AGN-${String(linkedDossier.id).padStart(4, "0")}`;
               linkedAgencyDossierDestination = linkedDossier.destination;
+              linkedAgencyDossierId = linkedDossier.id;
             }
           }
           return serializeAdminCandidateDetails({
@@ -2379,6 +2381,7 @@ export const adminRouter = router({
               source: "ACCOUNT_ONLY" as const,
               linkedAgencyDossierReference,
               linkedAgencyDossierDestination,
+              linkedAgencyDossierId,
               emailHistory,
               scoringTotal: null,
               scoringBadge: null,

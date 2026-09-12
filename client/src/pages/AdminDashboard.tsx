@@ -333,12 +333,14 @@ export function CandidateDetailModal({
   onClose,
   onStatusUpdated,
   onOpenOperations,
+  onNavigateToCandidate,
   openEvaluationEditor = false,
 }: {
   candidateId: string;
   onClose: () => void;
   onStatusUpdated: () => void;
   onOpenOperations: (area: "payments" | "documents" | "emails", folderCode: string) => void;
+  onNavigateToCandidate?: (candidateId: string) => void;
   openEvaluationEditor?: boolean;
 }) {
   const { toast } = useToast();
@@ -587,10 +589,19 @@ export function CandidateDetailModal({
                     <h4 className="mt-1 text-lg font-bold text-slate-950">Ce compte a déjà été activé</h4>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-700">
                       Ce n’est plus un pré-dossier : l’ouverture a déjà été confirmée{(candidate as any)?.linkedAgencyDossierDestination ? ` pour ${(candidate as any).linkedAgencyDossierDestination}` : ""}.
-                      {(candidate as any)?.linkedAgencyDossierReference
-                        ? ` Le dossier actif à consulter est ${(candidate as any).linkedAgencyDossierReference} (recherchez cette référence dans Dossiers).`
-                        : " Recherchez ce candidat dans l’onglet Dossiers pour retrouver son dossier actif."}
+                      {!(candidate as any)?.linkedAgencyDossierReference && " Recherchez ce candidat dans l’onglet Dossiers pour retrouver son dossier actif."}
                     </p>
+                    {(candidate as any)?.linkedAgencyDossierReference && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="mt-3 bg-emerald-700 hover:bg-emerald-800"
+                        onClick={() => { setCandidate360Tab("overview"); onNavigateToCandidate?.(`agency_${(candidate as any).linkedAgencyDossierId}`); }}
+                        aria-label={`Ouvrir le dossier actif ${(candidate as any).linkedAgencyDossierReference}`}
+                      >
+                        Ouvrir le dossier {(candidate as any).linkedAgencyDossierReference}
+                      </Button>
+                    )}
                   </section>
                 )}
               </>
@@ -2417,6 +2428,11 @@ export default function AdminDashboard() {
           onClose={() => { setSelectedCandidateId(null); setOpenEvaluationEditor(false); }}
           onStatusUpdated={handleRefresh}
           openEvaluationEditor={openEvaluationEditor}
+          onNavigateToCandidate={(nextCandidateId) => {
+            setOpenEvaluationEditor(false);
+            setSelectedCandidateId(nextCandidateId);
+            toast({ title: "Dossier ouvert", description: "Le dossier lié a été ouvert dans la fiche 360°." });
+          }}
           onOpenOperations={(area, folderCode) => {
             setSearch(folderCode);
             setActiveAdminTab(area);
