@@ -17,7 +17,8 @@ describe("admin destination synchronization contract", () => {
   it("exposes the destination synchronization action in Candidate360", () => {
     const source = read("client/src/components/Candidate360Workspace.tsx");
     expect(source).toContain("updateCandidateDestination");
-    expect(source).toContain("Synchroniser la destination");
-    expect(source).toContain("Confirmer la modification de destination");
+    expect(source).toContain("Synchroniser");
+    expect(source).toContain("Type de visa / procédure");
+    expect(source).toContain("Confirmer la modification de la destination et du type de visa");
   });
 });
