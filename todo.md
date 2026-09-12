@@ -3355,4 +3355,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif GitHub ec8d1e0 — dialogues, conseiller et échéances
 - [x] Récupérer et relire ec8d1e0 et le merge bd6c1ed.
 - [x] Vérifier les dialogues in-app de corbeille, l’assignation/reassignation conseiller et le filtre Mes dossiers des échéances.
-- [ ] Exécuter TypeScript/tests ciblés et publier le correctif validé.
+- [x] Exécuter TypeScript/tests ciblés et publier le correctif validé.
+
+## Correctif GitHub 1b11d3b — synchronisation pays et type de visa
+- [x] Récupérer et relire 1b11d3b et le merge 6487631.
+- [x] Vérifier TypeScript, la mutation de destination/visaType et le rendu Candidate360/parcours.
+- [ ] Exécuter les tests concernés et publier le correctif validé.
