@@ -3566,7 +3566,7 @@ export const adminRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const parsed = /^(account|online|agency)_(\\d+)$/.exec(input.candidateId.trim());
+      const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());
       if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence de dossier non prise en charge." });
       const source = parsed[1];
       const id = Number(parsed[2]);
@@ -3594,7 +3594,7 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const parsed = /^(account|online|agency)_(\\d+)$/.exec(input.candidateId.trim());
+      const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());
       if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence archivée non prise en charge." });
       const source = parsed[1];
       const id = Number(parsed[2]);
@@ -3686,7 +3686,7 @@ export const adminRouter = router({
       const destination = source.destination || "autre";
       const visaType = source.visaType || "Visiteur";
       const journey = getEnrichedCandidateJourney(destination, visaType, visaType);
-      const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
+      const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });
       const dossierKey = reference.source === "online" ? (source.dossierNumber || `online-${reference.id}`) : `3M-AG-${reference.id.toString().padStart(4, "0")}`;

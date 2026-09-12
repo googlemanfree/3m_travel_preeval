@@ -1721,7 +1721,7 @@ export const candidateRouter = router({
       const context = await resolveCandidateProcedureContext(db, ctx.candidate);
       if (!context) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier candidat introuvable." });
       const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
-      const indexMatch = /^checklist-(\\d+)$/.exec(input.stepId);
+      const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });
       const persistedStepId = `checklist-${stepIndex}`;
