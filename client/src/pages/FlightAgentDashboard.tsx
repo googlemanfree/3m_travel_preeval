@@ -292,8 +292,8 @@ export default function FlightAgentDashboard() {
       PRIORITY_LABELS[request.priority as RequestPriority] || request.priority,
       new Date(request.createdAt).toLocaleString("fr-FR"),
     ]);
-    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\\r\\n");
-    const blob = new Blob([`\\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

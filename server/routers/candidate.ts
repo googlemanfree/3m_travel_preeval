@@ -2107,9 +2107,14 @@ export const candidateRouter = router({
     const candidateHasTrackedDossier = Boolean((candidate as any).dossierNumber)
       || candidate.dossierStatus !== "nouveau"
       || candidate.evaluationDeclarationStatus === "validated";
-    const dashboardDossierNumber = activeApp?.dossierNumber
+    // Un candidat peut cumuler une candidature en ligne (EVAL-AG-...) et un
+    // dossier agence ouvert plus tard lors de l'activation (3M-AGN-...). Le
+    // dossier agence, quand il existe, est celui réellement traité par
+    // l'administration : il doit primer, sinon l'espace client continue
+    // d'afficher l'ancienne référence même après l'activation.
+    const dashboardDossierNumber = activeAgencyDossierNumber
+      || activeApp?.dossierNumber
       || (candidate as any).dossierNumber
-      || activeAgencyDossierNumber
       || (candidateHasTrackedDossier ? `COMPTE-${candidate.id}` : null)
       || "N/A";
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({

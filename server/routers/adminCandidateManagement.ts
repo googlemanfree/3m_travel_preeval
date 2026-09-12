@@ -466,7 +466,8 @@ export const adminCandidateManagementRouter = router({
       let emailSent = false;
       try {
         emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, `3M-AGN-${agencyDossierId.toString().padStart(4, "0")}`, input.destination, 0);
-      } catch {
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Échec de l'e-mail de confirmation d'activation:", err);
         emailSent = false;
       }
       return { success: true, emailSent, linkedExistingDossier, agencyDossierId };
@@ -495,7 +496,7 @@ export const adminCandidateManagementRouter = router({
       candidate.paymentStatus, candidate.documentsCount, candidate.source,
       new Date(candidate.createdAt).toLocaleString("fr-FR"),
     ].map(escapeCsvCell).join(","));
-    return { csv: `\\uFEFF${headers.map(escapeCsvCell).join(",")}\\n${rows.join("\\n")}`, count: candidates.length };
+    return { csv: `﻿${headers.map(escapeCsvCell).join(",")}\n${rows.join("\n")}`, count: candidates.length };
   }),
 
   reviewPortrait: publicProcedure
@@ -999,8 +1000,29 @@ export const adminCandidateManagementRouter = router({
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
       const protocolText = input.content.trim().length >= 50 ? input.content : INITIAL_AGREEMENT_PROTOCOL;
-      const paragraphs = protocolText.split(/\\n\\s*\\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\\n/g, "<br>")}</p>`).join("");
-      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#10234f;line-height:1.6"><h1>3M Travel &amp; Services</h1><p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p><p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p><p style="font-size:12px;color:#64748b">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>${paragraphs}<p style="font-size:12px;color:#64748b">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p></body></html>`;
+      const paragraphs = protocolText.split(/\n\s*\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
+      const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+      const logoUrl = `${siteUrl}/favicon.png`;
+      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#10234f;">
+<div style="max-width:760px;margin:0 auto;background:#ffffff;">
+  <div style="background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);padding:28px 32px;text-align:center;">
+    <img src="${logoUrl}" alt="3M Travel & Services" width="56" height="56" style="width:56px;height:56px;border-radius:50%;background:#ffffff;padding:4px;" />
+    <h1 style="color:#ffffff;font-size:20px;margin:12px 0 0;">3M Travel &amp; Services</h1>
+    <p style="color:#bfdbfe;font-size:12px;margin:4px 0 0;">Protocole d’accord de service</p>
+  </div>
+  <div style="padding:32px;line-height:1.6;">
+    <p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p>
+    <p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p>
+    <p style="font-size:12px;color:#64748b">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>
+    ${paragraphs}
+    <p style="font-size:12px;color:#64748b;margin-top:24px;">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p>
+  </div>
+  <div style="background:#f8faff;padding:20px 32px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;">
+    <p style="margin:0 0 4px;">3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+    <p style="margin:0;">Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
+  </div>
+</div>
+</body></html>`;
       const storageKey = `agreements/${reference.source}/${reference.id}/${Date.now()}-protocole.html`;
       const stored = await storagePut(storageKey, Buffer.from(html, "utf8"), "text/html; charset=utf-8");
       if (agencyDossierId) {

@@ -2678,7 +2678,7 @@ export const adminRouter = router({
           .orderBy(desc(adminActivityLogs.createdAt))
           .limit(input.limit);
 
-        const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\\r?\\n/g, " ")}"`;
+        const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
         const headers = ["ID", "Administrateur", "Action", "Type", "Identifiant", "Ancien statut", "Nouveau statut", "Résultats", "Détails", "Date"];
         const csvRows = rows.map((row) => [
           row.id,
@@ -2692,7 +2692,7 @@ export const adminRouter = router({
           row.details,
           row.createdAt ? new Date(row.createdAt).toLocaleString("fr-FR") : "",
         ]);
-        const content = "\\uFEFF" + [headers, ...csvRows].map((row) => row.map(escapeCsv).join(",")).join("\\r\\n");
+        const content = "﻿" + [headers, ...csvRows].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
         const fileName = `rapport-activite-admin-${new Date().toISOString().slice(0, 10)}.csv`;
 
         await db.insert(adminActivityLogs).values({
