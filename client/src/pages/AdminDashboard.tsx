@@ -1008,6 +1008,7 @@ export default function AdminDashboard() {
   const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [archiveSearch, setArchiveSearch] = useState("");
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [showPendingSaveConfirm, setShowPendingSaveConfirm] = useState(false);
   const { toast } = useToast();
   const updateDossierPaymentStateMutation = trpc.admin.updateDossierPaymentState.useMutation();
@@ -1031,6 +1032,39 @@ export default function AdminDashboard() {
     const reason = window.prompt("Motif obligatoire (doublon, compte mal créé, autre) :", "Doublon à vérifier");
     if (!reason || reason.trim().length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
     archiveDuplicateMutation.mutate({ sessionToken, candidateId: candidate.id, reason: reason.trim(), confirmation: "CORBEILLE" });
+  }, [archiveDuplicateMutation, sessionToken, toast]);
+
+  const toggleCandidateSelection = useCallback((candidateId: string) => {
+    setSelectedCandidateIds((current) => {
+      const next = new Set(current);
+      if (next.has(candidateId)) next.delete(candidateId);
+      else next.add(candidateId);
+      return next;
+    });
+  }, []);
+
+  const bulkArchiveSelectedCandidates = useCallback(async (selected: Array<{ id: string; folderCode?: string; fullName?: string }>) => {
+    if (!selected.length) return;
+    const list = selected.map((item) => `• ${item.folderCode ?? "—"} — ${item.fullName ?? "—"}`).join("\n");
+    if (!window.confirm(`Mettre ${selected.length} dossier(s) à la corbeille (réversible) ?\n\n${list}`)) return;
+    const reason = window.prompt("Motif obligatoire pour ces dossiers (doublon, compte mal créé, autre) :", "Doublon à vérifier");
+    if (!reason || reason.trim().length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
+    let succeeded = 0;
+    let failed = 0;
+    for (const item of selected) {
+      try {
+        await archiveDuplicateMutation.mutateAsync({ sessionToken, candidateId: item.id, reason: reason.trim(), confirmation: "CORBEILLE" });
+        succeeded += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setSelectedCandidateIds(new Set());
+    toast({
+      title: "Mise en corbeille groupée terminée",
+      description: `${succeeded} dossier(s) archivé(s)${failed ? `, ${failed} échec(s)` : ""}.`,
+      variant: failed ? "destructive" : undefined,
+    });
   }, [archiveDuplicateMutation, sessionToken, toast]);
 
   const queueInlineChange = useCallback((candidateId: string, field: "paymentStatus" | "procedureStep", value: string) => {
@@ -1136,6 +1170,9 @@ export default function AdminDashboard() {
     if (!sessionToken) return;
     void trpcUtils.admin.listCandidates.reset();
   }, [sessionToken, trpcUtils]);
+  useEffect(() => {
+    setSelectedCandidateIds(new Set());
+  }, [candidateListInput]);
   useEffect(() => {
     const message = candidateListError?.message?.toLowerCase() ?? "";
     const unauthorized = candidateListError?.data?.code === "UNAUTHORIZED" || message.includes("session invalide") || message.includes("session expirée") || message.includes("session administrateur requise");
@@ -2248,12 +2285,41 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
 
+        {selectedCandidateIds.size > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-sm font-semibold text-blue-900">{selectedCandidateIds.size} dossier{selectedCandidateIds.size > 1 ? "s" : ""} sélectionné{selectedCandidateIds.size > 1 ? "s" : ""}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setSelectedCandidateIds(new Set())}>Tout désélectionner</Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"
+                disabled={archiveDuplicateMutation.isPending}
+                onClick={() => void bulkArchiveSelectedCandidates(candidates.filter((candidate) => selectedCandidateIds.has(candidate.id)))}
+              >
+                <Trash2 className="h-4 w-4" />
+                Mettre à la corbeille ({selectedCandidateIds.size})
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Tableau */}
         <Card className="admin-glass-table border-0 overflow-hidden hover:-translate-y-0.5" aria-busy={isLoading}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200/70">
+                  <th className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                      aria-label="Sélectionner tous les dossiers affichés"
+                      checked={candidates.length > 0 && candidates.every((candidate) => selectedCandidateIds.has(candidate.id))}
+                      onChange={(event) => setSelectedCandidateIds(event.target.checked ? new Set(candidates.map((candidate) => candidate.id)) : new Set())}
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Candidat</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
@@ -2271,7 +2337,7 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 11 }).map((_, j) => (
+                      {Array.from({ length: 12 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
@@ -2280,7 +2346,7 @@ export default function AdminDashboard() {
                   ))
                 ) : candidates.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={12} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>{candidateListError ? "Impossible de synchroniser la liste. Réessayez dans quelques secondes." : isLoading ? "Chargement des dossiers…" : "Aucun candidat trouvé"}</p>
                       {hasCandidateFilters && !candidateListError && (
@@ -2295,6 +2361,15 @@ export default function AdminDashboard() {
                       className={`transition-colors cursor-pointer ${pendingInlineChanges[candidate.id] ? "bg-amber-50/90 hover:bg-amber-100/90 ring-1 ring-inset ring-amber-200" : "hover:bg-blue-50/40"}`}
                       onClick={() => setSelectedCandidateId(candidate.id)}
                     >
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300"
+                          aria-label={`Sélectionner le dossier de ${candidate.fullName}`}
+                          checked={selectedCandidateIds.has(candidate.id)}
+                          onChange={() => toggleCandidateSelection(candidate.id)}
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                           {candidate.folderCode}
