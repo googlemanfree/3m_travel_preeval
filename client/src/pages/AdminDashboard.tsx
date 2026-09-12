@@ -64,6 +64,7 @@ import {
   Timer,
   X,
   Trash2,
+  UserCheck,
 } from "lucide-react";
 import {
   BarChart,
@@ -993,6 +994,7 @@ export default function AdminDashboard() {
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [sourceFilter, setSourceFilter] = useState<CandidateSource | "ALL">("ALL");
   const [destinationFilter, setDestinationFilter] = useState("ALL");
+  const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
@@ -1119,8 +1121,9 @@ export default function AdminDashboard() {
     activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
     source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
+    assignedToMe: assignedToMeFilter || undefined,
     sortBy,
-  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, sortBy]);
+  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, assignedToMeFilter, sortBy]);
   const { data, isLoading, error: candidateListError, refetch } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
@@ -1294,13 +1297,14 @@ export default function AdminDashboard() {
     updateKanbanStatusMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus, notifyClient: true });
   };
   const availableDestinations = data?.availableDestinations || [];
-  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || sortBy !== "priority");
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority");
   const resetCandidateFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
     setActivationFilter("ALL");
     setSourceFilter("ALL");
     setDestinationFilter("ALL");
+    setAssignedToMeFilter(false);
     setSortBy("priority");
   };
 
@@ -2183,6 +2187,17 @@ export default function AdminDashboard() {
                 {availableDestinations.map((destination) => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant={assignedToMeFilter ? "default" : "outline"}
+              className={`w-full gap-2 lg:w-auto ${assignedToMeFilter ? "bg-blue-700 hover:bg-blue-800" : ""}`}
+              aria-pressed={assignedToMeFilter}
+              onClick={() => setAssignedToMeFilter((value) => !value)}
+              title="N’afficher que les dossiers qui me sont assignés"
+            >
+              <UserCheck className="h-4 w-4" />
+              Mes dossiers
+            </Button>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
               <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>
               <SelectContent>

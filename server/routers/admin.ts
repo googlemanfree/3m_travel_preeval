@@ -1475,6 +1475,7 @@ export const adminRouter = router({
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
        source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
        destination: z.string().trim().min(1).max(100).optional(),
+       assignedToMe: z.boolean().optional(),
        sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority"),
               limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
@@ -1667,7 +1668,7 @@ export const adminRouter = router({
           evaluationReviewNote: null,
           evaluationValidatedAt: candidateByEmail.get(app.email.toLowerCase())?.evaluationReviewedAt ?? null,
           evaluationValidatedBy: candidateByEmail.get(app.email.toLowerCase())?.evaluationReviewedBy ?? null,
-          adminAssignedTo: null,
+          adminAssignedTo: app.assignedToAdmin ?? null,
           lastStatusUpdateAt: app.updatedAt,
           evaluationScheduledAt: null,
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
@@ -1736,6 +1737,10 @@ export const adminRouter = router({
           const destination = input.destination.toLocaleLowerCase("fr-FR");
           allCandidates = allCandidates.filter(c => c.destinationCountry.toLocaleLowerCase("fr-FR") === destination);
         }
+        if (input.assignedToMe && admin.email) {
+          const adminEmail = admin.email.toLowerCase();
+          allCandidates = allCandidates.filter(c => c.adminAssignedTo?.toLowerCase() === adminEmail);
+        }
 
         // Filtrer par recherche
         if (input.search && input.search.trim()) {
@@ -1770,6 +1775,7 @@ export const adminRouter = router({
           candidates: allCandidates,
           total: allCandidates.length,
           availableDestinations,
+          currentAdminEmail: admin.email ?? null,
         };
       } catch (err) {
         console.error("[Admin List Candidates] Error:", err);
