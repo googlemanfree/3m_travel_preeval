@@ -3466,7 +3466,8 @@ export const adminRouter = router({
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
         .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
       const destination = (sourceRecord as any).destination ?? projectDetails.destination ?? null;
-      const candidateJourney = getEnrichedCandidateJourney(destination, latestEvaluation?.visaType ?? null, procedureLabel);
+      const visaTypeForJourney = (sourceRecord as any).visaType ?? latestEvaluation?.visaType ?? null;
+      const candidateJourney = getEnrichedCandidateJourney(destination, visaTypeForJourney, procedureLabel);
       const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
         evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
         activationRequested: Boolean((sourceRecord as any).activationRequestedAt),
@@ -3661,6 +3662,7 @@ export const adminRouter = router({
       sessionToken: z.string().min(1),
       candidateId: z.string().min(1),
       destination: z.string().trim().min(2).max(100),
+      visaType: z.string().trim().min(2).max(100).optional(),
       comment: z.string().trim().max(1000).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -3675,21 +3677,31 @@ export const adminRouter = router({
         : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
       const previousDestination = String((sourceRecord as any).destination ?? operationalCase.countryTarget ?? "");
-      if (previousDestination.trim().toLowerCase() === input.destination.trim().toLowerCase()) return { success: true, destination: input.destination.trim(), changed: false };
+      const previousVisaType = String((sourceRecord as any).visaType ?? "");
+      const destinationChanged = previousDestination.trim().toLowerCase() !== input.destination.trim().toLowerCase();
+      const visaTypeChanged = input.visaType !== undefined && previousVisaType.trim().toLowerCase() !== input.visaType.trim().toLowerCase();
+      if (!destinationChanged && !visaTypeChanged) return { success: true, destination: input.destination.trim(), visaType: input.visaType?.trim() ?? previousVisaType, changed: false };
+      const updateFields: { destination?: string; visaType?: string } = {};
+      if (destinationChanged) updateFields.destination = reference.source === "online" ? input.destination.trim().toLowerCase() : input.destination.trim();
+      if (visaTypeChanged) updateFields.visaType = input.visaType!.trim();
       if (reference.source === "online") {
-        await db.update(applications).set({ destination: input.destination.trim().toLowerCase() as any, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || admin.email }).where(eq(applications.id, reference.id));
+        await db.update(applications).set({ ...updateFields, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || admin.email } as any).where(eq(applications.id, reference.id));
       } else {
-        await db.update(agencyDossiers).set({ destination: input.destination.trim(), lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.email || admin.fullName }).where(eq(agencyDossiers.id, reference.id));
+        await db.update(agencyDossiers).set({ ...updateFields, lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.email || admin.fullName } as any).where(eq(agencyDossiers.id, reference.id));
       }
-      await db.update(cases).set({ countryTarget: input.destination.trim() }).where(eq(cases.id, operationalCase.id));
+      if (destinationChanged) await db.update(cases).set({ countryTarget: input.destination.trim() }).where(eq(cases.id, operationalCase.id));
       const candidateId = reference.source === "online" ? (sourceRecord as any).candidateId : (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, (sourceRecord as any).email)).limit(1))[0]?.id;
-      if (candidateId) {
+      if (candidateId && destinationChanged) {
         const normalizedDestination = input.destination.trim().toLowerCase();
         const candidateDestination = normalizedDestination.includes("canada") ? "canada" : normalizedDestination.includes("luxembourg") ? "luxembourg" : normalizedDestination.includes("pologne") ? "pologne" : normalizedDestination.includes("europe") ? "europe" : normalizedDestination.includes("golfe") ? "golfe" : "autre";
         await db.update(candidates).set({ destination: candidateDestination as any }).where(eq(candidates.id, candidateId));
       }
-      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "destination_updated", entityType: "case", entityId: String(operationalCase.id), description: `Destination modifiée de « ${previousDestination || "non définie"} » vers « ${input.destination.trim()} ».${input.comment ? ` ${input.comment}` : ""}` });
-      return { success: true, destination: input.destination.trim(), previousDestination, changed: true };
+      const changeDescriptions = [
+        destinationChanged ? `Destination modifiée de « ${previousDestination || "non définie"} » vers « ${input.destination.trim()} ».` : null,
+        visaTypeChanged ? `Type de procédure modifié de « ${previousVisaType || "non défini"} » vers « ${input.visaType!.trim()} ».` : null,
+      ].filter(Boolean).join(" ");
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "destination_updated", entityType: "case", entityId: String(operationalCase.id), description: `${changeDescriptions}${input.comment ? ` ${input.comment}` : ""}` });
+      return { success: true, destination: input.destination.trim(), visaType: input.visaType?.trim() ?? previousVisaType, previousDestination, previousVisaType, changed: true };
     }),
 
   updateCandidateJourneyStep: publicProcedure
