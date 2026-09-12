@@ -806,6 +806,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                     className="h-8 bg-emerald-700 px-2.5 text-xs hover:bg-emerald-800"
                     disabled={!canValidate || updateDocumentStatusMutation.isPending}
                     title={canValidate ? "Valider ce document et notifier le candidat" : "Ce document ne peut pas encore être validé depuis cette liste."}
+                    aria-label={canValidate ? `Valider ${document.fileName} et notifier le candidat` : `${document.fileName} ne peut pas encore être validé depuis cette liste`}
                     onClick={() => { setValidatingDocumentId(document.id); updateDocumentStatusMutation.mutate({ sessionToken, documentId: document.rawId, source: document.documentSource, status: "approved" }); }}
                   >
                     {isValidatingThis ? "Validation…" : "Valider"}
