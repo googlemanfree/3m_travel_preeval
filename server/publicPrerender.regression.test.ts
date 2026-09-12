@@ -63,7 +63,8 @@ describe("pré-rendu public indexable", () => {
       const path = `/procedures/${destination.procedure.id}`;
       const rendered = composePublicPrerender(template, path);
       expect(rendered.status, path).toBe(200);
-      expect(rendered.html, path).toContain(`Procédure ${destination.procedure.name}`);
+      const escapedProcedureName = destination.procedure.name.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] ?? character);
+      expect(rendered.html, path).toContain(`Procédure ${escapedProcedureName}`);
       expect(rendered.html, path).toContain("Commencer l’évaluation protégée");
     }
   });
