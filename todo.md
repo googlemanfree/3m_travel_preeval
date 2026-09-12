@@ -3335,3 +3335,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Récupérer et relire bd27a8d : renommer le forfait Tarifs et retirer la promesse de garantie.
 - [x] Récupérer et relire de887eb : enregistrer `/accessibilite` dans PUBLIC_PAGES pour supprimer le 404 serveur.
 - [x] Exécuter TypeScript/tests et publier les deux correctifs validés.
+
+## Commits origin/main après b49a710
+- [x] Récupérer et relire le lien cliquable COMPTE-* vers 3M-AGN-* dans la bannière Candidate360.
+- [x] Récupérer et relire le filtre « Mes dossiers » par conseiller et le retour assignedToAdmin pour les dossiers agence.
+- [x] Récupérer et relire la sélection multiple des dossiers avec action groupée « Mettre à la corbeille ».
+- [ ] Exécuter TypeScript/tests ciblés et publier les trois commits validés.

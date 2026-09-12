@@ -2296,7 +2296,7 @@ export default function AdminDashboard() {
                 variant="outline"
                 className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"
                 disabled={archiveDuplicateMutation.isPending}
-                onClick={() => void bulkArchiveSelectedCandidates(candidates.filter((candidate) => selectedCandidateIds.has(candidate.id)))}
+                onClick={() => void bulkArchiveSelectedCandidates(candidates.flatMap((candidate) => typeof candidate.id === "string" && selectedCandidateIds.has(candidate.id) ? [{ id: candidate.id, folderCode: candidate.folderCode, fullName: candidate.fullName }] : []))}
               >
                 <Trash2 className="h-4 w-4" />
                 Mettre à la corbeille ({selectedCandidateIds.size})
