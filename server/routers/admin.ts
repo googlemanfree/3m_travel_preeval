@@ -2065,7 +2065,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       documentId: z.number().int(),
-      source: z.enum(["client", "candidate", "agency"]).default("client"),
+      source: z.enum(["client", "candidate", "agency", "case"]).default("client"),
       status: z.enum(["pending", "approved", "rejected"]),
       comment: z.string().optional(),
     }))
@@ -2114,6 +2114,17 @@ export const adminRouter = router({
           const [cand] = candidateEmail ? await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1) : [];
           candidateId = cand?.id ?? null;
           await db.insert(agencyDossierHistory).values({ dossierId: fileRec.dossierId, action: "document_status_updated", changedBy: admin.email || "Admin", oldValue: fileRec.verificationStatus, newValue: input.status, details: input.comment || "Statut documentaire mis à jour" });
+        } else if (input.source === "case") {
+          const [fileRec] = await db.select({ id: caseDocuments.id, fileName: caseDocuments.fileName, candidateId: caseDocuments.candidateId }).from(caseDocuments).where(eq(caseDocuments.id, input.documentId)).limit(1);
+          if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Document du dossier introuvable" });
+          await db.update(caseDocuments).set({ reviewStatus: input.status === "approved" ? "approved" : input.status === "rejected" ? "rejected" : "pending", reviewNote: input.comment || null, reviewedAt: new Date() }).where(eq(caseDocuments.id, input.documentId));
+          documentName = fileRec.fileName;
+          if (fileRec.candidateId) {
+            const [cand] = await db.select().from(candidates).where(eq(candidates.id, fileRec.candidateId)).limit(1);
+            candidateEmail = cand?.email || "";
+            candidateName = cand?.fullName || "Candidat";
+            candidateId = cand?.id ?? null;
+          }
         } else {
           const [fileRec] = await db.select({ id: candidateFiles.id, fileName: candidateFiles.fileName, candidateId: candidateFiles.candidateId }).from(candidateFiles).where(eq(candidateFiles.id, input.documentId)).limit(1);
           if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Fichier candidat introuvable" });
@@ -3510,6 +3521,8 @@ export const adminRouter = router({
             ...document,
             documentUrl: document.fileKey ? `/manus-storage/${document.fileKey}` : null,
             source: document.uploadedByRole === "candidate" ? "online" : document.uploadedByRole === "agency" ? "scanned_agency" : "manual_admin",
+            documentSource: "case" as const,
+            rawId: document.id,
           })),
           ...agencyDocuments.map((document) => ({
             id: `agency-${document.id}`,
@@ -3521,6 +3534,8 @@ export const adminRouter = router({
             reviewNote: document.verificationComment,
             documentUrl: document.documentUrl,
             source: document.source,
+            documentSource: "agency" as const,
+            rawId: document.id,
           })),
           ...legacyDocuments.filter((document) => !operationalDocuments.some((operational) => operational.fileName === document.documentName) && !agencyDocuments.some((agency) => agency.documentName === document.documentName)).map((document) => ({
             id: `legacy-${document.id}`,
@@ -3532,6 +3547,8 @@ export const adminRouter = router({
             reviewNote: document.verificationComment,
             documentUrl: document.documentUrl,
             source: document.source,
+            documentSource: "client" as const,
+            rawId: document.id,
           })),
           ...((reference.source === "online" && (sourceRecord as typeof applications.$inferSelect).cvUrl && ![...operationalDocuments, ...legacyDocuments].some((document: any) => normalizeAdminDocumentType(document.documentType, document.documentName ?? document.fileName) === "cv")) ? [{
             id: `application-cv-${reference.id}`,
@@ -3543,6 +3560,8 @@ export const adminRouter = router({
             reviewStatus: "pending",
             reviewNote: null,
             source: "online",
+            documentSource: null,
+            rawId: null,
           }] : []),
         ],
         cvDocument: agencyCvDocument ? {

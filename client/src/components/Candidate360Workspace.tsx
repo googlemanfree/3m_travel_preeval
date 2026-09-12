@@ -106,6 +106,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "Canada");
   const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [visaTypeDraft, setVisaTypeDraft] = useState(candidate.projectType || "");
+  const [isFetchingCv, setIsFetchingCv] = useState(false);
   const [checklistProcedure, setChecklistProcedure] = useState("permanent_residence");
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
   const [outboundMessage, setOutboundMessage] = useState("");
@@ -264,6 +265,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onSuccess: async () => { unlockAction("assignAdvisor"); toast.success("Conseiller mis à jour"); await refresh(); },
     onError: (mutationError) => { unlockAction("assignAdvisor"); toast.error("Assignation impossible", { description: mutationError.message }); },
   });
+  const [validatingDocumentId, setValidatingDocumentId] = useState<string | null>(null);
+  const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation({
+    onSuccess: async () => { setValidatingDocumentId(null); toast.success("Document validé", { description: "Le candidat voit désormais ce document comme validé dans son espace, avec notification par e-mail." }); await refresh(); },
+    onError: (mutationError) => { setValidatingDocumentId(null); toast.error("Validation impossible", { description: mutationError.message }); },
+  });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
     onSuccess: async (result) => {
       unlockAction("message");
@@ -331,15 +337,29 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   // l’identifiant interne est la seule condition nécessaire côté UI.
   const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;
   const extractCandidateCv = async () => {
-    if (cvExtractionMutation.isPending) return;
+    if (cvExtractionMutation.isPending || isFetchingCv) return;
     if (!candidateCv?.documentUrl) {
       toast.error("CV introuvable", { description: "Aucun CV exploitable n’est rattaché à ce dossier." });
       return;
     }
+    setIsFetchingCv(true);
     try {
       const documentUrl = new URL(String(candidateCv.documentUrl), window.location.origin).toString();
-      const response = await fetch(documentUrl, { credentials: "include", headers: { Accept: "application/pdf,image/png,image/jpeg,application/octet-stream" }, cache: "no-store" });
-      if (!response.ok) throw new Error(`Le CV n’est pas accessible depuis le dossier (${response.status}).`);
+      const maxAttempts = 3;
+      let response: Response | null = null;
+      let lastStatus = 0;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        response = await fetch(documentUrl, { credentials: "include", headers: { Accept: "application/pdf,image/png,image/jpeg,application/octet-stream" }, cache: "no-store" });
+        if (response.ok) break;
+        lastStatus = response.status;
+        // Le stockage peut renvoyer une erreur transitoire (redémarrage, backend temporairement indisponible) : on retente avant d’abandonner.
+        if (attempt < maxAttempts && (response.status >= 500 || response.status === 429)) {
+          await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+          continue;
+        }
+        break;
+      }
+      if (!response || !response.ok) throw new Error(`Le CV n’est pas accessible depuis le dossier (${lastStatus || response?.status}). Réessayez dans quelques instants.`);
       const blob = await response.blob();
       if (blob.size > 5 * 1024 * 1024) throw new Error("Le CV dépasse la taille maximale d’analyse de 5 Mo.");
       const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -348,6 +368,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       cvExtractionMutation.mutate({ cvBase64: btoa(binary), cvMimeType: blob.type === "image/jpg" ? "image/jpeg" : (blob.type || "application/pdf") as "application/pdf" | "image/png" | "image/jpeg" });
     } catch (error) {
       toast.error("Lecture du CV impossible", { description: error instanceof Error ? error.message : "Réessayez depuis le dossier." });
+    } finally {
+      setIsFetchingCv(false);
     }
   };
 
@@ -766,9 +788,32 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
           {pendingRequirements.length > 0 && <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><h4 className="font-semibold text-amber-950">{pendingRequirements.length} pièce(s) à compléter</h4><p className="mt-1 text-sm text-amber-800">Envoyez une relance claire au candidat avec les documents attendus.</p></div><Button variant="outline" className="border-amber-300 bg-white text-amber-900" disabled={documentReminderMutation.isPending} onClick={() => documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id })}><Send className="mr-2 h-4 w-4" />{documentReminderMutation.isPending ? "Envoi…" : "Relancer le candidat"}</Button></div>}
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Pièces requises et vérification</h4><div className="mt-3 space-y-2">{data.requirements.length ? data.requirements.map((requirement: any) => <div key={requirement.id} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3"><div><p className="text-sm font-medium">{requirement.documentType}</p><p className="text-xs text-slate-500">{requirement.adminComment || "Aucun commentaire"}</p></div><StateBadge status={requirement.status} /></div>) : <p className="text-sm text-slate-500">La checklist documentaire sera créée selon la procédure choisie.</p>}</div></div>
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })}><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })}><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending || isFetchingCv} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{isFetchingCv ? "Lecture du CV…" : cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
           {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
-          <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => <div key={document.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3"><div><p className="text-sm font-medium">{document.documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div><StateBadge status={document.reviewStatus} /></div>) : <p className="text-sm text-slate-500">Aucun document opérationnel n’est encore centralisé dans ce dossier.</p>}</div></div>
+          <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => {
+            const isPending = String(document.reviewStatus ?? "").toLowerCase() === "pending" || String(document.reviewStatus ?? "").toLowerCase() === "received";
+            const canValidate = Boolean(document.documentSource && document.rawId);
+            const isValidatingThis = validatingDocumentId === document.id && updateDocumentStatusMutation.isPending;
+            return <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
+              <div className="min-w-0"><p className="text-sm font-medium">{document.documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <StateBadge status={document.reviewStatus} />
+                {document.documentUrl && <a href={document.documentUrl} download className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Télécharger</a>}
+                {isPending && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 bg-emerald-700 px-2.5 text-xs hover:bg-emerald-800"
+                    disabled={!canValidate || updateDocumentStatusMutation.isPending}
+                    title={canValidate ? "Valider ce document et notifier le candidat" : "Ce document ne peut pas encore être validé depuis cette liste."}
+                    onClick={() => { setValidatingDocumentId(document.id); updateDocumentStatusMutation.mutate({ sessionToken, documentId: document.rawId, source: document.documentSource, status: "approved" }); }}
+                  >
+                    {isValidatingThis ? "Validation…" : "Valider"}
+                  </Button>
+                )}
+              </div>
+            </div>;
+          }) : <p className="text-sm text-slate-500">Aucun document opérationnel n’est encore centralisé dans ce dossier.</p>}</div></div>
         </TabsContent>
 
         <DocumentPreviewModal isOpen={Boolean(previewDocument)} onClose={() => setPreviewDocument(null)} documentTitle={previewDocument?.documentTitle ?? "CV du candidat"} documentUrl={previewDocument?.documentUrl ?? ""} fileType={previewDocument?.fileType} />
