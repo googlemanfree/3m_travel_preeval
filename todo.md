@@ -3330,3 +3330,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Récupérer et relire le commit `af7eeed` sans écraser les travaux locaux en cours.
 - [x] Exécuter TypeScript et les tests ciblés d’activation, puis vérifier les garde-fous paiement et l’état déjà actif.
 - [ ] Publier le correctif validé et documenter la vérification exacte.
+
+## Correctifs GitHub bd27a8d et de887eb
+- [x] Récupérer et relire bd27a8d : renommer le forfait Tarifs et retirer la promesse de garantie.
+- [x] Récupérer et relire de887eb : enregistrer `/accessibilite` dans PUBLIC_PAGES pour supprimer le 404 serveur.
+- [x] Exécuter TypeScript/tests et publier les deux correctifs validés.
