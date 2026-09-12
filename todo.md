@@ -3345,4 +3345,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctif GitHub 8722572 — regex corbeille et checklist
 - [x] Récupérer et relire les quatre corrections de regex d’identifiant numérique.
 - [x] Exécuter TypeScript et les tests de corbeille/restauration et checklist admin/candidat.
-- [ ] Publier le correctif validé et documenter le résultat.
+- [x] Publier le correctif validé et documenter le résultat.
+
+## Correctif GitHub b42a77c — archivage automatique du pré-dossier lié
+- [x] Récupérer et relire b42a77c et le merge 5a3662f.
+- [x] Vérifier TypeScript, CandidateDetailModal, l’archivage réversible et la navigation vers le dossier agence.
+- [ ] Exécuter les tests concernés et publier le correctif validé.
