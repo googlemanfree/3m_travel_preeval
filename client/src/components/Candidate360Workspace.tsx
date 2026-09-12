@@ -256,6 +256,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onSuccess: async () => { unlockAction("clarificationDeadline"); toast.success("Échéance interne enregistrée"); await refresh(); },
     onError: (mutationError) => { unlockAction("clarificationDeadline"); toast.error("Échéance impossible à enregistrer", { description: mutationError.message }); },
   });
+  const currentAdminQuery = trpc.adminAuth.me.useQuery({ sessionToken }, { enabled: !!sessionToken });
+  const currentAdminEmail = currentAdminQuery.data?.authenticated ? currentAdminQuery.data.admin.email : null;
+  const [reassignEmailInput, setReassignEmailInput] = useState("");
+  const assignAdvisorMutation = trpc.admin.assignDossierAdvisor.useMutation({
+    onSuccess: async () => { unlockAction("assignAdvisor"); toast.success("Conseiller mis à jour"); await refresh(); },
+    onError: (mutationError) => { unlockAction("assignAdvisor"); toast.error("Assignation impossible", { description: mutationError.message }); },
+  });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
     onSuccess: async (result) => {
       unlockAction("message");
@@ -618,6 +625,32 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-700 p-2.5 text-white"><Gauge className="h-5 w-5" /></div><div><div className="flex flex-wrap items-center gap-2"><h4 className="text-lg font-bold text-slate-950">Pilotage du dossier</h4><StateBadge status={workflowStatus} /><Badge className={priority === "urgent" ? "border-rose-200 bg-rose-50 text-rose-800" : priority === "high" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-700"}>{PRIORITY_LABELS[priority]}</Badge></div><p className="mt-1 max-w-2xl text-sm text-slate-600">Modifiez les paramètres, préparez les relances et enregistrez une seule mise à jour synchronisée pour l’espace candidat.</p></div></div>
               <div className="grid grid-cols-2 gap-2 sm:flex"><Button type="button" variant="outline" onClick={() => setQuickMessageOpen(true)} className="gap-2"><Mail className="h-4 w-4" />Message</Button><Button type="button" variant="outline" disabled={!pendingRequirements.length || documentReminderMutation.isPending || actionLocks.documentReminder} onClick={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }} className="gap-2"><Bell className="h-4 w-4" />Relancer pièces</Button></div>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-label="Conseiller référent">
+              <UserRoundCheck className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <span className="text-sm text-slate-700">Conseiller assigné : <strong className="text-slate-900">{(candidate as any)?.assignedToAdmin || "Non assigné"}</strong></span>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                {currentAdminEmail && (candidate as any)?.assignedToAdmin?.toLowerCase() !== currentAdminEmail.toLowerCase() && (
+                  <Button type="button" size="sm" variant="outline" disabled={assignAdvisorMutation.isPending || actionLocks.assignAdvisor} onClick={() => { lockAction("assignAdvisor"); assignAdvisorMutation.mutate({ sessionToken, candidateId: candidate.id, assigneeEmail: currentAdminEmail }); }}>M’assigner ce dossier</Button>
+                )}
+                {(candidate as any)?.assignedToAdmin && (
+                  <Button type="button" size="sm" variant="ghost" className="text-slate-500 hover:text-slate-700" disabled={assignAdvisorMutation.isPending || actionLocks.assignAdvisor} onClick={() => { lockAction("assignAdvisor"); assignAdvisorMutation.mutate({ sessionToken, candidateId: candidate.id, assigneeEmail: null }); }}>Retirer</Button>
+                )}
+                <Input value={reassignEmailInput} onChange={(event) => setReassignEmailInput(event.target.value)} placeholder="Réassigner à un e-mail…" aria-label="Réassigner ce dossier à un autre conseiller" className="h-8 w-48 text-xs" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={!reassignEmailInput.trim() || assignAdvisorMutation.isPending || actionLocks.assignAdvisor}
+                  onClick={() => {
+                    const email = reassignEmailInput.trim();
+                    lockAction("assignAdvisor");
+                    assignAdvisorMutation.mutate({ sessionToken, candidateId: candidate.id, assigneeEmail: email }, { onSuccess: () => setReassignEmailInput("") });
+                  }}
+                >
+                  Assigner
+                </Button>
+              </div>
             </div>
             <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
               <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4" aria-label="Action suivante du dossier">

@@ -1040,7 +1040,7 @@ export default function AdminDashboard() {
   const updateInlineProcedureMutation = trpc.admin.updateCandidateStatus.useMutation();
   const confirmInlinePaymentMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation();
   const archiveDuplicateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
-    onSuccess: (result) => { toast({ title: "Dossier placé dans la corbeille", description: `${result.reference} est masqué de la liste active et reste restaurable.` }); void trpcUtils.admin.listCandidates.invalidate(); },
+    onSuccess: () => { void trpcUtils.admin.listCandidates.invalidate(); },
     onError: (error) => toast({ title: "Mise en corbeille impossible", description: error.message, variant: "destructive" }),
   });
   const trpcUtils = trpc.useUtils();
@@ -1050,14 +1050,15 @@ export default function AdminDashboard() {
     onError: (error) => toast({ title: "Restauration impossible", description: error.message, variant: "destructive" }),
   });
 
+  const [archiveDialogItems, setArchiveDialogItems] = useState<Array<{ id: string; folderCode?: string; fullName?: string; email?: string; source?: string }> | null>(null);
+  const [archiveReasonInput, setArchiveReasonInput] = useState("Doublon à vérifier");
+  const [restoreDialogRecord, setRestoreDialogRecord] = useState<{ candidateId: string; reference: string } | null>(null);
+
   const archiveCandidateFromTable = useCallback((candidate: { id?: string; folderCode?: string; fullName?: string; email?: string; source?: string }) => {
     if (!candidate.id) return;
-    const recap = `Récapitulatif de la mise en corbeille réversible\\n\\nDossier : ${candidate.folderCode ?? "—"}\\nCandidat : ${candidate.fullName ?? "—"}\\nE-mail : ${candidate.email ?? "—"}\\nSource : ${candidate.source ?? "—"}`;
-    if (!window.confirm(`${recap}\\n\\nAucune suppression définitive ne sera effectuée. Confirmer l’ouverture de la corbeille ?`)) return;
-    const reason = window.prompt("Motif obligatoire (doublon, compte mal créé, autre) :", "Doublon à vérifier");
-    if (!reason || reason.trim().length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
-    archiveDuplicateMutation.mutate({ sessionToken, candidateId: candidate.id, reason: reason.trim(), confirmation: "CORBEILLE" });
-  }, [archiveDuplicateMutation, sessionToken, toast]);
+    setArchiveDialogItems([candidate as { id: string; folderCode?: string; fullName?: string; email?: string; source?: string }]);
+    setArchiveReasonInput("Doublon à vérifier");
+  }, []);
 
   const toggleCandidateSelection = useCallback((candidateId: string) => {
     setSelectedCandidateIds((current) => {
@@ -1068,29 +1069,35 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  const bulkArchiveSelectedCandidates = useCallback(async (selected: Array<{ id: string; folderCode?: string; fullName?: string }>) => {
+  const openBulkArchiveDialog = useCallback((selected: Array<{ id: string; folderCode?: string; fullName?: string; email?: string; source?: string }>) => {
     if (!selected.length) return;
-    const list = selected.map((item) => `• ${item.folderCode ?? "—"} — ${item.fullName ?? "—"}`).join("\n");
-    if (!window.confirm(`Mettre ${selected.length} dossier(s) à la corbeille (réversible) ?\n\n${list}`)) return;
-    const reason = window.prompt("Motif obligatoire pour ces dossiers (doublon, compte mal créé, autre) :", "Doublon à vérifier");
-    if (!reason || reason.trim().length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
+    setArchiveDialogItems(selected);
+    setArchiveReasonInput("Doublon à vérifier");
+  }, []);
+
+  const confirmArchiveDialog = useCallback(async () => {
+    if (!archiveDialogItems) return;
+    const reason = archiveReasonInput.trim();
+    if (reason.length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
     let succeeded = 0;
     let failed = 0;
-    for (const item of selected) {
+    for (const item of archiveDialogItems) {
       try {
-        await archiveDuplicateMutation.mutateAsync({ sessionToken, candidateId: item.id, reason: reason.trim(), confirmation: "CORBEILLE" });
+        await archiveDuplicateMutation.mutateAsync({ sessionToken, candidateId: item.id, reason, confirmation: "CORBEILLE" });
         succeeded += 1;
       } catch {
         failed += 1;
       }
     }
+    const isBulk = archiveDialogItems.length > 1;
     setSelectedCandidateIds(new Set());
+    setArchiveDialogItems(null);
     toast({
-      title: "Mise en corbeille groupée terminée",
+      title: isBulk ? "Mise en corbeille groupée terminée" : "Dossier placé dans la corbeille",
       description: `${succeeded} dossier(s) archivé(s)${failed ? `, ${failed} échec(s)` : ""}.`,
       variant: failed ? "destructive" : undefined,
     });
-  }, [archiveDuplicateMutation, sessionToken, toast]);
+  }, [archiveDialogItems, archiveReasonInput, archiveDuplicateMutation, sessionToken, toast]);
 
   const queueInlineChange = useCallback((candidateId: string, field: "paymentStatus" | "procedureStep", value: string) => {
     setPendingInlineChanges((current) => ({ ...current, [candidateId]: { ...current[candidateId], [field]: value } }));
@@ -1214,6 +1221,8 @@ export default function AdminDashboard() {
     limit: 100,
     offset: 0,
   });
+  const { data: currentAdminData } = trpc.adminAuth.me.useQuery({ sessionToken }, { enabled: !!sessionToken });
+  const currentAdminEmail = currentAdminData?.authenticated ? currentAdminData.admin.email : null;
   const { data: advisorDeadlineGroups = [], isLoading: isLoadingAdvisorDeadlines, refetch: refetchAdvisorDeadlines } = trpc.admin.listAdvisorTreatmentDeadlines.useQuery(
     { sessionToken },
     { enabled: !!sessionToken },
@@ -1384,6 +1393,7 @@ export default function AdminDashboard() {
   const externalEvaluationCandidates = candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation");
   const pendingEvaluationCandidates = candidates.filter((candidate) => candidate.status === "PENDING_48H");
   const visibleAdvisorDeadlineGroups = advisorDeadlineGroups
+    .filter((group) => !assignedToMeFilter || !currentAdminEmail || group.advisorEmail?.toLowerCase() === currentAdminEmail.toLowerCase())
     .map((group) => ({
       ...group,
       items: advisorDeadlinePriorityFilter === "all"
@@ -1718,6 +1728,7 @@ export default function AdminDashboard() {
             <div>
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
               <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
+              {assignedToMeFilter && <p className="mt-1 text-xs font-semibold text-blue-700">Filtré sur « Mes dossiers » ({currentAdminEmail ?? "…"}).</p>}
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button variant="outline" size="sm" onClick={exportAdvisorDeadlinesCsv} className="gap-2"><Download className="h-4 w-4" />Exporter CSV</Button><Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}><SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes priorités</SelectItem><SelectItem value="urgent">Urgente</SelectItem><SelectItem value="high">Haute</SelectItem><SelectItem value="normal">Normale</SelectItem><SelectItem value="low">Basse</SelectItem></SelectContent></Select></div>
           </div>
@@ -2305,8 +2316,61 @@ export default function AdminDashboard() {
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
               {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
-              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => { if (window.confirm(`Restaurer ${record.reference} dans la liste active ?`)) restoreArchivedMutation.mutate({ sessionToken, candidateId: record.candidateId, confirmation: "RESTAURER" }); }}>Restaurer</Button></div>)}
+              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => setRestoreDialogRecord({ candidateId: record.candidateId, reference: record.reference })}>Restaurer</Button></div>)}
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={Boolean(restoreDialogRecord)} onOpenChange={(open) => { if (!open) setRestoreDialogRecord(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Restaurer {restoreDialogRecord?.reference} ?</AlertDialogTitle>
+              <AlertDialogDescription>L’enregistrement redeviendra visible dans la liste active des dossiers.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={restoreArchivedMutation.isPending}>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={restoreArchivedMutation.isPending}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!restoreDialogRecord) return;
+                  restoreArchivedMutation.mutate({ sessionToken, candidateId: restoreDialogRecord.candidateId, confirmation: "RESTAURER" }, { onSuccess: () => setRestoreDialogRecord(null) });
+                }}
+              >
+                {restoreArchivedMutation.isPending ? "Restauration…" : "Confirmer la restauration"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <Dialog open={Boolean(archiveDialogItems)} onOpenChange={(open) => { if (!open) setArchiveDialogItems(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Mettre {archiveDialogItems?.length ?? 0} dossier{(archiveDialogItems?.length ?? 0) > 1 ? "s" : ""} à la corbeille</DialogTitle>
+              <DialogDescription>Action réversible : les dossiers restent restaurables depuis Corbeille / doublons. Un motif d’au moins 8 caractères est obligatoire.</DialogDescription>
+            </DialogHeader>
+            <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
+              {archiveDialogItems?.map((item) => (
+                <p key={item.id} className="text-sm text-slate-700">
+                  <span className="font-mono text-xs font-semibold text-blue-700">{item.folderCode ?? "—"}</span> — {item.fullName ?? "—"}{item.email ? ` (${item.email})` : ""}
+                </p>
+              ))}
+            </div>
+            <div>
+              <Label htmlFor="archive-reason-input">Motif (doublon, compte mal créé, autre)</Label>
+              <textarea
+                id="archive-reason-input"
+                value={archiveReasonInput}
+                onChange={(event) => setArchiveReasonInput(event.target.value)}
+                className="mt-2 min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setArchiveDialogItems(null)} disabled={archiveDuplicateMutation.isPending}>Annuler</Button>
+              <Button type="button" className="bg-rose-700 hover:bg-rose-800" onClick={() => void confirmArchiveDialog()} disabled={archiveDuplicateMutation.isPending || archiveReasonInput.trim().length < 8}>
+                {archiveDuplicateMutation.isPending ? "Archivage…" : "Confirmer la mise à la corbeille"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -2321,7 +2385,7 @@ export default function AdminDashboard() {
                 variant="outline"
                 className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"
                 disabled={archiveDuplicateMutation.isPending}
-                onClick={() => void bulkArchiveSelectedCandidates(candidates.flatMap((candidate) => typeof candidate.id === "string" && selectedCandidateIds.has(candidate.id) ? [{ id: candidate.id, folderCode: candidate.folderCode, fullName: candidate.fullName }] : []))}
+                onClick={() => openBulkArchiveDialog(candidates.flatMap((candidate) => typeof candidate.id === "string" && selectedCandidateIds.has(candidate.id) ? [{ id: candidate.id, folderCode: candidate.folderCode, fullName: candidate.fullName, email: candidate.email, source: candidate.source }] : []))}
               >
                 <Trash2 className="h-4 w-4" />
                 Mettre à la corbeille ({selectedCandidateIds.size})

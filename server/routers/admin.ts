@@ -2460,6 +2460,7 @@ export const adminRouter = router({
               status: mapStatus(app.dossierStatus),
               internalStatus: app.dossierStatus,
               source: "WEB" as const,
+              assignedToAdmin: app.adminAssignedTo ?? null,
               emailHistory,
               scoringTotal: app.scoringTotal,
               scoringBadge: app.scoringBadge,
@@ -2514,6 +2515,7 @@ export const adminRouter = router({
               status: mapStatus(dossier.status),
               internalStatus: dossier.status,
               source: "AGENCY_PHYSICAL" as const,
+              assignedToAdmin: dossier.assignedToAdmin ?? null,
               scoringTotal: null,
               scoringBadge: null,
               scoringData: null,
@@ -2543,6 +2545,37 @@ export const adminRouter = router({
       }
 
     }),
+
+  /**
+   * Assigner (ou retirer l'assignation d') un conseiller référent à un dossier
+   * en ligne ou agence. Utilisé pour le raccourci "M'assigner ce dossier" et
+   * pour réassigner à un autre conseiller depuis la fiche Candidate360.
+   */
+  assignDossierAdvisor: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      assigneeEmail: z.string().trim().email().max(320).nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce type de dossier ne prend pas en charge l’assignation d’un conseiller." });
+      const assigneeEmail = input.assigneeEmail?.trim().toLowerCase() || null;
+      if (reference.source === "online") {
+        const [record] = await db.select({ id: applications.id }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        await db.update(applications).set({ adminAssignedTo: assigneeEmail }).where(eq(applications.id, reference.id));
+      } else {
+        const [record] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        await db.update(agencyDossiers).set({ assignedToAdmin: assigneeEmail }).where(eq(agencyDossiers.id, reference.id));
+      }
+      return { success: true, candidateId: input.candidateId, assigneeEmail };
+    }),
+
   /**
    * Répartition des candidats par pays de destination.
    * Les emails sont dédupliqués afin qu'un même candidat ne soit pas compté
