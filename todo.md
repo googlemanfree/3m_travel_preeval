@@ -3384,14 +3384,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Documenter les URLs/actions exactes de vérification
 
 ## Correctifs GitHub c077d9c et d0276f4 — parcours, e-mails et aperçu CSV
-- [ ] Synchroniser et relire c077d9c, d0276f4 et le merge 6dcb200
-- [ ] Vérifier le déverrouillage manuel forceUnlock avec motif obligatoire et journal d’activité
-- [ ] Vérifier la séparation visuelle et la progression dédiée aux 13 étapes internes
-- [ ] Vérifier les boutons manuels et l’infobulle de validation documentaire
-- [ ] Vérifier le rappel de non-remboursement du protocole initial et le bouton d’accès à l’espace client dans l’e-mail
-- [ ] Vérifier le pied de page légal de l’e-mail de confirmation de dossier
-- [ ] Vérifier l’identification du dossier agence et l’infobulle de l’ancienne référence
-- [ ] Vérifier l’aperçu des 10 premières lignes avant export CSV candidat
-- [ ] Exécuter TypeScript, le build et les tests ciblés
+- [x] Synchroniser et relire c077d9c, d0276f4 et le merge 6dcb200
+- [x] Vérifier le déverrouillage manuel forceUnlock avec motif obligatoire et journal d’activité
+- [x] Vérifier la séparation visuelle et la progression dédiée aux 13 étapes internes
+- [x] Vérifier les boutons manuels et l’infobulle de validation documentaire
+- [x] Vérifier le rappel de non-remboursement du protocole initial et le bouton d’accès à l’espace client dans l’e-mail
+- [x] Vérifier le pied de page légal de l’e-mail de confirmation de dossier
+- [x] Vérifier l’identification du dossier agence et l’infobulle de l’ancienne référence
+- [x] Vérifier l’aperçu des 10 premières lignes avant export CSV candidat
+- [x] Exécuter TypeScript, le build et les tests ciblés
 - [ ] Publier un checkpoint uniquement si tous les contrôles sont verts
 - [ ] Documenter les URLs/actions exactes de vérification
