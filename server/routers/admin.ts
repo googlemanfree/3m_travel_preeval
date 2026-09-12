@@ -3729,7 +3729,11 @@ export const adminRouter = router({
       candidateId: z.string().min(1),
       stepId: z.string().trim().min(1).max(160),
       checked: z.boolean(),
+      forceUnlock: z.boolean().optional(),
       comment: z.string().trim().max(1000).optional(),
+    }).refine((value) => !value.forceUnlock || (value.comment && value.comment.trim().length >= 8), {
+      message: "Un motif d’au moins 8 caractères est obligatoire pour un déverrouillage manuel.",
+      path: ["comment"],
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -3765,20 +3769,26 @@ export const adminRouter = router({
       const contiguousCount = (() => { let index = 0; while (completed.has(`checklist-${index}`)) index += 1; return index; })();
       if (input.checked) {
         const nextAllowedIndex = Math.max(baseIndex, contiguousCount);
-        if (stepIndex > nextAllowedIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord les étapes précédentes dans l’ordre." });
-        if (stepIndex >= 4 && !source.evaluationClientConfirmedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
-        if (stepIndex >= 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant cette étape." });
+        if (!input.forceUnlock) {
+          if (stepIndex > nextAllowedIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord les étapes précédentes dans l’ordre." });
+          if (stepIndex >= 4 && !source.evaluationClientConfirmedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
+          if (stepIndex >= 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant cette étape." });
+        }
         completed.add(`checklist-${stepIndex}`);
       } else {
-        const highest = Math.max(-1, ...Array.from(completed).map((value) => Number(value.replace("checklist-", ""))).filter(Number.isFinite));
-        if (stepIndex !== highest || stepIndex < baseIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seule la dernière étape ajoutée peut être annulée." });
+        if (!input.forceUnlock) {
+          const highest = Math.max(-1, ...Array.from(completed).map((value) => Number(value.replace("checklist-", ""))).filter(Number.isFinite));
+          if (stepIndex !== highest || stepIndex < baseIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seule la dernière étape ajoutée peut être annulée." });
+        }
         completed.delete(`checklist-${stepIndex}`);
       }
       const completedStepIds = JSON.stringify(Array.from(completed).sort((left, right) => Number(left.replace("checklist-", "")) - Number(right.replace("checklist-", ""))));
       if (existing) await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
       else await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
-      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: input.checked ? "journey_step_completed" : "journey_step_reopened", entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${input.checked ? "Étape validée" : "Étape rouverte"} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` ${input.comment}` : ""}` });
-      return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? "Étape validée et prochaine étape débloquée." : "Dernière étape rouverte." };
+      const actionType = input.forceUnlock ? (input.checked ? "journey_step_force_completed" : "journey_step_force_reopened") : (input.checked ? "journey_step_completed" : "journey_step_reopened");
+      const actionLabel = input.forceUnlock ? (input.checked ? "Étape déverrouillée et validée manuellement" : "Étape annulée manuellement") : (input.checked ? "Étape validée" : "Étape rouverte");
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType, entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${actionLabel} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` Motif : ${input.comment}` : ""}` });
+      return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? (input.forceUnlock ? "Étape déverrouillée et validée manuellement." : "Étape validée et prochaine étape débloquée.") : "Étape annulée." };
     }),
 
   updateCandidate360Workflow: publicProcedure
