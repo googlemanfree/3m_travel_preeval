@@ -3374,11 +3374,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Documenter les URLs/actions exactes de vérification
 
 ## Correctif GitHub b84c82c — dossier agence, protocole e-mail et échappements
-- [ ] Synchroniser et relire b84c82c et le merge 5879ee3
-- [ ] Vérifier la priorité du dossier agence dans getClientDashboardSummary pour les candidatures en ligne et agence
-- [ ] Vérifier la journalisation des échecs d’e-mail dans activatePreDossierAccount
-- [ ] Vérifier l’en-tête, le logo et le pied de page légal du protocole envoyé par e-mail
-- [ ] Vérifier les vrais caractères d’échappement dans le protocole et les trois exports CSV admin
-- [ ] Exécuter TypeScript, le build et les tests ciblés
+- [x] Synchroniser et relire b84c82c et le merge 5879ee3
+- [x] Vérifier la priorité du dossier agence dans getClientDashboardSummary pour les candidatures en ligne et agence
+- [x] Vérifier la journalisation des échecs d’e-mail dans activatePreDossierAccount
+- [x] Vérifier l’en-tête, le logo et le pied de page légal du protocole envoyé par e-mail
+- [x] Vérifier les vrais caractères d’échappement dans le protocole et les trois exports CSV admin
+- [x] Exécuter TypeScript, le build et les tests ciblés
 - [ ] Publier un checkpoint uniquement si tous les contrôles sont verts
 - [ ] Documenter les URLs/actions exactes de vérification
