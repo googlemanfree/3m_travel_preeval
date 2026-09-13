@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROCEDURE_VISUALS } from "@/data/procedureVisuals";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -21,6 +22,8 @@ export default function HeroSectionVIP({
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  // Annee extraite du numero RCCM officiel (format RC/Ville/Annee/Type/Numero) : donnee reelle, pas une statistique inventee.
+  const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -284,6 +287,12 @@ export default function HeroSectionVIP({
             <p className="text-2xl md:text-3xl font-bold">24h</p>
             <p className="text-sm text-slate-400">Délai de réponse annoncé</p>
           </div>
+          {registrationYear && (
+            <div>
+              <p className="text-2xl md:text-3xl font-bold">{registrationYear}</p>
+              <p className="text-sm text-slate-400">Agence enregistrée à Yaoundé depuis</p>
+            </div>
+          )}
         </motion.div>
       </div>
 

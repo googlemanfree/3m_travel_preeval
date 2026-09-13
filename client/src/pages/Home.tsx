@@ -629,6 +629,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── AVIS CLIENTS APPROUVÉS : preuve sociale positionnee au plus tot, ────
+          masquee automatiquement s'il n'existe encore aucun avis approuve ── */}
+      <ReviewsErrorBoundary>
+        <ApprovedReviewsSection />
+      </ReviewsErrorBoundary>
+
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
       <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">
@@ -1263,11 +1269,6 @@ export default function Home() {
       </section>
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <PublicFAQ />
-
-      {/* ─── AVIS CLIENTS APPROUVÉS ─────────────────────────────────────────────────── */}
-      <ReviewsErrorBoundary>
-        <ApprovedReviewsSection />
-      </ReviewsErrorBoundary>
 
       {/* --- TARIFS & GARANTIES --- */}
       <PricingSection />
