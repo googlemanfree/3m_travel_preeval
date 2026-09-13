@@ -3522,11 +3522,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Enregistrer la confirmation utilisateur du consentement documenté pour les sept nouvelles images et terminer le contrôle final
 
 ## Allemagne–Formation — commit d2dbd6b
-- [ ] Synchroniser et relire le commit d2dbd6b
-- [ ] Vérifier la route spécialisée /procedures/allemagne-formation avant le gestionnaire générique
-- [ ] Vérifier le parcours cours de langue intensif : conditions, 6 étapes et documents
-- [ ] Vérifier le parcours Ausbildung : 7 étapes, documents et rémunération indicative
-- [ ] Vérifier la section Pourquoi 3M Travel, le CTA, les avertissements et les sources officielles
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier visuellement le hero, les deux tableaux et les étapes numérotées
+- [x] Synchroniser et relire le commit d2dbd6b
+- [x] Vérifier la route spécialisée /procedures/allemagne-formation avant le gestionnaire générique
+- [x] Vérifier le parcours cours de langue intensif : conditions, 6 étapes et documents
+- [x] Vérifier le parcours Ausbildung : 7 étapes, documents et rémunération indicative
+- [x] Vérifier la section Pourquoi 3M Travel, le CTA, les avertissements et les sources officielles
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement le hero, les deux tableaux et les étapes numérotées
 - [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Raccourcir le meta description de l’accueil à 160 caractères maximum sans changer le contenu de la nouvelle page Allemagne–Formation
