@@ -3506,6 +3506,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la présence du filigrane et l’absence de métadonnées sensibles évidentes
 - [x] Exécuter TypeScript et les tests ciblés
 - [x] Vérifier visuellement l’accueil et le rendu de la galerie
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Publier uniquement si tous les contrôles sont verts
 
 - [x] Enregistrer la confirmation utilisateur du consentement documenté pour les trois images de preuve et terminer le contrôle final
+
+## Extension galerie Preuves et résultats — af92e4b / 496ec07
+- [x] Synchroniser et relire af92e4b et 496ec07
+- [x] Vérifier que ProofGallerySection référence bien 10 images
+- [x] Contrôler visuellement les 7 nouvelles images : caviardage, filigrane et absence de données personnelles lisibles
+- [x] Vérifier les métadonnées évidentes des 7 nouvelles images
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement les 10 photos dans la galerie
+- [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Enregistrer la confirmation utilisateur du consentement documenté pour les sept nouvelles images et terminer le contrôle final
