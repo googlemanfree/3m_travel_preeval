@@ -12,6 +12,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
+const EnHome = lazyWithTimeout(() => import("./pages/EnHome"));
 import CountryDetailPage from "./pages/CountryDetailPage";
 const Flights = lazyWithTimeout(() => import("./pages/Flights"));
 import Register from "./pages/Register";
@@ -138,6 +139,7 @@ function Router() {
     <Switch>
       {/* Pages publiques (SANS authentification) */}
       <Route path={"/"} component={Home} />
+      <Route path={"/en"} component={EnHome} />
       <Route path={"/register"} component={Register} />
       <Route path={"/signup"} component={Register} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
@@ -248,6 +250,8 @@ function Router() {
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
       <Route path="/destinations/:countryId" component={CountryDetailPage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
+      <Route path="/en/destinations/:countryId" component={CountryDetailPage} />
+      <Route path="/en/procedures/:countryId" component={CountryDetailPage} />
       <Route path={"/procedures-complete"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/procedures-enhanced"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/procedures-advanced"}>{() => <Redirect to="/procedures" />}</Route>

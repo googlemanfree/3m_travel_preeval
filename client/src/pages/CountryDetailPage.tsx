@@ -15,6 +15,8 @@ import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureDisplayTitle, getProcedureFaqItems } from '@shared/procedureSeo';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
+import { getEnglishContentByEnSlug } from '@/data/procedures107English';
+import { getCountryDetailLabels } from './CountryDetailPage.i18n';
 import { trpc } from '@/lib/trpc';
 
 import { useState, useEffect } from 'react';
@@ -24,10 +26,29 @@ import { toast } from 'sonner';
 export default function CountryDetailPage() {
   const [, procedureParams] = useRoute<{ countryId: string }>('/procedures/:countryId');
   const [, destinationParams] = useRoute<{ countryId: string }>('/destinations/:countryId');
-  const countryId = procedureParams?.countryId ?? destinationParams?.countryId;
+  const [, enProcedureParams] = useRoute<{ countryId: string }>('/en/procedures/:countryId');
+  const [, enDestinationParams] = useRoute<{ countryId: string }>('/en/destinations/:countryId');
+  const enSlug = enProcedureParams?.countryId ?? enDestinationParams?.countryId;
+  const locale: 'fr' | 'en' = enSlug ? 'en' : 'fr';
+  const englishContent = enSlug ? getEnglishContentByEnSlug(enSlug) : undefined;
+  const countryId = procedureParams?.countryId ?? destinationParams?.countryId ?? englishContent?.frId;
+  const L = getCountryDetailLabels(locale);
 
   const destinationDetail = getPublicDestinationDetail(countryId);
-  const country = destinationDetail?.procedure;
+  const baseCountry = destinationDetail?.procedure;
+  const country = baseCountry && englishContent
+    ? {
+        ...baseCountry,
+        name: englishContent.name,
+        region: englishContent.regionLabel,
+        difficulty: baseCountry.difficulty, // clé technique conservée pour getDifficultyColor
+        description: englishContent.description,
+        detailedDescription: englishContent.detailedDescription,
+        highlights: englishContent.highlights,
+        steps: englishContent.steps,
+        requiredDocuments: englishContent.requiredDocuments,
+      }
+    : baseCountry;
   const { language } = useLanguage();
   const { data: destinationMedia } = trpc.destinationMedia.getByDestination.useQuery(
     { destinationId: countryId ?? "unknown" },
@@ -51,13 +72,23 @@ export default function CountryDetailPage() {
 
   useEffect(() => {
     if (!country) return;
-    const displayTitle = getProcedureDisplayTitle(country);
-    document.title = `${displayTitle} à Yaoundé | 3M Travel & Services`;
-    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
-      "content",
-      `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M Travel & Services.`,
-    );
-  }, [country]);
+    const displayTitle = getProcedureDisplayTitle(country, locale);
+    if (locale === 'en') {
+      document.title = `${displayTitle} from Yaoundé | 3M Travel & Services`;
+      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
+        "content",
+        `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M Travel & Services.`,
+      );
+      document.documentElement.lang = 'en';
+    } else {
+      document.title = `${displayTitle} à Yaoundé | 3M Travel & Services`;
+      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
+        "content",
+        `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M Travel & Services.`,
+      );
+      document.documentElement.lang = 'fr';
+    }
+  }, [country, locale]);
 
   useEffect(() => {
     if (countryId) {
@@ -91,11 +122,11 @@ export default function CountryDetailPage() {
   if (!country) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-        <h2 className="text-3xl font-bold text-slate-900 mb-2">Destination non trouvée</h2>
-        <p className="text-slate-600 mb-6">Le pays demandé n'existe pas dans notre répertoire des 107 destinations.</p>
-        <a href="/procedures">
+        <h2 className="text-3xl font-bold text-slate-900 mb-2">{L.notFoundTitle}</h2>
+        <p className="text-slate-600 mb-6">{L.notFoundBody}</p>
+        <a href={locale === 'en' ? '/en' : '/procedures'}>
           <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-3 rounded-xl">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Retour aux procédures
+            <ArrowLeft className="w-4 h-4 mr-2" /> {L.notFoundCta}
           </Button>
         </a>
       </div>
@@ -134,21 +165,21 @@ export default function CountryDetailPage() {
         
         {/* Fil d'Ariane + partage */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <nav aria-label="Fil d'Ariane" className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
-            <a href="/" className="font-semibold text-blue-700 hover:text-blue-800">Accueil</a>
+          <nav aria-label={locale === 'en' ? 'Breadcrumb' : "Fil d'Ariane"} className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+            <a href={locale === 'en' ? '/en' : '/'} className="font-semibold text-blue-700 hover:text-blue-800">{L.breadcrumbHome}</a>
             <span aria-hidden="true">/</span>
-            <a href="/procedures" className="font-semibold text-blue-700 hover:text-blue-800">Procédures</a>
+            <a href={locale === 'en' ? '/en' : '/procedures'} className="font-semibold text-blue-700 hover:text-blue-800">{L.breadcrumbProcedures}</a>
             <span aria-hidden="true">/</span>
-            <span className="font-semibold text-slate-700">{getProcedureDisplayTitle(country)}</span>
+            <span className="font-semibold text-slate-700">{getProcedureDisplayTitle(country, locale)}</span>
           </nav>
           <div className="flex items-center gap-2">
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`${getProcedureDisplayTitle(country)} à Yaoundé — ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`${getProcedureDisplayTitle(country, locale)}${locale === 'en' ? ' from Yaoundé' : ' à Yaoundé'} — ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-emerald-600 hover:bg-emerald-50"
-              aria-label="Partager sur WhatsApp"
-              title="Partager sur WhatsApp"
+              aria-label={L.shareWhatsapp}
+              title={L.shareWhatsapp}
             >
               <MessageCircle className="h-4 w-4" />
             </a>
@@ -157,8 +188,8 @@ export default function CountryDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-600 hover:bg-blue-50"
-              aria-label="Partager sur Facebook"
-              title="Partager sur Facebook"
+              aria-label={L.shareFacebook}
+              title={L.shareFacebook}
             >
               <Facebook className="h-4 w-4" />
             </a>
@@ -201,30 +232,30 @@ export default function CountryDetailPage() {
                     {country.region}
                   </Badge>
                   <Badge className={`text-xs ${getDifficultyColor(country.difficulty)} font-bold max-w-full whitespace-normal`}>
-                    Niveau : {country.difficulty}
+                    {L.levelLabel} : {englishContent?.difficultyLabel ?? country.difficulty}
                   </Badge>
                   <Badge className="bg-white/10 text-white border border-white/20 text-xs font-semibold">
                     {regionBadge} {regionLabel}
                   </Badge>
                   {destinationDetail && isDestinationRecentlyUpdated(destinationDetail) && (
-                    <Badge className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 text-xs font-bold">Mis à jour</Badge>
+                    <Badge className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 text-xs font-bold">{L.updatedBadge}</Badge>
                   )}
                   {sourceVerifiedAt && (
                     <Badge
                       className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-50 text-xs font-bold"
                       role="status"
-                      aria-label={`Dernière vérification de la source institutionnelle : ${sourceVerifiedAt}`}
+                      aria-label={`${L.verifiedOn} ${sourceVerifiedAt}`}
                     >
-                      <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Vérifié le {sourceVerifiedAt}
+                      <ShieldCheck className="mr-1 h-3.5 w-3.5" /> {L.verifiedOn} {sourceVerifiedAt}
                     </Badge>
                   )}
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{getProcedureDisplayTitle(country)}</h1>
+                <h1 className="text-3xl sm:text-4xl font-black !text-white tracking-tight">{getProcedureDisplayTitle(country, locale)}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
-                  <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel & Services — accompagnement depuis Yaoundé
+                  <Globe className="w-4 h-4" /> {L.procedureSheet}
                 </p>
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-blue-200">
-                  <CalendarDays className="w-3.5 h-3.5" /> Dernière mise à jour : {pageUpdatedAt}
+                  <CalendarDays className="w-3.5 h-3.5" /> {L.lastUpdated} : {pageUpdatedAt}
                 </p>
               </div>
             </div>
@@ -240,22 +271,24 @@ export default function CountryDetailPage() {
                 }`}
               >
                 <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current text-white' : ''}`} />
-                {isFavorite ? 'Dans vos favoris' : 'Favori'}
+                {isFavorite ? L.favoriteRemove : L.favoriteAdd}
               </Button>
 
               <a href={evaluationUrl} className="w-full sm:w-auto flex-1 md:flex-initial">
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105">
-                  🚀 Lancer ma Procédure
+                  {L.startProcedure}
                 </Button>
               </a>
-              {country.pdfUrl && (
+              {country.pdfUrl && locale === 'fr' && (
                 <a href={getLocalizedPdfUrl(country, language)} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex-1 md:flex-initial">
                   <Button variant="outline" className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold px-6 py-3 rounded-xl">
-                    <Download className="w-4 h-4 mr-2" /> {language === 'en' ? 'PDF Guide' : 'Guide PDF'}
+                    <Download className="w-4 h-4 mr-2" /> {L.pdfGuide}
                   </Button>
                 </a>
               )}
-              <PublicProcedurePdfButton destination={destinationDetail} updatedAt={pageUpdatedAt} portal={portal} language={language} />
+              {locale === 'fr' && (
+                <PublicProcedurePdfButton destination={destinationDetail} updatedAt={pageUpdatedAt} portal={portal} language={language} />
+              )}
             </div>
           </div>
         </motion.div>
@@ -263,27 +296,27 @@ export default function CountryDetailPage() {
         {/* Indicateurs clés */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Étapes de traitement</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{L.processingSteps}</p>
             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 shrink-0 text-blue-600" /> À confirmer auprès de l’autorité
+              <Clock className="w-5 h-5 shrink-0 text-blue-600" /> {L.processingStepsValue}
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Frais officiels</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{L.officialFees}</p>
             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 shrink-0 text-emerald-600" /> Variables selon la procédure
+              <DollarSign className="w-5 h-5 shrink-0 text-emerald-600" /> {L.officialFeesValue}
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Conditions de projet</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{L.projectConditions}</p>
             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 shrink-0 text-indigo-600" /> Dépendent de votre situation
+              <Briefcase className="w-5 h-5 shrink-0 text-indigo-600" /> {L.projectConditionsValue}
             </p>
           </Card>
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Accompagnement 3M</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{L.support3M}</p>
             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 shrink-0 text-amber-600" /> Informations sur demande
+              <Sparkles className="w-5 h-5 shrink-0 text-amber-600" /> {L.support3MValue}
             </p>
           </Card>
         </div>
@@ -295,17 +328,17 @@ export default function CountryDetailPage() {
             {/* Description détaillée */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
               <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-blue-700" /> Présentation de la Destination & Culture
+                <FileText className="w-6 h-6 text-blue-700" /> {L.overviewTitle}
               </h2>
               <p className="text-slate-700 leading-relaxed text-base">{country.description}</p>
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 text-slate-700 leading-relaxed text-sm">
                 <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-600" /> Pourquoi choisir {country.name} ?
+                  <Award className="w-4 h-4 text-amber-600" /> {L.whyChoose} {country.name}?
                 </h4>
                 <p>{country.detailedDescription}</p>
               </div>
 
-              <h3 className="text-lg font-bold text-slate-900 pt-4">Points forts & Opportunités</h3>
+              <h3 className="text-lg font-bold text-slate-900 pt-4">{L.highlightsTitle}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {country.highlights.map((highlight, idx) => (
                   <div key={idx} className="flex items-start gap-2.5 bg-blue-50/50 border border-blue-100 p-3.5 rounded-xl">
@@ -319,7 +352,7 @@ export default function CountryDetailPage() {
             {/* Procédure étape par étape */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-6">
               <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="w-6 h-6 text-indigo-700" /> Étapes de la Procédure pour {country.name}
+                <Clock className="w-6 h-6 text-indigo-700" /> {L.stepsTitle} {country.name}
               </h2>
               <div className="space-y-4">
                 {country.steps.map((step, idx) => (
@@ -328,7 +361,7 @@ export default function CountryDetailPage() {
                       {idx + 1}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Étape {idx + 1}</h4>
+                      <h4 className="font-bold text-slate-900 text-sm">{L.stepLabel} {idx + 1}</h4>
                       <p className="text-slate-600 text-sm mt-0.5">{step}</p>
                     </div>
                   </div>
@@ -339,10 +372,10 @@ export default function CountryDetailPage() {
             {/* FAQ */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl">
               <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 mb-2">
-                <HelpCircle className="w-6 h-6 text-blue-700" /> Questions fréquentes
+                <HelpCircle className="w-6 h-6 text-blue-700" /> {L.faqTitle}
               </h2>
               <Accordion type="single" collapsible className="mt-2">
-                {getProcedureFaqItems(country).map((item, idx) => (
+                {getProcedureFaqItems(country, locale).map((item, idx) => (
                   <AccordionItem key={idx} value={`faq-${idx}`}>
                     <AccordionTrigger className="text-left font-semibold text-slate-900">{item.question}</AccordionTrigger>
                     <AccordionContent className="text-slate-600 leading-relaxed">{item.answer}</AccordionContent>
@@ -355,7 +388,7 @@ export default function CountryDetailPage() {
             {matchingReviews.length > 0 && (
               <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
                 <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <Star className="w-6 h-6 text-amber-500" /> Avis vérifiés — {country.name}
+                  <Star className="w-6 h-6 text-amber-500" /> {L.reviewsTitle} {country.name}
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {matchingReviews.map((review, idx) => (
@@ -371,7 +404,7 @@ export default function CountryDetailPage() {
                     </div>
                   ))}
                 </div>
-                <a href="/avis" className="inline-block text-sm font-bold text-blue-700 hover:text-blue-900">Voir tous les avis →</a>
+                <a href="/avis" className="inline-block text-sm font-bold text-blue-700 hover:text-blue-900">{L.seeAllReviews}</a>
               </Card>
             )}
           </div>
@@ -380,7 +413,7 @@ export default function CountryDetailPage() {
           <div className="space-y-6">
             <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-6">
               <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-purple-700" /> Documents Requis
+                <FileText className="w-5 h-5 text-purple-700" /> {L.requiredDocuments}
               </h3>
               <div className="space-y-5">
                 {country.requiredDocuments.map((cat, idx) => (
@@ -402,35 +435,37 @@ export default function CountryDetailPage() {
               <div className="pt-4 border-t">
                 <a href={evaluationUrl}>
                   <Button className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold py-3.5 rounded-xl shadow-md">
-                    🚀 Commencer mon Dossier
+                    {L.startMyFile}
                   </Button>
                 </a>
               </div>
             </Card>
 
             <Card className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white rounded-3xl shadow-lg space-y-4">
-              <h4 className="font-bold text-lg">Besoin d'aide sur {country.name} ?</h4>
-              <p className="text-blue-200 text-sm">Nos conseillers experts en mobilité internationale vous accompagnent de A à Z dans vos démarches.</p>
+              <h4 className="font-bold text-lg">{L.needHelp} {country.name}?</h4>
+              <p className="text-blue-200 text-sm">{L.needHelpBody}</p>
               <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="block">
                 <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow">
-                  💬 Discuter sur WhatsApp
+                  {L.chatWhatsapp}
                 </Button>
               </a>
-              <DestinationCallbackDialog destination={country.name} procedure={country.visaType} />
+              {locale === 'fr' && <DestinationCallbackDialog destination={country.name} procedure={country.visaType} />}
             </Card>
 
-            <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl">
-              <DestinationComparisonDialog current={destinationDetail} />
-            </Card>
+            {locale === 'fr' && (
+              <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl">
+                <DestinationComparisonDialog current={destinationDetail} />
+              </Card>
+            )}
 
-            {institutionalSource ? (
+            {institutionalSource && locale === 'fr' ? (
               <Card className="p-6 border-sky-100 bg-sky-50/40 shadow-sm rounded-3xl space-y-4">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-6 h-6 text-sky-700 shrink-0" />
                   <div>
-                    <h3 className="font-bold text-slate-900">Repères institutionnels</h3>
+                    <h3 className="font-bold text-slate-900">{L.institutionalGuidance}</h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      Synthèse de préparation issue de la source indiquée ci-dessous.
+                      {L.institutionalGuidanceBody}
                     </p>
                   </div>
                 </div>
@@ -449,10 +484,10 @@ export default function CountryDetailPage() {
                 </p>
                 <a href={institutionalSource.officialUrl} target="_blank" rel="noopener noreferrer" className="block">
                   <Button variant="outline" className="w-full border-sky-200 bg-white text-sky-800 hover:bg-sky-50 font-bold">
-                    <ExternalLink className="w-4 h-4 mr-2" /> Consulter : {institutionalSource.sourceTitle}
+                    <ExternalLink className="w-4 h-4 mr-2" /> {L.consultSource} {institutionalSource.sourceTitle}
                   </Button>
                 </a>
-                <p className="text-xs text-slate-500" role="status">Dernière vérification de la source : {sourceVerifiedAt}.</p>
+                <p className="text-xs text-slate-500" role="status">{L.sourceVerifiedOn} {sourceVerifiedAt}.</p>
               </Card>
             ) : null}
 
@@ -464,29 +499,29 @@ export default function CountryDetailPage() {
                   <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
                 )}
                 <div>
-                  <h3 className="font-bold text-slate-900">Portail institutionnel</h3>
+                  <h3 className="font-bold text-slate-900">{L.officialPortal}</h3>
                   <p className="text-sm text-slate-600 mt-1">
                     {portal?.officialPortalUrl && portal.verificationStatus === "verifie"
-                      ? "Lien indiqué comme vérifié dans le registre administratif."
-                      : "Le portail est en cours de vérification par l’administration."}
+                      ? L.officialPortalVerified
+                      : L.officialPortalPending}
                   </p>
                 </div>
               </div>
               {portal?.officialPortalUrl ? (
                 <a href={portal.officialPortalUrl} target="_blank" rel="noopener noreferrer" className="block">
                   <Button variant="outline" className="w-full border-blue-200 text-blue-800 hover:bg-blue-50 font-bold">
-                    <ExternalLink className="w-4 h-4 mr-2" /> {portal.officialPortalLabel || "Consulter le portail officiel"}
+                    <ExternalLink className="w-4 h-4 mr-2" /> {locale === 'en' ? L.consultOfficialPortal : (portal.officialPortalLabel || L.consultOfficialPortal)}
                   </Button>
                 </a>
               ) : (
                 <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
-                  Ne transmettez ni paiement ni document à un site tiers avant validation du lien par l’administration.
+                  {L.officialPortalWarning}
                 </p>
               )}
-              {portal?.officialVerifiedAt && <p className="text-xs text-slate-500">Dernière vérification : {portal.officialVerifiedAt}</p>}
+              {portal?.officialVerifiedAt && <p className="text-xs text-slate-500">{L.portalVerifiedOn} {portal.officialVerifiedAt}</p>}
             </Card>
 
-            {destinationDetail?.sources.length ? (
+            {destinationDetail?.sources.length && locale === 'fr' ? (
               <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
                 <div>
                   <h3 className="font-bold text-slate-900">Guides 3M associés</h3>

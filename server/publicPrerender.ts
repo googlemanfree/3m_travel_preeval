@@ -6,6 +6,7 @@ import { getInstitutionalProcedureSource } from "../client/src/data/institutiona
 import { COMPANY_PROFILE } from "../client/src/lib/companyContacts";
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
+import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
@@ -67,7 +68,55 @@ const procedureMetaForPath = (path: string): PublicMeta | undefined => {
   };
 };
 
+const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
+  const match = path.match(/^\/en\/(?:procedures|destinations)\/([^/]+)$/);
+  if (!match) return undefined;
+
+  let enSlug = match[1];
+  try {
+    enSlug = decodeURIComponent(enSlug);
+  } catch {
+    // Malformed URL falls back to not-found behaviour.
+  }
+
+  const englishContent = getEnglishContentByEnSlug(enSlug);
+  const procedure = englishContent ? getPublicDestinationDetail(englishContent.frId)?.procedure : undefined;
+  if (!englishContent || !procedure) return undefined;
+
+  const displayTitle = getProcedureDisplayTitle({ name: englishContent.name, visaType: procedure.visaType }, "en");
+  const projectLabelEn = procedure.visaType === "etudes" ? "study" : procedure.visaType === "visiteur" ? "visitor" : "work";
+  return {
+    title: `${displayTitle} from Yaoundé | ${SITE}`,
+    description: `Steps, documents and preparation resources for your ${projectLabelEn} project to ${englishContent.name}, supported from Yaoundé and to be verified with the competent authorities.`,
+    heading: `${displayTitle} from Yaoundé`,
+    lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with support from 3M Travel & Services in Yaoundé.`,
+    keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name} Yaoundé`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "3M Travel"],
+  };
+};
+
+// Paires FR<->EN pour l'émission des balises hreflang, limitées aux pages
+// effectivement traduites dans ce premier lot bilingue.
+const HREFLANG_PAIRS: Record<string, string> = {
+  "/": "/en",
+  "/en": "/",
+};
+for (const detail of PUBLIC_DESTINATION_DETAILS) {
+  const englishContent = getEnglishContentByFrId(detail.procedure.id);
+  if (!englishContent) continue;
+  const frPath = `/procedures/${detail.procedure.id}`;
+  const enPath = `/en/procedures/${englishContent.enSlug}`;
+  HREFLANG_PAIRS[frPath] = enPath;
+  HREFLANG_PAIRS[enPath] = frPath;
+}
+
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
+  "/en": {
+    title: `3M Travel & Services | International Mobility from Yaoundé`,
+    description: "3M Travel & Services supports your international mobility project — visa applications, study abroad, and travel services — from Yaoundé, Cameroon.",
+    keywords: ["visa Cameroon", "Canada work visa Yaoundé", "study in France", "international mobility", "3M Travel & Services"],
+    heading: "Your international mobility project, prepared with method",
+    lead: "3M Travel & Services supports candidates in preparing their applications. Decisions by authorities, employers and external partners remain independent of the agency.",
+  },
   "/": { title: "3M Travel Agency | Mobilité internationale en confiance", description: "Accompagnement documenté pour vos projets de mobilité internationale, avec évaluation, sources officielles et validation humaine des étapes sensibles.", keywords: ["mobilité internationale", "visa", "immigration", "voyage", "évaluation de profil", "3M Travel Agency"], heading: "Votre projet de mobilité, préparé avec méthode", lead: "3M Travel & Services accompagne les candidats dans la préparation de leurs démarches. Les décisions des autorités, employeurs et partenaires externes restent indépendantes de l’agence." },
   "/canada": { title: `Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M Travel"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
@@ -137,6 +186,14 @@ const routeSpecificPrerender = (path: string) => {
   if (path === "/") {
     return `<section aria-label="Services de mobilité"><h2>Préparez votre projet de mobilité internationale</h2><p>Découvrez les procédures, les sources institutionnelles et une évaluation initiale gratuite avant toute démarche.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Commencer l’évaluation gratuite</a> · <a href="/procedures">Explorer les procédures</a> · <a href="/sources-officielles">Consulter les sources officielles</a></p></section>`;
   }
+  if (path === "/en") {
+    const links = PUBLIC_DESTINATION_DETAILS
+      .map((detail) => getEnglishContentByFrId(detail.procedure.id))
+      .filter((entry): entry is ProcedureEnglishContent => Boolean(entry))
+      .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
+      .join("");
+    return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+  }
   if (path === "/contact") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
     const ottawa = COMPANY_PROFILE.offices.ottawa;
@@ -176,14 +233,40 @@ export function getIndexablePublicPaths() {
     .filter(([, meta]) => !meta.noindex)
     .map(([path]) => path);
   const destinationPaths = PUBLIC_DESTINATION_DETAILS.map((detail) => `/procedures/${detail.procedure.id}`);
-  return staticPaths.concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1));
+  const englishProcedurePaths = PUBLIC_DESTINATION_DETAILS
+    .map((detail) => getEnglishContentByFrId(detail.procedure.id))
+    .filter((entry): entry is ProcedureEnglishContent => Boolean(entry))
+    .map((entry) => `/en/procedures/${entry.enSlug}`);
+  return staticPaths
+    .concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1))
+    .concat(englishProcedurePaths.filter((path) => staticPaths.indexOf(path) === -1));
 }
 
 export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
+  const isEnPath = path === "/en" || path.startsWith("/en/");
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
-  const procedurePage = procedureMetaForPath(path);
-  const procedureDetail = procedurePage ? getPublicDestinationDetail(path.replace(/^\/(?:procedures|destinations)\//, "")) : undefined;
+  const procedurePage = procedureMetaForPath(path) ?? procedureMetaForPathEn(path);
+  const procedureDetail = procedurePage
+    ? isEnPath
+      ? (() => {
+          const match = path.match(/^\/en\/(?:procedures|destinations)\/([^/]+)$/);
+          const enSlug = match ? decodeURIComponent(match[1]) : "";
+          const englishContent = getEnglishContentByEnSlug(enSlug);
+          return englishContent ? getPublicDestinationDetail(englishContent.frId) : undefined;
+        })()
+      : getPublicDestinationDetail(path.replace(/^\/(?:procedures|destinations)\//, ""))
+    : undefined;
+  const englishContentForPath = isEnPath && procedureDetail
+    ? getEnglishContentByFrId(procedureDetail.procedure.id)
+    : undefined;
+  // Le nom anglais doit alimenter la FAQ en_US pour eviter qu'un nom de pays
+  // francais (ex: "Allemagne") n'apparaisse dans un texte anglais.
+  const faqProcedureInput = procedureDetail
+    ? isEnPath && englishContentForPath
+      ? { name: englishContentForPath.name, visaType: procedureDetail.procedure.visaType }
+      : procedureDetail.procedure
+    : undefined;
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
@@ -212,21 +295,21 @@ export function composePublicPrerender(template: string, url: string) {
     image: socialImage,
     author: { "@type": "Organization", name: "3M Travel & Services", url: ORIGIN },
     publisher: { "@type": "Organization", name: "3M Travel & Services", url: ORIGIN, logo: { "@type": "ImageObject", url: socialImage } },
-    inLanguage: "fr-FR",
+    inLanguage: isEnPath ? "en" : "fr-FR",
   } : null;
-  const structuredData = path === "/"
+  const structuredData = path === "/" || path === "/en"
     ? { "@context": "https://schema.org", "@graph": [
         { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm"] },
-        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
+        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: isEnPath ? "en" : "fr-FR" },
       ] }
     : path === "/procedures"
       ? { "@context": "https://schema.org", "@graph": [
           { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
           breadcrumb,
         ] }
-      : procedurePage && procedureDetail
+      : procedurePage && procedureDetail && faqProcedureInput
         ? { "@context": "https://schema.org", "@graph": [
-            { "@type": "FAQPage", mainEntity: getProcedureFaqItems(procedureDetail.procedure).map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+            { "@type": "FAQPage", mainEntity: getProcedureFaqItems(faqProcedureInput, isEnPath ? "en" : "fr").map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
             LOCAL_BUSINESS_STRUCTURED_DATA,
             breadcrumb,
           ] }
@@ -234,14 +317,21 @@ export function composePublicPrerender(template: string, url: string) {
           ? { "@context": "https://schema.org", "@graph": [article, breadcrumb] }
           : breadcrumb;
   const structuredDataTag = structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : "";
+  const hreflangAlternatePath = HREFLANG_PAIRS[path];
+  const hreflangTags = hreflangAlternatePath ? [
+    `<link rel="alternate" hreflang="${isEnPath ? "en" : "fr"}" href="${canonical}" />`,
+    `<link rel="alternate" hreflang="${isEnPath ? "fr" : "en"}" href="${ORIGIN}${hreflangAlternatePath}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${ORIGIN}${isEnPath ? hreflangAlternatePath : path}" />`,
+  ] : [];
   const head = [
     `<title>${esc(current.title)}</title>`,
     `<meta name="description" content="${esc(current.description)}" />`,
     ...(current.keywords?.length ? [`<meta name="keywords" content="${esc(current.keywords.join(", "))}" />`] : []),
     robot,
     `<link rel="canonical" href="${canonical}" />`,
+    ...hreflangTags,
     `<meta property="og:type" content="website" />`,
-    `<meta property="og:locale" content="fr_FR" />`,
+    `<meta property="og:locale" content="${isEnPath ? "en_US" : "fr_FR"}" />`,
     `<meta property="og:site_name" content="${SITE}" />`,
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
@@ -258,6 +348,18 @@ export function composePublicPrerender(template: string, url: string) {
   const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M Travel</a></p></section>` : "";
   const procedureFallback = procedurePage && procedureDetail ? (() => {
     const { procedure, sources, consular } = procedureDetail;
+
+    if (isEnPath && englishContentForPath) {
+      const steps = englishContentForPath.steps.map((step) => `<li>${esc(step)}</li>`).join("");
+      const documents = englishContentForPath.requiredDocuments.map((category) => `<li><strong>${esc(category.category)}:</strong> ${category.documents.map(esc).join(", ")}</li>`).join("");
+      const officialPortalEn = consular.officialPortalUrl && consular.verificationStatus === "verifie"
+        ? `<p><a href="${esc(consular.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(consular.officialPortalLabel || "Visit the official portal")}</a></p>`
+        : `<p>The associated official portal is currently being verified. Do not send any payment or document to a third party without prior verification.</p>`;
+      const faqSectionEn = `<section aria-labelledby="seo-procedure-faq"><h2 id="seo-procedure-faq">Frequently asked questions</h2><dl>${getProcedureFaqItems({ name: englishContentForPath.name, visaType: procedure.visaType }, "en").map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section>`;
+      const projectQueryEn = procedure.visaType === "etudes" ? "etudes" : procedure.visaType === "visiteur" ? "tourisme" : "travail";
+      return `<section aria-label="Procedure details"><h2>${esc(englishContentForPath.name)} procedure — preparing your file</h2><p>${esc(englishContentForPath.detailedDescription)}</p><h2>Preparation steps</h2><ol>${steps}</ol><h2>Documents to prepare</h2><ul>${documents}</ul>${officialPortalEn}${faqSectionEn}<p>Legal identification: ${LEGAL}</p><p>Applicable requirements, timelines and decisions belong to the competent authorities and partners; they must be confirmed before any step.</p><p><a href="/?project=${projectQueryEn}&amp;destination=${encodeURIComponent(procedure.id)}#evaluation-multi">Start the guided evaluation</a> · <a href="/en">Back to the English overview</a> · <a href="/contact">Contact 3M Travel</a></p></section>`;
+    }
+
     const institutionalSource = getInstitutionalProcedureSource(procedure.id);
     const projectQuery = procedure.visaType === "etudes" ? "etudes" : procedure.visaType === "visiteur" ? "tourisme" : "travail";
     const steps = procedure.steps.map((step) => `<li>${esc(step)}</li>`).join("");
@@ -275,7 +377,10 @@ export function composePublicPrerender(template: string, url: string) {
   })() : "";
   const procedureFaqFallback = path === "/procedures" ? `<section aria-labelledby="seo-procedures-faq"><h2 id="seo-procedures-faq">Questions fréquentes</h2><dl>${PUBLIC_FAQ_ITEMS.map((item) => `<div><dt>${esc(item.question)}</dt><dd>${esc(item.answer)}</dd></div>`).join("")}</dl></section><p>Identification légale : ${LEGAL}</p>` : "";
   const routeContent = routeSpecificPrerender(path);
-  const body = `<main class="seo-prerender" data-prerendered="true"><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${routeContent}${canadaFallback}${procedureFallback}${procedureFaqFallback}<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main>`;
+  const transparencySection = isEnPath
+    ? `<section aria-label="Transparency notes"><h2>Verifiable information before any step</h2><ul><li>Required documents and information are confirmed based on destination and procedure.</li><li>Decisions by employers, partner agencies and competent authorities are not guaranteed by 3M Travel &amp; Services.</li><li>Sensitive actions are controlled by an authorized person.</li></ul></section>`
+    : `<section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section>`;
+  const body = `<main class="seo-prerender" data-prerendered="true"><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p>${routeContent}${canadaFallback}${procedureFallback}${procedureFaqFallback}${transparencySection}</main>`;
   let html = template
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<meta\s+name="description"[^>]*>\s*/i, "")
