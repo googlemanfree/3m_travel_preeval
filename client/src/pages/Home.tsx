@@ -31,6 +31,7 @@ import TravelSearchHero from "@/components/TravelSearchHero";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
+import ProofGallerySection from "@/components/ProofGallerySection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
@@ -628,6 +629,9 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* ─── PREUVES DE DOSSIERS REELS TRAITES (documents redactes, filigranes) ── */}
+      <ProofGallerySection />
 
       {/* ─── AVIS CLIENTS APPROUVÉS : preuve sociale positionnee au plus tot, ────
           masquee automatiquement s'il n'existe encore aucun avis approuve ── */}
