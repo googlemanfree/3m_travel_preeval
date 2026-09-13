@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRoute } from 'wouter';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle, CalendarDays, HelpCircle } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle, CalendarDays, HelpCircle, MessageCircle, Facebook, Quote, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -37,6 +37,15 @@ export default function CountryDetailPage() {
     { countryCode: destinationDetail?.consular.countryCode ?? "unknown" },
     { enabled: Boolean(destinationDetail?.consular.countryCode), staleTime: 60 * 1000 },
   );
+  const { data: approvedReviews } = trpc.customerReview.listApproved.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const normalizeForMatch = (value: string) =>
+    value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  const matchingReviews = (country
+    ? (approvedReviews ?? []).filter((review) =>
+        review.destinationCountry && normalizeForMatch(review.destinationCountry).includes(normalizeForMatch(country.name))
+      )
+    : []
+  ).slice(0, 3);
 
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -123,11 +132,37 @@ export default function CountryDetailPage() {
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Navigation retour */}
-        <div>
-          <a href="/procedures" className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold text-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Retour à l'annuaire des procédures
-          </a>
+        {/* Fil d'Ariane + partage */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <nav aria-label="Fil d'Ariane" className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+            <a href="/" className="font-semibold text-blue-700 hover:text-blue-800">Accueil</a>
+            <span aria-hidden="true">/</span>
+            <a href="/procedures" className="font-semibold text-blue-700 hover:text-blue-800">Procédures</a>
+            <span aria-hidden="true">/</span>
+            <span className="font-semibold text-slate-700">{getProcedureDisplayTitle(country)}</span>
+          </nav>
+          <div className="flex items-center gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`${getProcedureDisplayTitle(country)} à Yaoundé — ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-emerald-600 hover:bg-emerald-50"
+              aria-label="Partager sur WhatsApp"
+              title="Partager sur WhatsApp"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-600 hover:bg-blue-50"
+              aria-label="Partager sur Facebook"
+              title="Partager sur Facebook"
+            >
+              <Facebook className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         {/* En-tête du Pays */}
@@ -315,6 +350,30 @@ export default function CountryDetailPage() {
                 ))}
               </Accordion>
             </Card>
+
+            {/* Avis vérifiés pour cette destination */}
+            {matchingReviews.length > 0 && (
+              <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  <Star className="w-6 h-6 text-amber-500" /> Avis vérifiés — {country.name}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {matchingReviews.map((review, idx) => (
+                    <div key={review.id ?? idx} className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                      <Quote className="w-6 h-6 text-amber-500 opacity-60 mb-2" />
+                      <div className="flex gap-0.5 mb-2" aria-label={`${review.rating ?? 0} / 5`}>
+                        {Array.from({ length: 5 }).map((_, starIdx) => (
+                          <Star key={starIdx} className={`w-3.5 h-3.5 ${starIdx < (review.rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                        ))}
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed line-clamp-4">"{review.reviewText}"</p>
+                      <p className="mt-3 text-xs font-semibold text-slate-500">{review.displayName}</p>
+                    </div>
+                  ))}
+                </div>
+                <a href="/avis" className="inline-block text-sm font-bold text-blue-700 hover:text-blue-900">Voir tous les avis →</a>
+              </Card>
+            )}
           </div>
 
           {/* Colonne latérale : Documents requis & Appel à l'action */}

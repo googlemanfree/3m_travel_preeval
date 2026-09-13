@@ -1,6 +1,7 @@
 import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
 import SubmitReview from "./SubmitReview";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 
 export default function Avis() {
   return (
@@ -11,7 +12,7 @@ export default function Avis() {
           Retours d’expérience et qualité de service
         </h1>
         <p className="mt-6 max-w-3xl text-base leading-7 text-slate-600">
-          Nous ne publions pas de notes, statistiques ou témoignages attribués à des clients sans source vérifiable et autorisation adaptée. Pour évaluer un projet, échangez directement avec l’équipe ; pour transmettre un retour, utilisez le parcours prévu à cet effet.
+          Nous ne publions pas de notes, statistiques ou témoignages attribués à des clients sans source vérifiable et autorisation adaptée. Les avis affichés ci-dessous sont des retours réellement soumis, vérifiés et approuvés par l’équipe avant publication, avec le consentement explicite de leur auteur.
         </p>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
@@ -47,8 +48,12 @@ export default function Avis() {
             Échanger avec l’agence
           </a>
         </div>
+      </section>
 
-        <section id="deposer-un-avis" className="mt-14 border-t border-slate-200 pt-12" aria-labelledby="deposer-un-avis-title">
+      <ApprovedReviewsSection />
+
+      <section className="mx-auto mt-4 max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
+        <section id="deposer-un-avis" aria-labelledby="deposer-un-avis-title">
           <div className="max-w-2xl">
             <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Retour d’expérience</p>
             <h2 id="deposer-un-avis-title" className="mt-3 text-2xl font-black text-slate-950 sm:text-3xl">
