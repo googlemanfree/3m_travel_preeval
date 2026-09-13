@@ -26,16 +26,34 @@ import SignatureCanvas from "@/components/SignatureCanvas";
 import { jsPDF } from "jspdf";
 import { OFFICIAL_SOURCE_CATALOG } from "@shared/officialSourceCatalog";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
+import { buildProtocolOneRichText } from "@shared/agreementProtocolCountryTemplates";
 
 const escapeAgreementHtml = (value: unknown) => String(value ?? "").replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;", "'": "&#039;" })[character] ?? character);
 const normalizeCountryKey = (value: unknown) => String(value ?? "").trim().toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const AGREEMENT_PROTOCOL_HTML = INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
+
+/** Texte du protocole, adapte automatiquement au pays de destination du candidat quand il est connu. */
+function getAgreementProtocolTextFor(application: { dossierNumber?: string | null; fullName?: string | null; email?: string | null; destination?: string | null }): string {
+  if (!application.destination) return INITIAL_AGREEMENT_PROTOCOL;
+  return buildProtocolOneRichText({
+    clientNomComplet: application.fullName || "Candidat",
+    dossierRef: application.dossierNumber || "Non attribu\u00e9",
+    destinationProjet: application.destination,
+    clientEmail: application.email || undefined,
+    modePaiement: "Voir re\u00e7u de paiement",
+    dateHeurePaiement: "Voir re\u00e7u de paiement",
+    conseillerEmail: "hello@3mtravelagency.com",
+    empreinteSha: "G\u00e9n\u00e9r\u00e9e \u00e0 la signature",
+    clientIpAddress: "Enregistr\u00e9e au moment de la signature",
+    dateDuJour: new Date().toLocaleDateString("fr-FR"),
+  }, application.destination);
+}
 const OFFICIAL_PROCEDURE_STEPS: Record<string, { scope: string; steps: string[] }> = {
   canada: { scope: "Visa visiteur / résident temporaire", steps: ["Vérifier le document requis pour entrer au Canada.", "Préparer les copies électroniques et la demande selon les instructions IRCC.", "Soumettre la demande et les frais via le canal indiqué par IRCC.", "Fournir les données biométriques lorsque cela est requis."] },
   luxembourg: { scope: "Visa court séjour Schengen (type C)", steps: ["Vérifier l’obligation de visa et la validité du passeport.", "Déposer la demande auprès du consulat compétent avec les justificatifs requis.", "Respecter les délais de dépôt publiés par l’autorité compétente.", "Attendre la décision consulaire ; un visa ne garantit pas à lui seul l’entrée."] },
 };
 
-function downloadSignedAgreementPdf(application: { dossierNumber?: string | null; agreementSignatureName?: string | null; agreementSignedAt?: number | null }) {
+function downloadSignedAgreementPdf(application: { dossierNumber?: string | null; agreementSignatureName?: string | null; agreementSignedAt?: number | null; fullName?: string | null; email?: string | null; destination?: string | null }) {
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
   const margin = 20;
   const contentWidth = 170;
@@ -65,7 +83,7 @@ function downloadSignedAgreementPdf(application: { dossierNumber?: string | null
   pdf.text(`Date de signature : ${signedDate}`, margin + 6, 76);
   pdf.setTextColor(30, 41, 59);
   let y = 98;
-  for (const paragraph of INITIAL_AGREEMENT_PROTOCOL.split("\n\n")) y = writeParagraph(paragraph, y);
+  for (const paragraph of getAgreementProtocolTextFor(application).split("\n\n")) y = writeParagraph(paragraph, y);
   pdf.setFont("helvetica", "bold");
   pdf.text("Statut : protocole signé et enregistré dans le dossier.", margin, y + 5);
   pdf.setFont("helvetica", "normal");
@@ -883,7 +901,7 @@ export default function MySpace() {
                   <>
                     <div className="max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord">
                       <p className="font-bold text-slate-950">Protocole d’accord — 3M Travel & Services SARL</p>
-                      {INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-3 whitespace-pre-line">{paragraph}</p>)}
+                      {getAgreementProtocolTextFor(app || {}).split("\n\n").map((paragraph, index) => <p key={index} className="mt-3 whitespace-pre-line">{paragraph}</p>)}
                     </div>
                     <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
                       <input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} />

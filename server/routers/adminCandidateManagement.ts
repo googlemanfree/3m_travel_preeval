@@ -11,7 +11,8 @@ import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../em
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
-import { INITIAL_AGREEMENT_PROTOCOL, AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
+import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
+import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -981,6 +982,10 @@ export const adminCandidateManagementRouter = router({
       let paymentConfirmed = false;
       let agencyDossierId: number | null = null;
       let applicationId: number | null = null;
+      let destination = "";
+      let whatsapp = "";
+      let paymentMethodLabel = "";
+      let paymentTimestamp: Date | null = null;
       if (reference.source === "agency") {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
         if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
@@ -989,6 +994,8 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
         paymentConfirmed = dossier.initialPaymentStatus === "paid";
         agencyDossierId = dossier.id;
+        destination = dossier.destination || "";
+        whatsapp = dossier.phone || "";
       } else {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
         if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
@@ -997,9 +1004,29 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = application.dossierNumber;
         paymentConfirmed = application.paymentStatus === "SUCCESS";
         applicationId = application.id;
+        destination = application.destination || "";
+        whatsapp = application.whatsappNumber || "";
+        paymentMethodLabel = application.paymentMethod || "";
+        paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
-      const protocolText = input.content.trim().length >= 50 ? input.content : INITIAL_AGREEMENT_PROTOCOL;
+      // Le protocole est genere automatiquement selon le pays de destination du candidat
+      // (COUNTRY_PROTOCOL_PROFILES) sauf si l'administrateur a fourni un texte personnalise.
+      const empreinteSha = crypto.createHash("sha256").update(`${dossierNumber}|${email}|${destination}|${Date.now()}`).digest("hex").slice(0, 24);
+      const autoProtocolText = buildProtocolOneRichText({
+        clientNomComplet: fullName,
+        dossierRef: dossierNumber,
+        destinationProjet: destination || "Non spécifiée",
+        clientTelephoneWhatsapp: whatsapp || undefined,
+        clientEmail: email,
+        modePaiement: paymentMethodLabel || "Validation manuelle par un conseiller",
+        dateHeurePaiement: paymentTimestamp ? paymentTimestamp.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }) : "Non renseignée",
+        conseillerEmail: admin.email || "",
+        empreinteSha,
+        clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
+        dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      }, destination);
+      const protocolText = input.content.trim().length >= 50 ? input.content : autoProtocolText;
       const paragraphs = protocolText.split(/\n\s*\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
       const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
       const logoUrl = `${siteUrl}/favicon.png`;
