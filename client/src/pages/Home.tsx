@@ -32,6 +32,7 @@ import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
+import DestinationsShowcaseSection from "@/components/DestinationsShowcaseSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
@@ -629,6 +630,9 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* ─── NOS DESTINATIONS : grille des 23 pays de formation/emploi qualifie ── */}
+      <DestinationsShowcaseSection />
 
       {/* ─── PREUVES DE DOSSIERS REELS TRAITES (documents redactes, filigranes) ── */}
       <ProofGallerySection />
