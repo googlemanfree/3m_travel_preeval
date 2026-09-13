@@ -17,6 +17,41 @@ const PROOF_PHOTOS = [
     alt: "Visas Canada approuvés dans des passeports de clients, informations personnelles masquées",
     caption: "Visas Canada obtenus par des candidats accompagnés depuis Yaoundé",
   },
+  {
+    src: "/proof-photos/proof-china-visa-1.jpg",
+    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa de travail Chine obtenu grâce à l'accompagnement 3M Travel & Services",
+  },
+  {
+    src: "/proof-photos/proof-china-visa-2.jpg",
+    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Dossier de visa Chine traité et validé pour un candidat camerounais",
+  },
+  {
+    src: "/proof-photos/proof-pr-letters-passports-1.jpg",
+    alt: "Confirmations de résidence permanente Canada et passeports de clients, informations personnelles masquées",
+    caption: "Quatre dossiers de résidence permanente Canada traités simultanément",
+  },
+  {
+    src: "/proof-photos/proof-express-entry-letter-1.jpg",
+    alt: "Lettre IRCC de suivi de dossier Entrée express, informations personnelles masquées",
+    caption: "Suivi officiel IRCC — dossier Entrée express en voie de finalisation",
+  },
+  {
+    src: "/proof-photos/proof-canada-visa-1.jpg",
+    alt: "Visa Canada approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa de résident permanent Canada obtenu par un candidat accompagné",
+  },
+  {
+    src: "/proof-photos/proof-china-visa-3.jpg",
+    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa Chine délivré à Yaoundé pour un candidat suivi par 3M Travel & Services",
+  },
+  {
+    src: "/proof-photos/proof-china-visa-4.jpg",
+    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Nouveau dossier de visa Chine mené à terme depuis Yaoundé",
+  },
 ];
 
 export default function ProofGallerySection() {
