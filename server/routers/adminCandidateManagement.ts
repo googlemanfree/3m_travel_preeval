@@ -1030,26 +1030,38 @@ export const adminCandidateManagementRouter = router({
       const paragraphs = protocolText.split(/\n\s*\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
       const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
       const logoUrl = `${siteUrl}/favicon.png`;
-      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#10234f;">
-<div style="max-width:760px;margin:0 auto;background:#ffffff;">
-  <div style="background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);padding:28px 32px;text-align:center;">
-    <img src="${logoUrl}" alt="3M Travel & Services" width="56" height="56" style="width:56px;height:56px;border-radius:50%;background:#ffffff;padding:4px;" />
-    <h1 style="color:#ffffff;font-size:20px;margin:12px 0 0;">3M Travel &amp; Services</h1>
-    <p style="color:#bfdbfe;font-size:12px;margin:4px 0 0;">Protocole d’accord de service</p>
-  </div>
-  <div style="padding:32px;line-height:1.6;">
-    <p><strong>Dossier :</strong> ${escapeAgreementHtml(dossierNumber)}</p>
-    <p><strong>Candidat :</strong> ${escapeAgreementHtml(fullName)}</p>
-    <p style="font-size:12px;color:#64748b">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>
-    ${paragraphs}
-    <p style="font-size:12px;color:#64748b;margin-top:24px;">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p>
-    <div style="text-align:center;margin-top:28px;">
-      <a href="${siteUrl}/mon-espace" style="display:inline-block;background:#1E3A8A;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;">Accéder à mon espace</a>
+      const generatedOn = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+      const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Protocole d’accord — ${escapeAgreementHtml(dossierNumber)}</title></head><body style="margin:0;padding:0;background:#eef2f7;">
+<div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; background: #eef2f7; padding: 24px;">
+  <div style="background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15,36,96,0.12);">
+    <div style="background: linear-gradient(135deg, #0f2460 0%, #1E3A8A 55%, #2563EB 100%); padding: 36px 30px 28px; text-align: center;">
+      <img src="${logoUrl}" alt="3M Travel & Services" width="72" height="72" style="width:72px;height:72px;border-radius:50%;background:#ffffff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,0.25);" />
+      <p style="display:inline-block;margin:18px 0 0;background:rgba(255,255,255,0.15);color:#dbeafe;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:999px;">Protocole d’accord officiel</p>
+      <h1 style="color:#ffffff;font-size:24px;margin:14px 0 0;">3M Travel &amp; Services</h1>
+      <div style="width:60px;height:3px;background:#c9972b;margin:14px auto 0;border-radius:2px;"></div>
     </div>
-  </div>
-  <div style="background:#f8faff;padding:20px 32px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;">
-    <p style="margin:0 0 4px;">3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
-    <p style="margin:0;">Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
+    <div style="padding: 32px 30px;">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:24px;">
+        <p style="margin:0;font-size:11px;font-weight:bold;color:#2563EB;text-transform:uppercase;letter-spacing:0.5px;">Dossier</p>
+        <p style="margin:2px 0 10px;font-size:16px;font-weight:bold;color:#0f2460;">${escapeAgreementHtml(dossierNumber)}</p>
+        <p style="margin:0;font-size:11px;font-weight:bold;color:#2563EB;text-transform:uppercase;letter-spacing:0.5px;">Candidat</p>
+        <p style="margin:2px 0 0;font-size:16px;font-weight:bold;color:#0f2460;">${escapeAgreementHtml(fullName)}</p>
+        <p style="margin:12px 0 0;font-size:11px;color:#64748b;">Version du protocole : ${AGREEMENT_PROTOCOL_VERSION}</p>
+      </div>
+      <div style="color:#1f2937;font-size:14px;line-height:1.7;">
+        ${paragraphs}
+      </div>
+      <p style="font-size:12px;color:#64748b;margin-top:24px;">Document préparé par ${escapeAgreementHtml(admin.email)}. Signature autorisée uniquement après paiement confirmé.</p>
+      <div style="text-align:center;margin-top:30px;">
+        <a href="${siteUrl}/mon-espace" style="background:linear-gradient(135deg,#0f2460,#2563EB);color:#ffffff;text-decoration:none;padding:14px 34px;border-radius:10px;font-weight:bold;font-size:15px;display:inline-block;box-shadow:0 6px 16px rgba(37,99,235,0.35);">Accéder à mon espace</a>
+      </div>
+    </div>
+    <div style="border-top:2px solid #f1f5f9;padding:20px 30px;text-align:center;background:#fafbfc;">
+      <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">Ce document est une preuve officielle de votre engagement. Conservez-le précieusement.</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M Travel &amp; Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">Yaoundé, Cameroun • hello@3mtravelagency.com</p>
+      <p style="margin:0;font-size:11px;color:#c7cdd6;">Document généré le ${generatedOn}</p>
+    </div>
   </div>
 </div>
 </body></html>`;
