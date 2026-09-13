@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Filter, Quote, Star } from "lucide-react";
+import { ArrowUpDown, Filter, Quote, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
@@ -19,6 +19,28 @@ interface Review {
 }
 
 type DestinationFilter = "all" | "canada" | "schengen" | "other";
+type SortOption = "rating-desc" | "rating-asc" | "date-desc" | "date-asc";
+
+function reviewTimestamp(value: Review["createdAt"]) {
+  if (!value) return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function sortReviews(reviews: Review[], sortBy: SortOption) {
+  const sorted = [...reviews];
+  switch (sortBy) {
+    case "rating-asc":
+      return sorted.sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0));
+    case "date-desc":
+      return sorted.sort((a, b) => reviewTimestamp(b.createdAt) - reviewTimestamp(a.createdAt));
+    case "date-asc":
+      return sorted.sort((a, b) => reviewTimestamp(a.createdAt) - reviewTimestamp(b.createdAt));
+    case "rating-desc":
+    default:
+      return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+  }
+}
 
 const SCHENGEN_DESTINATIONS = [
   "allemagne",
@@ -84,13 +106,14 @@ export default function ApprovedReviewsSection() {
   const [translationPending, setTranslationPending] = useState<Record<string, boolean>>({});
   const [showOriginal, setShowOriginal] = useState<Record<number, boolean>>({});
   const [visibleCount, setVisibleCount] = useState(REVIEWS_PAGE_SIZE);
+  const [sortBy, setSortBy] = useState<SortOption>("rating-desc");
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
 
   useEffect(() => {
-    // Revenir à la première page de résultats lorsque le filtre ou la recherche change.
+    // Revenir à la première page de résultats lorsque le filtre, la recherche ou le tri change.
     setVisibleCount(REVIEWS_PAGE_SIZE);
-  }, [destinationFilter, searchQuery]);
+  }, [destinationFilter, searchQuery, sortBy]);
 
   const filteredReviews = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase("fr-FR");
@@ -117,8 +140,8 @@ export default function ApprovedReviewsSection() {
       return searchableText.includes(normalizedQuery);
     });
 
-    return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-  }, [approvedReviews, destinationFilter, searchQuery]);
+    return sortReviews(filtered, sortBy);
+  }, [approvedReviews, destinationFilter, searchQuery, sortBy]);
 
   const displayedReviews = useMemo(
     () => filteredReviews.slice(0, visibleCount),
@@ -187,6 +210,11 @@ export default function ApprovedReviewsSection() {
         translating: "Translating…",
         originalText: "Original review",
         showMore: "Show more reviews",
+        sortLabel: "Sort reviews",
+        sortRatingDesc: "Highest rated",
+        sortRatingAsc: "Lowest rated",
+        sortDateDesc: "Most recent",
+        sortDateAsc: "Oldest",
       }
     : {
         loading: "Chargement des avis approuvés...",
@@ -211,6 +239,11 @@ export default function ApprovedReviewsSection() {
         translating: "Traduction en cours…",
         originalText: "Avis original",
         showMore: "Voir plus d'avis",
+        sortLabel: "Trier les avis",
+        sortRatingDesc: "Note la plus haute",
+        sortRatingAsc: "Note la plus basse",
+        sortDateDesc: "Les plus récents",
+        sortDateAsc: "Les plus anciens",
       };
 
   if (isLoading) {
@@ -288,7 +321,7 @@ export default function ApprovedReviewsSection() {
                 <p className="text-sm text-slate-600 mt-2">{labels.average}</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">{stats.totalReviews}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.approvedReviews}</p>
                 <p className="text-sm text-slate-600 mt-2">{labels.verified}</p>
               </div>
             </div>
@@ -343,6 +376,24 @@ export default function ApprovedReviewsSection() {
               );
             })}
           </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <label htmlFor="approved-reviews-sort" className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+              <ArrowUpDown className="w-3.5 h-3.5" aria-hidden="true" /> {labels.sortLabel}
+            </label>
+            <select
+              id="approved-reviews-sort"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="rating-desc">{labels.sortRatingDesc}</option>
+              <option value="rating-asc">{labels.sortRatingAsc}</option>
+              <option value="date-desc">{labels.sortDateDesc}</option>
+              <option value="date-asc">{labels.sortDateAsc}</option>
+            </select>
+          </div>
+
           <p className="mt-3 text-xs text-slate-500" aria-live="polite">
             {displayedReviews.length} {labels.results}
           </p>

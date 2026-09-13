@@ -1,10 +1,49 @@
+import { useEffect } from "react";
 import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
 import SubmitReview from "./SubmitReview";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
+import { trpc } from "@/lib/trpc";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
+
+const AGGREGATE_RATING_SCRIPT_ID = "avis-aggregate-rating-jsonld";
 
 export default function Avis() {
+  const { data: stats } = trpc.customerReview.getStats.useQuery();
+
+  useEffect(() => {
+    const existing = document.getElementById(AGGREGATE_RATING_SCRIPT_ID);
+    if (existing) existing.remove();
+
+    // N'émettre AggregateRating que si des avis réellement approuvés existent :
+    // pas de note fabriquée ni de volume gonflé.
+    if (!stats || stats.approvedReviews <= 0) return;
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = AGGREGATE_RATING_SCRIPT_ID;
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": `${COMPANY_PROFILE.website}/#localbusiness`,
+      name: COMPANY_PROFILE.legalName,
+      url: COMPANY_PROFILE.website,
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: stats.averageRating,
+        reviewCount: stats.approvedReviews,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.getElementById(AGGREGATE_RATING_SCRIPT_ID)?.remove();
+    };
+  }, [stats]);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white px-4 py-14 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
