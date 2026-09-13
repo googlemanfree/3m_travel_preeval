@@ -3608,3 +3608,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Blocage découvert pendant la vérification du bilan
 - [x] Corriger le clic Prévisualiser qui déclenche une sauvegarde avec recommendations vide et renvoie BAD_REQUEST sans retour utilisateur clair dans EvaluationDeliveryEditor. Le garde-fou affiche désormais « Recommandations requises » et capture les erreurs de sauvegarde.
 - [x] Ajouter une régression pour la prévisualisation d’un brouillon incomplet et republier après TypeScript/tests. La régression dédiée et le test CandidateDetailModal passent ; le clic réel post-correctif n’a généré aucune nouvelle erreur BAD_REQUEST.
+
+## Régression Enregistrer révélée en live
+- [x] Corriger le handler Enregistrer qui contourne le garde-fou de Prévisualiser et envoie encore recommendations vide à saveEvaluationDeliveryDraft. Le handler valide désormais les recommandations, capture l’erreur et le serveur ignore les sources secondaires indisponibles.
+- [x] Ajouter une régression dédiée au clic Enregistrer et retester le dossier interne sans envoi externe. TypeScript, six tests ciblés et le retest réel de COMPTE-1140001 sont au vert ; aucune diffusion externe n’a été déclenchée.

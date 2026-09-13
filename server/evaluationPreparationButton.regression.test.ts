@@ -22,10 +22,12 @@ describe("préparation manuelle du bilan", () => {
     expect(router).toContain("Bilan validé et envoyé immédiatement dans l’espace client et par e-mail.");
   });
 
-  it("bloque proprement la prévisualisation d’un brouillon sans recommandations", () => {
+  it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans recommandations", () => {
     expect(editor).toContain("if (payload.recommendations.length < 1)");
+    expect(editor).toContain("Ajoutez au moins une recommandation avant d’enregistrer le brouillon.");
     expect(editor).toContain("Recommandations requises");
     expect(editor).toContain("Préparation impossible");
+    expect(editor).toContain("Brouillon non enregistré");
     expect(editor).toContain("catch {");
   });
 });
