@@ -3517,6 +3517,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les métadonnées évidentes des 7 nouvelles images
 - [x] Exécuter TypeScript et les tests ciblés
 - [x] Vérifier visuellement les 10 photos dans la galerie
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Publier uniquement si tous les contrôles sont verts
 
 - [x] Enregistrer la confirmation utilisateur du consentement documenté pour les sept nouvelles images et terminer le contrôle final
+
+## Allemagne–Formation — commit d2dbd6b
+- [ ] Synchroniser et relire le commit d2dbd6b
+- [ ] Vérifier la route spécialisée /procedures/allemagne-formation avant le gestionnaire générique
+- [ ] Vérifier le parcours cours de langue intensif : conditions, 6 étapes et documents
+- [ ] Vérifier le parcours Ausbildung : 7 étapes, documents et rémunération indicative
+- [ ] Vérifier la section Pourquoi 3M Travel, le CTA, les avertissements et les sources officielles
+- [ ] Exécuter TypeScript et les tests ciblés
+- [ ] Vérifier visuellement le hero, les deux tableaux et les étapes numérotées
+- [ ] Publier uniquement si tous les contrôles sont verts
