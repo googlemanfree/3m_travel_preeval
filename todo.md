@@ -3604,3 +3604,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le rendu du nouvel e-mail de protocole sans envoyer de protocole réel
 - [x] Exécuter TypeScript et les tests agreement-payment-gating et adminAgreementResend
 - [x] Publier le lot après validation complète (checkpoint 3c1173ad)
+
+## Blocage découvert pendant la vérification du bilan
+- [x] Corriger le clic Prévisualiser qui déclenche une sauvegarde avec recommendations vide et renvoie BAD_REQUEST sans retour utilisateur clair dans EvaluationDeliveryEditor. Le garde-fou affiche désormais « Recommandations requises » et capture les erreurs de sauvegarde.
+- [x] Ajouter une régression pour la prévisualisation d’un brouillon incomplet et republier après TypeScript/tests. La régression dédiée et le test CandidateDetailModal passent ; le clic réel post-correctif n’a généré aucune nouvelle erreur BAD_REQUEST.

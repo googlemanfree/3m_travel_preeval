@@ -259,10 +259,19 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       toast({ title: "Bilan requis", description: "Saisissez au moins trois caractères dans le champ du bilan avant l’envoi.", variant: "destructive" });
       return false;
     }
-    await saveDraft.mutateAsync(payload);
-    lastAutosavedPayload.current = JSON.stringify(payload);
-    void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId: effectiveSourceRecordId });
-    return true;
+    if (payload.recommendations.length < 1) {
+      toast({ title: "Recommandations requises", description: "Ajoutez au moins une recommandation avant de prévisualiser, générer le PDF ou diffuser le bilan.", variant: "destructive" });
+      return false;
+    }
+    try {
+      await saveDraft.mutateAsync(payload);
+      lastAutosavedPayload.current = JSON.stringify(payload);
+      void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId: effectiveSourceRecordId });
+      return true;
+    } catch {
+      toast({ title: "Préparation impossible", description: "Le brouillon n’a pas pu être enregistré. Vérifiez les champs requis puis réessayez.", variant: "destructive" });
+      return false;
+    }
   };
   const saveDraftOnly = async () => {
     if (payload.verdict.trim().length < 3) {
