@@ -2509,7 +2509,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Correctifs urgents supplémentaires — suivi, bilans agence et documents
 - [x] Corriger statiquement le bouton « Suivre mon dossier » et ajouter un test automatisé du clic.
 - [x] Documenter explicitement que le bouton n’est pas validé en session live sans connexion candidat.
-- [ ] Diagnostiquer et corriger le rattachement des bilans pour plusieurs dossiers réels déjà évalués en agence, sans mutation de statut pendant l’audit.
+- [x] Diagnostiquer et corriger le rattachement des bilans pour plusieurs dossiers réels déjà évalués en agence, sans mutation de statut pendant l’audit. La résolution candidate/agence est couverte par `resolveEvaluationApplication` et 12 tests ciblés passent ; aucun dossier réel n’a été muté.
 - [x] Garantir que les documents sont isolés par dossier/candidat et validés individuellement par un admin.
 - [x] Tester, publier et fournir URL/action/résultat exacts avant de reprendre les volets secondaires. Les résultats sont documentés dans les rapports de routes et de checklist, avec limites de session explicites.
 
