@@ -3464,13 +3464,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier uniquement si tous les contrôles sont verts
 
 ## Lot bilingue FR/EN e599202 — routing, prerendu et SEO
-- [ ] Synchroniser et relire le commit e599202
-- [ ] Vérifier les routes /en, /en/procedures/:countryId et /en/destinations/:countryId
-- [ ] Vérifier le rendu locale-aware de CountryDetailPage et les quatre slugs anglais
-- [ ] Vérifier procedureMetaForPathEn, les titles/H1/meta descriptions et og:locale/inLanguage conditionnels
-- [ ] Vérifier HREFLANG_PAIRS avec alternates fr/en/x-default sur les pages concernées
-- [ ] Vérifier getIndexablePublicPaths et le sitemap avec les pages EN
-- [ ] Vérifier les limites connues : navigation/footer/formulaire FR, blocs masqués, aucun avis EN et seulement quatre procédures traduites
-- [ ] Exécuter TypeScript et les tests approfondis de routing, prerendu, sitemap et hreflang
-- [ ] Vérifier visuellement les pages EN et plusieurs pages FR existantes
+- [x] Synchroniser et relire le commit e599202
+- [x] Vérifier les routes /en, /en/procedures/:countryId et /en/destinations/:countryId
+- [x] Vérifier le rendu locale-aware de CountryDetailPage et les quatre slugs anglais
+- [x] Vérifier procedureMetaForPathEn, les titles/H1/meta descriptions et og:locale/inLanguage conditionnels
+- [x] Vérifier HREFLANG_PAIRS avec alternates fr/en/x-default sur les pages concernées
+- [x] Vérifier getIndexablePublicPaths et le sitemap avec les pages EN
+- [x] Vérifier les limites connues : navigation/footer/formulaire FR, blocs masqués, aucun avis EN et seulement quatre procédures traduites
+- [x] Exécuter TypeScript et les tests approfondis de routing, prerendu, sitemap et hreflang
+- [x] Vérifier visuellement les pages EN et plusieurs pages FR existantes
 - [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Corriger la compatibilité du test de positionnement de evaluation-multi dans Home.tsx sans réintroduire de contenu redondant
+
+- [x] Ajouter un test de régression ciblé pour les quatre slugs EN, le sitemap bilingue et les alternates hreflang

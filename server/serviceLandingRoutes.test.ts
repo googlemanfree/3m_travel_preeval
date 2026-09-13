@@ -44,7 +44,7 @@ describe("routes canoniques des pages de service", () => {
     const proceduresSource = readFileSync(resolve(process.cwd(), "client/src/pages/ProceduresAdvanced.tsx"), "utf8");
     const canadaSource = readFileSync(resolve(process.cwd(), "client/src/pages/Canada.tsx"), "utf8");
     expect(homeSource).toContain('id="evaluation-multi"');
-    expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf("<EmbassyNewsWidget />"));
+    expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf('id="home-quick-access-title"'));
     expect(proceduresSource).toContain("Canada : Résidence & Emploi");
     expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
     expect(proceduresSource).toContain("Études Internationales");
