@@ -12,7 +12,14 @@ interface Props {
  */
 export default function SignatureCanvas({ onSignatureChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  // Refs (pas des états) pour ces deux drapeaux : ils sont lus et ecrits dans
+  // des gestionnaires d'evenements natifs (mousedown/mousemove/mouseup) qui
+  // peuvent se declencher plus vite que le cycle de rendu React. Avec un
+  // useState, stopDrawing() pouvait lire une valeur perimee de "a-t-on
+  // dessine ?" (toujours false) sur un trait rapide, et ne jamais appeler
+  // onSignatureChange — bouton de signature bloque indefiniment desactive.
+  const isDrawingRef = useRef(false);
+  const hasDrawnRef = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
 
   useEffect(() => {
@@ -42,25 +49,28 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
     const { x, y } = getPos(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
-    setIsDrawing(true);
+    isDrawingRef.current = true;
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return;
+    if (!isDrawingRef.current) return;
     e.preventDefault();
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const { x, y } = getPos(e);
     ctx.lineTo(x, y);
     ctx.stroke();
-    if (!hasDrawn) setHasDrawn(true);
+    if (!hasDrawnRef.current) {
+      hasDrawnRef.current = true;
+      setHasDrawn(true);
+    }
   };
 
   const stopDrawing = () => {
-    if (!isDrawing) return;
-    setIsDrawing(false);
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
     const canvas = canvasRef.current;
-    if (canvas && hasDrawn) {
+    if (canvas && hasDrawnRef.current) {
       onSignatureChange(canvas.toDataURL("image/png"));
     }
   };
@@ -70,6 +80,7 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
     const ctx = canvas?.getContext("2d");
     if (canvas && ctx) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasDrawnRef.current = false;
       setHasDrawn(false);
       onSignatureChange(null);
     }
