@@ -3599,8 +3599,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Diagnostiquer et corriger la perte de session entre le tableau Admin et la fiche Candidate360 ouverte depuis COMPTE-1140001, puis retester sans mutation métier
 
 ## Lot signature et e-mail protocole — bcacef3c
-- [ ] Synchroniser le commit bcacef3c depuis origin/main sans écraser les changements en cours
-- [ ] Vérifier le bouton de signature après un trait rapide dans EvaluationSpace, MonDossier et MySpace
-- [ ] Vérifier le rendu du nouvel e-mail de protocole sans envoyer de protocole réel
-- [ ] Exécuter TypeScript et les tests agreement-payment-gating et adminAgreementResend
+- [x] Synchroniser le commit bcacef3c depuis origin/main sans écraser les changements en cours
+- [x] Vérifier le bouton de signature après un trait rapide dans EvaluationSpace, MonDossier et MySpace
+- [x] Vérifier le rendu du nouvel e-mail de protocole sans envoyer de protocole réel
+- [x] Exécuter TypeScript et les tests agreement-payment-gating et adminAgreementResend
 - [ ] Publier le lot après validation complète
