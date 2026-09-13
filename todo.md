@@ -3487,4 +3487,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le nouveau lead/heading prerendu de l’accueil
 - [x] Exécuter TypeScript et les tests ciblés
 - [x] Vérifier visuellement l’accueil et l’absence de contenu d’avis fictif
+- [x] Publier uniquement si tous les contrôles sont verts
+
+## Avis — état premier témoignage bb0ad8a
+- [x] Synchroniser et relire le commit bb0ad8a
+- [x] Vérifier l’état visible invitant à laisser le premier avis lorsque approvedReviews vaut zéro
+- [x] Vérifier le rappel que chaque avis est vérifié avant publication, sans témoignage fabriqué
+- [x] Vérifier que les deux boutons pointent vers /avis#deposer-un-avis
+- [x] Confirmer que /submit-review n’est plus utilisé par ces boutons
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement /avis avec zéro avis approuvé
 - [ ] Publier uniquement si tous les contrôles sont verts
