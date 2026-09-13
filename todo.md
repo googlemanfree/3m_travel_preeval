@@ -3444,11 +3444,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la regex de normalisation de CountryDetailPage.tsx incompatible avec la cible TypeScript ES5, sans modifier la logique SEO
 
 ## Correctif avis db34d9e — tri, réessai et AggregateRating
-- [ ] Synchroniser et relire le commit db34d9e
-- [ ] Vérifier le tri des avis par note et date avec réinitialisation de pagination
-- [ ] Vérifier le bouton Réessayer de ReviewsErrorBoundary sans rechargement complet
-- [ ] Vérifier AggregateRating uniquement avec les statistiques approuvées et absence de JSON-LD sans avis approuvé
-- [ ] Vérifier que la carte Avis approuvés utilise approvedReviews
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier le rendu de /avis
+- [x] Synchroniser et relire le commit db34d9e
+- [x] Vérifier le tri des avis par note et date avec réinitialisation de pagination
+- [x] Vérifier le bouton Réessayer de ReviewsErrorBoundary sans rechargement complet
+- [x] Vérifier AggregateRating uniquement avec les statistiques approuvées et absence de JSON-LD sans avis approuvé
+- [x] Vérifier que la carte Avis approuvés utilise approvedReviews
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier le rendu de /avis
 - [ ] Publier uniquement si tous les contrôles sont verts
