@@ -49,6 +49,7 @@ const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
 const Billets = lazyWithTimeout(() => import("./pages/Billets"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const ProcedureLuxembourg = lazyWithTimeout(() => import("./pages/ProcedureLuxembourg"));
+const ProcedureAllemagneFormation = lazyWithTimeout(() => import("./pages/ProcedureAllemagneFormation"));
 import MonDossier from "./pages/MonDossier";
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
@@ -248,6 +249,7 @@ function Router() {
       <Route path="/procedures/canada">{() => <Redirect to="/canada" />}</Route>
       <Route path="/procedures/schengen">{() => <Redirect to="/schengen" />}</Route>
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
+      <Route path={"/procedures/allemagne-formation"} component={ProcedureAllemagneFormation} />
       <Route path="/destinations/:countryId" component={CountryDetailPage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path="/en/destinations/:countryId" component={CountryDetailPage} />
