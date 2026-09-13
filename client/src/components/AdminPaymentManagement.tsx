@@ -9,6 +9,7 @@ import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mai
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
+import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 
 interface Payment {
   id: number;
@@ -62,6 +63,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
+  const [agreementProtocolPayment, setAgreementProtocolPayment] = useState<Payment | null>(null);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -74,6 +76,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation();
   const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
+  const sendAgreementProtocolMutation = trpc.adminCandidateManagement.sendAgreementProtocol.useMutation();
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -220,6 +223,21 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
       refetchAuditLogs();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "L’envoi de la confirmation a échoué");
+    }
+  };
+
+  const handleConfirmAgreementProtocol = async () => {
+    if (!agreementProtocolPayment) return;
+    try {
+      await sendAgreementProtocolMutation.mutateAsync({ sessionToken: "", candidateId: `online_${agreementProtocolPayment.id}`, content: INITIAL_AGREEMENT_PROTOCOL });
+      toast.success("Protocole d’accord envoyé", {
+        description: `Dossier ${agreementProtocolPayment.dossierNumber} — ${agreementProtocolPayment.email}`,
+      });
+      setAgreementProtocolPayment(null);
+      refetch();
+      refetchAuditLogs();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "L’envoi du protocole a échoué");
     }
   };
 
@@ -578,7 +596,20 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
                           {payment.agreementSigned ? (
                             <span className="text-[11px] font-medium text-emerald-700">Accord signé</span>
                           ) : (
-                            <span className="text-[11px] font-semibold text-amber-700">Accord requis</span>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-[11px] font-semibold text-amber-700">Accord requis</span>
+                              {payment.paymentStatus === "SUCCESS" && (
+                                <Button
+                                  onClick={() => setAgreementProtocolPayment(payment)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-blue-700 hover:bg-blue-50"
+                                  title="Envoyer le protocole d’accord au candidat"
+                                >
+                                  <Mail className="mr-1 h-3 w-3" />Envoyer le protocole
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -865,6 +896,24 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
              </Button>
              <Button onClick={handleConfirmReceiptEmail} disabled={sendPaymentReceiptMutation.isPending || approvePaymentReceiptMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
               {sendPaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />{receiptEmailAction === "resend" ? "Confirmer le renvoi" : "Confirmer l’envoi"}</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(agreementProtocolPayment)} onOpenChange={(open) => !open && setAgreementProtocolPayment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Envoyer le Protocole d’Accord</DialogTitle>
+            <DialogDescription>
+              {agreementProtocolPayment ? `Le Protocole d’Accord sera déposé dans l’espace client et envoyé par e-mail à ${agreementProtocolPayment.email} pour le dossier ${agreementProtocolPayment.dossierNumber}. Cette action sera journalisée.` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-700">Le paiement des frais d’ouverture doit déjà être confirmé (c’est le cas pour ce dossier). Le candidat recevra le protocole à signer depuis son espace ; l’envoi ne remplace pas sa signature électronique.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAgreementProtocolPayment(null)} disabled={sendAgreementProtocolMutation.isPending}>Annuler</Button>
+            <Button onClick={handleConfirmAgreementProtocol} disabled={sendAgreementProtocolMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
+              {sendAgreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />Confirmer l’envoi</>}
             </Button>
           </DialogFooter>
         </DialogContent>

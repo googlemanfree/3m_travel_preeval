@@ -1041,6 +1041,44 @@ export const adminCandidateManagementRouter = router({
       }
       return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
     }),
+  // Liste de rattrapage : dossiers en ligne dont le paiement est confirme mais dont le
+  // Protocole d'Accord N01 n'a pas encore ete signe (bug historique corrige cote candidat.ts :
+  // certains dossiers plus anciens restent a regulariser manuellement depuis le back-office).
+  listCandidatesAwaitingAgreementProtocol: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db
+        .select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          paymentDate: applications.paymentDate,
+          paymentAmount: applications.paymentAmount,
+          dossierStatus: applications.dossierStatus,
+        })
+        .from(applications)
+        .where(and(eq(applications.paymentStatus, "SUCCESS"), eq(applications.agreementSigned, false)))
+        .orderBy(desc(applications.paymentValidatedAt));
+      return {
+        count: rows.length,
+        candidates: rows.map((row) => ({
+          candidateId: `online_${row.id}`,
+          dossierNumber: row.dossierNumber,
+          fullName: row.fullName,
+          email: row.email,
+          destination: row.destination,
+          paymentConfirmedAt: row.paymentValidatedAt ?? row.paymentDate ?? null,
+          paymentAmount: row.paymentAmount,
+          dossierStatus: row.dossierStatus,
+        })),
+      };
+    }),
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

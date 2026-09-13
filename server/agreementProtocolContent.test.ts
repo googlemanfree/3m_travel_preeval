@@ -33,6 +33,6 @@ describe("agreement protocol content", () => {
   });
 
   it("exposes a version for admin and delivery traceability", () => {
-    expect(AGREEMENT_PROTOCOL_VERSION).toMatch(/^2026-09-08-v2$/);
+    expect(AGREEMENT_PROTOCOL_VERSION).toMatch(/^2026-09-13-v3$/);
   });
 });
