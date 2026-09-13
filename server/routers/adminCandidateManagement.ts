@@ -11,7 +11,8 @@ import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../em
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
-import { INITIAL_AGREEMENT_PROTOCOL, AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
+import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
+import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -981,6 +982,10 @@ export const adminCandidateManagementRouter = router({
       let paymentConfirmed = false;
       let agencyDossierId: number | null = null;
       let applicationId: number | null = null;
+      let destination = "";
+      let whatsapp = "";
+      let paymentMethodLabel = "";
+      let paymentTimestamp: Date | null = null;
       if (reference.source === "agency") {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
         if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
@@ -989,6 +994,8 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
         paymentConfirmed = dossier.initialPaymentStatus === "paid";
         agencyDossierId = dossier.id;
+        destination = dossier.destination || "";
+        whatsapp = dossier.phone || "";
       } else {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
         if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
@@ -997,9 +1004,29 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = application.dossierNumber;
         paymentConfirmed = application.paymentStatus === "SUCCESS";
         applicationId = application.id;
+        destination = application.destination || "";
+        whatsapp = application.whatsappNumber || "";
+        paymentMethodLabel = application.paymentMethod || "";
+        paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
-      const protocolText = input.content.trim().length >= 50 ? input.content : INITIAL_AGREEMENT_PROTOCOL;
+      // Le protocole est genere automatiquement selon le pays de destination du candidat
+      // (COUNTRY_PROTOCOL_PROFILES) sauf si l'administrateur a fourni un texte personnalise.
+      const empreinteSha = crypto.createHash("sha256").update(`${dossierNumber}|${email}|${destination}|${Date.now()}`).digest("hex").slice(0, 24);
+      const autoProtocolText = buildProtocolOneRichText({
+        clientNomComplet: fullName,
+        dossierRef: dossierNumber,
+        destinationProjet: destination || "Non spécifiée",
+        clientTelephoneWhatsapp: whatsapp || undefined,
+        clientEmail: email,
+        modePaiement: paymentMethodLabel || "Validation manuelle par un conseiller",
+        dateHeurePaiement: paymentTimestamp ? paymentTimestamp.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }) : "Non renseignée",
+        conseillerEmail: admin.email || "",
+        empreinteSha,
+        clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
+        dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      }, destination);
+      const protocolText = input.content.trim().length >= 50 ? input.content : autoProtocolText;
       const paragraphs = protocolText.split(/\n\s*\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
       const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
       const logoUrl = `${siteUrl}/favicon.png`;
@@ -1040,6 +1067,44 @@ export const adminCandidateManagementRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le protocole a été déposé dans l’espace client, mais l’e-mail n’a pas pu être envoyé. Relancez l’envoi après vérification SMTP." });
       }
       return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
+    }),
+  // Liste de rattrapage : dossiers en ligne dont le paiement est confirme mais dont le
+  // Protocole d'Accord N01 n'a pas encore ete signe (bug historique corrige cote candidat.ts :
+  // certains dossiers plus anciens restent a regulariser manuellement depuis le back-office).
+  listCandidatesAwaitingAgreementProtocol: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db
+        .select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          paymentDate: applications.paymentDate,
+          paymentAmount: applications.paymentAmount,
+          dossierStatus: applications.dossierStatus,
+        })
+        .from(applications)
+        .where(and(eq(applications.paymentStatus, "SUCCESS"), eq(applications.agreementSigned, false)))
+        .orderBy(desc(applications.paymentValidatedAt));
+      return {
+        count: rows.length,
+        candidates: rows.map((row) => ({
+          candidateId: `online_${row.id}`,
+          dossierNumber: row.dossierNumber,
+          fullName: row.fullName,
+          email: row.email,
+          destination: row.destination,
+          paymentConfirmedAt: row.paymentValidatedAt ?? row.paymentDate ?? null,
+          paymentAmount: row.paymentAmount,
+          dossierStatus: row.dossierStatus,
+        })),
+      };
     }),
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))

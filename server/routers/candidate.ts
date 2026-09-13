@@ -1531,12 +1531,16 @@ export const candidateRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
     const { applications } = await import("../../drizzle/schema");
-    const app = await db
+    const candidateApplications = await db
       .select()
       .from(applications)
       .where(eq(applications.candidateId, ctx.candidate.id))
-      .orderBy(desc(applications.createdAt))
-      .limit(1);
+      .orderBy(desc(applications.createdAt));
+    // Si une ligne plus recente et non payee a ete creee depuis (nouvelle evaluation,
+    // nouveau projet), on garde la ligne payee comme dossier actif : sinon le paiement
+    // confirme et le protocole d'accord a signer deviennent invisibles pour le candidat.
+    const activeApplication = candidateApplications.find((row) => row.paymentStatus === "SUCCESS") ?? candidateApplications[0] ?? null;
+    const app = activeApplication ? [activeApplication] : [];
 
     // Les dossiers ouverts directement en agence n’étaient pas reliés à une
     // application en ligne. Ils sont maintenant exposés dans le même espace,
@@ -2094,7 +2098,12 @@ export const candidateRouter = router({
       }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossierDocuments.createdAt)),
     ]);
 
-    const activeApp = appRows[0] || null;
+    // Un candidat peut accumuler plusieurs lignes "applications" (nouvelle evaluation,
+    // nouveau projet, etc.). Si l'une d'elles est payee, c'est elle qui doit rester
+    // "active" meme si une ligne plus recente et non payee a ete creee depuis - sinon
+    // le paiement confirme et le protocole d'accord a signer deviennent invisibles pour
+    // le candidat (appRows est trie du plus recent au plus ancien).
+    const activeApp = appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null;
     const [activeAgencyDossier] = await db
       .select()
       .from(agencyDossiers)
