@@ -3552,3 +3552,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le rendu final des 15 images dans la galerie ; publication en attente de la validation de confidentialité
 
 - [x] Enregistrer la confirmation utilisateur du consentement documenté pour les cinq nouvelles images et terminer le contrôle final
+
+## Lot destinations et formations — commits 75ba3a6, 5b12d4f, d29d304
+- [x] Synchroniser et relire les trois commits et leurs routes publiques
+- [x] Vérifier les pages spécialisées /procedures/autriche-formation et /procedures/suisse-formation
+- [x] Vérifier les 18 pages DestinationFormationPage sans doublon Canada/Luxembourg
+- [x] Vérifier le hub /destinations avec 23 destinations groupées et CTA
+- [x] Vérifier la section d’accueil Nos destinations, les 23 cartes et le lien du menu principal
+- [x] Exécuter TypeScript et les tests ciblés routing/prerendu/destinations
+- [x] Vérifier visuellement desktop et mobile les pages, le hub et l’accueil
+- [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Adapter l’assertion historique publicDestinationCoverage au composant CountryDetailPage locale-aware sans modifier les nouvelles pages destination
+
+- [x] Adapter l’assertion historique de date de mise à jour à la structure actuelle locale-aware sans modifier le rendu destination
+
+- [x] Corriger le contraste des titres de hero sur /destinations et /procedures/autriche-formation, sans modifier le contenu métier
+
+- [x] Corriger le contraste des titres hero dans DestinationFormationPage.tsx, puis retester les pages génériques

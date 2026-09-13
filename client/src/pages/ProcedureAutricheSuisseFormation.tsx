@@ -87,7 +87,7 @@ export default function ProcedureAutricheSuisseFormation() {
         <div className="mx-auto max-w-5xl">
           <p className="text-5xl" aria-hidden="true">{isSuisseRoute ? "🇨🇭" : "🇦🇹"}</p>
           <p className="mt-5 text-xs font-black uppercase tracking-[.18em] text-blue-100">Guide formation · Autriche &amp; Suisse</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
+          <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl">
             Au-delà de l'Allemagne : l'Autriche et la Suisse, deux autres portes d'entrée vers l'apprentissage européen
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-blue-50">
