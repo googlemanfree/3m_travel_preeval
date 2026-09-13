@@ -3500,10 +3500,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier uniquement si tous les contrôles sont verts
 
 ## Preuves et résultats — commit 2f822f0
-- [ ] Synchroniser et relire le commit 2f822f0
-- [ ] Vérifier l’emplacement de ProofGallerySection juste avant les avis approuvés
-- [ ] Vérifier les trois images locales de preuve et l’absence de données personnelles lisibles après caviardage
-- [ ] Vérifier la présence du filigrane et l’absence de métadonnées sensibles évidentes
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier visuellement l’accueil et le rendu de la galerie
+- [x] Synchroniser et relire le commit 2f822f0
+- [x] Vérifier l’emplacement de ProofGallerySection juste avant les avis approuvés
+- [x] Vérifier les trois images locales de preuve et l’absence de données personnelles lisibles après caviardage
+- [x] Vérifier la présence du filigrane et l’absence de métadonnées sensibles évidentes
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement l’accueil et le rendu de la galerie
 - [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Enregistrer la confirmation utilisateur du consentement documenté pour les trois images de preuve et terminer le contrôle final
