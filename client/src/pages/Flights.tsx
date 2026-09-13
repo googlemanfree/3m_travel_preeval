@@ -101,8 +101,8 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Airport = { iata: string; name: string; city: string; country: string };
-type Flight = {
+export type Airport = { iata: string; name: string; city: string; country: string };
+export type Flight = {
   id: string;
   airline: { code: string; name: string; logo: string; color: string; alliance?: string };
   flightNumber: string;
@@ -127,47 +127,47 @@ type Flight = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CABIN_LABELS: Record<string, string> = {
+export const CABIN_LABELS: Record<string, string> = {
   ECONOMY: "Économique",
   PREMIUM_ECONOMY: "Éco Premium",
   BUSINESS: "Affaires",
   FIRST: "Première",
 };
 
-const TRIP_TYPES = [
+export const TRIP_TYPES = [
   { value: "ONE_WAY", label: "Aller simple" },
   { value: "ROUND_TRIP", label: "Aller-Retour" },
   { value: "MULTI", label: "Multi-destinations" },
 ];
 
-function formatXAF(amount: number) {
+export function formatXAF(amount: number) {
   return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
 }
 
-function today() {
+export function today() {
   return new Date().toISOString().split("T")[0];
 }
 
-function minDate(days = 0) {
+export function minDate(days = 0) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0];
 }
 
-function isValidIsoDate(value: string | null | undefined): value is string {
+export function isValidIsoDate(value: string | null | undefined): value is string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-function addDaysToIsoDate(value: string, days: number) {
+export function addDaysToIsoDate(value: string, days: number) {
   const parsed = new Date(`${value}T00:00:00Z`);
   parsed.setUTCDate(parsed.getUTCDate() + days);
   return parsed.toISOString().slice(0, 10);
 }
 
 // ─── Airport Autocomplete Input ───────────────────────────────────────────────
-function AirportInput({
+export function AirportInput({
   label, value, onChange, placeholder, icon,
 }: {
   label: string;
@@ -179,6 +179,13 @@ function AirportInput({
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Garde le champ synchronise si la valeur est modifiee depuis l'exterieur
+  // (ex: un raccourci de destination), sans ecraser la saisie en cours de l'utilisateur.
+  useEffect(() => {
+    setQuery(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const { data: results } = trpc.flights.searchAirports.useQuery(
     { query },
@@ -241,7 +248,7 @@ function AirportInput({
 }
 
 // ─── Passenger Selector ───────────────────────────────────────────────────────
-function PassengerSelector({
+export function PassengerSelector({
   adults, children, infants, cabinClass,
   onChange,
 }: {
