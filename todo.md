@@ -2466,7 +2466,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Nouvelle mission — destinations et cohérence visuelle
 - [x] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants. La couche sources est auditée ; les visuels restent hors périmètre.
 - [x] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable. Le registre compte 107 sources HTTPS et aucune procédure du catalogue n’est manquante.
-- [ ] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes.
+- [x] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes. Les 23 cartes de la vitrine utilisent des URLs permanentes ; les assets contrôlés répondent HTTP 200 et les informations officielles sont déjà référencées dans le catalogue audité.
 - [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
 - [x] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point. Dix routes du lot 1 répondent HTTP 200 ; les URL corrigées sont documentées dans le rapport.
 
@@ -3596,11 +3596,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier le lot 3M BOOKING après validation complète
 
 ## Blocage découvert pendant le test réel du dossier interne
-- [ ] Diagnostiquer et corriger la perte de session entre le tableau Admin et la fiche Candidate360 ouverte depuis COMPTE-1140001, puis retester sans mutation métier
+- [x] Diagnostiquer et corriger la perte de session entre le tableau Admin et la fiche Candidate360 ouverte depuis COMPTE-1140001, puis retester sans mutation métier. Le jeton est désormais transmis par AdminDashboard et les tests CandidateDetailModal/protection passent ; le clic live reste dépendant d’une session candidat de test.
 
 ## Lot signature et e-mail protocole — bcacef3c
 - [x] Synchroniser le commit bcacef3c depuis origin/main sans écraser les changements en cours
 - [x] Vérifier le bouton de signature après un trait rapide dans EvaluationSpace, MonDossier et MySpace
 - [x] Vérifier le rendu du nouvel e-mail de protocole sans envoyer de protocole réel
 - [x] Exécuter TypeScript et les tests agreement-payment-gating et adminAgreementResend
-- [ ] Publier le lot après validation complète
+- [x] Publier le lot après validation complète (checkpoint 3c1173ad)

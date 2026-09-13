@@ -15,7 +15,8 @@ describe("Correctifs urgents upload et navigation", () => {
   it("retire le QR et les tooltips flottants du Footer", () => {
     const source = read("client/src/components/Footer.tsx");
     expect(source).not.toContain("FacebookQRCodeWidget");
-    expect(source).not.toContain('role="tooltip"');
+    expect(source).not.toContain("<Tooltip");
+    expect(source).not.toContain("TooltipContent");
   });
 
   it("normalise le proxy CV et signale un CV manquant", () => {
