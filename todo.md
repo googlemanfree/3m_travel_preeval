@@ -3431,3 +3431,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Redémarrer et vérifier une session fraîche sur l’accueil
 - [x] Exécuter TypeScript et les tests concernés
 - [x] Publier uniquement si tous les contrôles sont verts
+
+## Correctif avis 3047be2 — boundary, Skeleton et pagination progressive
+- [ ] Synchroniser et relire le commit 3047be2
+- [ ] Vérifier ReviewsErrorBoundary sur l’accueil et /avis
+- [ ] Vérifier les Skeleton de ApprovedReviewsSection et ClientProfilePanel
+- [ ] Vérifier le bouton Voir plus d’avis, les lots de 6 et la réinitialisation après filtre/recherche
+- [ ] Exécuter TypeScript et les tests ciblés
+- [ ] Vérifier le rendu des pages accueil et avis
+- [ ] Publier uniquement si tous les contrôles sont verts
