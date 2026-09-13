@@ -3572,15 +3572,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le contraste des titres hero dans DestinationFormationPage.tsx, puis retester les pages génériques
 
 ## Rattrapage protocole et visuels premium destinations
-- [ ] Lire en priorité docs/protocole-accord-cahier-des-charges-implementation.md et comparer l’existant au cahier des charges
-- [ ] Auditer AdminPaymentManagement.tsx et le bouton Envoyer le protocole pour les dossiers Accord requis
-- [ ] Vérifier les tests et garde-fous du bouton de rattrapage protocole
-- [ ] Inventorier les 14 entrées sans image dans DestinationsShowcaseSection.tsx
-- [ ] Produire ou collecter 14 visuels premium paysage/monument sans personnes fictives
-- [ ] Intégrer les 14 visuels dans les mêmes dimensions et le même style que les images existantes
-- [ ] Exécuter TypeScript et les tests ciblés protocole/destinations
-- [ ] Vérifier le rendu back-office et de l’accueil en desktop/mobile
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Lire en priorité docs/protocole-accord-cahier-des-charges-implementation.md et comparer l’existant au cahier des charges. Cahier présent et relu ; restes infra identifiés.
+- [x] Auditer AdminPaymentManagement.tsx et le bouton Envoyer le protocole pour les dossiers Accord requis. Bouton et confirmation publiés.
+- [x] Vérifier les tests et garde-fous du bouton de rattrapage protocole. Paiement, session admin et texte éditable couverts.
+- [x] Inventorier les 14 entrées sans image dans DestinationsShowcaseSection.tsx. Les 14 entrées ont été recensées.
+- [x] Produire ou collecter 14 visuels premium paysage/monument sans personnes fictives. Les 14 assets sont disponibles et contrôlés.
+- [x] Intégrer les 14 visuels dans les mêmes dimensions et le même style que les images existantes. URLs permanentes utilisées.
+- [x] Exécuter TypeScript et les tests ciblés protocole/destinations. Contrôles du lot publiés au vert.
+- [x] Vérifier le rendu back-office et de l’accueil en desktop/mobile. Contrôles live et screenshots réalisés.
+- [x] Publier uniquement si tous les contrôles sont verts. Checkpoints 1f48e2ae et 2fc0d9d2 publiés.
 
 ## Rattrapage protocole et visuels destinations
 - [x] Ajouter le bouton de rattrapage « Envoyer protocole » dans Paiements avec confirmation, texte éditable, dépôt espace client et e-mail après paiement confirmé
@@ -3612,3 +3612,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Régression Enregistrer révélée en live
 - [x] Corriger le handler Enregistrer qui contourne le garde-fou de Prévisualiser et envoie encore recommendations vide à saveEvaluationDeliveryDraft. Le handler valide désormais les recommandations, capture l’erreur et le serveur ignore les sources secondaires indisponibles.
 - [x] Ajouter une régression dédiée au clic Enregistrer et retester le dossier interne sans envoi externe. TypeScript, six tests ciblés et le retest réel de COMPTE-1140001 sont au vert ; aucune diffusion externe n’a été déclenchée.
+
+## PDF Protocole N°01 — extension du cahier des charges
+- [x] Auditer le générateur PDF d’évaluation, le stockage S3 et les pièces jointes SMTP existantes
+- [x] Générer un PDF professionnel du Protocole N°01 avec logo, variables pays et texte éditable administrateur
+- [x] Déposer simultanément les versions HTML et PDF dans l’espace client après paiement confirmé
+- [x] Joindre le PDF à l’e-mail du protocole sans envoyer de message pendant les tests
+- [x] Ajouter les régressions de contenu, paiement, session et pièce jointe
+- [x] Exécuter TypeScript, 18 tests ciblés et le build de production
+- [ ] Publier le checkpoint de l’extension PDF du Protocole N°01

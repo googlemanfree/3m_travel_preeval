@@ -1044,7 +1044,14 @@ export default function AdminDashboard() {
   });
   const cleanupOrphanedPreAccountsMutation = trpc.adminCandidateManagement.cleanupOrphanedPreAccounts.useMutation({
     onSuccess: (result) => {
-      setOrphanCleanupPreview(result);
+      setOrphanCleanupPreview({
+        count: result.count ?? 0,
+        duplicates: (result.duplicates ?? []).map((duplicate) => ({
+          dossierNumber: duplicate.dossierNumber ?? "",
+          fullName: duplicate.fullName ?? "",
+          email: duplicate.email ?? "",
+        })),
+      });
       if (result.deleted) {
         toast({ title: "Pré-comptes archivés", description: `${result.count} pré-dossier(s) en doublon envoyé(s) dans la corbeille.` });
         void trpcUtils.admin.listCandidates.invalidate();
