@@ -26,12 +26,13 @@ describe("interactions des fiches destination premium", () => {
 
   it("affiche les dates de mise à jour des fiches et des guides associés", () => {
     const page = readProjectFile("client/src/pages/CountryDetailPage.tsx");
+    const labels = readProjectFile("client/src/pages/CountryDetailPage.i18n.ts");
     const catalog = readProjectFile("client/src/lib/publicDestinationCatalog.ts");
-    expect(page).toContain("Dernière mise à jour");
+    expect(labels).toContain("lastUpdated: \"Dernière mise à jour\"");
     expect(page).toContain("getGuideLastUpdatedAt");
     expect(catalog).toContain("lastUpdatedAt");
     expect(catalog).toContain("isDestinationRecentlyUpdated");
-    expect(page).toContain("Mis à jour");
+    expect(labels).toContain("updatedBadge: \"Mis à jour\"");
   });
 
   it("isole les comparaisons sauvegardées par candidat côté serveur", () => {

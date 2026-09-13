@@ -69,9 +69,12 @@ describe("couverture publique des 107 fiches de procédure", () => {
   });
 
   it("n’affiche plus de délais, coûts, salaires ou budgets statiques non sourcés dans les cartes publiques", () => {
+    const labels = readFileSync(resolve(import.meta.dirname, "../client/src/pages/CountryDetailPage.i18n.ts"), "utf8");
     const page = readFileSync(resolve(import.meta.dirname, "../client/src/pages/CountryDetailPage.tsx"), "utf8");
-    expect(page).toContain("À confirmer auprès de l’autorité");
-    expect(page).toContain("Variables selon la procédure");
+    expect(labels).toContain("processingStepsValue: \"À confirmer auprès de l'autorité\"");
+    expect(labels).toContain("officialFeesValue: \"Variables selon la procédure\"");
+    expect(labels).toContain("processingStepsValue: \"To confirm with the authority\"");
+    expect(labels).toContain("officialFeesValue: \"Varies by procedure\"");
     expect(page).not.toContain("{country.processingTime}");
     expect(page).not.toContain("{country.cost}");
     expect(page).not.toContain("{country.minSalary || 'Variable'}");

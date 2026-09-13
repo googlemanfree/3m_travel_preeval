@@ -27,7 +27,7 @@ export default function DestinationsHub() {
       <section className="bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)] px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">Réseau de destinations</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">23 destinations, un seul accompagnement</h1>
+          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">23 destinations, un seul accompagnement</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-50">
             3M Travel &amp; Services élargit son réseau à 20 nouvelles destinations en formation professionnelle et emploi qualifié, en plus de l'Allemagne, l'Autriche et la Suisse déjà couvertes. Chaque profil est différent : notre rôle est de vous orienter vers la destination la plus réaliste selon votre secteur, votre niveau de langue et votre budget.
           </p>

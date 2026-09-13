@@ -42,7 +42,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
           </Link>
           <p className="mt-8 text-5xl" aria-hidden="true">{destination.flag}</p>
           <p className="mt-5 text-xs font-black uppercase tracking-[.18em] text-blue-100">Formation &amp; travail qualifié · {destination.region}</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">{destination.name}</h1>
+          <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">{destination.name}</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-50">{destination.dispositif}</p>
           <Link href={evalLink} className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
             Démarrer mon évaluation gratuite <ArrowRight className="h-4 w-4" aria-hidden="true" />
