@@ -3422,3 +3422,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Exécuter TypeScript et les tests ciblés pages procédures, accueil et SEO
 - [x] Vérifier le rendu des routes SEO prioritaires et de l’accueil
 - [x] Publier uniquement si tous les contrôles sont verts
+
+## Correctif tRPC accueil — 2026-09-13
+- [x] Inspecter les journaux serveur, navigateur et requêtes réseau pour identifier la requête tRPC en échec
+- [x] Reproduire ou isoler l’erreur de transformation de réponse sans mutation métier
+- [x] Corriger la cause minimale de sérialisation, contrat ou disponibilité serveur
+- [x] Ajouter ou mettre à jour les tests Vitest de régression
+- [x] Redémarrer et vérifier une session fraîche sur l’accueil
+- [x] Exécuter TypeScript et les tests concernés
+- [x] Publier uniquement si tous les contrôles sont verts
