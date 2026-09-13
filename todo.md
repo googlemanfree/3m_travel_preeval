@@ -3473,8 +3473,18 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les limites connues : navigation/footer/formulaire FR, blocs masqués, aucun avis EN et seulement quatre procédures traduites
 - [x] Exécuter TypeScript et les tests approfondis de routing, prerendu, sitemap et hreflang
 - [x] Vérifier visuellement les pages EN et plusieurs pages FR existantes
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Publier uniquement si tous les contrôles sont verts
 
 - [x] Corriger la compatibilité du test de positionnement de evaluation-multi dans Home.tsx sans réintroduire de contenu redondant
 
 - [x] Ajouter un test de régression ciblé pour les quatre slugs EN, le sitemap bilingue et les alternates hreflang
+
+## Preuve sociale et confiance a178eb0 — accueil
+- [ ] Synchroniser et relire le commit a178eb0
+- [ ] Vérifier le déplacement d’ApprovedReviewsSection après les procédures les plus demandées
+- [ ] Vérifier le masquage automatique quand approvedReviews vaut zéro
+- [ ] Vérifier l’affichage de l’année RCCM réelle 2019 et de l’enregistrement à Yaoundé
+- [ ] Vérifier le nouveau lead/heading prerendu de l’accueil
+- [ ] Exécuter TypeScript et les tests ciblés
+- [ ] Vérifier visuellement l’accueil et l’absence de contenu d’avis fictif
+- [ ] Publier uniquement si tous les contrôles sont verts
