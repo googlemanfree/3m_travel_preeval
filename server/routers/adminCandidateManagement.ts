@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -1116,6 +1116,62 @@ export const adminCandidateManagementRouter = router({
           paymentAmount: row.paymentAmount,
           dossierStatus: row.dossierStatus,
         })),
+      };
+    }),
+  // Detecte, puis (si demande) archive dans la corbeille reversible les
+  // pre-comptes en doublon : une ligne "applications" anonyme et jamais payee
+  // (creee par l'evaluation gratuite, candidateId null) qui partage l'email
+  // d'une ligne reelle deja rattachee a un compte candidat. Ces doublons
+  // saturent la liste des dossiers cote admin (ex. un meme candidat apparaissant
+  // deux fois avec deux numeros de dossier differents). Utilise le meme
+  // mecanisme reversible que admin.archiveDuplicateRecord (deletedAt/
+  // deletedBy/deletionReason) : rien n'est jamais supprime physiquement, tout
+  // reste restaurable depuis Corbeille / doublons. Toujours un dry-run par
+  // defaut : l'admin doit explicitement demander l'archivage apres avoir vu
+  // le nombre concerne.
+  cleanupOrphanedPreAccounts: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), confirmDelete: z.boolean().default(false) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const orphans = await db.select({
+        id: applications.id,
+        dossierNumber: applications.dossierNumber,
+        fullName: applications.fullName,
+        email: applications.email,
+        createdAt: applications.createdAt,
+      }).from(applications).where(and(isNull(applications.candidateId), eq(applications.paymentStatus, "PENDING"), isNull(applications.deletedAt)));
+
+      const linkedRows = await db.select({ email: applications.email }).from(applications).where(and(isNotNull(applications.candidateId), isNull(applications.deletedAt)));
+      const linkedEmails = new Set(linkedRows.map((row) => row.email.trim().toLowerCase()));
+
+      const duplicates = orphans.filter((row) => linkedEmails.has(row.email.trim().toLowerCase()));
+
+      if (input.confirmDelete && duplicates.length > 0) {
+        for (const row of duplicates) {
+          await db.update(applications).set({
+            deletedAt: new Date(),
+            deletedBy: admin.email || "Administrateur",
+            deletionReason: "Pré-dossier anonyme et non payé, en doublon avec un compte réel existant pour le même e-mail (nettoyage groupé).",
+          }).where(eq(applications.id, row.id));
+        }
+        await db.insert(paymentAuditLogs).values({
+          adminName: admin.email || "Administrateur",
+          adminEmail: admin.email || "",
+          action: "orphaned_pre_accounts_archived",
+          paymentId: 0,
+          candidateEmail: "multiple",
+          amount: "0",
+          details: `${duplicates.length} pré-dossier(s) anonyme(s) et jamais payé(s) archivé(s) (corbeille réversible) car un compte réel existe déjà pour le même e-mail : ${duplicates.map((row) => row.dossierNumber).join(", ")}.`,
+        });
+      }
+
+      return {
+        count: duplicates.length,
+        deleted: input.confirmDelete,
+        duplicates: duplicates.map((row) => ({ dossierNumber: row.dossierNumber, fullName: row.fullName, email: row.email, createdAt: row.createdAt })),
       };
     }),
   resendConfirmation: publicProcedure

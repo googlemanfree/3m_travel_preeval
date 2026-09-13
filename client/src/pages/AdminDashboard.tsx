@@ -1033,6 +1033,7 @@ export default function AdminDashboard() {
   const [pendingInlineChanges, setPendingInlineChanges] = useState<Record<string, { paymentStatus?: keyof typeof PAYMENT_STATUS_LABELS; procedureStep?: AdminStatus }>>({});
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [archiveSearch, setArchiveSearch] = useState("");
+  const [orphanCleanupPreview, setOrphanCleanupPreview] = useState<{ count: number; duplicates: { dossierNumber: string; fullName: string; email: string }[] } | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
   const [showPendingSaveConfirm, setShowPendingSaveConfirm] = useState(false);
   const { toast } = useToast();
@@ -1042,6 +1043,16 @@ export default function AdminDashboard() {
   const archiveDuplicateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
     onSuccess: () => { void trpcUtils.admin.listCandidates.invalidate(); },
     onError: (error) => toast({ title: "Mise en corbeille impossible", description: error.message, variant: "destructive" }),
+  });
+  const cleanupOrphanedPreAccountsMutation = trpc.adminCandidateManagement.cleanupOrphanedPreAccounts.useMutation({
+    onSuccess: (result) => {
+      setOrphanCleanupPreview(result);
+      if (result.deleted) {
+        toast({ title: "Pré-comptes archivés", description: `${result.count} pré-dossier(s) en doublon envoyé(s) dans la corbeille.` });
+        void trpcUtils.admin.listCandidates.invalidate();
+      }
+    },
+    onError: (error) => toast({ title: "Détection impossible", description: error.message, variant: "destructive" }),
   });
   const trpcUtils = trpc.useUtils();
   const archivedRecordsQuery = trpc.admin.listArchivedRecords.useQuery({ sessionToken, search: archiveSearch || undefined }, { enabled: showArchiveView });
@@ -2312,6 +2323,35 @@ export default function AdminDashboard() {
         <Dialog open={showArchiveView} onOpenChange={setShowArchiveView}>
           <DialogContent className="max-w-4xl">
             <DialogHeader><DialogTitle>Corbeille réversible — doublons et comptes mal créés</DialogTitle><DialogDescription>Les enregistrements archivés restent restaurables. Aucune suppression physique n’est effectuée.</DialogDescription></DialogHeader>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Pré-dossiers en doublon (créés avant l’activation du compte)</p>
+                  <p className="text-xs text-amber-700">Un pré-dossier anonyme et jamais payé qui partage l’e-mail d’un compte déjà activé. Nouvellement créés, ils sont désormais archivés automatiquement ; ce bouton nettoie ceux déjà existants.</p>
+                </div>
+                <Button type="button" size="sm" variant="outline" disabled={cleanupOrphanedPreAccountsMutation.isPending} onClick={() => cleanupOrphanedPreAccountsMutation.mutate({ sessionToken, confirmDelete: false })} className="border-amber-300 text-amber-900 hover:bg-amber-100">
+                  {cleanupOrphanedPreAccountsMutation.isPending ? "Détection…" : "Détecter les doublons"}
+                </Button>
+              </div>
+              {orphanCleanupPreview && (
+                <div className="mt-3 border-t border-amber-200 pt-3">
+                  {orphanCleanupPreview.count === 0 ? (
+                    <p className="text-xs text-amber-800">Aucun pré-dossier en doublon détecté.</p>
+                  ) : (
+                    <>
+                      <div className="max-h-32 space-y-1 overflow-y-auto text-xs text-amber-900">
+                        {orphanCleanupPreview.duplicates.map((item) => (
+                          <p key={item.dossierNumber}><span className="font-mono font-semibold">{item.dossierNumber}</span> — {item.fullName} ({item.email})</p>
+                        ))}
+                      </div>
+                      <Button type="button" size="sm" disabled={cleanupOrphanedPreAccountsMutation.isPending} onClick={() => cleanupOrphanedPreAccountsMutation.mutate({ sessionToken, confirmDelete: true })} className="mt-2 bg-amber-700 text-white hover:bg-amber-800">
+                        {cleanupOrphanedPreAccountsMutation.isPending ? "Archivage…" : `Archiver ces ${orphanCleanupPreview.count} doublon${orphanCleanupPreview.count > 1 ? "s" : ""}`}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <Input value={archiveSearch} onChange={(event) => setArchiveSearch(event.target.value)} placeholder="Rechercher une référence, un nom ou un e-mail…" aria-label="Rechercher dans la corbeille" />
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}

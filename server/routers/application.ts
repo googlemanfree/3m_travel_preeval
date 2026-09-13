@@ -8,7 +8,7 @@ import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, eq, desc, inArray, or, like, ilike } from "drizzle-orm";
+import { and, eq, desc, inArray, or, like, ilike, isNull, sql } from "drizzle-orm";
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { generateEvaluationReportHTML } from "../evaluationService";
@@ -169,6 +169,27 @@ export const applicationRouter = router({
       // Générer un OTP à 6 chiffres pour la vérification email
       const emailOtp = randomInt(100000, 1000000).toString();
       const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+
+      // Le candidat a pu soumettre une evaluation gratuite avant de creer un
+      // compte (server/routers/evaluationAI.ts, submitEvaluation) : cela cree
+      // une ligne "applications" anonyme (candidateId null) avec son propre
+      // numero de dossier. Une fois le compte cree et le vrai dossier ouvert
+      // ici, ce pre-dossier anonyme et jamais paye n'a plus lieu d'exister et
+      // sature l'affichage cote admin (deux numeros pour la meme personne).
+      // On l'archive automatiquement dans la corbeille reversible existante
+      // (deletedAt/deletedBy/deletionReason, cf. admin.archiveDuplicateRecord)
+      // plutot que de le supprimer physiquement, et sans jamais toucher a une
+      // ligne deja rattachee a un compte ou ayant un paiement enregistre.
+      await db.update(applications).set({
+        deletedAt: new Date(),
+        deletedBy: "system-auto",
+        deletionReason: `Pré-dossier anonyme et non payé, remplacé automatiquement par le dossier ${dossierNumber} lors de la création du compte.`,
+      }).where(and(
+        sql`LOWER(${applications.email}) = LOWER(${input.email.trim()})`,
+        isNull(applications.candidateId),
+        eq(applications.paymentStatus, "PENDING"),
+        isNull(applications.deletedAt),
+      ));
 
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
