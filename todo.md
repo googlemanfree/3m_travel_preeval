@@ -3393,5 +3393,32 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier l’identification du dossier agence et l’infobulle de l’ancienne référence
 - [x] Vérifier l’aperçu des 10 premières lignes avant export CSV candidat
 - [x] Exécuter TypeScript, le build et les tests ciblés
-- [ ] Publier un checkpoint uniquement si tous les contrôles sont verts
-- [ ] Documenter les URLs/actions exactes de vérification
+- [x] Publier un checkpoint uniquement si tous les contrôles sont verts
+- [x] Documenter les URLs/actions exactes de vérification
+
+## SEO local — inventaire et architecture avant développement
+- [x] Recenser dans le catalogue du site les services, destinations et types de visa réellement couverts
+- [x] Établir et communiquer la liste exacte des pages prioritaires pour Yaoundé
+- [x] Préparer le modèle réutilisable Schema.org LocalBusiness avec les informations réelles de l’agence
+- [x] Préparer le modèle réutilisable Schema.org FAQPage avec des FAQ rédigées et vérifiables
+- [ ] Faire valider la liste et le modèle avant de commencer le développement SEO
+
+## SEO local — premier lot de développement
+- [ ] Vérifier la procédure France–Études auprès de France-Visas, l’ambassade/consulat ou Campus France
+- [ ] Ajouter France–Études au catalogue uniquement si la source officielle confirme la combinaison
+- [ ] Développer le template réutilisable de page de service avec title, H1, meta description et URL canonique
+- [ ] Intégrer les données structurées LocalBusiness et FAQPage réelles dans le template
+- [ ] Créer les pages prioritaires Canada, France–Études, e-Visa et Allemagne à partir du catalogue
+- [ ] Alléger l’accueil sans supprimer d’information utile et ajouter les liens vers les pages prioritaires
+- [ ] Tester les routes, métadonnées, données structurées et responsive
+- [ ] Publier uniquement après réussite des contrôles
+- [ ] Documenter les URLs et actions de vérification
+
+## Synchronisation SEO commit 963ce91
+- [x] Annuler la modification locale de server/publicPrerender.ts sans toucher aux autres changements non liés
+- [x] Supprimer shared/seoServiceCatalog.ts créé localement et non commité
+- [x] Synchroniser origin/main et récupérer le commit 963ce91
+- [x] Relire shared/procedureSeo.ts, server/publicPrerender.ts, CountryDetailPage.tsx et Home.tsx
+- [x] Exécuter TypeScript et les tests ciblés pages procédures, accueil et SEO
+- [x] Vérifier le rendu des routes SEO prioritaires et de l’accueil
+- [x] Publier uniquement si tous les contrôles sont verts
