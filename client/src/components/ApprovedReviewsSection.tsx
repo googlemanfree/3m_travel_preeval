@@ -215,6 +215,9 @@ export default function ApprovedReviewsSection() {
         sortRatingAsc: "Lowest rated",
         sortDateDesc: "Most recent",
         sortDateAsc: "Oldest",
+        noReviewsYetTitle: "Be the first to share your experience",
+        noReviewsYetBody: "No review has been approved yet. Every review is checked by our team before publishing — no fabricated testimonials, ever.",
+        noReviewsYetCta: "Leave the first review",
       }
     : {
         loading: "Chargement des avis approuvés...",
@@ -244,6 +247,9 @@ export default function ApprovedReviewsSection() {
         sortRatingAsc: "Note la plus basse",
         sortDateDesc: "Les plus récents",
         sortDateAsc: "Les plus anciens",
+        noReviewsYetTitle: "Soyez le premier à partager votre expérience",
+        noReviewsYetBody: "Aucun avis n'est encore approuvé. Chaque avis est vérifié par notre équipe avant publication — aucun témoignage fabriqué, jamais.",
+        noReviewsYetCta: "Laisser le premier avis",
       };
 
   if (isLoading) {
@@ -278,7 +284,23 @@ export default function ApprovedReviewsSection() {
     );
   }
 
-  if (approvedReviews.length === 0) return null;
+  if (approvedReviews.length === 0) {
+    return (
+      <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-labelledby="no-reviews-yet-title">
+        <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
+          <Quote className="mx-auto h-8 w-8 text-orange-400 opacity-70" aria-hidden="true" />
+          <h2 id="no-reviews-yet-title" className="mt-4 text-xl font-bold text-slate-900">{labels.noReviewsYetTitle}</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{labels.noReviewsYetBody}</p>
+          <a
+            href="/avis#deposer-un-avis"
+            className="mt-6 inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
+          >
+            {labels.noReviewsYetCta}
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   const filterOptions: Array<{ value: DestinationFilter; label: string; flag?: string }> = [
     { value: "all", label: labels.all },
@@ -498,7 +520,7 @@ export default function ApprovedReviewsSection() {
         >
           <p className="text-slate-600 mb-4">{labels.share}</p>
           <a
-            href="/submit-review"
+            href="/avis#deposer-un-avis"
             className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
           >
             {labels.leave}
