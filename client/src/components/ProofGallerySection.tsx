@@ -84,10 +84,7 @@ export default function ProofGallerySection() {
                   alt={photo.alt}
                   loading="lazy"
                   decoding="async"
-                  draggable={false}
-                  onContextMenu={(event) => event.preventDefault()}
-                  className="h-full w-full object-cover select-none transition-transform duration-300 group-hover:scale-105"
-                  style={{ WebkitTouchCallout: "none" }}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
               <p className="p-3 text-xs font-semibold text-slate-700">{photo.caption}</p>
@@ -115,10 +112,7 @@ export default function ProofGallerySection() {
           <img
             src={PROOF_PHOTOS[openIndex].src}
             alt={PROOF_PHOTOS[openIndex].alt}
-            draggable={false}
-            onContextMenu={(event) => event.preventDefault()}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain select-none"
-            style={{ WebkitTouchCallout: "none" }}
+            className="max-h-[85vh] max-w-full rounded-lg object-contain"
             onClick={(event) => event.stopPropagation()}
           />
         </div>
