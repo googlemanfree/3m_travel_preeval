@@ -3586,4 +3586,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter le bouton de rattrapage « Envoyer protocole » dans Paiements avec confirmation, texte éditable, dépôt espace client et e-mail après paiement confirmé
 - [x] Remplacer les 14 replis drapeau de la vitrine destinations par des paysages/monuments premium sans personnes
 - [x] Vérifier TypeScript, tests ciblés et rendu desktop/mobile des modifications protocole et destinations
-- [ ] Publier le checkpoint validé des modifications protocole et visuels destinations
+- [x] Publier le checkpoint validé des modifications protocole et visuels destinations
