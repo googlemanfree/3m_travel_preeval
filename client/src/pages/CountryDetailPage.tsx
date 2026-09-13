@@ -39,7 +39,7 @@ export default function CountryDetailPage() {
   );
   const { data: approvedReviews } = trpc.customerReview.listApproved.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const normalizeForMatch = (value: string) =>
-    value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const matchingReviews = (country
     ? (approvedReviews ?? []).filter((review) =>
         review.destinationCountry && normalizeForMatch(review.destinationCountry).includes(normalizeForMatch(country.name))

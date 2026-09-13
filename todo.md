@@ -3433,10 +3433,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier uniquement si tous les contrôles sont verts
 
 ## Correctif avis 3047be2 — boundary, Skeleton et pagination progressive
-- [ ] Synchroniser et relire le commit 3047be2
-- [ ] Vérifier ReviewsErrorBoundary sur l’accueil et /avis
-- [ ] Vérifier les Skeleton de ApprovedReviewsSection et ClientProfilePanel
-- [ ] Vérifier le bouton Voir plus d’avis, les lots de 6 et la réinitialisation après filtre/recherche
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier le rendu des pages accueil et avis
+- [x] Synchroniser et relire le commit 3047be2
+- [x] Vérifier ReviewsErrorBoundary sur l’accueil et /avis
+- [x] Vérifier les Skeleton de ApprovedReviewsSection et ClientProfilePanel
+- [x] Vérifier le bouton Voir plus d’avis, les lots de 6 et la réinitialisation après filtre/recherche
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier le rendu des pages accueil et avis
 - [ ] Publier uniquement si tous les contrôles sont verts
+
+- [x] Corriger la regex de normalisation de CountryDetailPage.tsx incompatible avec la cible TypeScript ES5, sans modifier la logique SEO
