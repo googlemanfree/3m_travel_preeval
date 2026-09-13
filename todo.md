@@ -2467,7 +2467,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants. La couche sources est auditée ; les visuels restent hors périmètre.
 - [x] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable. Le registre compte 107 sources HTTPS et aucune procédure du catalogue n’est manquante.
 - [x] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes. Les 23 cartes de la vitrine utilisent des URLs permanentes ; les assets contrôlés répondent HTTP 200 et les informations officielles sont déjà référencées dans le catalogue audité.
-- [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
+- [x] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales. Audit visuel réalisé ; la base est cohérente et le contraste du hero Allemagne Formation a été corrigé dans le checkpoint d8797b08. Une refonte de marque plus ambitieuse reste hors périmètre sans validation dédiée.
 - [x] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point. Dix routes du lot 1 répondent HTTP 200 ; les URL corrigées sont documentées dans le rapport.
 
 ## Lot 1 — 10 destinations prioritaires
@@ -2565,8 +2565,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Test contrôlé autorisé — dossier fictif/test
 - [x] Identifier le dossier explicitement fictif ou interne à utiliser et confirmer son code avant mutation : COMPTE-1140001 — TEST INTERNE.
 - [ ] Tester Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action uniquement sur le dossier de test.
-- [ ] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement.
-- [ ] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts.
+- [x] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement. Préparation, prévisualisation et sauvegarde du brouillon testées sur COMPTE-1140001.
+- [x] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts. Traces consignées dans audit_admin_test_dossier.md et checkpoint 64234b9c.
 
 ## Correctif account-only — COMPTE-1140001 TEST INTERNE
 - [x] Dossier de test identifié : COMPTE-1140001 — TEST INTERNE (source account-only).
@@ -3620,4 +3620,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Joindre le PDF à l’e-mail du protocole sans envoyer de message pendant les tests
 - [x] Ajouter les régressions de contenu, paiement, session et pièce jointe
 - [x] Exécuter TypeScript, 18 tests ciblés et le build de production
-- [ ] Publier le checkpoint de l’extension PDF du Protocole N°01
+- [x] Publier le checkpoint de l’extension PDF du Protocole N°01 (checkpoint 1b4036a9)
