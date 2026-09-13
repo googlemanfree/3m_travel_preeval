@@ -3589,8 +3589,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier le checkpoint validé des modifications protocole et visuels destinations
 
 ## Refonte 3M BOOKING — /billets
-- [ ] Synchroniser le commit 6478b74 depuis origin/main sans écraser les changements existants
-- [ ] Auditer la recherche, les filtres, le détail et la demande de réservation de /billets
-- [ ] Exécuter TypeScript, build et tous les tests flight ciblés
-- [ ] Vérifier /billets en desktop et mobile, y compris les états vide/erreur et le bouton WhatsApp
-- [ ] Publier le lot 3M BOOKING après validation complète
+- [x] Synchroniser le commit 6478b74 depuis origin/main sans écraser les changements existants
+- [x] Auditer la recherche, les filtres, le détail et la demande de réservation de /billets
+- [x] Exécuter TypeScript, build et tous les tests flight ciblés
+- [x] Vérifier /billets en desktop et mobile, y compris les états vide/erreur et le bouton WhatsApp
+- [x] Publier le lot 3M BOOKING après validation complète
