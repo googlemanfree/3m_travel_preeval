@@ -3451,4 +3451,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier que la carte Avis approuvés utilise approvedReviews
 - [x] Exécuter TypeScript et les tests ciblés
 - [x] Vérifier le rendu de /avis
+- [x] Publier uniquement si tous les contrôles sont verts
+
+## Correctif avis 27be336 — répartition et transitions
+- [x] Synchroniser et relire le commit 27be336
+- [x] Vérifier customerReview.getRatingBreakdown et le comptage réel des avis approuvés par note
+- [x] Vérifier les barres de répartition 1–5 et leur masquage sans avis approuvé
+- [x] Vérifier les transitions AnimatePresence/layout lors du tri et des filtres
+- [x] Confirmer que la recherche existante reste intacte
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier le rendu de /avis
 - [ ] Publier uniquement si tous les contrôles sont verts
