@@ -1,4 +1,4 @@
-export type CountryDetailLabels = typeof FR_LABELS;
+export type CountryDetailLabels = { [K in keyof typeof FR_LABELS]: string };
 
 const FR_LABELS = {
   breadcrumbHome: "Accueil",
