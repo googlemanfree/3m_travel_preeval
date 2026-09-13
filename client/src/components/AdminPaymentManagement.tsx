@@ -9,6 +9,7 @@ import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mai
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
+import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 
 interface Payment {
   id: number;
@@ -39,10 +40,11 @@ interface Payment {
 }
 
 interface AdminPaymentManagementProps {
+  sessionToken: string;
   onPaymentUpdated?: () => void;
 }
 
-export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagementProps) {
+export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: AdminPaymentManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
@@ -62,6 +64,9 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
+  const [agreementPayment, setAgreementPayment] = useState<Payment | null>(null);
+  const [agreementSubject, setAgreementSubject] = useState("");
+  const [agreementContent, setAgreementContent] = useState(INITIAL_AGREEMENT_PROTOCOL);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -74,6 +79,7 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation();
   const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
+  const sendAgreementProtocolMutation = trpc.adminCandidateManagement.sendAgreementProtocol.useMutation();
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -193,6 +199,31 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
   const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
     setReceiptEmailPayment(payment);
     setReceiptEmailAction(action);
+  };
+
+  const handleOpenAgreementProtocol = (payment: Payment) => {
+    if (payment.paymentStatus !== "SUCCESS" || payment.agreementSigned) return;
+    setAgreementPayment(payment);
+    setAgreementSubject(`Protocole d’accord — Dossier ${payment.dossierNumber}`);
+    setAgreementContent(INITIAL_AGREEMENT_PROTOCOL);
+  };
+
+  const handleConfirmAgreementProtocol = async () => {
+    if (!agreementPayment) return;
+    try {
+      const result = await sendAgreementProtocolMutation.mutateAsync({
+        sessionToken,
+        candidateId: `online_${agreementPayment.id}`,
+        subject: agreementSubject.trim() || undefined,
+        content: agreementContent,
+      });
+      toast.success("Protocole envoyé", { description: `Déposé dans l’espace client et envoyé par e-mail pour ${result.dossierNumber}.` });
+      setAgreementPayment(null);
+      await refetch();
+      onPaymentUpdated?.();
+    } catch (error) {
+      toast.error("Envoi du protocole impossible", { description: error instanceof Error ? error.message : "Une erreur est survenue." });
+    }
   };
 
   const handleApproveReceipt = async () => {
@@ -634,6 +665,11 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
                             </>
                           )}
                           {payment.paymentStatus === "SUCCESS" && <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800" title="Ce paiement est déjà confirmé ; aucune seconde validation n’est nécessaire."><CheckCircle2 className="h-3.5 w-3.5" /> Validé · {payment.validatedBy || "conseiller"}</span>}
+                          {payment.paymentStatus === "SUCCESS" && !payment.agreementSigned && (
+                            <Button onClick={() => handleOpenAgreementProtocol(payment)} variant="ghost" size="sm" title="Préparer et envoyer le protocole d’accord" aria-label={`Préparer le protocole du dossier ${payment.dossierNumber}`} className="text-amber-700 hover:bg-amber-50" disabled={sendAgreementProtocolMutation.isPending}>
+                              <Mail className="h-4 w-4" /><span className="hidden xl:inline">Envoyer protocole</span>
+                            </Button>
+                          )}
                           {payment.paymentStatus === "SUCCESS" && (
                             payment.paymentReceiptDelivery?.status === "failed" ? (
                               <Button
@@ -845,6 +881,32 @@ export function AdminPaymentManagement({ onPaymentUpdated }: AdminPaymentManagem
             <iframe src={receiptPreview.receiptUrl} title={`Justificatif de paiement — ${receiptPreview.fullName}`} className="h-[65vh] w-full rounded-lg border" />
           ))}
           <DialogFooter><Button variant="outline" onClick={() => setReceiptPreview(null)}>Fermer</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(agreementPayment)} onOpenChange={(open) => !open && !sendAgreementProtocolMutation.isPending && setAgreementPayment(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Préparer le protocole d’accord</DialogTitle>
+            <DialogDescription>{agreementPayment ? `Le paiement du dossier ${agreementPayment.dossierNumber} est confirmé. Le protocole sera déposé dans l’espace client et envoyé à ${agreementPayment.email}.` : ""}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="agreement-subject">Objet de l’e-mail</Label>
+              <Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} className="mt-2" disabled={sendAgreementProtocolMutation.isPending} />
+            </div>
+            <div>
+              <Label htmlFor="agreement-content">Texte modifiable du protocole</Label>
+              <textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} className="mt-2 min-h-[360px] w-full rounded-md border border-slate-300 bg-white p-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-blue-500" maxLength={12000} disabled={sendAgreementProtocolMutation.isPending} />
+              <p className="mt-1 text-xs text-slate-500">Le texte par défaut est la version enrichie 2026-09-08-v2. Toute modification est enregistrée dans le protocole envoyé.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAgreementPayment(null)} disabled={sendAgreementProtocolMutation.isPending}>Annuler</Button>
+            <Button onClick={handleConfirmAgreementProtocol} disabled={sendAgreementProtocolMutation.isPending || agreementContent.trim().length < 50 || !sessionToken} className="bg-blue-700 text-white hover:bg-blue-800">
+              {sendAgreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />Confirmer l’envoi</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

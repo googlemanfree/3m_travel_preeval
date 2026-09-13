@@ -2575,6 +2575,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="payments" className="space-y-6">
             <AdminPaymentManagement
+              sessionToken={sessionToken || ""}
               onPaymentUpdated={() => {
                 void trpcUtils.admin.listCandidates.invalidate();
                 void trpcUtils.application.listApplications.invalidate();

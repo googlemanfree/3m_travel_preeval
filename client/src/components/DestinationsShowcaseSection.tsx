@@ -18,7 +18,7 @@ const DESTINATION_GROUPS: DestinationGroup[] = [
     title: "Europe francophone & germanophone",
     items: [
       { href: "/procedures/allemagne-formation", flag: "🇩🇪", name: "Allemagne", label: "Ausbildung dès B1", image: "/manus-storage/destination-germany_c58485b6.jpg" },
-      { href: "/procedures/autriche-formation", flag: "🇦🇹", name: "Autriche", label: "Lehre & métiers en pénurie" },
+      { href: "/procedures/autriche-formation", flag: "🇦🇹", name: "Autriche", label: "Lehre & métiers en pénurie", image: "/manus-storage/destination-austria_570c2da1.jpg" },
       { href: "/procedures/suisse-formation", flag: "🇨🇭", name: "Suisse", label: "CFC reconnu à l'international", image: "/manus-storage/destination-switzerland_8e49fdb0.jpg" },
       { href: "/procedures/france", flag: "🇫🇷", name: "France", label: "Apprentissage & passeport talent", image: "/manus-storage/destination-france_dc1778e3.jpg" },
       { href: "/procedures/belgique", flag: "🇧🇪", name: "Belgique", label: "Permis unique multi-secteurs", image: "/manus-storage/destination-belgium_c2e1640d.jpg" },
@@ -28,15 +28,15 @@ const DESTINATION_GROUPS: DestinationGroup[] = [
   {
     title: "Europe (autres destinations)",
     items: [
-      { href: "/procedures/pays-bas", flag: "🇳🇱", name: "Pays-Bas", label: "MBO & Highly Skilled Migrant" },
+      { href: "/procedures/pays-bas", flag: "🇳🇱", name: "Pays-Bas", label: "MBO & Highly Skilled Migrant", image: "/manus-storage/destination-netherlands_2c6d8389.jpg" },
       { href: "/procedures/royaume-uni", flag: "🇬🇧", name: "Royaume-Uni", label: "Skilled Worker — santé & IT", image: "/manus-storage/destination-united-kingdom_f21f95c8.jpg" },
-      { href: "/procedures/irlande", flag: "🇮🇪", name: "Irlande", label: "Critical Skills, voie vers la RP" },
-      { href: "/procedures/portugal", flag: "🇵🇹", name: "Portugal", label: "Job Seeker Visa, 120 jours" },
-      { href: "/procedures/espagne", flag: "🇪🇸", name: "Espagne", label: "Travail salarié ou arraigo" },
+      { href: "/procedures/irlande", flag: "🇮🇪", name: "Irlande", label: "Critical Skills, voie vers la RP", image: "/manus-storage/destination-ireland_8df97246.jpg" },
+      { href: "/procedures/portugal", flag: "🇵🇹", name: "Portugal", label: "Job Seeker Visa, 120 jours", image: "/manus-storage/destination-portugal_51d23085.jpg" },
+      { href: "/procedures/espagne", flag: "🇪🇸", name: "Espagne", label: "Travail salarié ou arraigo", image: "/manus-storage/destination-spain_df50bcc2.jpg" },
       { href: "/procedures/italie", flag: "🇮🇹", name: "Italie", label: "Decreto Flussi par quotas", image: "/manus-storage/destination-italy_3756968a.jpg" },
-      { href: "/procedures/pologne", flag: "🇵🇱", name: "Pologne", label: "Procédure rapide, coût réduit" },
-      { href: "/procedures/malte", flag: "🇲🇹", name: "Malte", label: "Anglophone — iGaming & IT" },
-      { href: "/procedures/norvege", flag: "🇳🇴", name: "Norvège", label: "Métiers en tension, hauts salaires" },
+      { href: "/procedures/pologne", flag: "🇵🇱", name: "Pologne", label: "Procédure rapide, coût réduit", image: "/manus-storage/destination-poland_00e08f73.jpg" },
+      { href: "/procedures/malte", flag: "🇲🇹", name: "Malte", label: "Anglophone — iGaming & IT", image: "/manus-storage/destination-malta_41841e72.jpg" },
+      { href: "/procedures/norvege", flag: "🇳🇴", name: "Norvège", label: "Métiers en tension, hauts salaires", image: "/manus-storage/destination-norway_69f4a76c.jpg" },
     ],
   },
   {
@@ -44,17 +44,17 @@ const DESTINATION_GROUPS: DestinationGroup[] = [
     items: [
       { href: "/canada", flag: "🇨🇦", name: "Canada", label: "Entrée express vers la résidence permanente", image: "/manus-storage/destination-canada_5e7dfbae.jpg" },
       { href: "/procedures/australie", flag: "🇦🇺", name: "Australie", label: "Skilled visas 189 / 190", image: "/manus-storage/destination-australia_8cc2aa45.jpg" },
-      { href: "/procedures/nouvelle-zelande", flag: "🇳🇿", name: "Nouvelle-Zélande", label: "Accredited Employer Work Visa" },
+      { href: "/procedures/nouvelle-zelande", flag: "🇳🇿", name: "Nouvelle-Zélande", label: "Accredited Employer Work Visa", image: "/manus-storage/destination-new-zealand_6e79abf1.jpg" },
     ],
   },
   {
     title: "Golfe & Asie",
     items: [
-      { href: "/procedures/emirats", flag: "🇦🇪", name: "Émirats", label: "Golden Visa 10 ans" },
-      { href: "/procedures/qatar", flag: "🇶🇦", name: "Qatar", label: "Visa sponsorisé, secteurs en essor" },
-      { href: "/procedures/arabie-saoudite", flag: "🇸🇦", name: "Arabie Saoudite", label: "Vision 2030, grands projets" },
-      { href: "/procedures/coree-du-sud", flag: "🇰🇷", name: "Corée du Sud", label: "Programme EPS (visa E-9)" },
-      { href: "/procedures/japon", flag: "🇯🇵", name: "Japon", label: "TITP — industrie & soins" },
+      { href: "/procedures/emirats", flag: "🇦🇪", name: "Émirats", label: "Golden Visa 10 ans", image: "/manus-storage/destination-uae_2a1c8b60.jpg" },
+      { href: "/procedures/qatar", flag: "🇶🇦", name: "Qatar", label: "Visa sponsorisé, secteurs en essor", image: "/manus-storage/destination-qatar_7d38f164.jpg" },
+      { href: "/procedures/arabie-saoudite", flag: "🇸🇦", name: "Arabie Saoudite", label: "Vision 2030, grands projets", image: "/manus-storage/destination-saudi-arabia_6b8072dc.jpg" },
+      { href: "/procedures/coree-du-sud", flag: "🇰🇷", name: "Corée du Sud", label: "Programme EPS (visa E-9)", image: "/manus-storage/destination-south-korea_30f632d3.jpg" },
+      { href: "/procedures/japon", flag: "🇯🇵", name: "Japon", label: "TITP — industrie & soins", image: "/manus-storage/destination-japan_e2e870c6.jpg" },
     ],
   },
 ];
