@@ -84,7 +84,7 @@ export default function ProcedureAllemagneFormation() {
         <div className="mx-auto max-w-5xl">
           <p className="text-5xl" aria-hidden="true">🇩🇪</p>
           <p className="mt-5 text-xs font-black uppercase tracking-[.18em] text-blue-100">Guide formation · Allemagne</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl">
+          <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl">
             L'Allemagne : une porte d'entrée concrète vers l'Europe, sans frais de scolarité
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-blue-50">

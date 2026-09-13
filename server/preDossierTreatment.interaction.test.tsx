@@ -32,6 +32,7 @@ vi.mock("@/lib/trpc", () => ({
     },
     admin: {
       getCandidateDetails: { useQuery: (...args: unknown[]) => getCandidateDetails(...args) },
+      archiveDuplicateRecord: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       updateCandidateStatus: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       revertCandidateStatus: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
@@ -70,6 +71,7 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
           destinationCountry: "Canada",
           projectType: "À qualifier",
           status: "PENDING_48H",
+          internalStatus: "nouveau",
           source: "ACCOUNT_ONLY",
           scoringTotal: null,
           evaluationDeclarationStatus: "validated",
@@ -89,13 +91,23 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
     sessionStorage.clear();
   });
 
+  it("utilise le jeton Admin transmis par le tableau même si le stockage contient un ancien jeton", () => {
+    localStorage.setItem("adminSessionToken", "jeton-perime");
+    render(<CandidateDetailModal candidateId="account_42" sessionToken="session-admin-valide" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
+
+    expect(getCandidateDetails).toHaveBeenCalledWith(
+      { sessionToken: "session-admin-valide", candidateId: "account_42" },
+      expect.objectContaining({ enabled: true }),
+    );
+  });
+
   it("permet de renseigner la procédure, confirmer et lancer l’activation depuis la fiche", async () => {
     const user = userEvent.setup();
-    render(<CandidateDetailModal candidateId="account_42" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
+    render(<CandidateDetailModal candidateId="account_42" sessionToken="session-admin-valide" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
 
     expect(screen.getByRole("region", { name: "Actions de traitement du compte pré-dossier" })).toBeTruthy();
-    await user.type(screen.getByLabelText("Procédure"), "Études");
-    await user.type(screen.getByLabelText("Note interne"), "Pièces vérifiées en agence.");
+    await user.type(screen.getByPlaceholderText("Ex. Études, travail, tourisme"), "Études");
+    await user.type(screen.getByPlaceholderText("Pièces déposées, suite attendue, décision de l’agence…"), "Pièces vérifiées en agence.");
     await user.click(screen.getByRole("button", { name: "Ouvrir le dossier et activer le suivi" }));
     await user.click(await screen.findByRole("button", { name: "Confirmer l’activation" }));
 
@@ -111,9 +123,9 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
   it("affiche le refus serveur et réarme la confirmation si un dossier actif existe déjà", async () => {
     activationErrorMessage = "Ce compte possède déjà un dossier actif.";
     const user = userEvent.setup();
-    render(<CandidateDetailModal candidateId="account_42" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
+    render(<CandidateDetailModal candidateId="account_42" sessionToken="session-admin-valide" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("Procédure"), "Travail");
+    await user.type(screen.getByPlaceholderText("Ex. Études, travail, tourisme"), "Travail");
     await user.click(screen.getByRole("button", { name: "Ouvrir le dossier et activer le suivi" }));
     await user.click(await screen.findByRole("button", { name: "Confirmer l’activation" }));
 

@@ -331,6 +331,7 @@ function ActivationBadge({ status }: { status?: string }) {
 
 export function CandidateDetailModal({
   candidateId,
+  sessionToken,
   onClose,
   onStatusUpdated,
   onOpenOperations,
@@ -338,6 +339,7 @@ export function CandidateDetailModal({
   openEvaluationEditor = false,
 }: {
   candidateId: string;
+  sessionToken: string;
   onClose: () => void;
   onStatusUpdated: () => void;
   onOpenOperations: (area: "payments" | "documents" | "emails", folderCode: string) => void;
@@ -357,10 +359,6 @@ export function CandidateDetailModal({
   const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
-  const sessionToken = typeof window !== "undefined"
-    ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || ""
-    : "";
-
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
     {
@@ -2645,6 +2643,7 @@ export default function AdminDashboard() {
       {selectedCandidateId && (
         <CandidateDetailModal
           candidateId={selectedCandidateId}
+          sessionToken={sessionToken}
           onClose={() => { setSelectedCandidateId(null); setOpenEvaluationEditor(false); }}
           onStatusUpdated={handleRefresh}
           openEvaluationEditor={openEvaluationEditor}
