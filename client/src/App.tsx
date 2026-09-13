@@ -51,6 +51,8 @@ const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const ProcedureLuxembourg = lazyWithTimeout(() => import("./pages/ProcedureLuxembourg"));
 const ProcedureAllemagneFormation = lazyWithTimeout(() => import("./pages/ProcedureAllemagneFormation"));
 const ProcedureAutricheSuisseFormation = lazyWithTimeout(() => import("./pages/ProcedureAutricheSuisseFormation"));
+const DestinationFormationPage = lazyWithTimeout(() => import("./pages/DestinationFormationPage"));
+const DestinationsHub = lazyWithTimeout(() => import("./pages/DestinationsHub"));
 import MonDossier from "./pages/MonDossier";
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
@@ -253,6 +255,25 @@ function Router() {
       <Route path={"/procedures/allemagne-formation"} component={ProcedureAllemagneFormation} />
       <Route path={"/procedures/autriche-formation"} component={ProcedureAutricheSuisseFormation} />
       <Route path={"/procedures/suisse-formation"} component={ProcedureAutricheSuisseFormation} />
+      <Route path="/destinations" component={DestinationsHub} />
+      <Route path="/procedures/pays-bas">{() => <DestinationFormationPage slug="pays-bas" />}</Route>
+      <Route path="/procedures/belgique">{() => <DestinationFormationPage slug="belgique" />}</Route>
+      <Route path="/procedures/france">{() => <DestinationFormationPage slug="france" />}</Route>
+      <Route path="/procedures/royaume-uni">{() => <DestinationFormationPage slug="royaume-uni" />}</Route>
+      <Route path="/procedures/irlande">{() => <DestinationFormationPage slug="irlande" />}</Route>
+      <Route path="/procedures/portugal">{() => <DestinationFormationPage slug="portugal" />}</Route>
+      <Route path="/procedures/espagne">{() => <DestinationFormationPage slug="espagne" />}</Route>
+      <Route path="/procedures/italie">{() => <DestinationFormationPage slug="italie" />}</Route>
+      <Route path="/procedures/pologne">{() => <DestinationFormationPage slug="pologne" />}</Route>
+      <Route path="/procedures/malte">{() => <DestinationFormationPage slug="malte" />}</Route>
+      <Route path="/procedures/norvege">{() => <DestinationFormationPage slug="norvege" />}</Route>
+      <Route path="/procedures/australie">{() => <DestinationFormationPage slug="australie" />}</Route>
+      <Route path="/procedures/nouvelle-zelande">{() => <DestinationFormationPage slug="nouvelle-zelande" />}</Route>
+      <Route path="/procedures/emirats">{() => <DestinationFormationPage slug="emirats" />}</Route>
+      <Route path="/procedures/qatar">{() => <DestinationFormationPage slug="qatar" />}</Route>
+      <Route path="/procedures/arabie-saoudite">{() => <DestinationFormationPage slug="arabie-saoudite" />}</Route>
+      <Route path="/procedures/coree-du-sud">{() => <DestinationFormationPage slug="coree-du-sud" />}</Route>
+      <Route path="/procedures/japon">{() => <DestinationFormationPage slug="japon" />}</Route>
       <Route path="/destinations/:countryId" component={CountryDetailPage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path="/en/destinations/:countryId" component={CountryDetailPage} />
