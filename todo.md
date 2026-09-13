@@ -2572,19 +2572,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Dossier de test identifié : COMPTE-1140001 — TEST INTERNE (source account-only).
 - [x] Corriger le cas où un compte candidat sans ligne applications provoquait « Dossier d’évaluation introuvable » ; création d’un brouillon provisoire sans activation ni modification de paiement.
 - [x] TypeScript et 9 régressions ciblées réussis après ce correctif.
-- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon.
+- [x] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon. Ouverture, prévisualisation et sauvegarde contrôlée réalisées sans diffusion.
 - [ ] Tester les actions Pilotage du dossier TEST INTERNE, sans activer le dossier ni envoyer de communication.
 - [x] Brancher `ACCOUNT_ONLY` sur `sourceType: candidate` afin d’utiliser le bootstrap d’évaluation existant au lieu de charger directement un identifiant candidat sans application.
 - [x] Ajouter la régression de ce branchement ; TypeScript et 10 tests ciblés réussissent.
-- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon.
+- [x] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon. La fiche et l’éditeur sont accessibles avec le jeton partagé.
 
 ## Recherche dossier account-only après bootstrap
 - [x] Conserver l’alias `COMPTE-<id>` dans les clés de recherche quand une application provisoire EVAL-DRAFT existe déjà.
 - [x] Ajouter la régression de recherche par alias ; TypeScript et 11 tests ciblés réussissent.
-- [ ] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon.
+- [x] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon. La recherche, l’ouverture et la sauvegarde interne ont été vérifiées.
 - [x] Conserver la ligne ACCOUNT_ONLY avec son code `COMPTE-<id>` tant qu’une application liée reste en statut EVAL-DRAFT, afin de permettre la recherche et l’accès au dossier de test.
 - [x] TypeScript et 11 régressions ciblées réussissent après ce correctif.
-- [ ] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon.
+- [x] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon. Contrôle live consigné dans audit_admin_test_dossier.md.
 
 ## Nouvelle passe — session admin et confirmation paiement
 - [x] Invalider et vider explicitement le cache tRPC de la liste candidats après reconnexion ou changement de jeton, afin d’éviter l’écart liste/fiche.
