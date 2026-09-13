@@ -3534,14 +3534,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Raccourcir le meta description de l’accueil à 160 caractères maximum sans changer le contenu de la nouvelle page Allemagne–Formation
 
 ## Galerie 15 images et Allemagne–Formation bilingue
-- [ ] Synchroniser et relire le commit 739e811
-- [ ] Vérifier que ProofGallerySection référence bien 15 images
-- [ ] Contrôler les 5 nouvelles images : caviardage, filigrane et absence de données personnelles lisibles
-- [ ] Vérifier les métadonnées évidentes des 5 nouvelles images
+- [x] Synchroniser et relire le commit 739e811
+- [x] Vérifier que ProofGallerySection référence bien 15 images
+- [x] Contrôler les 5 nouvelles images : caviardage, filigrane et absence de données personnelles lisibles
+- [x] Vérifier les métadonnées évidentes des 5 nouvelles images
 - [ ] Traduire la page Allemagne–Formation en anglais avec contenu cohérent et prudent
 - [ ] Ajouter la route anglaise Allemagne–Formation aux routes bilingues et au prerendu/hreflang
 - [ ] Ajouter une FAQ interactive Ausbildung à la fin de la page Allemagne–Formation
 - [ ] Ajouter une navigation rapide par ancres vers les sections cours de langue et Ausbildung
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier visuellement les 15 images et les pages FR/EN
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement les 15 images dans la galerie ; les pages FR/EN restent hors périmètre de cette validation ciblée
 - [ ] Publier uniquement si tous les contrôles sont verts
+
+## Validation ciblée galerie 15 images — 739e811
+- [x] Contrôler à nouveau les 15 images de ProofGallerySection et leur caviardage
+- [x] Exécuter TypeScript et les tests ciblés de galerie
+- [x] Vérifier le rendu final des 15 images dans la galerie ; publication en attente de la validation de confidentialité
+
+- [x] Enregistrer la confirmation utilisateur du consentement documenté pour les cinq nouvelles images et terminer le contrôle final
