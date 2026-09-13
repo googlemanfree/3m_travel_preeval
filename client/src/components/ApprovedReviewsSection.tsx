@@ -4,6 +4,9 @@ import { Filter, Quote, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const REVIEWS_PAGE_SIZE = 6;
 
 interface Review {
   id?: number;
@@ -80,10 +83,16 @@ export default function ApprovedReviewsSection() {
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translationPending, setTranslationPending] = useState<Record<string, boolean>>({});
   const [showOriginal, setShowOriginal] = useState<Record<number, boolean>>({});
+  const [visibleCount, setVisibleCount] = useState(REVIEWS_PAGE_SIZE);
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
 
-  const displayedReviews = useMemo(() => {
+  useEffect(() => {
+    // Revenir à la première page de résultats lorsque le filtre ou la recherche change.
+    setVisibleCount(REVIEWS_PAGE_SIZE);
+  }, [destinationFilter, searchQuery]);
+
+  const filteredReviews = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase("fr-FR");
     const filtered = approvedReviews.filter((review) => {
       const matchesDestination =
@@ -108,10 +117,14 @@ export default function ApprovedReviewsSection() {
       return searchableText.includes(normalizedQuery);
     });
 
-    return [...filtered]
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 6);
+    return [...filtered].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   }, [approvedReviews, destinationFilter, searchQuery]);
+
+  const displayedReviews = useMemo(
+    () => filteredReviews.slice(0, visibleCount),
+    [filteredReviews, visibleCount],
+  );
+  const hasMoreReviews = visibleCount < filteredReviews.length;
 
   useEffect(() => {
     // Les témoignages approuvés sont soumis majoritairement en français. Pour
@@ -173,6 +186,7 @@ export default function ApprovedReviewsSection() {
         translatedView: "Show translation",
         translating: "Translating…",
         originalText: "Original review",
+        showMore: "Show more reviews",
       }
     : {
         loading: "Chargement des avis approuvés...",
@@ -196,13 +210,36 @@ export default function ApprovedReviewsSection() {
         translatedView: "Voir la traduction",
         translating: "Traduction en cours…",
         originalText: "Avis original",
+        showMore: "Voir plus d'avis",
       };
 
   if (isLoading) {
     return (
-      <div className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-slate-500">{labels.loading}</p>
+      <div className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true" aria-label={labels.loading}>
+        <div className="max-w-6xl mx-auto">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <Skeleton className="mx-auto h-8 w-64" />
+            <Skeleton className="mx-auto mt-4 h-4 w-80" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="rounded-lg bg-white p-6 shadow-md">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="mt-3 flex gap-1">
+                  {Array.from({ length: 5 }).map((__, starIndex) => (
+                    <Skeleton key={starIndex} className="h-4 w-4 rounded-sm" />
+                  ))}
+                </div>
+                <Skeleton className="mt-4 h-3 w-full" />
+                <Skeleton className="mt-2 h-3 w-5/6" />
+                <Skeleton className="mt-2 h-3 w-2/3" />
+                <div className="mt-4 border-t pt-4">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="mt-2 h-3 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -384,6 +421,18 @@ export default function ApprovedReviewsSection() {
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center mb-8">
             <p className="text-slate-600">{labels.empty}</p>
+          </div>
+        )}
+
+        {hasMoreReviews && (
+          <div className="text-center mb-8">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((current) => current + REVIEWS_PAGE_SIZE)}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+            >
+              {labels.showMore}
+            </button>
           </div>
         )}
 

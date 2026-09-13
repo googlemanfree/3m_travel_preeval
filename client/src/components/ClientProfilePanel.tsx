@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -117,7 +118,33 @@ export default function ClientProfilePanel() {
   };
 
   if (profileQuery.isLoading) {
-    return <Card className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement de votre profil…</Card>;
+    return (
+      <Card className="border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-busy="true" aria-label="Chargement de votre profil…">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-56" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+        <div className="mt-5 space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2 sm:max-w-md">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <Skeleton className="h-11 w-48 rounded-xl" />
+        </div>
+      </Card>
+    );
   }
 
   if (profileQuery.isError || !profileQuery.data) {

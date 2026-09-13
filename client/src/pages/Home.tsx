@@ -30,6 +30,7 @@ import CurrencyConverterWidget from "@/components/CurrencyConverterWidget";
 import TravelSearchHero from "@/components/TravelSearchHero";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
+import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
@@ -1264,7 +1265,9 @@ export default function Home() {
       <PublicFAQ />
 
       {/* ─── AVIS CLIENTS APPROUVÉS ─────────────────────────────────────────────────── */}
-      <ApprovedReviewsSection />
+      <ReviewsErrorBoundary>
+        <ApprovedReviewsSection />
+      </ReviewsErrorBoundary>
 
       {/* --- TARIFS & GARANTIES --- */}
       <PricingSection />

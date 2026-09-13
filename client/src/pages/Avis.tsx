@@ -2,6 +2,7 @@ import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
 import SubmitReview from "./SubmitReview";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
+import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 
 export default function Avis() {
   return (
@@ -50,7 +51,9 @@ export default function Avis() {
         </div>
       </section>
 
-      <ApprovedReviewsSection />
+      <ReviewsErrorBoundary>
+        <ApprovedReviewsSection />
+      </ReviewsErrorBoundary>
 
       <section className="mx-auto mt-4 max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
         <section id="deposer-un-avis" aria-labelledby="deposer-un-avis-title">
