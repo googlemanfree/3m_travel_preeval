@@ -3480,11 +3480,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un test de régression ciblé pour les quatre slugs EN, le sitemap bilingue et les alternates hreflang
 
 ## Preuve sociale et confiance a178eb0 — accueil
-- [ ] Synchroniser et relire le commit a178eb0
-- [ ] Vérifier le déplacement d’ApprovedReviewsSection après les procédures les plus demandées
-- [ ] Vérifier le masquage automatique quand approvedReviews vaut zéro
-- [ ] Vérifier l’affichage de l’année RCCM réelle 2019 et de l’enregistrement à Yaoundé
-- [ ] Vérifier le nouveau lead/heading prerendu de l’accueil
-- [ ] Exécuter TypeScript et les tests ciblés
-- [ ] Vérifier visuellement l’accueil et l’absence de contenu d’avis fictif
+- [x] Synchroniser et relire le commit a178eb0
+- [x] Vérifier le déplacement d’ApprovedReviewsSection après les procédures les plus demandées
+- [x] Vérifier le masquage automatique quand approvedReviews vaut zéro
+- [x] Vérifier l’affichage de l’année RCCM réelle 2019 et de l’enregistrement à Yaoundé
+- [x] Vérifier le nouveau lead/heading prerendu de l’accueil
+- [x] Exécuter TypeScript et les tests ciblés
+- [x] Vérifier visuellement l’accueil et l’absence de contenu d’avis fictif
 - [ ] Publier uniquement si tous les contrôles sont verts
