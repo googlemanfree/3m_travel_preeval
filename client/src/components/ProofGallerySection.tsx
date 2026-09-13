@@ -52,6 +52,31 @@ const PROOF_PHOTOS = [
     alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
     caption: "Nouveau dossier de visa Chine mené à terme depuis Yaoundé",
   },
+  {
+    src: "/proof-photos/proof-schengen-visa-1.jpg",
+    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa Schengen obtenu pour un candidat accompagné par 3M Travel & Services",
+  },
+  {
+    src: "/proof-photos/proof-schengen-visa-2.jpg",
+    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Dossier de visa Schengen traité et validé depuis Yaoundé",
+  },
+  {
+    src: "/proof-photos/proof-schengen-visa-3.jpg",
+    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa Schengen pour travail saisonnier obtenu par un candidat suivi par 3M Travel",
+  },
+  {
+    src: "/proof-photos/proof-schengen-visa-4.jpg",
+    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Nouveau dossier de visa Schengen mené à terme depuis Yaoundé",
+  },
+  {
+    src: "/proof-photos/proof-schengen-visa-5.jpg",
+    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa Schengen délivré à un candidat accompagné de bout en bout par 3M Travel",
+  },
 ];
 
 export default function ProofGallerySection() {
