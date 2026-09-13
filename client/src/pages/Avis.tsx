@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle2, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import SubmitReview from "./SubmitReview";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
@@ -11,6 +11,7 @@ const AGGREGATE_RATING_SCRIPT_ID = "avis-aggregate-rating-jsonld";
 
 export default function Avis() {
   const { data: stats } = trpc.customerReview.getStats.useQuery();
+  const { data: ratingBreakdown } = trpc.customerReview.getRatingBreakdown.useQuery();
 
   useEffect(() => {
     const existing = document.getElementById(AGGREGATE_RATING_SCRIPT_ID);
@@ -89,6 +90,29 @@ export default function Avis() {
           </a>
         </div>
       </section>
+
+      {stats && stats.approvedReviews > 0 && ratingBreakdown && (
+        <section className="mx-auto mt-4 max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12" aria-labelledby="rating-breakdown-title">
+          <h2 id="rating-breakdown-title" className="text-lg font-black text-slate-950">Répartition des notes</h2>
+          <div className="mt-5 space-y-2.5">
+            {([5, 4, 3, 2, 1] as const).map((star) => {
+              const starCount = ratingBreakdown[star] ?? 0;
+              const percent = stats.approvedReviews > 0 ? Math.round((starCount / stats.approvedReviews) * 100) : 0;
+              return (
+                <div key={star} className="flex items-center gap-3">
+                  <span className="flex w-12 shrink-0 items-center gap-1 text-xs font-bold text-slate-600">
+                    {star} <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                  </span>
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={`${star} étoiles : ${percent}%`}>
+                    <div className="h-full rounded-full bg-amber-400" style={{ width: `${percent}%` }} />
+                  </div>
+                  <span className="w-10 shrink-0 text-right text-xs font-semibold text-slate-500">{starCount}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <ReviewsErrorBoundary>
         <ApprovedReviewsSection />

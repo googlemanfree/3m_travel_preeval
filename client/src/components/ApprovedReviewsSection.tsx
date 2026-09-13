@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpDown, Filter, Quote, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -401,13 +401,15 @@ export default function ApprovedReviewsSection() {
 
         {displayedReviews.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <AnimatePresence mode="popLayout">
             {displayedReviews.map((review, index) => (
               <motion.div
                 key={review.id ?? `${review.displayName}-${index}`}
+                layout
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.25, delay: (index % REVIEWS_PAGE_SIZE) * 0.04 }}
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
               >
                 <Quote className="w-8 h-8 text-orange-500 mb-4 opacity-50" aria-hidden="true" />
@@ -468,6 +470,7 @@ export default function ApprovedReviewsSection() {
                 </div>
               </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center mb-8">

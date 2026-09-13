@@ -233,4 +233,26 @@ export const customerReviewRouter = router({
       };
     }
   }),
+
+  getRatingBreakdown: publicProcedure.query(async () => {
+    const emptyBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    try {
+      const db = await requireDb();
+      const rows = await db
+        .select({ rating: customerReviews.rating, value: count() })
+        .from(customerReviews)
+        .where(eq(customerReviews.status, "approved"))
+        .groupBy(customerReviews.rating);
+
+      const breakdown = { ...emptyBreakdown };
+      for (const row of rows) {
+        if (row.rating >= 1 && row.rating <= 5) {
+          breakdown[row.rating as 1 | 2 | 3 | 4 | 5] = Number(row.value);
+        }
+      }
+      return breakdown;
+    } catch {
+      return emptyBreakdown;
+    }
+  }),
 });
