@@ -3561,7 +3561,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la section d’accueil Nos destinations, les 23 cartes et le lien du menu principal
 - [x] Exécuter TypeScript et les tests ciblés routing/prerendu/destinations
 - [x] Vérifier visuellement desktop et mobile les pages, le hub et l’accueil
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Publier uniquement si tous les contrôles sont verts
 
 - [x] Adapter l’assertion historique publicDestinationCoverage au composant CountryDetailPage locale-aware sans modifier les nouvelles pages destination
 
@@ -3570,3 +3570,20 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le contraste des titres de hero sur /destinations et /procedures/autriche-formation, sans modifier le contenu métier
 
 - [x] Corriger le contraste des titres hero dans DestinationFormationPage.tsx, puis retester les pages génériques
+
+## Rattrapage protocole et visuels premium destinations
+- [ ] Lire en priorité docs/protocole-accord-cahier-des-charges-implementation.md et comparer l’existant au cahier des charges
+- [ ] Auditer AdminPaymentManagement.tsx et le bouton Envoyer le protocole pour les dossiers Accord requis
+- [ ] Vérifier les tests et garde-fous du bouton de rattrapage protocole
+- [ ] Inventorier les 14 entrées sans image dans DestinationsShowcaseSection.tsx
+- [ ] Produire ou collecter 14 visuels premium paysage/monument sans personnes fictives
+- [ ] Intégrer les 14 visuels dans les mêmes dimensions et le même style que les images existantes
+- [ ] Exécuter TypeScript et les tests ciblés protocole/destinations
+- [ ] Vérifier le rendu back-office et de l’accueil en desktop/mobile
+- [ ] Publier uniquement si tous les contrôles sont verts
+
+## Rattrapage protocole et visuels destinations
+- [x] Ajouter le bouton de rattrapage « Envoyer protocole » dans Paiements avec confirmation, texte éditable, dépôt espace client et e-mail après paiement confirmé
+- [x] Remplacer les 14 replis drapeau de la vitrine destinations par des paysages/monuments premium sans personnes
+- [x] Vérifier TypeScript, tests ciblés et rendu desktop/mobile des modifications protocole et destinations
+- [x] Publier le checkpoint validé des modifications protocole et visuels destinations
