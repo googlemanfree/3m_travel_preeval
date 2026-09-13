@@ -3529,6 +3529,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la section Pourquoi 3M Travel, le CTA, les avertissements et les sources officielles
 - [x] Exécuter TypeScript et les tests ciblés
 - [x] Vérifier visuellement le hero, les deux tableaux et les étapes numérotées
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Publier uniquement si tous les contrôles sont verts
 
 - [x] Raccourcir le meta description de l’accueil à 160 caractères maximum sans changer le contenu de la nouvelle page Allemagne–Formation
+
+## Galerie 15 images et Allemagne–Formation bilingue
+- [ ] Synchroniser et relire le commit 739e811
+- [ ] Vérifier que ProofGallerySection référence bien 15 images
+- [ ] Contrôler les 5 nouvelles images : caviardage, filigrane et absence de données personnelles lisibles
+- [ ] Vérifier les métadonnées évidentes des 5 nouvelles images
+- [ ] Traduire la page Allemagne–Formation en anglais avec contenu cohérent et prudent
+- [ ] Ajouter la route anglaise Allemagne–Formation aux routes bilingues et au prerendu/hreflang
+- [ ] Ajouter une FAQ interactive Ausbildung à la fin de la page Allemagne–Formation
+- [ ] Ajouter une navigation rapide par ancres vers les sections cours de langue et Ausbildung
+- [ ] Exécuter TypeScript et les tests ciblés
+- [ ] Vérifier visuellement les 15 images et les pages FR/EN
+- [ ] Publier uniquement si tous les contrôles sont verts
