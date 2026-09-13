@@ -3587,3 +3587,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer les 14 replis drapeau de la vitrine destinations par des paysages/monuments premium sans personnes
 - [x] Vérifier TypeScript, tests ciblés et rendu desktop/mobile des modifications protocole et destinations
 - [x] Publier le checkpoint validé des modifications protocole et visuels destinations
+
+## Refonte 3M BOOKING — /billets
+- [ ] Synchroniser le commit 6478b74 depuis origin/main sans écraser les changements existants
+- [ ] Auditer la recherche, les filtres, le détail et la demande de réservation de /billets
+- [ ] Exécuter TypeScript, build et tous les tests flight ciblés
+- [ ] Vérifier /billets en desktop et mobile, y compris les états vide/erreur et le bouton WhatsApp
+- [ ] Publier le lot 3M BOOKING après validation complète
