@@ -3621,3 +3621,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les régressions de contenu, paiement, session et pièce jointe
 - [x] Exécuter TypeScript, 18 tests ciblés et le build de production
 - [x] Publier le checkpoint de l’extension PDF du Protocole N°01 (checkpoint 1b4036a9)
+
+## Audit paiement avant activation — reprise du backlog
+- [x] Cartographier les mutations d’activation agence, pré-dossier et inscription en ligne. Les mutations admin, candidate et candidate-new ont été inspectées.
+- [x] Vérifier ou corriger la garde serveur de paiement validé avant activation. Les trois entrées imposent désormais évaluation validée et paiement administrativement confirmé avant activation/traitement.
+- [x] Ajouter les régressions des trois entrées et le message explicite côté interface. Les tests officiels couvrent le paiement en ligne, l’audit agence et la demande candidat sans validation automatique.
+- [x] Exécuter TypeScript, tests et publier le correctif. 15 tests ciblés passent ; la vérification live reste limitée par l’absence de dossier de test activé.
