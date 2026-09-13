@@ -55,3 +55,20 @@ Les champs personnels, la photo, le numéro de passeport et les références son
 ## Conclusion de l’extension
 
 Les sept nouvelles images sont bien référencées par `ProofGallerySection` et montrent un caviardage important avec filigrane. Toutefois, plusieurs images conservent des informations contextuelles précises ; `proof-china-visa-3.jpg` laisse notamment apparaître une date de naissance partielle. La publication doit donc être conditionnée au même consentement documenté que pour le premier lot, sans les présenter comme anonymisées au sens strict.
+
+## Revue ciblée du lot 739e811
+
+### `proof-schengen-visa-1.jpg`
+Visa lituanien visible dans un montage ; les zones d’identification et la partie basse de la vignette sont masquées en aplats noirs, et le filigrane 3M Travel est visible. Aucun visage, numéro de document ou MRZ complet n’est lisible à cette résolution.
+
+### `proof-schengen-visa-2.jpg`
+Second visa lituanien ; les champs personnels et la partie basse sont masqués, avec filigrane visible. Aucun identifiant complet n’est lisible à cette résolution.
+
+### `proof-schengen-visa-3.jpg`
+Visa lituanien avec caviardage important et filigrane. Un fragment de date et un code graphique restent visibles sur la vignette ; aucun nom ou numéro complet n’est lisible à cette résolution. À considérer comme information contextuelle, non comme anonymisation stricte.
+
+### `proof-schengen-visa-4.jpg`
+Visa lituanien largement masqué, filigrane présent, sans identifiant complet lisible. Des éléments de catégorie et de validité restent perceptibles ; ils relèvent du contexte du document et nécessitent la même confirmation de consentement que le reste du lot.
+
+### `proof-schengen-visa-5.jpg`
+Visa lituanien avec blocs noirs couvrant les zones nominatives et filigrane diagonal visible. Aucun identifiant complet n’est lisible à cette résolution, mais des fragments de catégorie, montant et validité restent visibles ; ce visuel doit être traité comme preuve consentie, pas comme document entièrement anonymisé.
