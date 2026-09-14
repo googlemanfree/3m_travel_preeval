@@ -28,5 +28,9 @@ describe("retours visuels du Pilotage admin", () => {
     expect(dashboard).toContain("Erreur");
     expect(dashboard).toContain("Paiement déjà confirmé");
     expect(dashboard).toContain("Validation du paiement impossible");
+    expect(dashboard).toContain("const paymentAlreadyConfirmed = paymentConfirmedOptimistically ||");
+    expect(dashboard).toContain("paymentAlreadyConfirmed ? (");
+    expect(dashboard).toContain("setPaymentConfirmedOptimistically(true)");
+    expect(dashboard).toContain("void refetch()");
   });
 });

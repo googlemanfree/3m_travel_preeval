@@ -3631,7 +3631,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Stabilisation de la suite globale après audit activation
 - [x] Identifier et corriger les assertions de régression obsolètes parmi les 22 échecs de la suite complète. Les 11 écarts restants ont été classés et alignés sur les contrats publiés.
 - [x] Relancer la suite Vitest globale jusqu’à zéro échec et vérifier TypeScript/build. Résultat : 377 fichiers passés, 1 ignoré, 1082 tests passés, 4 ignorés ; TypeScript et build au vert.
-- [ ] Publier le checkpoint de stabilisation de la suite globale
+- [x] Publier le checkpoint de stabilisation de la suite globale (checkpoint 64719e65)
 
 ## Prévention des doublons applications — 383189a2
 - [x] Synchroniser le commit 383189a2/ff7afa8c sans écraser les changements locaux. Le commit est déjà ancêtre de HEAD et a été audité.
@@ -3639,3 +3639,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les garde-fous de doublon par e-mail, identité et dossier existant. Les détections préventives existantes et la nouvelle réutilisation par candidateId sont couvertes.
 - [x] Exécuter les tests ciblés, TypeScript et le build sans suppression de données. 7 tests ciblés passent, TypeScript et build de production réussissent.
 - [x] Publier le correctif et documenter l’action de vérification admin. Checkpoint 37fd0f3f publié ; aucune suppression de donnée réelle effectuée.
+
+## Cohérence du panneau Validation manuelle guidée
+- [x] Lire la source de vérité des paiements dans Candidate360 et l’onglet Paiements. AdminDashboard utilise le snapshot de getCandidateDetails et les statuts SUCCESS/completed/paid.
+- [x] Afficher l’état déjà validé et empêcher une nouvelle validation après paiement success. Le panneau affiche Paiement déjà confirmé et ne rend plus le bouton de validation.
+- [x] Invalider et recharger le panneau après mutation, avec toast explicite. L’état optimiste, le toast et refetch sont présents.
+- [x] Ajouter les régressions, exécuter TypeScript/tests/build et publier. 19 tests ciblés, TypeScript et build au vert ; aucun dossier réel muté.
