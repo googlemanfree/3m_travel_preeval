@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2,
   AlertCircle,
+  Clock,
   Download,
   Loader2,
   ChevronRight,
@@ -676,7 +677,9 @@ export default function EvaluationSpace() {
                   <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
                 </CardHeader>
                 <CardContent>
-                  {activeDossier?.agreementSigned ? (
+                  {!activeDossier ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
+                  ) : activeDossier?.agreementSigned ? (
                     <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4" role="status"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700" /><div><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">La signature est enregistrée dans votre dossier. Vous pouvez poursuivre les étapes autorisées.</p></div></div>
                   ) : (
                     <div className="space-y-4">
@@ -685,6 +688,16 @@ export default function EvaluationSpace() {
                       <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
                       <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div></div>
                       <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>{signAgreementMutation.isPending ? "Enregistrement…" : "Signer le protocole d’accord"}</Button>
+                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber) && (
+                        <p className="text-xs text-slate-500" role="status">
+                          Bouton inactif tant que : {[
+                            !agreementAccepted && "la case à cocher n’est pas validée",
+                            !agreementSignatureName.trim() && "le nom du signataire n’est pas renseigné",
+                            !agreementSignatureDataUrl && "aucune signature n’a été dessinée ci-dessus",
+                            !activeDossier?.dossierNumber && "aucun dossier actif n’est associé à ce compte",
+                          ].filter(Boolean).join(" · ")}.
+                        </p>
+                      )}
                     </div>
                   )}
                 </CardContent>
