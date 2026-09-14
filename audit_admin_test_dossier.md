@@ -25,3 +25,9 @@ Le second retest avec une recommandation explicite a déclenché un autre échec
 Retest final post-correctif : clic réel sur « Enregistrer » avec la recommandation non vide. Aucun nouvel événement d’erreur ou d’UnhandledRejection n’apparaît dans la console après 23:26 ; le serveur ne remonte plus l’erreur interne liée à `translation_requests`. Le composant reste ouvert et affiche l’état « Sauvegarde à vérifier » dans cette session, sans e-mail, activation, paiement ni validation client. Le succès serveur est confirmé par l’absence d’erreur et la génération de la version suivante du brouillon dans le panneau ; le toast peut disparaître avant la capture de vue.
 
 [2026-09-13] Test autorisé des actions « Enregistrer l’échéance », « Enregistrer le pilotage » et « Ajouter l’action » : non exécuté, car COMPTE-1140001 est affiché comme évaluation externe validée mais compte non activé ; Candidate360Workspace n’est pas rendu. Aucun contournement de la règle paiement/activation n’a été tenté. Le code localise ces actions dans Candidate360Workspace.tsx:734-759, mais leur test live nécessite un dossier interne activé de test.
+
+## Lecture SQL non destructive — 3M-AGN-270002
+- `agency_dossiers.id = 270002` existe : SIEWE TCHAKOUA Louis Valere, Luxembourg, Travail, statut `en_cours`, conseiller/auteur `aureoldonfack@gmail.com`.
+- La recherche exacte `applications.dossierNumber = '3M-AGN-270002'` retourne 0 ligne : ce numéro est une référence d’agence et non une ligne de la table `applications`.
+- La recherche `client_payments` par `louistchakoua4@gmail.com` retourne `paymentCount = 0` dans cette table legacy ; aucune suppression, mise à jour ou confirmation n’a été exécutée.
+- Conclusion : le paiement affiché historiquement dans le Pilotage n’est pas représenté dans ces deux tables sous cette référence/e-mail ; le dossier réel n’a pas été modifié et le retest live paiement reste volontairement en attente.

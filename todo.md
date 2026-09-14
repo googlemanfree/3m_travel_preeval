@@ -3207,8 +3207,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Ajouter les régressions ciblées et rejouer le clic réel sur `COMPTE-1260001` sans créer, archiver ou modifier de dossier.
 
 ## Synchronisation paiement Candidate360 — priorité utilisateur
-- [ ] Vérifier en lecture seule le nombre et les statuts des paiements liés à `3M-AGN-270002`, sans supprimer ni modifier l’enregistrement original du 8 septembre.
-- [ ] Aligner le panneau « Validation manuelle guidée » sur le vrai paiement Frais de dossier `success`, avec état déjà validé et invalidation après mutation.
+- [x] Vérifier en lecture seule le nombre et les statuts des paiements liés à `3M-AGN-270002`, sans supprimer ni modifier l’enregistrement original du 8 septembre. `agency_dossiers.id=270002` existe ; `applications` exact et `client_payments` par e-mail retournent 0 ligne, donc aucune suppression ni mutation n’a été faite et le paiement historique n’est pas dans ces tables legacy.
+- [x] Aligner le panneau « Validation manuelle guidée » sur le vrai paiement Frais de dossier `success`, avec état déjà validé et invalidation après mutation. Correctif publié en 6b4eb5a1 ; le retest réel de 3M-AGN-270002 reste volontairement non exécuté.
 - [ ] Garantir un toast de succès ou d’échec après chaque clic de validation paiement et vérifier les actions voisines Candidate360.
 - [ ] Ajouter les régressions et rejouer un clic réel autorisé sans créer de doublon ni modifier le dossier réel sans confirmation explicite.
 
