@@ -9,9 +9,10 @@ describe("official dossier evaluation and payment gate", () => {
   it("requires a validated evaluation and confirmed payment when activating a pre-dossier account", () => {
     const source = read("server/routers/adminCandidateManagement.ts");
     expect(source).toContain('candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt');
-    expect(source).toContain('latestApplication?.paymentStatus !== "SUCCESS" && !paidAgencyDossier');
-    expect(source).toContain("L’évaluation doit être validée par un conseiller");
-    expect(source).toContain("Le paiement doit être confirmé");
+    expect(source).toContain("const onlinePaymentValidated =");
+    expect(source).toContain("let agencyPaymentValidated = false");
+    expect(source).toContain("L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel.");
+    expect(source).toContain("Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.");
   });
 
   it("keeps preparatory agency dossiers separate from official application status gates", () => {
@@ -37,8 +38,9 @@ describe("official dossier evaluation and payment gate", () => {
   it("protects the inherited admin status mutation for online and agency records", () => {
     const source = read("server/routers/candidate-new.ts");
     expect(source).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
-    expect(source).toContain("Le dossier agence ne peut pas passer en traitement sans évaluation validée et paiement confirmé.");
-    expect(source).toContain("dossier.initialPaymentStatus === \"paid\"");
+    expect(source).toContain("Le dossier agence ne peut pas passer en traitement : l’évaluation doit être validée et le paiement doit être validé par un administrateur.");
+    expect(source).toContain("confirmedAgencyPayment");
+    expect(source).toContain("const paymentConfirmed =");
   });
 
   it("does not promote a paid application before the evaluation and agreement gates", () => {

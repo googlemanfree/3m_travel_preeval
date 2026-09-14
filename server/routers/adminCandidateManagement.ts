@@ -13,6 +13,7 @@ import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
 import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
+import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -1013,7 +1014,7 @@ export const adminCandidateManagementRouter = router({
       // Le protocole est genere automatiquement selon le pays de destination du candidat
       // (COUNTRY_PROTOCOL_PROFILES) sauf si l'administrateur a fourni un texte personnalise.
       const empreinteSha = crypto.createHash("sha256").update(`${dossierNumber}|${email}|${destination}|${Date.now()}`).digest("hex").slice(0, 24);
-      const autoProtocolText = buildProtocolOneRichText({
+      const protocolVariables = {
         clientNomComplet: fullName,
         dossierRef: dossierNumber,
         destinationProjet: destination || "Non spécifiée",
@@ -1025,8 +1026,16 @@ export const adminCandidateManagementRouter = router({
         empreinteSha,
         clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
         dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
-      }, destination);
+      };
+      const autoProtocolText = buildProtocolOneRichText(protocolVariables, destination);
       const protocolText = input.content.trim().length >= 50 ? input.content : autoProtocolText;
+      const protocolPdf = await createAgreementProtocolOnePdf({
+        dossierNumber,
+        fullName,
+        destination,
+        variables: protocolVariables,
+        content: protocolText,
+      });
       const paragraphs = protocolText.split(/\n\s*\n/).map((paragraph) => `<p>${escapeAgreementHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
       const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
       const logoUrl = `${siteUrl}/favicon.png`;
@@ -1069,11 +1078,18 @@ export const adminCandidateManagementRouter = router({
       const stored = await storagePut(storageKey, Buffer.from(html, "utf8"), "text/html; charset=utf-8");
       if (agencyDossierId) {
         await db.insert(agencyDossierDocuments).values({ dossierId: agencyDossierId, documentType: "protocole_accord", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "admin_upload", uploadedBy: admin.email, verificationStatus: "verified", verificationComment: `Protocole ${AGREEMENT_PROTOCOL_VERSION} préparé et validé par l’administrateur avant diffusion.`, });
+        await db.insert(agencyDossierDocuments).values({ dossierId: agencyDossierId, documentType: "protocole_accord", documentName: `Protocole d’accord — ${dossierNumber}.pdf`, documentUrl: protocolPdf.url, fileSize: protocolPdf.bytes.length, source: "admin_upload", uploadedBy: admin.email, verificationStatus: "verified", verificationComment: `PDF du Protocole ${AGREEMENT_PROTOCOL_VERSION} déposé après validation du paiement.`, });
       } else if (applicationId) {
         await db.insert(clientDocuments).values({ evaluationId: applicationId, candidateEmail: email, documentType: "other", documentName: `Protocole d’accord — ${dossierNumber}.html`, documentUrl: stored.url, fileSize: Buffer.byteLength(html), source: "manual_admin", uploadedByAdmin: admin.email, receivedByAdmin: true, status: "verified", verificationStatus: "approved", verifiedByAdmin: admin.email, verifiedAt: new Date(), adminNotes: `Protocole éditable (${AGREEMENT_PROTOCOL_VERSION}) préparé par l’administrateur et déposé après paiement confirmé.`, });
+        await db.insert(clientDocuments).values({ evaluationId: applicationId, candidateEmail: email, documentType: "other", documentName: `Protocole d’accord — ${dossierNumber}.pdf`, documentUrl: protocolPdf.url, fileSize: protocolPdf.bytes.length, source: "manual_admin", uploadedByAdmin: admin.email, receivedByAdmin: true, status: "verified", verificationStatus: "approved", verifiedByAdmin: admin.email, verifiedAt: new Date(), adminNotes: `PDF du Protocole ${AGREEMENT_PROTOCOL_VERSION} déposé après validation du paiement.`, });
       }
       try {
-        await sendGenericEmail({ to: email, subject: input.subject?.trim() || `Protocole d’accord — ${dossierNumber}`, html });
+        await sendGenericEmail({
+          to: email,
+          subject: input.subject?.trim() || `Protocole d’accord — ${dossierNumber}`,
+          html,
+          attachments: [{ filename: `Protocole-accord-01-${dossierNumber}.pdf`, content: protocolPdf.bytes, contentType: "application/pdf" }],
+        });
       } catch (error) {
         console.error("[Agreement] Email delivery failed", error);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le protocole a été déposé dans l’espace client, mais l’e-mail n’a pas pu être envoyé. Relancez l’envoi après vérification SMTP." });

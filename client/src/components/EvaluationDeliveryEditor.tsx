@@ -278,10 +278,18 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       toast({ title: "Bilan requis", description: "Saisissez au moins trois caractères avant d’enregistrer le brouillon.", variant: "destructive" });
       return;
     }
-    await saveDraft.mutateAsync(payload);
-    lastAutosavedPayload.current = JSON.stringify(payload);
-    void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId: effectiveSourceRecordId });
-    toast({ title: "Brouillon enregistré", description: "Le bilan est sauvegardé sans e-mail, sans publication et sans changement d’étape côté candidat." });
+    if (payload.recommendations.length < 1) {
+      toast({ title: "Recommandations requises", description: "Ajoutez au moins une recommandation avant d’enregistrer le brouillon.", variant: "destructive" });
+      return;
+    }
+    try {
+      await saveDraft.mutateAsync(payload);
+      lastAutosavedPayload.current = JSON.stringify(payload);
+      void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId: effectiveSourceRecordId });
+      toast({ title: "Brouillon enregistré", description: "Le bilan est sauvegardé sans e-mail, sans publication et sans changement d’étape côté candidat." });
+    } catch {
+      toast({ title: "Brouillon non enregistré", description: "Le brouillon n’a pas pu être enregistré. Vérifiez les champs requis puis réessayez.", variant: "destructive" });
+    }
   };
 
   const applyTemplate = (key: keyof typeof MESSAGE_TEMPLATES) => {

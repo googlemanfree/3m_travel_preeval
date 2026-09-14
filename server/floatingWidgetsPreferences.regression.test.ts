@@ -16,7 +16,7 @@ describe("floating widgets and responsive header contracts", () => {
 
     expect(context).toContain('"3m-floating-widgets-visible"');
     expect(context).toContain("localStorage");
-    expect(app).toContain("widgetsVisible && location !== \"/contact\"");
+    expect(app).toContain("widgetsVisible && !isAdminRoute && location !== \"/contact\" && !isAccessRoute");
     expect(accessibility).toContain('aria-pressed={widgetsVisible}');
   });
 

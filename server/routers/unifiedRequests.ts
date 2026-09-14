@@ -284,13 +284,17 @@ type SourceSnapshot = {
 
  type UnifiedDb = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
-async function loadLegacyProfileEvaluations(db: UnifiedDb) {
+async function loadOptionalSource<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
   try {
-    return await db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200);
+    return await loader();
   } catch (error) {
-    console.warn("[UnifiedRequests] Legacy profile_evaluations unavailable; continuing with primary sources.", error instanceof Error ? error.message : String(error));
-    return [];
+    console.warn(`[UnifiedRequests] Optional source ${label} unavailable; continuing without it.`, error instanceof Error ? error.message : String(error));
+    return fallback;
   }
+}
+
+async function loadLegacyProfileEvaluations(db: UnifiedDb) {
+  return loadOptionalSource("profile_evaluations", () => db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200), []);
 }
 
 async function loadLegacyProfileEvaluationsForEmail(db: UnifiedDb, email: string) {
@@ -392,13 +396,13 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
     loadLegacyProfileEvaluations(db),
-    db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200),
-    db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(200),
-    db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt)).limit(200),
-    db.select().from(translationRequests).orderBy(desc(translationRequests.createdAt)).limit(200),
-    db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200),
-    db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200),
-    db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(200),
+    loadOptionalSource("consultation_requests", () => db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200), []),
+    loadOptionalSource("flight_booking_requests", () => db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(200), []),
+    loadOptionalSource("insurance_requests", () => db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt)).limit(200), []),
+    loadOptionalSource("translation_requests", () => db.select().from(translationRequests).orderBy(desc(translationRequests.createdAt)).limit(200), []),
+    loadOptionalSource("contact_messages", () => db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200), []),
+    loadOptionalSource("agency_dossiers", () => db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200), []),
+    loadOptionalSource("tourism_service_requests", () => db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(200), []),
   ]);
 
   const firstContactBySession = new Set<string>();

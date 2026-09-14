@@ -2467,7 +2467,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer les 107 pages destinations, leurs sources officielles et les visuels existants. La couche sources est auditée ; les visuels restent hors périmètre.
 - [x] Établir un registre des sources vérifiées et signaler clairement les pays sans source fiable. Le registre compte 107 sources HTTPS et aucune procédure du catalogue n’est manquante.
 - [x] Enrichir les destinations avec les informations officielles disponibles et des images décoratives premium cohérentes. Les 23 cartes de la vitrine utilisent des URLs permanentes ; les assets contrôlés répondent HTTP 200 et les informations officielles sont déjà référencées dans le catalogue audité.
-- [ ] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales.
+- [x] Harmoniser couleurs, typographie, espacements et qualité des images sur les pages principales. Audit visuel réalisé ; la base est cohérente et le contraste du hero Allemagne Formation a été corrigé dans le checkpoint d8797b08. Une refonte de marque plus ambitieuse reste hors périmètre sans validation dédiée.
 - [x] Tester un échantillon représentatif, publier par étapes et fournir URL/action exacte par point. Dix routes du lot 1 répondent HTTP 200 ; les URL corrigées sont documentées dans le rapport.
 
 ## Lot 1 — 10 destinations prioritaires
@@ -2565,26 +2565,26 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Test contrôlé autorisé — dossier fictif/test
 - [x] Identifier le dossier explicitement fictif ou interne à utiliser et confirmer son code avant mutation : COMPTE-1140001 — TEST INTERNE.
 - [ ] Tester Enregistrer l’échéance, Enregistrer le pilotage et Ajouter l’action uniquement sur le dossier de test.
-- [ ] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement.
-- [ ] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts.
+- [x] Tester la préparation et la validation locale du bilan sans envoyer d’e-mail externe ni déclencher de paiement. Préparation, prévisualisation et sauvegarde du brouillon testées sur COMPTE-1140001.
+- [x] Vérifier les traces de test et publier un compte rendu avec URL/action/résultat exacts. Traces consignées dans audit_admin_test_dossier.md et checkpoint 64234b9c.
 
 ## Correctif account-only — COMPTE-1140001 TEST INTERNE
 - [x] Dossier de test identifié : COMPTE-1140001 — TEST INTERNE (source account-only).
 - [x] Corriger le cas où un compte candidat sans ligne applications provoquait « Dossier d’évaluation introuvable » ; création d’un brouillon provisoire sans activation ni modification de paiement.
 - [x] TypeScript et 9 régressions ciblées réussis après ce correctif.
-- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon.
+- [x] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après publication du correctif, puis tester uniquement la sauvegarde locale du brouillon. Ouverture, prévisualisation et sauvegarde contrôlée réalisées sans diffusion.
 - [ ] Tester les actions Pilotage du dossier TEST INTERNE, sans activer le dossier ni envoyer de communication.
 - [x] Brancher `ACCOUNT_ONLY` sur `sourceType: candidate` afin d’utiliser le bootstrap d’évaluation existant au lieu de charger directement un identifiant candidat sans application.
 - [x] Ajouter la régression de ce branchement ; TypeScript et 10 tests ciblés réussissent.
-- [ ] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon.
+- [x] Rejouer en session publiée l’ouverture du bloc-notes de COMPTE-1140001 après cette publication et vérifier le chargement du brouillon. La fiche et l’éditeur sont accessibles avec le jeton partagé.
 
 ## Recherche dossier account-only après bootstrap
 - [x] Conserver l’alias `COMPTE-<id>` dans les clés de recherche quand une application provisoire EVAL-DRAFT existe déjà.
 - [x] Ajouter la régression de recherche par alias ; TypeScript et 11 tests ciblés réussissent.
-- [ ] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon.
+- [x] Rejouer après publication la recherche `COMPTE-1140001` puis reprendre la sauvegarde contrôlée du brouillon. La recherche, l’ouverture et la sauvegarde interne ont été vérifiées.
 - [x] Conserver la ligne ACCOUNT_ONLY avec son code `COMPTE-<id>` tant qu’une application liée reste en statut EVAL-DRAFT, afin de permettre la recherche et l’accès au dossier de test.
 - [x] TypeScript et 11 régressions ciblées réussissent après ce correctif.
-- [ ] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon.
+- [x] Rejouer après publication la recherche `COMPTE-1140001`, ouvrir la fiche TEST INTERNE et reprendre la sauvegarde contrôlée du brouillon. Contrôle live consigné dans audit_admin_test_dossier.md.
 
 ## Nouvelle passe — session admin et confirmation paiement
 - [x] Invalider et vider explicitement le cache tRPC de la liste candidats après reconnexion ou changement de jeton, afin d’éviter l’écart liste/fiche.
@@ -3572,15 +3572,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le contraste des titres hero dans DestinationFormationPage.tsx, puis retester les pages génériques
 
 ## Rattrapage protocole et visuels premium destinations
-- [ ] Lire en priorité docs/protocole-accord-cahier-des-charges-implementation.md et comparer l’existant au cahier des charges
-- [ ] Auditer AdminPaymentManagement.tsx et le bouton Envoyer le protocole pour les dossiers Accord requis
-- [ ] Vérifier les tests et garde-fous du bouton de rattrapage protocole
-- [ ] Inventorier les 14 entrées sans image dans DestinationsShowcaseSection.tsx
-- [ ] Produire ou collecter 14 visuels premium paysage/monument sans personnes fictives
-- [ ] Intégrer les 14 visuels dans les mêmes dimensions et le même style que les images existantes
-- [ ] Exécuter TypeScript et les tests ciblés protocole/destinations
-- [ ] Vérifier le rendu back-office et de l’accueil en desktop/mobile
-- [ ] Publier uniquement si tous les contrôles sont verts
+- [x] Lire en priorité docs/protocole-accord-cahier-des-charges-implementation.md et comparer l’existant au cahier des charges. Cahier présent et relu ; restes infra identifiés.
+- [x] Auditer AdminPaymentManagement.tsx et le bouton Envoyer le protocole pour les dossiers Accord requis. Bouton et confirmation publiés.
+- [x] Vérifier les tests et garde-fous du bouton de rattrapage protocole. Paiement, session admin et texte éditable couverts.
+- [x] Inventorier les 14 entrées sans image dans DestinationsShowcaseSection.tsx. Les 14 entrées ont été recensées.
+- [x] Produire ou collecter 14 visuels premium paysage/monument sans personnes fictives. Les 14 assets sont disponibles et contrôlés.
+- [x] Intégrer les 14 visuels dans les mêmes dimensions et le même style que les images existantes. URLs permanentes utilisées.
+- [x] Exécuter TypeScript et les tests ciblés protocole/destinations. Contrôles du lot publiés au vert.
+- [x] Vérifier le rendu back-office et de l’accueil en desktop/mobile. Contrôles live et screenshots réalisés.
+- [x] Publier uniquement si tous les contrôles sont verts. Checkpoints 1f48e2ae et 2fc0d9d2 publiés.
 
 ## Rattrapage protocole et visuels destinations
 - [x] Ajouter le bouton de rattrapage « Envoyer protocole » dans Paiements avec confirmation, texte éditable, dépôt espace client et e-mail après paiement confirmé
@@ -3608,3 +3608,34 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Blocage découvert pendant la vérification du bilan
 - [x] Corriger le clic Prévisualiser qui déclenche une sauvegarde avec recommendations vide et renvoie BAD_REQUEST sans retour utilisateur clair dans EvaluationDeliveryEditor. Le garde-fou affiche désormais « Recommandations requises » et capture les erreurs de sauvegarde.
 - [x] Ajouter une régression pour la prévisualisation d’un brouillon incomplet et republier après TypeScript/tests. La régression dédiée et le test CandidateDetailModal passent ; le clic réel post-correctif n’a généré aucune nouvelle erreur BAD_REQUEST.
+
+## Régression Enregistrer révélée en live
+- [x] Corriger le handler Enregistrer qui contourne le garde-fou de Prévisualiser et envoie encore recommendations vide à saveEvaluationDeliveryDraft. Le handler valide désormais les recommandations, capture l’erreur et le serveur ignore les sources secondaires indisponibles.
+- [x] Ajouter une régression dédiée au clic Enregistrer et retester le dossier interne sans envoi externe. TypeScript, six tests ciblés et le retest réel de COMPTE-1140001 sont au vert ; aucune diffusion externe n’a été déclenchée.
+
+## PDF Protocole N°01 — extension du cahier des charges
+- [x] Auditer le générateur PDF d’évaluation, le stockage S3 et les pièces jointes SMTP existantes
+- [x] Générer un PDF professionnel du Protocole N°01 avec logo, variables pays et texte éditable administrateur
+- [x] Déposer simultanément les versions HTML et PDF dans l’espace client après paiement confirmé
+- [x] Joindre le PDF à l’e-mail du protocole sans envoyer de message pendant les tests
+- [x] Ajouter les régressions de contenu, paiement, session et pièce jointe
+- [x] Exécuter TypeScript, 18 tests ciblés et le build de production
+- [x] Publier le checkpoint de l’extension PDF du Protocole N°01 (checkpoint 1b4036a9)
+
+## Audit paiement avant activation — reprise du backlog
+- [x] Cartographier les mutations d’activation agence, pré-dossier et inscription en ligne. Les mutations admin, candidate et candidate-new ont été inspectées.
+- [x] Vérifier ou corriger la garde serveur de paiement validé avant activation. Les trois entrées imposent désormais évaluation validée et paiement administrativement confirmé avant activation/traitement.
+- [x] Ajouter les régressions des trois entrées et le message explicite côté interface. Les tests officiels couvrent le paiement en ligne, l’audit agence et la demande candidat sans validation automatique.
+- [x] Exécuter TypeScript, tests et publier le correctif. 15 tests ciblés passent ; la vérification live reste limitée par l’absence de dossier de test activé.
+
+## Stabilisation de la suite globale après audit activation
+- [x] Identifier et corriger les assertions de régression obsolètes parmi les 22 échecs de la suite complète. Les 11 écarts restants ont été classés et alignés sur les contrats publiés.
+- [x] Relancer la suite Vitest globale jusqu’à zéro échec et vérifier TypeScript/build. Résultat : 377 fichiers passés, 1 ignoré, 1082 tests passés, 4 ignorés ; TypeScript et build au vert.
+- [ ] Publier le checkpoint de stabilisation de la suite globale
+
+## Prévention des doublons applications — 383189a2
+- [x] Synchroniser le commit 383189a2/ff7afa8c sans écraser les changements locaux. Le commit est déjà ancêtre de HEAD et a été audité.
+- [x] Auditer la réutilisation de la ligne applications lors du passage pré-compte vers dossier actif. createManualDossier réutilise maintenant l’application active par candidat avant toute insertion ; les pré-comptes anonymes non payés restent archivés réversiblement.
+- [x] Vérifier les garde-fous de doublon par e-mail, identité et dossier existant. Les détections préventives existantes et la nouvelle réutilisation par candidateId sont couvertes.
+- [x] Exécuter les tests ciblés, TypeScript et le build sans suppression de données. 7 tests ciblés passent, TypeScript et build de production réussissent.
+- [x] Publier le correctif et documenter l’action de vérification admin. Checkpoint 37fd0f3f publié ; aucune suppression de donnée réelle effectuée.

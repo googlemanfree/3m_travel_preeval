@@ -19,6 +19,9 @@ describe("candidate activation flow", () => {
     expect(candidateRouter).toContain("evaluationClientConfirmedAt");
     expect(candidateRouter).toContain('dossierStatus: "en_attente_paiement"');
     expect(candidateRouter).toContain("paymentOpeningRequestedAt");
+    expect(candidateRouter).toContain('dossierStatus: "en_attente_paiement"');
+    expect(candidateRouter).toContain("paymentRequested: true");
+    expect(candidateRouter).toContain('if (application.paymentStatus === "SUCCESS") return');
   });
 
   it("exposes the client actions without making activation automatic", () => {

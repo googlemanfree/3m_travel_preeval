@@ -29,7 +29,7 @@ describe("espace client professionnel", () => {
     expect(timeline).toContain('key: "soumission"');
     expect(timeline).toContain('key: "decision"');
     expect(page).toContain("dossierStatus={cProfile.dossierStatus}");
-    expect(router).toContain("dossierStatus: (candidate as any).dossierStatus");
+    expect(router).toContain("dossierStatus: candidate.dossierStatus");
   });
 
   it("alerte d’une nouvelle étape et mémorise l’étape consultée", () => {

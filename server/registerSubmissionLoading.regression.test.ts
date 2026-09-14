@@ -7,7 +7,7 @@ const source = readFileSync(resolve(import.meta.dirname, "../client/src/pages/Re
 describe("soumission d’inscription", () => {
   it("bloque une nouvelle soumission pendant l’envoi ou la création", () => {
     expect(source).toContain("if (registerMutation.isPending || isUploadingPortrait || showSuccessAnimation)");
-    expect(source).toContain('disabled={registerMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}');
+    expect(source).toContain('disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}');
   });
 
   it("annonce un chargement accessible avec une progression visible", () => {

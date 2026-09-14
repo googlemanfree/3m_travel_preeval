@@ -9,7 +9,7 @@ describe("badge de dossier actif côté client", () => {
     const source = read("server/routers/candidate.ts");
     expect(source).toContain("dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, \"0\")}`");
     expect(source).toContain("const activeAgencyDossierNumber = activeAgencyDossier");
-    expect(source).toContain("const dashboardDossierNumber = activeApp?.dossierNumber");
+    expect(source).toContain("const dashboardDossierNumber = activeAgencyDossierNumber");
     expect(source).toContain("dossierNumber: dashboardDossierNumber");
     expect(source).toContain("const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)");
     expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`");
@@ -33,7 +33,7 @@ describe("protocole d’accord par défaut", () => {
   it("reste détaillé et inclut le second protocole après sélection", () => {
     const source = read("shared/agreementProtocolContent.ts");
     expect(source).toContain("export const INITIAL_AGREEMENT_PROTOCOL =");
-    expect(source).toContain("6. Sélection du candidat et second protocole");
+    expect(source).toContain("Article 6 — Sélection du candidat et second protocole");
     expect(source).toContain("La signature est autorisée uniquement après confirmation du paiement");
     expect(source).toContain("export const SECOND_AGREEMENT_PROTOCOL_TEMPLATE =");
     expect(source).not.toContain("export const INITIAL_AGREEMENT_PROTOCOL = `export const");

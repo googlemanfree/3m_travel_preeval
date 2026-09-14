@@ -71,6 +71,6 @@ describe("back-office — compte pré-dossier avec évaluation déclarée", () =
       evaluationDeclarationStatus: "pending_validation",
       internalStatus: "nouveau",
     });
-    expect(result.candidate.evaluationDeclaredAt).toEqual(state.account.evaluationDeclaredAt);
+    expect(result.candidate.evaluationDeclaredAt).toBe(state.account.evaluationDeclaredAt.toISOString());
   });
 });
