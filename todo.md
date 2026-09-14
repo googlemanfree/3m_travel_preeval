@@ -3682,4 +3682,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la cause de disponibilité ou de sérialisation sans masquer une erreur métier réelle — redémarrage/synchronisation du serveur d’aperçu effectué ; aucune modification de sérialisation nécessaire, aucune erreur métier masquée.
 - [x] Ajouter une régression ciblée et vérifier l’accueil en session neuve, avec cache/PWA contrôlés — endpoints `customerReview` testés, cache-busting appliqué et accueil rechargé après redémarrage ; console sans erreur.
 - [x] Exécuter TypeScript, tests concernés et build avant publication — TypeScript, 6 tests customerReview et build production au vert.
-- [ ] Publier le correctif et documenter le résultat de vérification
+- [x] Publier le correctif et documenter le résultat de vérification — version 92297558 publiée ; accueil rechargé sans erreur après redémarrage.
