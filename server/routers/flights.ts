@@ -180,10 +180,77 @@ function generateFlights(
       gdsBookingClass: cabinClass === "BUSINESS" ? "J" : cabinClass === "FIRST" ? "F" : "Y",
       gdsTaxesAndFees: Math.round(pricePerPax * 0.18),
       isLiveGoogleFlights: false,
+      departureToken: null,
     });
   }
 
   return results.sort((a, b) => a.totalPrice - b.totalPrice);
+}
+
+type SearchApiLegParams = {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  cabinClass: string;
+  adults: number;
+  children: number;
+  infants: number;
+  /** "SA" pour le vol aller, "SA-RET" pour le vol retour — evite toute collision d'id entre les deux legs. */
+  idPrefix: string;
+};
+
+/** Convertit un item best_flights/other_flights de SearchAPI.io (Google Flights) en Flight interne.
+ * Reutilise pour le vol aller (premiere requete) et le vol retour (seconde requete avec departure_token). */
+function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegParams) {
+  const firstLeg = item.flights?.[0];
+  const lastLeg = item.flights?.[item.flights.length - 1];
+  const sourcePrice = parseSearchApiPrice(item.price);
+  if (!firstLeg || !lastLeg || sourcePrice === null) return null;
+
+  const stops = (item.flights?.length ?? 1) - 1;
+  const stopDetails = (item.layovers || []).map((l: any) => ({
+    airport: l.id,
+    airportName: l.name,
+    duration: formatDuration(l.duration),
+  }));
+
+  const airlineCode = firstLeg.flight_number?.split(" ")[0] ?? "AF";
+  const knownAirline = AIRLINES[airlineCode];
+  const airline = knownAirline || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A", alliance: "Autre" };
+
+  return {
+    id: `${params.idPrefix}-${index}-${firstLeg.flight_number}`,
+    airline,
+    flightNumber: firstLeg.flight_number,
+    origin: firstLeg.departure_airport?.id ?? params.origin,
+    originName: firstLeg.departure_airport?.name ?? params.origin,
+    originCity: AIRPORTS[params.origin]?.city ?? params.origin,
+    destination: lastLeg.arrival_airport?.id ?? params.destination,
+    destinationName: lastLeg.arrival_airport?.name ?? params.destination,
+    destinationCity: AIRPORTS[params.destination]?.city ?? params.destination,
+    departureDate: firstLeg.departure_airport?.date ?? params.departureDate,
+    departureTime: firstLeg.departure_airport?.time ?? "--:--",
+    arrivalTime: lastLeg.arrival_airport?.time ?? "--:--",
+    duration: formatDuration(item.total_duration),
+    durationMinutes: item.total_duration,
+    stops,
+    stopDetails,
+    cabinClass: params.cabinClass,
+    pricePerPax: Math.round(sourcePrice * XAF_PER_EUR),
+    totalPrice: Math.round(Math.round(sourcePrice * XAF_PER_EUR) * (params.adults + (params.children * 0.75) + (params.infants * 0.1))),
+    currency: "XAF",
+    sourceCurrency: "EUR",
+    sourcePrice,
+    seatsLeft: randomBetween(2, 9),
+    baggage: params.cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
+    refundable: true,
+    pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    gdsFareBasis: `${params.cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
+    gdsBookingClass: params.cabinClass === "BUSINESS" ? "J" : params.cabinClass === "FIRST" ? "F" : "Y",
+    gdsTaxesAndFees: Math.round(sourcePrice * XAF_PER_EUR * 0.18),
+    isLiveGoogleFlights: true,
+    departureToken: item.departure_token ?? null,
+  };
 }
 
 export const flightsRouter = router({
@@ -304,60 +371,18 @@ export const flightsRouter = router({
           return result;
         }
 
-        const totalPax = input.adults + input.children;
-
-        const toFlightResult = (item: any, index: number) => {
-          const firstLeg = item.flights?.[0];
-          const lastLeg = item.flights?.[item.flights.length - 1];
-          const sourcePrice = parseSearchApiPrice(item.price);
-          if (!firstLeg || !lastLeg || sourcePrice === null) return null;
-
-          const stops = (item.flights?.length ?? 1) - 1;
-          const stopDetails = (item.layovers || []).map((l: any) => ({
-            airport: l.id,
-            airportName: l.name,
-            duration: formatDuration(l.duration),
-          }));
-
-          const airlineCode = firstLeg.flight_number?.split(" ")[0] ?? "AF";
-          const knownAirline = AIRLINES[airlineCode];
-          const airline = knownAirline || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A", alliance: "Autre" };
-
-          return {
-            id: `SA-${index}-${firstLeg.flight_number}`,
-            airline,
-            flightNumber: firstLeg.flight_number,
-            origin: firstLeg.departure_airport?.id ?? input.origin,
-            originName: firstLeg.departure_airport?.name ?? input.origin,
-            originCity: AIRPORTS[input.origin]?.city ?? input.origin,
-            destination: lastLeg.arrival_airport?.id ?? input.destination,
-            destinationName: lastLeg.arrival_airport?.name ?? input.destination,
-            destinationCity: AIRPORTS[input.destination]?.city ?? input.destination,
-            departureDate: firstLeg.departure_airport?.date ?? input.departureDate,
-            departureTime: firstLeg.departure_airport?.time ?? "--:--",
-            arrivalTime: lastLeg.arrival_airport?.time ?? "--:--",
-            duration: formatDuration(item.total_duration),
-            durationMinutes: item.total_duration,
-            stops,
-            stopDetails,
-            cabinClass: input.cabinClass,
-            pricePerPax: Math.round(sourcePrice * XAF_PER_EUR),
-            totalPrice: Math.round(Math.round(sourcePrice * XAF_PER_EUR) * (input.adults + (input.children * 0.75) + (input.infants * 0.1))),
-            currency: "XAF",
-            sourceCurrency: "EUR",
-            sourcePrice,
-            seatsLeft: randomBetween(2, 9),
-            baggage: input.cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
-            refundable: true,
-            pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-            gdsFareBasis: `${input.cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
-            gdsBookingClass: input.cabinClass === "BUSINESS" ? "J" : input.cabinClass === "FIRST" ? "F" : "Y",
-            gdsTaxesAndFees: Math.round(sourcePrice * XAF_PER_EUR * 0.18),
-            isLiveGoogleFlights: true,
-          };
+        const legParams: SearchApiLegParams = {
+          origin: input.origin,
+          destination: input.destination,
+          departureDate: input.departureDate,
+          cabinClass: input.cabinClass,
+          adults: input.adults,
+          children: input.children,
+          infants: input.infants,
+          idPrefix: "SA",
         };
 
-        let outbound = allResults.map((item, i) => toFlightResult(item, i)).filter(Boolean);
+        let outbound = allResults.map((item, i) => mapSearchApiFlightItem(item, i, legParams)).filter(Boolean);
         if (input.alliance && input.alliance !== "ALL") {
           outbound = outbound.filter((f: any) => f.airline.alliance === input.alliance);
         }
@@ -400,6 +425,94 @@ export const flightsRouter = router({
         };
         setCachedSearch(cacheKey, result);
         return result;
+      }
+    }),
+
+  /**
+   * Étape 2 d'une recherche aller-retour Google Flights (via SearchAPI.io) : la première requête
+   * (searchFlights) ne renvoie que les vols ALLER, chacun porteur d'un departure_token. Cette
+   * procédure interroge SearchAPI.io une seconde fois avec ce token pour obtenir les vraies
+   * options de vol RETOUR correspondant au vol aller choisi — jamais un tableau vide inventé.
+   */
+  searchReturnFlights: publicProcedure
+    .input(
+      z.object({
+        origin: z.string().length(3),
+        destination: z.string().length(3),
+        departureDate: z.string(),
+        returnDate: z.string(),
+        adults: z.number().min(1).max(9).default(1),
+        children: z.number().min(0).max(8).default(0),
+        infants: z.number().min(0).max(4).default(0),
+        cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
+        departureToken: z.string().nullable().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const apiKey = process.env.SEARCHAPI_KEY;
+      // Vol retour = trajet inverse (destination -> origin) à la date de retour.
+      const returnLegParams: SearchApiLegParams = {
+        origin: input.destination,
+        destination: input.origin,
+        departureDate: input.returnDate,
+        cabinClass: input.cabinClass,
+        adults: input.adults,
+        children: input.children,
+        infants: input.infants,
+        idPrefix: "SA-RET",
+      };
+
+      if (!apiKey || !input.departureToken) {
+        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
+        const inbound = generateFlights(input.destination, input.origin, input.returnDate, totalPaxForCalc, input.cabinClass);
+        return { inbound, isDemo: true, providerStatus: apiKey ? "no_departure_token" : "not_configured" };
+      }
+
+      try {
+        const searchOrigin = input.origin === "YAO" ? "NSI" : input.origin;
+        const searchDestination = input.destination === "YAO" ? "NSI" : input.destination;
+        const travelClassMap: Record<string, string> = {
+          ECONOMY: "economy",
+          PREMIUM_ECONOMY: "premium_economy",
+          BUSINESS: "business",
+          FIRST: "first_class",
+        };
+        const params = new URLSearchParams({
+          engine: "google_flights",
+          api_key: apiKey,
+          departure_id: searchOrigin,
+          arrival_id: searchDestination,
+          outbound_date: input.departureDate,
+          return_date: input.returnDate,
+          flight_type: "round_trip",
+          travel_class: travelClassMap[input.cabinClass] ?? "economy",
+          adults: String(input.adults),
+          children: String(input.children),
+          currency: "EUR",
+          departure_token: input.departureToken,
+        });
+
+        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+        if (!res.ok) {
+          throw new Error(`SearchAPI.io (retour) a répondu ${res.status}`);
+        }
+        const json = await res.json();
+        const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
+        if (allResults.length === 0) {
+          return { inbound: [], isDemo: false, providerStatus: "live_no_results" };
+        }
+        const inbound = allResults.map((item, i) => mapSearchApiFlightItem(item, i, returnLegParams)).filter(Boolean);
+        return { inbound, isDemo: false, providerStatus: "live" };
+      } catch (err) {
+        console.error("SearchAPI error (retour), falling back to mock:", err);
+        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
+        const inbound = generateFlights(input.destination, input.origin, input.returnDate, totalPaxForCalc, input.cabinClass);
+        return {
+          inbound,
+          isDemo: true,
+          providerStatus: "error",
+          providerNotice: "Service fournisseur momentanément indisponible pour le vol retour : offres indicatives à confirmer par un conseiller.",
+        };
       }
     }),
 

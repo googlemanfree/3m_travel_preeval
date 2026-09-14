@@ -124,6 +124,9 @@ export type Flight = {
   gdsBookingClass?: string;
   gdsTaxesAndFees?: number;
   isLiveGoogleFlights?: boolean;
+  /** Présent uniquement sur les vols aller d'une recherche aller-retour en direct : nécessaire
+   * pour interroger ensuite les vraies options de vol retour (flights.searchReturnFlights). */
+  departureToken?: string | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
