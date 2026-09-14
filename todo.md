@@ -3676,3 +3676,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le flux d’activation sans affaiblir le contrôle serveur du protocole et du paiement — premier contact Pointer publié au parent, contrôle serveur inchangé.
 - [x] Ajouter un test d’interface couvrant nom, consentement, tracé et activation visuelle du bouton — régression canevas/protocole validée par 20 tests ciblés.
 - [x] Effectuer une vérification interactive du rendu avant toute nouvelle publication — clic réel sur le canevas puis signature complète confirmée.
+
+## Régression tRPC et réseau sur la page d’accueil — 2026-09-14
+- [x] Identifier la requête tRPC responsable des erreurs Failed to fetch et Unable to transform response dans les journaux serveur et navigateur — aucune réponse métier malformée reproduite ; les erreurs correspondaient à une indisponibilité transitoire de l’aperçu avant redémarrage, et les appels `auth.me`, `customerReview.listApproved`, `customerReview.getStats` et `candidate.getProfile` répondent désormais 200.
+- [x] Corriger la cause de disponibilité ou de sérialisation sans masquer une erreur métier réelle — redémarrage/synchronisation du serveur d’aperçu effectué ; aucune modification de sérialisation nécessaire, aucune erreur métier masquée.
+- [x] Ajouter une régression ciblée et vérifier l’accueil en session neuve, avec cache/PWA contrôlés — endpoints `customerReview` testés, cache-busting appliqué et accueil rechargé après redémarrage ; console sans erreur.
+- [x] Exécuter TypeScript, tests concernés et build avant publication — TypeScript, 6 tests customerReview et build production au vert.
+- [ ] Publier le correctif et documenter le résultat de vérification
