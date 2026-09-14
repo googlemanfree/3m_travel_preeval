@@ -3645,3 +3645,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher l’état déjà validé et empêcher une nouvelle validation après paiement success. Le panneau affiche Paiement déjà confirmé et ne rend plus le bouton de validation.
 - [x] Invalider et recharger le panneau après mutation, avec toast explicite. L’état optimiste, le toast et refetch sont présents.
 - [x] Ajouter les régressions, exécuter TypeScript/tests/build et publier. 19 tests ciblés, TypeScript et build au vert ; aucun dossier réel muté.
+
+## Suivi public et isolation du compte
+- [x] Vérifier que le bouton Suivre ce dossier utilise la référence et l’e-mail du même compte. Le résumé serveur privilégie le dossier agence du compte courant et les tests de badge passent.
+- [x] Vérifier la redirection vers /mon-dossier et l’absence de préremplissage croisé entre comptes. La route publiée est `/mon-espace?section=dossier`, avec raccourcis dossier/documents ancrés au même compte.
+- [x] Ajouter ou renforcer la régression de non-fuite, puis exécuter TypeScript/tests. 9 tests de suivi/badge/navigation passent et TypeScript est au vert.
+- [x] Publier le correctif ou documenter que seul le clic live candidat reste à confirmer. Le code correspondant est déjà publié ; seul le clic live avec une session candidat demeure à confirmer.
