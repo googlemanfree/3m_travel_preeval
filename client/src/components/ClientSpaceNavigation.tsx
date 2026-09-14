@@ -13,8 +13,8 @@ import { resetPwaCache } from "@/lib/pwaClient";
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
   { href: "/flights#3m-booking", label: "Mes séjours", description: "Suivre une demande d’hôtel", icon: BedDouble, tone: "bg-orange-50 text-orange-700" },
-  { href: "/mon-dossier", label: "Mon dossier", description: "Suivre votre dossier actif et ses étapes", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
-  { href: "/document-upload", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
+  { href: "/mon-espace?section=dossier", label: "Mon dossier", description: "Suivre votre dossier actif et ses étapes", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
+  { href: "/mon-espace?section=documents", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
   { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700" },
   { href: "/evisas", label: "Destinations", description: "Explorer les procédures e-Visa", icon: Plane, tone: "bg-amber-50 text-amber-700" },
   { href: "/mon-espace?section=messages", label: "Messagerie", description: "Échanger avec votre conseiller", icon: MessageCircle, tone: "bg-sky-50 text-sky-700" },
@@ -120,6 +120,9 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     ? dossierPayload.activeDossier.dossierNumber
     : null;
   const visibleQuickLinks = quickLinks.filter((link) => {
+    // En mode compact (sur /mon-espace), la barre d'onglets juste en dessous couvre déjà
+    // dossier/documents/messagerie/profil : on évite de dupliquer ces raccourcis ici.
+    if (compact && ["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return false;
     if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
     if (["Réserver un vol", "Vols favoris"].includes(link.label)) return Boolean(requestsQuery.data?.length);
     if (link.label === "Mes séjours") return Boolean(hotelRequestsQuery.data?.length);
@@ -153,18 +156,18 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
                 legacyEvaluationNumber ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}, anciennement référencé ${legacyEvaluationNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
+                      <a href="/mon-espace?section=dossier" aria-label={`Suivre le dossier ${dossierNumber}, anciennement référencé ${legacyEvaluationNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
                     </TooltipTrigger>
                     <TooltipContent>Ancienne référence d’évaluation : {legacyEvaluationNumber}</TooltipContent>
                   </Tooltip>
                 ) : (
-                  <a href="/mon-dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
+                  <a href="/mon-espace?section=dossier" aria-label={`Suivre le dossier ${dossierNumber}`} className="rounded-full bg-blue-100 px-3 py-1.5 text-left text-blue-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">#{dossierNumber}</a>
                 )
               ) : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
               {isAgencyDossierNumber && <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">Dossier Agence</Badge>}
             </div>
           </div>
-          <a href="/mon-dossier" className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-800 px-5 font-bold text-white hover:bg-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+          <a href="/mon-espace?section=dossier" className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-800 px-5 font-bold text-white hover:bg-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
             <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
           </a>
         </div>

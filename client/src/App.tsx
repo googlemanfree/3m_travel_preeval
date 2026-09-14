@@ -53,7 +53,6 @@ const ProcedureAllemagneFormation = lazyWithTimeout(() => import("./pages/Proced
 const ProcedureAutricheSuisseFormation = lazyWithTimeout(() => import("./pages/ProcedureAutricheSuisseFormation"));
 const DestinationFormationPage = lazyWithTimeout(() => import("./pages/DestinationFormationPage"));
 const DestinationsHub = lazyWithTimeout(() => import("./pages/DestinationsHub"));
-import MonDossier from "./pages/MonDossier";
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
 const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
@@ -114,7 +113,6 @@ const PaymentAgencyConfirmation = lazyWithTimeout(() => import("./pages/PaymentA
 const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomerReviews"));
 const AdminInsuranceRequests = lazyWithTimeout(() => import("./pages/AdminInsuranceRequests"));
 const AdminAccessRecovery = lazyWithTimeout(() => import("./pages/AdminAccessRecovery"));
-const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTracking"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import Navbar from "./components/Navbar";
 import { FooterLegal } from "./components/FooterLegal";
@@ -209,9 +207,9 @@ function Router() {
       <Route path={"/payment-failed"} component={PaymentFailed} />
       <Route path={"/dossier-confirmation"} component={DossierConfirmation} />
 
-      {/* Suivi de dossier candidat */}
-      <Route path={"/mon-dossier"} component={MonDossier} />
-      <Route path={"/suivi-client"} component={ClientCaseTracking} />
+      {/* Suivi de dossier candidat — unifié dans /mon-espace (onglet Dossier) pour éviter les doublons de suivi. */}
+      <Route path={"/mon-dossier"}>{() => <Redirect to="/mon-espace?section=dossier" />}</Route>
+      <Route path={"/suivi-client"}>{() => <Redirect to="/mon-espace?section=dossier" />}</Route>
 
       {/* Mon Espace Candidat — aliases historiques vers l’espace client unique. */}
       <Route path={"/candidate/login"}>{() => <Redirect to="/login" />}</Route>

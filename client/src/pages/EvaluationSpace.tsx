@@ -8,28 +8,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   CheckCircle2,
-  Clock,
   AlertCircle,
   Download,
-  Share2,
   Loader2,
   ChevronRight,
   TrendingUp,
   FileText,
-  Mail,
   Plane,
   FolderOpen,
   User,
   MessageSquare,
   ShieldCheck,
   RefreshCw,
-  Award,
-  Calendar,
-  ArrowLeftRight,
   Sparkles,
-  History,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
@@ -53,7 +45,7 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const validSections = ["overview", "dossier", "signatures", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"] as const;
+  const validSections = ["overview", "dossier", "signatures", "documents", "profile", "messages"] as const;
   type ClientSection = (typeof validSections)[number];
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
@@ -67,11 +59,6 @@ export default function EvaluationSpace() {
   const [uploadClarification, setUploadClarification] = useState<{ id: number; documentLabel: string } | null>(null);
   const seenAnsweredClarificationIds = useRef<Set<number> | null>(null);
 
-  // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
-  const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
-  const [budgetStartDate, setBudgetStartDate] = useState<string>("");
-  const [budgetEndDate, setBudgetEndDate] = useState<string>("");
-  const [visaTypeCalc, setVisaTypeCalc] = useState<string>("study"); // study, work, visitor, business
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [agreementSignatureName, setAgreementSignatureName] = useState("");
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
@@ -94,6 +81,27 @@ export default function EvaluationSpace() {
     refetchOnWindowFocus: false,
     retry: 2,
   });
+  const { data: insuranceRequests } = trpc.caseTracking.getMyInsuranceRequests.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const downloadInsuranceCoupon = async (id: number) => {
+    try {
+      const result = await trpcUtils.caseTracking.downloadMyInsuranceCoupon.fetch({ insuranceRequestId: id });
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Coupon indisponible pour le moment.");
+    }
+  };
+  const downloadInsuranceAttestation = async (id: number) => {
+    try {
+      const result = await trpcUtils.caseTracking.downloadMyInsuranceAttestation.fetch({ insuranceRequestId: id });
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Attestation indisponible pour le moment.");
+    }
+  };
   const { data: documentClarifications = [] } = trpc.candidate.getDocumentClarifications.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
@@ -770,391 +778,30 @@ export default function EvaluationSpace() {
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
+              {insuranceRequests && insuranceRequests.length > 0 && (
+                <Card className="p-6 border-blue-100 bg-white shadow-sm">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Mes assurances voyage</h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {insuranceRequests.map((item: any) => (
+                      <div key={item.id} className="rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{item.reference}</p>
+                            <p className="text-xs text-slate-500">{item.destinationCountry} · {item.coveragePlan}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-700">{item.status}</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {item.couponFileName && <Button type="button" variant="outline" size="sm" onClick={() => downloadInsuranceCoupon(item.id)}><Download className="mr-2 h-3.5 w-3.5" />Coupon</Button>}
+                          {item.attestationFileName ? <Button type="button" size="sm" onClick={() => downloadInsuranceAttestation(item.id)}><Download className="mr-2 h-3.5 w-3.5" />Attestation</Button> : <span className="text-xs text-slate-500">Attestation en attente</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
             </div>
           )}
-
-          {activeTab === "flights" && (
-            <div className="space-y-6">
-              {/* Tableau de bord budgétaire multi-devises */}
-              <Card className="p-6 border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Tableau de bord budgétaire des vols</h3>
-                    <p className="text-xs text-gray-600">Estimation consolidée de vos itinéraires favoris selon différentes devises de référence.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-xs bg-indigo-100 text-indigo-800 font-semibold px-3 py-1 rounded-full">
-                      {favoriteFlights.length} Itinéraire(s) enregistré(s)
-                    </span>
-                    <Button
-                      onClick={() => {
-                        const totalXAF = favoriteFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0);
-                        const totalEUR = Math.round(totalXAF / 655.957);
-                        const totalUSD = Math.round(totalXAF / 600);
-                        const totalCAD = Math.round(totalXAF / 440);
-
-                        const reportContent = `
-==================================================
-   3M TRAVEL AND SERVICES — RAPPORT BUDGÉTAIRE
-==================================================
-Date d'édition : ${new Date().toLocaleDateString("fr-FR")}
-Candidat : ${cProfile.fullName} (${cProfile.email})
-N° de Dossier : ${cProfile.dossierNumber}
-
---------------------------------------------------
-RÉCAPITULATIF MULTI-DEVISES
---------------------------------------------------
-- Total XAF (FCFA) : ${totalXAF.toLocaleString()} XAF
-- Total EUR (€)    : ${totalEUR.toLocaleString()} €
-- Total USD ($)    : ${totalUSD.toLocaleString()} $
-- Total CAD ($CA)  : ${totalCAD.toLocaleString()} $CA
-
---------------------------------------------------
-VENTILATION ESTIMÉE PAR CATÉGORIE
---------------------------------------------------
-- Billets d'avion (Long-courrier & Régional) : ${Math.round(totalXAF * 0.70).toLocaleString()} XAF
-- Frais consulaires & Visas                  : ${Math.round(totalXAF * 0.20).toLocaleString()} XAF
-- Accompagnement & Frais d'agence            : ${Math.round(totalXAF * 0.10).toLocaleString()} XAF
-
---------------------------------------------------
-MENTION LÉGALE & JUSTIFICATION FINANCIÈRE
---------------------------------------------------
-Ce rapport est généré automatiquement par l'espace client 
-3M Travel and Services à des fins de planification et de 
-justification de fonds auprès des autorités consulaires.
-Les tarifs sont basés sur les données GDS et sources vérifiées.
---------------------------------------------------
-`;
-
-                        const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = `Rapport_Budgetaire_${cProfile.dossierNumber || '3MTravel'}.txt`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                        alert("Rapport budgétaire exporté avec succès !");
-                      }}
-                      size="sm"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
-                    >
-                      📥 Exporter le Rapport Budgétaire (PDF/TXT)
-                    </Button>
-                  </div>
-                </div>
-                {/* Contrôles de filtre et Calculateur interactif de frais consulaires */}
-                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-3 border-b border-indigo-50">
-                    <div>
-                      <p className="text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">Filtres du rapport budgétaire</p>
-                      <div className="grid grid-cols-1 gap-2">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Catégorie de coût</label>
-                          <select
-                            value={budgetCategoryFilter}
-                            onChange={(e) => setBudgetCategoryFilter(e.target.value)}
-                            className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
-                          >
-                            <option value="all">Toutes les catégories</option>
-                            <option value="flight">Billets d'avion uniquement</option>
-                            <option value="consular">Frais consulaires & Visas</option>
-                            <option value="agency">Frais d'agence & Accompagnement</option>
-                          </select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Début</label>
-                            <input
-                              type="date"
-                              value={budgetStartDate}
-                              onChange={(e) => setBudgetStartDate(e.target.value)}
-                              className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Fin</label>
-                            <input
-                              type="date"
-                              value={budgetEndDate}
-                              onChange={(e) => setBudgetEndDate(e.target.value)}
-                              className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-2">🧮 Calculateur de Frais Consulaires</p>
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Type de procédure / Visa</label>
-                        <select
-                          value={visaTypeCalc}
-                          onChange={(e) => setVisaTypeCalc(e.target.value)}
-                          className="w-full text-xs border border-indigo-200 rounded-lg p-2 bg-indigo-50/50 text-indigo-900 font-semibold focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="study">Permis d'Études (Canada / Campus France) — ~150 000 XAF</option>
-                          <option value="work">Permis de Travail / Résidence — ~250 000 XAF</option>
-                          <option value="visitor">Visa Visiteur / Tourisme (Schengen / US) — ~95 000 XAF</option>
-                          <option value="business">Visa d'Affaires / Conférence — ~120 000 XAF</option>
-                        </select>
-                        <p className="text-[10px] text-gray-500 mt-1 italic">
-                          * Les frais consulaires officiels s'ajoutent dynamiquement à votre estimation globale.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Calcul des vols filtrés selon la plage de dates */}
-                {(() => {
-                  const filteredFlights = favoriteFlights.filter((f: any) => {
-                    const flightDate = f.createdAt ? new Date(f.createdAt).toISOString().split('T')[0] : '';
-                    if (budgetStartDate && flightDate && flightDate < budgetStartDate) return false;
-                    if (budgetEndDate && flightDate && flightDate > budgetEndDate) return false;
-                    return true;
-                  });
-
-                  const rawTotalXAF = filteredFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0);
-
-                  // Frais consulaires selon le type de visa choisi dans le calculateur
-                  const consularFeeMap: Record<string, number> = {
-                    study: 150000,
-                    work: 250000,
-                    visitor: 95000,
-                    business: 120000,
-                  };
-                  const consularFee = consularFeeMap[visaTypeCalc] || 150000;
-
-                  const baseCalculatedXAF = Math.round(rawTotalXAF * (budgetCategoryFilter === 'all' ? 1.0 : (budgetCategoryFilter === 'flight' ? 0.70 : (budgetCategoryFilter === 'consular' ? 0.20 : 0.10))));
-                  const totalXAF = budgetCategoryFilter === 'consular' ? consularFee : (budgetCategoryFilter === 'all' ? (baseCalculatedXAF + consularFee) : baseCalculatedXAF);
-                  const totalEUR = Math.round(totalXAF / 655.957);
-                  const totalUSD = Math.round(totalXAF / 600);
-                  const totalCAD = Math.round(totalXAF / 440);
-
-                  return (
-                    <>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100 mb-6">
-                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Total XAF (FCFA)</p>
-                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalXAF.toLocaleString()} XAF</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Total EUR (€)</p>
-                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalEUR.toLocaleString()} €</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Total USD ($)</p>
-                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalUSD.toLocaleString()} $</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                          <p className="text-xs text-gray-500 uppercase font-semibold">Total CAD ($CA)</p>
-                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalCAD.toLocaleString()} $CA</p>
-                        </div>
-                      </div>
-
-                      {/* Bouton d'export PDF et bouton de prise de rendez-vous en agence */}
-                      <div className="mb-6 flex flex-wrap gap-2 justify-end items-center">
-                        <Button
-                          onClick={() => {
-                            const apptDate = prompt("Entrez la date souhaitée pour votre consultation en agence (AAAA-MM-JJ) :");
-                            if (!apptDate) return;
-                            const apptTime = prompt("Entrez l'heure souhaitée (ex: 10:00, 14:30) :");
-                            if (!apptTime) return;
-                            alert(`Demande de rendez-vous enregistrée pour le ${apptDate} à ${apptTime} ! Un conseiller 3M Travel and Services vous contactera pour confirmation.`);
-                          }}
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
-                        >
-                          📅 Planifier une consultation en agence
-                        </Button>
-
-                        <Button
-                          onClick={() => {
-                            const reportContent = `
-==================================================
-   3M TRAVEL AND SERVICES — RAPPORT BUDGÉTAIRE
-==================================================
-Date d'édition : ${new Date().toLocaleDateString("fr-FR")}
-Candidat : ${cProfile.fullName} (${cProfile.email})
-N° de Dossier : ${cProfile.dossierNumber}
-Filtre Catégorie : ${budgetCategoryFilter}
-Période : ${budgetStartDate || 'Début'} au ${budgetEndDate || 'Aujourd\'hui'}
-
---------------------------------------------------
-RÉCAPITULATIF MULTI-DEVISES (FILTRÉ)
---------------------------------------------------
-- Total XAF (FCFA) : ${totalXAF.toLocaleString()} XAF
-- Total EUR (€)    : ${totalEUR.toLocaleString()} €
-- Total USD ($)    : ${totalUSD.toLocaleString()} $
-- Total CAD ($CA)  : ${totalCAD.toLocaleString()} $CA
-
---------------------------------------------------
-MENTION LÉGALE & JUSTIFICATION FINANCIÈRE
---------------------------------------------------
-Ce rapport est généré automatiquement par l'espace client 
-3M Travel and Services à des fins de justification de fonds.
---------------------------------------------------
-`;
-                            const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement("a");
-                            link.href = url;
-                            link.download = `Rapport_Budgetaire_Filtre_${cProfile.dossierNumber || '3MTravel'}.txt`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            URL.revokeObjectURL(url);
-                            alert("Rapport budgétaire filtré exporté avec succès !");
-                          }}
-                          size="sm"
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
-                        >
-                          📥 Exporter le Rapport Budgétaire Filtré (PDF/TXT)
-                        </Button>
-                      </div>
-                    </>
-                  );
-                })()}
-
-                {/* Graphique visuel de répartition des coûts par catégorie */}
-                <div className="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm">
-                  <h4 className="text-sm font-bold text-gray-900 mb-3">📊 Répartition visuelle du budget par catégorie</h4>
-                  {favoriteFlights.length === 0 ? (
-                    <p className="text-xs text-gray-500">Aucun vol enregistré pour afficher la répartition graphique.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {(() => {
-                        const totalSum = favoriteFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0) || 1;
-                        // Catégorisation simulée des favoris en Billets Long-Courrier, Frais Consulaires et Services Agence
-                        const transportShare = Math.round(totalSum * 0.70);
-                        const consulShare = Math.round(totalSum * 0.20);
-                        const serviceShare = totalSum - transportShare - consulShare;
-
-                        const categories = [
-                          { label: "Billets d'avion (Long-courrier & Régional)", amount: transportShare, color: "bg-blue-600", border: "border-blue-200" },
-                          { label: "Frais de consulat & Visas", amount: consulShare, color: "bg-purple-600", border: "border-purple-200" },
-                          { label: "Accompagnement & Frais d'agence", amount: serviceShare, color: "bg-emerald-600", border: "border-emerald-200" },
-                        ];
-
-                        return categories.map((cat, idx) => {
-                          const percent = Math.round((cat.amount / totalSum) * 100);
-                          return (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between text-xs font-semibold text-gray-700">
-                                <span>{cat.label}</span>
-                                <span>{cat.amount.toLocaleString()} XAF ({percent}%)</span>
-                              </div>
-                              <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden border border-gray-200">
-                                <div className={`${cat.color} h-full transition-all duration-500 rounded-full`} style={{ width: `${Math.max(percent, 5)}%` }}></div>
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-              {/* Itinéraires favoris et historique des variations de prix */}
-              <Card className="p-6 border-purple-100 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-900">Itinéraires de vol et historique des variations de prix</h3>
-                  <Button onClick={() => setLocation("/flights")} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                    Rechercher des vols
-                  </Button>
-                </div>
-                {favoriteFlights.length === 0 ? (
-                  <p className="text-sm text-gray-500">Vous n'avez enregistré aucun vol favori pour l'instant.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {favoriteFlights.map((f: any) => {
-                      const basePrice = Number(f.price) || 450000;
-                      const oldPrice1 = Math.round(basePrice * 1.08);
-                      const oldPrice2 = Math.round(basePrice * 1.04);
-                      return (
-                        <div key={f.id} className="p-4 rounded-xl border border-purple-100 bg-purple-50/50 flex flex-col justify-between">
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-bold text-gray-900 text-lg">{f.departureCity || "Vol"} ➔ {f.arrivalCity || "Destination"}</span>
-                              <div className="text-right">
-                                <span className="font-bold text-purple-700 text-lg">{f.price} {f.currency || "XAF"}</span>
-                                <div className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 mt-0.5">
-                                  Tarif source vérifié ({f.priceSource || "gds_live"})
-                                </div>
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-600 mb-1">Compagnie : {f.airline || "Partenaire"} • Cabine : {f.cabinClass || "Économique"}</p>
-                            <p className="text-xs text-gray-500 mb-3">Voyageurs : {f.passengersCount || 1} • Date : {f.departureDate || "Libre"}</p>
-                            
-                            {/* Historique des variations de prix */}
-                            <div className="mt-3 pt-3 border-t border-purple-200/60 bg-white/60 p-2.5 rounded-lg">
-                              <p className="text-[11px] font-bold text-gray-700 mb-1.5">📈 Historique des variations de prix (GDS)</p>
-                              <div className="space-y-1 text-[11px] text-gray-600">
-                                <div className="flex justify-between">
-                                  <span>Il y a 30 jours :</span>
-                                  <span className="font-semibold text-gray-800">{oldPrice1.toLocaleString()} {f.currency || "XAF"}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Il y a 7 jours :</span>
-                                  <span className="font-semibold text-gray-800">{oldPrice2.toLocaleString()} {f.currency || "XAF"}</span>
-                                </div>
-                                <div className="flex justify-between text-emerald-700 font-medium pt-0.5 border-t border-gray-100">
-                                  <span>Tendance actuelle :</span>
-                                  <span>Stable / Meilleurs tarifs</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-2 pt-4 mt-3 border-t border-purple-100">
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>Enregistré le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
-                              <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white font-bold h-7 px-3">
-                                Consulter
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2 pt-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs h-8 border-purple-200 text-purple-700 hover:bg-purple-100"
-                                onClick={() => {
-                                  const emailDest = prompt("Entrez l'adresse e-mail du destinataire :");
-                                  if (emailDest) {
-                                    alert(`Demande d'envoi de l'itinéraire vers ${emailDest} enregistrée.`);
-                                  }
-                                }}
-                              >
-                                📧 Partager par e-mail
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                onClick={() => {
-                                  const text = encodeURIComponent(`Itinéraire 3M Travel Agency : Trajet ${f.departureCity || 'Départ'} ➔ ${f.arrivalCity || 'Arrivée'} | Compagnie : ${f.airline || 'Standard'} | Prix : ${f.price} ${f.currency || 'XAF'} | Cabine : ${f.cabinClass || 'Économique'}. Réservez dès maintenant avec 3M Travel Agency !`);
-                                  window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-                                }}
-                              >
-                                💬 WhatsApp
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
-            </div>
-          )}
-
-          {activeTab === "comparisons" && <SavedDestinationComparisonsPanel />}
-          {activeTab === "history" && <div className="space-y-6"><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Historique des évaluations</h2><p className="mt-1 text-sm text-slate-600">Retrouvez vos évaluations, brouillons d’orientation et exports PDF. Les suggestions restent à vérifier par un conseiller.</p></div><EvaluationHistoryPanel evaluations={evaluations as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} /></section><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Comparaisons sauvegardées</h2><p className="mt-1 text-sm text-slate-600">Vos comparaisons enregistrées depuis l’espace candidat.</p></div><SavedDestinationComparisonsPanel /></section></div>}
 
           {activeTab === "signatures" && (
             <SignableDocumentsPanel
@@ -1182,6 +829,13 @@ Ce rapport est généré automatiquement par l'espace client
                   }}
                 />
               </Card>
+              <section aria-labelledby="client-history-title">
+                <h3 id="client-history-title" className="mb-3 text-base font-bold text-gray-900">Historique des évaluations et comparaisons</h3>
+                <div className="space-y-4">
+                  <EvaluationHistoryPanel evaluations={evaluations as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} />
+                  <SavedDestinationComparisonsPanel />
+                </div>
+              </section>
             </div>
           )}
 
@@ -1213,96 +867,6 @@ Ce rapport est généré automatiquement par l'espace client
                   <ClientMessagesPanel />
                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === "testimonials" && (
-            <div className="space-y-6">
-              <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Galerie de réussites et témoignages clients</h3>
-                    <p className="text-xs text-gray-600">Découvrez les retours d'expérience et visas obtenus par nos candidats à travers le monde.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-xs bg-emerald-100 text-emerald-800 font-semibold px-3 py-1 rounded-full">
-                      ✨ 100% Visas Authentiques
-                    </span>
-                  </div>
-                </div>
-
-                {/* Filtre par destination */}
-                <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-100">
-                  <button
-                    onClick={() => (window as any).__setTestimonialFilter ? (window as any).__setTestimonialFilter('tous') : null}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm"
-                  >
-                    Toutes les destinations
-                  </button>
-                  <button
-                    onClick={() => alert("Filtre Canada appliqué")}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  >
-                    🇨🇦 Canada
-                  </button>
-                  <button
-                    onClick={() => alert("Filtre Espace Schengen appliqué")}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  >
-                    🇪🇺 Espace Schengen
-                  </button>
-                  <button
-                    onClick={() => alert("Filtre États-Unis appliqué")}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  >
-                    🇺🇸 États-Unis
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-gray-900 text-sm">Jean-Marc T.</span>
-                        <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">🇨🇦 Canada (Études)</span>
-                      </div>
-                      <p className="text-xs text-gray-600 italic mb-3">"Procédure d'étude au Québec validée en 3 mois grâce à l'accompagnement rigoureux de l'équipe 3M Travel Agency. Mon permis d'étude est arrivé sans encombre."</p>
-                    </div>
-                    <div className="pt-2 border-t border-gray-200/60 flex justify-between items-center text-[10px] text-gray-500">
-                      <span>Visa Étudiant • Douala</span>
-                      <span className="text-emerald-600 font-bold">✓ Dossier Vérifié</span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-gray-900 text-sm">Clarisse M.</span>
-                        <span className="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-semibold">🇪🇺 Schengen (France)</span>
-                      </div>
-                      <p className="text-xs text-gray-600 italic mb-3">"Visiteur familial obtenu pour la France. Le suivi du dossier et la préparation minutieuse des justificatifs ont fait toute la différence."</p>
-                    </div>
-                    <div className="pt-2 border-t border-gray-200/60 flex justify-between items-center text-[10px] text-gray-500">
-                      <span>Visa Visiteur • Yaoundé</span>
-                      <span className="text-emerald-600 font-bold">✓ Dossier Vérifié</span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-gray-900 text-sm">Hervé K.</span>
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">🇨🇦 Canada (Entrée Express)</span>
-                      </div>
-                      <p className="text-xs text-gray-600 italic mb-3">"Accompagnement professionnel exceptionnel pour mon projet de résidence permanente. Les conseils sur l'évaluation des diplômes étaient parfaits."</p>
-                    </div>
-                    <div className="pt-2 border-t border-gray-200/60 flex justify-between items-center text-[10px] text-gray-500">
-                      <span>Résidence Permanente • Bafoussam</span>
-                      <span className="text-emerald-600 font-bold">✓ Dossier Vérifié</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
           )}
 	        </div>
