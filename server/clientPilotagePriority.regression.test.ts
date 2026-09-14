@@ -24,7 +24,7 @@ describe("pilotage prioritaire de l’espace client", () => {
   });
 
   it("offre des raccourcis exploitables vers le suivi, les documents et la messagerie", () => {
-    expect(navigationSource).toContain('href: "/mon-dossier"');
+    expect(navigationSource).toContain('href: "/mon-espace?section=dossier"');
     expect(dashboardSource).toContain('switchToSection("documents")');
     expect(dashboardSource).toContain('switchToSection("messages")');
     expect(dashboardSource).toContain("Référence de dossier");

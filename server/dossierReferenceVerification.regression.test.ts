@@ -26,7 +26,7 @@ describe("normalisation et vérification de références de dossier", () => {
 
   it("laisse le formulaire de suivi accessible sans compte, avec le contrôle serveur numéro et e-mail", () => {
     const appSource = readFileSync(resolve(import.meta.dirname, "../client/src/App.tsx"), "utf8");
-    expect(appSource).toContain('<Route path={"/mon-dossier"} component={MonDossier} />');
-    expect(appSource).not.toContain('path={"/mon-dossier"}>\n        <AuthGuard');
+    expect(appSource).toContain('<Route path={"/mon-dossier"}>{() => <Redirect to="/mon-espace?section=dossier" />}</Route>');
+    expect(appSource).not.toContain('path={"/mon-dossier"} component={MonDossier}');
   });
 });
