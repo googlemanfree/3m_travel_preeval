@@ -579,10 +579,10 @@ export const flightsRouter = router({
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="https://wa.me/237620996045?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${flightDetails.pnrRef}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
+              <a href="https://wa.me/237698104832?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${flightDetails.pnrRef}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
             </div>
 
-            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© 2024 3M Travel & Services • hello@3mtravelagency.com</p>
+            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© ${new Date().getFullYear()} 3M Travel & Services • hello@3mtravelagency.com</p>
           </div>
         </div>
       `;

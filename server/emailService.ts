@@ -59,11 +59,11 @@ export async function sendClientDossierConfirmationEmail(
             </p>
             
             <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, contactez-nous sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
+              Si vous avez des questions, contactez-nous sur <a href="https://wa.me/237698104832" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© 2024 3M Travel & Services. Tous droits réservés.</p>
+            <p>© ${new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p>
           </div>
         </div>
       `,
@@ -383,11 +383,11 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
             </p>
             
             <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
+              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237698104832" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© 2024 3M Travel & Services. Tous droits réservés.</p>
+            <p>© ${new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p>
           </div>
         </div>
       `,
@@ -405,7 +405,7 @@ export async function sendDossierConfirmationEmail(
   amount: number
 ): Promise<boolean> {
   const dashboardUrl = `${SITE_URL}/dashboard`;
-  const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
+  const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
   
   let avatarHtml = "";
   try {
