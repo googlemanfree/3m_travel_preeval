@@ -3689,5 +3689,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier puis appliquer de façon non destructive la migration `ambassadors` et `applications.referredByCode` — migration SQL 0060 appliquée et vérifiée en lecture seule, sans modification de lignes existantes.
 - [x] Exécuter TypeScript, les tests ciblés et le build — TypeScript, 377 suites / 1083 tests passants et build production au vert.
 - [x] Tester `/admin/admins` et `/ambassador-program` dans le navigateur, ainsi que les liens concernés — ambassadeur rendu avec titre corrigé ; `/admin/admins` affiche correctement son garde d’accès en session non administrateur.
-- [ ] Publier uniquement après validation complète et documenter le checkpoint
+- [x] Publier uniquement après validation complète et documenter le checkpoint — version publiée 3c1f84c6.
 - [x] Corriger l’entrée prerender/public SEO de `/ambassador-program` si nécessaire, puis retester son titre et son rendu — titre live `Programme Ambassadeur | 3M Travel & Services`.
