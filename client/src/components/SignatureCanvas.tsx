@@ -44,7 +44,17 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
     activePointerIdRef.current = event.pointerId;
     ctx.beginPath();
     ctx.moveTo(x, y);
+    // Un premier point rend le geste observable même si le navigateur perd
+    // immédiatement pointermove/pointerup. Le candidat peut toujours effacer
+    // ce point avec « Effacer et recommencer ».
+    ctx.lineTo(x + 0.5, y + 0.5);
+    ctx.stroke();
     isDrawingRef.current = true;
+    if (!hasDrawnRef.current) {
+      hasDrawnRef.current = true;
+      setHasDrawn(true);
+      onSignatureChange(canvas.toDataURL("image/png"));
+    }
   };
 
   const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -58,6 +68,10 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
     if (!hasDrawnRef.current) {
       hasDrawnRef.current = true;
       setHasDrawn(true);
+      // Publier immédiatement une première image : si le navigateur perd
+      // pointerup après un geste rapide, le parent dispose tout de même d’une
+      // signature et le bouton ne reste pas bloqué à tort.
+      onSignatureChange(canvasRef.current?.toDataURL("image/png") ?? null);
     }
   };
 

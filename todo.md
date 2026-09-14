@@ -3670,3 +3670,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reproduire le bouton grisé et identifier la cause exacte sans contourner la règle de paiement confirmé
 - [x] Corriger l’état d’activation et ajouter une régression Vitest ciblée
 - [x] Vérifier TypeScript, tests et rendu avant publication — 20 tests protocole/signature au vert, TypeScript et git diff --check au vert.
+
+## Régression confirmée — bouton de signature toujours inactif après tracé
+- [x] Reproduire le tracé et le clic dans l’écran candidat concerné, puis relever la condition exacte qui reste fausse — reproduit sur EVAL-DRAFT-2026-4267.
+- [x] Corriger le flux d’activation sans affaiblir le contrôle serveur du protocole et du paiement — premier contact Pointer publié au parent, contrôle serveur inchangé.
+- [x] Ajouter un test d’interface couvrant nom, consentement, tracé et activation visuelle du bouton — régression canevas/protocole validée par 20 tests ciblés.
+- [x] Effectuer une vérification interactive du rendu avant toute nouvelle publication — clic réel sur le canevas puis signature complète confirmée.
