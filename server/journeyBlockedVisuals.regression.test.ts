@@ -8,8 +8,8 @@ describe("Candidate360 blocked journey step visuals", () => {
     expect(source).toContain("LockKeyhole");
     expect(source).toContain("Étape bloquée :");
     expect(source).toContain("Progression indisponible :");
-    expect(source).toContain("isBlocked || journeyStepMutation.isPending");
-    expect(source).toContain("Étape verrouillée");
+    expect(source).toContain("journeyStepMutation.isPending || actionLocks.journeyStep");
+    expect(source).toContain('"Verrouillé"');
   });
 });
 

@@ -27,7 +27,7 @@ describe("suivi de dossier prudent", () => {
     const page = read("client/src/pages/MonDossier.tsx");
     const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(page).toContain("trpc.candidate.getMyDossierData.useQuery");
-    expect(page).toContain("setCredentials({ dossierNumber: activeDossierNumber, email: candidateEmail })");
+    expect(page).toContain("setCredentials({ dossierNumber: associatedDossierNumber, email: associatedEmail })");
     expect(navigation).toContain('label: "Mon dossier"');
     expect(navigation).not.toContain("/mon-dossier?email=");
   });

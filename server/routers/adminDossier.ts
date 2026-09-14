@@ -84,6 +84,50 @@ export const adminDossierRouter = router({
           return { success: false, error: 'Création bloquée : l’évaluation doit être validée et le paiement confirmé avant l’ouverture du dossier officiel.' };
         }
 
+        // Une application active existe déjà pour ce compte : la mise à jour du dossier
+        // ne doit jamais créer une seconde ligne applications. Les champs de paiement
+        // et la référence existante sont conservés, puis les informations de procédure
+        // sont synchronisées avec la demande admin.
+        const [existingApplication] = await db.select().from(applications)
+          .where(and(eq(applications.candidateId, candidate.id), isNull(applications.deletedAt)))
+          .orderBy(desc(applications.createdAt))
+          .limit(1);
+        if (existingApplication) {
+          await db.update(applications).set({
+            fullName: input.fullName,
+            email: input.email,
+            whatsappNumber: input.phone,
+            nationality: input.nationality,
+            destination: input.destinationCountry.toLowerCase() as any,
+            visaType: input.visaType,
+            updatedAt: new Date(),
+          }).where(eq(applications.id, existingApplication.id));
+
+          try {
+            await sendDossierConfirmationEmail(
+              input.email,
+              input.fullName,
+              existingApplication.dossierNumber,
+              input.destinationCountry,
+              65000,
+            );
+          } catch (emailError) {
+            console.warn('Erreur envoi email:', emailError);
+          }
+
+          return {
+            success: true,
+            reusedExistingApplication: true,
+            dossier: {
+              id: existingApplication.id,
+              dossierNumber: existingApplication.dossierNumber,
+              accessCode,
+              candidateName: input.fullName,
+              email: input.email,
+            },
+          };
+        }
+
         // Créer le candidat s'il n'existe pas (conservé pour compatibilité historique,
         // mais rendu inatteignable par la garde ci-dessus).
         if (!candidate) {

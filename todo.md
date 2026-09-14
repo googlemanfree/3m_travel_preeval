@@ -3627,3 +3627,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier ou corriger la garde serveur de paiement validé avant activation. Les trois entrées imposent désormais évaluation validée et paiement administrativement confirmé avant activation/traitement.
 - [x] Ajouter les régressions des trois entrées et le message explicite côté interface. Les tests officiels couvrent le paiement en ligne, l’audit agence et la demande candidat sans validation automatique.
 - [x] Exécuter TypeScript, tests et publier le correctif. 15 tests ciblés passent ; la vérification live reste limitée par l’absence de dossier de test activé.
+
+## Stabilisation de la suite globale après audit activation
+- [ ] Identifier et corriger les assertions de régression obsolètes parmi les 22 échecs de la suite complète
+- [ ] Relancer la suite Vitest globale jusqu’à zéro échec et vérifier TypeScript/build
+- [ ] Publier le checkpoint de stabilisation de la suite globale
+
+## Prévention des doublons applications — 383189a2
+- [x] Synchroniser le commit 383189a2/ff7afa8c sans écraser les changements locaux. Le commit est déjà ancêtre de HEAD et a été audité.
+- [x] Auditer la réutilisation de la ligne applications lors du passage pré-compte vers dossier actif. createManualDossier réutilise maintenant l’application active par candidat avant toute insertion ; les pré-comptes anonymes non payés restent archivés réversiblement.
+- [x] Vérifier les garde-fous de doublon par e-mail, identité et dossier existant. Les détections préventives existantes et la nouvelle réutilisation par candidateId sont couvertes.
+- [x] Exécuter les tests ciblés, TypeScript et le build sans suppression de données. 7 tests ciblés passent, TypeScript et build de production réussissent.
+- [ ] Publier le correctif et documenter l’action de vérification admin

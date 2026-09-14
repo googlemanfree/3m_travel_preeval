@@ -97,9 +97,9 @@ describe("reprise et aperçu du bilan", () => {
   it("tolère l’indisponibilité de la table legacy sans bloquer le pilotage", () => {
     const router = read("server/routers/unifiedRequests.ts");
     expect(router).toContain("async function loadLegacyProfileEvaluations");
-    expect(router).toContain("continuing with primary sources");
+    expect(router).toContain("continuing without it");
     expect(router).toContain("loadLegacyProfileEvaluationsForEmail(db, source.email)");
-    expect(router).not.toContain("db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),");
+    expect(router).toContain("return loadOptionalSource(\"profile_evaluations\"");
   });
 
   it("résout un compte candidat admin vers son application liée", () => {
