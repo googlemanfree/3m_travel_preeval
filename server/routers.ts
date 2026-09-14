@@ -82,6 +82,7 @@ import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 import { accessRecoveryRouter } from "./routers/accessRecovery";
 import { dossierVerificationRouter } from "./routers/dossierVerification";
 import { newsletterRouter } from "./routers/newsletter";
+import { ambassadorRouter } from "./routers/ambassador";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -202,6 +203,7 @@ export const appRouter = router({
   flightPlannerAI: flightPlannerAIRouter,
   exchangeRates: exchangeRatesRouter,
   newsletter: newsletterRouter,
+  ambassador: ambassadorRouter,
 });
 
 export type AppRouter = typeof appRouter;

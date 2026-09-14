@@ -28,8 +28,8 @@ describe("Rôle administrateur commun", () => {
     const adminDashboard = read("client/src/pages/AdminDashboard.tsx");
     expect(dashboard).not.toContain('role === "super_admin"');
     expect(dashboard).toContain("Administrateur");
-    expect(list).not.toContain('role: "super_admin"');
-    expect(list).toContain('role: "admin"');
+    expect(list).not.toContain("super_admin");
+    expect(list).toContain('adminType: "evaluation" | "accompagnement" | "procedures"');
     expect(adminDashboard).not.toContain('localStorage.getItem("adminType") === "super_admin"');
   });
 });

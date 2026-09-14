@@ -422,6 +422,8 @@ export const applications = mysqlTable("applications", {
   ticketNumber: varchar("ticketNumber", { length: 100 }),
   // Candidat (peut être un candidat inscrit ou un visiteur)
   candidateId: int("candidateId"),             // null si soumis sans compte
+  // Code de parrainage ambassadeur utilisé à l'ouverture du dossier, le cas échéant
+  referredByCode: varchar("referredByCode", { length: 16 }),
   // Informations personnelles
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
@@ -2042,3 +2044,25 @@ export const adminAuditLogs = mysqlTable("admin_audit_logs", {
 ]);
 export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
 export type InsertAdminAuditLog = typeof adminAuditLogs.$inferInsert;
+
+/**
+ * Programme ambassadeur — parrainage réel avec code unique. La commission n'est
+ * jamais calculée sur une estimation : elle se déduit du paiement réellement
+ * confirmé (applications.paymentStatus = SUCCESS) des dossiers ouverts avec le
+ * code de l'ambassadeur (applications.referredByCode).
+ */
+export const ambassadors = mysqlTable("ambassadors", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  phone: varchar("phone", { length: 50 }),
+  country: varchar("country", { length: 100 }),
+  referralCode: varchar("referralCode", { length: 16 }).notNull().unique(),
+  commissionRateBps: int("commissionRateBps").default(1500).notNull(), // 1500 = 15.00 %
+  status: mysqlEnum("status", ["active", "suspended"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_ambassadors_referral_code").on(table.referralCode),
+]);
+export type Ambassador = typeof ambassadors.$inferSelect;
+export type InsertAmbassador = typeof ambassadors.$inferInsert;

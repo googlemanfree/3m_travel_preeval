@@ -37,71 +37,41 @@ interface Admin {
   name: string;
   email: string;
   phone: string;
-  role: "admin";
-  status: "active" | "inactive";
+  adminType: "evaluation" | "accompagnement" | "procedures";
+  status: "active" | "inactive" | "suspended";
   createdAt: string;
-  lastLogin?: string;
-  permissions: string[];
+  lastLogin?: string | null;
 }
 
-// Données d’affichage de secours : tous les comptes partagent le rôle et les permissions admin.
-const mockAdmins: Admin[] = [
-  {
-    id: 1,
-    name: "Aureol Donfack",
-    email: "aureol@3mtravel.com",
-    phone: "+237698104832",
-    role: "admin",
-    status: "active",
-    createdAt: "2026-01-15",
-    lastLogin: "2026-07-25",
-    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
-  },
-  {
-    id: 2,
-    name: "Marie Dupont",
-    email: "marie@3mtravel.com",
-    phone: "+237698104833",
-    role: "admin",
-    status: "active",
-    createdAt: "2026-02-20",
-    lastLogin: "2026-07-24",
-    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
-  },
-  {
-    id: 3,
-    name: "Jean Martin",
-    email: "jean@3mtravel.com",
-    phone: "+237698104834",
-    role: "admin",
-    status: "active",
-    createdAt: "2026-03-10",
-    lastLogin: "2026-07-23",
-    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
-  },
-  {
-    id: 4,
-    name: "Sophie Bernard",
-    email: "sophie@3mtravel.com",
-    phone: "+237698104835",
-    role: "admin",
-    status: "inactive",
-    createdAt: "2026-04-05",
-    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
-  },
-];
-
-const roleLabels = {
-  admin: "Administrateur",
+const roleLabels: Record<Admin["adminType"], string> = {
+  evaluation: "Évaluation",
+  accompagnement: "Accompagnement",
+  procedures: "Procédures",
 };
 
-const roleColors = {
-  admin: "bg-blue-100 text-blue-800",
+const roleColors: Record<Admin["adminType"], string> = {
+  evaluation: "bg-blue-100 text-blue-800",
+  accompagnement: "bg-emerald-100 text-emerald-800",
+  procedures: "bg-purple-100 text-purple-800",
 };
 
 export default function AdminsList() {
-  const [admins, setAdmins] = useState<Admin[]>(mockAdmins);
-  const [filteredAdmins, setFilteredAdmins] = useState<Admin[]>(mockAdmins);
+  const sessionToken = getAdminSessionToken();
+  const { data: listAdminsResult, isLoading, isError } = trpc.adminAuth.listAdmins.useQuery(
+    { sessionToken },
+    { enabled: Boolean(sessionToken) },
+  );
+  const admins: Admin[] = (listAdminsResult?.admins ?? []).map((a) => ({
+    id: a.id,
+    name: a.fullName,
+    email: a.email,
+    phone: a.phone ?? "",
+    adminType: a.adminType as Admin["adminType"],
+    status: a.status as Admin["status"],
+    createdAt: a.createdAt ? new Date(a.createdAt).toISOString() : "",
+    lastLogin: a.lastLoginAt ? new Date(a.lastLoginAt).toISOString() : null,
+  }));
+  const [filteredAdmins, setFilteredAdmins] = useState<Admin[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("tous");
   const [statusFilter, setStatusFilter] = useState("tous");
@@ -145,7 +115,7 @@ export default function AdminsList() {
     }
 
     if (roleFilter !== "tous") {
-      filtered = filtered.filter((a) => a.role === roleFilter);
+      filtered = filtered.filter((a) => a.adminType === roleFilter);
     }
 
     if (statusFilter !== "tous") {
@@ -174,7 +144,7 @@ export default function AdminsList() {
               Gestion des Administrateurs
             </h1>
             <p className="text-gray-600 mt-2">
-              Gérez les administrateurs avec un rôle et des permissions communes
+              Gérez les administrateurs par type d'accès (évaluation, accompagnement, procédures)
             </p>
           </div>
           <div className="flex flex-wrap gap-3 justify-end">
@@ -224,9 +194,9 @@ export default function AdminsList() {
             transition={{ delay: 0.2 }}
             className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500"
           >
-              <p className="text-gray-600 text-sm">Rôle commun</p>
+              <p className="text-gray-600 text-sm">Suspendus</p>
             <p className="text-3xl font-bold text-red-600 mt-2">
-              {admins.filter((a) => a.role === "admin").length}
+              {admins.filter((a) => a.status === "suspended").length}
             </p>
           </motion.div>
           <motion.div
@@ -235,8 +205,8 @@ export default function AdminsList() {
             transition={{ delay: 0.3 }}
             className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500"
           >
-            <p className="text-gray-600 text-sm">Permissions communes</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">Admin</p>
+            <p className="text-gray-600 text-sm">Inactifs</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">{admins.filter((a) => a.status === "inactive").length}</p>
           </motion.div>
         </div>
 
@@ -263,7 +233,9 @@ export default function AdminsList() {
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="tous">Tous les rôles</option>
-                <option value="admin">Administrateur</option>
+                <option value="evaluation">Évaluation</option>
+                <option value="accompagnement">Accompagnement</option>
+                <option value="procedures">Procédures</option>
               </select>
             </div>
             <div>
@@ -276,12 +248,22 @@ export default function AdminsList() {
                 <option value="tous">Tous les statuts</option>
                 <option value="active">Actif</option>
                 <option value="inactive">Inactif</option>
+                <option value="suspended">Suspendu</option>
               </select>
             </div>
           </div>
         </div>
 
         {/* Admins Table */}
+        {!sessionToken ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">
+            Session administrateur introuvable. Veuillez vous reconnecter pour voir la liste réelle des comptes.
+          </div>
+        ) : isLoading ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">Chargement des administrateurs…</div>
+        ) : isError ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-red-600">La liste des administrateurs n'a pas pu être chargée. Réessayez dans un instant.</div>
+        ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -308,6 +290,9 @@ export default function AdminsList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
+                {filteredAdmins.length === 0 && (
+                  <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">Aucun administrateur ne correspond aux filtres.</td></tr>
+                )}
                 {filteredAdmins.map((admin, index) => (
                   <motion.tr
                     key={admin.id}
@@ -329,8 +314,8 @@ export default function AdminsList() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{admin.email}</td>
                     <td className="px-6 py-4">
-                      <Badge className={roleColors[admin.role]}>
-                        {roleLabels[admin.role]}
+                      <Badge className={roleColors[admin.adminType]}>
+                        {roleLabels[admin.adminType]}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -338,14 +323,16 @@ export default function AdminsList() {
                         className={
                           admin.status === "active"
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : admin.status === "suspended"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
                         }
                       >
-                        {admin.status === "active" ? "✓ Actif" : "✗ Inactif"}
+                        {admin.status === "active" ? "✓ Actif" : admin.status === "suspended" ? "⚠ Suspendu" : "✗ Inactif"}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(admin.createdAt).toLocaleDateString("fr-FR")}
+                      {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString("fr-FR") : "—"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
@@ -367,6 +354,7 @@ export default function AdminsList() {
             </table>
           </div>
         </div>
+        )}
 
         {/* Admin Invite Dialog */}
         <AdminInvite
@@ -429,8 +417,8 @@ export default function AdminsList() {
                     </div>
                     <div>
                       <Label className="text-xs text-gray-600">Rôle</Label>
-                      <Badge className={`${roleColors[selectedAdmin.role]} mt-1`}>
-                        {roleLabels[selectedAdmin.role]}
+                      <Badge className={`${roleColors[selectedAdmin.adminType]} mt-1`}>
+                        {roleLabels[selectedAdmin.adminType]}
                       </Badge>
                     </div>
                   </div>
@@ -446,16 +434,18 @@ export default function AdminsList() {
                         className={`${
                           selectedAdmin.status === "active"
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : selectedAdmin.status === "suspended"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
                         } mt-1`}
                       >
-                        {selectedAdmin.status === "active" ? "✓ Actif" : "✗ Inactif"}
+                        {selectedAdmin.status === "active" ? "✓ Actif" : selectedAdmin.status === "suspended" ? "⚠ Suspendu" : "✗ Inactif"}
                       </Badge>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-600">Créé le</Label>
                       <p className="text-sm font-semibold text-gray-900 mt-1">
-                        {new Date(selectedAdmin.createdAt).toLocaleDateString("fr-FR")}
+                        {selectedAdmin.createdAt ? new Date(selectedAdmin.createdAt).toLocaleDateString("fr-FR") : "—"}
                       </p>
                     </div>
                     {selectedAdmin.lastLogin && (
@@ -466,18 +456,6 @@ export default function AdminsList() {
                         </p>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Permissions */}
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-4">Permissions</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAdmin.permissions.map((perm) => (
-                      <Badge key={perm} variant="outline">
-                        {perm}
-                      </Badge>
-                    ))}
                   </div>
                 </div>
 

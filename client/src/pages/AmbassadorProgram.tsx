@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
+
+const REFERRAL_CODE_STORAGE_KEY = '3m-travel:ambassador-referral-code';
 
 export default function AmbassadorProgram() {
   const [activeTab, setActiveTab] = useState<'benefits' | 'join' | 'dashboard'>('benefits');
@@ -11,6 +15,39 @@ export default function AmbassadorProgram() {
     country: '',
     referralCode: ''
   });
+  const [savedReferralCode, setSavedReferralCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setSavedReferralCode(window.localStorage.getItem(REFERRAL_CODE_STORAGE_KEY));
+    } catch {
+      // localStorage indisponible (navigation privée) : le tableau de bord proposera de saisir le code.
+    }
+  }, []);
+
+  const registerMutation = trpc.ambassador.register.useMutation({
+    onSuccess: (data) => {
+      setAmbassadorData(prev => ({ ...prev, referralCode: data.referralCode }));
+      try {
+        window.localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, data.referralCode);
+      } catch {
+        // Si le stockage échoue, le code reste affiché à l'écran mais ne sera pas retrouvé au prochain passage.
+      }
+      setSavedReferralCode(data.referralCode);
+      toast.success(data.alreadyRegistered ? 'Cette adresse e-mail est déjà inscrite. Voici votre code existant.' : 'Inscription réussie !', {
+        description: `Votre code de parrainage : ${data.referralCode}`,
+      });
+      setActiveTab('dashboard');
+    },
+    onError: (error) => {
+      toast.error(error.message || "L'inscription n'a pas pu être enregistrée. Réessayez.");
+    },
+  });
+
+  const statsQuery = trpc.ambassador.getStatsByCode.useQuery(
+    { referralCode: savedReferralCode ?? '' },
+    { enabled: Boolean(savedReferralCode) },
+  );
 
   const benefits = [
     {
@@ -45,26 +82,23 @@ export default function AmbassadorProgram() {
     }
   ];
 
-  const handleJoin = async (e: React.FormEvent) => {
+  const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const response = await fetch('/api/ambassador/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ambassadorData)
-      });
+    registerMutation.mutate({
+      fullName: ambassadorData.fullName,
+      email: ambassadorData.email,
+      phone: ambassadorData.phone,
+      country: ambassadorData.country,
+    });
+  };
 
-      if (response.ok) {
-        const data = await response.json();
-        setAmbassadorData(prev => ({
-          ...prev,
-          referralCode: data.referralCode
-        }));
-        alert('✅ Inscription réussie ! Votre code de parrainage : ' + data.referralCode);
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de l\'inscription');
+  const copyReferralCode = async () => {
+    if (!savedReferralCode) return;
+    try {
+      await navigator.clipboard.writeText(savedReferralCode);
+      toast.success('Code copié dans le presse-papiers.');
+    } catch {
+      toast.error("Impossible de copier automatiquement. Copiez le code manuellement.");
     }
   };
 
@@ -207,9 +241,10 @@ export default function AmbassadorProgram() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl transition"
+                disabled={registerMutation.isPending}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl transition disabled:opacity-60"
               >
-                ✅ Devenir Ambassadeur
+                {registerMutation.isPending ? 'Inscription en cours…' : '✅ Devenir Ambassadeur'}
               </button>
             </form>
 
@@ -222,6 +257,21 @@ export default function AmbassadorProgram() {
         )}
 
         {activeTab === 'dashboard' && (
+          !savedReferralCode ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto bg-white rounded-3xl shadow-xl p-8 text-center">
+              <p className="text-gray-700">Vous n'avez pas encore de code de parrainage sur cet appareil.</p>
+              <button
+                onClick={() => setActiveTab('join')}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl transition"
+              >
+                Rejoindre le programme
+              </button>
+            </motion.div>
+          ) : statsQuery.isLoading ? (
+            <div className="text-center text-gray-500 py-12">Chargement de vos statistiques…</div>
+          ) : statsQuery.isError ? (
+            <div className="text-center text-red-600 py-12">Vos statistiques n'ont pas pu être chargées. Réessayez dans un instant.</div>
+          ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -232,11 +282,15 @@ export default function AmbassadorProgram() {
               <div className="space-y-4">
                 <div>
                   <p className="text-gray-600 text-sm">Parrainages totaux</p>
-                  <p className="text-3xl font-black text-blue-600">0</p>
+                  <p className="text-3xl font-black text-blue-600">{statsQuery.data?.totalReferrals ?? 0}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Commissions gagnées</p>
-                  <p className="text-3xl font-black text-green-600">0 XAF</p>
+                  <p className="text-gray-600 text-sm">Dossiers payés parmi vos filleuls</p>
+                  <p className="text-3xl font-black text-blue-600">{statsQuery.data?.paidReferrals ?? 0}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Commissions gagnées ({(statsQuery.data ? statsQuery.data.commissionRateBps / 100 : 15)}%, sur paiements confirmés)</p>
+                  <p className="text-3xl font-black text-green-600">{(statsQuery.data?.totalCommissionXaf ?? 0).toLocaleString('fr-FR')} XAF</p>
                 </div>
               </div>
             </Card>
@@ -246,14 +300,15 @@ export default function AmbassadorProgram() {
               <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 text-center">
                 <p className="text-gray-600 text-sm mb-2">Partagez ce code</p>
                 <p className="text-2xl font-black text-blue-600 font-mono">
-                  {ambassadorData.referralCode || 'XXXXX'}
+                  {savedReferralCode}
                 </p>
               </div>
-              <button className="w-full mt-4 bg-blue-100 text-blue-600 font-bold py-2 rounded-xl hover:bg-blue-200 transition">
+              <button onClick={copyReferralCode} className="w-full mt-4 bg-blue-100 text-blue-600 font-bold py-2 rounded-xl hover:bg-blue-200 transition">
                 📋 Copier le code
               </button>
             </Card>
           </motion.div>
+          )
         )}
       </div>
     </div>

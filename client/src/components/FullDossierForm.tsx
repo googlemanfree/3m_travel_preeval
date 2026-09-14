@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { getStoredReferralCode } from "@/lib/referral";
 import { useLocation } from "wouter";
 import {
   User, MapPin, GraduationCap, Briefcase, DollarSign,
@@ -352,6 +353,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         familyMemberRelation: form.familyMemberRelation || undefined,
         familyMemberStatus: form.familyMemberStatus || undefined,
         visaType: form.visaType || undefined,
+        referredByCode: getStoredReferralCode(),
       });
 
       // Afficher le Protocole d'Accord avant la vérification email

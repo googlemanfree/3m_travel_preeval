@@ -4,6 +4,7 @@ import { lazyWithTimeout } from "./lib/lazyWithTimeout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 const NotFound = lazyWithTimeout(() => import("./pages/NotFound"));
 import { Route, Switch, Redirect, useLocation } from "wouter";
+import { captureReferralCodeFromUrl } from "./lib/referral";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
@@ -82,7 +83,6 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 const HowItWorks = lazyWithTimeout(() => import("./pages/HowItWorks"));
 const EvisaDetailPage = lazyWithTimeout(() => import("./pages/EvisaDetailPage"));
-const DocumentUploadPage = lazyWithTimeout(() => import("./pages/DocumentUploadPage"));
 const DocumentCompliancePage = lazyWithTimeout(() => import("./pages/DocumentCompliancePage"));
 const PaymentSuccessPage = lazyWithTimeout(() => import("./pages/PaymentSuccessPage"));
 const PaymentErrorPage = lazyWithTimeout(() => import("./pages/PaymentErrorPage"));
@@ -314,7 +314,6 @@ function Router() {
       {/* Prototypes historiques : redirigés vers l’espace client synchronisé. */}
       <Route path={"/mon-espace-enhanced"}>{() => <Redirect to="/mon-espace" />}</Route>
       <Route path={"/mon-espace-v2"}>{() => <Redirect to="/mon-espace" />}</Route>
-      <Route path={"/document-upload"} component={DocumentUploadPage} />
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"} component={Ressources} />
@@ -523,6 +522,10 @@ function AppShell() {
   const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
   const showPublicFooter = !isAdminRoute;
+
+  React.useEffect(() => {
+    captureReferralCodeFromUrl();
+  }, []);
 
   return (
     <ErrorBoundary>

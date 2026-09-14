@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getStoredReferralCode } from "@/lib/referral";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -359,6 +360,7 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
         scoringBadge: score?.badge,
         procedureId: procedure.id,
         procedureTitle: procedure.title,
+        referredByCode: getStoredReferralCode(),
       });
 
       // Rediriger vers la vérification email

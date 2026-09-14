@@ -36,6 +36,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Contrat d'apprentissage transfrontalier ou emploi qualifié (finance, IT, logistique).",
     secteurs: ["Finance", "IT", "Logistique"],
     visa: "Autorisation de séjour pour salarié, procédure rapide pour les métiers en pénurie.",
+    etapesCles: "Offre d'emploi ou contrat d'apprentissage transfrontalier → demande d'autorisation de séjour auprès de la Direction de l'immigration → titre de séjour délivré au Luxembourg.",
     pointFort: "Forte demande en langues (français/allemand/anglais), salaires parmi les plus élevés d'Europe.",
     existingPageUrl: "/procedures/luxembourg",
   },
@@ -47,6 +48,10 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Contrat d'apprentissage ou permis de travail pour métiers en pénurie (liste régionale : Flandre, Wallonie, Bruxelles).",
     secteurs: ["Construction", "Santé", "IT", "Logistique"],
     visa: "Permis unique (combiné travail + séjour).",
+    langue: "Néerlandais, français ou allemand selon la région ; l'anglais reste limité dans les métiers manuels.",
+    etapesCles: "Offre d'emploi ou contrat d'apprentissage → demande de permis unique déposée par l'employeur auprès de la région compétente → délivrance du titre de séjour.",
+    pointFort: "Trois régions avec des listes de métiers en pénurie différentes, ce qui élargit les possibilités selon le secteur.",
+    pointVigilance: "La procédure et les listes de métiers en pénurie diffèrent selon la région (Flandre, Wallonie, Bruxelles) : bien vérifier laquelle correspond au poste visé.",
   },
   {
     slug: "france",
@@ -56,6 +61,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Contrat d'apprentissage ou de professionnalisation, carte de séjour \"salarié\" ou \"passeport talent\".",
     secteurs: ["Multi-secteurs"],
     visa: "VLS-TS (visa long séjour valant titre de séjour) pour contrat d'apprentissage signé.",
+    etapesCles: "Contrat d'apprentissage/de travail signé → dépôt de la demande de VLS-TS auprès du consulat de France → validation à l'arrivée auprès de l'OFII.",
     pointVigilance: "Accès plus encadré depuis 2024-2025, l'employeur doit démontrer l'absence de candidat prioritaire sur le marché local dans certains cas.",
   },
   {
@@ -66,6 +72,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Skilled Worker Visa (emploi qualifié sponsorisé) ou Health & Care Worker Visa (secteur santé).",
     secteurs: ["Santé", "IT", "Ingénierie"],
     visa: "Offre d'emploi d'un employeur titulaire d'une licence de sponsor (Certificate of Sponsorship) et seuil de salaire minimum.",
+    etapesCles: "Offre d'emploi d'un sponsor agréé → délivrance du Certificate of Sponsorship → dépôt de la demande de visa Skilled Worker en ligne.",
     pointVigilance: "Accès plus sélectif pour les candidats africains ces dernières années, dossier à bâtir avec un employeur sérieux.",
   },
   {
@@ -76,6 +83,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Critical Skills Employment Permit, destiné aux métiers en pénurie.",
     secteurs: ["Technologie", "Santé", "Ingénierie", "Finance"],
     visa: "Critical Skills Employment Permit.",
+    etapesCles: "Offre d'emploi éligible → demande de Critical Skills Employment Permit auprès du service de l'emploi irlandais → visa d'entrée si nationalité soumise à visa.",
     pointFort: "Anglophone, voie vers la résidence permanente après 2 ans pour certains permis.",
   },
   {
@@ -86,6 +94,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Job Seeker Visa (visa de recherche d'emploi, 120 jours) ou visa de travail avec contrat.",
     secteurs: ["Tourisme", "Technologie", "Agriculture"],
     visa: "Job Seeker Visa ou visa de travail avec contrat.",
+    etapesCles: "Dépôt de la demande (Job Seeker ou contrat de travail) auprès du consulat portugais → entrée sur le territoire → titre de séjour délivré par l'AIMA.",
     pointFort: "Accès facilité à un titre de séjour pour les ressortissants de pays lusophones et voie vers la citoyenneté après 5 ans.",
   },
   {
@@ -96,6 +105,9 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Visa de travail salarié ou \"arraigo\" pour régularisation après séjour préalable.",
     secteurs: ["Hôtellerie-restauration", "Agriculture", "Construction"],
     visa: "Visa de travail salarié.",
+    langue: "Espagnol généralement requis, notamment dans l'hôtellerie-restauration et la construction.",
+    etapesCles: "Offre d'emploi d'un employeur espagnol → autorisation de travail initiale → visa auprès du consulat d'Espagne → titre de séjour à l'arrivée.",
+    pointVigilance: "La voie « arraigo » suppose une présence préalable sur le territoire espagnol et des conditions précises : à ne pas confondre avec une procédure d'entrée directe depuis l'étranger.",
   },
   {
     slug: "italie",
@@ -105,6 +117,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Decreto Flussi (quotas annuels de travailleurs étrangers par secteur).",
     secteurs: ["Multi-secteurs"],
     visa: "Decreto Flussi.",
+    etapesCles: "Offre d'emploi → dépôt de la demande de nulla osta pendant la fenêtre d'ouverture du décret → visa de travail auprès du consulat italien.",
     pointVigilance: "Dépôt de dossier uniquement pendant les fenêtres d'ouverture du décret, forte concurrence sur les quotas.",
   },
   {
@@ -115,6 +128,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Permis de travail type A, forte demande de main-d'œuvre étrangère.",
     secteurs: ["Industrie", "Logistique", "Construction"],
     visa: "Permis de travail type A.",
+    etapesCles: "Offre d'emploi → demande de permis de travail type A par l'employeur (ou déclaration simplifiée selon les cas) → visa national auprès du consulat polonais.",
     pointFort: "Procédure généralement plus rapide et moins coûteuse que l'Europe de l'Ouest.",
   },
   {
@@ -125,6 +139,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Single Permit (travail + séjour), forte demande dans les services et le numérique (iGaming, IT).",
     secteurs: ["Services", "iGaming", "IT"],
     visa: "Single Permit.",
+    etapesCles: "Offre d'emploi → demande de Single Permit déposée par l'employeur auprès d'Identity Malta → délivrance du titre combiné travail/séjour.",
     pointFort: "Anglophone, économie dynamique, démarches administratives allégées.",
   },
   {
@@ -135,6 +150,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Permis de travail qualifié pour métiers en tension (santé, ingénierie, artisanat technique).",
     secteurs: ["Santé", "Ingénierie", "Artisanat technique"],
     visa: "Permis de travail qualifié.",
+    etapesCles: "Offre d'emploi d'un employeur norvégien → demande de permis de travail qualifié auprès de l'UDI → titre de séjour à l'arrivée.",
     pointVigilance: "Coût de la vie élevé à intégrer dans l'évaluation budgétaire du candidat.",
   },
   {
@@ -145,6 +161,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Entrée express (résidence permanente), Permis de travail via étude (PGWP après diplôme canadien), Programme des travailleurs étrangers temporaires (EIMT/LMIA).",
     secteurs: ["Santé", "Technologie", "Métiers spécialisés", "Construction"],
     visa: "Entrée express, PGWP ou EIMT/LMIA selon le profil.",
+    etapesCles: "Évaluation du profil (études ou entrée express) → obtention d'une offre/admission → dépôt de la demande de permis auprès d'IRCC → arrivée et validation à la frontière.",
     pointFort: "Voie claire vers la résidence permanente, plusieurs programmes provinciaux (PEQ Québec notamment).",
     existingPageUrl: "/canada",
   },
@@ -156,6 +173,10 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Skilled Independent Visa (189), Skilled Nominated Visa (190), ou visa employeur pour métiers en pénurie.",
     secteurs: ["Santé", "Construction", "Ingénierie", "Métiers manuels qualifiés"],
     visa: "Évaluation des compétences (skills assessment) par l'organisme australien compétent avant dépôt.",
+    langue: "Anglais requis, avec un score minimum au test IELTS (ou équivalent reconnu) pour la plupart des visas qualifiés.",
+    etapesCles: "Évaluation des compétences par l'organisme australien compétent pour la profession → manifestation d'intérêt (SkillSelect) → invitation à déposer le visa 189/190 ou parrainage employeur.",
+    pointFort: "Système à points transparent, voie vers la résidence permanente dès l'obtention du visa qualifié.",
+    pointVigilance: "Le métier visé doit figurer sur la liste des professions en demande, qui évolue régulièrement — à vérifier avant tout engagement.",
   },
   {
     slug: "nouvelle-zelande",
@@ -165,6 +186,9 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Accredited Employer Work Visa (AEWV), système à points pour les résidents qualifiés.",
     secteurs: ["Santé", "Artisanat technique", "Agriculture"],
     visa: "Accredited Employer Work Visa (AEWV).",
+    langue: "Anglais requis.",
+    etapesCles: "Offre d'emploi d'un employeur accrédité → dépôt de la demande AEWV → vérification du salaire minimum et des conditions du poste par Immigration New Zealand.",
+    pointVigilance: "L'employeur doit d'abord être accrédité par Immigration New Zealand avant de pouvoir sponsoriser un travailleur étranger.",
   },
   {
     slug: "emirats",
@@ -174,6 +198,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Employment Visa (standard, avec offre d'emploi) ou Golden Visa (10 ans renouvelable, sans sponsor si seuils atteints).",
     secteurs: ["Hôtellerie", "Construction", "Logistique", "Santé", "Commerce"],
     visa: "Employment Visa ou Golden Visa (environ 30 000 AED/mois de salaire dans une profession qualifiée reconnue par le MOHRE).",
+    etapesCles: "Offre d'emploi d'un employeur basé aux Émirats → visa de travail via le MOHRE → permis de résidence (Emirates ID) à l'arrivée.",
     pointFort: "Traitement très rapide (2 à 5 jours pour le visa standard).",
   },
   {
@@ -184,6 +209,9 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Visa de travail sponsorisé par l'employeur (kafala assouplie ces dernières années).",
     secteurs: ["Construction", "Hôtellerie", "Sécurité", "Services"],
     visa: "Visa de travail sponsorisé par l'employeur.",
+    langue: "Arabe apprécié mais anglais généralement suffisant selon le secteur.",
+    etapesCles: "Offre d'emploi d'un employeur qatari → visa de travail sponsorisé → carte de résidence (Qatar ID) délivrée à l'arrivée.",
+    pointVigilance: "Vérifier attentivement les conditions contractuelles (logement, rapatriement, congés) avant signature, comme pour toute procédure sponsorisée dans la région du Golfe.",
   },
   {
     slug: "arabie-saoudite",
@@ -193,6 +221,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Visa de travail dans le cadre de la stratégie Vision 2030, forte demande dans la construction et les services liés aux grands projets.",
     secteurs: ["Construction", "Services"],
     visa: "Visa de travail sponsorisé par l'employeur.",
+    etapesCles: "Offre d'emploi d'un employeur saoudien → visa de travail sponsorisé → carte de résidence (Iqama) délivrée à l'arrivée.",
     pointVigilance: "Conditions contractuelles à vérifier attentivement avant signature, notamment sur le rapatriement et les congés.",
   },
   {
@@ -203,6 +232,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Employment Permit System (EPS), visa E-9 pour travailleurs non qualifiés/semi-qualifiés dans l'industrie, l'agriculture, la pêche.",
     secteurs: ["Industrie", "Agriculture", "Pêche"],
     visa: "Visa E-9 (Employment Permit System).",
+    etapesCles: "Réussite du test EPS-TOPIK → inscription sur la liste des candidats éligibles → mise en relation avec un employeur coréen → visa E-9 via l'accord bilatéral.",
     pointVigilance: "Nécessite généralement de réussir un test de coréen (EPS-TOPIK) et de passer par un accord bilatéral gouvernemental — l'éligibilité du Cameroun à cet accord doit être vérifiée au cas par cas avant tout engagement.",
   },
   {
@@ -213,6 +243,7 @@ export const DESTINATIONS_20: Destination20[] = [
     dispositif: "Technical Intern Training Program (TITP) ou visa \"Ingénieur/Spécialiste en sciences humaines\".",
     secteurs: ["Industrie manufacturière", "Construction", "Agriculture", "Soins aux personnes âgées"],
     visa: "TITP ou visa Ingénieur/Spécialiste en sciences humaines.",
+    etapesCles: "Sélection par un organisme d'envoi agréé → formation préalable → placement auprès d'un organisme de supervision japonais → visa TITP délivré au Japon.",
     pointVigilance: "Programme encadré par des organismes de supervision agréés, à ne traiter qu'avec des partenaires japonais reconnus pour éviter les abus documentés par le passé sur ce programme.",
   },
 ];

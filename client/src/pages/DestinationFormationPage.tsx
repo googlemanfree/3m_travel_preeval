@@ -120,7 +120,6 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
           <p className="text-sm leading-6 text-amber-900">
             Les niveaux de sélectivité, seuils de salaire et exigences linguistiques évoluent régulièrement selon la politique migratoire de chaque pays. 3M Travel &amp; Services accompagne la préparation des dossiers ; la décision finale relève exclusivement des autorités, employeurs ou établissements de formation du pays visé.
           </p>
-          <p className="mt-3 text-xs leading-5 text-amber-800">Dernière vérification des sources : 13 septembre 2026.</p>
         </footer>
       </div>
     </main>

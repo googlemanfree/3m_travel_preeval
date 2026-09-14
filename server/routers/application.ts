@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs, paymentReceiptApprovals, ambassadors } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -145,6 +145,8 @@ export const applicationRouter = router({
       familyMemberStatus: z.string().optional(),
       // Type de visa
       visaType: z.string().optional(),
+      // Code de parrainage ambassadeur, si le candidat est arrivé via un lien de parrainage
+      referredByCode: z.string().trim().toUpperCase().max(16).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -191,9 +193,20 @@ export const applicationRouter = router({
         isNull(applications.deletedAt),
       ));
 
+      // Un code de parrainage n'est enregistré que s'il correspond à un ambassadeur réel et actif.
+      let verifiedReferredByCode: string | null = null;
+      if (input.referredByCode) {
+        const ambassadorMatch = await db.select({ id: ambassadors.id })
+          .from(ambassadors)
+          .where(and(eq(ambassadors.referralCode, input.referredByCode), eq(ambassadors.status, "active")))
+          .limit(1);
+        if (ambassadorMatch[0]) verifiedReferredByCode = input.referredByCode;
+      }
+
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
         candidateId: ctx.candidate.id,
+        referredByCode: verifiedReferredByCode,
         fullName: input.fullName,
         email: input.email,
         whatsappNumber: input.whatsappNumber,
