@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Check, Clipboard, Loader2, Link2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -16,6 +17,12 @@ export default function AmbassadorProgram() {
     referralCode: ''
   });
   const [savedReferralCode, setSavedReferralCode] = useState<string | null>(null);
+  const [registrationNotice, setRegistrationNotice] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const referralLink = useMemo(() => {
+    if (!savedReferralCode || typeof window === 'undefined') return '';
+    return `${window.location.origin}/?ref=${encodeURIComponent(savedReferralCode)}`;
+  }, [savedReferralCode]);
 
   useEffect(() => {
     try {
@@ -28,6 +35,7 @@ export default function AmbassadorProgram() {
   const registerMutation = trpc.ambassador.register.useMutation({
     onSuccess: (data) => {
       setAmbassadorData(prev => ({ ...prev, referralCode: data.referralCode }));
+      setRegistrationNotice(data.alreadyRegistered ? 'Votre compte ambassadeur existe déjà. Votre lien personnel est prêt.' : 'Inscription réussie : votre lien personnel est prêt à être partagé.');
       try {
         window.localStorage.setItem(REFERRAL_CODE_STORAGE_KEY, data.referralCode);
       } catch {
@@ -40,6 +48,7 @@ export default function AmbassadorProgram() {
       setActiveTab('dashboard');
     },
     onError: (error) => {
+      setRegistrationNotice(null);
       toast.error(error.message || "L'inscription n'a pas pu être enregistrée. Réessayez.");
     },
   });
@@ -92,13 +101,15 @@ export default function AmbassadorProgram() {
     });
   };
 
-  const copyReferralCode = async () => {
-    if (!savedReferralCode) return;
+  const copyReferralLink = async () => {
+    if (!referralLink) return;
     try {
-      await navigator.clipboard.writeText(savedReferralCode);
-      toast.success('Code copié dans le presse-papiers.');
+      await navigator.clipboard.writeText(referralLink);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 2200);
+      toast.success('Lien de parrainage copié dans le presse-papiers.');
     } catch {
-      toast.error("Impossible de copier automatiquement. Copiez le code manuellement.");
+      toast.error("Impossible de copier automatiquement. Copiez le lien manuellement.");
     }
   };
 
@@ -242,11 +253,18 @@ export default function AmbassadorProgram() {
               <button
                 type="submit"
                 disabled={registerMutation.isPending}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl transition disabled:opacity-60"
+                aria-busy={registerMutation.isPending}
+                className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl transition disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {registerMutation.isPending ? 'Inscription en cours…' : '✅ Devenir Ambassadeur'}
+                {registerMutation.isPending ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Inscription en cours…</> : '✅ Devenir Ambassadeur'}
               </button>
             </form>
+            {registrationNotice && (
+              <div role="status" className="mt-4 flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                <Check className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                <span>{registrationNotice}</span>
+              </div>
+            )}
 
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
               <p className="text-sm text-gray-700">
@@ -289,9 +307,14 @@ export default function AmbassadorProgram() {
                   <p className="text-3xl font-black text-blue-600">{statsQuery.data?.paidReferrals ?? 0}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Commissions gagnées ({(statsQuery.data ? statsQuery.data.commissionRateBps / 100 : 15)}%, sur paiements confirmés)</p>
-                  <p className="text-3xl font-black text-green-600">{(statsQuery.data?.totalCommissionXaf ?? 0).toLocaleString('fr-FR')} XAF</p>
+                  <p className="text-gray-600 text-sm">Commissions gagnées ({statsQuery.data ? statsQuery.data.commissionRateBps / 100 : '—'}%, sur paiements confirmés)</p>
+                  <p className="text-3xl font-black text-green-600">{statsQuery.data ? `${statsQuery.data.totalCommissionXaf.toLocaleString('fr-FR')} XAF` : '—'}</p>
                 </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Statut du profil</p>
+                  <p className="text-lg font-black capitalize text-slate-900">{statsQuery.data?.status ?? '—'}</p>
+                </div>
+                <p className="text-xs leading-5 text-slate-500">Ces indicateurs sont calculés à partir des dossiers réellement associés à votre code et des paiements confirmés.</p>
               </div>
             </Card>
 
@@ -303,8 +326,13 @@ export default function AmbassadorProgram() {
                   {savedReferralCode}
                 </p>
               </div>
-              <button onClick={copyReferralCode} className="w-full mt-4 bg-blue-100 text-blue-600 font-bold py-2 rounded-xl hover:bg-blue-200 transition">
-                📋 Copier le code
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">Lien complet à partager</p>
+                <p className="break-all text-xs font-semibold text-slate-700">{referralLink}</p>
+              </div>
+              <button onClick={copyReferralLink} disabled={!referralLink} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-100 py-2 font-bold text-blue-600 transition hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-50" aria-label="Copier le lien complet de parrainage">
+                {copiedLink ? <Check className="h-4 w-4" aria-hidden="true" /> : <><Link2 className="h-4 w-4" aria-hidden="true" /><Clipboard className="h-4 w-4" aria-hidden="true" /></>}
+                {copiedLink ? 'Lien copié' : 'Copier le lien complet'}
               </button>
             </Card>
           </motion.div>

@@ -3691,3 +3691,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester `/admin/admins` et `/ambassador-program` dans le navigateur, ainsi que les liens concernés — ambassadeur rendu avec titre corrigé ; `/admin/admins` affiche correctement son garde d’accès en session non administrateur.
 - [x] Publier uniquement après validation complète et documenter le checkpoint — version publiée 3c1f84c6.
 - [x] Corriger l’entrée prerender/public SEO de `/ambassador-program` si nécessaire, puis retester son titre et son rendu — titre live `Programme Ambassadeur | 3M Travel & Services`.
+
+## Améliorations `/ambassador-program`
+- [x] Ajouter un bouton de copie du lien complet de parrainage avec retour visuel — lien `/?ref=E93XHU`, clic live confirmé avec état `Lien copié`.
+- [x] Ajouter des états de chargement et un message de succès clair au formulaire d’inscription — `aria-busy`, spinner `Inscription en cours…` et succès live confirmé.
+- [x] Afficher les statistiques réelles du profil via `ambassador.getStatsByCode`, sans chiffres inventés — code live E93XHU : 0 parrainage, 0 payé, 0 XAF, statut active, taux 15% renvoyés par le backend.
+- [x] Ajouter les régressions, exécuter TypeScript, tests et build — 3 tests ciblés ambassadeur, TypeScript et build au vert.
+- [x] Tester réellement les trois points dans le navigateur puis publier — inscription, dashboard/statistiques et copie testés dans l’aperçu ; prêt pour publication.
