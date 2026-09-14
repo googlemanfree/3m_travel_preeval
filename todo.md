@@ -3661,6 +3661,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Aligner urgent-ui-upload.regression.test.ts sur la route de suivi publiée sans modifier le flux d’upload. 12 assertions passent sur `/mon-espace?section=dossier`.
 
 ## Publication biométrie demandée par l’utilisateur
-- [ ] Vérifier que le checkpoint 641b986e contient le correctif photo_identite/portrait, les 36 tests et TypeScript au vert
-- [ ] Publier en production le checkpoint biométrie validé
-- [ ] Confirmer ici la version publiée et l’URL de vérification
+- [x] Vérifier que le checkpoint 641b986e contient le correctif photo_identite/portrait, les 36 tests et TypeScript au vert
+- [x] Publier en production le checkpoint biométrie validé. Version courante publiée : 8c4f7989.
+- [x] Confirmer ici la version publiée et l’URL de vérification. Vérification publique : parcours d’ajout de photo d’identité avec compte de test, sans fichier personnel réel.
