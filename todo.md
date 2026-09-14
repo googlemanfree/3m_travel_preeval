@@ -3209,11 +3209,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Synchronisation paiement Candidate360 — priorité utilisateur
 - [x] Vérifier en lecture seule le nombre et les statuts des paiements liés à `3M-AGN-270002`, sans supprimer ni modifier l’enregistrement original du 8 septembre. `agency_dossiers.id=270002` existe ; `applications` exact et `client_payments` par e-mail retournent 0 ligne, donc aucune suppression ni mutation n’a été faite et le paiement historique n’est pas dans ces tables legacy.
 - [x] Aligner le panneau « Validation manuelle guidée » sur le vrai paiement Frais de dossier `success`, avec état déjà validé et invalidation après mutation. Correctif publié en 6b4eb5a1 ; le retest réel de 3M-AGN-270002 reste volontairement non exécuté.
-- [ ] Garantir un toast de succès ou d’échec après chaque clic de validation paiement et vérifier les actions voisines Candidate360.
+- [x] Garantir un toast de succès ou d’échec après chaque clic de validation paiement et vérifier les actions voisines Candidate360. La couverture statique et les 19 tests ciblés confirment les branches succès/échec et l’invalidation ; le clic réel du dossier 3M-AGN-270002 reste séparé.
 - [ ] Ajouter les régressions et rejouer un clic réel autorisé sans créer de doublon ni modifier le dossier réel sans confirmation explicite.
 
 ## Finalisation synchronisation paiement réel Candidate360
-- [ ] Relever les lignes exactes de paiement et d’audit de `3M-AGN-270002`, distinguer la validation originale du 8 septembre d’une trace `confirmed_again`, sans supprimer.
+- [x] Relever les lignes exactes de paiement et d’audit de `3M-AGN-270002`, distinguer la validation originale du 8 septembre d’une trace `confirmed_again`, sans supprimer. Les tables applications, client_payments et agency_dossier_history interrogées ne contiennent aucune ligne/trace pour cette référence ; aucune suppression ni mutation n’a été effectuée.
 - [ ] Finaliser l’affichage « Paiement déjà confirmé » dans la fiche Candidate360 à partir de `payments[0].status`, avec toast succès/échec et rafraîchissement.
 - [ ] Ajouter ou compléter les régressions sur paiement SUCCESS, double clic et retour d’erreur.
 - [ ] Après publication, rejouer uniquement un clic réel autorisé et fournir le résultat ; toute suppression d’un doublon reste soumise à confirmation explicite.

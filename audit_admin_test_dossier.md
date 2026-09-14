@@ -31,3 +31,4 @@ Retest final post-correctif : clic réel sur « Enregistrer » avec la recommand
 - La recherche exacte `applications.dossierNumber = '3M-AGN-270002'` retourne 0 ligne : ce numéro est une référence d’agence et non une ligne de la table `applications`.
 - La recherche `client_payments` par `louistchakoua4@gmail.com` retourne `paymentCount = 0` dans cette table legacy ; aucune suppression, mise à jour ou confirmation n’a été exécutée.
 - Conclusion : le paiement affiché historiquement dans le Pilotage n’est pas représenté dans ces deux tables sous cette référence/e-mail ; le dossier réel n’a pas été modifié et le retest live paiement reste volontairement en attente.
+- La recherche de `agency_dossier_history` pour `dossierId=270002` et les actions/details contenant « pay » retourne `paymentHistoryCount = 0` ; aucune trace `confirmed_again` ou validation du 8 septembre n’est présente dans cette table. Le contrôle reste purement lecture seule.
