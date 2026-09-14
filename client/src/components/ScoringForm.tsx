@@ -206,9 +206,10 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
       languageLevel: form.languageLevel,
       jobSector: form.jobSector,
       age: parseInt(form.age) || 0,
+      destination: procedure?.destination,
     };
     return calculateScore(input);
-  }, [form.academicLevel, form.experienceYears, form.languageLevel, form.jobSector, form.age]);
+  }, [form.academicLevel, form.experienceYears, form.languageLevel, form.jobSector, form.age, procedure?.destination]);
 
   // Upload d'un fichier vers S3 via l'API candidate/upload
   const uploadFile = async (file: File, type: "passeport" | "cv" | "diplome") => {
