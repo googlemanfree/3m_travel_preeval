@@ -81,10 +81,10 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("dirige le suivi client vers la page dédiée", () => {
     const source = read("client/src/components/ClientSpaceNavigation.tsx");
-    expect(source).toContain('href="/mon-dossier"');
-    expect(source).not.toContain('href="/mon-espace?section=dossier"');
+    expect(source).toContain('href="/mon-espace?section=dossier"');
+    expect(source).not.toContain('href="/mon-dossier"');
     const appSource = read("client/src/App.tsx");
-    expect(appSource).toContain('path={"/mon-dossier"}');
+    expect(appSource).toContain('path={"/mon-espace"}');
   });
 });
 

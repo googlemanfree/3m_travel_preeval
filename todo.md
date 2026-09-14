@@ -3651,3 +3651,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la redirection vers /mon-dossier et l’absence de préremplissage croisé entre comptes. La route publiée est `/mon-espace?section=dossier`, avec raccourcis dossier/documents ancrés au même compte.
 - [x] Ajouter ou renforcer la régression de non-fuite, puis exécuter TypeScript/tests. 9 tests de suivi/badge/navigation passent et TypeScript est au vert.
 - [x] Publier le correctif ou documenter que seul le clic live candidat reste à confirmer. Le code correspondant est déjà publié ; seul le clic live avec une session candidat demeure à confirmer.
+
+## Upload biométrique et mapping photo_identite
+- [x] Auditer le mapping photo_identite/photo/profile_photo dans les routes client et admin. Les alias photo_identite, portrait et portrait_humain convergent vers la catégorie sécurisée.
+- [x] Vérifier les messages et validations de format sans fichier personnel réel. MIME, signatures binaires, dimensions et taille sont contrôlés par candidateUpload.
+- [x] Ajouter ou renforcer les régressions d’upload, puis exécuter TypeScript/tests. Les trois suites passent avec 36 tests et TypeScript est au vert.
+- [x] Publier ou documenter la vérification sans téléversement personnel. Le code est déjà publié ; aucun fichier personnel n’a été téléversé pendant ce contrôle.
+
+- [x] Aligner urgent-ui-upload.regression.test.ts sur la route de suivi publiée sans modifier le flux d’upload. 12 assertions passent sur `/mon-espace?section=dossier`.
