@@ -3214,8 +3214,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Finalisation synchronisation paiement réel Candidate360
 - [x] Relever les lignes exactes de paiement et d’audit de `3M-AGN-270002`, distinguer la validation originale du 8 septembre d’une trace `confirmed_again`, sans supprimer. Les tables applications, client_payments et agency_dossier_history interrogées ne contiennent aucune ligne/trace pour cette référence ; aucune suppression ni mutation n’a été effectuée.
-- [ ] Finaliser l’affichage « Paiement déjà confirmé » dans la fiche Candidate360 à partir de `payments[0].status`, avec toast succès/échec et rafraîchissement.
-- [ ] Ajouter ou compléter les régressions sur paiement SUCCESS, double clic et retour d’erreur.
+- [x] Finaliser l’affichage « Paiement déjà confirmé » dans la fiche Candidate360 à partir de `payments[0].status`, avec toast succès/échec et rafraîchissement. Correctif publié en 6b4eb5a1 et couvert par 19 tests ciblés.
+- [x] Ajouter ou compléter les régressions sur paiement SUCCESS, double clic et retour d’erreur. Les branches sont couvertes par la régression Pilotage et les tests de paiement ; aucun double clic réel n’a été exécuté sur le dossier réel.
 - [ ] Après publication, rejouer uniquement un clic réel autorisé et fournir le résultat ; toute suppression d’un doublon reste soumise à confirmation explicite.
 
 ## Bugs publics suivi candidat et CV PDF — priorité utilisateur
@@ -3227,8 +3227,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Audit exhaustif Pilotage et activation conditionnée au paiement — priorité business
 - [ ] Cartographier tous les boutons d’action du Pilotage et de Candidate360, avec mutation, état pending, succès, erreur et mise à jour visible.
 - [ ] Corriger tous les boutons muets ou sans retour clair, sans supprimer les actions existantes.
-- [ ] Imposer côté serveur qu’aucune activation de dossier agence, pré-dossier ou inscription en ligne ne puisse aboutir sans paiement validé par un administrateur.
-- [ ] Afficher un message explicite et réarmer le bouton lors de toute tentative d’activation sans paiement validé.
+- [x] Imposer côté serveur qu’aucune activation de dossier agence, pré-dossier ou inscription en ligne ne puisse aboutir sans paiement validé par un administrateur. Les trois parcours sont couverts par les garde-fous et 15 tests ciblés publiés en 2afcf8bf.
+- [x] Afficher un message explicite et réarmer le bouton lors de toute tentative d’activation sans paiement validé. Les mutations retournent un refus métier explicite et les contrôles UI réarment l’action.
 - [ ] Ajouter les régressions par parcours et effectuer des clics réels non destructifs avant publication.
 
 ## Panneau bilan après validation hors ligne — COMPTE-1260001
@@ -3659,3 +3659,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier ou documenter la vérification sans téléversement personnel. Le code est déjà publié ; aucun fichier personnel n’a été téléversé pendant ce contrôle.
 
 - [x] Aligner urgent-ui-upload.regression.test.ts sur la route de suivi publiée sans modifier le flux d’upload. 12 assertions passent sur `/mon-espace?section=dossier`.
+
+## Publication biométrie demandée par l’utilisateur
+- [ ] Vérifier que le checkpoint 641b986e contient le correctif photo_identite/portrait, les 36 tests et TypeScript au vert
+- [ ] Publier en production le checkpoint biométrie validé
+- [ ] Confirmer ici la version publiée et l’URL de vérification
