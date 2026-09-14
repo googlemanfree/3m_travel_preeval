@@ -19,12 +19,12 @@ describe("client space navigation", () => {
     expect(navigation).toContain('href: "/mon-dossier"');
     expect(navigation).toContain('href: "/document-upload"');
     expect(navigation).toContain('href: "/evisas"');
-    expect(navigation).toContain('setLocation("/")');
+    expect(navigation).toContain('href: "/mon-espace?section=messages"');
     expect(navigation).toContain("getMyRequests");
     expect(navigation).not.toContain("/admin/flight-requests");
   });
 
   it("mounts the navigation hub in both dossier states", () => {
-    expect(evaluationSpace.match(/<ClientSpaceNavigation \/>/g)?.length).toBe(1);
+    expect(evaluationSpace.match(/<ClientSpaceNavigation compact \/>/g)?.length).toBe(1);
   });
 });

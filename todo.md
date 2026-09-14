@@ -3629,8 +3629,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Exécuter TypeScript, tests et publier le correctif. 15 tests ciblés passent ; la vérification live reste limitée par l’absence de dossier de test activé.
 
 ## Stabilisation de la suite globale après audit activation
-- [ ] Identifier et corriger les assertions de régression obsolètes parmi les 22 échecs de la suite complète
-- [ ] Relancer la suite Vitest globale jusqu’à zéro échec et vérifier TypeScript/build
+- [x] Identifier et corriger les assertions de régression obsolètes parmi les 22 échecs de la suite complète. Les 11 écarts restants ont été classés et alignés sur les contrats publiés.
+- [x] Relancer la suite Vitest globale jusqu’à zéro échec et vérifier TypeScript/build. Résultat : 377 fichiers passés, 1 ignoré, 1082 tests passés, 4 ignorés ; TypeScript et build au vert.
 - [ ] Publier le checkpoint de stabilisation de la suite globale
 
 ## Prévention des doublons applications — 383189a2
@@ -3638,4 +3638,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer la réutilisation de la ligne applications lors du passage pré-compte vers dossier actif. createManualDossier réutilise maintenant l’application active par candidat avant toute insertion ; les pré-comptes anonymes non payés restent archivés réversiblement.
 - [x] Vérifier les garde-fous de doublon par e-mail, identité et dossier existant. Les détections préventives existantes et la nouvelle réutilisation par candidateId sont couvertes.
 - [x] Exécuter les tests ciblés, TypeScript et le build sans suppression de données. 7 tests ciblés passent, TypeScript et build de production réussissent.
-- [ ] Publier le correctif et documenter l’action de vérification admin
+- [x] Publier le correctif et documenter l’action de vérification admin. Checkpoint 37fd0f3f publié ; aucune suppression de donnée réelle effectuée.

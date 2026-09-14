@@ -8,19 +8,17 @@ const indexHtml = readFileSync(
 );
 
 describe("static bootstrap recovery contract", () => {
-  it("keeps a React-independent 15-second recovery deadline", () => {
-    expect(indexHtml).toContain("Filet de sécurité indépendant de React");
-    expect(indexHtml).toContain("var BOOT_TIMEOUT_MS = 15000");
-    expect(indexHtml).toContain("window.setTimeout");
-    expect(indexHtml).toContain("3m_boot_timeout_reload_attempted");
-    expect(indexHtml).toContain('root.querySelector(".boot-fallback")');
+  it("retient un bootstrap indépendant du service worker en prévisualisation", () => {
+    expect(indexHtml).toContain('<div id="root"><!--prerender-app--></div>');
+    expect(indexHtml).toContain('<script type="module" src="/src/main.tsx"></script>');
+    expect(indexHtml).toContain("isPreviewHost");
+    expect(indexHtml).toContain("navigator.serviceWorker.getRegistrations()");
   });
 
-  it("reloads once and then exposes a manual retry instead of looping forever", () => {
-    expect(indexHtml).toContain("window.location.reload()");
-    expect(indexHtml).toContain("sessionStorage.setItem(RELOAD_FLAG_KEY, \"1\")");
-    expect(indexHtml).toContain("Le chargement rencontre un problème persistant.");
-    expect(indexHtml).toContain("Réessayer");
-    expect(indexHtml).toContain("Contacter l\\'agence sur WhatsApp");
+  it("évite de conserver un cache de prévisualisation obsolète", () => {
+    expect(indexHtml).toContain("caches.keys()");
+    expect(indexHtml).toContain("caches.delete(key)");
+    expect(indexHtml).not.toContain("3m_boot_timeout_reload_attempted");
+    expect(indexHtml).not.toContain("boot-fallback");
   });
 });
