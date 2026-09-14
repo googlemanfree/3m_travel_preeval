@@ -7,57 +7,52 @@ interface Props {
 }
 
 /**
- * Zone de dessin pour signature électronique — souris (desktop) ou doigt
- * (tactile). Exporte un PNG en base64 (fond transparent, trait bleu foncé).
+ * Zone de dessin pour signature électronique — souris, doigt ou stylet.
+ * Les événements Pointer unifient les appareils et évitent les courses entre
+ * les événements tactiles et souris qui pouvaient laisser le bouton de
+ * signature désactivé après un trait rapide.
  */
 export default function SignatureCanvas({ onSignatureChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Refs (pas des états) pour ces deux drapeaux : ils sont lus et ecrits dans
-  // des gestionnaires d'evenements natifs (mousedown/mousemove/mouseup) qui
-  // peuvent se declencher plus vite que le cycle de rendu React. Avec un
-  // useState, stopDrawing() pouvait lire une valeur perimee de "a-t-on
-  // dessine ?" (toujours false) sur un trait rapide, et ne jamais appeler
-  // onSignatureChange — bouton de signature bloque indefiniment desactive.
   const isDrawingRef = useRef(false);
   const hasDrawnRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
   const [hasDrawn, setHasDrawn] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas?.getContext("2d");
     if (!ctx) return;
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.strokeStyle = "#1e3a8a";
   }, []);
 
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+  const getPosition = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) {
-      const touch = e.touches[0];
-      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
-    const { x, y } = getPos(e);
+  const startDrawing = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const { x, y } = getPosition(event);
+    canvas.setPointerCapture?.(event.pointerId);
+    activePointerIdRef.current = event.pointerId;
     ctx.beginPath();
     ctx.moveTo(x, y);
     isDrawingRef.current = true;
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawingRef.current) return;
-    e.preventDefault();
+  const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current || activePointerIdRef.current !== event.pointerId) return;
+    event.preventDefault();
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
-    const { x, y } = getPos(e);
+    const { x, y } = getPosition(event);
     ctx.lineTo(x, y);
     ctx.stroke();
     if (!hasDrawnRef.current) {
@@ -66,55 +61,52 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
     }
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (event?: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawingRef.current) return;
+    if (event && activePointerIdRef.current !== event.pointerId) return;
     isDrawingRef.current = false;
-    const canvas = canvasRef.current;
-    if (canvas && hasDrawnRef.current) {
-      onSignatureChange(canvas.toDataURL("image/png"));
+    activePointerIdRef.current = null;
+    if (event) {
+      try {
+        canvasRef.current?.releasePointerCapture?.(event.pointerId);
+      } catch {
+        // Le navigateur peut déjà avoir libéré la capture après pointercancel.
+      }
     }
+    const canvas = canvasRef.current;
+    if (canvas && hasDrawnRef.current) onSignatureChange(canvas.toDataURL("image/png"));
   };
 
   const clear = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (canvas && ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      hasDrawnRef.current = false;
-      setHasDrawn(false);
-      onSignatureChange(null);
-    }
+    if (!canvas || !ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hasDrawnRef.current = false;
+    setHasDrawn(false);
+    onSignatureChange(null);
   };
 
   return (
     <div>
-      <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white relative">
+      <div className="relative rounded-lg border-2 border-dashed border-gray-300 bg-white">
         <canvas
           ref={canvasRef}
           width={500}
           height={160}
-          className="w-full h-40 touch-none cursor-crosshair rounded-lg"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
+          className="h-40 w-full touch-none cursor-crosshair rounded-lg"
+          onPointerDown={startDrawing}
+          onPointerMove={draw}
+          onPointerUp={stopDrawing}
+          onPointerCancel={stopDrawing}
+          onPointerLeave={stopDrawing}
+          aria-label="Zone de signature manuscrite"
         />
-        {!hasDrawn && (
-          <p className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm pointer-events-none">
-            Signez ici avec la souris ou le doigt
-          </p>
-        )}
+        {!hasDrawn && <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-gray-300">Signez ici avec la souris ou le doigt</p>}
       </div>
-      <button
-        type="button"
-        onClick={clear}
-        className="mt-2 flex items-center gap-1 text-xs text-gray-500 hover:text-red-600"
-      >
-        <Eraser className="w-3 h-3" /> Effacer et recommencer
-      </button>
+      <Button type="button" variant="ghost" onClick={clear} className="mt-2 h-auto px-0 text-xs text-gray-500 hover:text-red-600">
+        <Eraser className="mr-1 h-3 w-3" /> Effacer et recommencer
+      </Button>
     </div>
   );
 }

@@ -26,15 +26,28 @@ describe("SignatureCanvas — trait rapide", () => {
     });
   });
 
-  it("publie la signature dès un trait souris rapide", () => {
+  it("publie la signature dès un trait Pointer rapide", () => {
     const onSignatureChange = vi.fn();
     const { container } = render(<SignatureCanvas onSignatureChange={onSignatureChange} />);
     const canvas = container.querySelector("canvas");
     expect(canvas).not.toBeNull();
 
-    fireEvent.mouseDown(canvas!, { clientX: 20, clientY: 30 });
-    fireEvent.mouseMove(canvas!, { clientX: 80, clientY: 45 });
-    fireEvent.mouseUp(canvas!);
+    fireEvent.pointerDown(canvas!, { pointerId: 1, clientX: 20, clientY: 30 });
+    fireEvent.pointerMove(canvas!, { pointerId: 1, clientX: 80, clientY: 45 });
+    fireEvent.pointerUp(canvas!, { pointerId: 1, clientX: 80, clientY: 45 });
+
+    expect(onSignatureChange).toHaveBeenCalledWith("data:image/png;base64,test-signature");
+  });
+
+  it("publie aussi un trait Pointer rapide sur un second pointeur", () => {
+    const onSignatureChange = vi.fn();
+    const { container } = render(<SignatureCanvas onSignatureChange={onSignatureChange} />);
+    const canvas = container.querySelector("canvas");
+    expect(canvas).not.toBeNull();
+
+    fireEvent.pointerDown(canvas!, { pointerId: 7, clientX: 20, clientY: 30 });
+    fireEvent.pointerMove(canvas!, { pointerId: 7, clientX: 80, clientY: 45 });
+    fireEvent.pointerUp(canvas!, { pointerId: 7, clientX: 80, clientY: 45 });
 
     expect(onSignatureChange).toHaveBeenCalledWith("data:image/png;base64,test-signature");
   });

@@ -3664,3 +3664,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier que le checkpoint 641b986e contient le correctif photo_identite/portrait, les 36 tests et TypeScript au vert
 - [x] Publier en production le checkpoint biométrie validé. Version courante publiée : 8c4f7989.
 - [x] Confirmer ici la version publiée et l’URL de vérification. Vérification publique : parcours d’ajout de photo d’identité avec compte de test, sans fichier personnel réel.
+
+## Régression — bouton de signature du protocole inactif
+- [x] Cartographier les pages, composants et conditions qui contrôlent l’activation de « Signer le protocole d’accord »
+- [x] Reproduire le bouton grisé et identifier la cause exacte sans contourner la règle de paiement confirmé
+- [x] Corriger l’état d’activation et ajouter une régression Vitest ciblée
+- [x] Vérifier TypeScript, tests et rendu avant publication — 20 tests protocole/signature au vert, TypeScript et git diff --check au vert.
