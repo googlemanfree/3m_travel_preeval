@@ -297,6 +297,7 @@ export default function Contact() {
                       required
                       disabled={isLoading}
                       className="w-full"
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -329,6 +330,7 @@ export default function Contact() {
                       placeholder="+237 6XX XXX XXX"
                       disabled={isLoading}
                       className="w-full"
+                      maxLength={30}
                     />
                   </div>
                   <div>
@@ -344,6 +346,7 @@ export default function Contact() {
                       required
                       disabled={isLoading}
                       className="w-full"
+                      maxLength={300}
                     />
                   </div>
                 </div>
@@ -360,6 +363,7 @@ export default function Contact() {
                     required
                     disabled={isLoading}
                     rows={6}
+                    maxLength={5000}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100"
                   />
                 </div>
