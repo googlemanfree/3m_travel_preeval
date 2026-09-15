@@ -11,7 +11,7 @@ import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, g
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
 import { logger } from "../_core/logger";
 import { and, eq } from "drizzle-orm";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
 

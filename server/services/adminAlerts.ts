@@ -2,6 +2,7 @@
  * Admin Alerts Service - Real-time notifications for new evaluations
  * Integrates with WebSocket for instant dashboard updates
  */
+import { randomBytes } from "node:crypto";
 
 export interface AdminAlert {
   id: string;
@@ -30,7 +31,7 @@ export function createEvaluationAlert(
   score: number
 ): AdminAlert {
   const alert: AdminAlert = {
-    id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `alert-${Date.now()}-${randomBytes(4).toString("hex")}`,
     type: 'NEW_EVALUATION',
     title: '🔔 Nouvelle Évaluation Reçue',
     message: `${candidateName} a soumis une évaluation pour ${destination} (Score: ${score}/100)`,
@@ -55,7 +56,7 @@ export function createPaymentAlert(
   amount: number
 ): AdminAlert {
   const alert: AdminAlert = {
-    id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `alert-${Date.now()}-${randomBytes(4).toString("hex")}`,
     type: 'PAYMENT_RECEIVED',
     title: '💳 Paiement Reçu',
     message: `${candidateName} a effectué un paiement de ${(amount / 1000).toFixed(0)} 000 FCFA`,
@@ -79,7 +80,7 @@ export function createDocumentAlert(
   documentType: string
 ): AdminAlert {
   const alert: AdminAlert = {
-    id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `alert-${Date.now()}-${randomBytes(4).toString("hex")}`,
     type: 'DOCUMENT_SUBMITTED',
     title: '📄 Document Soumis',
     message: `${candidateName} a soumis un ${documentType}`,

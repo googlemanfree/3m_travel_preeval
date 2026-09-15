@@ -163,9 +163,9 @@ export const adminAuthRouter = router({
           html: emailTemplate.html,
         });
 
-        console.log(`[Admin Auth] Password change notification sent to ${admin.email}`);
+        console.log(`[Admin Auth] Password change notification sent to admin #${admin.id}`);
       } catch (emailError) {
-        console.error(`[Admin Auth] Failed to send password change notification to ${admin.email}:`, emailError);
+        console.error(`[Admin Auth] Failed to send password change notification to admin #${admin.id}:`, emailError);
         // Ne pas échouer la mutation si l'email n'est pas envoyé
       }
 
@@ -265,7 +265,7 @@ export const adminAuthRouter = router({
       });
 
       try {
-        const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
+        const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
           <p>Bonjour ${input.fullName},</p>
@@ -329,7 +329,7 @@ export const adminAuthRouter = router({
       await db.update(adminAccounts).set({ passwordHash }).where(eq(adminAccounts.id, admin.id));
 
       try {
-        const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
+        const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const subject = input.customSubject || "🔐 Nouveau mot de passe — Accès administrateur 3M Travel";
         const bodyText = input.customBody
           ? input.customBody.replace(/\{inviteLink\}/g, loginUrl)

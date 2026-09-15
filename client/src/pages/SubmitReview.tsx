@@ -149,6 +149,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="Votre nom complet"
                   className={errors.fullName ? "border-red-500" : ""}
+                  maxLength={255}
                 />
                 {errors.fullName && (
                   <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
@@ -190,6 +191,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                     value={formData.destinationCountry}
                     onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
                     placeholder="ex: Canada, France"
+                    maxLength={100}
                   />
                 </div>
 
@@ -245,6 +247,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                   onChange={(e) => setFormData({ ...formData, reviewText: e.target.value })}
                   placeholder="Partagez votre expérience avec 3M Travel Agency..."
                   rows={6}
+                  maxLength={1000}
                   className={errors.reviewText ? "border-red-500" : ""}
                 />
                 <div className="flex justify-between mt-2">

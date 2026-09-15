@@ -117,7 +117,7 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="cr-fullName">Nom complet *</Label>
-          <Input id="cr-fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Votre nom complet" className="mt-1" disabled={isPending} />
+          <Input id="cr-fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Votre nom complet" className="mt-1" disabled={isPending} maxLength={200} />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
@@ -126,12 +126,12 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
           </div>
           <div>
             <Label htmlFor="cr-phone">Téléphone</Label>
-            <Input id="cr-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+237 6XX XXX XXX" className="mt-1" disabled={isPending} />
+            <Input id="cr-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+237 6XX XXX XXX" className="mt-1" disabled={isPending} maxLength={30} />
           </div>
         </div>
         <div>
           <Label htmlFor="cr-message">Message (optionnel)</Label>
-          <Textarea id="cr-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Précisez votre projet, vos questions..." className="mt-1" rows={3} disabled={isPending} />
+          <Textarea id="cr-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Précisez votre projet, vos questions..." className="mt-1" rows={3} disabled={isPending} maxLength={2000} />
         </div>
 
         <div>
