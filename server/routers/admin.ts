@@ -3585,6 +3585,17 @@ export const adminRouter = router({
           source: "online",
         } : null,
         payments: paymentSnapshot ? [paymentSnapshot] : [],
+        agreement: reference.source === "online"
+          ? {
+              signed: Boolean((sourceRecord as typeof applications.$inferSelect).agreementSigned),
+              agreementSigned: Boolean((sourceRecord as typeof applications.$inferSelect).agreementSigned),
+              signedAt: (sourceRecord as typeof applications.$inferSelect).agreementSignedAt ?? null,
+              agreementSignedAt: (sourceRecord as typeof applications.$inferSelect).agreementSignedAt ?? null,
+              signatureName: (sourceRecord as typeof applications.$inferSelect).agreementSignatureName ?? null,
+              agreementSignatureName: (sourceRecord as typeof applications.$inferSelect).agreementSignatureName ?? null,
+              dossierNumber: (sourceRecord as typeof applications.$inferSelect).dossierNumber,
+            }
+          : null,
         tasks,
         notes,
         statusHistory,

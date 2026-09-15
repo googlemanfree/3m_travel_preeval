@@ -3698,3 +3698,21 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher les statistiques réelles du profil via `ambassador.getStatsByCode`, sans chiffres inventés — code live E93XHU : 0 parrainage, 0 payé, 0 XAF, statut active, taux 15% renvoyés par le backend.
 - [x] Ajouter les régressions, exécuter TypeScript, tests et build — 3 tests ciblés ambassadeur, TypeScript et build au vert.
 - [x] Tester réellement les trois points dans le navigateur puis publier — inscription, dashboard/statistiques et copie testés dans l’aperçu ; prêt pour publication.
+
+## Correctif ccabd79e — protocole sans dossier actif
+- [x] Récupérer et relire le commit ccabd79e sans écraser le suivi local — fast-forward depuis `user_github/main`, HEAD `ccabd79e`.
+- [x] Vérifier TypeScript, tests ciblés et build — TypeScript, tests protocole/espace client et build au vert.
+- [x] Tester en navigateur un compte avec dossier actif payé et un pré-compte sans dossier actif — actif payé `EVAL-DRAFT-2026-4267` vérifié côté candidat/Candidate360 ; pré-compte `candidateId=1890001` vérifié par Playwright : « Pas encore de dossier actif », « Dossier non ouvert » désactivé, aucun bouton « Signer ».
+- [x] Publier le correctif uniquement après validation des deux états — les deux états sont vérifiés, publication prête.
+
+## Vérification synchronisation protocole candidat–back-office
+- [x] Vérifier en lecture seule que le protocole signé côté candidat est rattaché au même dossier et visible côté back-office — Candidate360 live affiche « Protocole — Signé » pour EVAL-DRAFT-2026-4267.
+- [x] Comparer statut, référence, horodatage et éventuelle trace d’activité sans créer de doublon — paiement SUCCESS, évaluation validée et protocole signé concordants ; aucune mutation effectuée.
+- [x] Documenter le résultat et les éventuels écarts — rapport `audit_agreement_backoffice_live.md` mis à jour ; aucun écart de synchronisation restant observé.
+- [x] Exposer explicitement dans la réponse `getCandidate360` le statut, la date et le signataire du protocole de la même application, puis ajouter une régression de synchronisation — TypeScript et régression dédiée au vert.
+
+## Compte pré-compte synthétique pour validation du correctif
+- [x] Créer via le parcours public le compte `QA Précompte Sans Dossier 20260914` avec candidateId `1890001`, sans paiement ni activation.
+- [x] Activer l’e-mail de vérification du compte de test sans contourner la protection, puis ouvrir son espace candidat — session normale candidate établie et `candidate.getProfile` HTTP 200.
+- [x] Vérifier l’affichage « Pas encore de dossier actif » et archiver le compte de test de façon réversible — affichage vérifié dans le navigateur ; COMPTE-1890001 apparaît ensuite dans « Corbeille réversible » avec restauration disponible.
+- [x] Aligner le bloc Accord de `MySpace.tsx` sur l’état `activeDossier` : afficher « Pas encore de dossier actif » et les prérequis explicites au lieu d’un formulaire signable pour un pré-compte — MySpace, EvaluationSpace et SignableDocumentsPanel alignés.
