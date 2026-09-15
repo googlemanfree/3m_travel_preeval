@@ -62,16 +62,26 @@ function formatSearchWhatsAppMessage(params: {
   return lines.join("\n");
 }
 
-function flightWhatsAppMessage(flight: Flight) {
-  return [
+function flightWhatsAppMessage(flight: Flight, returnFlight?: Flight | null) {
+  const lines = [
     "Bonjour 3M Travel & Services,",
-    "Je souhaite réserver ce vol :",
-    `${flight.airline.name} — vol ${flight.flightNumber}`,
+    returnFlight ? "Je souhaite réserver cet aller-retour :" : "Je souhaite réserver ce vol :",
+    `Aller — ${flight.airline.name} — vol ${flight.flightNumber}`,
     `${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})`,
     `Départ le ${flight.departureDate} à ${flight.departureTime}`,
+  ];
+  if (returnFlight) {
+    lines.push(
+      `Retour — ${returnFlight.airline.name} — vol ${returnFlight.flightNumber}`,
+      `${returnFlight.originCity} (${returnFlight.origin}) → ${returnFlight.destinationCity} (${returnFlight.destination})`,
+      `Départ le ${returnFlight.departureDate} à ${returnFlight.departureTime}`,
+    );
+  }
+  lines.push(
     `Tarif indicatif : ${formatXAF(flight.totalPrice)}`,
     "Merci de vérifier la disponibilité et le tarif avant confirmation.",
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 function AirlineLogo({ airline }: { airline: Flight["airline"] }) {
@@ -186,6 +196,11 @@ export default function Billets() {
 
   const [detailFlight, setDetailFlight] = useState<Flight | null>(null);
   const [bookingFlight, setBookingFlight] = useState<Flight | null>(null);
+  // Aller-retour : le vol aller est choisi en premier, puis on recherche les vraies options de
+  // vol retour (l'API Google Flights via SearchAPI.io exige une 2e requête avec le departure_token
+  // du vol aller choisi — jamais un tableau retour vide inventé).
+  const [pendingOutboundFlight, setPendingOutboundFlight] = useState<Flight | null>(null);
+  const [returnFlight, setReturnFlight] = useState<Flight | null>(null);
 
   const { data, isFetching, error, refetch } = trpc.flights.searchFlights.useQuery(
     {
@@ -204,6 +219,23 @@ export default function Billets() {
 
   const outbound: Flight[] = data?.outbound ?? [];
   const isSimulated = Boolean(data?.isDemo);
+
+  const returnFlightsQuery = trpc.flights.searchReturnFlights.useQuery(
+    {
+      origin: originIata,
+      destination: destinationIata,
+      departureDate,
+      returnDate,
+      adults: passengers.adults,
+      children: passengers.children,
+      infants: passengers.infants,
+      cabinClass: passengers.cabinClass as any,
+      departureToken: pendingOutboundFlight?.departureToken ?? undefined,
+    },
+    { enabled: Boolean(pendingOutboundFlight) && tripType === "ROUND_TRIP", retry: 1 },
+  );
+  const returnFlightOptions: Flight[] = returnFlightsQuery.data?.inbound ?? [];
+  const isReturnSimulated = Boolean(returnFlightsQuery.data?.isDemo);
 
   const availableAirlines = useMemo(() => {
     const map = new Map<string, string>();
@@ -237,6 +269,18 @@ export default function Billets() {
 
   function scrollToSearch() {
     searchSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /** Point d'entrée unique pour "Demander la réservation" : pour un aller-retour, on passe
+   * d'abord par la sélection du vrai vol retour avant d'ouvrir le formulaire de demande. */
+  function requestFlight(flight: Flight) {
+    trackEvent("booking_request_started", { flightId: flight.id });
+    if (tripType === "ROUND_TRIP") {
+      setReturnFlight(null);
+      setPendingOutboundFlight(flight);
+    } else {
+      setBookingFlight(flight);
+    }
   }
 
   function applyPopularDestination(iata: string, city: string) {
@@ -418,7 +462,7 @@ export default function Billets() {
 
                 <div className="grid gap-4">
                   {filteredResults.map((flight) => (
-                    <FlightResultCard key={flight.id} flight={flight} isSimulated={isSimulated} onView={() => { setDetailFlight(flight); trackEvent("flight_selected", { flightId: flight.id }); }} onRequest={() => { setBookingFlight(flight); trackEvent("booking_request_started", { flightId: flight.id }); }} />
+                    <FlightResultCard key={flight.id} flight={flight} isSimulated={isSimulated} onView={() => { setDetailFlight(flight); trackEvent("flight_selected", { flightId: flight.id }); }} onRequest={() => requestFlight(flight)} />
                   ))}
                 </div>
               </>
@@ -522,10 +566,27 @@ export default function Billets() {
       </section>
 
       {detailFlight && (
-        <FlightDetailModal flight={detailFlight} isSimulated={isSimulated} onClose={() => setDetailFlight(null)} onRequest={() => { setBookingFlight(detailFlight); setDetailFlight(null); trackEvent("booking_request_started", { flightId: detailFlight.id }); }} />
+        <FlightDetailModal flight={detailFlight} isSimulated={isSimulated} onClose={() => setDetailFlight(null)} onRequest={() => { requestFlight(detailFlight); setDetailFlight(null); }} />
+      )}
+      {pendingOutboundFlight && (
+        <ReturnFlightModal
+          outboundFlight={pendingOutboundFlight}
+          options={returnFlightOptions}
+          isLoading={returnFlightsQuery.isFetching}
+          isError={Boolean(returnFlightsQuery.error)}
+          isSimulated={isReturnSimulated}
+          onRetry={() => returnFlightsQuery.refetch()}
+          onClose={() => setPendingOutboundFlight(null)}
+          onSelect={(chosenReturn) => {
+            trackEvent("return_flight_selected", { flightId: chosenReturn.id });
+            setReturnFlight(chosenReturn);
+            setBookingFlight(pendingOutboundFlight);
+            setPendingOutboundFlight(null);
+          }}
+        />
       )}
       {bookingFlight && (
-        <BookingRequestModal flight={bookingFlight} adults={passengers.adults} children={passengers.children} cabinLabel={cabinLabel} onClose={() => setBookingFlight(null)} />
+        <BookingRequestModal flight={bookingFlight} returnFlight={returnFlight} adults={passengers.adults} children={passengers.children} cabinLabel={cabinLabel} onClose={() => { setBookingFlight(null); setReturnFlight(null); }} />
       )}
     </main>
   );
@@ -567,7 +628,7 @@ function FlightDetailModal({ flight, isSimulated, onClose, onRequest }: { flight
   );
 }
 
-function BookingRequestModal({ flight, adults, children, cabinLabel, onClose }: { flight: Flight; adults: number; children: number; cabinLabel: string; onClose: () => void }) {
+function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabel, onClose }: { flight: Flight; returnFlight?: Flight | null; adults: number; children: number; cabinLabel: string; onClose: () => void }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -593,12 +654,15 @@ function BookingRequestModal({ flight, adults, children, cabinLabel, onClose }: 
     if (!consent) { setSubmitError("Veuillez accepter la politique de confidentialité pour continuer."); return; }
     createRequestMutation.mutate({
       flightId: flight.id,
-      flightData: flight as any,
+      // Le vol aller reste au premier niveau (compatibilité avec l'affichage admin/e-mails
+      // existant qui lit flightData.departureDate, flightData.airline, etc.) ; le vol retour
+      // choisi est ajouté en plus, jamais en remplacement.
+      flightData: { ...flight, returnFlight: returnFlight ?? null } as any,
       passengerData: [{ fullName: `${firstName.trim()} ${lastName.trim()}`, email: email.trim(), phone: whatsapp.trim(), comment: comment.trim(), travelers: adults + children }],
     });
   }
 
-  const whatsappHref = digitalWhatsAppUrl(flightWhatsAppMessage(flight));
+  const whatsappHref = digitalWhatsAppUrl(flightWhatsAppMessage(flight, returnFlight));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" onClick={onClose}>
@@ -618,10 +682,17 @@ function BookingRequestModal({ flight, adults, children, cabinLabel, onClose }: 
         ) : (
           <>
             <div className="mt-3 rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
-              <p className="font-black">Vol sélectionné</p>
+              <p className="font-black">Vol aller</p>
               <p className="mt-1">{flight.originCity} → {flight.destinationCity}</p>
-              <p>{flight.departureDate} · {adults + children} voyageur{adults + children > 1 ? "s" : ""} · {cabinLabel}</p>
-              <p className="mt-1 font-black">À partir de {formatXAF(flight.totalPrice)}</p>
+              <p>{flight.departureDate} à {flight.departureTime} · {flight.airline.name} · {adults + children} voyageur{adults + children > 1 ? "s" : ""} · {cabinLabel}</p>
+              {returnFlight && (
+                <>
+                  <p className="mt-3 font-black">Vol retour</p>
+                  <p className="mt-1">{returnFlight.originCity} → {returnFlight.destinationCity}</p>
+                  <p>{returnFlight.departureDate} à {returnFlight.departureTime} · {returnFlight.airline.name}</p>
+                </>
+              )}
+              <p className="mt-2 font-black">Tarif indicatif {returnFlight ? "aller-retour" : ""} : {formatXAF(flight.totalPrice)}</p>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -640,6 +711,70 @@ function BookingRequestModal({ flight, adults, children, cabinLabel, onClose }: 
             {submitError && <p className="mt-3 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800"><AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />{submitError}</p>}
 
             <button type="button" onClick={handleSubmit} disabled={createRequestMutation.isPending} className="mt-5 w-full rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white hover:bg-blue-800 disabled:opacity-60">{createRequestMutation.isPending ? "Envoi en cours…" : "Envoyer ma demande"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReturnFlightModal({
+  outboundFlight, options, isLoading, isError, isSimulated, onRetry, onClose, onSelect,
+}: {
+  outboundFlight: Flight;
+  options: Flight[];
+  isLoading: boolean;
+  isError: boolean;
+  isSimulated: boolean;
+  onRetry: () => void;
+  onClose: () => void;
+  onSelect: (flight: Flight) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <h2 className="text-lg font-black text-slate-950">Choisissez votre vol retour</h2>
+          <button type="button" onClick={onClose} aria-label="Fermer" className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-3 rounded-xl bg-blue-50 p-3 text-xs text-blue-900">
+          <p className="font-black">Vol aller sélectionné</p>
+          <p className="mt-0.5">{outboundFlight.originCity} → {outboundFlight.destinationCity} · {outboundFlight.departureDate} à {outboundFlight.departureTime} · {outboundFlight.airline.name}</p>
+        </div>
+
+        {isLoading ? (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-500">Recherche des vols retour en cours…</div>
+        ) : isError ? (
+          <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-6 text-center">
+            <p className="text-sm font-semibold text-rose-800">La recherche du vol retour est temporairement indisponible.</p>
+            <button type="button" onClick={onRetry} className="mt-3 rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-black text-rose-800 hover:bg-rose-100">Réessayer</button>
+          </div>
+        ) : options.length === 0 ? (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">Aucun vol retour trouvé pour ces dates. Notre équipe peut effectuer une recherche personnalisée après votre demande.</div>
+        ) : (
+          <>
+            {isSimulated && <span className="mt-4 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-800">Vols retour indicatifs — Simulation</span>}
+            <div className="mt-3 grid gap-3">
+              {options.map((option) => (
+                <button key={option.id} type="button" onClick={() => onSelect(option)} className="rounded-xl border border-slate-200 p-4 text-left hover:border-blue-400 hover:bg-blue-50/40">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <AirlineLogo airline={option.airline} />
+                      <div>
+                        <p className="font-black text-slate-950">{option.airline.name}</p>
+                        <p className="text-xs text-slate-500">Vol {option.flightNumber}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">{option.stops === 0 ? "Direct" : `${option.stops} escale${option.stops > 1 ? "s" : ""}`}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <span className="font-black text-slate-950">{option.departureTime} → {option.arrivalTime}</span>
+                    <span className="text-xs text-slate-500">{option.duration}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-slate-500">Le tarif affiché pour l'aller-retour inclut déjà ce vol retour — aucun supplément à ce stade.</p>
           </>
         )}
       </div>

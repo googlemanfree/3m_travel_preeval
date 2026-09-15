@@ -3,12 +3,49 @@
  * Calcule un score d'éligibilité sur 100 points selon 5 critères.
  */
 
+import { DESTINATIONS_20 } from "@/data/destinations20";
+
 export interface ScoringInput {
   academicLevel: string;    // "doctorat" | "master" | "licence" | "bts" | "bac"
   experienceYears: number;  // Années d'expérience
   languageLevel: string;    // "bilingue" | "francais_anglais_inter" | "mono"
   jobSector: string;        // "sante" | "education" | "electro" | "soudure" | "it" | "commerce" | "gestion" | "logistique" | "assurance" | "autre"
   age: number;              // Âge du candidat
+  /** Nom de la destination visée (ex: "Canada", "Royaume-Uni"). Optionnel : sans elle, le critère
+   * secteur reste générique comme avant. Avec elle, il reflète les secteurs réellement en demande
+   * pour ce pays (destinations20.ts), plutôt qu'une liste identique pour toutes les destinations. */
+  destination?: string;
+}
+
+function normalizeForMatch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+/** Mots-clés (issus des libellés réels de destinations20.ts) associés à chaque secteur du formulaire. */
+const SECTOR_DEMAND_KEYWORDS: Record<string, string[]> = {
+  sante: ["sante", "soins"],
+  education: ["education", "formation"],
+  it: ["technologie", "informatique", "numerique", "it"],
+  electro: ["ingenierie", "technique", "industrie"],
+  soudure: ["industrie", "construction", "metiers specialises", "metiers manuels qualifies", "artisanat technique", "manufacturiere"],
+  commerce: ["commerce", "services"],
+  gestion: ["finance", "services"],
+  logistique: ["logistique"],
+  assurance: ["finance"],
+  btp: ["construction", "ingenierie"],
+};
+
+/** Vrai si le secteur choisi figure réellement parmi les secteurs en demande de cette destination. */
+function isSectorInDemandForDestination(sector: string, destinationName: string): boolean | null {
+  const destination = DESTINATIONS_20.find((entry) => normalizeForMatch(entry.name) === normalizeForMatch(destinationName));
+  if (!destination) return null; // Pas de données vérifiées pour cette destination : rester neutre.
+  const keywords = SECTOR_DEMAND_KEYWORDS[sector];
+  if (!keywords?.length) return false;
+  const normalizedSecteurs = destination.secteurs.map(normalizeForMatch);
+  return keywords.some((keyword) => normalizedSecteurs.some((label) => label.includes(keyword)));
 }
 
 export interface ScoringResult {
@@ -57,13 +94,22 @@ function scoreLanguage(level: string): number {
   }
 }
 
-/** Critère 4 : Secteur d'activité (Max 20 points) */
-function scoreSector(sector: string): number {
+/** Critère 4 : Secteur d'activité (Max 20 points)
+ * Quand une destination est fournie et couverte par des données réelles (destinations20.ts),
+ * le score reflète si ce secteur y est effectivement en demande plutôt qu'une liste générique
+ * identique pour tous les pays. Sans destination reconnue, le comportement générique d'origine
+ * est conservé à l'identique. */
+function scoreSector(sector: string, destination?: string): number {
   const prioritaires = ["sante", "education", "electro", "soudure", "chaudronnerie", "it", "informatique"];
   const secondaires  = ["commerce", "assurance", "gestion", "logistique"];
-  if (prioritaires.includes(sector)) return 20;
-  if (secondaires.includes(sector))  return 12;
-  return 5;
+  const genericScore = prioritaires.includes(sector) ? 20 : secondaires.includes(sector) ? 12 : 5;
+
+  if (destination) {
+    const inDemand = isSectorInDemandForDestination(sector, destination);
+    if (inDemand === true) return 20;
+    if (inDemand === false) return Math.min(genericScore, 10);
+  }
+  return genericScore;
 }
 
 /** Critère 5 : Âge & Adaptabilité (Max 10 points) */
@@ -79,7 +125,7 @@ export function calculateScore(input: ScoringInput): ScoringResult {
     education:  scoreEducation(input.academicLevel),
     experience: scoreExperience(input.experienceYears),
     language:   scoreLanguage(input.languageLevel),
-    sector:     scoreSector(input.jobSector),
+    sector:     scoreSector(input.jobSector, input.destination),
     age:        scoreAge(input.age),
   };
 

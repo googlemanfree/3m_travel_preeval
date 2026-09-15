@@ -251,7 +251,7 @@ export default function ProcedureAutricheSuisseFormation() {
             ))}
           </div>
           <p className="mt-4 text-xs leading-5 text-slate-500">
-            Dernière vérification des sources : 13 septembre 2026. Les règles d'admission, de visa, de séjour et de rémunération peuvent évoluer. Ce guide est informatif et ne remplace pas les instructions de l'ambassade ou de l'autorité compétente.
+            Informations basées sur les sources officielles listées ci-dessus. Les règles d'admission, de visa, de séjour et de rémunération peuvent évoluer : ce guide est informatif et ne remplace pas les instructions de l'ambassade ou de l'autorité compétente.
           </p>
         </footer>
       </div>

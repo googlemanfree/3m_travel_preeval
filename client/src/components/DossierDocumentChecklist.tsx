@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getCountryById, procedures107Complete } from "@/data/procedures107Complete";
+import { getCountryById, procedures107Complete, type CountryProcedureComplete } from "@/data/procedures107Complete";
 import { getEvaluationDocumentRequirements, type EvaluationProjectType } from "@/data/evaluationDocumentCatalogue";
 
 type ChecklistDocument = {
@@ -47,9 +47,19 @@ function normalize(value: string): string {
     .trim();
 }
 
-function resolveProcedure(destination?: string | null) {
+/** procedures107Complete utilise "visiteur", le catalogue d'évaluation utilise "tourisme" pour le même parcours. */
+function projectTypeToVisaType(projectType: EvaluationProjectType): CountryProcedureComplete["visaType"] {
+  return projectType === "tourisme" ? "visiteur" : projectType;
+}
+
+function resolveProcedure(destination?: string | null, projectType?: string | null) {
   if (!destination) return undefined;
   const key = normalize(destination);
+  if (isProjectType(projectType)) {
+    const visaType = projectTypeToVisaType(projectType);
+    const exactMatch = procedures107Complete.find((country) => normalize(country.id) === `${key}-${visaType}` || (normalize(country.name) === key && country.visaType === visaType));
+    if (exactMatch) return exactMatch;
+  }
   return getCountryById(destination) ?? procedures107Complete.find((country) => {
     const countryKey = normalize(country.id);
     return countryKey.startsWith(`${key}-`) || normalize(country.name) === key;
@@ -60,15 +70,45 @@ function isProjectType(value?: string | null): value is EvaluationProjectType {
   return value === "travail" || value === "etudes" || value === "tourisme";
 }
 
+/** Thème générique d'une pièce, pour éviter de répéter la même idée sous deux formulations (ex: "Passeport
+ * en cours de validité" côté socle générique et "Passeport valide" côté données pays). Retourne null pour
+ * les pièces sans équivalent générique connu (ex: "Certificat de parrainage") : celles-ci ne sont jamais filtrées. */
+function requirementTheme(label: string): string | null {
+  const target = normalize(label);
+  if (target.includes("passeport") || target.includes("passport")) return "passeport";
+  if (target.includes("photo")) return "photo";
+  if (/(^| )cv( |$)/.test(target) || target.includes("curriculum")) return "cv";
+  if (target.includes("diplome") || target.includes("releve")) return "diplome";
+  if (target.includes("naissance")) return "naissance";
+  if (target.includes("domicile") || target.includes("residence") || target.includes("hebergement")) return "residence";
+  if (target.includes("financ") || target.includes("ressource") || target.includes("bancaire") || target.includes("solvabilite")) return "financement";
+  return null;
+}
+
 function getRequirements(destination?: string | null, projectType?: string | null): Requirement[] {
-  if (destination && isProjectType(projectType)) {
-    return getEvaluationDocumentRequirements(destination, projectType);
-  }
-  const procedure = resolveProcedure(destination);
-  if (!procedure?.requiredDocuments?.length) return FALLBACK_REQUIREMENTS;
-  return procedure.requiredDocuments.flatMap((group) =>
-    group.documents.map((label) => ({ category: group.category, label }))
-  );
+  const generic = destination && isProjectType(projectType) ? getEvaluationDocumentRequirements(destination, projectType) : [];
+  // procedures107Complete couvre 41+ pays avec des pieces reellement propres au couple pays+type de visa,
+  // contrairement a COUNTRY_REQUIREMENTS (evaluationDocumentCatalogue) qui ne detaille que 5 pays : on le
+  // fusionne toujours pour que la checklist ne reste jamais generique faute de couverture.
+  const procedure = resolveProcedure(destination, projectType);
+  const countrySpecific = procedure?.requiredDocuments?.length
+    ? procedure.requiredDocuments.flatMap((group) => group.documents.map((label) => ({ category: group.category, label })))
+    : [];
+
+  const genericThemes = new Set(generic.map((requirement) => requirementTheme(requirement.label)).filter((theme): theme is string => theme !== null));
+  const genericLabels = new Set(generic.map((requirement) => normalize(requirement.label)));
+  const seenCountryLabels = new Set<string>();
+  const filteredCountrySpecific = countrySpecific.filter((requirement) => {
+    const key = normalize(requirement.label);
+    if (genericLabels.has(key) || seenCountryLabels.has(key)) return false;
+    const theme = requirementTheme(requirement.label);
+    if (theme && genericThemes.has(theme)) return false;
+    seenCountryLabels.add(key);
+    return true;
+  });
+
+  const merged = [...generic, ...filteredCountrySpecific];
+  return merged.length ? merged : FALLBACK_REQUIREMENTS;
 }
 
 function documentsForRequirement(requirement: Requirement, documents: ChecklistDocument[]): ChecklistDocument[] {

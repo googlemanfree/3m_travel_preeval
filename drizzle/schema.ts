@@ -188,6 +188,11 @@ export const candidates = mysqlTable("candidates", {
   acquisitionSource: mysqlEnum("acquisitionSource", ["facebook", "whatsapp", "direct", "other"]).default("direct").notNull(),
   acquisitionCampaign: varchar("acquisitionCampaign", { length: 160 }),
   destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
+  // Jusqu'à 3 pays precis (noms reels, ex: "Royaume-Uni") declares par le candidat a l'inscription,
+  // stockes en JSON. Distinct de `destination` (categorie large historique) : ce champ permet aux
+  // systemes par-pays (checklist documentaire, score d'eligibilite) de fonctionner reellement au
+  // lieu de retomber sur un comportement generique faute de pays precis connu.
+  preferredDestinations: text("preferredDestinations"),
   visaType: varchar("visaType", { length: 100 }),
   dossierStatus: mysqlEnum("dossierStatus", [
     "nouveau",

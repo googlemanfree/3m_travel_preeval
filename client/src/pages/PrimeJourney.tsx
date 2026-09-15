@@ -160,7 +160,7 @@ export default function PrimeJourney() {
                   Commencer mon évaluation
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </a>
-                <a href="https://wa.me/237620996045?text=Bonjour%20Prime%20Travel%20Service%2C%20je%20souhaite%20%C3%AAtre%20orient%C3%A9" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200">
+                <a href="https://wa.me/237698104832?text=Bonjour%20Prime%20Travel%20Service%2C%20je%20souhaite%20%C3%AAtre%20orient%C3%A9" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200">
                   <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                   Parler sur WhatsApp
                 </a>

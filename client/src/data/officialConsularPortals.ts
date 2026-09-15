@@ -51,4 +51,6 @@ export const OFFICIAL_CONSULAR_PORTALS: Record<string, OfficialConsularPortal> =
   "luxembourg": { url: "https://guichet.public.lu/fr/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html", label: "Portail officiel des visas et de l’immigration", sourceUrl: "https://guichet.public.lu/fr/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html", verifiedAt: "19 août 2026" },
   "canada": { url: "https://www.canada.ca/fr/services/immigration-citoyennete.html", label: "Portail officiel d’immigration", sourceUrl: "https://www.canada.ca/fr/services/immigration-citoyennete.html", verifiedAt: "19 août 2026" },
   "nouvelle-zelande": { url: "https://www.immigration.govt.nz", label: "Portail officiel d’immigration et des visas", sourceUrl: "https://www.immigration.govt.nz", verifiedAt: "19 août 2026" },
+  "kenya": { url: "https://fns.immigration.go.ke/", label: "eFNS — Directorate of Immigration Services (permis de travail)", sourceUrl: "https://immigration.go.ke/work-permits-and-passes/", verifiedAt: "14 septembre 2026" },
+  "qatar": { url: "https://www.mol.gov.qa/", label: "Portail officiel du ministère du Travail", sourceUrl: "https://www.mol.gov.qa/", verifiedAt: "14 septembre 2026" },
 };

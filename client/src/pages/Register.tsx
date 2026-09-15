@@ -1,26 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Globe, Phone, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { PortraitCapture, PortraitCaptureResult } from "@/components/PortraitCapture";
 import { toast } from "sonner";
+import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptions";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
-const DESTINATIONS = [
-  { value: "canada",     label: "🇨🇦 Canada — Résidence Permanente" },
-  { value: "luxembourg", label: "🇱🇺 Luxembourg — Travail qualifié" },
-  { value: "pologne",    label: "🇵🇱 Pologne — Recrutement direct" },
-  { value: "europe",     label: "🇪🇺 Europe Zone Schengen" },
-  { value: "golfe",      label: "🇦🇪 Golfe & Moyen-Orient" },
-  { value: "autre",      label: "Autre destination" },
-];
+const MAX_PREFERRED_DESTINATIONS = 3;
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string; rules: { ok: boolean; text: string }[] } {
   const rules = [
@@ -62,12 +55,22 @@ export default function Register() {
     password: "",
     confirmPassword: "",
     evaluationAlreadyCompleted: "no" as "yes" | "no",
+    preferredDestinations: [] as string[],
   });
   const isFullNameInvalid = form.fullName.length > 0 && form.fullName.trim().length < 2;
   const isEmailInvalid = form.email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
   const passwordStrength = getPasswordStrength(form.password);
   const isPasswordInvalid = form.password.length > 0 && passwordStrength.score < 3;
   const isConfirmationInvalid = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
+
+  function toggleDestination(name: string) {
+    setForm((prev) => {
+      const already = prev.preferredDestinations.includes(name);
+      if (already) return { ...prev, preferredDestinations: prev.preferredDestinations.filter((value) => value !== name) };
+      if (prev.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS) return prev;
+      return { ...prev, preferredDestinations: [...prev.preferredDestinations, name] };
+    });
+  }
 
   function handleGoogleRegister() {
     if (!googleOAuthConfigured) {
@@ -84,7 +87,7 @@ export default function Register() {
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
     const passwordValid = form.password.length >= 8 && /[A-Z]/.test(form.password) && /[0-9]/.test(form.password);
     const passwordMatch = form.password === form.confirmPassword;
-    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch;
+    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch && form.preferredDestinations.length > 0;
     setIsFormValid(isValid as boolean);
   }, [form, portrait]);
 
@@ -181,6 +184,7 @@ export default function Register() {
         password: form.password,
         portraitVerificationToken: result.portraitVerificationToken,
         evaluationAlreadyCompleted: form.evaluationAlreadyCompleted === "yes",
+        preferredDestinations: form.preferredDestinations,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
@@ -433,6 +437,31 @@ export default function Register() {
             </div>
 
 
+
+            {/* Destination(s) de préférence — obligatoire */}
+            <fieldset className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
+              <legend className="px-1 text-sm font-bold text-slate-800">Destination(s) de préférence *</legend>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Choisissez jusqu'à {MAX_PREFERRED_DESTINATIONS} pays qui vous intéressent : votre espace, vos documents à fournir et votre score d'éligibilité seront adaptés à ce choix.</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Destinations de préférence">
+                {CANDIDATE_DESTINATION_OPTIONS.map((option) => {
+                  const selected = form.preferredDestinations.includes(option.name);
+                  const disabledByLimit = !selected && form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS;
+                  return (
+                    <button
+                      key={option.name}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleDestination(option.name)}
+                      disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || disabledByLimit}
+                      className={`min-h-11 rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-violet-700 bg-violet-700 text-white" : "border-violet-200 bg-white text-violet-900 hover:bg-violet-100"}`}
+                    >
+                      <span className="mr-1">{option.flag}</span>{option.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
+            </fieldset>
 
             {/* Portrait humain obligatoire */}
             <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">

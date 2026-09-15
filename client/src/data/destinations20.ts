@@ -107,6 +107,7 @@ export const DESTINATIONS_20: Destination20[] = [
     visa: "Visa de travail salarié.",
     langue: "Espagnol généralement requis, notamment dans l'hôtellerie-restauration et la construction.",
     etapesCles: "Offre d'emploi d'un employeur espagnol → autorisation de travail initiale → visa auprès du consulat d'Espagne → titre de séjour à l'arrivée.",
+    pointFort: "Communautés francophones et hispanophones déjà installées dans plusieurs régions, ce qui facilite l'intégration des candidats ayant des bases en espagnol.",
     pointVigilance: "La voie « arraigo » suppose une présence préalable sur le territoire espagnol et des conditions précises : à ne pas confondre avec une procédure d'entrée directe depuis l'étranger.",
   },
   {
@@ -188,6 +189,7 @@ export const DESTINATIONS_20: Destination20[] = [
     visa: "Accredited Employer Work Visa (AEWV).",
     langue: "Anglais requis.",
     etapesCles: "Offre d'emploi d'un employeur accrédité → dépôt de la demande AEWV → vérification du salaire minimum et des conditions du poste par Immigration New Zealand.",
+    pointFort: "Les métiers figurant sur la liste « Green List » néo-zélandaise donnent accès à une voie directe vers la résidence permanente, sans attendre plusieurs années sous permis de travail.",
     pointVigilance: "L'employeur doit d'abord être accrédité par Immigration New Zealand avant de pouvoir sponsoriser un travailleur étranger.",
   },
   {
@@ -211,6 +213,7 @@ export const DESTINATIONS_20: Destination20[] = [
     visa: "Visa de travail sponsorisé par l'employeur.",
     langue: "Arabe apprécié mais anglais généralement suffisant selon le secteur.",
     etapesCles: "Offre d'emploi d'un employeur qatari → visa de travail sponsorisé → carte de résidence (Qatar ID) délivrée à l'arrivée.",
+    pointFort: "Depuis les réformes de 2020, un salaire minimum national s'applique à tous les travailleurs étrangers et le changement d'employeur ne nécessite plus l'autorisation du sponsor initial.",
     pointVigilance: "Vérifier attentivement les conditions contractuelles (logement, rapatriement, congés) avant signature, comme pour toute procédure sponsorisée dans la région du Golfe.",
   },
   {
