@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Inscription Simple
  * Système d'inscription indépendant et simplifié
  */
@@ -21,7 +21,7 @@ export const signupRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2, "Nom requis").max(100),
-        email: z.string().email("Email invalide"),
+        email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(100),
       })
     )
@@ -228,7 +228,7 @@ export const signupRouter = router({
 
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) {

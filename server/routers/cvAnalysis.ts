@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -11,7 +11,7 @@ export const cvAnalysisRouter = router({
     .input(
       z.object({
         candidateName: z.string(),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         destination: z.string(),
         visaType: z.string(),
         education: z.string(),
@@ -141,7 +141,7 @@ ${evaluationData.summary}
     .input(
       z.object({
         candidateName: z.string(),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         targetCountry: z.string(),
         cvContent: z.string(),
       })

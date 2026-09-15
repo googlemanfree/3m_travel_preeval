@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Dossiers d'immigration & Paiement CinetPay
  */
 
@@ -92,7 +92,7 @@ export const applicationRouter = router({
   createApplication: candidateProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       whatsappNumber: z.string().min(8),
       age: z.number().int().min(18).max(65).optional(),
       nationality: z.string().optional(),
@@ -462,7 +462,7 @@ export const applicationRouter = router({
   initiateCinetPayPayment: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       paymentMethod: z.enum(["mtn", "orange", "card"]).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -958,7 +958,7 @@ export const applicationRouter = router({
       cvBase64: z.string(),
       candidateName: z.string(),
       destination: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       applicationId: z.number().int().optional(),
       candidateId: z.number().int().optional(),
     }))
@@ -1114,7 +1114,7 @@ export const applicationRouter = router({
   getDossierStatus: publicProcedure
     .input(z.object({
       dossierNumber: z.string().trim().min(5).max(80),
-      email: z.string().email(),
+      email: z.string().email().max(320),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -1262,7 +1262,7 @@ export const applicationRouter = router({
   sendCandidateMessage: publicProcedure
     .input(z.object({
       dossierNumber: z.string().min(5),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       message: z.string().min(5).max(2000),
     }))
     .mutation(async ({ input }) => {
@@ -1335,7 +1335,7 @@ export const applicationRouter = router({
     .input(z.object({
       applicationId: z.number().int().optional(),
       candidateId: z.number().int().optional(),
-      email: z.string().email().optional(),
+      email: z.string().email().max(320).optional(),
       limit: z.number().int().default(50),
       offset: z.number().int().default(0),
     }))

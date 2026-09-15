@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des Évaluations
  * Création, suivi et gestion des demandes de pré-évaluation
  */
@@ -17,7 +17,7 @@ export const evaluationRouter = router({
   create: publicProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       phone: z.string().min(5),
       nationality: z.string().optional(),
       dateOfBirth: z.string().optional(),
@@ -110,7 +110,7 @@ export const evaluationRouter = router({
    */
   getByEmail: publicProcedure
     .input(z.object({
-      email: z.string().email(),
+      email: z.string().email().max(320),
     }))
     .query(async ({ input }) => {
       const db = await getDb();

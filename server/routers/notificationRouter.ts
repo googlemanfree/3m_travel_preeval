@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC pour les notifications automatiques
  * Gère l'envoi de notifications Email + WhatsApp
  */
@@ -28,7 +28,7 @@ export const notificationRouter = router({
     .input(
       z.object({
         applicationId: z.string(),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         destinationCountry: z.string(),
@@ -83,7 +83,7 @@ export const notificationRouter = router({
     .input(
       z.object({
         transactionId: z.string(),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         amount: z.string(),
@@ -137,7 +137,7 @@ export const notificationRouter = router({
   sendPaymentReminder: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         amount: z.string(),
@@ -188,7 +188,7 @@ export const notificationRouter = router({
   sendDocumentsReceivedNotification: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         documentCount: z.number(),
@@ -230,7 +230,7 @@ export const notificationRouter = router({
   sendVisaApprovedNotification: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         destinationCountry: z.string(),
@@ -273,7 +273,7 @@ export const notificationRouter = router({
   sendContractObtainedNotification: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         employerName: z.string(),
@@ -324,7 +324,7 @@ export const notificationRouter = router({
   sendApplicationRejectedNotification: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phoneNumber: z.string(),
         candidateName: z.string(),
         reason: z.string(),

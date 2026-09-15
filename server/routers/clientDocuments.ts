@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des Documents et Paiements Clients
  * Permet aux clients de soumettre des documents et des paiements
  * Permet aux admins de valider et générer des décharges/factures
@@ -43,7 +43,7 @@ export const clientDocumentsRouter = router({
   submitDocument: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email().optional(),
+      candidateEmail: z.string().email().max(320).optional(),
       documentType: z.enum([
         "passport",
         "cv",
@@ -144,7 +144,7 @@ export const clientDocumentsRouter = router({
   getDocuments: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email().optional(),
+      candidateEmail: z.string().email().max(320).optional(),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
@@ -183,7 +183,7 @@ export const clientDocumentsRouter = router({
   submitPayment: publicProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       amount: z.number().positive(),
       currency: z.string().default("EUR"),
       paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
@@ -234,7 +234,7 @@ export const clientDocumentsRouter = router({
   getPayments: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email().optional(),
+      candidateEmail: z.string().email().max(320).optional(),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
@@ -351,7 +351,7 @@ export const clientDocumentsRouter = router({
   adminAddDocument: protectedProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       documentType: z.string(),
       documentName: z.string(),
       documentUrl: z.string().url().optional(),
@@ -401,7 +401,7 @@ export const clientDocumentsRouter = router({
   adminAddPayment: protectedProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       amount: z.number().positive(),
       currency: z.string().default("EUR"),
       paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),

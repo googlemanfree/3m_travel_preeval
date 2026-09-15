@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { publicProcedure, router } from "../_core/trpc";
@@ -40,8 +40,8 @@ export const simpleAuthRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-        email: z.string().email("Email invalide"),
-        password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+        email: z.string().email("Email invalide").max(320),
+        password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").max(128),
         confirmPassword: z.string(),
       })
     )
@@ -185,7 +185,7 @@ export const simpleAuthRouter = router({
    * Procédure de renvoi d'email de vérification
    */
   resendVerificationEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const { email } = input;
       const db = await getDb();
@@ -250,7 +250,7 @@ export const simpleAuthRouter = router({
   login: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().email().max(320),
         password: z.string(),
       })
     )
@@ -310,7 +310,7 @@ export const simpleAuthRouter = router({
    * Procédure pour demander une réinitialisation de mot de passe
    */
   forgotPassword: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const { email } = input;
       const db = await getDb();
@@ -359,7 +359,7 @@ export const simpleAuthRouter = router({
     .input(
       z.object({
         token: z.string(),
-        password: z.string().min(8),
+        password: z.string().min(8).max(128),
         confirmPassword: z.string(),
       })
     )

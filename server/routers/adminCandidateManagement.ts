@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+﻿import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
@@ -534,7 +534,7 @@ export const adminCandidateManagementRouter = router({
       status: z.string().min(1).max(50),
       adminNotes: z.string().max(5000).optional(),
       fullName: z.string().trim().min(2).max(160).optional(),
-      email: z.string().email().optional(),
+      email: z.string().email().max(320).optional(),
       phone: z.string().trim().max(40).optional(),
       destination: z.string().trim().max(120).optional(),
       visaType: z.string().trim().max(120).optional(),

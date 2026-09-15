@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Authentification Candidat avec OTP (France-Visas Compliant)
  * Procédures améliorées pour :
  * - Inscription avec OTP 6 chiffres
@@ -39,7 +39,7 @@ export const candidateAuthOTPRouter = router({
   sendRegistrationOTP: publicProcedure
     .input(
       z.object({
-        email: z.string().email("Email invalide"),
+        email: z.string().email("Email invalide").max(320),
         fullName: z.string().min(2, "Nom requis"),
       })
     )
@@ -195,7 +195,7 @@ export const candidateAuthOTPRouter = router({
    * Envoie un lien de réinitialisation par email
    */
   requestPasswordReset: publicProcedure
-    .input(z.object({ email: z.string().email("Email invalide") }))
+    .input(z.object({ email: z.string().email("Email invalide").max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });

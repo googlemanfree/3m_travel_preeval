@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion Admin Spécialisée
  * Permet de gérer les 3 types d'admins : Évaluation, Accompagnement, Procédures
  */
@@ -1180,7 +1180,7 @@ export const adminRouter = router({
   importAgencyDossier: protectedProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       whatsapp: z.string().min(5),
       city: z.string().default("Yaoundé"),
       dateOfBirth: z.string().max(20).optional(),
@@ -1189,7 +1189,7 @@ export const adminRouter = router({
       projectType: z.string().min(2),
       documentsReceived: z.string().max(10000).optional(),
       initialPaymentStatus: z.enum(["unknown", "pending", "paid"]).default("unknown"),
-      assignedToAdmin: z.string().email().optional(),
+      assignedToAdmin: z.string().email().max(320).optional(),
       depositDate: z.coerce.date().optional(),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
     }))
@@ -1489,7 +1489,7 @@ export const adminRouter = router({
     .input(
       z.object({
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
-        testEmail: z.string().email("Email invalide"),
+        testEmail: z.string().email("Email invalide").max(320),
         testName: z.string().min(2, "Nom trop court"),
       })
     )
@@ -1552,7 +1552,7 @@ export const adminRouter = router({
     .input(
       z.object({
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
-        email: z.string().email("Email invalide"),
+        email: z.string().email("Email invalide").max(320),
         testName: z.string().min(2, "Nom trop court"),
       })
     )

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Évaluation d'éligibilité Visa Études
  * Calcule le score, sauvegarde le résultat, envoie l'email au candidat et
  * notifie l'équipe.
@@ -63,7 +63,7 @@ import { candidateProcedure } from "./candidate";
 
 const submitInput = z.object({
   fullName: z.string().min(3),
-  email: z.string().email(),
+  email: z.string().email().max(320),
   phone: z.string().optional(),
   targetCountry: z.string().optional(),
   academicLevel: z.enum(["master_mention", "licence", "bac2", "bac"]),

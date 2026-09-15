@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Authentification Admin (Email + Mot de passe)
  * Système d'authentification séparé pour les administrateurs (Évaluation,
  * Accompagnement, Procédures), indépendant du compte plateforme et du
@@ -230,7 +230,7 @@ export const adminAuthRouter = router({
   inviteAdmin: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       fullName: z.string().min(2),
       phone: z.string().optional(),
       adminType: z.enum(["evaluation", "accompagnement", "procedures"]),
@@ -303,7 +303,7 @@ export const adminAuthRouter = router({
   resendInvite: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       customSubject: z.string().optional(),
       customBody: z.string().optional(),
     }))

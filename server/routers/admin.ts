@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion Admin Spécialisée
  * Permet de gérer les 3 types d'admins : Évaluation, Accompagnement, Procédures
  */
@@ -2254,7 +2254,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       whatsapp: z.string().min(5),
       city: z.string().default("Yaoundé"),
       destinationCountry: z.string().min(2),
@@ -2960,7 +2960,7 @@ export const adminRouter = router({
       z.object({
       sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
-        testEmail: z.string().email("Email invalide"),
+        testEmail: z.string().email("Email invalide").max(320),
         testName: z.string().min(2, "Nom trop court"),
       })
     )
@@ -3022,7 +3022,7 @@ export const adminRouter = router({
       z.object({
       sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
-        email: z.string().email("Email invalide"),
+        email: z.string().email("Email invalide").max(320),
         testName: z.string().min(2, "Nom trop court"),
       })
     )
@@ -3259,7 +3259,7 @@ export const adminRouter = router({
     }),
 
   setAdvisorThreshold: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), advisorEmail: z.string().email(), failureThreshold: z.number().int().min(1).max(100), isActive: z.boolean().default(true) }))
+    .input(z.object({ sessionToken: z.string().min(1), advisorEmail: z.string().email().max(320), failureThreshold: z.number().int().min(1).max(100), isActive: z.boolean().default(true) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

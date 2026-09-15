@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
@@ -105,7 +105,7 @@ export const placementPortalRouter = router({
     return { organizations, profiles, submissions };
   }),
 
-  adminCreateOrganization: publicProcedure.input(z.object({ sessionToken: z.string().min(20), organizationType: z.enum(["placement_partner", "employer"]), legalName: z.string().trim().min(2).max(255), country: z.string().trim().min(2).max(120), contactEmail: z.string().email(), verified: z.boolean() })).mutation(async ({ input }) => {
+  adminCreateOrganization: publicProcedure.input(z.object({ sessionToken: z.string().min(20), organizationType: z.enum(["placement_partner", "employer"]), legalName: z.string().trim().min(2).max(255), country: z.string().trim().min(2).max(120), contactEmail: z.string().email().max(320), verified: z.boolean() })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -114,7 +114,7 @@ export const placementPortalRouter = router({
     return { organizationId: Number((result as any)[0]?.insertId ?? 0) };
   }),
 
-  adminCreateEmployerAccess: publicProcedure.input(z.object({ sessionToken: z.string().min(20), organizationId: z.number().int().positive(), fullName: z.string().trim().min(2).max(255), email: z.string().email() })).mutation(async ({ input }) => {
+  adminCreateEmployerAccess: publicProcedure.input(z.object({ sessionToken: z.string().min(20), organizationId: z.number().int().positive(), fullName: z.string().trim().min(2).max(255), email: z.string().email().max(320) })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -158,7 +158,7 @@ export const placementPortalRouter = router({
     return { submissionId };
   }),
 
-  employerLogin: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(1), twoFactorCode: z.string().trim().min(6).max(32).optional() })).mutation(async ({ input }) => {
+  employerLogin: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1), twoFactorCode: z.string().trim().min(6).max(32).optional() })).mutation(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const account = (await db.select().from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, input.email.toLowerCase())).limit(1))[0];

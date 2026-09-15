@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from '../_core/trpc';
+﻿import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { getDb } from '../db';
 import { agencyDossiers, applications, candidates, paymentAuditLogs } from '../../drizzle/schema';
@@ -28,7 +28,7 @@ export const adminDossierRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         phone: z.string(),
         nationality: z.string(),
         destinationCountry: z.string(),

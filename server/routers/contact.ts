@@ -9,7 +9,7 @@ import { requireValidAdminSession } from "./adminAuth";
 
 const sendContactEmailInput = z.object({
   name: z.string().min(2, "Le nom est requis").max(200).trim(),
-  email: z.string().email("Email invalide").trim(),
+  email: z.string().email("Email invalide").max(320).trim(),
   phone: z.string().max(30).optional(),
   subject: z.string().min(3, "Le sujet est requis").max(300).trim(),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères").max(5000),
@@ -17,7 +17,7 @@ const sendContactEmailInput = z.object({
 
 const sendMessageInput = z.object({
   visitorName: z.string().min(2, "Le nom est requis").max(200).trim(),
-  visitorEmail: z.string().email("Email invalide").trim(),
+  visitorEmail: z.string().email("Email invalide").max(320).trim(),
   visitorPhone: z.string().max(30).optional(),
   sessionId: z.string().min(1, "Session ID requis").max(128),
   content: z.string().min(1, "Le message ne peut pas être vide").max(5000),

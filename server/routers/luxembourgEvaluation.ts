@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Évaluation d'éligibilité Luxembourg
  * Calcule le score, sauvegarde le résultat, envoie l'email au candidat et
  * notifie l'équipe (WhatsApp lien + email interne).
@@ -20,7 +20,7 @@ import { applications } from "../../drizzle/schema";
 
 const submitInput = z.object({
   fullName: z.string().min(3),
-  email: z.string().email(),
+  email: z.string().email().max(320),
   phone: z.string().optional(),
   jobTitle: z.string().min(3),
   yearsExperience: z.number().min(0).max(50),

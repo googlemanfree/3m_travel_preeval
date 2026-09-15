@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+﻿import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { agencySettings, favoriteFlights, flightSearchHistory } from "../../drizzle/schema";
@@ -569,7 +569,7 @@ export const flightsRouter = router({
   saveSearchHistory: publicProcedure
     .input(
       z.object({
-        userEmail: z.string().email().optional(),
+        userEmail: z.string().email().max(320).optional(),
         origin: z.string(),
         destination: z.string(),
         departureDate: z.string(),
@@ -594,7 +594,7 @@ export const flightsRouter = router({
     }),
 
   getSearchHistory: publicProcedure
-    .input(z.object({ userEmail: z.string().email() }))
+    .input(z.object({ userEmail: z.string().email().max(320) }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
@@ -653,7 +653,7 @@ export const flightsRouter = router({
   sendFlightSummaryEmail: publicProcedure
     .input(
       z.object({
-        email: z.string().email("Adresse email invalide"),
+        email: z.string().email("Adresse email invalide").max(320),
         flightDetails: z.object({
           airlineName: z.string(),
           flightNumber: z.string(),

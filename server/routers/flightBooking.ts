@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -64,7 +64,7 @@ export function resolveBookingRequester(
 ) {
   const email = typeof passenger.email === "string" ? passenger.email.trim().toLowerCase() : "";
   const fullName = typeof passenger.fullName === "string" ? passenger.fullName.trim() : "";
-  if (!z.string().email().safeParse(email).success || fullName.length < 2) {
+  if (!z.string().email().max(320).safeParse(email).success || fullName.length < 2) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Le nom complet et une adresse e-mail valide du passager sont requis." });
   }
   return {
@@ -594,7 +594,7 @@ export const flightBookingRouter = router({
     }),
 
   assignRequest: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), assignedAgentEmail: z.string().email() }))
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), assignedAgentEmail: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
       const db = await getDb();
@@ -850,7 +850,7 @@ export const flightBookingRouter = router({
     }),
 
   generatePaymentReceiptPdf: publicProcedure
-    .input(z.object({ requestId: z.number().int().positive(), candidateEmail: z.string().email() }))
+    .input(z.object({ requestId: z.number().int().positive(), candidateEmail: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });

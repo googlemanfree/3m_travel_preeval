@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Réinitialisation de Mot de Passe Admin
  * Système sécurisé de réinitialisation de mot de passe pour les administrateurs
  */
@@ -49,7 +49,7 @@ export const adminPasswordResetRouter = router({
    * La réponse reste volontairement générique pour ne pas révéler les comptes.
    */
   requestTemporaryPassword: publicProcedure
-    .input(z.object({ email: z.string().email("Email invalide") }))
+    .input(z.object({ email: z.string().email("Email invalide").max(320) }))
     .mutation(async ({ input }) => {
       const genericMessage = "Si cette adresse correspond à un compte administrateur actif, un mot de passe temporaire sera envoyé par e-mail.";
       const db = await getDb();
@@ -100,7 +100,7 @@ export const adminPasswordResetRouter = router({
    */
   requestReset: publicProcedure
     .input(z.object({
-      email: z.string().email("Email invalide"),
+      email: z.string().email("Email invalide").max(320),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

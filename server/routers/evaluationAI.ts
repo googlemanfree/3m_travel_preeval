@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Router pour l'évaluation IA des candidats
  * Analyse le CV avec Gemini et génère un bilan d'admissibilité
  */
@@ -16,7 +16,7 @@ import { sendEmail } from "../_core/email";
 // Schéma de validation pour la soumission d'évaluation
 const submitEvaluationSchema = z.object({
   fullName: z.string().min(2, "Nom requis"),
-  email: z.string().email("Email invalide"),
+  email: z.string().email("Email invalide").max(320),
   whatsappNumber: z.string().min(10, "Numéro WhatsApp requis"),
   city: z.string().min(2, "Ville requise"),
   destinationCountry: z.string().min(2, "Destination requise"),

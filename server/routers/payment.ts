@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Paiement des Frais d'Ouverture de Dossier (65 000 XAF)
  * Gère l'initiation, la confirmation et le suivi des paiements
  */
@@ -46,7 +46,7 @@ export const paymentRouter = router({
   initiateFolderPayment: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       fullName: z.string(),
       whatsappNumber: z.string().optional(),
     }))
@@ -210,7 +210,7 @@ export const paymentRouter = router({
   getPaymentStatus: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
     }))
     .query(async ({ input }) => {
       const db = await getDb();

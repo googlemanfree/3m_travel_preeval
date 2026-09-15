@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des Candidats
  * Inscription, connexion, profil et dossier candidat
  */
@@ -19,9 +19,9 @@ export const candidateRouter = router({
   register: publicProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       phone: z.string().min(5),
-      password: z.string().min(8),
+      password: z.string().min(8).max(128),
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
     }))
     .mutation(async ({ input }) => {
@@ -68,7 +68,7 @@ export const candidateRouter = router({
    */
   login: publicProcedure
     .input(z.object({
-      email: z.string().email(),
+      email: z.string().email().max(320),
       password: z.string(),
     }))
     .mutation(async ({ input }) => {

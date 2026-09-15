@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur admin pour la gestion des demandes e-visa
  * Synchronisation en temps réel, notifications et gestion des dossiers
  */
@@ -220,7 +220,7 @@ export const evisaAdminRouter = router({
    * Assigner une demande à un admin
    */
   assignRequest: protectedProcedure
-    .input(z.object({ id: z.number(), adminEmail: z.string().email() }))
+    .input(z.object({ id: z.number(), adminEmail: z.string().email().max(320) }))
     .mutation(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({

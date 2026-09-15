@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur pour la gestion des e-visas
  * Procédures pour lister, créer et gérer les demandes e-visa
  */
@@ -423,7 +423,7 @@ export const evisaRouter = router({
     .input(
       z.object({
         fullName: z.string().min(1, 'Le nom complet est requis'),
-        email: z.string().email('Email invalide'),
+        email: z.string().email('Email invalide').max(320),
         phone: z.string().min(1, 'Le téléphone est requis'),
         nationality: z.string().optional(),
         dateOfBirth: z.string().optional(),
@@ -536,7 +536,7 @@ export const evisaRouter = router({
    * Récupérer les demandes d'e-visa par email candidat (pour le suivi espace client)
    */
   getMyEvisaRequests: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .query(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -708,7 +708,7 @@ export const evisaRouter = router({
    * Sauvegarder un brouillon e-Visa dans le cloud (associé à un email)
    */
   saveCloudDraft: publicProcedure
-    .input(z.object({ email: z.string().email(), countryCode: z.string(), draftData: z.any() }))
+    .input(z.object({ email: z.string().email().max(320), countryCode: z.string(), draftData: z.any() }))
     .mutation(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -741,7 +741,7 @@ export const evisaRouter = router({
    * Récupérer un brouillon e-Visa du cloud
    */
   getCloudDraft: publicProcedure
-    .input(z.object({ email: z.string().email(), countryCode: z.string() }))
+    .input(z.object({ email: z.string().email().max(320), countryCode: z.string() }))
     .query(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';

@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -80,7 +80,7 @@ export function verifyEvaluationUploadToken(token: string, evaluationId: number,
 const evaluationInput = z.object({
   // État civil & famille
   fullName: z.string().min(2, "Le nom complet est requis"),
-  email: z.string().email("Email invalide"),
+  email: z.string().email("Email invalide").max(320),
   phone: z.string().min(8, "Numéro de téléphone invalide"),
   dateOfBirth: z.string().optional(),
   nationality: z.string().optional(),
@@ -132,7 +132,7 @@ const evaluationInput = z.object({
 const multiProjectEvaluationInput = z.object({
   // Étape 1 : Infos générales
   fullName: z.string().min(2, "Le nom complet est requis"),
-  email: z.string().email("Email invalide"),
+  email: z.string().email("Email invalide").max(320),
   whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide"),
   age: z.number().int().min(16).max(100).optional(),
   currentCity: z.string().optional(),
@@ -322,7 +322,7 @@ export const evaluationRouter = router({
       return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre évaluation est reçue et placée en revue humaine.", dossierCode, reviewDeadline, emailSent };
     }),
 
-  uploadSupportingDocument: publicProcedure.input(z.object({ evaluationId: z.number().int().positive(), email: z.string().email(), uploadToken: z.string().min(30), documentType: evaluationDocumentTypeEnum, fileName: z.string().min(1).max(180), mimeType: z.string().refine((value) => ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES.has(value), "Format non autorisé."), sizeBytes: z.number().int().positive().max(MAX_EVALUATION_DOCUMENT_BYTES), fileBase64: z.string().min(8) })).mutation(async ({ input }) => {
+  uploadSupportingDocument: publicProcedure.input(z.object({ evaluationId: z.number().int().positive(), email: z.string().email().max(320), uploadToken: z.string().min(30), documentType: evaluationDocumentTypeEnum, fileName: z.string().min(1).max(180), mimeType: z.string().refine((value) => ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES.has(value), "Format non autorisé."), sizeBytes: z.number().int().positive().max(MAX_EVALUATION_DOCUMENT_BYTES), fileBase64: z.string().min(8) })).mutation(async ({ input }) => {
     verifyEvaluationUploadToken(input.uploadToken, input.evaluationId, input.email);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données non disponible." });

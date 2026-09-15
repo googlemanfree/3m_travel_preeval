@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Demandes de consultation avec CV
  *
  * Flux : candidat soumet (infos + CV déjà uploadé) → analyse IA automatique
@@ -27,7 +27,7 @@ export const consultationRequestRouter = router({
   submit: publicProcedure
     .input(z.object({
       fullName: z.string().min(3).max(200).trim(),
-      email: z.string().email().trim(),
+      email: z.string().email().max(320).trim(),
       phone: z.string().max(30).optional(),
       targetCountry: z.string().max(100).optional(),
       message: z.string().max(2000).optional(),

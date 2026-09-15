@@ -1,4 +1,4 @@
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+﻿import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { eq, and, SQL } from "drizzle-orm";
 import * as drizzleSchema from "../../drizzle/schema";
@@ -32,7 +32,7 @@ export const translationRouter = router({
       totalPrice: z.string(),
       currency: z.string(),
       candidateName: z.string(),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       whatsapp: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -62,8 +62,8 @@ export const translationRouter = router({
   getTranslationRequests: protectedProcedure
     .input(z.object({
       status: z.enum(["pending_payment", "pending_translation", "in_progress", "completed", "rejected"]).optional(),
-      email: z.string().email().optional(),
-      assignedToTranslator: z.string().email().optional(),
+      email: z.string().email().max(320).optional(),
+      assignedToTranslator: z.string().email().max(320).optional(),
     }))
     .query(async ({ ctx, input }) => {
       const { db, user } = ctx;

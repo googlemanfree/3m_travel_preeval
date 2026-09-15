@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
@@ -318,7 +318,7 @@ export const candidateRouter = router({
 
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -351,7 +351,7 @@ export const candidateRouter = router({
 
   // ── Pré-vérification d’inscription (lecture seule) ─────────────────────────
   checkRegistrationDuplicate: publicProcedure
-    .input(z.object({ fullName: z.string().min(2, "Nom requis"), email: z.string().email("Email invalide") }))
+    .input(z.object({ fullName: z.string().min(2, "Nom requis"), email: z.string().email("Email invalide").max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -1274,7 +1274,7 @@ export const candidateRouter = router({
     }),
 
   requestPasswordReset: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1990,7 +1990,7 @@ export const candidateRouter = router({
    */
   sendBilanQuestion: candidateProcedure
     .input(z.object({
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       dossierNumber: z.string(),
       question: z.string().min(10),
     }))
@@ -2276,7 +2276,7 @@ export const candidateRouter = router({
   shareFlightFavoriteEmail: candidateProcedure
     .input(z.object({
       flightId: z.number().int().positive(),
-      recipientEmail: z.string().email(),
+      recipientEmail: z.string().email().max(320),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();

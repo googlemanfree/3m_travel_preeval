@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des Applications (Dossiers d'Immigration)
  * Création, suivi et gestion des dossiers d'immigration
  */
@@ -28,7 +28,7 @@ export const applicationRouter = router({
   create: publicProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       whatsappNumber: z.string().min(5),
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
@@ -121,7 +121,7 @@ export const applicationRouter = router({
    */
   getByEmail: publicProcedure
     .input(z.object({
-      email: z.string().email(),
+      email: z.string().email().max(320),
     }))
     .query(async ({ input }) => {
       const db = await getDb();

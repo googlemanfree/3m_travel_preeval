@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des Dossiers en Agence
  * Permet aux administrateurs d'ajouter et gérer des dossiers manuellement
  */
@@ -20,7 +20,7 @@ export const agencyDossierRouter = router({
   createDossier: protectedProcedure
     .input(z.object({
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       phone: z.string().min(5),
       dateOfBirth: z.string().optional(),
       nationality: z.string().optional(),
@@ -125,7 +125,7 @@ export const agencyDossierRouter = router({
     .input(z.object({
       dossierId: z.number().int().positive(),
       fullName: z.string().min(2),
-      email: z.string().email(),
+      email: z.string().email().max(320),
       phone: z.string().min(5),
       dateOfBirth: z.string().optional(),
       nationality: z.string().optional(),

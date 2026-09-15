@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
@@ -114,7 +114,7 @@ export const DOSSIER_STEPS = [
 export const candidateRouter = router({
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -149,8 +149,8 @@ export const candidateRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2, "Nom requis"),
-        email: z.string().email("Email invalide"),
-        password: z.string().min(8, "Mot de passe : 8 caractères minimum"),
+        email: z.string().email("Email invalide").max(320),
+        password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
         phone: z.string().optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
         nationality: z.string().optional(),
@@ -219,8 +219,8 @@ export const candidateRouter = router({
   login: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
-        password: z.string().min(1),
+        email: z.string().email().max(320),
+        password: z.string().min(1).max(128),
       })
     )
     .mutation(async ({ input }) => {
@@ -587,7 +587,7 @@ export const candidateRouter = router({
     }),
 
   requestPasswordReset: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.string().email().max(320) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -602,7 +602,7 @@ export const candidateRouter = router({
     }),
 
   resetPassword: publicProcedure
-    .input(z.object({ token: z.string().min(10), newPassword: z.string().min(8) }))
+    .input(z.object({ token: z.string().min(10), newPassword: z.string().min(8).max(128) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -951,7 +951,7 @@ export const candidateRouter = router({
    */
   sendBilanQuestion: candidateProcedure
     .input(z.object({
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       dossierNumber: z.string(),
       question: z.string().min(10),
     }))
@@ -991,7 +991,7 @@ export const candidateRouter = router({
    */
   requestBilanAppointment: candidateProcedure
     .input(z.object({
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().max(320),
       dossierNumber: z.string(),
       preferredDate: z.string(),
       preferredTime: z.string(),

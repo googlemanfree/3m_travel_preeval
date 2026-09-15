@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+﻿import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { profileEvaluations } from "../../drizzle/schema";
 import { getDb } from "../db";
@@ -24,7 +24,7 @@ export const profileEvaluationRouter = router({
         nationality: z.string().optional(),
         currentAddress: z.string().optional(),
         whatsappPhone: z.string(),
-        email: z.string().email(),
+        email: z.string().email().max(320),
         
         // Passeport
         passportNumber: z.string().optional(),
