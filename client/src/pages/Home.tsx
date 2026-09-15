@@ -206,22 +206,22 @@ type VisaType =
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const formSchema = z.object({
-  fullName: z.string().min(2, "Le nom complet est requis"),
+  fullName: z.string().min(2, "Le nom complet est requis").max(200),
   email: z.string().email("Email invalide"),
-  phone: z.string().min(8, "Numéro de téléphone invalide"),
+  phone: z.string().min(8, "Numéro de téléphone invalide").max(30),
   dateOfBirth: z.string().optional(),
-  nationality: z.string().optional(),
+  nationality: z.string().max(100).optional(),
   destinationCategory: z.enum(["schengen", "canada", "autre"]),
-  destinationCountry: z.string().optional(),
+  destinationCountry: z.string().max(100).optional(),
   visaType: z.enum([
     "schengen_etude", "schengen_tourisme", "schengen_travail",
     "canada_rp", "canada_etude", "canada_tourisme", "autre"
   ]),
   educationLevel: z.string().optional(),
   employmentStatus: z.string().optional(),
-  message: z.string().optional(),
+  message: z.string().max(2000).optional(),
   cvBase64: z.string().optional(),
-  cvFileName: z.string().optional(),
+  cvFileName: z.string().max(255).optional(),
   cvMimeType: z.string().optional(),
 });
 type FormValues = z.infer<typeof formSchema>;
