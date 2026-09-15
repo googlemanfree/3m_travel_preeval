@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import mysql from 'mysql2/promise';
 import { storagePut } from '../storage';
+import { sendEmail } from '../_core/email';
 
 // Générer un numéro de dossier unique
 function generateDossierNumber(): string {
@@ -184,13 +185,25 @@ export const evisaAdminRouter = router({
           [input.status, input.notes || existingRequest.adminNotes, ctx.user?.email, input.id]
         );
 
-        // TODO: Envoyer un email de confirmation au client
-        // const statusMessages: Record<string, string> = {
-        //   pending: 'Votre demande est en attente de traitement',
-        //   processing: 'Votre demande est en cours de traitement',
-        //   approved: 'Votre demande d\'e-visa a été approuvée!',
-        //   rejected: 'Votre demande d\'e-visa a été rejetée',
-        // };
+        // Notify client of status change
+        if (existingRequest.email) {
+          const statusLabels: Record<string, string> = {
+            pending: "en attente de traitement",
+            processing: "en cours de traitement",
+            approved: "approuvée ✅",
+            rejected: "rejetée",
+          };
+          const statusLabel = statusLabels[input.status] || input.status;
+          try {
+            await sendEmail({
+              to: existingRequest.email,
+              subject: `Mise à jour de votre demande e-visa — 3M Travel`,
+              html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Mise à jour de votre demande e-visa</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${existingRequest.fullName || "Client"}</strong>,</p><p>Le statut de votre demande d'e-visa a été mis à jour : votre dossier est désormais <strong>${statusLabel}</strong>.</p>${input.notes ? `<div style="background:#fff;border-left:4px solid #2563EB;padding:12px 16px;margin:16px 0"><p style="margin:0;color:#374151">${input.notes}</p></div>` : ""}<p>Pour toute question, contactez notre équipe via WhatsApp : <strong>+237 698 104 832</strong></p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
+            });
+          } catch (emailErr) {
+            console.warn("[evisaAdmin] Status update email failed:", emailErr);
+          }
+        }
 
         await connection.end();
 
