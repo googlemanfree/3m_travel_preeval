@@ -625,6 +625,41 @@ export const adminAuthRouter = router({
           : `${resetCount} mot(s) de passe réinitialisé(s). Les e-mails de secours sont affichés ci-dessous en raison d'une restriction de livraison.`,
       };
     }),
+
+  /**
+   * Désactive (suspend) un compte administrateur.
+   * Utilise un soft-disable : le compte peut être réactivé si nécessaire.
+   */
+  deactivateAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      adminId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const actor = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (actor.id === input.adminId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Vous ne pouvez pas désactiver votre propre compte." });
+      }
+
+      const rows = await db.select({ id: adminAccounts.id, email: adminAccounts.email })
+        .from(adminAccounts)
+        .where(eq(adminAccounts.id, input.adminId))
+        .limit(1);
+
+      if (rows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Compte administrateur introuvable." });
+      }
+
+      await db.update(adminAccounts)
+        .set({ status: "suspended" })
+        .where(eq(adminAccounts.id, input.adminId));
+
+      return { success: true, message: `Compte ${rows[0].email} désactivé.` };
+    }),
 });
 
 /**

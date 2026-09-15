@@ -89,6 +89,17 @@ export default function AdminsList() {
     onError: (error) => window.alert(error.message),
   });
 
+  const deactivateAdmin = trpc.adminAuth.deactivateAdmin.useMutation({
+    onSuccess: () => { void refetchAdmins(); },
+    onError: (error) => window.alert(error.message),
+  });
+
+  const handleDeactivate = (admin: Admin) => {
+    const confirmed = window.confirm(`Désactiver le compte de ${admin.name} (${admin.email}) ? L'admin ne pourra plus se connecter.`);
+    if (!confirmed) return;
+    deactivateAdmin.mutate({ sessionToken: getAdminSessionToken(), adminId: admin.id });
+  };
+
   const handleResetAllPasswords = () => {
     const confirmed = window.confirm(
       "Réinitialiser les mots de passe de tous les administrateurs ? Chaque compte recevra un mot de passe temporaire par e-mail et devra le changer à la prochaine connexion.",
@@ -343,7 +354,14 @@ export default function AdminsList() {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" className="text-red-600">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeactivate(admin)}
+                          disabled={deactivateAdmin.isPending}
+                          title="Désactiver ce compte"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -466,8 +484,12 @@ export default function AdminsList() {
                   >
                     Renvoyer invitation
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Modifier
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => { setIsDetailOpen(false); setIsResendOpen(true); }}
+                    title="Réinitialiser le mot de passe et renvoyer les accès"
+                  >
+                    Réinitialiser accès
                   </Button>
                 </div>
               </div>

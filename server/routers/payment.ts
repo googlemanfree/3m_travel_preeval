@@ -210,6 +210,7 @@ export const paymentRouter = router({
   getPaymentStatus: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),
+      email: z.string().email(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -224,6 +225,10 @@ export const paymentRouter = router({
 
         if (app.length === 0) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+        }
+
+        if (app[0].email.toLowerCase() !== input.email.trim().toLowerCase()) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Accès non autorisé." });
         }
 
         const application = app[0];
