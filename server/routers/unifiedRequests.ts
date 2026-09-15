@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -61,7 +62,7 @@ function mapCandidateDestination(destination: string | null | undefined): "canad
 
 function generateBootstrapEvaluationReference() {
   // applications.dossierNumber est limité à 20 caractères en production.
-  return `EVAL-DRAFT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  return `EVAL-DRAFT-${new Date().getFullYear()}-${randomInt(1000, 10000)}`;
 }
 
 async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
@@ -71,7 +72,7 @@ async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof
   const existing = (await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, standardNumber)).limit(1))[0];
   const dossierNumber = !existing || existing.id === application.id
     ? standardNumber
-    : `3M-${year}-${Math.floor(10000 + Math.random() * 90000)}`;
+    : `3M-${year}-${randomInt(10000, 100000)}`;
   await db.update(applications).set({ dossierNumber, updatedAt: new Date() }).where(eq(applications.id, application.id));
   await db.update(cases).set({ caseNumber: dossierNumber, updatedAt: new Date() }).where(eq(cases.legacyApplicationId, application.id));
   return dossierNumber;

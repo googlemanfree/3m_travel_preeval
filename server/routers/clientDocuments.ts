@@ -293,7 +293,7 @@ export const clientDocumentsRouter = router({
         }
 
         // Générer un numéro de facture unique si confirmé
-        const invoiceNumber = input.invoiceNumber || `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const invoiceNumber = input.invoiceNumber || `INV-${Date.now()}-${randomBytes(4).toString("hex")}`;
 
         await db
           .update(clientPayments)
@@ -366,7 +366,7 @@ export const clientDocumentsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const receiptNumber = `REC-${Date.now()}-${randomBytes(4).toString("hex")}`;
 
         await db.insert(clientDocuments).values({
           evaluationId: input.evaluationId,
@@ -417,7 +417,7 @@ export const clientDocumentsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const invoiceNumber = `INV-${Date.now()}-${randomBytes(4).toString("hex")}`;
 
         await db.insert(clientPayments).values({
           evaluationId: input.evaluationId,

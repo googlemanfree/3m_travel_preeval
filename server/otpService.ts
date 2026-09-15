@@ -4,12 +4,13 @@
  */
 
 import { TRPCError } from "@trpc/server";
+import { randomInt } from "node:crypto";
 
 /**
- * Génère un code OTP 6 chiffres aléatoire
+ * Génère un code OTP 6 chiffres cryptographiquement sûr
  */
 export function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 /**

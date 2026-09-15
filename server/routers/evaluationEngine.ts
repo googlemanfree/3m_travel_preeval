@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { randomBytes } from 'node:crypto';
 import { protectedProcedure, publicProcedure } from './../../server/_core/trpc';
 import { TRPCError } from '@trpc/server';
 import { sendEvaluationEmail } from '../services/emailTemplates';
@@ -164,7 +165,7 @@ export const evaluationEngineRouter = {
         else if (score >= 80) status = 'HIGHLY_ELIGIBLE';
 
         const result = {
-          folderId: `3M-EVAL-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+          folderId: `3M-EVAL-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${randomBytes(2).toString("hex").toUpperCase()}`,
           score,
           status,
           destination: input.destination,

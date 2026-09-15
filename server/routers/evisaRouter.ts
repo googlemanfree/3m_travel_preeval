@@ -6,6 +6,7 @@
 import { protectedProcedure, publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { randomBytes } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import { getDb } from '../db';
 import { sql } from 'drizzle-orm';
@@ -338,7 +339,7 @@ export const evisaRouter = router({
         }
 
         // Générer une référence de transaction unique
-        const transactionRef = `EVISA-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const transactionRef = `EVISA-${Date.now()}-${randomBytes(4).toString("hex")}`;
 
         // Mettre à jour le statut du paiement
         await connection.execute(`
