@@ -237,6 +237,7 @@ export default function Tourism() {
                 value={form.destination}
                 onChange={event => change("destination", event.target.value)}
                 placeholder="Ville et pays de destination"
+                maxLength={160}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"
               />
             </label>
@@ -298,18 +299,18 @@ export default function Tourism() {
                 </label>
                 <label className="text-sm font-semibold">
                   Retrait
-                  <input value={form.pickupLocation} onChange={event => change("pickupLocation", event.target.value)} placeholder="Aéroport" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
+                  <input value={form.pickupLocation} onChange={event => change("pickupLocation", event.target.value)} placeholder="Aéroport" maxLength={255} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
                 </label>
               </div>
             )}
 
             <label className="text-sm font-semibold">
               Téléphone WhatsApp
-              <input required value={form.phone} onChange={event => change("phone", event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
+              <input required value={form.phone} onChange={event => change("phone", event.target.value)} maxLength={50} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
             </label>
             <label className="text-sm font-semibold">
               Demandes particulières
-              <textarea value={form.notes} onChange={event => change("notes", event.target.value)} className="mt-1 min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
+              <textarea value={form.notes} onChange={event => change("notes", event.target.value)} maxLength={1500} className="mt-1 min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />
             </label>
 
             {notice && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{notice}</p>}
