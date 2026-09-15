@@ -26,13 +26,13 @@ export const consultationRequestRouter = router({
    */
   submit: publicProcedure
     .input(z.object({
-      fullName: z.string().min(3),
-      email: z.string().email(),
-      phone: z.string().optional(),
-      targetCountry: z.string().optional(),
-      message: z.string().optional(),
-      cvFileUrl: z.string().url().optional(),
-      cvFileName: z.string().optional(),
+      fullName: z.string().min(3).max(200).trim(),
+      email: z.string().email().trim(),
+      phone: z.string().max(30).optional(),
+      targetCountry: z.string().max(100).optional(),
+      message: z.string().max(2000).optional(),
+      cvFileUrl: z.string().url().max(1000).optional(),
+      cvFileName: z.string().max(255).optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
