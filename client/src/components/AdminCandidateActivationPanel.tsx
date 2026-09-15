@@ -144,6 +144,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
               value={search}
               onChange={(event) => { setSearch(event.target.value); setPage(1); }}
               placeholder="Rechercher par nom ou e-mail…"
+              maxLength={200}
               className="pl-9"
             />
           </div>

@@ -752,6 +752,7 @@ export function AdminDocumentsManagement() {
                 placeholder="Chercher par dossier, candidat, document ou IA..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                maxLength={200}
                 className="xl:col-span-2"
               />
               <select
@@ -1055,6 +1056,7 @@ export function AdminDocumentsManagement() {
                             value={markerAnnotations[activeMarkerId] ?? ""}
                             onChange={(event) => setMarkerAnnotations((current) => ({ ...current, [activeMarkerId]: event.target.value }))}
                             placeholder="Expliquez précisément ce qui doit être corrigé sur cette zone…"
+                            maxLength={2000}
                             className="min-h-20 text-sm"
                           />
                           <Button size="sm" type="button" onClick={handleSaveMarkerAnnotations} disabled={isLoading}>
@@ -1155,6 +1157,7 @@ export function AdminDocumentsManagement() {
                 placeholder="Raison du rejet (ex: Document illisible, informations manquantes, etc.)"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
+                maxLength={2000}
                 className="min-h-24"
               />
             </div>

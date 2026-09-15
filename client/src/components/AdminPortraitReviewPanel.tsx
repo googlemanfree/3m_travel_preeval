@@ -103,6 +103,7 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
                 <Textarea
                   value={reason}
                   onChange={(event) => updateReason(candidate.id, event.target.value)}
+                  maxLength={2000}
                   className="mt-3 min-h-16 bg-white text-sm"
                   placeholder="Note ou consigne envoyée au candidat (facultatif)"
                   aria-label={`Motif de revue pour ${candidate.fullName}`}

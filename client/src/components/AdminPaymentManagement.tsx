@@ -518,6 +518,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
               placeholder="Rechercher un candidat par nom, dossier ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              maxLength={200}
               className="flex-1"
             />
             <select
@@ -834,6 +835,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                         placeholder="Ex: Image illisible, référence Mobile Money introuvable..."
                         value={adminNote}
                         onChange={(e) => setAdminNote(e.target.value)}
+                        maxLength={1000}
                         className="text-xs"
                       />
                     </div>

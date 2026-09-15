@@ -114,6 +114,7 @@ export function BilanActionModal({
                 placeholder="Posez votre question concernant votre bilan d'évaluation..."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
+                maxLength={2000}
                 className="min-h-32 resize-none"
               />
             </div>
@@ -171,6 +172,7 @@ export function BilanActionModal({
                 placeholder="Ex: Discussion du bilan, clarifications sur les recommandations..."
                 value={appointmentReason}
                 onChange={(e) => setAppointmentReason(e.target.value)}
+                maxLength={2000}
                 className="min-h-24 resize-none"
               />
             </div>

@@ -378,6 +378,7 @@ export default function AgreementProtocol({
                     value={signatureName}
                     onChange={(e) => setSignatureName(e.target.value)}
                     placeholder="Ex : Jean-Pierre DUPONT"
+                    maxLength={255}
                     className="text-base"
                   />
                 </div>

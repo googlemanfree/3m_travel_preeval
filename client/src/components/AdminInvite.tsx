@@ -83,6 +83,7 @@ export default function AdminInvite({ isOpen, onClose, onInviteSent }: AdminInvi
                 placeholder="Marie Dupont"
                 value={fullName}
                 onChange={(e) => { setFullName(e.target.value); setError(""); }}
+                maxLength={255}
                 className="mt-2"
                 disabled={inviteMutation.isPending}
               />
@@ -97,6 +98,7 @@ export default function AdminInvite({ isOpen, onClose, onInviteSent }: AdminInvi
                   placeholder="admin@example.com"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                  maxLength={320}
                   className="pl-10"
                   disabled={inviteMutation.isPending}
                 />
