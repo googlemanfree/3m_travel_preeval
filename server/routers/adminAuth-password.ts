@@ -14,10 +14,12 @@ import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
-// Générer un token de session
+import { randomBytes } from "node:crypto";
+
 function generateSessionToken(): string {
-  return Array.from({ length: 48 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+  return randomBytes(36).toString("hex");
 }
 
 /**
@@ -56,6 +58,8 @@ export const adminAuthRouter = router({
       password: z.string().min(1),
     }))
     .mutation(async ({ input }) => {
+      checkLoginAttempts(input.email);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -66,6 +70,7 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
@@ -76,13 +81,17 @@ export const adminAuthRouter = router({
       }
 
       if (!admin.passwordHash) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
+
+      resetLoginAttempts(input.email);
 
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h
@@ -103,7 +112,7 @@ export const adminAuthRouter = router({
         adminType: admin.adminType,
         fullName: admin.fullName,
         email: admin.email,
-        requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
+        requiresPasswordChange: admin.requiresPasswordChange || false,
       };
     }),
 
@@ -361,14 +370,16 @@ function generateSecurePassword(): string {
   const symbols = "!@#$%*?";
   const all = upper + lower + digits;
 
-  let pwd = "";
-  pwd += upper[Math.floor(Math.random() * upper.length)];
-  pwd += lower[Math.floor(Math.random() * lower.length)];
-  pwd += digits[Math.floor(Math.random() * digits.length)];
-  pwd += symbols[Math.floor(Math.random() * symbols.length)];
-  for (let i = 0; i < 8; i++) {
-    pwd += all[Math.floor(Math.random() * all.length)];
+  const pick = (charset: string) => charset[randomBytes(1)[0] % charset.length];
+
+  let pwd = pick(upper) + pick(lower) + pick(digits) + pick(symbols);
+  for (let i = 0; i < 8; i++) pwd += pick(all);
+
+  // mélange cryptographiquement sûr (Fisher-Yates)
+  const chars = pwd.split("");
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomBytes(1)[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
   }
-  // mélange
-  return pwd.split("").sort(() => Math.random() - 0.5).join("");
+  return chars.join("");
 }

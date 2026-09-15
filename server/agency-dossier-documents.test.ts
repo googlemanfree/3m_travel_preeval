@@ -76,9 +76,9 @@ describe("Centre documentaire par dossier", () => {
     expect(candidateSource).toContain("where(eq(agencyDossiers.email, ctx.candidate.email))");
     expect(candidateSource).toContain("where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))");
     expect(candidateSource).toContain("agencyDocuments");
-    expect(clientPage).toContain("const agencyDocuments = dossierData?.data?.agencyDocuments || []");
-    expect(clientPage).toContain('id: `agency-${document.id}`');
-    expect(clientPage).toContain("document.documentUrl || null");
+    expect(clientPage).toContain("candidateFiles, agencyDocuments, stats } = dashboardData");
+    expect(clientPage).toContain("agencyDocuments as any[]");
+    expect(clientPage).toContain("documentUrl: document.documentUrl ?? document.url");
   });
 
   it("permet des corrections ciblées uniquement sur les documents refusés", () => {

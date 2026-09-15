@@ -1,170 +1,183 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { getDb } from "../db";
+import { applications } from "../../drizzle/schema";
+import { eq, and } from "drizzle-orm";
 
-// Mock data for visa status - en production, récupérer depuis la BD
-const mockDossiers: Record<string, any> = {
-  "3M-2026-0001": {
-    dossierNumber: "3M-2026-0001",
-    candidateName: "Jean Dupont",
-    destination: "Canada",
-    visaType: "Travail",
-    overallStatus: "in_progress",
-    progressPercentage: 65,
-    lastUpdated: new Date("2026-08-08T10:30:00"),
-    estimatedCompletion: new Date("2026-08-20"),
-    notes: "Votre dossier est actuellement en cours de vérification auprès des autorités canadiennes. Pas d'action requise de votre part.",
-    steps: [
-      {
-        id: "step-1",
-        name: "Réception du Dossier",
-        description: "Votre dossier a été reçu et enregistré",
-        status: "completed",
-        completedAt: new Date("2026-07-25T14:00:00"),
-      },
-      {
-        id: "step-2",
-        name: "Vérification des Documents",
-        description: "Vérification de la complétude et de la validité des documents",
-        status: "completed",
-        completedAt: new Date("2026-08-01T09:30:00"),
-      },
-      {
-        id: "step-3",
-        name: "Évaluation Préliminaire",
-        description: "Évaluation initiale de votre admissibilité",
-        status: "in_progress",
-        completedAt: undefined,
-      },
-      {
-        id: "step-4",
-        name: "Transmission aux Autorités",
-        description: "Transmission du dossier aux autorités compétentes",
-        status: "pending",
-        completedAt: undefined,
-      },
-      {
-        id: "step-5",
-        name: "Entrevue (si requise)",
-        description: "Entrevue avec les autorités d'immigration",
-        status: "pending",
-        completedAt: undefined,
-      },
-      {
-        id: "step-6",
-        name: "Décision Finale",
-        description: "Réception de la décision finale",
-        status: "pending",
-        completedAt: undefined,
-      },
-    ],
-  },
-};
+type StepStatus = "completed" | "in_progress" | "pending";
+
+interface DossierStep {
+  id: string;
+  name: string;
+  description: string;
+  status: StepStatus;
+  completedAt?: Date;
+}
+
+const STATUS_ORDER = [
+  "nouveau",
+  "en_evaluation",
+  "bilan_envoye",
+  "en_attente_paiement",
+  "paye",
+  "en_attente_documents",
+  "documents_recus",
+  "soumis_agences",
+  "en_cours_recrutement",
+  "contrat_obtenu",
+  "visa_approuve",
+] as const;
+
+function deriveSteps(app: {
+  dossierStatus: string;
+  paymentStatus: string;
+  agreementSigned: boolean | null;
+  evaluationDeliveryStatus: string;
+  paymentDate: Date | null;
+  evaluationClientConfirmedAt: Date | null;
+  createdAt: Date;
+}): DossierStep[] {
+  const statusIndex = STATUS_ORDER.indexOf(app.dossierStatus as typeof STATUS_ORDER[number]);
+
+  const step = (
+    id: string,
+    threshold: number,
+    name: string,
+    description: string,
+    completedAt?: Date | null,
+  ): DossierStep => {
+    const s: StepStatus =
+      statusIndex > threshold ? "completed"
+      : statusIndex === threshold ? "in_progress"
+      : "pending";
+    return { id, name, description, status: s, completedAt: s === "completed" ? (completedAt ?? undefined) : undefined };
+  };
+
+  return [
+    step("reception", 0, "Réception du dossier", "Votre dossier a été reçu et enregistré.", app.createdAt),
+    step("evaluation", 1, "Évaluation du profil", "Analyse de votre profil et de votre admissibilité.", app.evaluationClientConfirmedAt),
+    step("bilan", 2, "Bilan d'admissibilité", "Le bilan de votre évaluation vous a été transmis."),
+    step("paiement", 4, "Règlement des frais", "Frais d'ouverture de dossier réglés.", app.paymentDate),
+    step("documents", 6, "Dépôt de documents", "Vos pièces ont été reçues et vérifiées."),
+    step("soumission", 7, "Soumission aux partenaires", "Votre dossier a été transmis aux recruteurs ou aux autorités."),
+    step("decision", 10, "Décision finale", "Visa approuvé ou contrat obtenu."),
+  ];
+}
 
 export const visaStatusTrackerRouter = router({
-  /**
-   * Récupérer le statut du dossier visa
-   */
   getDossierStatus: protectedProcedure
     .input(z.object({ dossierNumber: z.string() }))
     .query(async ({ input, ctx }) => {
-      // En production : vérifier que l'utilisateur est propriétaire du dossier
-      const dossier = mockDossiers[input.dossierNumber];
-      
-      if (!dossier) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Dossier non trouvé",
-        });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(and(
+          eq(applications.dossierNumber, input.dossierNumber),
+          eq(applications.email, ctx.user.email ?? ""),
+        ))
+        .limit(1);
+
+      if (!app) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable ou accès non autorisé." });
       }
 
-      return dossier;
+      const steps = deriveSteps(app);
+      const completedCount = steps.filter((s) => s.status === "completed").length;
+      const progressPercentage = Math.round((completedCount / steps.length) * 100);
+
+      return {
+        dossierNumber: app.dossierNumber,
+        candidateName: app.fullName,
+        destination: app.destination,
+        visaType: app.destination === "canada" ? "Travail / Études" : "Mobilité internationale",
+        overallStatus: app.dossierStatus === "visa_approuve" || app.dossierStatus === "contrat_obtenu" ? "completed"
+          : app.dossierStatus === "refuse" ? "refused"
+          : "in_progress",
+        progressPercentage,
+        lastUpdated: app.updatedAt ?? app.createdAt,
+        notes: app.adminNote ?? null,
+        steps,
+      };
     }),
 
-  /**
-   * Récupérer tous les dossiers de l'utilisateur connecté
-   */
   getUserDossiers: protectedProcedure.query(async ({ ctx }) => {
-    // En production : récupérer depuis la BD les dossiers de l'utilisateur
-    return Object.values(mockDossiers).map((dossier) => ({
-      dossierNumber: dossier.dossierNumber,
-      destination: dossier.destination,
-      visaType: dossier.visaType,
-      overallStatus: dossier.overallStatus,
-      progressPercentage: dossier.progressPercentage,
-      lastUpdated: dossier.lastUpdated,
-    }));
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+    const rows = await db
+      .select({
+        dossierNumber: applications.dossierNumber,
+        destination: applications.destination,
+        dossierStatus: applications.dossierStatus,
+        paymentStatus: applications.paymentStatus,
+        agreementSigned: applications.agreementSigned,
+        evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
+        paymentDate: applications.paymentDate,
+        evaluationClientConfirmedAt: applications.evaluationClientConfirmedAt,
+        createdAt: applications.createdAt,
+        updatedAt: applications.updatedAt,
+        adminNote: applications.adminNote,
+      })
+      .from(applications)
+      .where(eq(applications.email, ctx.user.email ?? ""))
+      .limit(50);
+
+    return rows.map((app) => {
+      const steps = deriveSteps(app);
+      const completedCount = steps.filter((s) => s.status === "completed").length;
+      return {
+        dossierNumber: app.dossierNumber,
+        destination: app.destination,
+        visaType: "Mobilité internationale",
+        overallStatus: app.dossierStatus === "visa_approuve" || app.dossierStatus === "contrat_obtenu" ? "completed"
+          : app.dossierStatus === "refuse" ? "refused"
+          : "in_progress",
+        progressPercentage: Math.round((completedCount / steps.length) * 100),
+        lastUpdated: app.updatedAt ?? app.createdAt,
+      };
+    });
   }),
 
-  /**
-   * Mettre à jour le statut d'une étape (admin uniquement)
-   */
-  updateStepStatus: protectedProcedure
-    .input(
-      z.object({
-        dossierNumber: z.string(),
-        stepId: z.string(),
-        status: z.enum(["completed", "in_progress", "pending", "failed"]),
-        notes: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      // En production : vérifier que l'utilisateur est admin
-      const dossier = mockDossiers[input.dossierNumber];
-      
-      if (!dossier) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Dossier non trouvé",
-        });
-      }
-
-      const step = dossier.steps.find((s: any) => s.id === input.stepId);
-      if (!step) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Étape non trouvée",
-        });
-      }
-
-      // Mettre à jour l'étape
-      step.status = input.status;
-      if (input.status === "completed") {
-        step.completedAt = new Date();
-      }
-
-      // Recalculer la progression
-      const completedSteps = dossier.steps.filter((s: any) => s.status === "completed").length;
-      dossier.progressPercentage = Math.round((completedSteps / dossier.steps.length) * 100);
-
-      // Mettre à jour le statut global
-      if (completedSteps === dossier.steps.length) {
-        dossier.overallStatus = "completed";
-      } else if (dossier.steps.some((s: any) => s.status === "in_progress")) {
-        dossier.overallStatus = "in_progress";
-      }
-
-      dossier.lastUpdated = new Date();
-      if (input.notes) {
-        dossier.notes = input.notes;
-      }
-
-      return { success: true, dossier };
-    }),
-
-  /**
-   * Obtenir les statistiques de suivi
-   */
   getTrackingStats: protectedProcedure.query(async ({ ctx }) => {
-    const dossiers = Object.values(mockDossiers);
-    
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+    const rows = await db
+      .select({
+        dossierStatus: applications.dossierStatus,
+        paymentStatus: applications.paymentStatus,
+        agreementSigned: applications.agreementSigned,
+        evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
+        paymentDate: applications.paymentDate,
+        evaluationClientConfirmedAt: applications.evaluationClientConfirmedAt,
+        createdAt: applications.createdAt,
+        updatedAt: applications.updatedAt,
+        adminNote: applications.adminNote,
+      })
+      .from(applications)
+      .where(eq(applications.email, ctx.user.email ?? ""))
+      .limit(50);
+
+    const statuses = rows.map((app) => {
+      const steps = deriveSteps(app);
+      const completedCount = steps.filter((s) => s.status === "completed").length;
+      return {
+        isCompleted: app.dossierStatus === "visa_approuve" || app.dossierStatus === "contrat_obtenu",
+        progress: Math.round((completedCount / steps.length) * 100),
+      };
+    });
+
     return {
-      totalDossiers: dossiers.length,
-      completedDossiers: dossiers.filter((d: any) => d.overallStatus === "completed").length,
-      inProgressDossiers: dossiers.filter((d: any) => d.overallStatus === "in_progress").length,
-      averageProgress: Math.round(
-        dossiers.reduce((sum: number, d: any) => sum + d.progressPercentage, 0) / dossiers.length
-      ),
+      totalDossiers: rows.length,
+      completedDossiers: statuses.filter((s) => s.isCompleted).length,
+      inProgressDossiers: statuses.filter((s) => !s.isCompleted).length,
+      averageProgress: rows.length === 0 ? 0 : Math.round(statuses.reduce((sum, s) => sum + s.progress, 0) / rows.length),
     };
   }),
+
+  // updateStepStatus is admin-only — handled via admin.ts, not exposed to candidates.
 });

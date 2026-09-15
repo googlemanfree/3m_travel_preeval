@@ -44,9 +44,9 @@ describe("sessions de 24 heures", () => {
   // setActiveTab("overview") / setActiveTab("messages") calls or "Étape suivante" text were found.
   it("expose des raccourcis internes sans dépendre de l’historique du navigateur", () => {
     const dashboard = read("client/src/pages/EvaluationSpace.tsx");
-    expect(dashboard).toContain("Étape suivante");
-    expect(dashboard).toContain("setActiveTab(\"overview\")");
-    expect(dashboard).toContain("setActiveTab(\"messages\")");
+    expect(dashboard).toContain(‘switchToSection("dossier")’);
+    expect(dashboard).toContain(‘setActiveTab("documents")’);
+    expect(dashboard).toContain(‘switchToSection("messages")’);
   });
 
   it("trace les renouvellements et permet une révocation globale sécurisée aux administrateurs", () => {

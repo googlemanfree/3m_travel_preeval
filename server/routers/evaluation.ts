@@ -6,7 +6,6 @@ import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
-import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEvaluationReceptionEmail } from "../emailService";
 import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, getPdfPageCount } from "../aiEvaluationService";
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";

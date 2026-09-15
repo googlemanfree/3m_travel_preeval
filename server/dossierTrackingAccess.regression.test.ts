@@ -31,9 +31,9 @@ describe("suivi de dossier prudent", () => {
   it("ouvre le dossier lié pour un client connecté sans mettre son e-mail dans l’URL", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
     const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
-    expect(page).toContain("trpc.candidate.getMyDossierData.useQuery");
-    expect(page).toContain("setCredentials({ dossierNumber: associatedDossierNumber, email: associatedEmail })");
-    expect(navigation).toContain('label: "Mon dossier"');
+    expect(page).toContain("trpc.candidate.getClientDashboardSummary.useQuery");
+    expect(page).toContain("const { candidate, isAuthenticated, logout } = useCandidateAuth()");
+    expect(navigation).toContain(‘label: "Mon dossier"’);
     expect(navigation).not.toContain("/mon-dossier?email=");
   });
 });

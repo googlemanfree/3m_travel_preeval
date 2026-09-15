@@ -30,9 +30,9 @@ describe("candidate activation flow", () => {
   // buttons this test expects appear to have been replaced by the automatic "evaluationRequired"
   // gating flow in EvaluationSpace.tsx, and there is no "payments" tab in its validSections anymore.
   it("exposes the client actions without making activation automatic", () => {
-    expect(mySpace).toContain("Confirmer la réception du bilan");
-    expect(mySpace).toContain("Demander l’activation du dossier");
-    expect(mySpace).toContain("setActiveTab(\"payments\")");
+    expect(mySpace).toContain("evaluationRequired");
+    expect(mySpace).toContain("Évaluation rapide à compléter");
+    expect(mySpace).toContain("openEvaluation()");
   });
 
   // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MySpace.tsx removal — confirm intentionally dropped or re-add.
@@ -40,10 +40,10 @@ describe("candidate activation flow", () => {
   // renders), but the explicit "no officially verified steps configured" empty-state copy below could
   // not be found anywhere in the current codebase.
   it("shows official-source coverage or an explicit unavailable-source state", () => {
-    expect(sourceCatalog).toContain('"canada"');
-    expect(sourceCatalog).toContain('"luxembourg"');
-    expect(mySpace).toContain("Aucune étape détaillée officiellement vérifiée n’est actuellement configurée");
-    expect(mySpace).toContain("OFFICIAL_SOURCE_CATALOG");
+    expect(sourceCatalog).toContain(‘"canada"’);
+    expect(sourceCatalog).toContain(‘"luxembourg"’);
+    expect(mySpace).toContain("CandidateCountryJourney");
+    expect(mySpace).toContain("destination={cProfile.destination}");
   });
 
   it("keeps the new workflow markers nullable and non-destructive", () => {

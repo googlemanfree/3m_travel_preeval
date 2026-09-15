@@ -3,6 +3,7 @@ import { z } from "zod";
 import { eq, and, SQL } from "drizzle-orm";
 import * as drizzleSchema from "../../drizzle/schema";
 import { getDb } from "../db";
+import { sendEmail } from "../_core/email";
 
 export const translationRouter = router({
   createTranslationRequest: publicProcedure
@@ -149,8 +150,20 @@ export const translationRouter = router({
         updatedAt: new Date(),
       }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
   
-      // TODO: Generate PDF invoice and send notifications (email/WhatsApp) to admin and client
-  
+      // Send payment confirmation to client
+      const req = request[0];
+      if (req.candidateEmail) {
+        try {
+          await sendEmail({
+            to: req.candidateEmail,
+            subject: "Paiement reçu — Traduction de document 3M Travel",
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Paiement confirmé ✅</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${req.candidateName || req.candidateEmail}</strong>,</p><p>Nous avons bien reçu votre paiement de <strong>${req.totalPrice} ${req.currency}</strong> pour la traduction de votre document.</p><p>Notre équipe prend en charge votre demande et vous transmettra le document traduit dans les meilleurs délais.</p><p>Pour toute question : <strong>+237 698 104 832</strong> (WhatsApp)</p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
+          });
+        } catch (emailErr) {
+          console.warn("[translation] Payment confirmation email failed:", emailErr);
+        }
+      }
+
       return { success: true };
     }),
 
@@ -186,8 +199,20 @@ export const translationRouter = router({
         updatedAt: new Date(),
       }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
   
-      // TODO: Send notification to client about completed translation
-  
+      // Notify client that their translation is ready
+      const completedReq = request[0];
+      if (completedReq.candidateEmail) {
+        try {
+          await sendEmail({
+            to: completedReq.candidateEmail,
+            subject: "Votre traduction est prête — 3M Travel",
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Votre document traduit est disponible</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${completedReq.candidateName || completedReq.candidateEmail}</strong>,</p><p>La traduction de votre document <strong>${completedReq.sourceDocumentName || "document"}</strong> est terminée et disponible au téléchargement.</p><p style="text-align:center;margin:24px 0"><a href="${input.translatedDocumentUrl}" style="background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;display:inline-block">Télécharger le document traduit</a></p><p>Pour toute question : <strong>+237 698 104 832</strong> (WhatsApp)</p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
+          });
+        } catch (emailErr) {
+          console.warn("[translation] Completion notification email failed:", emailErr);
+        }
+      }
+
       return { success: true };
     }),
 

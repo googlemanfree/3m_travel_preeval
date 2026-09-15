@@ -8,6 +8,7 @@
 import type { Express, Request, Response } from "express";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
+import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
 
@@ -153,7 +154,7 @@ export function registerCinetPayWebhook(app: Express): void {
         })
         .where(and(eq(applications.id, application.id), eq(applications.paymentTransactionId, transactionId)));
 
-      // Un email est envoyé uniquement à la première transition PENDING → SUCCESS.
+      // Un email et une notification in-app sont envoyés uniquement à la première transition PENDING → SUCCESS.
       if (isFirstSuccessfulTransition) {
         try {
           await sendPaymentConfirmationEmail(
@@ -165,6 +166,19 @@ export function registerCinetPayWebhook(app: Express): void {
           );
         } catch (emailErr) {
           console.warn("[CinetPay Webhook] Email send failed:", emailErr);
+        }
+        if (application.candidateId) {
+          try {
+            await db.insert(clientNotifications).values({
+              candidateId: application.candidateId,
+              type: "payment_confirmed",
+              title: "Votre paiement a été confirmé",
+              body: `Votre paiement de ${(application.paymentAmount ?? 65000).toLocaleString("fr-FR")} XAF a été reçu. Votre dossier ${application.dossierNumber} est maintenant débloqué pour le dépôt de documents.`,
+              actionUrl: "/mon-espace?section=documents",
+            });
+          } catch (notifErr) {
+            console.warn("[CinetPay Webhook] Notification insert failed:", notifErr);
+          }
         }
       }
 
