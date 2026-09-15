@@ -110,6 +110,7 @@ export default function AdminLogin() {
                     className="pl-10"
                     disabled={loginMutation.isPending}
                     autoComplete="username"
+                    maxLength={320}
                   />
                 </div>
               </div>
@@ -129,6 +130,7 @@ export default function AdminLogin() {
                     className="pl-10 pr-10"
                     disabled={loginMutation.isPending}
                     autoComplete="current-password"
+                    maxLength={128}
                   />
                   <button
                     type="button"
@@ -143,7 +145,7 @@ export default function AdminLogin() {
 
               {needsTwoFactor && <div>
                 <Label htmlFor="admin-two-factor" className="text-gray-700 font-semibold mb-2 block">Code 2FA ou récupération</Label>
-                <Input id="admin-two-factor" inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={(e) => { setTwoFactorCode(e.target.value); setLocalError(''); }} placeholder="Code à six chiffres" disabled={loginMutation.isPending} />
+                <Input id="admin-two-factor" inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={(e) => { setTwoFactorCode(e.target.value); setLocalError(''); }} placeholder="Code à six chiffres" disabled={loginMutation.isPending} maxLength={32} />
               </div>}
 
               {localError && (

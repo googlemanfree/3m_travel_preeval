@@ -233,6 +233,7 @@ export default function CVGenerator() {
                     placeholder="Nom complet"
                     value={cvData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    maxLength={255}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                   />
                   <input
@@ -240,6 +241,7 @@ export default function CVGenerator() {
                     placeholder="Email"
                     value={cvData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
+                    maxLength={320}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                   />
                   <input
@@ -247,6 +249,7 @@ export default function CVGenerator() {
                     placeholder="Téléphone"
                     value={cvData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
+                    maxLength={50}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                   />
                   <input
@@ -254,12 +257,14 @@ export default function CVGenerator() {
                     placeholder="Localisation"
                     value={cvData.location}
                     onChange={(e) => handleInputChange('location', e.target.value)}
+                    maxLength={150}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                   />
                   <textarea
                     placeholder="Résumé professionnel"
                     value={cvData.summary}
                     onChange={(e) => handleInputChange('summary', e.target.value)}
+                    maxLength={2000}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none h-24"
                   />
                 </div>
@@ -273,6 +278,7 @@ export default function CVGenerator() {
                       placeholder="Ajouter une compétence"
                       value={skillInput}
                       onChange={(e) => setSkillInput(e.target.value)}
+                      maxLength={100}
                       className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                     />
                     <button
@@ -298,6 +304,7 @@ export default function CVGenerator() {
                         placeholder="Ajouter une langue"
                         value={languageInput}
                         onChange={(e) => setLanguageInput(e.target.value)}
+                        maxLength={100}
                         className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                       />
                       <button

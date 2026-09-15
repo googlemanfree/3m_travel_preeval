@@ -185,7 +185,7 @@ export default function AdminDigitalServices() {
                     </div>
                     <div>
                       <label htmlFor="digital-admin-notes" className="text-sm font-black text-slate-950">Notes internes</label>
-                      <Textarea id="digital-admin-notes" className="mt-2 min-h-24 bg-white" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contexte, prochaine action, conditions proposées…" />
+                      <Textarea id="digital-admin-notes" className="mt-2 min-h-24 bg-white" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contexte, prochaine action, conditions proposées…" maxLength={2000} />
                     </div>
                   </div>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">

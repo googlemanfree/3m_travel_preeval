@@ -213,6 +213,7 @@ export default function AdminUsersManagement() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(0);
               }}
+              maxLength={200}
               className="pl-12 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>

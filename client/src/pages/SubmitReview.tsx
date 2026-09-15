@@ -170,6 +170,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="votre.email@exemple.com"
+                  maxLength={320}
                   className={errors.email ? "border-red-500" : ""}
                 />
                 {errors.email && (

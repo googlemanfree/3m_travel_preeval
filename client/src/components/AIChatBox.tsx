@@ -314,6 +314,7 @@ export function AIChatBox({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
+          maxLength={4000}
           className="flex-1 max-h-32 resize-none min-h-9"
           rows={1}
         />

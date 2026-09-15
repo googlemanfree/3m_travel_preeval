@@ -358,6 +358,7 @@ export default function ApprovedReviewsSection() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder={labels.searchPlaceholder}
+                maxLength={200}
                 className="w-full rounded-full border border-slate-200 bg-white px-5 py-3 pr-24 text-sm text-slate-800 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
               {searchQuery && (

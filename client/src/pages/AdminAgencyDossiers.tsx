@@ -478,6 +478,7 @@ export default function AdminAgencyDossiers() {
                   placeholder="Rechercher par n° dossier, nom, email ou téléphone..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  maxLength={200}
                   className="pl-9 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
@@ -717,6 +718,7 @@ export default function AdminAgencyDossiers() {
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                     placeholder="Jean Dupont"
                     required
+                    maxLength={255}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
                   />
                 </div>
@@ -726,6 +728,7 @@ export default function AdminAgencyDossiers() {
                     value={form.nationality}
                     onChange={(e) => setForm({ ...form, nationality: e.target.value })}
                     placeholder="Camerounaise"
+                    maxLength={100}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
                   />
                 </div>
@@ -739,6 +742,7 @@ export default function AdminAgencyDossiers() {
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="jean@example.com"
                     required
+                    maxLength={320}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
                   />
                 </div>
@@ -751,6 +755,7 @@ export default function AdminAgencyDossiers() {
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="+237 6XX XXX XXX"
                     required
+                    maxLength={50}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
                   />
                 </div>
@@ -883,6 +888,7 @@ export default function AdminAgencyDossiers() {
                 onChange={(e) => setForm({ ...form, adminNotes: e.target.value })}
                 placeholder="Observations, remarques, points d'attention..."
                 rows={3}
+                maxLength={2000}
                 className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
               />
             </div>
@@ -1080,6 +1086,7 @@ export default function AdminAgencyDossiers() {
                   onChange={(e) => setStatusNote(e.target.value)}
                   placeholder="Précisions sur le changement de statut..."
                   rows={3}
+                  maxLength={2000}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
                 />
               </div>
@@ -1141,6 +1148,7 @@ export default function AdminAgencyDossiers() {
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Observations, remarques, points d'attention..."
                   rows={5}
+                  maxLength={2000}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
                 />
               </div>
@@ -1192,8 +1200,8 @@ export default function AdminAgencyDossiers() {
               <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/30 rounded-lg p-3">
                 Cette action est irréversible. Le dossier sera définitivement supprimé.
               </p>
-              <div className="space-y-2"><Label htmlFor="delete-reason">Motif de suppression</Label><Textarea id="delete-reason" value={deleteReason} onChange={(event) => setDeleteReason(event.target.value)} placeholder="Ex. doublon créé par erreur" className="border-slate-600 bg-slate-900 text-white" /></div>
-              <div className="space-y-2"><Label htmlFor="delete-confirmation">Tapez SUPPRIMER pour confirmer</Label><Input id="delete-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())} className="border-slate-600 bg-slate-900 text-white" /></div>
+              <div className="space-y-2"><Label htmlFor="delete-reason">Motif de suppression</Label><Textarea id="delete-reason" value={deleteReason} onChange={(event) => setDeleteReason(event.target.value)} placeholder="Ex. doublon créé par erreur" maxLength={500} className="border-slate-600 bg-slate-900 text-white" /></div>
+              <div className="space-y-2"><Label htmlFor="delete-confirmation">Tapez SUPPRIMER pour confirmer</Label><Input id="delete-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())} maxLength={9} className="border-slate-600 bg-slate-900 text-white" /></div>
             </div>
           )}
           <DialogFooter className="gap-2 mt-4">

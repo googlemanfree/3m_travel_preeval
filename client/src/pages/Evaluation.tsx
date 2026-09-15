@@ -462,12 +462,12 @@ export default function Evaluation() {
             {onboardingFromRegistration && <div role="status" aria-live="polite" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Votre compte est activé.</strong> Complétez votre évaluation préparatoire en sélectionnant votre projet, votre pays et la procédure concernée. Les critères et pièces définitifs seront confirmés par un conseiller à partir des sources institutionnelles.</div>}
             <SectionTitle>État civil & famille</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><Label>Nom complet *</Label><Input value={form.fullName} onChange={(e) => update('fullName', e.target.value)} className="mt-1" /></div>
+              <div><Label>Nom complet *</Label><Input value={form.fullName} onChange={(e) => update('fullName', e.target.value)} maxLength={255} className="mt-1" /></div>
               <div><Label>Date de naissance</Label><Input type="date" value={form.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} className="mt-1" /></div>
-              <div><Label>Email *</Label><Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className="mt-1" /></div>
-              <div><Label>Téléphone *</Label><Input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+237 6XX XXX XXX" className="mt-1" /></div>
-              <div><Label>Nationalité</Label><Input value={form.nationality} onChange={(e) => update('nationality', e.target.value)} className="mt-1" /></div>
-              <div><Label>Ville de résidence</Label><Input value={form.cityOfResidence} onChange={(e) => update('cityOfResidence', e.target.value)} className="mt-1" /></div>
+              <div><Label>Email *</Label><Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} maxLength={320} className="mt-1" /></div>
+              <div><Label>Téléphone *</Label><Input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+237 6XX XXX XXX" maxLength={50} className="mt-1" /></div>
+              <div><Label>Nationalité</Label><Input value={form.nationality} onChange={(e) => update('nationality', e.target.value)} maxLength={100} className="mt-1" /></div>
+              <div><Label>Ville de résidence</Label><Input value={form.cityOfResidence} onChange={(e) => update('cityOfResidence', e.target.value)} maxLength={100} className="mt-1" /></div>
               <div>
                 <Label>Situation matrimoniale</Label>
                 <select value={form.maritalStatus} onChange={(e) => update('maritalStatus', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
@@ -494,9 +494,9 @@ export default function Evaluation() {
                   <option value="doctorat">Doctorat</option>
                 </select>
               </div>
-              <div><PrefillLabel active={autoFilledFields.has('diplomaTitle')}>Intitulé exact du diplôme</PrefillLabel><Input value={form.diplomaTitle} onChange={(e) => update('diplomaTitle', e.target.value)} className={`mt-1 ${prefillClass('diplomaTitle')}`} /></div>
-              <div><PrefillLabel active={autoFilledFields.has('graduationYear')}>Année d'obtention</PrefillLabel><Input value={form.graduationYear} onChange={(e) => update('graduationYear', e.target.value)} placeholder="2022" className={`mt-1 ${prefillClass('graduationYear')}`} /></div>
-              <div><PrefillLabel active={autoFilledFields.has('fieldOfStudy')}>Domaine d'études</PrefillLabel><Input value={form.fieldOfStudy} onChange={(e) => update('fieldOfStudy', e.target.value)} className={`mt-1 ${prefillClass('fieldOfStudy')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('diplomaTitle')}>Intitulé exact du diplôme</PrefillLabel><Input value={form.diplomaTitle} onChange={(e) => update('diplomaTitle', e.target.value)} maxLength={255} className={`mt-1 ${prefillClass('diplomaTitle')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('graduationYear')}>Année d'obtention</PrefillLabel><Input value={form.graduationYear} onChange={(e) => update('graduationYear', e.target.value)} placeholder="2022" maxLength={20} className={`mt-1 ${prefillClass('graduationYear')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('fieldOfStudy')}>Domaine d'études</PrefillLabel><Input value={form.fieldOfStudy} onChange={(e) => update('fieldOfStudy', e.target.value)} maxLength={150} className={`mt-1 ${prefillClass('fieldOfStudy')}`} /></div>
             </div>
 
             <SectionTitle>Expérience professionnelle</SectionTitle>
@@ -511,7 +511,7 @@ export default function Evaluation() {
                   <option value="etudiant">Étudiant(e)</option>
                 </select>
               </div>
-              <div><PrefillLabel active={autoFilledFields.has('currentJobTitle')}>Intitulé du poste actuel</PrefillLabel><Input value={form.currentJobTitle} onChange={(e) => update('currentJobTitle', e.target.value)} className={`mt-1 ${prefillClass('currentJobTitle')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('currentJobTitle')}>Intitulé du poste actuel</PrefillLabel><Input value={form.currentJobTitle} onChange={(e) => update('currentJobTitle', e.target.value)} maxLength={150} className={`mt-1 ${prefillClass('currentJobTitle')}`} /></div>
               <div>
                 <PrefillLabel active={autoFilledFields.has('yearsOfExperience')}>Années d'expérience continue</PrefillLabel>
                 <select value={form.yearsOfExperience} onChange={(e) => update('yearsOfExperience', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('yearsOfExperience')}`}>
@@ -523,9 +523,9 @@ export default function Evaluation() {
                   <option value="10+">10 ans ou plus</option>
                 </select>
               </div>
-              <div><PrefillLabel active={autoFilledFields.has('industrySector')}>Secteur d'activité</PrefillLabel><Input value={form.industrySector} onChange={(e) => update('industrySector', e.target.value)} className={`mt-1 ${prefillClass('industrySector')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('industrySector')}>Secteur d'activité</PrefillLabel><Input value={form.industrySector} onChange={(e) => update('industrySector', e.target.value)} maxLength={100} className={`mt-1 ${prefillClass('industrySector')}`} /></div>
             </div>
-            <div><PrefillLabel active={autoFilledFields.has('mainTasks')}>Tâches principales</PrefillLabel><Textarea value={form.mainTasks} onChange={(e) => update('mainTasks', e.target.value)} rows={2} className={`mt-1 ${prefillClass('mainTasks')}`} /></div>
+            <div><PrefillLabel active={autoFilledFields.has('mainTasks')}>Tâches principales</PrefillLabel><Textarea value={form.mainTasks} onChange={(e) => update('mainTasks', e.target.value)} rows={2} maxLength={2000} className={`mt-1 ${prefillClass('mainTasks')}`} /></div>
 
             <SectionTitle>Compétences linguistiques</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -552,7 +552,7 @@ export default function Evaluation() {
                 </select>
               </div>
             </div>
-            <div><PrefillLabel active={autoFilledFields.has('languageTestsTaken')}>Tests officiels passés ou à passer</PrefillLabel><Input value={form.languageTestsTaken} onChange={(e) => update('languageTestsTaken', e.target.value)} placeholder="Ex: TEF, TCF, IELTS..." className={`mt-1 ${prefillClass('languageTestsTaken')}`} /></div>
+            <div><PrefillLabel active={autoFilledFields.has('languageTestsTaken')}>Tests officiels passés ou à passer</PrefillLabel><Input value={form.languageTestsTaken} onChange={(e) => update('languageTestsTaken', e.target.value)} placeholder="Ex: TEF, TCF, IELTS..." maxLength={255} className={`mt-1 ${prefillClass('languageTestsTaken')}`} /></div>
 
             <SectionTitle>Projet & pays cible</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -577,7 +577,7 @@ export default function Evaluation() {
               </div>
               {customDestinationMode && <div>
                 <Label>Précisez la destination</Label>
-                <Input value={form.destinationCountry} onChange={(event) => update('destinationCountry', event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" className="mt-1" />
+                <Input value={form.destinationCountry} onChange={(event) => update('destinationCountry', event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" maxLength={100} className="mt-1" />
               </div>}
               {availableProcedures.length > 0 && <div>
                 <Label>Procédure à évaluer *</Label>
@@ -598,9 +598,9 @@ export default function Evaluation() {
                   <option value="autre">Autre</option>
                 </select>
               </div>
-              <div><Label>Budget disponible (FCFA)</Label><Input value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} className="mt-1" /></div>
+              <div><Label>Budget disponible (FCFA)</Label><Input value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} maxLength={50} className="mt-1" /></div>
             </div>
-            <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} placeholder="Travail, études, recrutement, visite, installation…" className="mt-1" /></div>
+            <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} placeholder="Travail, études, recrutement, visite, installation…" maxLength={255} className="mt-1" /></div>
             {form.destinationCountry && availableProcedures.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Destination à comparer :</strong> aucun guide spécifique n’est encore associé à cette combinaison. Votre dossier est néanmoins enregistré pour vérification par un conseiller.</div>}
 
             <ProjectDetailsSection projectType={form.projectType} values={form.projectDetails} onChange={updateProjectDetails} countryFields={countryProcedureFields} procedure={selectedProcedure} />
@@ -612,7 +612,7 @@ export default function Evaluation() {
                 Refus de visa antérieur
               </label>
               {form.priorVisaRefusal && (
-                <Input value={form.priorVisaRefusalCountry} onChange={(e) => update('priorVisaRefusalCountry', e.target.value)} placeholder="Préciser le pays" className="ml-6" />
+                <Input value={form.priorVisaRefusalCountry} onChange={(e) => update('priorVisaRefusalCountry', e.target.value)} placeholder="Préciser le pays" maxLength={100} className="ml-6" />
               )}
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input type="checkbox" checked={form.criminalRecord} onChange={(e) => update('criminalRecord', e.target.checked)} />
@@ -732,7 +732,7 @@ export default function Evaluation() {
               </div>
             </div>
 
-            <div><Label>Message complémentaire</Label><Textarea value={form.message} onChange={(e) => update('message', e.target.value)} rows={3} className="mt-1" /></div>
+            <div><Label>Message complémentaire</Label><Textarea value={form.message} onChange={(e) => update('message', e.target.value)} rows={3} maxLength={2000} className="mt-1" /></div>
 
             {(formError || submitMutation.error) && (
               <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

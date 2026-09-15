@@ -149,7 +149,7 @@ export default function AdminEmailDeliveryManagement() {
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher instantanément dans les journaux e-mail" className="pl-9 pr-20" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher instantanément dans les journaux e-mail" maxLength={200} className="pl-9 pr-20" />
                 {search && <Button type="button" variant="ghost" size="sm" className="absolute right-1 top-1 h-8" onClick={() => setSearch("")}>Effacer</Button>}
                 <span className="sr-only" aria-live="polite">{search ? `Recherche active : ${search}` : "Tous les journaux e-mail sont affichés"}</span>
               </div>
@@ -195,6 +195,7 @@ export default function AdminEmailDeliveryManagement() {
                                 value={editingEmail}
                                 onChange={(event) => setEditingEmail(event.target.value)}
                                 aria-label={`Nouvelle adresse pour ${log.recipientEmail}`}
+                                maxLength={320}
                                 className="h-8"
                                 autoFocus
                               />

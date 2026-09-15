@@ -54,6 +54,7 @@ export function AdminPassportCorrectionHistory() {
               placeholder="Ex. 248"
               value={requestId}
               onChange={event => setRequestId(event.target.value.replace(/\D/g, ''))}
+              maxLength={20}
             />
           </div>
           {requestId && (

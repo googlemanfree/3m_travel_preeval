@@ -313,6 +313,7 @@ export default function Contact() {
                       required
                       disabled={isLoading}
                       className="w-full"
+                      maxLength={320}
                     />
                   </div>
                 </div>

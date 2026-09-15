@@ -87,6 +87,7 @@ export default function AdminAddDossier() {
                   onChange={handleInputChange}
                   required
                   placeholder="Jean Dupont"
+                  maxLength={255}
                   className="mt-1"
                 />
               </div>
@@ -101,6 +102,7 @@ export default function AdminAddDossier() {
                   onChange={handleInputChange}
                   required
                   placeholder="jean@example.com"
+                  maxLength={320}
                   className="mt-1"
                 />
               </div>
@@ -114,6 +116,7 @@ export default function AdminAddDossier() {
                   onChange={handleInputChange}
                   required
                   placeholder="+237 6XX XXX XXX"
+                  maxLength={50}
                   className="mt-1"
                 />
               </div>
@@ -127,6 +130,7 @@ export default function AdminAddDossier() {
                   onChange={handleInputChange}
                   required
                   placeholder="Camerounaise"
+                  maxLength={100}
                   className="mt-1"
                 />
               </div>

@@ -691,24 +691,25 @@ export default function EvisaRequestForm() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    ['firstName', 'Prénom(s)', 'Ex. AUREOL', 'text'],
-                    ['lastName', 'Nom de famille', 'Ex. DONFACK', 'text'],
-                    ['passportNumber', 'Numéro de passeport', 'Numéro inscrit sur le passeport', 'text'],
-                    ['issuingCountry', 'Pays d’émission', 'Ex. Cameroun', 'text'],
-                    ['issueDate', 'Date d’émission', '', 'date'],
-                    ['expiryDate', 'Date d’expiration', '', 'date'],
-                    ['gender', 'Genre', 'Ex. M ou F', 'text'],
-                    ['placeOfBirth', 'Lieu de naissance', 'Ville et pays si disponibles', 'text'],
-                  ].map(([name, label, placeholder, type]) => (
+                    [‘firstName’, ‘Prénom(s)’, ‘Ex. AUREOL’, ‘text’, 255],
+                    [‘lastName’, ‘Nom de famille’, ‘Ex. DONFACK’, ‘text’, 255],
+                    [‘passportNumber’, ‘Numéro de passeport’, ‘Numéro inscrit sur le passeport’, ‘text’, 64],
+                    [‘issuingCountry’, ‘Pays d’émission’, ‘Ex. Cameroun’, ‘text’, 100],
+                    [‘issueDate’, ‘Date d’émission’, ‘’, ‘date’, undefined],
+                    [‘expiryDate’, ‘Date d’expiration’, ‘’, ‘date’, undefined],
+                    [‘gender’, ‘Genre’, ‘Ex. M ou F’, ‘text’, 10],
+                    [‘placeOfBirth’, ‘Lieu de naissance’, ‘Ville et pays si disponibles’, ‘text’, 150],
+                  ].map(([name, label, placeholder, type, maxLen]) => (
                     <div key={name}>
                       <Label htmlFor={`confirmed-${name}`} className="block text-sm font-medium text-emerald-950 mb-2">{label}</Label>
                       <Input
                         id={`confirmed-${name}`}
                         name={name}
-                        type={type}
-                        placeholder={placeholder}
+                        type={type as string}
+                        placeholder={placeholder as string}
                         value={formData[name as keyof FormData] as string}
                         onChange={handleInputChange}
+                        maxLength={maxLen as number | undefined}
                         className="w-full border-emerald-200 bg-white"
                       />
                     </div>
@@ -795,6 +796,7 @@ export default function EvisaRequestForm() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={4}
+                  maxLength={2000}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

@@ -128,6 +128,7 @@ export default function AdminChangePasswordRequired({
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Entrez votre mot de passe actuel"
+                maxLength={128}
                 className="mt-2"
                 disabled={loading}
               />
@@ -144,6 +145,7 @@ export default function AdminChangePasswordRequired({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Minimum 8 caractères"
+                maxLength={128}
                 className="mt-2"
                 disabled={loading}
               />
@@ -160,6 +162,7 @@ export default function AdminChangePasswordRequired({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirmez votre nouveau mot de passe"
+                maxLength={128}
                 className="mt-2"
                 disabled={loading}
               />

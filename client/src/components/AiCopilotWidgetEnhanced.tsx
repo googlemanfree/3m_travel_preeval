@@ -344,6 +344,7 @@ export default function AiCopilotWidgetEnhanced() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Posez votre question..."
                 disabled={chatMutation.isPending}
+                maxLength={4000}
                 className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <button

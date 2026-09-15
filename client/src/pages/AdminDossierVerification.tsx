@@ -39,8 +39,8 @@ export default function AdminDossierVerification() {
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-[1.25fr_1fr_auto] sm:items-end">
-              <div className="space-y-2"><Label htmlFor="reference">Numéro de dossier</Label><Input id="reference" value={reference} onChange={(event) => setReference(event.target.value)} placeholder="3M-2026-0001 ou 3M-AGN-0001" autoComplete="off" /></div>
-              <div className="space-y-2"><Label htmlFor="matching-email">E-mail à contrôler <span className="font-normal text-slate-500">(facultatif)</span></Label><Input id="matching-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="client@exemple.com" autoComplete="off" /></div>
+              <div className="space-y-2"><Label htmlFor="reference">Numéro de dossier</Label><Input id="reference" value={reference} onChange={(event) => setReference(event.target.value)} placeholder="3M-2026-0001 ou 3M-AGN-0001" autoComplete="off" maxLength={40} /></div>
+              <div className="space-y-2"><Label htmlFor="matching-email">E-mail à contrôler <span className="font-normal text-slate-500">(facultatif)</span></Label><Input id="matching-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="client@exemple.com" autoComplete="off" maxLength={320} /></div>
               <Button type="submit" className="gap-2 bg-[#123a7a] hover:bg-[#0b2f6f]" disabled={!reference.trim() || verifyMutation.isPending}><Search className="h-4 w-4" />{verifyMutation.isPending ? "Vérification…" : "Vérifier"}</Button>
             </form>
 

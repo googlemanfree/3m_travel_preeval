@@ -45,7 +45,7 @@ Règles strictes :
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string(),
+  content: z.string().max(4000),
 });
 
 export const aiCopilotRouter = router({

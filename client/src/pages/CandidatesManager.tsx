@@ -276,15 +276,15 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="admin-full-name" className="text-xs text-gray-600">Nom complet</Label>
-                <Input id="admin-full-name" value={fullName} onChange={(event) => setFullName(event.target.value)} className="mt-1" />
+                <Input id="admin-full-name" value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={255} className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="admin-email" className="text-xs text-gray-600">Email</Label>
-                <Input id="admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1" />
+                <Input id="admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="admin-phone" className="text-xs text-gray-600">Téléphone</Label>
-                <Input id="admin-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-1" />
+                <Input id="admin-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={50} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs text-gray-600">Numéro de dossier</Label>
@@ -301,11 +301,11 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="admin-destination" className="text-xs text-gray-600">Destination</Label>
-                <Input id="admin-destination" value={destination} onChange={(event) => setDestination(event.target.value)} className="mt-1" />
+                <Input id="admin-destination" value={destination} onChange={(event) => setDestination(event.target.value)} maxLength={100} className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="admin-visa-type" className="text-xs text-gray-600">Type de visa</Label>
-                <Input id="admin-visa-type" value={visaType} onChange={(event) => setVisaType(event.target.value)} className="mt-1" />
+                <Input id="admin-visa-type" value={visaType} onChange={(event) => setVisaType(event.target.value)} maxLength={50} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs text-gray-600">Date de création</Label>

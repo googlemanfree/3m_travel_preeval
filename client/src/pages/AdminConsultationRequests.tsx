@@ -135,11 +135,12 @@ export default function AdminConsultationRequests() {
                       value={editedReport}
                       onChange={(e) => setEditedReport(e.target.value)}
                       rows={12}
+                      maxLength={10000}
                       className="mt-1 mb-4 text-sm"
                       placeholder={selected.aiProcessingError ? "L'analyse IA a échoué — rédigez le retour manuellement." : ""}
                     />
                     <Label>Note interne (optionnel, non envoyée au candidat)</Label>
-                    <Textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} rows={2} className="mt-1 mb-4 text-sm" />
+                    <Textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} rows={2} maxLength={2000} className="mt-1 mb-4 text-sm" />
 
                     <div className="flex gap-3">
                       <Button

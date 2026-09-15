@@ -212,6 +212,7 @@ export default function AdminAccompagnement() {
                     placeholder="Ajouter des notes sur l'avancement..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
+                    maxLength={2000}
                     className="min-h-24"
                   />
                 </div>
