@@ -9,12 +9,15 @@ describe("pilotage paiement, activation et étapes officielles", () => {
   });
 
   it("affiche une progression client basée sur les états réels du dossier", () => {
-    const source = readFileSync(resolve(process.cwd(), "client/src/pages/MySpace.tsx"), "utf8");
-    expect(source).toContain("Progression de l’activation");
+    // MySpace.tsx was consolidated into EvaluationSpace.tsx; the activation progress bar itself
+    // now lives in the CandidateCountryJourney component that EvaluationSpace.tsx renders.
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/EvaluationSpace.tsx"), "utf8");
+    const journeyComponent = readFileSync(resolve(process.cwd(), "client/src/components/CandidateCountryJourney.tsx"), "utf8");
+    expect(journeyComponent).toContain("Progression du parcours");
     expect(source).toContain("evaluationClientConfirmedAt");
     expect(source).toContain("activationRequestedAt");
-    expect(source).toContain('paymentStatus === "SUCCESS"');
-    expect(source).toContain('role="progressbar"');
+    expect(source).toContain('paymentStatus ?? "").toUpperCase() === "SUCCESS"');
+    expect(journeyComponent).toContain('role="progressbar"');
   });
 
   it("bloque l’activation pré-dossier sans paiement validé par un admin sur les deux sources", () => {

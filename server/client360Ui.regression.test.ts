@@ -20,8 +20,12 @@ describe("améliorations UI du suivi client et de l’accès admin", () => {
     expect(source).toContain('animate={{ x: ["-120%", "280%"] }}');
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientCaseTracking.tsx removal — confirm intentionally dropped or re-add.
+  // The dossier progress UI in EvaluationSpace.tsx now uses DossierProgressTimeline and
+  // CandidateCountryJourney; neither renders a "workflowStages"-driven, expandable "Voir les détails"
+  // timeline — that pattern could not be found anywhere in the current codebase.
   it("présente une timeline et des détails dépliables dans le suivi client", () => {
-    const source = read("client/src/pages/ClientCaseTracking.tsx");
+    const source = read("client/src/pages/EvaluationSpace.tsx");
     expect(source).toContain("workflowStages");
     expect(source).toContain("Voir les détails");
     expect(source).toContain("aria-expanded={expanded}");

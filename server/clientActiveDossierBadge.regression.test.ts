@@ -23,9 +23,12 @@ describe("badge de dossier actif côté client", () => {
     expect(navigation).toContain("dossierPayload?.activeDossier?.dossierNumber");
     expect(navigation).toContain("dossierPayload?.applications?.[0]?.dossierNumber");
     expect(navigation).toContain("Aucun dossier actif");
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    // ClientDashboard.tsx (and its `dashboardSummary` variable) was consolidated into
+    // EvaluationSpace.tsx, which reads the same query into `dashboardData` and renders the badge
+    // via the derived `cProfile.dossierNumber`.
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("trpc.candidate.getClientDashboardSummary.useQuery");
-    expect(dashboard).toContain("dashboardSummary?.candidate?.dossierNumber");
+    expect(dashboard).toContain("cProfile.dossierNumber");
   });
 });
 

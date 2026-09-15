@@ -14,12 +14,12 @@ describe("agreement and payment gating contracts", () => {
     expect(() => assertApplicationCanEnterStatus({ ...base, evaluationClientConfirmed: true }, "paye")).not.toThrow();
   });
   it("renders a mandatory protocol signature flow in the candidate space", () => {
-    const source = read("client/src/pages/MySpace.tsx");
-    expect(source).toContain("Protocole d’accord de service");
+    const source = read("client/src/pages/EvaluationSpace.tsx");
+    expect(source).toContain("Protocole d’accord obligatoire");
     expect(source).toContain("Signer le protocole d’accord");
     expect(source).toContain("agreementSigned");
     expect(source).toContain("SignatureCanvas");
-    expect(source).toContain("Tant que cette étape n’est pas signée");
+    expect(source).toContain("Il reste visible ici jusqu’à sa signature.");
   });
 
   it("protects processing statuses on the server", () => {

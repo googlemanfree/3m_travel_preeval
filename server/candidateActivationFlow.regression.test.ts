@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const candidateRouter = readFileSync(resolve(process.cwd(), "server/routers/candidate.ts"), "utf8");
-const mySpace = readFileSync(resolve(process.cwd(), "client/src/pages/MySpace.tsx"), "utf8");
+const mySpace = readFileSync(resolve(process.cwd(), "client/src/pages/EvaluationSpace.tsx"), "utf8");
 const schema = readFileSync(resolve(process.cwd(), "drizzle/schema.ts"), "utf8");
 const sourceCatalog = readFileSync(resolve(process.cwd(), "shared/officialSourceCatalog.ts"), "utf8");
 
@@ -24,12 +24,21 @@ describe("candidate activation flow", () => {
     expect(candidateRouter).toContain('if (application.paymentStatus === "SUCCESS") return');
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MySpace.tsx removal — confirm intentionally dropped or re-add.
+  // Neither the "confirmEvaluationReceipt" nor "requestDossierActivation" mutations checked above are
+  // called from any client file anymore (grepped across client/src) — the manual confirm/request
+  // buttons this test expects appear to have been replaced by the automatic "evaluationRequired"
+  // gating flow in EvaluationSpace.tsx, and there is no "payments" tab in its validSections anymore.
   it("exposes the client actions without making activation automatic", () => {
     expect(mySpace).toContain("Confirmer la réception du bilan");
     expect(mySpace).toContain("Demander l’activation du dossier");
     expect(mySpace).toContain("setActiveTab(\"payments\")");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MySpace.tsx removal — confirm intentionally dropped or re-add.
+  // "OFFICIAL_SOURCE_CATALOG" is still used (by the CandidateCountryJourney component EvaluationSpace.tsx
+  // renders), but the explicit "no officially verified steps configured" empty-state copy below could
+  // not be found anywhere in the current codebase.
   it("shows official-source coverage or an explicit unavailable-source state", () => {
     expect(sourceCatalog).toContain('"canada"');
     expect(sourceCatalog).toContain('"luxembourg"');

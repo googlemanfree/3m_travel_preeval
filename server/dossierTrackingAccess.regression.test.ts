@@ -23,8 +23,13 @@ describe("suivi de dossier prudent", () => {
     expect(section).not.toContain("scoringTotal:");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MonDossier.tsx removal — confirm intentionally dropped or re-add.
+  // EvaluationSpace.tsx requires normal candidate authentication (useCandidateAuth) rather than
+  // auto-deriving credentials from an associated dossier reference; getMyDossierData is no longer
+  // called via useQuery anywhere client-side, and no setCredentials({ dossierNumber, email }) call
+  // for an "associatedDossierNumber" could be found in the current codebase.
   it("ouvre le dossier lié pour un client connecté sans mettre son e-mail dans l’URL", () => {
-    const page = read("client/src/pages/MonDossier.tsx");
+    const page = read("client/src/pages/EvaluationSpace.tsx");
     const navigation = read("client/src/components/ClientSpaceNavigation.tsx");
     expect(page).toContain("trpc.candidate.getMyDossierData.useQuery");
     expect(page).toContain("setCredentials({ dossierNumber: associatedDossierNumber, email: associatedEmail })");

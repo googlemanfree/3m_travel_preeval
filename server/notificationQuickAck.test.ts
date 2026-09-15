@@ -23,8 +23,11 @@ describe("Visualiseur modal - Accusé de réception des notifications", () => {
     expect(acknowledged).toBe(true);
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // The "acknowledgement-toast-progress" class only survives as unused CSS in index.css; no current
+  // TSX file references it, so the acknowledgement toast itself appears to have been dropped.
   it("affiche un toast explicite au bas de l’écran après l’accusé de réception", () => {
-    const dashboardSource = readFileSync("client/src/pages/ClientDashboard.tsx", "utf8");
+    const dashboardSource = readFileSync("client/src/pages/EvaluationSpace.tsx", "utf8");
     const stylesSource = readFileSync("client/src/index.css", "utf8");
     expect(dashboardSource).toContain("Accusé de réception enregistré");
     expect(dashboardSource).toContain('position: "bottom-center"');
@@ -35,8 +38,9 @@ describe("Visualiseur modal - Accusé de réception des notifications", () => {
     expect(stylesSource).toContain("animation: acknowledgementToastCountdown 3.5s linear forwards");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
   it("permet d’annuler l’accusé de réception depuis le toast", () => {
-    const dashboardSource = readFileSync("client/src/pages/ClientDashboard.tsx", "utf8");
+    const dashboardSource = readFileSync("client/src/pages/EvaluationSpace.tsx", "utf8");
     const routerSource = readFileSync("server/routers/caseTracking.ts", "utf8");
     expect(dashboardSource).toContain('label: "Annuler"');
     expect(dashboardSource).toContain("markNotificationUnread");

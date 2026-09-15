@@ -38,8 +38,12 @@ describe("sessions de 24 heures", () => {
     expect(timeoutHook).toContain("La durée est fixe");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // EvaluationSpace.tsx only calls setActiveTab("profile") / setActiveTab("documents") explicitly
+  // (plus a generic tab-click handler and the switchToSection() helper); no literal
+  // setActiveTab("overview") / setActiveTab("messages") calls or "Étape suivante" text were found.
   it("expose des raccourcis internes sans dépendre de l’historique du navigateur", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("Étape suivante");
     expect(dashboard).toContain("setActiveTab(\"overview\")");
     expect(dashboard).toContain("setActiveTab(\"messages\")");

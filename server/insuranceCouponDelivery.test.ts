@@ -23,10 +23,13 @@ describe("coupon et remise assurance", () => {
 
   it("donne au client un accès propriétaire au coupon et à l’attestation", () => {
     const tracking = read("server/routers/caseTracking.ts");
-    const client = read("client/src/pages/ClientCaseTracking.tsx");
+    // ClientCaseTracking.tsx was consolidated into EvaluationSpace.tsx; its coupon/attestation
+    // buttons are now short icon buttons ("Coupon" / "Attestation") wired to these handlers rather
+    // than the old full-length "Télécharger..." labels.
+    const client = read("client/src/pages/EvaluationSpace.tsx");
     expect(tracking).toContain("downloadMyInsuranceCoupon");
     expect(tracking).toContain("eq(insuranceRequests.email, ctx.candidate.email)");
-    expect(client).toContain("Télécharger le coupon");
-    expect(client).toContain("Télécharger l’attestation");
+    expect(client).toContain("downloadInsuranceCoupon(item.id)");
+    expect(client).toContain("downloadInsuranceAttestation(item.id)");
   });
 });
