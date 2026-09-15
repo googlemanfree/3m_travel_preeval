@@ -54,8 +54,8 @@ export const adminAuthRouter = router({
    */
   login: publicProcedure
     .input(z.object({
-      email: z.string().email(),
-      password: z.string().min(1),
+      email: z.string().email().max(320),
+      password: z.string().min(1).max(128),
     }))
     .mutation(async ({ input }) => {
       checkLoginAttempts(input.email);
@@ -122,8 +122,8 @@ export const adminAuthRouter = router({
   changePassword: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      currentPassword: z.string().min(1),
-      newPassword: z.string().min(8),
+      currentPassword: z.string().min(1).max(128),
+      newPassword: z.string().min(8).max(128),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);

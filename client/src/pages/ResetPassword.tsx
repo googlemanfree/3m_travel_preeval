@@ -146,6 +146,7 @@ export default function ResetPassword() {
                       onChange={e => setPassword(e.target.value)}
                       placeholder="Minimum 8 caractères"
                       className="pl-10 pr-10 h-11"
+                      maxLength={128}
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -182,6 +183,7 @@ export default function ResetPassword() {
                       onChange={e => setConfirm(e.target.value)}
                       placeholder="Répétez le mot de passe"
                       className={`pl-10 h-11 ${confirm && password !== confirm ? "border-red-400" : confirm && password === confirm ? "border-green-400" : ""}`}
+                      maxLength={128}
                     />
                   </div>
                   {confirm && password !== confirm && (

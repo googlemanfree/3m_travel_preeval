@@ -86,6 +86,7 @@ export default function ForgotPassword() {
                       placeholder="votre@email.com"
                       className="pl-10 h-11"
                       required
+                      maxLength={320}
                     />
                   </div>
                 </div>

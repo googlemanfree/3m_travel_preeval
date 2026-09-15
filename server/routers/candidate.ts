@@ -363,10 +363,10 @@ export const candidateRouter = router({
   register: publicProcedure
     .input(
       z.object({
-        fullName: z.string().min(2, "Nom requis"),
-        email: z.string().email("Email invalide"),
-        password: z.string().min(8, "Mot de passe : 8 caractères minimum"),
-        phone: z.string().optional(),
+        fullName: z.string().min(2, "Nom requis").max(255),
+        email: z.string().email("Email invalide").max(320),
+        password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
+        phone: z.string().max(50).optional(),
         // Jusqu'à 3 pays précis parmi les destinations réellement couvertes par le site
         // (destinations20.ts) : condition obligatoire pour que la checklist documentaire et le
         // score d'éligibilité, tous deux construits pour un pays précis, s'appliquent réellement.
@@ -504,8 +504,8 @@ export const candidateRouter = router({
   login: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
-        password: z.string().min(1),
+        email: z.string().email().max(320),
+        password: z.string().min(1).max(128),
       })
     )
     .mutation(async ({ input }) => {

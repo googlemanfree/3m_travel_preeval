@@ -260,6 +260,7 @@ export default function Register() {
                   aria-describedby={isFullNameInvalid ? "fullName-error" : undefined}
                   className={`h-12 pl-10 ${isFullNameInvalid ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                   required
+                  maxLength={255}
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
               </div>
@@ -291,6 +292,7 @@ export default function Register() {
                   aria-describedby={isEmailInvalid ? "email-error" : undefined}
                   className={`h-12 pl-10 ${isEmailInvalid ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                   required
+                  maxLength={320}
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
               </div>
@@ -350,6 +352,7 @@ export default function Register() {
                   aria-describedby={form.password ? "password-strength" : undefined}
                   className={`h-12 pl-10 pr-12 ${isPasswordInvalid ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                   required
+                  maxLength={128}
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
                 <button
@@ -407,6 +410,7 @@ export default function Register() {
                   aria-describedby={isConfirmationInvalid ? "confirmPassword-error" : undefined}
                   className={`h-12 pl-10 pr-12 ${isConfirmationInvalid ? "border-red-400 focus-visible:ring-red-500" : ""}`}
                   required
+                  maxLength={128}
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
                 <button

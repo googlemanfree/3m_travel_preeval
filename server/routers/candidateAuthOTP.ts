@@ -82,13 +82,13 @@ export const candidateAuthOTPRouter = router({
   verifyOTPAndRegister: publicProcedure
     .input(
       z.object({
-        email: z.string().email("Email invalide"),
-        fullName: z.string().min(2, "Nom requis"),
-        password: z.string().min(8, "Mot de passe : 8 caractères minimum"),
+        email: z.string().email("Email invalide").max(320),
+        fullName: z.string().min(2, "Nom requis").max(255),
+        password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
         otp: z.string().regex(/^\d{6}$/, "OTP invalide (6 chiffres)"),
-        phone: z.string().optional(),
+        phone: z.string().max(50).optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        nationality: z.string().optional(),
+        nationality: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -141,8 +141,8 @@ export const candidateAuthOTPRouter = router({
   loginSecure: publicProcedure
     .input(
       z.object({
-        email: z.string().email("Email invalide"),
-        password: z.string().min(1, "Mot de passe requis"),
+        email: z.string().email("Email invalide").max(320),
+        password: z.string().min(1, "Mot de passe requis").max(128),
       })
     )
     .mutation(async ({ input }) => {
@@ -229,7 +229,7 @@ export const candidateAuthOTPRouter = router({
     .input(
       z.object({
         token: z.string().min(1, "Token requis"),
-        newPassword: z.string().min(8, "Mot de passe : 8 caractères minimum"),
+        newPassword: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
       })
     )
     .mutation(async ({ input }) => {

@@ -117,8 +117,8 @@ export const adminAuthRouter = router({
    */
   login: publicProcedure
     .input(z.object({
-      email: z.string().email(),
-      password: z.string().min(1),
+      email: z.string().email().max(320),
+      password: z.string().min(1).max(128),
       twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -426,9 +426,9 @@ export const adminAuthRouter = router({
   inviteAdmin: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      email: z.string().email(),
-      fullName: z.string().min(2),
-      phone: z.string().optional(),
+      email: z.string().email().max(320),
+      fullName: z.string().min(2).max(255),
+      phone: z.string().max(50).optional(),
       adminType: z.enum(["evaluation", "accompagnement", "procedures"]),
     }))
     .mutation(async ({ input }) => {

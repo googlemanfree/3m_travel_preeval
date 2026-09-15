@@ -241,6 +241,7 @@ export default function Login() {
                   className="h-12 pl-10"
                   autoComplete="email"
                   required
+                  maxLength={320}
                 />
               </div>
             </div>
@@ -258,6 +259,7 @@ export default function Login() {
                   className="h-12 pl-10 pr-12"
                   autoComplete="current-password"
                   required
+                  maxLength={128}
                 />
                 <button
                   type="button"
@@ -511,6 +513,7 @@ export default function Login() {
                       className="pl-10"
                       autoComplete="email"
                       required
+                      maxLength={320}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
@@ -613,6 +616,7 @@ export default function Login() {
                       className="pl-10"
                       autoComplete="email"
                       required
+                      maxLength={320}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
