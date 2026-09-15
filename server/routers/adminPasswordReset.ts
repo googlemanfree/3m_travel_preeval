@@ -165,7 +165,7 @@ export const adminPasswordResetRouter = router({
 
         console.log(`[Admin Password Reset] Reset email sent to admin #${admin.id}`);
       } catch (emailError) {
-        console.error(`[Admin Password Reset] Failed to send reset email to ${admin.email}:`, emailError);
+        console.error(`[Admin Password Reset] Failed to send reset email to admin #${admin.id}:`, emailError);
         // Ne pas échouer la mutation si l'email n'est pas envoyé
       }
 
@@ -281,7 +281,7 @@ export const adminPasswordResetRouter = router({
 
         console.log(`[Admin Password Reset] Password reset confirmation sent to admin #${admin.id}`);
       } catch (emailError) {
-        console.error(`[Admin Password Reset] Failed to send confirmation email to ${admin.email}:`, emailError);
+        console.error(`[Admin Password Reset] Failed to send confirmation email to admin #${admin.id}:`, emailError);
       }
 
       return {

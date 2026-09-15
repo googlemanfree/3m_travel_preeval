@@ -194,7 +194,7 @@ export async function sendEvaluationEmail(data: EvaluationEmailData, resendApiKe
       return false;
     }
 
-    console.log(`[Email] Évaluation envoyée à ${data.email} (Dossier: ${data.folderId})`);
+    console.log(`[Email] Évaluation envoyée — Dossier: ${data.folderId}`);
     return true;
   } catch (error) {
     console.error('[Email] Erreur lors de l\'envoi:', error);
