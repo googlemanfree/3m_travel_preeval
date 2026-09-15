@@ -317,7 +317,7 @@ export const evisaRouter = router({
       z.object({
         applicationId: z.number(),
         amount: z.number(),
-        description: z.string(),
+        description: z.string().max(500),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

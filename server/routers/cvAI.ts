@@ -14,9 +14,9 @@ export const cvAIRouter = router({
   suggestExperienceImprovement: publicProcedure
     .input(
       z.object({
-        jobTitle: z.string(),
-        company: z.string(),
-        description: z.string(),
+        jobTitle: z.string().max(150),
+        company: z.string().max(255),
+        description: z.string().max(4000),
         language: z.enum(["fr", "en"]).default("fr"),
       })
     )

@@ -1119,7 +1119,7 @@ export const adminRouter = router({
    * Rejeter un bilan
    */
   rejectBilan: publicProcedure
-    .input(z.object({ sessionToken: z.string(), bilanId: z.number(), reason: z.string() }))
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number(), reason: z.string().max(2000) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -2253,12 +2253,12 @@ export const adminRouter = router({
   importAgencyDossier: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      whatsapp: z.string().min(5),
-      city: z.string().default("Yaoundé"),
-      destinationCountry: z.string().min(2),
-      projectType: z.string().min(2),
+      whatsapp: z.string().min(5).max(50),
+      city: z.string().max(100).default("Yaoundé"),
+      destinationCountry: z.string().min(2).max(100),
+      projectType: z.string().min(2).max(100),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
     }))
     .mutation(async ({ input }) => {

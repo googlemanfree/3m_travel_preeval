@@ -641,7 +641,7 @@ export const adminRouter = router({
    * Rejeter un bilan
    */
   rejectBilan: protectedProcedure
-    .input(z.object({ bilanId: z.number(), reason: z.string() }))
+    .input(z.object({ bilanId: z.number(), reason: z.string().max(2000) }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -1179,14 +1179,14 @@ export const adminRouter = router({
    */
   importAgencyDossier: protectedProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      whatsapp: z.string().min(5),
-      city: z.string().default("Yaoundé"),
+      whatsapp: z.string().min(5).max(50),
+      city: z.string().max(100).default("Yaoundé"),
       dateOfBirth: z.string().max(20).optional(),
       nationality: z.string().max(100).optional(),
-      destinationCountry: z.string().min(2),
-      projectType: z.string().min(2),
+      destinationCountry: z.string().min(2).max(100),
+      projectType: z.string().min(2).max(100),
       documentsReceived: z.string().max(10000).optional(),
       initialPaymentStatus: z.enum(["unknown", "pending", "paid"]).default("unknown"),
       assignedToAdmin: z.string().email().max(320).optional(),

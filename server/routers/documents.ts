@@ -34,12 +34,12 @@ export const documentsRouter = router({
    */
   getDownloadUrl: protectedProcedure
     .input(z.object({
-      folderCode: z.string(),
-      filename: z.string(),
+      folderCode: z.string().max(50),
+      filename: z.string().max(255),
     }))
     .query(async ({ input, ctx }) => {
       const { folderCode, filename } = input;
-      
+
       // Vérifier que le fichier existe
       const filePath = path.join(process.cwd(), "uploads", "candidates", folderCode, filename);
       
@@ -59,12 +59,12 @@ export const documentsRouter = router({
    */
   deleteDocument: protectedProcedure
     .input(z.object({
-      folderCode: z.string(),
-      filename: z.string(),
+      folderCode: z.string().max(50),
+      filename: z.string().max(255),
     }))
     .mutation(async ({ input, ctx }) => {
       const { folderCode, filename } = input;
-      
+
       // Vérifier que l'utilisateur est admin
       if (ctx.user?.role !== "admin") {
         throw new Error("Accès refusé");

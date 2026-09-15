@@ -78,11 +78,11 @@ export const documentSubmissionRouter = router({
       dossierNumber: z.string(),
       submissionMethod: z.enum(["en_ligne", "agence_physique"]),
       documentsUrls: z.array(z.object({
-        type: z.string(),
+        type: z.string().max(100),
         url: z.string().url(),
-        name: z.string(),
+        name: z.string().max(255),
       })).optional(),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

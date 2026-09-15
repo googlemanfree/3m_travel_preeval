@@ -992,10 +992,10 @@ export const candidateRouter = router({
   requestBilanAppointment: candidateProcedure
     .input(z.object({
       candidateEmail: z.string().email().max(320),
-      dossierNumber: z.string(),
-      preferredDate: z.string(),
-      preferredTime: z.string(),
-      reason: z.string(),
+      dossierNumber: z.string().max(40),
+      preferredDate: z.string().max(20),
+      preferredTime: z.string().max(20),
+      reason: z.string().max(2000),
     }))
     .mutation(async ({ ctx, input }) => {
       if (!ctx.candidate) throw new TRPCError({ code: "UNAUTHORIZED", message: "Compte candidat requis." });

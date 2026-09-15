@@ -27,14 +27,14 @@ export const notificationRouter = router({
   sendAdmissibilityNotification: protectedProcedure
     .input(
       z.object({
-        applicationId: z.string(),
+        applicationId: z.string().max(40),
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        destinationCountry: z.string(),
-        visaType: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        destinationCountry: z.string().max(100),
+        visaType: z.string().max(100),
         scorePercentage: z.number().min(0).max(100),
-        recommendation: z.string(),
+        recommendation: z.string().max(4000),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {
@@ -82,13 +82,13 @@ export const notificationRouter = router({
   sendPaymentConfirmedNotification: protectedProcedure
     .input(
       z.object({
-        transactionId: z.string(),
+        transactionId: z.string().max(255),
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        amount: z.string(),
-        currency: z.string(),
-        invoiceNumber: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        amount: z.string().max(20),
+        currency: z.string().max(10),
+        invoiceNumber: z.string().max(100),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {
@@ -325,9 +325,9 @@ export const notificationRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        reason: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        reason: z.string().max(2000),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {
