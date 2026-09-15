@@ -16,9 +16,10 @@ import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
-// Générer un token de session
+import { randomBytes } from "node:crypto";
+
 function generateSessionToken(): string {
-  return Array.from({ length: 48 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+  return randomBytes(36).toString("hex");
 }
 
 /**
@@ -369,14 +370,16 @@ function generateSecurePassword(): string {
   const symbols = "!@#$%*?";
   const all = upper + lower + digits;
 
-  let pwd = "";
-  pwd += upper[Math.floor(Math.random() * upper.length)];
-  pwd += lower[Math.floor(Math.random() * lower.length)];
-  pwd += digits[Math.floor(Math.random() * digits.length)];
-  pwd += symbols[Math.floor(Math.random() * symbols.length)];
-  for (let i = 0; i < 8; i++) {
-    pwd += all[Math.floor(Math.random() * all.length)];
+  const pick = (charset: string) => charset[randomBytes(1)[0] % charset.length];
+
+  let pwd = pick(upper) + pick(lower) + pick(digits) + pick(symbols);
+  for (let i = 0; i < 8; i++) pwd += pick(all);
+
+  // mélange cryptographiquement sûr (Fisher-Yates)
+  const chars = pwd.split("");
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomBytes(1)[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
   }
-  // mélange
-  return pwd.split("").sort(() => Math.random() - 0.5).join("");
+  return chars.join("");
 }
