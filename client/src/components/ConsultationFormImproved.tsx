@@ -149,6 +149,7 @@ export function ConsultationFormImproved() {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     placeholder="Ex: Jean Dupont"
+                    maxLength={255}
                   />
                 </div>
                 <div>
@@ -160,6 +161,7 @@ export function ConsultationFormImproved() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Ex: jean@example.com"
+                    maxLength={320}
                   />
                 </div>
                 <div>
@@ -170,6 +172,7 @@ export function ConsultationFormImproved() {
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="Ex: +237 6XX XXX XXX"
+                    maxLength={50}
                   />
                 </div>
               </>
@@ -199,6 +202,7 @@ export function ConsultationFormImproved() {
                     value={formData.field}
                     onChange={handleInputChange}
                     placeholder="Ex: Informatique, Médecine, etc."
+                    maxLength={150}
                   />
                 </div>
                 <div>
@@ -209,6 +213,7 @@ export function ConsultationFormImproved() {
                     value={formData.gpa}
                     onChange={handleInputChange}
                     placeholder="Ex: 3.8 ou 18/20"
+                    maxLength={20}
                   />
                 </div>
               </>
@@ -261,6 +266,7 @@ export function ConsultationFormImproved() {
                     value={formData.languages}
                     onChange={handleInputChange}
                     placeholder="Ex: Français, Anglais, Allemand"
+                    maxLength={255}
                   />
                 </div>
                 <div>
@@ -271,6 +277,7 @@ export function ConsultationFormImproved() {
                     value={formData.testScores}
                     onChange={handleInputChange}
                     placeholder="Ex: TOEFL 100, DELF B2"
+                    maxLength={255}
                   />
                 </div>
               </>
@@ -301,6 +308,7 @@ export function ConsultationFormImproved() {
                     value={formData.targetProgram}
                     onChange={handleInputChange}
                     placeholder="Ex: Master en Informatique"
+                    maxLength={255}
                   />
                 </div>
                 <div>
@@ -311,6 +319,7 @@ export function ConsultationFormImproved() {
                     value={formData.message}
                     onChange={handleInputChange}
                     placeholder="Parlez-nous de vos objectifs et de vos préoccupations..."
+                    maxLength={2000}
                     rows={4}
                   />
                 </div>

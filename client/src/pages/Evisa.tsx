@@ -241,6 +241,7 @@ export default function Evisa() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tapez le nom d'un pays (ex: Dubaï, Inde, Kenya, Canada...)"
+                maxLength={200}
                 className="pl-12 py-6 text-base rounded-full shadow-md"
                 aria-label="Rechercher un pays"
               />

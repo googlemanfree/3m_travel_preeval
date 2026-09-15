@@ -122,7 +122,7 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="cr-email">Email *</Label>
-            <Input id="cr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.com" className="mt-1" disabled={isPending} />
+            <Input id="cr-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.com" className="mt-1" disabled={isPending} maxLength={320} />
           </div>
           <div>
             <Label htmlFor="cr-phone">Téléphone</Label>

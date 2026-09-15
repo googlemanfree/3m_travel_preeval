@@ -117,6 +117,7 @@ export const NavbarSearchBar: React.FC<NavbarSearchBarProps> = ({ compact = true
           onKeyDown={handleSearch}
           className="pl-9 pr-9 py-2 text-sm rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
           aria-label="Rechercher"
+          maxLength={200}
         />
         {query && (
           <button

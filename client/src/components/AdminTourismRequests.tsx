@@ -237,7 +237,7 @@ export function AdminTourismRequests() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input placeholder="Rechercher par client, destination, réf..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Rechercher par client, destination, réf..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" maxLength={200} />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger><SelectValue placeholder="Filtrer par statut" /></SelectTrigger>
@@ -480,7 +480,7 @@ export function AdminTourismRequests() {
                 </div>
                 <div>
                   <Label htmlFor="adminNotes" className="text-xs font-semibold">Notes internes de l’agence / Instructions de confirmation</Label>
-                  <Textarea id="adminNotes" placeholder="Détails des hôtels réservés, conditions de paiement agence..." value={adminNotes} onChange={e => setAdminNotes(e.target.value)} className="mt-1" />
+                  <Textarea id="adminNotes" placeholder="Détails des hôtels réservés, conditions de paiement agence..." value={adminNotes} onChange={e => setAdminNotes(e.target.value)} className="mt-1" maxLength={2000} />
                 </div>
               </div>
             </div>

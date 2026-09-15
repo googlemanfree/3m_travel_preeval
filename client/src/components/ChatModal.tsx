@@ -182,6 +182,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 onChange={(e) => setVisitorName(e.target.value)}
                 className="text-sm"
                 required
+                maxLength={255}
               />
               <Input
                 placeholder="Votre email"
@@ -190,12 +191,14 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 onChange={(e) => setVisitorEmail(e.target.value)}
                 className="text-sm"
                 required
+                maxLength={320}
               />
               <Input
                 placeholder="Votre téléphone (optionnel)"
                 value={visitorPhone}
                 onChange={(e) => setVisitorPhone(e.target.value)}
                 className="text-sm"
+                maxLength={50}
               />
               <Textarea
                 placeholder="Votre message..."
@@ -203,6 +206,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 onChange={(e) => setMessageContent(e.target.value)}
                 className="text-sm resize-none min-h-20"
                 required
+                maxLength={2000}
               />
               <Button
                 type="submit"
@@ -220,6 +224,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 onChange={(e) => setMessageContent(e.target.value)}
                 className="text-sm resize-none min-h-10 max-h-20"
                 rows={1}
+                maxLength={2000}
               />
               <Button
                 type="submit"

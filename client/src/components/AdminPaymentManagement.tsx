@@ -895,7 +895,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
           <div className="space-y-4">
             <div>
               <Label htmlFor="agreement-subject">Objet de l’e-mail</Label>
-              <Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} className="mt-2" disabled={sendAgreementProtocolMutation.isPending} />
+              <Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} className="mt-2" maxLength={255} disabled={sendAgreementProtocolMutation.isPending} />
             </div>
             <div>
               <Label htmlFor="agreement-content">Texte modifiable du protocole</Label>

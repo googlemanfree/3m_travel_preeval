@@ -49,11 +49,11 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label htmlFor="callback-name">Votre nom</Label>
-            <Input id="callback-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom et prénom" autoComplete="name" />
+            <Input id="callback-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom et prénom" autoComplete="name" maxLength={255} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="callback-phone">Numéro à rappeler</Label>
-            <Input id="callback-phone" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Ex. +237 6XX XXX XXX" inputMode="tel" autoComplete="tel" />
+            <Input id="callback-phone" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Ex. +237 6XX XXX XXX" inputMode="tel" autoComplete="tel" maxLength={50} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

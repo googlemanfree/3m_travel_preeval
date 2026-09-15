@@ -131,17 +131,17 @@ export default function StudyVisaEvaluationWidget() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="se-fullName">Nom complet *</Label>
-            <Input id="se-fullName" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Votre nom complet" className="mt-1" />
+            <Input id="se-fullName" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Votre nom complet" className="mt-1" maxLength={255} />
           </div>
           <div>
             <Label htmlFor="se-email">Email *</Label>
-            <Input id="se-email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="vous@exemple.com" className="mt-1" />
+            <Input id="se-email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="vous@exemple.com" className="mt-1" maxLength={320} />
           </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="se-phone">Téléphone</Label>
-            <Input id="se-phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+237 6XX XXX XXX" className="mt-1" />
+            <Input id="se-phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+237 6XX XXX XXX" className="mt-1" maxLength={50} />
           </div>
           <div>
             <Label htmlFor="se-country">Destination visée</Label>

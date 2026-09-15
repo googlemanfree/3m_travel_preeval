@@ -470,6 +470,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Ex: Douala, Cameroun"
                     value={formData.currentCountry}
                     onChange={(e) => handleInputChange("currentCountry", e.target.value)}
+                    maxLength={100}
                   />
                 </div>
 
@@ -510,6 +511,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Comme sur le passeport"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange("fullName", e.target.value)}
+                    maxLength={255}
                   />
                 </div>
 
@@ -548,6 +550,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Ex: Camerounaise"
                     value={formData.nationality}
                     onChange={(e) => handleInputChange("nationality", e.target.value)}
+                    maxLength={100}
                   />
                 </div>
 
@@ -559,6 +562,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="+237 6XXXXXXXX"
                     value={formData.whatsappPhone}
                     onChange={(e) => handleInputChange("whatsappPhone", e.target.value)}
+                    maxLength={50}
                   />
                 </div>
 
@@ -571,6 +575,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="votre@email.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
+                    maxLength={320}
                   />
                 </div>
 
@@ -582,6 +587,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Ex: AB123456"
                     value={formData.passportNumber}
                     onChange={(e) => handleInputChange("passportNumber", e.target.value)}
+                    maxLength={64}
                   />
                 </div>
 
@@ -698,6 +704,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Ex: Informatique, Droit"
                     value={formData.fieldOfStudy}
                     onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
+                    maxLength={150}
                   />
                 </div>
 
@@ -709,6 +716,7 @@ export default function PremiumEvaluationForm() {
                     placeholder="Ex: Ingénieur, Enseignant"
                     value={formData.currentProfession}
                     onChange={(e) => handleInputChange("currentProfession", e.target.value)}
+                    maxLength={150}
                   />
                 </div>
 

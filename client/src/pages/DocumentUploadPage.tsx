@@ -400,7 +400,7 @@ export default function DocumentUploadPage() {
                   ))}
                   {Object.entries(review.annotations ?? {}).map(([markerId, comment]: [string, any]) => {
                     const key = `${review.id}:${markerId}`;
-                    return <div key={markerId} className="mt-3 border-t border-slate-100 pt-3"><p className="text-xs font-bold text-slate-500">{markerId}</p><p className="text-sm text-slate-700">{comment}</p><div className="mt-2 flex gap-2"><Textarea value={markerReply[key] ?? ''} onChange={(event) => setMarkerReply((current) => ({ ...current, [key]: event.target.value }))} placeholder="Répondre à ce commentaire…" className="min-h-16 text-sm" /><Button type="button" size="sm" disabled={replyToMarkerMutation.isPending || !(markerReply[key] ?? '').trim()} onClick={() => handleMarkerReply(review.id, markerId)}>Répondre</Button></div></div>;
+                    return <div key={markerId} className="mt-3 border-t border-slate-100 pt-3"><p className="text-xs font-bold text-slate-500">{markerId}</p><p className="text-sm text-slate-700">{comment}</p><div className="mt-2 flex gap-2"><Textarea value={markerReply[key] ?? ''} onChange={(event) => setMarkerReply((current) => ({ ...current, [key]: event.target.value }))} placeholder="Répondre à ce commentaire…" maxLength={2000} className="min-h-16 text-sm" /><Button type="button" size="sm" disabled={replyToMarkerMutation.isPending || !(markerReply[key] ?? '').trim()} onClick={() => handleMarkerReply(review.id, markerId)}>Répondre</Button></div></div>;
                   })}
                 </div>
               ))}

@@ -121,6 +121,7 @@ export function CommentsSection({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="min-h-[100px]"
+            maxLength={2000}
           />
 
           <Button

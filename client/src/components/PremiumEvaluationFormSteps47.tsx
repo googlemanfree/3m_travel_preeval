@@ -53,6 +53,7 @@ export default function PremiumEvaluationFormSteps47({
               placeholder="Ex: France, Émirats, Sénégal, Belgique"
               value={formData.countriesVisited || ""}
               onChange={(e) => onFormDataChange("countriesVisited", e.target.value)}
+              maxLength={255}
             />
           </div>
 
@@ -98,6 +99,7 @@ export default function PremiumEvaluationFormSteps47({
               value={formData.submissionNotes || ""}
               onChange={(e) => onFormDataChange("submissionNotes", e.target.value)}
               className="min-h-32"
+              maxLength={2000}
             />
           </div>
         </div>
@@ -143,6 +145,7 @@ export default function PremiumEvaluationFormSteps47({
                 placeholder="Ex: Licence, Master, Doctorat"
                 value={formData.desiredEducationLevel || ""}
                 onChange={(e) => onFormDataChange("desiredEducationLevel", e.target.value)}
+                maxLength={255}
               />
             </div>
 
@@ -169,6 +172,7 @@ export default function PremiumEvaluationFormSteps47({
                 placeholder="Ex: Université de Montréal, Sorbonne"
                 value={formData.targetInstitution || ""}
                 onChange={(e) => onFormDataChange("targetInstitution", e.target.value)}
+                maxLength={255}
               />
             </div>
 
@@ -204,6 +208,7 @@ export default function PremiumEvaluationFormSteps47({
                 value={formData.academicProject || ""}
                 onChange={(e) => onFormDataChange("academicProject", e.target.value)}
                 className="min-h-24"
+                maxLength={2000}
               />
             </div>
           </div>
@@ -243,6 +248,7 @@ export default function PremiumEvaluationFormSteps47({
                 placeholder="Ex: 2 semaines, 1 mois"
                 value={formData.plannedStayDuration || ""}
                 onChange={(e) => onFormDataChange("plannedStayDuration", e.target.value)}
+                maxLength={100}
               />
             </div>
 
@@ -266,6 +272,7 @@ export default function PremiumEvaluationFormSteps47({
                 value={formData.tiesInHomeCountry || ""}
                 onChange={(e) => onFormDataChange("tiesInHomeCountry", e.target.value)}
                 className="min-h-24"
+                maxLength={2000}
               />
             </div>
           </div>
@@ -287,6 +294,7 @@ export default function PremiumEvaluationFormSteps47({
                 placeholder="Ex: Ingénieur, Infirmier, Développeur"
                 value={formData.desiredPosition || ""}
                 onChange={(e) => onFormDataChange("desiredPosition", e.target.value)}
+                maxLength={150}
               />
             </div>
 
@@ -298,6 +306,7 @@ export default function PremiumEvaluationFormSteps47({
                 placeholder="Ex: Toronto, Vancouver, Paris"
                 value={formData.targetCity || ""}
                 onChange={(e) => onFormDataChange("targetCity", e.target.value)}
+                maxLength={100}
               />
             </div>
 
@@ -342,6 +351,7 @@ export default function PremiumEvaluationFormSteps47({
                 value={formData.previousExperiences || ""}
                 onChange={(e) => onFormDataChange("previousExperiences", e.target.value)}
                 className="min-h-24"
+                maxLength={2000}
               />
             </div>
           </div>

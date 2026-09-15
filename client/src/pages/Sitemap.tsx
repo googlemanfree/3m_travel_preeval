@@ -129,7 +129,7 @@ export default function Sitemap() {
           <div className="relative mt-7 max-w-2xl">
             <label htmlFor="sitemap-search" className="sr-only">{copy(COPY.searchLabel)}</label>
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-blue-700" aria-hidden="true" />
-            <Input id="sitemap-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy(COPY.searchPlaceholder)} className="h-12 border-blue-200 bg-white pl-12 pr-12 text-base shadow-sm focus-visible:ring-blue-600" />
+            <Input id="sitemap-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy(COPY.searchPlaceholder)} maxLength={200} className="h-12 border-blue-200 bg-white pl-12 pr-12 text-base shadow-sm focus-visible:ring-blue-600" />
             {query && <button type="button" onClick={() => setQuery("")} aria-label={copy(COPY.clear)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-blue-600"><X className="h-4 w-4" /></button>}
             {query && <p className="mt-2 text-sm text-slate-600" aria-live="polite">{resultCount} {copy(COPY.results)}</p>}
           </div>

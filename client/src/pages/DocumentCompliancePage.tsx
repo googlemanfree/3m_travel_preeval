@@ -34,7 +34,7 @@ export default function DocumentCompliancePage() {
           <Card className="border-blue-100 bg-white/80 shadow-lg shadow-blue-950/5">
             <CardHeader className="pb-3"><CardTitle className="text-base">Choisir une destination</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input value={query} onChange={(event) => setQuery(event.target.value)} className="pl-9" placeholder="Pays ou région" /></div>
+              <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={200} className="pl-9" placeholder="Pays ou région" /></div>
               <div className="max-h-[56vh] space-y-1 overflow-y-auto pr-1">
                 {destinations.map((item) => (
                   <button key={item.id} type="button" onClick={() => setSelectedId(item.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${item.id === country.id ? "bg-blue-700 text-white shadow" : "hover:bg-blue-50 text-slate-700"}`}>

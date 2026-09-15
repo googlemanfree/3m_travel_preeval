@@ -390,6 +390,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               placeholder="Ajoutez vos notes ici..."
+              maxLength={2000}
               className="mt-2"
               rows={4}
             />
@@ -421,7 +422,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               </div>
               <form onSubmit={(event) => { event.preventDefault(); const text = messageText.trim(); if (text) replyMutation.mutate({ candidateId: candidateReference, content: text }); }} className="space-y-3">
                 <Label htmlFor="admin-candidate-message">Répondre au candidat</Label>
-                <Textarea id="admin-candidate-message" value={messageText} onChange={(event) => setMessageText(event.target.value.slice(0, 2000))} rows={4} placeholder="Écrire une réponse claire au candidat…" disabled={replyMutation.isPending} />
+                <Textarea id="admin-candidate-message" value={messageText} onChange={(event) => setMessageText(event.target.value.slice(0, 2000))} rows={4} placeholder="Écrire une réponse claire au candidat…" maxLength={2000} disabled={replyMutation.isPending} />
                 <Button type="submit" disabled={!messageText.trim() || replyMutation.isPending} className="bg-blue-600 hover:bg-blue-700"><Send className="mr-2 h-4 w-4" />{replyMutation.isPending ? "Envoi…" : "Envoyer la réponse"}</Button>
               </form>
             </TabsContent>
@@ -695,6 +696,7 @@ export default function CandidatesManager() {
                 placeholder="Rechercher par nom, email..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); resetToFirstPage(); }}
+                maxLength={200}
                 className="pl-10"
               />
             </div>

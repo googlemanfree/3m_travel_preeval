@@ -457,19 +457,19 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                 <div>
                   <Label>Nom complet <span className="text-red-500">*</span></Label>
                   <Input value={form.fullName} onChange={e => set("fullName", e.target.value)}
-                    placeholder="Ex : Jean-Pierre Mbarga" className="mt-1" />
+                    placeholder="Ex : Jean-Pierre Mbarga" className="mt-1" maxLength={255} />
                   {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
                 </div>
                 <div>
                   <Label>Adresse e-mail <span className="text-red-500">*</span></Label>
                   <Input type="email" value={form.email} onChange={e => set("email", e.target.value)}
-                    placeholder="votre@email.com" className="mt-1" />
+                    placeholder="votre@email.com" className="mt-1" maxLength={320} />
                   {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                 </div>
                 <div>
                   <Label>Numéro WhatsApp <span className="text-red-500">*</span></Label>
                   <Input value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
-                    placeholder="+237 6XX XXX XXX" className="mt-1" />
+                    placeholder="+237 6XX XXX XXX" className="mt-1" maxLength={50} />
                   {errors.whatsappNumber && <p className="text-xs text-red-500 mt-1">{errors.whatsappNumber}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -482,7 +482,7 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                   <div>
                     <Label>Nationalité</Label>
                     <Input value={form.nationality} onChange={e => set("nationality", e.target.value)}
-                      placeholder="Camerounaise" className="mt-1" />
+                      placeholder="Camerounaise" className="mt-1" maxLength={100} />
                   </div>
                 </div>
               </div>

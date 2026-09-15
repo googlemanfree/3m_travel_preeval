@@ -170,6 +170,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("fullName")}
                   placeholder="Jean Dupont"
                   className="mt-1"
+                  maxLength={255}
                 />
                 {errors.fullName && (
                   <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>
@@ -184,6 +185,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("email")}
                   placeholder="jean@example.com"
                   className="mt-1"
+                  maxLength={320}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -199,6 +201,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("whatsappNumber")}
                   placeholder="+237 6 98 10 48 32"
                   className="mt-1"
+                  maxLength={50}
                 />
                 {errors.whatsappNumber && (
                   <p className="text-red-500 text-sm mt-1">{errors.whatsappNumber.message}</p>
@@ -212,6 +215,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("city")}
                   placeholder="Yaoundé"
                   className="mt-1"
+                  maxLength={100}
                 />
                 {errors.city && (
                   <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
@@ -232,6 +236,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("destinationCountry")}
                   placeholder="Canada"
                   className="mt-1"
+                  maxLength={100}
                 />
                 {errors.destinationCountry && (
                   <p className="text-red-500 text-sm mt-1">{errors.destinationCountry.message}</p>
@@ -265,6 +270,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
                   {...register("academicLevel")}
                   placeholder="Licence, Master, etc."
                   className="mt-1"
+                  maxLength={255}
                 />
               </div>
 

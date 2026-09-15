@@ -194,6 +194,7 @@ export default function Ressources() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={language === 'en' ? 'Search country, visa type...' : 'Rechercher un pays, un type de visa…'}
+                maxLength={200}
                 className="pl-9 pr-9 h-10 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
               />
             {search && (

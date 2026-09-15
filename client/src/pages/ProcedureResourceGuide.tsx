@@ -79,7 +79,7 @@ export default function ProcedureResourceGuide() {
           <label htmlFor="guide-search" className="sr-only">Rechercher une procédure ou une ressource</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input id="guide-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Rechercher un pays, un visa ou un guide PDF…" className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10" />
+            <Input id="guide-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Rechercher un pays, un visa ou un guide PDF…" maxLength={200} className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10" />
           </div>
           <p className="mt-2 px-1 text-xs text-slate-500">{totalResources} ressource(s) affichée(s) sur {allResources}.</p>
         </div>

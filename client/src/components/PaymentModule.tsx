@@ -238,6 +238,7 @@ Pour toute question, contactez-nous:
                   placeholder="+237 6XX XXX XXX"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
+                  maxLength={50}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -253,6 +254,7 @@ Pour toute question, contactez-nous:
                   placeholder="+237 6XX XXX XXX"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
+                  maxLength={50}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
