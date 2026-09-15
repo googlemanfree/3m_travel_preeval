@@ -13,6 +13,9 @@ export interface CandidateInfo {
   fullName: string;
   email: string;
   destination?: string | null;
+  /** Pays de préférence précis déclarés à l'inscription (jusqu'à 3), pour pré-remplir l'évaluation
+   * au lieu de faire ressaisir une information déjà connue. */
+  preferredDestinations?: string[] | null;
   dossierStatus?: string | null;
   emailVerified?: boolean;
 }

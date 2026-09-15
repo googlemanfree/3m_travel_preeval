@@ -74,7 +74,17 @@ export default function Evaluation() {
   const projectFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('project');
   const onboardingFromRegistration = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('onboarding') === 'registration';
   const initialProject = isEvaluationProjectType(projectFromUrl) ? projectFromUrl : initialForm.projectType;
-  const initialProjectForm = { ...initialForm, fullName: candidate?.fullName ?? '', email: candidate?.email ?? '', projectType: initialProject, visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType };
+  // Pré-remplit avec le premier pays de préférence déclaré à l'inscription plutôt que de faire
+  // ressaisir une information déjà connue — le candidat reste libre de le changer.
+  const preferredDestination = candidate?.preferredDestinations?.[0];
+  const initialProjectForm = {
+    ...initialForm,
+    fullName: candidate?.fullName ?? '',
+    email: candidate?.email ?? '',
+    projectType: initialProject,
+    visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType,
+    ...(preferredDestination ? { destinationCountry: preferredDestination, destinationCategory: getSuggestedDestinationCategory(preferredDestination) } : {}),
+  };
   const [form, setForm] = useState<FormState>(initialProjectForm);
   const formRef = useRef<FormState>(initialProjectForm);
   const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
