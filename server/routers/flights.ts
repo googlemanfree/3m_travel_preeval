@@ -8,6 +8,7 @@ import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
+import { randomInt, randomBytes } from "node:crypto";
 
 function getCachedSearch(key: string): any | null {
   const entry = flightSearchCache.get(key);
@@ -75,7 +76,7 @@ const AIRLINES: Record<string, { name: string; code: string; logo: string; color
 };
 
 function randomBetween(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return randomInt(min, max + 1);
 }
 
 function formatDuration(minutes: number) {
@@ -175,7 +176,7 @@ function generateFlights(
       seatsLeft: randomBetween(2, 9),
       baggage: cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
       refundable: i % 3 === 0,
-      pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      pnrRef: `3M${randomBytes(3).toString("hex").toUpperCase()}`,
       gdsFareBasis: `${cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
       gdsBookingClass: cabinClass === "BUSINESS" ? "J" : cabinClass === "FIRST" ? "F" : "Y",
       gdsTaxesAndFees: Math.round(pricePerPax * 0.18),
@@ -244,7 +245,7 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
     seatsLeft: randomBetween(2, 9),
     baggage: params.cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
     refundable: true,
-    pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    pnrRef: `3M${randomBytes(3).toString("hex").toUpperCase()}`,
     gdsFareBasis: `${params.cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
     gdsBookingClass: params.cabinClass === "BUSINESS" ? "J" : params.cabinClass === "FIRST" ? "F" : "Y",
     gdsTaxesAndFees: Math.round(sourcePrice * XAF_PER_EUR * 0.18),

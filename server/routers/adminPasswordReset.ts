@@ -114,8 +114,6 @@ export const adminPasswordResetRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
-        // Ne pas révéler si l'email existe ou non (sécurité)
-        console.log(`[Admin Password Reset] Reset requested for non-existent email: ${input.email}`);
         return {
           success: true,
           message: "Si cet email est associé à un compte administrateur, vous recevrez un lien de réinitialisation.",
@@ -125,7 +123,6 @@ export const adminPasswordResetRouter = router({
       const admin = rows[0];
 
       if (admin.status !== "active") {
-        console.log(`[Admin Password Reset] Reset requested for inactive admin: ${input.email}`);
         return {
           success: true,
           message: "Si cet email est associé à un compte administrateur, vous recevrez un lien de réinitialisation.",
@@ -166,7 +163,7 @@ export const adminPasswordResetRouter = router({
           html: emailTemplate.html,
         });
 
-        console.log(`[Admin Password Reset] Reset email sent to ${admin.email}`);
+        console.log(`[Admin Password Reset] Reset email sent to admin #${admin.id}`);
       } catch (emailError) {
         console.error(`[Admin Password Reset] Failed to send reset email to ${admin.email}:`, emailError);
         // Ne pas échouer la mutation si l'email n'est pas envoyé
@@ -282,7 +279,7 @@ export const adminPasswordResetRouter = router({
           html: emailTemplate.html,
         });
 
-        console.log(`[Admin Password Reset] Password reset confirmation sent to ${admin.email}`);
+        console.log(`[Admin Password Reset] Password reset confirmation sent to admin #${admin.id}`);
       } catch (emailError) {
         console.error(`[Admin Password Reset] Failed to send confirmation email to ${admin.email}:`, emailError);
       }
