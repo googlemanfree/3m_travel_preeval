@@ -16,12 +16,11 @@ describe("redirection Google et suivi candidat", () => {
   });
 
   it("utilise le statut réel du dossier et expose une progression synchronisée", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
-    expect(dashboard).toContain('dossierData.data.dossierStatus || app.dossierStatus || "nouveau"');
-    expect(dashboard).toContain('aria-label="Suivi d’avancement du dossier"');
-    expect(dashboard).toContain('aria-label="Progression du dossier"');
-    expect(dashboard).toContain("currentStatus.action");
-    expect(dashboard).not.toContain('status: "draft"');
+    const space = read("client/src/pages/EvaluationSpace.tsx");
+    expect(space).toContain("DossierProgressTimeline");
+    expect(space).toContain("dossierStatus={cProfile.dossierStatus}");
+    expect(space).toContain("CandidateCountryJourney");
+    expect(space).not.toContain('status: "draft"');
   });
 
   it("priorise les prérequis du dossier dans l’espace candidat", () => {

@@ -3716,3 +3716,18 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Activer l’e-mail de vérification du compte de test sans contourner la protection, puis ouvrir son espace candidat — session normale candidate établie et `candidate.getProfile` HTTP 200.
 - [x] Vérifier l’affichage « Pas encore de dossier actif » et archiver le compte de test de façon réversible — affichage vérifié dans le navigateur ; COMPTE-1890001 apparaît ensuite dans « Corbeille réversible » avec restauration disponible.
 - [x] Aligner le bloc Accord de `MySpace.tsx` sur l’état `activeDossier` : afficher « Pas encore de dossier actif » et les prérequis explicites au lieu d’un formulaire signable pour un pré-compte — MySpace, EvaluationSpace et SignableDocumentsPanel alignés.
+
+## Erreur tRPC interne — accueil 2026-09-15
+- [ ] Corréler l’erreur « Une erreur interne est survenue » avec les journaux et isoler la procédure tRPC fautive.
+- [ ] Corriger la cause sans masquer les erreurs métier et ajouter une régression ciblée.
+- [ ] Vérifier l’accueil, TypeScript, tests et build, puis publier le correctif.
+- [ ] Appliquer la migration non destructive 0061 pour `candidates.preferredDestinations`, puis vérifier que `candidate.getProfile` ne renvoie plus d’erreur interne.
+- [ ] Aligner les deux tests historiques qui référencent `ClientDashboard.tsx` supprimé par bddcdd82, puis rejouer la suite et le build.
+
+## Lot de commits priorisés — 2026-09-15
+- [ ] Finaliser l’alignement des tests après suppression de `ClientDashboard.tsx`.
+- [ ] Vérifier et publier `19bbec23` en priorité — vol retour réel.
+- [ ] Vérifier `bddcdd82` et la migration 0061 `preferredDestinations` déjà appliquée.
+- [ ] Vérifier et publier `5060b76e` — préremplissage pays de préférence jusqu’à l’évaluation.
+- [ ] Vérifier et publier `c620a29e`, `c92c112b` et `6dbfcff0` selon leurs diffs réels.
+- [ ] Considérer `3571db27` comme merge sans contrôle fonctionnel dédié.
