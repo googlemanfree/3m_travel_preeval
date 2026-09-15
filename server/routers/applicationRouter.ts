@@ -27,16 +27,16 @@ export const applicationRouter = router({
    */
   create: publicProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      whatsappNumber: z.string().min(5),
+      whatsappNumber: z.string().min(5).max(50),
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
-      nationality: z.string().optional(),
+      nationality: z.string().max(100).optional(),
       age: z.number().optional(),
-      academicLevel: z.string().optional(),
+      academicLevel: z.string().max(100).optional(),
       experienceYears: z.number().optional(),
-      jobSector: z.string().optional(),
+      jobSector: z.string().max(100).optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -290,8 +290,8 @@ export const applicationRouter = router({
    */
   addAdminNote: protectedProcedure
     .input(z.object({
-      dossierNumber: z.string(),
-      note: z.string(),
+      dossierNumber: z.string().max(20),
+      note: z.string().max(2000),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {

@@ -813,20 +813,20 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom complet *</Label>
           <Input value={form.fullName} onChange={e => set("fullName", e.target.value)}
-            placeholder="Prénom et Nom de famille" className={inputClass("fullName")} />
+            placeholder="Prénom et Nom de famille" maxLength={255} className={inputClass("fullName")} />
           {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Email *</Label>
             <Input type="email" value={form.email} onChange={e => set("email", e.target.value)}
-              placeholder="votre@email.com" className={inputClass("email")} />
+              placeholder="votre@email.com" maxLength={320} className={inputClass("email")} />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">WhatsApp *</Label>
             <Input value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
-              placeholder="+237 6XX XXX XXX" className={inputClass("whatsappNumber")} />
+              placeholder="+237 6XX XXX XXX" maxLength={50} className={inputClass("whatsappNumber")} />
             {errors.whatsappNumber && <p className="text-red-500 text-xs mt-1">{errors.whatsappNumber}</p>}
           </div>
         </div>
@@ -840,7 +840,7 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Lieu de naissance</Label>
             <Input value={form.placeOfBirth} onChange={e => set("placeOfBirth", e.target.value)}
-              placeholder="Ville, Pays" className={inputClass("placeOfBirth")} />
+              placeholder="Ville, Pays" maxLength={150} className={inputClass("placeOfBirth")} />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -871,25 +871,25 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité *</Label>
             <Input value={form.nationality} onChange={e => set("nationality", e.target.value)}
-              placeholder="Ex: Camerounaise" className={inputClass("nationality")} />
+              placeholder="Ex: Camerounaise" maxLength={100} className={inputClass("nationality")} />
             {errors.nationality && <p className="text-red-500 text-xs mt-1">{errors.nationality}</p>}
           </div>
         </div>
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Adresse actuelle</Label>
           <Input value={form.currentAddress} onChange={e => set("currentAddress", e.target.value)}
-            placeholder="Rue, Quartier" className={inputClass("currentAddress")} />
+            placeholder="Rue, Quartier" maxLength={500} className={inputClass("currentAddress")} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Ville</Label>
             <Input value={form.currentCity} onChange={e => set("currentCity", e.target.value)}
-              placeholder="Ex: Yaoundé" className={inputClass("currentCity")} />
+              placeholder="Ex: Yaoundé" maxLength={100} className={inputClass("currentCity")} />
           </div>
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Pays de résidence</Label>
             <Input value={form.currentCountry} onChange={e => set("currentCountry", e.target.value)}
-              placeholder="Ex: Cameroun" className={inputClass("currentCountry")} />
+              placeholder="Ex: Cameroun" maxLength={100} className={inputClass("currentCountry")} />
           </div>
         </div>
       </div>
@@ -923,12 +923,12 @@ function Step3Education({ form, set, errors, inputClass }: StepProps) {
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Intitulé du diplôme principal</Label>
           <Input value={form.diplomaTitle} onChange={e => set("diplomaTitle", e.target.value)}
-            placeholder="Ex: Master en Informatique" className={inputClass("diplomaTitle")} />
+            placeholder="Ex: Master en Informatique" maxLength={255} className={inputClass("diplomaTitle")} />
         </div>
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Établissement</Label>
           <Input value={form.diplomaInstitution} onChange={e => set("diplomaInstitution", e.target.value)}
-            placeholder="Université / École" className={inputClass("diplomaInstitution")} />
+            placeholder="Université / École" maxLength={255} className={inputClass("diplomaInstitution")} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -940,7 +940,7 @@ function Step3Education({ form, set, errors, inputClass }: StepProps) {
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Domaine d'études</Label>
           <Input value={form.fieldOfStudy} onChange={e => set("fieldOfStudy", e.target.value)}
-            placeholder="Ex: Informatique, Médecine..." className={inputClass("fieldOfStudy")} />
+            placeholder="Ex: Informatique, Médecine..." maxLength={150} className={inputClass("fieldOfStudy")} />
         </div>
       </div>
     </div>
@@ -973,12 +973,12 @@ function Step4Employment({ form, set, errors, inputClass }: StepProps) {
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Employeur actuel</Label>
           <Input value={form.currentEmployer} onChange={e => set("currentEmployer", e.target.value)}
-            placeholder="Nom de l'entreprise" className={inputClass("currentEmployer")} />
+            placeholder="Nom de l'entreprise" maxLength={255} className={inputClass("currentEmployer")} />
         </div>
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Poste occupé</Label>
           <Input value={form.currentJobTitle} onChange={e => set("currentJobTitle", e.target.value)}
-            placeholder="Ex: Ingénieur logiciel" className={inputClass("currentJobTitle")} />
+            placeholder="Ex: Ingénieur logiciel" maxLength={150} className={inputClass("currentJobTitle")} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -1100,12 +1100,12 @@ function Step5Finances({ form, set, errors, inputClass }: StepProps) {
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom du garant</Label>
             <Input value={form.sponsorName} onChange={e => set("sponsorName", e.target.value)}
-              placeholder="Nom complet" className={inputClass("sponsorName")} />
+              placeholder="Nom complet" maxLength={255} className={inputClass("sponsorName")} />
           </div>
           <div>
             <Label className="text-sm font-semibold text-gray-700 mb-1 block">Lien de parenté</Label>
             <Input value={form.sponsorRelation} onChange={e => set("sponsorRelation", e.target.value)}
-              placeholder="Ex: Parent, Ami, Employeur" className={inputClass("sponsorRelation")} />
+              placeholder="Ex: Parent, Ami, Employeur" maxLength={100} className={inputClass("sponsorRelation")} />
           </div>
         </motion.div>
       )}
@@ -1132,13 +1132,13 @@ function Step6Family({ form, set, errors, inputClass }: StepProps) {
         <div>
           <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom du conjoint(e)</Label>
           <Input value={form.spouseFullName} onChange={e => set("spouseFullName", e.target.value)}
-            placeholder="Si marié(e)" className={inputClass("spouseFullName")} />
+            placeholder="Si marié(e)" maxLength={255} className={inputClass("spouseFullName")} />
         </div>
       </div>
       <div>
         <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité du conjoint(e)</Label>
         <Input value={form.spouseNationality} onChange={e => set("spouseNationality", e.target.value)}
-          placeholder="Ex: Française, Canadienne..." className={inputClass("spouseNationality")} />
+          placeholder="Ex: Française, Canadienne..." maxLength={100} className={inputClass("spouseNationality")} />
       </div>
       <div>
         <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50">

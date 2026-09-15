@@ -256,7 +256,7 @@ export const evisaAdminRouter = router({
    * Ajouter une note admin
    */
   addAdminNote: protectedProcedure
-    .input(z.object({ id: z.number(), note: z.string() }))
+    .input(z.object({ id: z.number(), note: z.string().max(2000) }))
     .mutation(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({

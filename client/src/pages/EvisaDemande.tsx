@@ -148,6 +148,7 @@ export default function EvisaDemande() {
                     id="evisa-fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
+                    maxLength={255}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Votre nom complet"
                   />
@@ -162,6 +163,7 @@ export default function EvisaDemande() {
                     id="evisa-email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    maxLength={320}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="votre.email@example.com"
                   />
@@ -176,6 +178,7 @@ export default function EvisaDemande() {
                     id="evisa-phone"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    maxLength={50}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="+237 6XX XXX XXX"
                   />
@@ -218,6 +221,7 @@ export default function EvisaDemande() {
                     id="evisa-passportNumber"
                     value={formData.passportNumber}
                     onChange={handleInputChange}
+                    maxLength={64}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Ex: AB123456"
                   />
