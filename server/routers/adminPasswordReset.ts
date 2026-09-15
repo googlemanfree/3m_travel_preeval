@@ -65,7 +65,7 @@ export const adminPasswordResetRouter = router({
 
       const temporaryPassword = generateTemporaryPassword();
       const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-      const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+      const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
 
       await sendEmail({
         to: admin.email,

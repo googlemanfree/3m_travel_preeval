@@ -13,31 +13,39 @@ import { getDb } from "../server/db";
 import { adminAccounts } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
+// Les mots de passe sont passés en variables d'environnement pour éviter
+// de les stocker en clair dans le dépôt.
+// Usage : SEED_PWD_1=xxx SEED_PWD_2=yyy SEED_PWD_3=zzz npx tsx server/seed-admins.ts
 const ADMINS = [
   {
     email: "aureoldonfack@gmail.com",
     fullName: "Aureol Donfack",
     phone: "+237698104832",
     adminType: "evaluation" as const,
-    password: "5@w7ETkXdqQP",
+    password: process.env.SEED_PWD_1 || "",
   },
   {
     email: "fabienbah203@gmail.com",
     fullName: "Fabien",
     phone: "",
     adminType: "accompagnement" as const,
-    password: "SJRzdmy7T#qj",
+    password: process.env.SEED_PWD_2 || "",
   },
   {
     email: "hello@3mtravelagency.com",
     fullName: "3M Travel & Services",
     phone: "+237698104832",
     adminType: "procedures" as const,
-    password: "M46C!mywWYV6",
+    password: process.env.SEED_PWD_3 || "",
   },
 ];
 
 async function main() {
+  if (!process.env.SEED_PWD_1 || !process.env.SEED_PWD_2 || !process.env.SEED_PWD_3) {
+    console.error("❌ SEED_PWD_1, SEED_PWD_2 et SEED_PWD_3 doivent être définis en variable d'environnement.");
+    process.exit(1);
+  }
+
   const db = await getDb();
   if (!db) {
     console.error("❌ Impossible de se connecter à la base de données (DATABASE_URL manquant ou invalide).");

@@ -32,8 +32,9 @@ describe("activation et suivi candidat", () => {
     expect(router).not.toMatch(/evaluation\.reviewDraft/);
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MonDossier.tsx removal — confirm intentionally dropped or re-add.
   it("affiche uniquement un état de revue minimal pour une référence d’évaluation", () => {
-    const page = read("client/src/pages/MonDossier.tsx");
+    const page = read("client/src/pages/EvaluationSpace.tsx");
     expect(page).toContain('dossier.trackingKind === "evaluation"');
     expect(page).toContain("Les documents, notes internes et brouillons ne sont jamais affichés ici.");
   });

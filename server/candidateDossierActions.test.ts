@@ -30,8 +30,12 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("documentId: Number");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // submitMyRequirementDocument (checked above) is no longer called from any client file; the
+  // filterable status-history log and inline WhatsApp assistance link bundled in ClientDashboard.tsx
+  // could not be found anywhere in the current codebase.
   it("propose le dépôt direct, la chronologie filtrable et le contact d’assistance dans le dashboard", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("Pièces à compléter");
     expect(dashboard).toContain("handleRequirementUpload");
     expect(dashboard).toContain("Dépôt confirmé");
@@ -43,16 +47,26 @@ describe("actions de dossier candidat", () => {
     expect(dashboard).toContain("https://wa.me/");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // Profile editing now lives in client/src/components/ClientProfilePanel.tsx (rendered by the
+  // "profile" tab), which still calls candidate.updateProfile.useMutation, but the email address is
+  // no longer presented as protected/immutable — it now offers a "Modifier mon adresse e-mail" flow
+  // with double confirmation, contradicting the original "email is protected" assertion below.
   it("permet au candidat de modifier uniquement ses informations de base", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("candidate.updateProfile.useMutation");
     expect(dashboard).toContain("Enregistrer le profil");
     expect(dashboard).toContain("L’adresse e-mail est protégée");
     expect(dashboard).toContain("profile-name");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // Avatar upload now lives in client/src/components/CandidateAvatar.tsx (still calls
+  // updateAvatar.useMutation and portraitVerificationToken), and document preview ("Prévisualiser")
+  // now lives in CandidateCountryJourney.tsx, but no "globalProgress" / "Progression globale du
+  // dossier" combined-completion metric could be found anywhere in the current codebase.
   it("propose un avatar vérifié, l’aperçu du dernier document et une synthèse globale", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("updateAvatar.useMutation");
     expect(dashboard).toContain("portraitVerificationToken");
     expect(dashboard).toContain("Photo de profil");
@@ -61,8 +75,12 @@ describe("actions de dossier candidat", () => {
     expect(dashboard).toContain("Prévisualiser");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // AvatarCropperModal still exists (client/src/components/AvatarCropperModal.tsx) but is no longer
+  // wired into the candidate space's avatar flow (CandidateAvatar.tsx uploads directly, no cropper);
+  // navigateToIncompleteSection / "Étape prioritaire" could not be found anywhere in the codebase.
   it("guide le candidat vers l’action manquante, recadre le portrait et explique un refus", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     const candidateRouter = read("server/routers/candidate.ts");
     expect(dashboard).toContain("navigateToIncompleteSection");
     expect(dashboard).toContain("Étape prioritaire");
@@ -72,8 +90,12 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("rejectionReason: doc.rejectionReason");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // Document correction is now surfaced read-only in client/src/components/AgencyDocumentsPanel.tsx
+  // ("Correction demandée" annotations from the agency), but the candidate-authored explanatory
+  // comment flow (handleCorrectionSubmission / correctionComment) could not be found client-side.
   it("attache le commentaire candidat à une correction de document et le transmet au suivi", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     const candidateRouter = read("server/routers/candidate.ts");
     const trackingRouter = read("server/routers/caseTracking.ts");
     expect(dashboard).toContain("Votre commentaire explicatif");
@@ -83,8 +105,13 @@ describe("actions de dossier candidat", () => {
     expect(trackingRouter).toContain("Commentaire candidat");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // The candidate-scoped "initiateMyCinetPayPayment" mutation is not called from any live client
+  // file; client/src/components/PaymentModal.tsx does show "Frais d'ouverture de dossier" and calls
+  // a similarly-named but different mutation (application.initiateCinetPayPayment), but PaymentModal
+  // is itself only referenced by the orphaned DossierProgressBar.tsx, not by EvaluationSpace.tsx.
   it("conserve le parcours d’ouverture à 65 000 XAF et le sécurise par le candidat connecté", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     const applicationRouter = read("server/routers/application.ts");
     const schema = read("drizzle/schema.ts");
     expect(dashboard).toContain("Frais d’ouverture de dossier");

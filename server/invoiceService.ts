@@ -102,8 +102,8 @@ export function generateInvoiceHTML(invoice: {
             <h1>3M Travel & Services</h1>
             <p>Votre mobilité, notre expertise</p>
             <p style="margin-top: 10px; font-size: 12px;">
-              📧 contact@3mtravelagency.com<br>
-              📞 +237 XXX XXX XXX<br>
+              📧 hello@3mtravelagency.com<br>
+              📞 +237 620 996 045<br>
               🏢 Douala, Yaoundé, Kinshasa
             </p>
           </div>

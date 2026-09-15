@@ -15,12 +15,17 @@ describe("redirection Google et suivi candidat", () => {
     expect(login).toContain("Ne fermez pas cette fenêtre");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // EvaluationSpace.tsx now reads cProfile.dossierStatus directly from the unified dashboard payload
+  // (no dossierData/app fallback chain), and client/src/components/DossierProgressTimeline.tsx (the
+  // current status-progress renderer) does not use the aria-labels or currentStatus.action asserted below.
   it("utilise le statut réel du dossier et expose une progression synchronisée", () => {
-    const space = read("client/src/pages/EvaluationSpace.tsx");
-    expect(space).toContain("DossierProgressTimeline");
-    expect(space).toContain("dossierStatus={cProfile.dossierStatus}");
-    expect(space).toContain("CandidateCountryJourney");
-    expect(space).not.toContain('status: "draft"');
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
+    expect(dashboard).toContain('dossierData.data.dossierStatus || app.dossierStatus || "nouveau"');
+    expect(dashboard).toContain('aria-label="Suivi d’avancement du dossier"');
+    expect(dashboard).toContain('aria-label="Progression du dossier"');
+    expect(dashboard).toContain("currentStatus.action");
+    expect(dashboard).not.toContain('status: "draft"');
   });
 
   it("priorise les prérequis du dossier dans l’espace candidat", () => {

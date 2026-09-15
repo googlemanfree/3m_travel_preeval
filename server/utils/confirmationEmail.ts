@@ -59,14 +59,14 @@ export function getConfirmationEmailHTML(params: ConfirmationEmailParams): strin
       
       <p style="background: #f0f7ff; padding: 10px; border-radius: 4px; font-size: 14px;">
         <strong>Besoin d'aide ?</strong><br>
-        📧 Email : contact@3mtravelagency.click<br>
-        💬 WhatsApp : +237 671 234 567
+        📧 Email : hello@3mtravelagency.com<br>
+        💬 WhatsApp : +237 698 104 832
       </p>
     </div>
-    
+
     <div class="footer">
-      <p>© 2026 3M Travel & Services - Votre mobilité, notre expertise</p>
-      <p>RC/NIU : 3M-2024-001 | Yaoundé, Biyem-Assi</p>
+      <p>© ${new Date().getFullYear()} 3M Travel & Services - Votre mobilité, notre expertise</p>
+      <p>RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi</p>
     </div>
   </div>
 </body>
@@ -96,11 +96,11 @@ PROCHAINES ÉTAPES :
 3. Nous vous contacterons pour fixer un rendez-vous
 
 BESOIN D'AIDE ?
-📧 Email : contact@3mtravelagency.click
-💬 WhatsApp : +237 671 234 567
+📧 Email : hello@3mtravelagency.com
+💬 WhatsApp : +237 698 104 832
 
 ---
-© 2026 3M Travel & Services - Votre mobilité, notre expertise
-RC/NIU : 3M-2024-001 | Yaoundé, Biyem-Assi
+© ${new Date().getFullYear()} 3M Travel & Services - Votre mobilité, notre expertise
+RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi
   `.trim();
 }

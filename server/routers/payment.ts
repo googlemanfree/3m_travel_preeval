@@ -96,7 +96,8 @@ export const paymentRouter = router({
           .where(eq(applications.id, application.id));
 
         // URL interne du tunnel ; le statut final est exclusivement confirmé par CinetPay.
-        const paymentUrl = `https://www.3mtravelagency.click/checkout?tx=${transactionId}&dossier=${encodeURIComponent(input.dossierNumber)}`;
+        const appBase = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
+        const paymentUrl = `${appBase}/payment/${encodeURIComponent(input.dossierNumber)}?tx=${transactionId}`;
 
         return {
           success: true,
@@ -209,6 +210,7 @@ export const paymentRouter = router({
   getPaymentStatus: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),
+      email: z.string().email(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -223,6 +225,10 @@ export const paymentRouter = router({
 
         if (app.length === 0) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+        }
+
+        if (app[0].email.toLowerCase() !== input.email.trim().toLowerCase()) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Accès non autorisé." });
         }
 
         const application = app[0];

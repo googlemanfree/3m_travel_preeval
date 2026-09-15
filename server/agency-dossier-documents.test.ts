@@ -63,9 +63,16 @@ describe("Centre documentaire par dossier", () => {
     expect(agencyUpload).toContain("Notification document non envoyée");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MySpace.tsx removal — confirm intentionally dropped or re-add.
+  // MySpace.tsx re-derived `agencyDocuments` client-side (with a `dossierData?.data?.agencyDocuments`
+  // fallback, an `agency-${id}` prefix, and an explicit `document.documentUrl || null`) from a
+  // dedicated dossier query. EvaluationSpace.tsx instead destructures `agencyDocuments` directly off
+  // the unified `getClientDashboardSummary` payload with no client-side id-prefixing or URL fallback —
+  // the merge is still scoped correctly server-side (see candidateSource assertions below), but the
+  // specific client-side re-mapping this test asserts no longer exists anywhere in the codebase.
   it("fusionne les documents agence dans l’espace client sans élargir la source de rattachement", () => {
     const candidateSource = readProjectFile("server/routers/candidate.ts");
-    const clientPage = readProjectFile("client/src/pages/MySpace.tsx");
+    const clientPage = readProjectFile("client/src/pages/EvaluationSpace.tsx");
     expect(candidateSource).toContain("where(eq(agencyDossiers.email, ctx.candidate.email))");
     expect(candidateSource).toContain("where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))");
     expect(candidateSource).toContain("agencyDocuments");

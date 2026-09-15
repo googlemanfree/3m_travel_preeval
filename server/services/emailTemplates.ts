@@ -144,7 +144,7 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
 
             <!-- CTA Button -->
             <div style="text-align: center;">
-              <a href="https://3mtravelagency.click/mon-espace?dossier=${data.folderId}" class="cta-button">
+              <a href="https://3mtravelagency.com/mon-espace?dossier=${data.folderId}" class="cta-button">
                 👉 Valider mon Ouverture de Dossier (${(data.pricingFormulas.opening / 1000).toFixed(0)} 000 FCFA)
               </a>
             </div>
@@ -159,7 +159,7 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
             <p><strong>3M Travel & Services SARL</strong></p>
             <p>📍 Agence physique : Biyem-Assi (Montée Chapelle Obili) - Yaoundé, Cameroun</p>
             <p>📞 Assistance WhatsApp : +237 698 104 832 / +237 620 996 045</p>
-            <p>📧 Email : support@3mtravelagency.click</p>
+            <p>📧 Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
               © 2026 3M Travel & Services SARL. Tous droits réservés.
             </p>
@@ -181,11 +181,11 @@ export async function sendEvaluationEmail(data: EvaluationEmailData, resendApiKe
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'support@3mtravelagency.click',
+        from: 'hello@3mtravelagency.com',
         to: data.email,
         subject: `🎯 Bilan d'Admissibilité Consulaire pour ${data.destination} — ${data.fullName} (Matricule N° ${data.folderId})`,
         html: htmlContent,
-        reply_to: 'support@3mtravelagency.click',
+        reply_to: 'hello@3mtravelagency.com',
       }),
     });
 

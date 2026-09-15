@@ -25,8 +25,8 @@ export function PaymentSection({
 
   // Récupérer le statut de paiement
   const { data: paymentStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = trpc.payment.getPaymentStatus.useQuery(
-    { dossierNumber },
-    { staleTime: 0 }
+    { dossierNumber, email },
+    { staleTime: 0, enabled: Boolean(dossierNumber) && Boolean(email) }
   );
 
   // Initier le paiement

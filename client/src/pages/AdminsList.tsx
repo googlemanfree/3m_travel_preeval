@@ -57,7 +57,7 @@ const roleColors: Record<Admin["adminType"], string> = {
 
 export default function AdminsList() {
   const sessionToken = getAdminSessionToken();
-  const { data: listAdminsResult, isLoading, isError } = trpc.adminAuth.listAdmins.useQuery(
+  const { data: listAdminsResult, isLoading, isError, refetch: refetchAdmins } = trpc.adminAuth.listAdmins.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken) },
   );
@@ -88,6 +88,17 @@ export default function AdminsList() {
     },
     onError: (error) => window.alert(error.message),
   });
+
+  const deactivateAdmin = trpc.adminAuth.deactivateAdmin.useMutation({
+    onSuccess: () => { void refetchAdmins(); },
+    onError: (error) => window.alert(error.message),
+  });
+
+  const handleDeactivate = (admin: Admin) => {
+    const confirmed = window.confirm(`Désactiver le compte de ${admin.name} (${admin.email}) ? L'admin ne pourra plus se connecter.`);
+    if (!confirmed) return;
+    deactivateAdmin.mutate({ sessionToken: getAdminSessionToken(), adminId: admin.id });
+  };
 
   const handleResetAllPasswords = () => {
     const confirmed = window.confirm(
@@ -343,7 +354,14 @@ export default function AdminsList() {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" className="text-red-600">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeactivate(admin)}
+                          disabled={deactivateAdmin.isPending}
+                          title="Désactiver ce compte"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -360,10 +378,7 @@ export default function AdminsList() {
         <AdminInvite
           isOpen={isInviteOpen}
           onClose={() => setIsInviteOpen(false)}
-          onInviteSent={(email) => {
-            // Optionally add the invited admin to the list
-            console.log("Admin invited:", email);
-          }}
+          onInviteSent={() => { void refetchAdmins(); }}
         />
 
         {/* Resend Invite Dialog */}
@@ -376,9 +391,7 @@ export default function AdminsList() {
             inviteLink={`${window.location.origin}/admin/accept-invite?email=${encodeURIComponent(
               selectedAdmin.email
             )}`}
-            onResendSuccess={() => {
-              console.log("Invitation resent to:", selectedAdmin.email);
-            }}
+            onResendSuccess={() => { void refetchAdmins(); }}
           />
         )}
 
@@ -471,8 +484,12 @@ export default function AdminsList() {
                   >
                     Renvoyer invitation
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Modifier
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => { setIsDetailOpen(false); setIsResendOpen(true); }}
+                    title="Réinitialiser le mot de passe et renvoyer les accès"
+                  >
+                    Réinitialiser accès
                   </Button>
                 </div>
               </div>

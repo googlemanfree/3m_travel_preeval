@@ -102,8 +102,8 @@ function generateAdmissibilityReport(evaluation: any): string {
           <h2>📞 Besoin d'aide ?</h2>
           <p>Nos conseillers sont disponibles :</p>
           <ul>
-            <li>📧 Email : contact@3mtravelagency.com</li>
-            <li>💬 WhatsApp : +237 XXX XXX XXX</li>
+            <li>📧 Email : hello@3mtravelagency.com</li>
+            <li>💬 WhatsApp : +237 698 104 832</li>
             <li>🏢 Agence : Douala, Yaoundé, Kinshasa</li>
           </ul>
         </div>

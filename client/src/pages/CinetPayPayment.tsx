@@ -6,9 +6,8 @@ import { AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/lib/trpc';
 
-type PaymentStatus = 'idle' | 'opening' | 'waiting' | 'success' | 'failed' | 'error';
+type PaymentStatus = 'idle' | 'registering' | 'opening' | 'waiting' | 'success' | 'failed' | 'error';
 
-const PAYMENT_AMOUNT = 65000;
 const PAYMENT_CURRENCY = 'XAF';
 
 export default function CinetPayPayment() {
@@ -16,90 +15,93 @@ export default function CinetPayPayment() {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const transactionIdRef = useRef<string>('');
+  const paymentAmountRef = useRef<number>(65000);
 
-  // Charger les vraies données du dossier
   const { data: application, isLoading, error: loadError } = trpc.application.getApplicationByDossierNumber.useQuery(
     { dossierNumber: dossierNumber || '' },
     { enabled: !!dossierNumber, retry: 1 }
   );
 
+  const initiateMutation = trpc.payment.initiateFolderPayment.useMutation();
   const confirmPaymentMutation = trpc.payment.confirmPayment.useMutation();
 
-  useEffect(() => {
-    // Enregistre le callback CinetPay dès que le SDK est disponible, une seule fois.
+  const launchCinetPay = (transactionId: string, amount: number) => {
     const CinetPay = (window as any).CinetPay;
-    if (!CinetPay || typeof CinetPay.waitResponse !== 'function') return;
+    const apikey = import.meta.env.VITE_CINETPAY_API_KEY;
+    const siteId = import.meta.env.VITE_CINETPAY_SITE_ID;
+    if (!apikey || !siteId) throw new Error("Le paiement en ligne n'est pas encore configuré. Contactez-nous sur WhatsApp.");
+
+    CinetPay.setConfig({
+      apikey,
+      site_id: siteId,
+      notify_url: `${window.location.origin}/api/cinetpay/webhook`,
+      mode: import.meta.env.PROD ? 'PRODUCTION' : 'TEST',
+    });
 
     CinetPay.waitResponse((data: { status: string }) => {
       if (data.status === 'ACCEPTED') {
         setStatus('success');
-        confirmPaymentMutation.mutate({
-          transactionId: transactionIdRef.current,
-          dossierNumber: dossierNumber || '',
-        });
+        confirmPaymentMutation.mutate({ transactionId, dossierNumber: dossierNumber || '' });
       } else if (data.status === 'REFUSED') {
         setStatus('failed');
-        setErrorMessage("Le paiement a été refusé par votre opérateur ou votre banque. Vérifiez votre solde et réessayez, ou choisissez un autre moyen de paiement.");
+        setErrorMessage("Paiement refusé. Vérifiez votre solde ou essayez un autre moyen de paiement.");
       } else {
-        // PENDING, CANCELLED, ou autre statut intermédiaire
         setStatus('failed');
-        setErrorMessage("Le paiement n'a pas pu être finalisé. Vous pouvez réessayer.");
+        setErrorMessage("Le paiement n'a pas abouti. Vous pouvez réessayer.");
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    setStatus('waiting');
+    CinetPay.getCheckout({
+      transaction_id: transactionId,
+      amount,
+      currency: PAYMENT_CURRENCY,
+      channels: 'ALL',
+      description: `Frais d'ouverture de dossier — ${dossierNumber}`,
+      customer_name: application?.fullName?.split(' ')[0] || '',
+      customer_surname: application?.fullName?.split(' ').slice(1).join(' ') || '',
+      customer_email: application?.email || '',
+      customer_phone_number: application?.whatsappNumber || '',
+      customer_address: 'N/A',
+      customer_city: 'Yaoundé',
+      customer_country: 'CM',
+      customer_state: 'CM',
+      customer_zip_code: '00000',
+    });
+  };
 
   const handleCinetPayPayment = async () => {
     if (!application) return;
 
-    setStatus('opening');
+    const CinetPay = (window as any).CinetPay;
+    if (!CinetPay || typeof CinetPay.waitResponse !== 'function') {
+      setStatus('error');
+      setErrorMessage("Le module de paiement n'a pas pu se charger. Rechargez la page et réessayez.");
+      return;
+    }
+
+    setStatus('registering');
     setErrorMessage(null);
 
     try {
-      const CinetPay = (window as any).CinetPay;
-      if (!CinetPay) {
-        throw new Error("Le module de paiement n'a pas pu se charger. Vérifiez votre connexion internet et rechargez la page.");
-      }
-
-      const apikey = import.meta.env.VITE_CINETPAY_API_KEY;
-      const siteId = import.meta.env.VITE_CINETPAY_SITE_ID;
-
-      if (!apikey || !siteId) {
-        throw new Error("Le paiement en ligne n'est pas encore configuré. Merci de contacter notre équipe sur WhatsApp pour finaliser votre paiement autrement.");
-      }
-
-      const transactionId = `3M-${dossierNumber}-${Date.now()}`;
-      transactionIdRef.current = transactionId;
-
-      CinetPay.setConfig({
-        apikey,
-        site_id: siteId,
-        notify_url: `${window.location.origin}/api/cinetpay/webhook`,
-        mode: import.meta.env.PROD ? 'PRODUCTION' : 'TEST',
+      // Étape 1 : enregistrer la transaction côté serveur → obtenir le vrai transactionId
+      const initiated = await initiateMutation.mutateAsync({
+        dossierNumber: dossierNumber || '',
+        email: application.email,
+        fullName: application.fullName || '',
+        whatsappNumber: application.whatsappNumber || undefined,
       });
 
-      setStatus('waiting');
+      transactionIdRef.current = initiated.transactionId;
+      paymentAmountRef.current = initiated.amount;
 
-      CinetPay.getCheckout({
-        transaction_id: transactionId,
-        amount: PAYMENT_AMOUNT,
-        currency: PAYMENT_CURRENCY,
-        channels: 'ALL',
-        description: `Frais d'ouverture de dossier — ${dossierNumber}`,
-        customer_name: application.fullName?.split(' ')[0] || application.fullName,
-        customer_surname: application.fullName?.split(' ').slice(1).join(' ') || '',
-        customer_email: application.email,
-        customer_phone_number: application.whatsappNumber || '',
-        customer_address: 'N/A',
-        customer_city: 'Yaoundé',
-        customer_country: 'CM',
-        customer_state: 'CM',
-        customer_zip_code: '00000',
-      });
-      // La suite (succès/échec) est gérée par CinetPay.waitResponse() ci-dessus.
+      setStatus('opening');
+
+      // Étape 2 : lancer CinetPay avec le transactionId officiel
+      launchCinetPay(initiated.transactionId, initiated.amount);
     } catch (err: any) {
       console.error('Erreur CinetPay:', err);
-      setErrorMessage(err.message || "Une erreur inattendue est survenue lors de l'initialisation du paiement.");
+      setErrorMessage(err.message || "Une erreur est survenue lors de l'initialisation du paiement.");
       setStatus('error');
     }
   };
@@ -160,7 +162,7 @@ export default function CinetPayPayment() {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Montant à payer</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {PAYMENT_AMOUNT.toLocaleString()} {PAYMENT_CURRENCY}
+                  {(application.paymentAmount ?? 65000).toLocaleString()} {PAYMENT_CURRENCY}
                 </p>
               </div>
 
@@ -202,19 +204,15 @@ export default function CinetPayPayment() {
 
             <Button
               onClick={handleCinetPayPayment}
-              disabled={status === 'opening' || status === 'waiting' || status === 'success'}
+              disabled={['registering', 'opening', 'waiting', 'success'].includes(status)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {status === 'opening' ? (
-                <span className="flex items-center gap-2">
-                  <Loader className="w-4 h-4 animate-spin" />
-                  Ouverture du guichet de paiement...
-                </span>
+              {status === 'registering' ? (
+                <span className="flex items-center gap-2"><Loader className="w-4 h-4 animate-spin" />Préparation du paiement...</span>
+              ) : status === 'opening' ? (
+                <span className="flex items-center gap-2"><Loader className="w-4 h-4 animate-spin" />Ouverture du guichet...</span>
               ) : status === 'waiting' ? (
-                <span className="flex items-center gap-2">
-                  <Loader className="w-4 h-4 animate-spin" />
-                  En attente de votre paiement...
-                </span>
+                <span className="flex items-center gap-2"><Loader className="w-4 h-4 animate-spin" />En attente de votre paiement...</span>
               ) : status === 'success' ? (
                 'Paiement effectué ✓'
               ) : status === 'failed' || status === 'error' ? (

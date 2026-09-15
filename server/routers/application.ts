@@ -156,7 +156,7 @@ export const applicationRouter = router({
       }
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
-      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
 
       // La demande reçoit une référence interne. Le numéro de dossier client est attribué uniquement après validation humaine du bilan.
       let dossierNumber = generateEvaluationDraftReference();
@@ -396,7 +396,7 @@ export const applicationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
-      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
 
       const [app] = await db
         .select()
@@ -470,7 +470,7 @@ export const applicationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
-      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
 
       const [app] = await db
         .select()

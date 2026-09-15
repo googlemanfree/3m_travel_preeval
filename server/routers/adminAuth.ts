@@ -462,7 +462,7 @@ export const adminAuthRouter = router({
       });
 
       try {
-        const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+        const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
           <p>Bonjour ${input.fullName},</p>
@@ -526,7 +526,7 @@ export const adminAuthRouter = router({
       await db.update(adminAccounts).set({ passwordHash }).where(eq(adminAccounts.id, admin.id));
 
       try {
-        const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+        const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const subject = input.customSubject || "🔐 Nouveau mot de passe — Accès administrateur 3M Travel";
         const bodyText = input.customBody
           ? input.customBody.replace(/\{inviteLink\}/g, loginUrl)
@@ -573,7 +573,7 @@ export const adminAuthRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte administrateur à réinitialiser." });
       }
 
-      const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+      const loginUrl = `${process.env.APP_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
       let resetCount = 0;
       let emailFailureCount = 0;
       const fallbackCredentials: { email: string; tempPassword: string }[] = [];
@@ -624,6 +624,41 @@ export const adminAuthRouter = router({
           ? "Les mots de passe administrateurs ont été réinitialisés et envoyés individuellement par e-mail."
           : `${resetCount} mot(s) de passe réinitialisé(s). Les e-mails de secours sont affichés ci-dessous en raison d'une restriction de livraison.`,
       };
+    }),
+
+  /**
+   * Désactive (suspend) un compte administrateur.
+   * Utilise un soft-disable : le compte peut être réactivé si nécessaire.
+   */
+  deactivateAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      adminId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const actor = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (actor.id === input.adminId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Vous ne pouvez pas désactiver votre propre compte." });
+      }
+
+      const rows = await db.select({ id: adminAccounts.id, email: adminAccounts.email })
+        .from(adminAccounts)
+        .where(eq(adminAccounts.id, input.adminId))
+        .limit(1);
+
+      if (rows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Compte administrateur introuvable." });
+      }
+
+      await db.update(adminAccounts)
+        .set({ status: "suspended" })
+        .where(eq(adminAccounts.id, input.adminId));
+
+      return { success: true, message: `Compte ${rows[0].email} désactivé.` };
     }),
 });
 

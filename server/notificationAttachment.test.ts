@@ -20,15 +20,19 @@ describe("pièces jointes des réponses rapides", () => {
     expect(router).toContain("buffer.length > 5 * 1024 * 1024");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
+  // The notification quick-reply attachment picker could not be found anywhere in the current
+  // codebase (ClientMessagesPanel.tsx, the current messaging component, has no attachment support).
   it("expose le sélecteur de fichier dans la réponse rapide", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain('type="file"');
     expect(dashboard).toContain("notification-attachment-");
     expect(dashboard).toContain("Retirer la pièce jointe");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
   it("propose un aperçu modal des PDF et images à partir d’URLs signées", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     const router = read("server/routers/candidate.ts");
     expect(router).toContain("attachmentSignedUrl");
     expect(dashboard).toContain("Visualisation sécurisée de la pièce jointe");
@@ -37,8 +41,9 @@ describe("pièces jointes des réponses rapides", () => {
   });
 
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
   it("permet de naviguer entre plusieurs pièces jointes dans la modale", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("Précédent");
     expect(dashboard).toContain("Suivant");
     expect(dashboard).toContain("attachmentGallery");
@@ -47,8 +52,9 @@ describe("pièces jointes des réponses rapides", () => {
     expect(dashboard).toContain("ArrowRight");
   });
 
+  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.
   it("expose le téléchargement et l’impression depuis la modale", () => {
-    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const dashboard = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboard).toContain("Imprimer");
     expect(dashboard).toContain("printAttachment");
     expect(dashboard).toContain("download={attachmentPreview.name}");
