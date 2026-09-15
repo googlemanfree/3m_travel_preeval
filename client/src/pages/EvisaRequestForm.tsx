@@ -598,6 +598,7 @@ export default function EvisaRequestForm() {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       required
+                      maxLength={255}
                       className="w-full"
                     />
                   </div>
@@ -615,6 +616,7 @@ export default function EvisaRequestForm() {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
+                        maxLength={320}
                         className="w-full"
                       />
                     </div>
@@ -631,6 +633,7 @@ export default function EvisaRequestForm() {
                         value={formData.phone}
                         onChange={handleInputChange}
                         required
+                        maxLength={50}
                         className="w-full"
                       />
                     </div>
@@ -648,6 +651,7 @@ export default function EvisaRequestForm() {
                         placeholder="Votre nationalité"
                         value={formData.nationality}
                         onChange={handleInputChange}
+                        maxLength={100}
                         className="w-full"
                       />
                     </div>

@@ -183,6 +183,7 @@ export default function TranslationOrder() {
             value={candidateName}
             onChange={(e) => setCandidateName(e.target.value)}
             required
+            maxLength={255}
           />
         </div>
 
@@ -194,6 +195,7 @@ export default function TranslationOrder() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            maxLength={320}
           />
         </div>
 
@@ -204,6 +206,7 @@ export default function TranslationOrder() {
             type="text"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
+            maxLength={50}
           />
         </div>
 

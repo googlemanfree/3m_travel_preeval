@@ -198,6 +198,7 @@ export default function AmbassadorProgram() {
                     ...prev,
                     fullName: e.target.value
                   }))}
+                  maxLength={255}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>
@@ -214,6 +215,7 @@ export default function AmbassadorProgram() {
                     ...prev,
                     email: e.target.value
                   }))}
+                  maxLength={320}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>
@@ -230,6 +232,7 @@ export default function AmbassadorProgram() {
                     ...prev,
                     phone: e.target.value
                   }))}
+                  maxLength={50}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>
@@ -246,6 +249,7 @@ export default function AmbassadorProgram() {
                     ...prev,
                     country: e.target.value
                   }))}
+                  maxLength={100}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                 />
               </div>

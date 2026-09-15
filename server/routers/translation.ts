@@ -31,9 +31,9 @@ export const translationRouter = router({
       pricePerPage: z.number(),
       totalPrice: z.string(),
       currency: z.string(),
-      candidateName: z.string(),
+      candidateName: z.string().max(255),
       email: z.string().email().max(320),
-      whatsapp: z.string().optional(),
+      whatsapp: z.string().max(50).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
