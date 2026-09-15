@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { contactMessages } from "../../drizzle/schema";
@@ -125,7 +126,7 @@ export const contactRouter = router({
             visitorName: input.name,
             visitorEmail: input.email,
             visitorPhone: input.phone,
-            sessionId: `contact-form-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            sessionId: `contact-form-${Date.now()}-${randomBytes(3).toString("hex")}`,
             senderRole: "visitor",
             content: input.message,
             subject: input.subject,

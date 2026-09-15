@@ -4,6 +4,7 @@
  */
 
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
@@ -35,9 +36,7 @@ function generateDossierNumber(): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  const random = Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, "0");
+  const random = randomInt(0, 10000).toString().padStart(4, "0");
 
   return `#3M-${year}${month}${day}-${random}`;
 }

@@ -1,6 +1,7 @@
 import { publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { randomBytes } from 'node:crypto';
 
 /**
  * Routeur pour la gestion des téléchargements de fichiers
@@ -29,7 +30,7 @@ export const uploadRouter = router({
 
         // Générer un nom de fichier unique
         const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(2, 8);
+        const randomString = randomBytes(3).toString("hex");
         const uniqueFileName = `passport_${timestamp}_${randomString}_${input.fileName}`;
 
         // Demander une URL de téléchargement présignée

@@ -4,6 +4,7 @@
  */
 
 import { TRPCError } from "@trpc/server";
+import { randomInt } from "node:crypto";
 import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
 import { applications } from "../../drizzle/schema";
@@ -16,7 +17,7 @@ import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEm
  */
 function generateDossierNumber(): string {
   const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  const random = randomInt(0, 10000).toString().padStart(4, "0");
   return `3M-${year}-${random}`;
 }
 

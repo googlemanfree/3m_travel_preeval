@@ -6,6 +6,7 @@
 import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { randomInt } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import { storagePut } from '../storage';
 import { sendEmail } from '../_core/email';
@@ -16,9 +17,7 @@ function generateDossierNumber(): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
-  const random = Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, '0');
+  const random = randomInt(0, 100000).toString().padStart(5, '0');
   return `EVISA-${year}${month}${day}-${random}`;
 }
 

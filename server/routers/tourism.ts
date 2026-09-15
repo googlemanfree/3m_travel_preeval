@@ -193,7 +193,7 @@ export const tourismRouter = router({
     const owner = linkedCandidate
       ? { candidateId: linkedCandidate.id, fullName: linkedCandidate.fullName, email: linkedCandidate.email }
       : { candidateId: null, fullName: input.fullName, email: input.email };
-    const reference = `TRM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const reference = `TRM-${new Date().getFullYear()}-${randomInt(100000, 1000000)}`;
     await db.insert(tourismServiceRequests).values({ reference, candidateId: owner.candidateId, fullName: owner.fullName, email: owner.email, phone: input.phone, destination: input.destination, departureDate: input.departureDate ? new Date(`${input.departureDate}T00:00:00Z`) : null, returnDate: input.returnDate ? new Date(`${input.returnDate}T00:00:00Z`) : null, travelersCount: input.travelersCount, serviceTypesJson: JSON.stringify(buildTourismServiceTypes(input.packType, input.serviceTypes)), packType: input.packType || null, hotelCategory: input.hotelCategory || null, vehicleCategory: input.vehicleCategory || null, pickupLocation: input.pickupLocation || null, budgetXaf: input.budgetXaf ?? null, notes: input.notes || null, enrichmentJson: input.enrichment ? JSON.stringify(input.enrichment) : null });
     await db.insert(adminNotifications).values({ type: "new_contact_message", title: "Nouvelle demande Tourisme", message: `${owner.fullName} — ${input.destination} — ${reference}`, relatedId: reference, targetAdminType: "accompagnement" });
     return { reference };
