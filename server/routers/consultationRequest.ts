@@ -12,7 +12,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { consultationRequests } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
@@ -145,10 +145,20 @@ export const consultationRequestRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const rows = await db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt));
-      const filtered = input.status ? rows.filter((r) => r.status === input.status) : rows;
-      const total = filtered.length;
-      const page = filtered.slice(input.offset, input.offset + input.limit);
+      const where = input.status ? eq(consultationRequests.status, input.status) : undefined;
+
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(consultationRequests)
+        .where(where);
+
+      const page = await db
+        .select()
+        .from(consultationRequests)
+        .where(where)
+        .orderBy(desc(consultationRequests.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
 
       return { items: page, total };
     }),

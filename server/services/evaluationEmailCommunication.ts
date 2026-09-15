@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const CANONICAL_SITE_ORIGIN = "https://www.3mtravelagency.com";
 

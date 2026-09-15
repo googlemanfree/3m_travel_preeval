@@ -5,17 +5,20 @@ import { agencyDossiers, applications, candidates, paymentAuditLogs } from '../.
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { sendDossierConfirmationEmail } from '../emailService';
 import { assertApplicationCanEnterStatus } from '../utils/applicationGates';
-import crypto from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 // Générer un numéro de dossier unique au format #3M-AAAA-XXXX
 async function generateDossierNumber(): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
-  
+
   const year = new Date().getFullYear();
-  const count = await (db as any).query.applications.findMany();
-  const yearCount = count.filter((app: any) => new Date(app.createdAt).getFullYear() === year).length;
-  
+  const [row] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(applications)
+    .where(sql`YEAR(${applications.createdAt}) = ${year}`);
+  const yearCount = Number(row?.count ?? 0);
+
   const sequence = String(yearCount + 1).padStart(4, '0');
   return `#3M-${year}-${sequence}`;
 }
@@ -47,7 +50,7 @@ export const adminDossierRouter = router({
 
         // Générer le numéro de dossier
         const dossierNumber = await generateDossierNumber();
-        const accessCode = crypto.randomBytes(6).toString('hex').toUpperCase();
+        const accessCode = randomBytes(6).toString('hex').toUpperCase();
 
         // La création officielle ne doit jamais contourner les deux prérequis.
         // Le dépôt préparatoire agence possède son propre formulaire et reste inchangé.
@@ -132,7 +135,7 @@ export const adminDossierRouter = router({
         // mais rendu inatteignable par la garde ci-dessus).
         if (!candidate) {
           // Générer un mot de passe temporaire
-          const tempPassword = crypto.randomBytes(16).toString('hex');
+          const tempPassword = randomBytes(16).toString('hex');
           
           const now = new Date();
           await db.execute(
