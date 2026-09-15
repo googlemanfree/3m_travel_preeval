@@ -3736,3 +3736,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser `user_github/main` jusqu’à `868c9649` et auditer les 12 fichiers serveur concernés — remplacements `node:crypto` présents dans les générateurs ciblés ; aucun `Math.random()` dans ces 12 fichiers.
 - [x] Exécuter TypeScript, tests de régression sécurité et build — TypeScript, tests ciblés et build de production au vert.
 - [ ] Publier uniquement si tous les contrôles sont verts — prêt pour publication.
+
+## Push sécurité 7584e26b — validation
+- [x] Synchroniser `user_github/main` jusqu’à `7584e26b` et intégrer le correctif intermédiaire `04a57ee9`
+- [x] Vérifier `adminPasswordReset.ts` : aucun e-mail brut dans les logs des branches de demande de réinitialisation ; logs de succès limités à l’identifiant admin
+- [x] Vérifier `flights.ts` : `randomBetween` utilise `randomInt` et les PNR utilisent `randomBytes(3)`
+- [x] Exécuter TypeScript, tests ciblés flights/admin et build — tout est au vert
+- [ ] Publier uniquement si tous les contrôles sont verts — prêt pour publication
