@@ -74,13 +74,13 @@ async function notifyCandidateReply(
           <p>${replyContent.replace(/\n/g, "<br>")}</p>
         </div>
         <p style="text-align: center; margin: 20px 0;">
-          <a href="https://3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+          <a href="https://3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
              style="background-color: #0066cc; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
             Consulter ma réponse
           </a>
         </p>
         <hr />
-        <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+        <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
       </div>
     `;
 
@@ -246,7 +246,7 @@ export const evaluationCommentsRouter = router({
           authorType: "admin",
           authorId: ctx.user.id,
           authorName: ctx.user.name || "Admin",
-          authorEmail: ctx.user.email || "admin@3mtravelagency.click",
+          authorEmail: ctx.user.email || "hello@3mtravelagency.com",
           content: input.content,
           isQuestion: false,
           isRead: false,

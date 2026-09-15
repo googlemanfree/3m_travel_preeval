@@ -197,7 +197,7 @@ export function getPasswordChangedEmailTemplate(params: AdminEmailTemplateParams
 
             <!-- Action recommandée -->
             <p style="text-align: center;">
-              <a href="https://www.3mtravelagency.click/admin-login" class="button">
+              <a href="https://www.3mtravelagency.com/admin-login" class="button">
                 Accéder au tableau de bord administrateur
               </a>
             </p>
@@ -554,7 +554,7 @@ export function getPasswordResetSuccessEmailTemplate(params: AdminEmailTemplateP
             </div>
 
             <div style="text-align: center;">
-              <a href="https://www.3mtravelagency.click/admin/login" class="button">
+              <a href="https://www.3mtravelagency.com/admin/login" class="button">
                 Se connecter maintenant
               </a>
             </div>

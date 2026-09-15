@@ -1139,11 +1139,11 @@ export const adminRouter = router({
                     <p style="margin: 0; font-size: 18px; font-weight: 700; color: #1E3A8A;">📋 ${statusLabel}</p>
                   </div>
                   <p style="color: #374151;">Vous pouvez consulter votre espace client pour plus de détails :</p>
-                  <a href="https://3mtravelagency.click/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                  <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
                 </div>
                 <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
                   <p>3M Travel & Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
-                  <p>Yaoundé, Cameroun | +237 620-996-045 | contact@3mtravelagency.click</p>
+                  <p>Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
                 </div>
               </div>
             `;
@@ -1249,7 +1249,7 @@ export const adminRouter = router({
                   <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${input.projectType}</p>
                 </div>
                 <p style="color: #374151;">Notre équipe vous contactera sous peu pour les prochaines étapes.</p>
-                <a href="https://3mtravelagency.click/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
               </div>
               <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
                 <p>3M Travel & Services — Yaoundé, Cameroun | +237 620-996-045</p>
@@ -1506,7 +1506,7 @@ export const adminRouter = router({
         switch (templateId) {
           case "verification": {
             const testToken = "test-token-" + Date.now();
-            const verifyUrl = `https://3mtravelagency.click/verify-email-link?token=${testToken}`;
+            const verifyUrl = `https://3mtravelagency.com/verify-email-link?token=${testToken}`;
             html = generateVerificationEmailHtml(testName, verifyUrl);
             break;
           }
@@ -1517,7 +1517,7 @@ export const adminRouter = router({
           }
           case "password-reset": {
             const testToken = "test-token-" + Date.now();
-            const resetUrl = `https://3mtravelagency.click/reset-password?token=${testToken}`;
+            const resetUrl = `https://3mtravelagency.com/reset-password?token=${testToken}`;
             html = generatePasswordResetEmailHtml(testName, resetUrl);
             break;
           }
@@ -1622,7 +1622,7 @@ function generatePasswordResetEmailHtml(fullName: string, resetUrl: string): str
 }
 
 function generateWelcomeEmailHtml(fullName: string, destination: string): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Bienvenue!</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>🎉 Votre compte 3M Travel est maintenant <strong>activé</strong> !</p><p>Vous pouvez maintenant :</p><ul style="margin:16px 0;padding-left:20px;color:#374151;line-height:2"><li>📁 Uploader vos documents</li><li>💬 Contacter votre conseiller</li><li>📊 Suivre votre dossier</li></ul><div class="btn-center" style="margin:24px 0"><a href="https://3mtravelagency.click/dashboard" class="btn">🚀 Accéder à mon espace</a></div></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Bienvenue!</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>🎉 Votre compte 3M Travel est maintenant <strong>activé</strong> !</p><p>Vous pouvez maintenant :</p><ul style="margin:16px 0;padding-left:20px;color:#374151;line-height:2"><li>📁 Uploader vos documents</li><li>💬 Contacter votre conseiller</li><li>📊 Suivre votre dossier</li></ul><div class="btn-center" style="margin:24px 0"><a href="https://3mtravelagency.com/dashboard" class="btn">🚀 Accéder à mon espace</a></div></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
 }
 
 function generateDossierConfirmationEmailHtml(fullName: string, dossierNumber: string, destination: string, amount: number): string {

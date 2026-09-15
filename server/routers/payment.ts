@@ -96,7 +96,8 @@ export const paymentRouter = router({
           .where(eq(applications.id, application.id));
 
         // URL interne du tunnel ; le statut final est exclusivement confirmé par CinetPay.
-        const paymentUrl = `https://www.3mtravelagency.click/checkout?tx=${transactionId}&dossier=${encodeURIComponent(input.dossierNumber)}`;
+        const appBase = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
+        const paymentUrl = `${appBase}/payment/${encodeURIComponent(input.dossierNumber)}?tx=${transactionId}`;
 
         return {
           success: true,

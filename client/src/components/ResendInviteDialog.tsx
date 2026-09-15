@@ -20,6 +20,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trpc } from "@/lib/trpc";
+
+const getAdminSessionToken = () =>
+  sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "";
 
 interface ResendInviteDialogProps {
   isOpen: boolean;
@@ -89,10 +93,21 @@ export default function ResendInviteDialog({
     emailTemplates.professional.subject
   );
   const [customBody, setCustomBody] = useState(emailTemplates.professional.body);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [sendError, setSendError] = useState("");
+
+  const resendMutation = trpc.adminAuth.resendInvite.useMutation({
+    onSuccess: () => {
+      setIsSent(true);
+      if (onResendSuccess) onResendSuccess();
+      setTimeout(() => handleClose(), 3000);
+    },
+    onError: (err) => {
+      setSendError(err.message || "Erreur lors de l'envoi.");
+    },
+  });
 
   const handleTemplateChange = (template: keyof typeof emailTemplates) => {
     setSelectedTemplate(template);
@@ -109,26 +124,19 @@ export default function ResendInviteDialog({
     };
   };
 
-  const handleSendEmail = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API call to send email
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      setIsSent(true);
-      if (onResendSuccess) {
-        onResendSuccess();
-      }
-
-      // Auto-close after 3 seconds
-      setTimeout(() => {
-        handleClose();
-      }, 3000);
-    } catch (error) {
-      console.error("Error sending email:", error);
-    } finally {
-      setIsLoading(false);
+  const handleSendEmail = () => {
+    setSendError("");
+    const sessionToken = getAdminSessionToken();
+    if (!sessionToken) {
+      setSendError("Session expirée. Veuillez vous reconnecter.");
+      return;
     }
+    resendMutation.mutate({
+      sessionToken,
+      email: adminEmail,
+      customSubject,
+      customBody,
+    });
   };
 
   const handleCopyEmail = () => {
@@ -331,15 +339,15 @@ export default function ResendInviteDialog({
         {/* Actions */}
         {!isSent && (
           <div className="flex gap-3 justify-end border-t pt-6">
-            <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+            <Button variant="outline" onClick={handleClose} disabled={resendMutation.isPending}>
               Annuler
             </Button>
             <Button
               className="bg-blue-600 hover:bg-blue-700"
               onClick={handleSendEmail}
-              disabled={isLoading}
+              disabled={resendMutation.isPending}
             >
-              {isLoading ? (
+              {resendMutation.isPending ? (
                 <>
                   <Loader className="w-4 h-4 mr-2 animate-spin" />
                   Envoi en cours...

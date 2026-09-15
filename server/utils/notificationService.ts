@@ -40,14 +40,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </ul>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Accéder à mon Espace
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -68,14 +68,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir les Détails
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -95,14 +95,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir mes Documents
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -122,14 +122,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Consulter mon Bilan
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -150,14 +150,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir ma Facture
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -177,14 +177,14 @@ export async function sendDossierNotification(notification: DossierNotification)
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Lire le Message
             </a>
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;

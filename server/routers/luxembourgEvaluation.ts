@@ -92,7 +92,7 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
       <p style="font-size:12px;color:#666;text-align:center;">
         3M Travel & Services SARL — "Votre mobilité, notre expertise. Votre réussite, notre mission."<br/>
-        +237 698 104 832 | hello@3mtravelagency.com | www.3mtravelagency.click<br/>
+        +237 698 104 832 | hello@3mtravelagency.com | www.3mtravelagency.com<br/>
         RC/YAO/2019/A/2567
       </p>
     </div>

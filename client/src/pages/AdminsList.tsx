@@ -57,7 +57,7 @@ const roleColors: Record<Admin["adminType"], string> = {
 
 export default function AdminsList() {
   const sessionToken = getAdminSessionToken();
-  const { data: listAdminsResult, isLoading, isError } = trpc.adminAuth.listAdmins.useQuery(
+  const { data: listAdminsResult, isLoading, isError, refetch: refetchAdmins } = trpc.adminAuth.listAdmins.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken) },
   );
@@ -360,10 +360,7 @@ export default function AdminsList() {
         <AdminInvite
           isOpen={isInviteOpen}
           onClose={() => setIsInviteOpen(false)}
-          onInviteSent={(email) => {
-            // Optionally add the invited admin to the list
-            console.log("Admin invited:", email);
-          }}
+          onInviteSent={() => { void refetchAdmins(); }}
         />
 
         {/* Resend Invite Dialog */}
@@ -376,9 +373,7 @@ export default function AdminsList() {
             inviteLink={`${window.location.origin}/admin/accept-invite?email=${encodeURIComponent(
               selectedAdmin.email
             )}`}
-            onResendSuccess={() => {
-              console.log("Invitation resent to:", selectedAdmin.email);
-            }}
+            onResendSuccess={() => { void refetchAdmins(); }}
           />
         )}
 

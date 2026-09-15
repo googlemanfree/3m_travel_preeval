@@ -24,7 +24,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de bilan d'admissibilité (Email + WhatsApp)
    */
-  sendAdmissibilityNotification: publicProcedure
+  sendAdmissibilityNotification: protectedProcedure
     .input(
       z.object({
         applicationId: z.string(),
@@ -79,7 +79,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de paiement confirmé
    */
-  sendPaymentConfirmedNotification: publicProcedure
+  sendPaymentConfirmedNotification: protectedProcedure
     .input(
       z.object({
         transactionId: z.string(),
@@ -134,7 +134,7 @@ export const notificationRouter = router({
   /**
    * Envoyer un rappel de paiement
    */
-  sendPaymentReminder: publicProcedure
+  sendPaymentReminder: protectedProcedure
     .input(
       z.object({
         email: z.string().email(),
@@ -185,7 +185,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de documents reçus
    */
-  sendDocumentsReceivedNotification: publicProcedure
+  sendDocumentsReceivedNotification: protectedProcedure
     .input(
       z.object({
         email: z.string().email(),
@@ -227,7 +227,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de visa approuvé
    */
-  sendVisaApprovedNotification: publicProcedure
+  sendVisaApprovedNotification: protectedProcedure
     .input(
       z.object({
         email: z.string().email(),
@@ -270,7 +270,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de contrat obtenu
    */
-  sendContractObtainedNotification: publicProcedure
+  sendContractObtainedNotification: protectedProcedure
     .input(
       z.object({
         email: z.string().email(),
@@ -321,7 +321,7 @@ export const notificationRouter = router({
   /**
    * Envoyer une notification de dossier rejeté
    */
-  sendApplicationRejectedNotification: publicProcedure
+  sendApplicationRejectedNotification: protectedProcedure
     .input(
       z.object({
         email: z.string().email(),
