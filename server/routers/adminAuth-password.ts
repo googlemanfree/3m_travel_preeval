@@ -14,6 +14,7 @@ import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
 // Générer un token de session
 function generateSessionToken(): string {
@@ -56,6 +57,8 @@ export const adminAuthRouter = router({
       password: z.string().min(1),
     }))
     .mutation(async ({ input }) => {
+      checkLoginAttempts(input.email);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -66,6 +69,7 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
@@ -76,13 +80,17 @@ export const adminAuthRouter = router({
       }
 
       if (!admin.passwordHash) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
+
+      resetLoginAttempts(input.email);
 
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h
@@ -103,7 +111,7 @@ export const adminAuthRouter = router({
         adminType: admin.adminType,
         fullName: admin.fullName,
         email: admin.email,
-        requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
+        requiresPasswordChange: admin.requiresPasswordChange || false,
       };
     }),
 
