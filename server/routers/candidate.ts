@@ -40,6 +40,7 @@ import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVeri
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
+import { coarseCategoryForPreferredDestinations, isRecognizedCandidateDestination } from "../../shared/candidateDestinationOptions";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 
@@ -366,7 +367,10 @@ export const candidateRouter = router({
         email: z.string().email("Email invalide"),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum"),
         phone: z.string().optional(),
-        destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
+        // Jusqu'à 3 pays précis parmi les destinations réellement couvertes par le site
+        // (destinations20.ts) : condition obligatoire pour que la checklist documentaire et le
+        // score d'éligibilité, tous deux construits pour un pays précis, s'appliquent réellement.
+        preferredDestinations: z.array(z.string().min(1)).min(1, "Choisissez au moins une destination").max(3, "3 destinations maximum"),
         nationality: z.string().optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
         evaluationAlreadyCompleted: z.boolean().default(false),
@@ -376,6 +380,11 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const normalizedEmail = input.email.trim().toLowerCase();
+
+      const unrecognizedDestinations = input.preferredDestinations.filter((name) => !isRecognizedCandidateDestination(name));
+      if (unrecognizedDestinations.length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Destination(s) non reconnue(s) : ${unrecognizedDestinations.join(", ")}.` });
+      }
 
       // Vérifier si l'email existe déjà
       const existing = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, normalizedEmail)).limit(1);
@@ -431,7 +440,8 @@ export const candidateRouter = router({
           email: normalizedEmail,
           passwordHash,
           phone: input.phone ?? null,
-          destination: input.destination ?? "autre",
+          destination: coarseCategoryForPreferredDestinations(input.preferredDestinations),
+          preferredDestinations: JSON.stringify(input.preferredDestinations),
           nationality: input.nationality ?? null,
           dossierStatus: "nouveau",
           ...priorEvaluationFields,

@@ -255,6 +255,17 @@ export default function EvaluationSpace() {
   };
   const workflow = dashboardData.workflow;
   const portraitIsMissing = !cProfile.avatarUrl;
+  // Pays précis déclarés à l'inscription (jusqu'à 3). Prioritaire sur cProfile.destination, qui ne
+  // reste qu'une catégorie large ("europe", "golfe"...) insuffisante pour la checklist et le score.
+  const preferredDestinationsList: string[] = (() => {
+    try {
+      const parsed = JSON.parse((rawCProfile as any).preferredDestinations || "[]");
+      return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string" && value.length > 0) : [];
+    } catch {
+      return [];
+    }
+  })();
+  const primaryDestination = preferredDestinationsList[0] || cProfile.destination;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
@@ -321,6 +332,18 @@ export default function EvaluationSpace() {
   const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
   const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
   const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(cProfile.destination || "general")}`);
+  // Les onglets Documents/Dossier n'ont de sens qu'une fois l'évaluation soumise : avant cela, le
+  // candidat n'a ni pays précis validé ni base pour une checklist ou un suivi réels. On bloque
+  // réellement l'accès (pas une simple incitation) plutôt que d'afficher un espace vide ou générique.
+  const evaluationGateCard = (
+    <Card className="border-2 border-violet-300 bg-violet-50 p-8 text-center shadow-sm" role="region" aria-labelledby="evaluation-gate-title">
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-sm"><Sparkles className="h-7 w-7" aria-hidden="true" /></span>
+      <p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-violet-700">Étape obligatoire</p>
+      <h3 id="evaluation-gate-title" className="mt-1 text-xl font-black text-slate-950">Terminez d'abord votre évaluation</h3>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-violet-900">Cette section s'ouvre une fois votre évaluation soumise : c'est elle qui précise votre destination et votre projet, et sans laquelle il n'y a ni pièces à demander ni dossier à suivre.</p>
+      <Button type="button" onClick={openEvaluation} className="mt-5 h-12 bg-violet-700 px-6 text-white hover:bg-violet-800"><Sparkles className="mr-2 h-4 w-4" />Faire mon évaluation</Button>
+    </Card>
+  );
   const priority = stats.unreadMessages > 0
     ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
     : cProfile.dossierStatus === "documents"
@@ -475,7 +498,7 @@ export default function EvaluationSpace() {
                   </div>
                   <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-sm text-blue-100">
                     <span><strong className="text-white">Référence :</strong> {cProfile.dossierNumber || "En attribution"}</span>
-                    <span><strong className="text-white">Destination :</strong> {cProfile.destination || "À préciser"}</span>
+                    <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.length > 0 ? preferredDestinationsList.join(", ") : cProfile.destination || "À préciser"}</span>
                   </div>
                   <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
                   <div className="mt-5 border-t border-white/15 pt-4" aria-label="Historique simplifié des étapes validées"><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-200">Étapes validées récemment</p>{validatedSteps.length === 0 ? <p className="mt-2 text-xs text-blue-100">Aucune étape validée n’est encore enregistrée.</p> : <ol className="mt-3 space-y-2">{validatedSteps.map((entry: any) => <li key={entry.id} className="flex items-start gap-2 text-xs text-blue-50"><span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-blue-950">✓</span><span><strong className="text-white">{String(entry.newStatus).replaceAll("_", " ")}</strong><span className="ml-2 text-blue-200">{new Date(entry.createdAt).toLocaleDateString("fr-FR")}</span></span></li>)}</ol>}</div>
@@ -600,7 +623,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
+                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -656,7 +679,7 @@ export default function EvaluationSpace() {
             </div>
           )}
 
-          {activeTab === "dossier" && (
+          {activeTab === "dossier" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
@@ -814,7 +837,7 @@ export default function EvaluationSpace() {
                 </Card>
               )}
             </div>
-          )}
+          ))}
 
           {activeTab === "signatures" && (
             <SignableDocumentsPanel
@@ -824,9 +847,9 @@ export default function EvaluationSpace() {
             />
           )}
 
-          {activeTab === "documents" && (
+          {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
-              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} />
+              <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} />
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />
               {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetch()]); }} /></Card>}
               {agencyDocuments && agencyDocuments.length > 0 && (
@@ -850,7 +873,7 @@ export default function EvaluationSpace() {
                 </div>
               </section>
             </div>
-          )}
+          ))}
 
           {activeTab === "profile" && (
             <div className="space-y-6">
