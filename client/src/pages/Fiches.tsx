@@ -340,6 +340,7 @@ export default function Fiches() {
                 placeholder="Rechercher un pays, un secteur, une condition..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                maxLength={200}
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {search && (

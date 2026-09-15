@@ -579,10 +579,10 @@ export function CandidateDetailModal({
                       <Badge className="w-fit bg-amber-100 text-amber-800">Pré-dossier</Badge>
                     </div>
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
-                      <div><Label htmlFor="predossier-destination-modal">Destination confirmée</Label><Input id="predossier-destination-modal" className="mt-2" value={preDossierDestination} onChange={(event) => setPreDossierDestination(event.target.value)} placeholder="Ex. Canada" /></div>
-                      <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" /></div>
+                      <div><Label htmlFor="predossier-destination-modal">Destination confirmée</Label><Input id="predossier-destination-modal" className="mt-2" value={preDossierDestination} onChange={(event) => setPreDossierDestination(event.target.value)} placeholder="Ex. Canada" maxLength={100} /></div>
+                      <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" maxLength={50} /></div>
                     </div>
-                    <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
+                    <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" maxLength={2000} className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
                     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p></div>
                   </section>
                 ) : (
@@ -867,6 +867,7 @@ function ImportAgencyModal({
                 onChange={(e) => setField("fullName", e.target.value)}
                 placeholder="Ex: Jean-Pierre Mbarga"
                 required
+                maxLength={255}
               />
             </div>
 
@@ -879,6 +880,7 @@ function ImportAgencyModal({
                 onChange={(e) => setField("email", e.target.value)}
                 placeholder="candidat@email.com"
                 required
+                maxLength={320}
               />
             </div>
 
@@ -890,12 +892,13 @@ function ImportAgencyModal({
                 onChange={(e) => setField("whatsapp", e.target.value)}
                 placeholder="+237 6XX XXX XXX"
                 required
+                maxLength={50}
               />
             </div>
 
             <div>
               <Label htmlFor="city">Ville</Label>
-              <Input id="city" value={form.city} onChange={(e) => setField("city", e.target.value)} placeholder="Yaoundé" />
+              <Input id="city" value={form.city} onChange={(e) => setField("city", e.target.value)} placeholder="Yaoundé" maxLength={100} />
             </div>
 
             <div>
@@ -905,7 +908,7 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="nationality">Nationalité</Label>
-              <Input id="nationality" value={form.nationality} onChange={(e) => setField("nationality", e.target.value)} placeholder="Camerounaise" />
+              <Input id="nationality" value={form.nationality} onChange={(e) => setField("nationality", e.target.value)} placeholder="Camerounaise" maxLength={100} />
             </div>
 
             <div>
@@ -938,7 +941,7 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="documentsReceived">Documents déjà remis</Label>
-              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme" className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme" maxLength={2000} className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
             </div>
 
             <div>
@@ -955,7 +958,7 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="assignedToAdmin">Conseiller référent (email)</Label>
-              <Input id="assignedToAdmin" type="email" value={form.assignedToAdmin} onChange={(e) => setField("assignedToAdmin", e.target.value)} placeholder="conseiller@3mtravelagency.com" />
+              <Input id="assignedToAdmin" type="email" value={form.assignedToAdmin} onChange={(e) => setField("assignedToAdmin", e.target.value)} placeholder="conseiller@3mtravelagency.com" maxLength={320} />
             </div>
 
             <div>
@@ -1514,6 +1517,7 @@ export default function AdminDashboard() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label="Filtrer les dossiers candidats"
+                  maxLength={200}
                   className="pl-10 pr-4 py-2 bg-white/10 border border-white/25 text-white placeholder-slate-200 rounded-lg shadow-inner shadow-black/10 focus:bg-white/15 focus:border-white/60 transition-all"
                 />
               </div>
@@ -1641,7 +1645,7 @@ export default function AdminDashboard() {
             <p className="text-sm text-slate-600">Accédez rapidement aux espaces autorisés. Raccourci : <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-semibold">Ctrl/Cmd + K</kbd></p>
           </DialogHeader>
           <div className="p-4">
-            <Input autoFocus value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Rechercher un espace ou un outil..." aria-label="Recherche globale administrateur" className="h-11" />
+            <Input autoFocus value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Rechercher un espace ou un outil..." aria-label="Recherche globale administrateur" maxLength={200} className="h-11" />
             <div className="mt-3 max-h-80 space-y-1 overflow-y-auto" role="listbox" aria-label="Résultats de recherche admin">
               {filteredGlobalSearchItems.length === 0 ? <p className="px-3 py-8 text-center text-sm text-slate-500">Aucun espace ne correspond à votre recherche.</p> : filteredGlobalSearchItems.map((item) => <button key={item.label} type="button" role="option" onClick={() => openGlobalSearchItem(item)} className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700"><Search className="h-4 w-4" /></span><span className="min-w-0"><strong className="block text-sm font-bold text-slate-950">{item.label}</strong><span className="block text-xs text-slate-600">{item.hint}</span></span></button>)}
             </div>
@@ -1956,12 +1960,14 @@ export default function AdminDashboard() {
                     type="text"
                     placeholder="Titre (ex: Guide Visa Canada 2026)"
                     id="rag-doc-title"
+                    maxLength={255}
                     className="px-3 py-2 text-sm rounded-lg border bg-white"
                   />
                   <input
                     type="text"
                     placeholder="Pays (ex: Canada)"
                     id="rag-doc-country"
+                    maxLength={100}
                     className="px-3 py-2 text-sm rounded-lg border bg-white"
                   />
                   <select id="rag-doc-category" className="px-3 py-2 text-sm rounded-lg border bg-white">
@@ -2228,6 +2234,7 @@ export default function AdminDashboard() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par nom, email, n° dossier, destination..."
+              maxLength={200}
               className="pl-9"
             />
           </div>
@@ -2357,7 +2364,7 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
-            <Input value={archiveSearch} onChange={(event) => setArchiveSearch(event.target.value)} placeholder="Rechercher une référence, un nom ou un e-mail…" aria-label="Rechercher dans la corbeille" />
+            <Input value={archiveSearch} onChange={(event) => setArchiveSearch(event.target.value)} placeholder="Rechercher une référence, un nom ou un e-mail…" aria-label="Rechercher dans la corbeille" maxLength={200} />
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
               {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
@@ -2407,6 +2414,7 @@ export default function AdminDashboard() {
                 id="archive-reason-input"
                 value={archiveReasonInput}
                 onChange={(event) => setArchiveReasonInput(event.target.value)}
+                maxLength={500}
                 className="mt-2 min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
               />
             </div>

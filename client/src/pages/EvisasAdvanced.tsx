@@ -56,6 +56,7 @@ export default function EvisasAdvanced() {
               placeholder="Rechercher un pays, un type de visa (ex: Égypte, Tourisme, ETA...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              maxLength={200}
               className="pl-12 py-6 text-base rounded-2xl border-slate-200 bg-slate-50 focus:bg-white transition-all font-medium"
             />
           </div>

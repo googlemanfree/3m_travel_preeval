@@ -142,6 +142,7 @@ export default function AdminMediaLibrary() {
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       placeholder="Ex: Hôte d’accueil Canada"
+                      maxLength={255}
                       className="bg-slate-950 border-slate-800 text-slate-100"
                       required
                     />
@@ -203,6 +204,7 @@ export default function AdminMediaLibrary() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par titre ou catégorie..."
+              maxLength={200}
               className="bg-slate-950 border-slate-800 text-slate-100 pl-10"
             />
           </div>

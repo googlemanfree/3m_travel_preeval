@@ -81,6 +81,7 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
                 placeholder="votre.email@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                maxLength={320}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
               />
               <div className="flex gap-2 justify-end">
@@ -1156,25 +1157,25 @@ function AIPlannerForm() {
         <form onSubmit={(e) => { e.preventDefault(); planMutation.mutate({ origin, destination, dates, budget, preferences }); }} className="space-y-3">
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Ville de départ</label>
-            <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Destination</label>
-            <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Période / Dates</label>
-              <input type="text" value={dates} onChange={(e) => setDates(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" value={dates} onChange={(e) => setDates(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Budget</label>
-              <input type="text" value={budget} onChange={(e) => setBudget(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={50} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Préférences particulières</label>
-            <input type="text" value={preferences} onChange={(e) => setPreferences(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+            <input type="text" value={preferences} onChange={(e) => setPreferences(e.target.value)} maxLength={500} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
           </div>
 
           <button type="submit" disabled={planMutation.isPending} className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2">

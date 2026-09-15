@@ -95,6 +95,7 @@ const SearchBarWithAutocomplete = () => {
             setShowSuggestions(e.target.value.length > 0);
           }}
           onFocus={() => setShowSuggestions(query.length > 0)}
+          maxLength={200}
           className="w-full px-5 py-3 rounded-lg bg-white/15 backdrop-blur-md border border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all duration-300 font-medium"
         />
         <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -922,6 +923,7 @@ export default function Home() {
                                 placeholder="Jean Dupont"
                                 {...register("fullName")}
                                 aria-invalid={fieldState("fullName") === "error"}
+                                maxLength={255}
                                 className={`pr-9 transition-colors ${
                                   fieldState("fullName") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
                                   fieldState("fullName") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
@@ -967,6 +969,7 @@ export default function Home() {
                                 placeholder="jean@example.com"
                                 {...register("email")}
                                 aria-invalid={fieldState("email") === "error"}
+                                maxLength={320}
                                 className={`pr-9 transition-colors ${
                                   fieldState("email") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
                                   fieldState("email") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
@@ -1011,6 +1014,7 @@ export default function Home() {
                                 placeholder="+237 620-996-045"
                                 {...register("phone")}
                                 aria-invalid={fieldState("phone") === "error"}
+                                maxLength={50}
                                 className={`pr-9 transition-colors ${
                                   fieldState("phone") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
                                   fieldState("phone") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
@@ -1053,7 +1057,7 @@ export default function Home() {
                           {/* Nationalité */}
                           <div className="space-y-1">
                             <Label htmlFor="nationality" className="text-gray-700 font-semibold text-sm">Nationalité</Label>
-                            <Input id="nationality" placeholder="Camerounaise" {...register("nationality")} className="border-gray-200 focus:border-blue-500" />
+                            <Input id="nationality" placeholder="Camerounaise" {...register("nationality")} maxLength={100} className="border-gray-200 focus:border-blue-500" />
                           </div>
 
                           {/* Pays de destination (Autre) */}
@@ -1067,6 +1071,7 @@ export default function Home() {
                                   id="destinationCountry"
                                   placeholder="Ex: États-Unis, Australie..."
                                   {...register("destinationCountry")}
+                                  maxLength={100}
                                   className="border-gray-200 focus:border-blue-500"
                                 />
                               </div>
@@ -1355,6 +1360,7 @@ export default function Home() {
                       value={contactForm.name}
                       onChange={event => setContactForm(current => ({ ...current, name: event.target.value }))}
                       required
+                      maxLength={255}
                       className="bg-white border-gray-300"
                     />
                   </div>
@@ -1369,6 +1375,7 @@ export default function Home() {
                       value={contactForm.email}
                       onChange={event => setContactForm(current => ({ ...current, email: event.target.value }))}
                       required
+                      maxLength={320}
                       className="bg-white border-gray-300"
                     />
                   </div>
@@ -1382,6 +1389,7 @@ export default function Home() {
                       value={contactForm.message}
                       onChange={event => setContactForm(current => ({ ...current, message: event.target.value }))}
                       required
+                      maxLength={2000}
                       className="bg-white border-gray-300 resize-none"
                       rows={3}
                     />
@@ -1823,6 +1831,7 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
                   placeholder="Ex: Jean Dupont"
                   value={form.nom}
                   onChange={e => { setForm(p => ({ ...p, nom: e.target.value })); if (errors.nom) setErrors(p => ({ ...p, nom: undefined })); }}
+                  maxLength={255}
                   className={fieldClass("nom")}
                 />
                 {errors.nom && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.nom}</p>}

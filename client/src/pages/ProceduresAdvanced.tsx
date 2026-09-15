@@ -299,6 +299,7 @@ export default function ProceduresAdvanced() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-describedby="procedure-search-help procedure-results-count"
+                maxLength={200}
                 className="pl-12 pr-12 py-3 text-base border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
               {searchQuery ? <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" aria-label="Effacer la recherche"><X className="h-4 w-4" /></button> : null}

@@ -175,6 +175,7 @@ export default function AdminEvaluations() {
                   placeholder="Rechercher par nom ou email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  maxLength={200}
                   className="pl-10"
                 />
               </div>

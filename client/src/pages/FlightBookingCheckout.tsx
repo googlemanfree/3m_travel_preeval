@@ -395,29 +395,29 @@ export default function FlightBookingCheckout() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider text-slate-600">Nom complet (selon passeport) *</Label>
-                    <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Ex : DONFACK AUREOL" required className="h-12 rounded-xl" />
+                    <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Ex : DONFACK AUREOL" required maxLength={255} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-600">Adresse E-mail *</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="exemple@gmail.com" required className="h-12 rounded-xl" />
+                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="exemple@gmail.com" required maxLength={320} className="h-12 rounded-xl" />
                   </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-600">Téléphone / WhatsApp *</Label>
-                    <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+237 6XX XXX XXX" required className="h-12 rounded-xl" />
+                    <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+237 6XX XXX XXX" required maxLength={50} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nationality" className="text-xs font-bold uppercase tracking-wider text-slate-600">Nationalité</Label>
-                    <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} placeholder="Camerounaise" className="h-12 rounded-xl" />
+                    <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} placeholder="Camerounaise" maxLength={100} className="h-12 rounded-xl" />
                   </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="passportNumber" className="text-xs font-bold uppercase tracking-wider text-slate-600">N° de Passeport *</Label>
-                    <Input id="passportNumber" name="passportNumber" value={formData.passportNumber} onChange={handleChange} placeholder="CC123456" required className="h-12 rounded-xl font-mono uppercase" />
+                    <Input id="passportNumber" name="passportNumber" value={formData.passportNumber} onChange={handleChange} placeholder="CC123456" required maxLength={64} className="h-12 rounded-xl font-mono uppercase" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="passportExpiry" className="text-xs font-bold uppercase tracking-wider text-slate-600">Expiration Passeport</Label>
@@ -451,7 +451,7 @@ export default function FlightBookingCheckout() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="frequentFlyer" className="text-xs font-bold uppercase tracking-wider text-slate-600">Programme de fidélité (SkyTeam / Autre)</Label>
-                    <Input id="frequentFlyer" name="frequentFlyer" value={formData.frequentFlyer} onChange={handleChange} placeholder="Ex : AF123456789" className="h-12 rounded-xl font-mono" />
+                    <Input id="frequentFlyer" name="frequentFlyer" value={formData.frequentFlyer} onChange={handleChange} placeholder="Ex : AF123456789" maxLength={50} className="h-12 rounded-xl font-mono" />
                   </div>
                 </div>
 
@@ -544,7 +544,7 @@ export default function FlightBookingCheckout() {
                 <form onSubmit={handleSendRecapToFriend} className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-left">
                   <Label htmlFor="friendEmail" className="mb-2 block text-xs font-black uppercase tracking-wider text-blue-900">Envoyer le récapitulatif à un proche</Label>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input id="friendEmail" type="email" value={friendEmail} onChange={(event) => setFriendEmail(event.target.value)} placeholder="proche@exemple.com" required className="h-11 min-w-0 flex-1 rounded-xl border-blue-200 bg-white" />
+                    <Input id="friendEmail" type="email" value={friendEmail} onChange={(event) => setFriendEmail(event.target.value)} placeholder="proche@exemple.com" required maxLength={320} className="h-11 min-w-0 flex-1 rounded-xl border-blue-200 bg-white" />
                     <Button type="submit" className="h-11 rounded-xl bg-blue-700 px-4 font-bold text-white hover:bg-blue-800 sm:shrink-0">
                       <Mail className="mr-2 h-4 w-4" /> Envoyer
                     </Button>

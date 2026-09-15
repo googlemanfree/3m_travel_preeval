@@ -232,6 +232,7 @@ export default function AdminsList() {
                   placeholder="Nom ou email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  maxLength={200}
                   className="pl-10"
                 />
               </div>

@@ -225,7 +225,7 @@ export default function AdminDestinationMedia() {
               </CardTitle>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Rechercher un pays" className="pl-9" aria-label="Rechercher une destination" />
+                <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Rechercher un pays" maxLength={200} className="pl-9" aria-label="Rechercher une destination" />
               </div>
             </CardHeader>
             <CardContent className="max-h-[620px] space-y-1 overflow-y-auto pr-3">
