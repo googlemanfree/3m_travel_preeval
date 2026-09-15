@@ -2145,14 +2145,18 @@ export const adminRouter = router({
           candidateId = cand?.id ?? fileRec.candidateId;
         }
 
-        if (input.status === "approved" && candidateId && /\bcv\b/i.test(documentName)) {
-          await db.insert(clientNotifications).values({
-            candidateId,
-            type: "cv_validated",
-            title: "Votre CV a été validé",
-            body: "Votre CV a été contrôlé par l’agence. Vous pouvez consulter l’avancement de votre évaluation dans votre espace candidat.",
-            actionUrl: "/mon-espace?section=evaluation",
-          });
+        if (input.status === "approved" && candidateId) {
+          try {
+            await db.insert(clientNotifications).values({
+              candidateId,
+              type: "document_approved",
+              title: "Document approuvé",
+              body: `Votre document "${documentName}" a été validé par l’agence. Consultez l’état de votre dossier dans votre espace candidat.`,
+              actionUrl: "/mon-espace?section=documents",
+            });
+          } catch (notifErr) {
+            console.warn("[Admin] Document notification insert failed:", notifErr);
+          }
         }
 
         // Envoyer la notification e-mail automatique au candidat
