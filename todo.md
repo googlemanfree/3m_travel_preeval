@@ -3731,3 +3731,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Vérifier et publier `5060b76e` — préremplissage pays de préférence jusqu’à l’évaluation.
 - [ ] Vérifier et publier `c620a29e`, `c92c112b` et `6dbfcff0` selon leurs diffs réels.
 - [ ] Considérer `3571db27` comme merge sans contrôle fonctionnel dédié.
+
+## Push sécurité 868c9649 — validation
+- [x] Synchroniser `user_github/main` jusqu’à `868c9649` et auditer les 12 fichiers serveur concernés — remplacements `node:crypto` présents dans les générateurs ciblés ; aucun `Math.random()` dans ces 12 fichiers.
+- [x] Exécuter TypeScript, tests de régression sécurité et build — TypeScript, tests ciblés et build de production au vert.
+- [ ] Publier uniquement si tous les contrôles sont verts — prêt pour publication.
