@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock3, FileSignature, PenLine, ShieldCheck } from "lucide-react";
@@ -30,16 +31,17 @@ export function SignableDocumentsPanel({
   onOpenProtocol: () => void;
 }) {
   const documentsToSign = documents.filter(isDocumentToSign);
-  const paymentConfirmed = activeDossier?.paymentStatus === "SUCCESS";
-  const protocolSigned = Boolean(activeDossier?.agreementSigned);
-  const pendingCount = (paymentConfirmed && !protocolSigned ? 1 : 0) + documentsToSign.length;
+  const hasActiveDossier = Boolean(activeDossier?.dossierNumber);
+  const paymentConfirmed = hasActiveDossier && activeDossier?.paymentStatus === "SUCCESS";
+  const protocolSigned = hasActiveDossier && Boolean(activeDossier?.agreementSigned);
+  const pendingCount = (hasActiveDossier && paymentConfirmed && !protocolSigned ? 1 : 0) + documentsToSign.length;
 
   return (
     <section className="space-y-4" aria-labelledby="documents-to-sign-title">
       <Card className="border-amber-200 bg-gradient-to-r from-amber-50 via-white to-blue-50 shadow-sm">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Dossier actif · signature encadrée</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">{hasActiveDossier ? "Dossier actif · signature encadrée" : "Pré-compte · activation en attente"}</p>
             <CardTitle id="documents-to-sign-title" className="mt-1 flex items-center gap-2 text-xl text-slate-950"><PenLine className="h-5 w-5 text-amber-700" /> Documents à signer</CardTitle>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">Consultez uniquement les documents qui demandent votre signature. L’agence reste responsable de la vérification et de la suite du dossier.</p>
           </div>
@@ -56,13 +58,14 @@ export function SignableDocumentsPanel({
               </span>
               <div className="min-w-0">
                 <p className="font-bold text-slate-950">Protocole d’accord 3M Travel &amp; Services</p>
-                {protocolSigned ? <p className="mt-1 text-sm text-emerald-800">Signé et enregistré pour le dossier {activeDossier?.dossierNumber ?? "actif"}.</p>
+                {!hasActiveDossier ? <><p className="mt-1 font-semibold text-blue-900">Pas encore de dossier actif</p><p className="mt-1 text-sm text-slate-600">Votre pré-compte est enregistré, mais aucun dossier officiel n’a encore été ouvert. Le protocole ne peut pas être signé à cette étape.</p></>
+                  : protocolSigned ? <p className="mt-1 text-sm text-emerald-800">Signé et enregistré pour le dossier {activeDossier?.dossierNumber ?? "actif"}.</p>
                   : paymentConfirmed ? <p className="mt-1 text-sm text-amber-900">Paiement confirmé : votre signature est maintenant requise avant le traitement humain.</p>
                   : <p className="mt-1 text-sm text-slate-600">Le protocole sera rendu signable après la confirmation du paiement.</p>}
               </div>
             </div>
-            <Button type="button" onClick={onOpenProtocol} disabled={!activeDossier || protocolSigned || !paymentConfirmed} className="h-11 shrink-0 bg-blue-800 text-white hover:bg-blue-900 disabled:bg-slate-300">
-              <ShieldCheck className="mr-2 h-4 w-4" /> {protocolSigned ? "Déjà signé" : paymentConfirmed ? "Lire et signer" : "En attente de paiement"}
+            <Button type="button" onClick={onOpenProtocol} disabled={!hasActiveDossier || protocolSigned || !paymentConfirmed} className="h-11 shrink-0 bg-blue-800 text-white hover:bg-blue-900 disabled:bg-slate-300">
+              <ShieldCheck className="mr-2 h-4 w-4" /> {protocolSigned ? "Déjà signé" : !hasActiveDossier ? "Dossier non ouvert" : paymentConfirmed ? "Lire et signer" : "En attente de paiement"}
             </Button>
           </div>
         </CardContent>

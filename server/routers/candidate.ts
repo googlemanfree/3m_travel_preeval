@@ -1663,6 +1663,7 @@ export const candidateRouter = router({
       success: true,
       data: {
         application,
+        hasActiveDossier: Boolean(app[0] || historicalAgencyDossier),
         documents,
         agencyDocuments,
         evaluationReportPdfUrl,
