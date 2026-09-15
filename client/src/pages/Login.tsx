@@ -15,6 +15,16 @@ import { toast } from "sonner";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
+function parsePreferredDestinations(raw: unknown): string[] | null {
+  if (typeof raw !== "string" || !raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string" && value.length > 0) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Login() {
   const [location, navigate] = useLocation();
   const { login } = useCandidateAuth();
@@ -76,6 +86,7 @@ export default function Login() {
         fullName: candidateData.fullName,
         email: candidateData.email,
         emailVerified: candidateData.emailVerified ?? true,
+        preferredDestinations: parsePreferredDestinations((candidateData as any).preferredDestinations),
       });
       const candidateWithPortrait = data.candidate as typeof data.candidate & { avatarVerificationStatus?: string };
       if (candidateWithPortrait.avatarVerificationStatus !== "verified") {
