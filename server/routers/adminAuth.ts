@@ -321,9 +321,9 @@ export const adminAuthRouter = router({
           html: emailTemplate.html,
         });
 
-        console.log(`[Admin Auth] Password change notification sent to ${admin.email}`);
+        console.log(`[Admin Auth] Password change notification sent to admin #${admin.id}`);
       } catch (emailError) {
-        console.error(`[Admin Auth] Failed to send password change notification to ${admin.email}:`, emailError);
+        console.error(`[Admin Auth] Failed to send password change notification to admin #${admin.id}:`, emailError);
         // Ne pas échouer la mutation si l'email n'est pas envoyé
       }
 
