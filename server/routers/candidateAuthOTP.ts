@@ -40,7 +40,7 @@ export const candidateAuthOTPRouter = router({
     .input(
       z.object({
         email: z.string().email("Email invalide").max(320),
-        fullName: z.string().min(2, "Nom requis"),
+        fullName: z.string().min(2, "Nom requis").max(255),
       })
     )
     .mutation(async ({ input }) => {

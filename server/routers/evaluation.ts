@@ -79,9 +79,9 @@ export function verifyEvaluationUploadToken(token: string, evaluationId: number,
 
 const evaluationInput = z.object({
   // État civil & famille
-  fullName: z.string().min(2, "Le nom complet est requis"),
+  fullName: z.string().min(2, "Le nom complet est requis").max(255),
   email: z.string().email("Email invalide").max(320),
-  phone: z.string().min(8, "Numéro de téléphone invalide"),
+  phone: z.string().min(8, "Numéro de téléphone invalide").max(50),
   dateOfBirth: z.string().optional(),
   nationality: z.string().optional(),
   cityOfResidence: z.string().optional(),
@@ -131,9 +131,9 @@ const evaluationInput = z.object({
 // Schéma pour le formulaire multi-projets
 const multiProjectEvaluationInput = z.object({
   // Étape 1 : Infos générales
-  fullName: z.string().min(2, "Le nom complet est requis"),
+  fullName: z.string().min(2, "Le nom complet est requis").max(255),
   email: z.string().email("Email invalide").max(320),
-  whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide"),
+  whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide").max(50),
   age: z.number().int().min(16).max(100).optional(),
   currentCity: z.string().optional(),
   nationality: z.string().optional(),

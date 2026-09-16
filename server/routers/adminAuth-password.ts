@@ -231,8 +231,8 @@ export const adminAuthRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       email: z.string().email().max(320),
-      fullName: z.string().min(2),
-      phone: z.string().optional(),
+      fullName: z.string().min(2).max(255),
+      phone: z.string().max(50).optional(),
       adminType: z.enum(["evaluation", "accompagnement", "procedures"]),
     }))
     .mutation(async ({ input }) => {

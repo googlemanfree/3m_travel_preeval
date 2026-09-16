@@ -19,9 +19,9 @@ export const agencyDossierRouter = router({
    */
   createDossier: protectedProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      phone: z.string().min(5),
+      phone: z.string().min(5).max(50),
       dateOfBirth: z.string().optional(),
       nationality: z.string().optional(),
       destination: z.string().min(2),
@@ -124,9 +124,9 @@ export const agencyDossierRouter = router({
   updateDossier: protectedProcedure
     .input(z.object({
       dossierId: z.number().int().positive(),
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      phone: z.string().min(5),
+      phone: z.string().min(5).max(50),
       dateOfBirth: z.string().optional(),
       nationality: z.string().optional(),
       destination: z.string().min(2),

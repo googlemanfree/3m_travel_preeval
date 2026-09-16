@@ -27,9 +27,9 @@ export const adminDossierRouter = router({
   createManualDossier: protectedProcedure
     .input(
       z.object({
-        fullName: z.string().min(2),
+        fullName: z.string().min(2).max(255),
         email: z.string().email().max(320),
-        phone: z.string(),
+        phone: z.string().max(50),
         nationality: z.string(),
         destinationCountry: z.string(),
         visaType: z.string(),

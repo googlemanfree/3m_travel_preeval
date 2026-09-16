@@ -15,9 +15,9 @@ import { sendEmail } from "../_core/email";
 
 // Schéma de validation pour la soumission d'évaluation
 const submitEvaluationSchema = z.object({
-  fullName: z.string().min(2, "Nom requis"),
+  fullName: z.string().min(2, "Nom requis").max(255),
   email: z.string().email("Email invalide").max(320),
-  whatsappNumber: z.string().min(10, "Numéro WhatsApp requis"),
+  whatsappNumber: z.string().min(10, "Numéro WhatsApp requis").max(50),
   city: z.string().min(2, "Ville requise"),
   destinationCountry: z.string().min(2, "Destination requise"),
   projectType: z.enum(["etude", "travail", "tourisme", "residence"]),

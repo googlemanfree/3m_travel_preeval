@@ -18,9 +18,9 @@ export const candidateRouter = router({
    */
   register: publicProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      phone: z.string().min(5),
+      phone: z.string().min(5).max(50),
       password: z.string().min(8).max(128),
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
     }))
@@ -155,8 +155,8 @@ export const candidateRouter = router({
   updateProfile: protectedProcedure
     .input(z.object({
       candidateId: z.number(),
-      fullName: z.string().optional(),
-      phone: z.string().optional(),
+      fullName: z.string().max(255).optional(),
+      phone: z.string().max(50).optional(),
       nationality: z.string().optional(),
       educationLevel: z.string().optional(),
       employmentStatus: z.string().optional(),
