@@ -49,10 +49,10 @@ export const oauthUserDashboardRouter = router({
   updateProfile: protectedProcedure
     .input(
       z.object({
-        fullName: z.string().min(2).optional(),
-        phone: z.string().optional(),
-        nationality: z.string().optional(),
-        dateOfBirth: z.string().optional(),
+        fullName: z.string().min(2).max(255).optional(),
+        phone: z.string().max(50).optional(),
+        nationality: z.string().max(100).optional(),
+        dateOfBirth: z.string().max(20).optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
         visaType: z.string().optional(),
         educationLevel: z.string().optional(),

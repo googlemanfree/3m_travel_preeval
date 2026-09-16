@@ -371,7 +371,7 @@ export const candidateRouter = router({
         // (destinations20.ts) : condition obligatoire pour que la checklist documentaire et le
         // score d'éligibilité, tous deux construits pour un pays précis, s'appliquent réellement.
         preferredDestinations: z.array(z.string().min(1)).min(1, "Choisissez au moins une destination").max(3, "3 destinations maximum"),
-        nationality: z.string().optional(),
+        nationality: z.string().max(100).optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
         evaluationAlreadyCompleted: z.boolean().default(false),
       })
