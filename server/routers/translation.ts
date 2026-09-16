@@ -24,7 +24,7 @@ export const translationRouter = router({
       ]),
       sourceLanguage: z.string().max(10),
       targetLanguage: z.string().max(10),
-      fileUrl: z.string().url(),
+      fileUrl: z.string().url().max(500),
       fileName: z.string().max(255),
       fileSize: z.number(),
       numberOfPages: z.number(),

@@ -659,7 +659,7 @@ export const candidateRouter = router({
   }),
 
   requestEmailChange: candidateProcedure
-    .input(z.object({ newEmail: z.string().email().max(320), origin: z.string().url() }))
+    .input(z.object({ newEmail: z.string().email().max(320), origin: z.string().url().max(500) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -789,7 +789,7 @@ export const candidateRouter = router({
 
   // ── Mettre à jour la photo de profil ──────────────────────────────────────
   updateAvatar: candidateProcedure
-    .input(z.object({ avatarUrl: z.string().url(), portraitVerificationToken: z.string().min(20) }))
+    .input(z.object({ avatarUrl: z.string().url().max(500), portraitVerificationToken: z.string().min(20).max(512) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

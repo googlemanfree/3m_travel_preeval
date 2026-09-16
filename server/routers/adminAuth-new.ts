@@ -333,7 +333,7 @@ export const candidateRouter = router({
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
         ]),
         fileName: z.string().max(255),
-        fileUrl: z.string().url(),
+        fileUrl: z.string().url().max(500),
         fileKey: z.string().max(512),
         fileSizeBytes: z.number().optional(),
         mimeType: z.string().optional(),

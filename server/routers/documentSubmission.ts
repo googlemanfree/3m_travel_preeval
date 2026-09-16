@@ -12,8 +12,8 @@ import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 export const documentSubmissionRouter = router({
   analyzeDocumentReadability: publicProcedure
     .input(z.object({
-      imageUrl: z.string().url(),
-      documentType: z.string().optional(),
+      imageUrl: z.string().url().max(500),
+      documentType: z.string().max(100).optional(),
     }))
     .mutation(async ({ input }) => {
       try {
@@ -35,7 +35,7 @@ export const documentSubmissionRouter = router({
     }),
   classifyDocument: publicProcedure
     .input(z.object({
-      imageUrl: z.string().url(),
+      imageUrl: z.string().url().max(500),
     }))
     .mutation(async ({ input }) => {
       try {
@@ -54,7 +54,7 @@ export const documentSubmissionRouter = router({
     }),
   classifyMultipleDocuments: publicProcedure
     .input(z.object({
-      imageUrls: z.array(z.string().url()),
+      imageUrls: z.array(z.string().url().max(500)).max(20),
     }))
     .mutation(async ({ input }) => {
       try {
@@ -79,7 +79,7 @@ export const documentSubmissionRouter = router({
       submissionMethod: z.enum(["en_ligne", "agence_physique"]),
       documentsUrls: z.array(z.object({
         type: z.string().max(100),
-        url: z.string().url(),
+        url: z.string().url().max(500),
         name: z.string().max(255),
       })).optional(),
       notes: z.string().max(2000).optional(),
