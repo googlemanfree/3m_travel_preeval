@@ -846,7 +846,7 @@ export const adminCandidateManagementRouter = router({
     }),
   approvePaymentReceipt: publicProcedure
     .input(z.object({
-      sessionToken: z.string().optional().default(""),
+      sessionToken: z.string().max(512).optional().default(""),
       candidateId: z.string().regex(/^(online|agency)_\d+$/),
     }))
     .mutation(async ({ input, ctx }) => {
