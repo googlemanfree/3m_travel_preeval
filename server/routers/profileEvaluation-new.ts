@@ -163,7 +163,7 @@ export const agencyDossierRouter = router({
    */
   getDossierById: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierid: z.number().int().positive().int().positive(),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
@@ -215,7 +215,7 @@ export const agencyDossierRouter = router({
    */
   updateStatus: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierid: z.number().int().positive().int().positive(),
       newStatus: z.enum(["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"]),
       notes: z.string().max(2000).optional(),
     }))
@@ -310,7 +310,7 @@ export const agencyDossierRouter = router({
    */
   addNotes: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierid: z.number().int().positive().int().positive(),
       notes: z.string().min(1).max(2000),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -375,7 +375,7 @@ export const agencyDossierRouter = router({
    */
   deleteDossier: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierid: z.number().int().positive().int().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

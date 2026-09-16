@@ -13,7 +13,7 @@ export const profileEvaluationRouter = router({
       z.object({
         destination: z.string().max(100),
         projectType: z.enum(["student", "visitor", "worker", "permanent_residence", "family_reunification", "other"]),
-        currentCountry: z.string().optional(),
+        currentCountry: z.string().max(100).optional(),
         communicationLanguage: z.enum(["fr", "en"]).default("fr"),
         
         // Informations personnelles
@@ -37,24 +37,24 @@ export const profileEvaluationRouter = router({
         
         // Famille
         maritalStatus: z.enum(["celibataire", "marie", "divorce", "veuf", "union_libre"]).optional(),
-        spouseName: z.string().optional(),
+        spouseName: z.string().max(255).optional(),
         numberOfChildren: z.number().default(0),
         dependents: z.number().default(0),
         familyInDestination: z.boolean().default(false),
-        familyMemberRelation: z.string().optional(),
-        familyMemberStatus: z.string().optional(),
+        familyMemberRelation: z.string().max(100).optional(),
+        familyMemberStatus: z.string().max(100).optional(),
         
         // Études
-        educationLevel: z.string().optional(),
-        latestDiploma: z.string().optional(),
-        fieldOfStudy: z.string().optional(),
+        educationLevel: z.string().max(100).optional(),
+        latestDiploma: z.string().max(255).optional(),
+        fieldOfStudy: z.string().max(100).optional(),
         diplomaYear: z.number().optional(),
-        institution: z.string().optional(),
+        institution: z.string().max(255).optional(),
         diplomasAvailable: z.boolean().default(false),
         
         // Emploi
-        currentProfession: z.string().optional(),
-        currentEmployer: z.string().optional(),
+        currentProfession: z.string().max(255).optional(),
+        currentEmployer: z.string().max(255).optional(),
         yearsOfExperience: z.number().optional(),
         previousExperiences: z.string().optional(), // JSON
         monthlyIncome: z.number().optional(),
@@ -65,8 +65,8 @@ export const profileEvaluationRouter = router({
         bankBalance: z.number().optional(),
         bankBalanceAverage6Months: z.number().optional(),
         hasSponsor: z.boolean().default(false),
-        sponsorName: z.string().optional(),
-        fundSource: z.string().optional(),
+        sponsorName: z.string().max(255).optional(),
+        fundSource: z.string().max(255).optional(),
         realEstate: z.boolean().default(false),
         businessActivity: z.boolean().default(false),
         debts: z.boolean().default(false),
@@ -84,44 +84,44 @@ export const profileEvaluationRouter = router({
         immigrationIssues: z.boolean().default(false),
         medicalConcerns: z.boolean().default(false),
         falseDeclaration: z.boolean().default(false),
-        specialNeeds: z.string().optional(),
+        specialNeeds: z.string().max(2000).optional(),
         
         // Documents
         documentsAvailable: z.string().optional(), // JSON
         
         // Conditionnel: Étudiant
-        desiredProgram: z.string().optional(),
-        desiredEducationLevel: z.string().optional(),
-        targetInstitution: z.string().optional(),
+        desiredProgram: z.string().max(255).optional(),
+        desiredEducationLevel: z.string().max(100).optional(),
+        targetInstitution: z.string().max(255).optional(),
         admissionLetterAvailable: z.boolean().default(false),
-        intendedStartDate: z.string().optional(),
+        intendedStartDate: z.string().max(20).optional(),
         studyBudget: z.number().optional(),
-        studyFunder: z.string().optional(),
-        academicProject: z.string().optional(),
-        postStudiesProject: z.string().optional(),
+        studyFunder: z.string().max(255).optional(),
+        academicProject: z.string().max(2000).optional(),
+        postStudiesProject: z.string().max(2000).optional(),
         companions: z.string().optional(), // JSON
         
         // Conditionnel: Visiteur
-        visitReason: z.string().optional(),
+        visitReason: z.string().max(500).optional(),
         visitType: z.enum(["tourism", "family", "business", "event", "other"]).optional(),
-        plannedStayDuration: z.string().optional(),
-        estimatedTravelDate: z.string().optional(),
-        plannedAccommodation: z.string().optional(),
-        invitingPerson: z.string().optional(),
+        plannedStayDuration: z.string().max(50).optional(),
+        estimatedTravelDate: z.string().max(20).optional(),
+        plannedAccommodation: z.string().max(255).optional(),
+        invitingPerson: z.string().max(255).optional(),
         invitationLetterAvailable: z.boolean().default(false),
-        stayFunder: z.string().optional(),
+        stayFunder: z.string().max(255).optional(),
         tiesInHomeCountry: z.string().optional(), // JSON
         
         // Conditionnel: Travailleur
-        desiredPosition: z.string().optional(),
-        targetCity: z.string().optional(),
+        desiredPosition: z.string().max(255).optional(),
+        targetCity: z.string().max(100).optional(),
         relatedExperience: z.number().optional(),
         relatedDiplomas: z.string().optional(), // JSON
-        languageLevel: z.string().optional(),
-        departureAvailability: z.string().optional(),
+        languageLevel: z.string().max(100).optional(),
+        departureAvailability: z.string().max(100).optional(),
         
         // Conditionnel: Résidence permanente
-        targetCategory: z.string().optional(),
+        targetCategory: z.string().max(100).optional(),
         age: z.number().optional(),
         ecaAvailable: z.boolean().default(false),
         experienceYears: z.number().optional(),
@@ -130,7 +130,7 @@ export const profileEvaluationRouter = router({
         availableFunds: z.number().optional(),
         policeCertificatesAvailable: z.boolean().default(false),
         
-        submissionNotes: z.string().optional(),
+        submissionNotes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -151,7 +151,7 @@ export const profileEvaluationRouter = router({
    * Récupérer une évaluation par ID
    */
   getById: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number().int().positive() }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return null;

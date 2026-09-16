@@ -121,7 +121,7 @@ export const translationRouter = router({
 
   validateTranslationPayment: publicProcedure
     .input(z.object({
-      requestId: z.number(),
+      requestid: z.number().int().positive().int().positive(),
       transactionId: z.string().max(64),
       paymentMethod: z.string().max(50),
       amount: z.string().max(50),
@@ -169,7 +169,7 @@ export const translationRouter = router({
 
   uploadTranslatedDocument: protectedProcedure
     .input(z.object({
-      requestId: z.number(),
+      requestid: z.number().int().positive().int().positive(),
       translatedDocumentUrl: z.string().url().max(500),
       translatedDocumentName: z.string().max(255),
       translatedDocumentSize: z.number(),
@@ -218,7 +218,7 @@ export const translationRouter = router({
 
   downloadTranslatedDocument: publicProcedure
     .input(z.object({
-      requestId: z.number(),
+      requestid: z.number().int().positive().int().positive(),
     }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
