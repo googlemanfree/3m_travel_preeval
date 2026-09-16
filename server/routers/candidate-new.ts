@@ -893,7 +893,7 @@ export const adminRouter = router({
    */
   listCandidates: protectedProcedure
     .input(z.object({
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       status: z.string().optional(),
       limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
@@ -1411,7 +1411,7 @@ export const adminRouter = router({
    */
   listDocuments: protectedProcedure
     .input(z.object({
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       verificationStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),

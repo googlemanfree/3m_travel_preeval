@@ -131,9 +131,9 @@ export const evaluationAdminRouter = router({
   updateScore: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         newScore: z.number().int().min(0).max(100),
-        notes: z.string().optional(),
+        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

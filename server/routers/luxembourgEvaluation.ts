@@ -19,9 +19,9 @@ import { candidateProcedure } from "./candidate";
 import { applications } from "../../drizzle/schema";
 
 const submitInput = z.object({
-  fullName: z.string().min(3),
+  fullName: z.string().min(3).max(255),
   email: z.string().email().max(320),
-  phone: z.string().optional(),
+  phone: z.string().max(50).optional(),
   jobTitle: z.string().min(3),
   yearsExperience: z.number().min(0).max(50),
   sector: z.enum(["sante", "documentation", "education", "finance", "technologie", "administration", "rh", "metiers_mecanique", "autre"]),
@@ -223,7 +223,7 @@ export const luxembourgEvaluationRouter = router({
   listEvaluations: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       status: z.enum(["tres_eligible", "eligible", "moderement_eligible", "non_eligible"]).optional(),
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),

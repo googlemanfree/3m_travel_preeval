@@ -174,10 +174,10 @@ export const reassuranceRouter = {
   requestCallback: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
-        phoneNumber: z.string(),
-        preferredTime: z.string().optional(),
-        reason: z.string().optional(),
+        dossierNumber: z.string().max(50),
+        phoneNumber: z.string().max(50),
+        preferredTime: z.string().max(100).optional(),
+        reason: z.string().max(1000).optional(),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

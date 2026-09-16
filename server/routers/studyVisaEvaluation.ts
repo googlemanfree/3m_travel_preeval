@@ -62,9 +62,9 @@ import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
 
 const submitInput = z.object({
-  fullName: z.string().min(3),
+  fullName: z.string().min(3).max(255),
   email: z.string().email().max(320),
-  phone: z.string().optional(),
+  phone: z.string().max(50).optional(),
   targetCountry: z.string().optional(),
   academicLevel: z.enum(["master_mention", "licence", "bac2", "bac"]),
   gradeLevel: z.enum(["tres_bien", "bien", "assez_bien", "passable"]),

@@ -83,7 +83,7 @@ const evaluationInput = z.object({
   email: z.string().email("Email invalide").max(320),
   phone: z.string().min(8, "Numéro de téléphone invalide").max(50),
   dateOfBirth: z.string().optional(),
-  nationality: z.string().optional(),
+  nationality: z.string().max(100).optional(),
   cityOfResidence: z.string().optional(),
   maritalStatus: z.string().optional(),
   numberOfDependents: z.number().min(0).max(20).optional(),

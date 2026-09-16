@@ -153,7 +153,7 @@ export const candidateRouter = router({
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
         phone: z.string().max(50).optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        nationality: z.string().optional(),
+        nationality: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -287,7 +287,7 @@ export const candidateRouter = router({
       z.object({
         fullName: z.string().min(2).max(255).optional(),
         phone: z.string().max(50).optional(),
-        nationality: z.string().optional(),
+        nationality: z.string().max(100).optional(),
         dateOfBirth: z.string().optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
         visaType: z.string().optional(),

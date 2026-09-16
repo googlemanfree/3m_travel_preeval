@@ -138,10 +138,10 @@ export const notificationRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        amount: z.string(),
-        currency: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        amount: z.string().max(50),
+        currency: z.string().max(10),
         daysOverdue: z.number().optional(),
       })
     )
@@ -189,8 +189,8 @@ export const notificationRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
         documentCount: z.number(),
       })
     )
@@ -231,10 +231,10 @@ export const notificationRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        destinationCountry: z.string(),
-        visaType: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        destinationCountry: z.string().max(100),
+        visaType: z.string().max(100),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {
@@ -274,11 +274,11 @@ export const notificationRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        phoneNumber: z.string(),
-        candidateName: z.string(),
-        employerName: z.string(),
-        position: z.string(),
-        destinationCountry: z.string(),
+        phoneNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        employerName: z.string().max(255),
+        position: z.string().max(150),
+        destinationCountry: z.string().max(100),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {
@@ -367,8 +367,8 @@ export const notificationRouter = router({
   sendCustomWhatsAppMessage: protectedProcedure
     .input(
       z.object({
-        phoneNumber: z.string(),
-        message: z.string(),
+        phoneNumber: z.string().max(50),
+        message: z.string().max(4000),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {

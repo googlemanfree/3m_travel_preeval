@@ -45,10 +45,10 @@ export const paymentRouter = router({
    */
   initiateFolderPayment: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       email: z.string().email().max(320),
-      fullName: z.string(),
-      whatsappNumber: z.string().optional(),
+      fullName: z.string().max(255),
+      whatsappNumber: z.string().max(50).optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

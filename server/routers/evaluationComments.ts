@@ -101,10 +101,10 @@ export const evaluationCommentsRouter = router({
   postComment: publicProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         email: z.string().email().max(320),
-        fullName: z.string(),
-        content: z.string().min(10, "Le commentaire doit faire au moins 10 caractères"),
+        fullName: z.string().max(255),
+        content: z.string().min(10, "Le commentaire doit faire au moins 10 caractères").max(4000),
         isQuestion: z.boolean().default(true),
       })
     )

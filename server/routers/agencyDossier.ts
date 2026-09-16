@@ -23,7 +23,7 @@ export const agencyDossierRouter = router({
       email: z.string().email().max(320),
       phone: z.string().min(5).max(50),
       dateOfBirth: z.string().optional(),
-      nationality: z.string().optional(),
+      nationality: z.string().max(100).optional(),
       destination: z.string().min(2),
       visaType: z.string().min(2),
       educationLevel: z.string().optional(),
@@ -128,7 +128,7 @@ export const agencyDossierRouter = router({
       email: z.string().email().max(320),
       phone: z.string().min(5).max(50),
       dateOfBirth: z.string().optional(),
-      nationality: z.string().optional(),
+      nationality: z.string().max(100).optional(),
       destination: z.string().min(2),
       visaType: z.string().min(2),
       educationLevel: z.string().optional(),
@@ -302,7 +302,7 @@ export const agencyDossierRouter = router({
     .input(z.object({
       dossierId: z.number(),
       newStatus: z.enum(AGENCY_DOSSIER_STATUS_VALUES),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

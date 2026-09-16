@@ -217,7 +217,7 @@ export const agencyDossierRouter = router({
     .input(z.object({
       dossierId: z.number(),
       newStatus: z.enum(["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"]),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

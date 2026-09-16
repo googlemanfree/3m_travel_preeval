@@ -27,8 +27,8 @@ export const passportAnalysisRouter = router({
       z.object({
         passportUrl: z.string().optional(),
         fileBase64: z.string().optional(),
-        fileName: z.string().optional(),
-        fileType: z.string().min(1),
+        fileName: z.string().max(255).optional(),
+        fileType: z.string().min(1).max(100),
       }).refine(input => Boolean(input.fileBase64 || input.passportUrl), {
         message: 'Le fichier passeport est requis.',
       })

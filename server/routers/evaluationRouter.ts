@@ -34,7 +34,7 @@ export const evaluationRouter = router({
       ]),
       educationLevel: z.string().optional(),
       employmentStatus: z.string().optional(),
-      message: z.string().optional(),
+      message: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

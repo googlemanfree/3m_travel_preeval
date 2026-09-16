@@ -776,12 +776,12 @@ export const evisaRouter = router({
   generateProformaPdf: publicProcedure
     .input(
       z.object({
-        fullName: z.string(),
-        email: z.string(),
-        phone: z.string(),
-        countryName: z.string(),
+        fullName: z.string().max(255),
+        email: z.string().max(320),
+        phone: z.string().max(50),
+        countryName: z.string().max(100),
         totalCost: z.number(),
-        currency: z.string(),
+        currency: z.string().max(10),
       })
     )
     .mutation(async ({ input }: any) => {

@@ -816,7 +816,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       documentId: z.number(),
-      comment: z.string().min(3),
+      comment: z.string().min(3).max(2000),
       markerAnnotations: z.record(z.string(), z.string()).optional(),
       notifyCandidate: z.boolean().default(true),
     }))
@@ -2067,7 +2067,7 @@ export const adminRouter = router({
       documentId: z.number().int(),
       source: z.enum(["client", "candidate", "agency", "case"]).default("client"),
       status: z.enum(["pending", "approved", "rejected"]),
-      comment: z.string().optional(),
+      comment: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);

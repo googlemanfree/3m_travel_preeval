@@ -157,7 +157,7 @@ export const candidateRouter = router({
       candidateId: z.number(),
       fullName: z.string().max(255).optional(),
       phone: z.string().max(50).optional(),
-      nationality: z.string().optional(),
+      nationality: z.string().max(100).optional(),
       educationLevel: z.string().optional(),
       employmentStatus: z.string().optional(),
       languageLevel: z.string().optional(),

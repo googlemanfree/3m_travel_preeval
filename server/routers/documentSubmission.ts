@@ -160,7 +160,7 @@ export const documentSubmissionRouter = router({
     .input(z.object({
       applicationId: z.number().int(),
       verified: z.boolean(),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {

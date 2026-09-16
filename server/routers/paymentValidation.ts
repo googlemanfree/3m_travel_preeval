@@ -50,9 +50,9 @@ export const paymentValidationRouter = router({
   validateAgencyPayment: protectedProcedure
     .input(
       z.object({
-        candidateId: z.string(),
-        paymentId: z.string(),
-        notes: z.string().optional(),
+        candidateId: z.string().max(64),
+        paymentId: z.string().max(64),
+        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -94,9 +94,9 @@ export const paymentValidationRouter = router({
   rejectAgencyPayment: protectedProcedure
     .input(
       z.object({
-        candidateId: z.string(),
-        paymentId: z.string(),
-        reason: z.string().optional(),
+        candidateId: z.string().max(64),
+        paymentId: z.string().max(64),
+        reason: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {

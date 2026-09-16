@@ -13,7 +13,7 @@ export const proceduresRouter = router({
   chatWithAI: publicProcedure
     .input(
       z.object({
-        message: z.string().min(1, "Le message ne peut pas être vide"),
+        message: z.string().min(1, "Le message ne peut pas être vide").max(4000),
         conversationHistory: z
           .array(
             z.object({
