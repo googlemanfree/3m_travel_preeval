@@ -482,7 +482,7 @@ export const adminRouter = router({
       sessionToken: z.string(),
       evaluationId: z.number().int(),
       newStatus: z.enum(["pending", "reviewed", "contacted", "closed"]),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -561,7 +561,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       evaluationId: z.number().int(),
-      notes: z.string().min(10),
+      notes: z.string().min(10).max(2000),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -997,7 +997,7 @@ export const adminRouter = router({
   getAllUsersWithApplications: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       status: z.string().optional(),
       limit: z.number().default(50),
       offset: z.number().default(0),
@@ -1252,8 +1252,8 @@ export const adminRouter = router({
         destinationCountry: z.string().optional(),
         projectType: z.string().optional(),
         studyLevel: z.string().optional(),
-        fieldOfStudy: z.string().optional(),
-        adminNotes: z.string().optional(),
+        fieldOfStudy: z.string().max(150).optional(),
+        adminNotes: z.string().max(2000).optional(),
       }),
     }))
     .mutation(async ({ input }) => {
@@ -1470,7 +1470,7 @@ export const adminRouter = router({
   listCandidates: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
        status: z.string().optional(),
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
        source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
@@ -2052,7 +2052,7 @@ export const adminRouter = router({
    * Importer un dossier physique d'agence
    */
   listDestinationDocumentsAdmin: publicProcedure
-    .input(z.object({ sessionToken: z.string(), search: z.string().optional() }))
+    .input(z.object({ sessionToken: z.string(), search: z.string().max(200).optional() }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       return await listDestinationDocuments(input.search);
@@ -2222,10 +2222,10 @@ export const adminRouter = router({
   addDestinationDocumentAdmin: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      title: z.string().min(2),
-      country: z.string().min(2),
-      category: z.string().min(2),
-      fileUrl: z.string().url(),
+      title: z.string().min(2).max(255),
+      country: z.string().min(2).max(100),
+      category: z.string().min(2).max(100),
+      fileUrl: z.string().url().max(500),
       fileKey: z.string().min(2),
       extractedText: z.string().optional(),
       fileSize: z.number().optional(),
@@ -2758,7 +2758,7 @@ export const adminRouter = router({
   listDocuments: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       verificationStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       aiClassification: z.string().max(120).optional(),
       sortBy: z.enum(["uploadedAt", "documentName", "verificationStatus", "aiClassification"]).default("uploadedAt"),
@@ -3673,7 +3673,7 @@ export const adminRouter = router({
     }),
 
   listArchivedRecords: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().optional() }))
+    .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().max(200).optional() }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
