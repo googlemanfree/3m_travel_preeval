@@ -1212,7 +1212,7 @@ export const adminRouter = router({
 
   updateDossierPaymentState: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().regex(/^(online|agency)_\d+$/),
       status: z.enum(["PENDING", "FAILED", "CANCELLED", "NOT_PAID"]),
     }))
@@ -1957,7 +1957,7 @@ export const adminRouter = router({
 
   revertCandidateStatus: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1).max(512),
+      sessionToken: z.string().min(1).max(512).max(512),
       candidateId: z.string().max(50),
       reason: z.string().trim().min(5).max(1000),
       notifyClient: z.boolean().default(true),
@@ -2568,7 +2568,7 @@ export const adminRouter = router({
    */
   assignDossierAdvisor: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       assigneeEmail: z.string().trim().email().max(320).nullable(),
     }))
@@ -2598,7 +2598,7 @@ export const adminRouter = router({
    */
   getCandidateCountryDistribution: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       limit: z.number().int().min(1).max(30).default(15),
     }))
     .query(async ({ input }) => {
@@ -2656,7 +2656,7 @@ export const adminRouter = router({
    */
   exportActivityReportCsv: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       limit: z.number().int().min(1).max(5000).default(1000),
     }))
     .mutation(async ({ input }) => {
@@ -2853,7 +2853,7 @@ export const adminRouter = router({
 
   uploadDocumentForCandidate: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.number().int().positive().optional(),
       agencyDossierId: z.number().int().positive().optional(),
       fileType: z.enum(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre"]),
@@ -2938,7 +2938,7 @@ export const adminRouter = router({
     }),
   suggestDroppedDocumentMetadata: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1), fileName: z.string().min(1).max(255),
+      sessionToken: z.string().min(1).max(512), fileName: z.string().min(1).max(255),
       mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
       dataUrl: z.string().max(15_000_000),
     }))
@@ -3078,7 +3078,7 @@ export const adminRouter = router({
    * Récupérer l'historique de délivrabilité des e-mails
    */
   getEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3089,7 +3089,7 @@ export const adminRouter = router({
     }),
 
   prepareEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3101,7 +3101,7 @@ export const adminRouter = router({
     }),
 
   sendEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3120,7 +3120,7 @@ export const adminRouter = router({
     }),
 
   archiveEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3169,7 +3169,7 @@ export const adminRouter = router({
     }),
 
   getEmailDeliveryTrend30Days: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3250,7 +3250,7 @@ export const adminRouter = router({
     }),
 
   getAdvisorThresholds: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3259,7 +3259,7 @@ export const adminRouter = router({
     }),
 
   setAdvisorThreshold: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), advisorEmail: z.string().email().max(320), failureThreshold: z.number().int().min(1).max(100), isActive: z.boolean().default(true) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), advisorEmail: z.string().email().max(320), failureThreshold: z.number().int().min(1).max(100), isActive: z.boolean().default(true) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3274,7 +3274,7 @@ export const adminRouter = router({
     }),
 
   getEmailIncidents: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3285,7 +3285,7 @@ export const adminRouter = router({
     }),
 
   acknowledgeIncident: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), resolve: z.boolean().default(false) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), incidentId: z.number().int().positive(), resolve: z.boolean().default(false) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3296,7 +3296,7 @@ export const adminRouter = router({
     }),
 
   addIncidentComment: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3306,7 +3306,7 @@ export const adminRouter = router({
     }),
 
   getResolutionMetrics: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3325,7 +3325,7 @@ export const adminRouter = router({
 
   // Alias de compatibilité pour les rapports et interfaces historiques.
   acknowledgeEmailDeliveryIncident: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive() }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), incidentId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3335,7 +3335,7 @@ export const adminRouter = router({
     }),
 
   addEmailDeliveryIncidentComment: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3345,7 +3345,7 @@ export const adminRouter = router({
     }),
 
   emailDeliveryIncidentsHistory: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3354,7 +3354,7 @@ export const adminRouter = router({
     }),
 
   incidentResolutionByAdvisor: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3364,7 +3364,7 @@ export const adminRouter = router({
     }),
 
   getCandidate360: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1) }))
     .query(async ({ input, ctx }) => {
       let admin;
       try {
@@ -3629,7 +3629,7 @@ export const adminRouter = router({
     }),
 
   archiveDuplicateRecord: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), reason: z.string().trim().min(8).max(500), confirmation: z.literal("CORBEILLE") }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1), reason: z.string().trim().min(8).max(500), confirmation: z.literal("CORBEILLE") }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3657,7 +3657,7 @@ export const adminRouter = router({
     }),
 
   restoreArchivedRecord: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), confirmation: z.literal("RESTAURER") }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1), confirmation: z.literal("RESTAURER") }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3673,7 +3673,7 @@ export const adminRouter = router({
     }),
 
   listArchivedRecords: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().max(200).optional() }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), search: z.string().trim().max(200).optional() }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3693,7 +3693,7 @@ export const adminRouter = router({
 
   updateCandidateDestination: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       destination: z.string().trim().min(2).max(100),
       visaType: z.string().trim().min(2).max(100).optional(),
@@ -3740,7 +3740,7 @@ export const adminRouter = router({
 
   updateCandidateJourneyStep: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       stepId: z.string().trim().min(1).max(160),
       checked: z.boolean(),
@@ -3808,7 +3808,7 @@ export const adminRouter = router({
 
   updateCandidate360Workflow: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       workflowStatus: z.enum(candidate360WorkflowStatuses),
       priority: z.enum(["low", "normal", "high", "urgent"]),
@@ -3880,7 +3880,7 @@ export const adminRouter = router({
 
   updateCandidate360Deadline: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       dueAt: z.date().nullable(),
       reason: z.string().trim().max(500).optional(),
@@ -3910,7 +3910,7 @@ export const adminRouter = router({
     }),
 
   listAdvisorTreatmentDeadlines: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3954,7 +3954,7 @@ export const adminRouter = router({
     }),
 
   addCandidate360Task: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), title: z.string().trim().min(2).max(255), description: z.string().trim().max(1000).optional(), assignedAdminId: z.number().int().positive().nullable(), dueAt: z.date().nullable() }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1), title: z.string().trim().min(2).max(255), description: z.string().trim().max(1000).optional(), assignedAdminId: z.number().int().positive().nullable(), dueAt: z.date().nullable() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3968,7 +3968,7 @@ export const adminRouter = router({
     }),
 
   completeCandidate360Task: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), taskId: z.number().int().positive() }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), taskId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -3982,7 +3982,7 @@ export const adminRouter = router({
 
   createCountryDocumentChecklist: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       destination: z.string().trim().min(2).max(100).optional(),
       procedureType: z.string().trim().max(120).optional(),
@@ -4007,7 +4007,7 @@ export const adminRouter = router({
     }),
 
   sendCandidate360DocumentReminder: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -4031,7 +4031,7 @@ export const adminRouter = router({
 
   updateDocumentClarificationDeadline: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       clarificationRequestId: z.number().int().positive(),
       dueAt: z.date().nullable(),
@@ -4080,7 +4080,7 @@ export const adminRouter = router({
 
   sendCandidate360Message: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       content: z.string().trim().min(3).max(12_000),
       attachmentUrl: z.string().url().max(500).optional(),
@@ -4202,7 +4202,7 @@ export const adminRouter = router({
     }),
 
   recordCandidate360CommunicationExport: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

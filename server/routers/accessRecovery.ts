@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { candidateAccessRecoveryEvents, candidateAccessRecoveryRequests } from "../../drizzle/schema";
@@ -56,7 +56,7 @@ export const accessRecoveryRouter = router({
     }),
 
   list: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), status: z.enum([...recoveryStatuses, "all"]).default("pending") }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), status: z.enum([...recoveryStatuses, "all"]).default("pending") }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -81,7 +81,7 @@ export const accessRecoveryRouter = router({
     }),
 
   getHistory: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), requestId: z.number().int().positive() }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -99,7 +99,7 @@ export const accessRecoveryRouter = router({
 
   review: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
+      sessionToken: z.string().min(1).max(512),
       requestId: z.number().int().positive(),
       status: z.enum(["reviewing", "identity_verified", "rejected", "closed"]),
       reviewNote: z.string().trim().min(10).max(500),
