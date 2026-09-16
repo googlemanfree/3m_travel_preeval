@@ -114,6 +114,7 @@ export const SearchBarWithFilters: React.FC<SearchBarWithFiltersProps> = ({
               onFocus={() => setShowResults(true)}
               className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               aria-label="Rechercher"
+              maxLength={200}
             />
           </div>
 

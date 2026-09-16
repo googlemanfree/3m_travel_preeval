@@ -179,6 +179,7 @@ export default function HeartbeatJobManager() {
               onChange={(e) => setCronExpression(e.target.value)}
               placeholder="0 0 8 * * *"
               className="font-mono text-sm"
+              maxLength={100}
             />
             <p className="text-xs text-gray-500 mt-1">
               Ex: "0 0 8 * * *" = tous les jours à 8h UTC
@@ -193,6 +194,7 @@ export default function HeartbeatJobManager() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description du job"
+              maxLength={255}
             />
           </div>
 

@@ -249,6 +249,7 @@ export function ValidationStep({
                   aria-invalid={hasError}
                   aria-describedby={hasError ? `passport-${field.key}-error` : undefined}
                   className={hasError ? 'border-red-500 focus-visible:ring-red-500' : isModified ? 'border-blue-400 bg-blue-50/30' : ''}
+                  maxLength={255}
                 />
                 {hasError && (
                   <p id={`passport-${field.key}-error`} className="flex items-center gap-1 text-xs text-red-600" role="alert">

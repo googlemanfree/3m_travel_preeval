@@ -157,6 +157,7 @@ export function SchedulingLink({
               value={customLink}
               onChange={(e) => setCustomLink(e.target.value)}
               className="mt-2"
+              maxLength={500}
             />
             <p className="text-xs text-gray-600 mt-1">
               Entrez l'URL de votre page de réservation

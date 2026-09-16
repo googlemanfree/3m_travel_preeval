@@ -44,7 +44,7 @@ export function DestinationAutocomplete({ id, value, options, onSelect, onCustom
   return <div ref={wrapperRef} className="relative mt-1">
     <div className="relative">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-      <Input id={inputId} value={query} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-controls={listId} placeholder={placeholder} className="h-10 bg-white pl-9 pr-16" onFocus={() => { setOpen(true); setActiveIndex(0); }} onChange={(event) => { setQuery(event.target.value); setOpen(true); setActiveIndex(0); }} onKeyDown={(event) => {
+      <Input id={inputId} value={query} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-controls={listId} placeholder={placeholder} className="h-10 bg-white pl-9 pr-16" maxLength={200} onFocus={() => { setOpen(true); setActiveIndex(0); }} onChange={(event) => { setQuery(event.target.value); setOpen(true); setActiveIndex(0); }} onKeyDown={(event) => {
         if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); setActiveIndex((index) => Math.min(index + 1, Math.max(filtered.length - 1, 0))); }
         if (event.key === "ArrowUp") { event.preventDefault(); setActiveIndex((index) => Math.max(index - 1, 0)); }
         if (event.key === "Enter" && open && filtered[activeIndex]) { event.preventDefault(); choose(filtered[activeIndex].country); }

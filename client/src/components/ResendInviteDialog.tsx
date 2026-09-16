@@ -238,6 +238,7 @@ export default function ResendInviteDialog({
                   onChange={(e) => setCustomSubject(e.target.value)}
                   className="mt-2"
                   placeholder="Sujet de l'email"
+                  maxLength={255}
                 />
               </div>
 
@@ -249,6 +250,7 @@ export default function ResendInviteDialog({
                   className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
                   rows={10}
                   placeholder="Contenu de l'email"
+                  maxLength={4000}
                 />
                 <p className="text-xs text-gray-500 mt-2">
                   Utilisez {"{name}"} pour le nom et {"{inviteLink}"} pour le lien

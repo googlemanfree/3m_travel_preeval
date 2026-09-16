@@ -112,6 +112,7 @@ export function EvisaAdvancedFilters({
               handleFilterChange();
             }}
             className="pl-12 pr-12 h-12 text-base"
+            maxLength={200}
           />
           {searchTerm && (
             <button

@@ -265,6 +265,7 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                   value={reuploadComment}
                   onChange={(e) => setReuploadComment(e.target.value)}
                   className="min-h-[100px]"
+                  maxLength={500}
                 />
                 <p className="text-xs text-gray-500 mt-1">{reuploadComment.length}/500 caractères</p>
               </div>
