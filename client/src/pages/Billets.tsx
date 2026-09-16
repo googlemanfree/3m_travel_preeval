@@ -701,7 +701,7 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
               <div><label className="mb-1 block text-xs font-semibold text-slate-600">Numéro WhatsApp</label><input value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} placeholder="+237 6XX XXX XXX" maxLength={50} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
               <div><label className="mb-1 block text-xs font-semibold text-slate-600">E-mail</label><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
             </div>
-            <div className="mt-3"><label className="mb-1 block text-xs font-semibold text-slate-600">Commentaire (facultatif)</label><textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
+            <div className="mt-3"><label className="mb-1 block text-xs font-semibold text-slate-600">Commentaire (facultatif)</label><textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} maxLength={2000} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
 
             <label className="mt-4 flex items-start gap-2 text-xs text-slate-600">
               <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-0.5 h-4 w-4" />

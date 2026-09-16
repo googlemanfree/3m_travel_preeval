@@ -1980,6 +1980,7 @@ export default function AdminDashboard() {
                     type="url"
                     placeholder="URL publique du PDF (Stockage ou S3)"
                     id="rag-doc-url"
+                    maxLength={500}
                     className="px-3 py-2 text-sm rounded-lg border bg-white"
                   />
                 </div>

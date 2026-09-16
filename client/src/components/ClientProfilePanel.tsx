@@ -170,14 +170,14 @@ export default function ClientProfilePanel() {
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2"><Label htmlFor="client-full-name">Nom complet</Label><Input id="client-full-name" value={form.fullName} onChange={(event) => update("fullName", event.target.value)} required /></div>
-          <div className="space-y-2"><Label htmlFor="client-phone">Téléphone</Label><Input id="client-phone" type="tel" value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+237 …" /></div>
-          <div className="space-y-2"><Label htmlFor="client-nationality">Nationalité</Label><Input id="client-nationality" value={form.nationality} onChange={(event) => update("nationality", event.target.value)} /></div>
+          <div className="space-y-2"><Label htmlFor="client-full-name">Nom complet</Label><Input id="client-full-name" value={form.fullName} onChange={(event) => update("fullName", event.target.value)} maxLength={255} required /></div>
+          <div className="space-y-2"><Label htmlFor="client-phone">Téléphone</Label><Input id="client-phone" type="tel" value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+237 …" maxLength={50} /></div>
+          <div className="space-y-2"><Label htmlFor="client-nationality">Nationalité</Label><Input id="client-nationality" value={form.nationality} onChange={(event) => update("nationality", event.target.value)} maxLength={100} /></div>
           <div className="space-y-2"><Label htmlFor="client-birth-date">Date de naissance</Label><Input id="client-birth-date" type="date" value={form.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="client-visa-type">Type de visa souhaité</Label><Input id="client-visa-type" value={form.visaType} onChange={(event) => update("visaType", event.target.value)} placeholder="Études, travail, tourisme…" /></div>
-          <div className="space-y-2"><Label htmlFor="client-education">Niveau d’études</Label><Input id="client-education" value={form.educationLevel} onChange={(event) => update("educationLevel", event.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="client-employment">Situation professionnelle</Label><Input id="client-employment" value={form.employmentStatus} onChange={(event) => update("employmentStatus", event.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="client-language">Niveau de langue</Label><Input id="client-language" value={form.languageLevel} onChange={(event) => update("languageLevel", event.target.value)} placeholder="IELTS 7, DELF B2…" /></div>
+          <div className="space-y-2"><Label htmlFor="client-visa-type">Type de visa souhaité</Label><Input id="client-visa-type" value={form.visaType} onChange={(event) => update("visaType", event.target.value)} placeholder="Études, travail, tourisme…" maxLength={100} /></div>
+          <div className="space-y-2"><Label htmlFor="client-education">Niveau d’études</Label><Input id="client-education" value={form.educationLevel} onChange={(event) => update("educationLevel", event.target.value)} maxLength={255} /></div>
+          <div className="space-y-2"><Label htmlFor="client-employment">Situation professionnelle</Label><Input id="client-employment" value={form.employmentStatus} onChange={(event) => update("employmentStatus", event.target.value)} maxLength={150} /></div>
+          <div className="space-y-2"><Label htmlFor="client-language">Niveau de langue</Label><Input id="client-language" value={form.languageLevel} onChange={(event) => update("languageLevel", event.target.value)} placeholder="IELTS 7, DELF B2…" maxLength={100} /></div>
         </div>
         <div className="space-y-2 sm:max-w-md"><Label>Destination principale</Label><Select value={form.destination} onValueChange={(value) => update("destination", value)}><SelectTrigger><SelectValue placeholder="Choisir une destination" /></SelectTrigger><SelectContent>{destinationOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
         <Button type="submit" disabled={updateMutation.isPending} className="h-11 rounded-xl bg-blue-700 px-5 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
@@ -199,7 +199,7 @@ export default function ClientProfilePanel() {
           </div>
         ) : (
           <form onSubmit={handleEmailChange} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="w-full max-w-md space-y-2"><Label htmlFor="client-new-email">Nouvelle adresse e-mail</Label><Input id="client-new-email" type="email" autoComplete="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} placeholder="nouvelle.adresse@exemple.com" required /></div>
+            <div className="w-full max-w-md space-y-2"><Label htmlFor="client-new-email">Nouvelle adresse e-mail</Label><Input id="client-new-email" type="email" autoComplete="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} placeholder="nouvelle.adresse@exemple.com" maxLength={320} required /></div>
             <Button type="submit" disabled={requestEmailChange.isPending} className="h-10 bg-slate-900 text-white hover:bg-slate-800">{requestEmailChange.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}{requestEmailChange.isPending ? "Envoi…" : "Envoyer les confirmations"}</Button>
           </form>
         )}
