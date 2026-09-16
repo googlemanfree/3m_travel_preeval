@@ -663,9 +663,9 @@ export const flightsRouter = router({
           departureTime: z.string().max(20),
           arrivalTime: z.string().max(20),
           duration: z.string().max(20),
-          stops: z.number(),
+          stops: z.number().int().min(0).max(10),
           cabinClass: z.string().max(20),
-          totalPrice: z.number(),
+          totalPrice: z.number().positive(),
           pnrRef: z.string().max(50),
         }),
       })

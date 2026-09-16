@@ -191,7 +191,7 @@ export const notificationRouter = router({
         email: z.string().email().max(320),
         phoneNumber: z.string().max(50),
         candidateName: z.string().max(255),
-        documentCount: z.number(),
+        documentCount: z.number().int().min(0),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {

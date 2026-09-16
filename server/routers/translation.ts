@@ -26,9 +26,9 @@ export const translationRouter = router({
       targetLanguage: z.string().max(10),
       fileUrl: z.string().url().max(500),
       fileName: z.string().max(255),
-      fileSize: z.number(),
-      numberOfPages: z.number(),
-      pricePerPage: z.number(),
+      fileSize: z.number().positive(),
+      numberOfPages: z.number().int().positive(),
+      pricePerPage: z.number().positive(),
       totalPrice: z.string().max(50),
       currency: z.string().max(10),
       candidateName: z.string().max(255),
@@ -172,7 +172,7 @@ export const translationRouter = router({
       requestid: z.number().int().positive().int().positive(),
       translatedDocumentUrl: z.string().url().max(500),
       translatedDocumentName: z.string().max(255),
-      translatedDocumentSize: z.number(),
+      translatedDocumentSize: z.number().positive(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db, user } = ctx;

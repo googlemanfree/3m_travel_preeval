@@ -65,7 +65,7 @@ const submitInput = z.object({
   fullName: z.string().min(3).max(255),
   email: z.string().email().max(320),
   phone: z.string().max(50).optional(),
-  targetCountry: z.string().optional(),
+  targetCountry: z.string().max(100).optional(),
   academicLevel: z.enum(["master_mention", "licence", "bac2", "bac"]),
   gradeLevel: z.enum(["tres_bien", "bien", "assez_bien", "passable"]),
   languageLevel: z.enum(["c1_c2", "b2", "b1", "moins_b1"]),

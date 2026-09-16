@@ -317,7 +317,7 @@ export const evisaRouter = router({
     .input(
       z.object({
         applicationId: z.number().int().positive(),
-        amount: z.number(),
+        amount: z.number().positive(),
         description: z.string().max(500),
       })
     )
@@ -433,7 +433,7 @@ export const evisaRouter = router({
         evisaType: z.string().max(100).optional(),
         visaFee: z.number().default(0),
         accompanimentFee: z.number().default(25000),
-        totalCost: z.number().default(25000),
+        totalCost: z.number().positive().default(25000),
         currency: z.string().max(10).default('XOF'),
         notes: z.string().max(2000).optional(),
         passportFile: z.string().max(500).optional(),
@@ -781,7 +781,7 @@ export const evisaRouter = router({
         email: z.string().max(320),
         phone: z.string().max(50),
         countryName: z.string().max(100),
-        totalCost: z.number(),
+        totalCost: z.number().positive(),
         currency: z.string().max(10),
       })
     )
@@ -856,7 +856,7 @@ export const evisaRouter = router({
   }),
 
   updateExchangeRates: publicProcedure
-    .input(z.object({ eurToXaf: z.number(), usdToXaf: z.number() }))
+    .input(z.object({ eurToXaf: z.number().positive(), usdToXaf: z.number().positive() }))
     .mutation(async ({ input }) => {
       return { success: true, eurToXaf: input.eurToXaf, usdToXaf: input.usdToXaf };
     }),

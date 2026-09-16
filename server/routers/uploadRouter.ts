@@ -1,4 +1,4 @@
-import { publicProcedure, router } from '../_core/trpc';
+﻿import { publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { randomBytes } from 'node:crypto';
@@ -15,7 +15,7 @@ export const uploadRouter = router({
       z.object({
         fileName: z.string().max(255),
         fileType: z.string().max(100),
-        fileSize: z.number(),
+        fileSize: z.number().positive(),
       })
     )
     .mutation(async ({ input }: any) => {

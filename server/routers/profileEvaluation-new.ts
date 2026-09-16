@@ -116,8 +116,8 @@ export const agencyDossierRouter = router({
    */
   getDossiers: protectedProcedure
     .input(z.object({
-      status: z.string().optional(),
-      destination: z.string().optional(),
+      status: z.string().max(50).optional(),
+      destination: z.string().max(100).optional(),
       limit: z.number().default(50),
       offset: z.number().default(0),
     }))

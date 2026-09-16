@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur pour les fonctionnalités de réassurance et suivi dynamique
  * Inclut : barre de progression, galerie de visas, calculateur de budget, rappels téléphoniques
  */
@@ -120,7 +120,7 @@ export const reassuranceRouter = {
         destination: z.string().max(100),
         visaType: z.string().max(100),
         approvalDate: z.date(),
-        imageUrl: z.string().optional(),
+        imageUrl: z.string().url().max(500).optional(),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

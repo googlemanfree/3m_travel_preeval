@@ -15,7 +15,7 @@ export const cvAnalysisRouter = router({
         destination: z.string().max(100),
         visaType: z.string().max(100),
         education: z.string().max(100),
-        experience: z.number(),
+        experience: z.number().int().min(0).max(60),
         englishLevel: z.string().max(50),
         currentJob: z.string().max(255),
         sector: z.string().max(100),
@@ -200,7 +200,7 @@ Sois constructif et encourageant.`;
       z.object({
         destination: z.string().max(100),
         visaType: z.string().max(100),
-        aiScore: z.number(),
+        aiScore: z.number().min(0).max(100),
         candidateProfile: z.record(z.string(), z.any()),
       })
     )
