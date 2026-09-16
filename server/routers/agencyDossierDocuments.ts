@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { agencyDossierDocuments, agencyDossierDocumentAnnotations, agencyDossierHistory, agencyDossiers } from "../../drizzle/schema";
@@ -39,7 +39,7 @@ export const agencyDossierDocumentsRouter = router({
 
   updateVerificationStatus: protectedProcedure
     .input(z.object({
-      documentId: z.number().int().positive(),
+      documentId: z.number().int().positive().positive(),
       verificationStatus: z.enum(["pending", "verified", "rejected"]),
       verificationComment: z.string().max(2000).optional(),
     }))
@@ -70,7 +70,7 @@ export const agencyDossierDocumentsRouter = router({
     }),
 
   listAnnotationsForAdmin: protectedProcedure
-    .input(z.object({ documentId: z.number().int().positive() }))
+    .input(z.object({ documentId: z.number().int().positive().positive() }))
     .query(async ({ input, ctx }) => {
       adminOnly(ctx.user?.role);
       const db = await getDb();
@@ -82,7 +82,7 @@ export const agencyDossierDocumentsRouter = router({
 
   addCorrectionAnnotation: protectedProcedure
     .input(z.object({
-      documentId: z.number().int().positive(),
+      documentId: z.number().int().positive().positive(),
       message: z.string().trim().min(3).max(2000),
       areaLabel: z.string().trim().max(120).optional(),
       x: z.number().int().min(0).max(100000).optional(),

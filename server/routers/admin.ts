@@ -766,7 +766,7 @@ export const adminRouter = router({
    * Valider un document
    */
   approveDocument: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), documentId: z.number(), comment: z.string().optional() }))
+    .input(z.object({ sessionToken: z.string().max(512), documentId: z.number().int().positive(), comment: z.string().optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -815,7 +815,7 @@ export const adminRouter = router({
   rejectDocument: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      documentId: z.number(),
+      documentId: z.number().int().positive(),
       comment: z.string().min(3).max(2000),
       markerAnnotations: z.record(z.string(), z.string()).optional(),
       notifyCandidate: z.boolean().default(true),
@@ -908,7 +908,7 @@ export const adminRouter = router({
   savePassportMarkerAnnotations: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      documentId: z.number(),
+      documentId: z.number().int().positive(),
       annotations: z.record(z.string(), z.string().max(600)),
     }))
     .mutation(async ({ input }) => {
@@ -1080,7 +1080,7 @@ export const adminRouter = router({
    * Valider et envoyer un bilan au candidat
    */
   validateAndSendBilan: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number() }))
+    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -1119,7 +1119,7 @@ export const adminRouter = router({
    * Rejeter un bilan
    */
   rejectBilan: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number(), reason: z.string().max(2000) }))
+    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number().int().positive(), reason: z.string().max(2000) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -1183,7 +1183,7 @@ export const adminRouter = router({
    * Mettre à jour le statut d'un dossier
    */
   updateApplicationStatus: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), applicationId: z.number(), status: z.string().max(50) }))
+    .input(z.object({ sessionToken: z.string().max(512), applicationId: z.number().int().positive(), status: z.string().max(50) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -1246,7 +1246,7 @@ export const adminRouter = router({
   updateApplicationData: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      applicationId: z.number(),
+      applicationId: z.number().int().positive(),
       data: z.object({
       sessionToken: z.string().max(512),
         destinationCountry: z.string().max(100).optional(),
@@ -1368,7 +1368,7 @@ export const adminRouter = router({
     }),
 
   getApplicationDetails: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), applicationId: z.number() }))
+    .input(z.object({ sessionToken: z.string().max(512), applicationId: z.number().int().positive() }))
     .query(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -1419,7 +1419,7 @@ export const adminRouter = router({
    * Publier le bilan vers l'espace personnel du client
    */
   publishBilanToClient: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number() }))
+    .input(z.object({ sessionToken: z.string().max(512), bilanId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -2064,7 +2064,7 @@ export const adminRouter = router({
   updateDocumentStatus: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      documentId: z.number().int(),
+      documentId: z.number().int().positive(),
       source: z.enum(["client", "candidate", "agency", "case"]).default("client"),
       status: z.enum(["pending", "approved", "rejected"]),
       comment: z.string().max(2000).optional(),
@@ -2715,7 +2715,7 @@ export const adminRouter = router({
 
   /** Valider un document du flux candidat authentifié. */
   approveCandidateFile: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), fileId: z.number().int().positive(), comment: z.string().max(2000).optional() }))
+    .input(z.object({ sessionToken: z.string().max(512), fileId: z.number().int().positive().positive(), comment: z.string().max(2000).optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -2728,7 +2728,7 @@ export const adminRouter = router({
 
   /** Rejeter un document du flux candidat authentifié et conserver le motif. */
   rejectCandidateFile: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), fileId: z.number().int().positive(), comment: z.string().min(3).max(2000), notifyCandidate: z.boolean().default(true) }))
+    .input(z.object({ sessionToken: z.string().max(512), fileId: z.number().int().positive().positive(), comment: z.string().min(3).max(2000), notifyCandidate: z.boolean().default(true) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

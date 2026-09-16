@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+﻿import { TRPCError } from "@trpc/server";
 import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
@@ -900,7 +900,7 @@ initializeEvaluationDelivery: publicProcedure
     }),
 
   sendEvaluationReminder: publicProcedure
-    .input(sessionInput.extend({ applicationId: z.number().int().positive(), language: z.enum(["fr", "en"]).default("fr"), customMessage: z.string().trim().max(3000).optional() }))
+    .input(sessionInput.extend({ applicationId: z.number().int().positive().positive(), language: z.enum(["fr", "en"]).default("fr"), customMessage: z.string().trim().max(3000).optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

@@ -823,7 +823,7 @@ export const candidateRouter = router({
         fileSizeBytes: z.number().optional(),
         mimeType: z.string().max(100).optional(),
         correctionComment: z.string().trim().min(3).max(1000).optional(),
-        replacesFileId: z.number().int().positive().optional(),
+        replacesfileId: z.number().int().positive().positive().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -878,7 +878,7 @@ export const candidateRouter = router({
 
   // ── Supprimer une pièce récente non validée ─────────────────────────────────
   deleteDocument: candidateProcedure
-    .input(z.object({ fileId: z.number().int().positive() }))
+    .input(z.object({ fileId: z.number().int().positive().positive() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -920,7 +920,7 @@ export const candidateRouter = router({
   }),
 
   replyToPassportMarker: candidateProcedure
-    .input(z.object({ documentId: z.number().int(), markerId: z.string().min(1).max(120), message: z.string().min(3).max(600) }))
+    .input(z.object({ documentId: z.number().int().positive(), markerId: z.string().min(1).max(120), message: z.string().min(3).max(600) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1955,7 +1955,7 @@ export const candidateRouter = router({
    * Telecharger un document
    */
   downloadDocument: candidateProcedure
-    .input(z.object({ documentId: z.number() }))
+    .input(z.object({ documentId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

@@ -368,7 +368,7 @@ export const candidateRouter = router({
 
   // ── Supprimer un document ─────────────────────────────────────────────────
   deleteDocument: candidateProcedure
-    .input(z.object({ fileId: z.number() }))
+    .input(z.object({ fileId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       if (!ctx.candidate) throw new TRPCError({ code: "UNAUTHORIZED", message: "Compte candidat requis." });
       const candidate = ctx.candidate as Candidate;
@@ -914,7 +914,7 @@ export const candidateRouter = router({
    * Telecharger un document
    */
   downloadDocument: candidateProcedure
-    .input(z.object({ documentId: z.number() }))
+    .input(z.object({ documentId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       if (!ctx.candidate) throw new TRPCError({ code: "UNAUTHORIZED", message: "Compte candidat requis." });
       const candidate = ctx.candidate as Candidate;

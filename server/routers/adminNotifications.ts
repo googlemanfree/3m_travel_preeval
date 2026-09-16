@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Notifications internes du tableau de bord admin
  *
  * Système par sondage (polling) : le client interroge régulièrement cette
@@ -119,7 +119,7 @@ export const adminNotificationsRouter = router({
    * Marquer une notification comme lue.
    */
   markAsRead: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), notificationId: z.number() }))
+    .input(z.object({ sessionToken: z.string().max(512), notificationId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

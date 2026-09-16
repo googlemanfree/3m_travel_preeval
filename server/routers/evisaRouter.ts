@@ -260,7 +260,7 @@ export const evisaRouter = router({
   updateEvisaApplicationStatus: protectedProcedure
     .input(
       z.object({
-        applicationId: z.number(),
+        applicationId: z.number().int().positive(),
         status: z.enum(['pending', 'approved', 'rejected', 'processing', 'completed']),
         rejectionReason: z.string().max(2000).optional(),
       })
@@ -316,7 +316,7 @@ export const evisaRouter = router({
   initiateEvisaPayment: protectedProcedure
     .input(
       z.object({
-        applicationId: z.number(),
+        applicationId: z.number().int().positive(),
         amount: z.number(),
         description: z.string().max(500),
       })
@@ -372,7 +372,7 @@ export const evisaRouter = router({
   confirmEvisaPayment: protectedProcedure
     .input(
       z.object({
-        applicationId: z.number(),
+        applicationId: z.number().int().positive(),
         transactionId: z.string().max(64),
         status: z.enum(['paid', 'failed']),
       })

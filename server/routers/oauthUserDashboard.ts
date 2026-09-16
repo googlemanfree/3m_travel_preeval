@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Tableau de Bord Utilisateur OAuth (Google / Facebook / Manus)
  *
  * Les utilisateurs connectés via un fournisseur social n'ont pas de ligne dans
@@ -54,12 +54,12 @@ export const oauthUserDashboardRouter = router({
         nationality: z.string().max(100).optional(),
         dateOfBirth: z.string().max(20).optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        visaType: z.string().optional(),
-        educationLevel: z.string().optional(),
-        employmentStatus: z.string().optional(),
-        languageLevel: z.string().optional(),
+        visaType: z.string().max(100).optional(),
+        educationLevel: z.string().max(100).optional(),
+        employmentStatus: z.string().max(100).optional(),
+        languageLevel: z.string().max(100).optional(),
         preferredLanguage: z.enum(["fr", "en"]).optional(),
-        formulaChosen: z.string().optional(),
+        formulaChosen: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -132,7 +132,7 @@ export const oauthUserDashboardRouter = router({
 
   // ── Supprimer un document (réellement supprimé) ─────────────────────────────
   deleteDocument: protectedProcedure
-    .input(z.object({ fileId: z.number() }))
+    .input(z.object({ fileId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Non authentifié." });
       const c = (await getOrCreateCandidateForPlatformUser(ctx.user)) as Candidate;

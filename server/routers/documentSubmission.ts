@@ -1,4 +1,4 @@
-import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+﻿import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { and, eq, or } from "drizzle-orm";
@@ -158,7 +158,7 @@ export const documentSubmissionRouter = router({
 
   verifyDocuments: protectedProcedure
     .input(z.object({
-      applicationId: z.number().int(),
+      applicationId: z.number().int().positive(),
       verified: z.boolean(),
       notes: z.string().max(2000).optional(),
     }))

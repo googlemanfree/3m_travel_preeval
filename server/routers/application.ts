@@ -875,7 +875,7 @@ export const applicationRouter = router({
   /** Envoyer le rapport d'évaluation automatique par email */
   sendEvaluationReport: protectedProcedure
     .input(z.object({
-      applicationId: z.number().int(),
+      applicationId: z.number().int().positive(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -959,7 +959,7 @@ export const applicationRouter = router({
       candidateName: z.string().max(255),
       destination: z.string().max(100),
       email: z.string().email().max(320),
-      applicationId: z.number().int().optional(),
+      applicationId: z.number().int().positive().optional(),
       candidateId: z.number().int().optional(),
     }))
     .mutation(async ({ input }) => {
@@ -1062,7 +1062,7 @@ export const applicationRouter = router({
   // ─── Signature du Protocole d'Accord ─────────────────────────────────────────
   signAgreement: publicProcedure
     .input(z.object({
-      applicationId: z.number(),
+      applicationId: z.number().int().positive(),
       signatureName: z.string().min(2).max(255),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -1300,7 +1300,7 @@ export const applicationRouter = router({
    */
   replyToCandidate: protectedProcedure
     .input(z.object({
-      applicationId: z.number(),
+      applicationId: z.number().int().positive(),
       reply: z.string().min(5).max(2000),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -1333,7 +1333,7 @@ export const applicationRouter = router({
    */
   getAIReportHistory: publicProcedure
     .input(z.object({
-      applicationId: z.number().int().optional(),
+      applicationId: z.number().int().positive().optional(),
       candidateId: z.number().int().optional(),
       email: z.string().email().max(320).optional(),
       limit: z.number().int().default(50),

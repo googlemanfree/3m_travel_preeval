@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur pour la classification IA des documents
  * Utilise l'API OpenAI pour analyser et classifier les documents
  */
@@ -77,7 +77,7 @@ ${input.fileContent}
   validateDocument: protectedProcedure
     .input(
       z.object({
-        documentId: z.number(),
+        documentId: z.number().int().positive(),
         documentType: z.string().max(100),
       })
     )
@@ -158,7 +158,7 @@ ${input.fileContent}
   extractText: protectedProcedure
     .input(
       z.object({
-        documentId: z.number(),
+        documentId: z.number().int().positive(),
         documentUrl: z.string().url().max(500),
       })
     )
