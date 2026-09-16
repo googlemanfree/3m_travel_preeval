@@ -37,12 +37,11 @@ export const evisaFavoritesRouter = router({
           });
         }
 
-        // Utiliser une requête SQL brute pour INSERT ... ON DUPLICATE KEY UPDATE
-        await db.execute(sql.raw(`
+        await db.execute(sql`
           INSERT INTO evisaFavorites (candidateId, countryCode, countryName, price, processingTime)
-          VALUES ('${candidateId}', '${input.countryCode}', '${input.countryName}', ${input.price || null}, '${input.processingTime || null}')
+          VALUES (${candidateId}, ${input.countryCode}, ${input.countryName}, ${input.price ?? null}, ${input.processingTime ?? null})
           ON DUPLICATE KEY UPDATE addedAt = CURRENT_TIMESTAMP
-        `));
+        `);
 
         return {
           success: true,
@@ -78,9 +77,9 @@ export const evisaFavoritesRouter = router({
           });
         }
 
-        await db.execute(sql.raw(`
-          DELETE FROM evisaFavorites WHERE candidateId = '${candidateId}' AND countryCode = '${input.countryCode}'
-        `));
+        await db.execute(sql`
+          DELETE FROM evisaFavorites WHERE candidateId = ${candidateId} AND countryCode = ${input.countryCode}
+        `);
 
         return {
           success: true,
@@ -114,8 +113,8 @@ export const evisaFavoritesRouter = router({
         });
       }
 
-      const favorites = await db.execute(sql.raw(`
-        SELECT 
+      const favorites = await db.execute(sql`
+        SELECT
           id,
           countryCode,
           countryName,
@@ -123,9 +122,9 @@ export const evisaFavoritesRouter = router({
           processingTime,
           addedAt
         FROM evisaFavorites
-        WHERE candidateId = '${candidateId}'
+        WHERE candidateId = ${candidateId}
         ORDER BY addedAt DESC
-      `));
+      `);
 
       return {
         data: (favorites as any).rows || [],
@@ -155,9 +154,9 @@ export const evisaFavoritesRouter = router({
           return { isFavorite: false };
         }
 
-        const result = await db.execute(sql.raw(`
-          SELECT id FROM evisaFavorites WHERE candidateId = '${candidateId}' AND countryCode = '${input.countryCode}' LIMIT 1
-        `));
+        const result = await db.execute(sql`
+          SELECT id FROM evisaFavorites WHERE candidateId = ${candidateId} AND countryCode = ${input.countryCode} LIMIT 1
+        `);
 
         return {
           isFavorite: ((result as any).rows || []).length > 0,
@@ -170,7 +169,7 @@ export const evisaFavoritesRouter = router({
 
   // Vérifier les favoris pour plusieurs pays
   checkFavorites: protectedProcedure
-    .input(z.object({ countryCodes: z.array(z.string()) }))
+    .input(z.object({ countryCodes: z.array(z.string().max(10)).max(50) }))
     .query(async ({ ctx, input }) => {
       try {
         const candidateId = ctx.user?.id;
@@ -191,11 +190,14 @@ export const evisaFavoritesRouter = router({
           return { favorites };
         }
 
-        const codesStr = input.countryCodes.map(c => `'${c}'`).join(',');
-        const result = await db.execute(sql.raw(`
+        const placeholders = sql.join(
+          input.countryCodes.map((c) => sql`${c}`),
+          sql`, `
+        );
+        const result = await db.execute(sql`
           SELECT countryCode FROM evisaFavorites
-          WHERE candidateId = '${candidateId}' AND countryCode IN (${codesStr})
-        `));
+          WHERE candidateId = ${candidateId} AND countryCode IN (${placeholders})
+        `);
 
         const favorites: Record<string, boolean> = {};
         input.countryCodes.forEach((code) => {
@@ -232,9 +234,9 @@ export const evisaFavoritesRouter = router({
         });
       }
 
-      await db.execute(sql.raw(`
-        DELETE FROM evisaFavorites WHERE candidateId = '${candidateId}'
-      `));
+      await db.execute(sql`
+        DELETE FROM evisaFavorites WHERE candidateId = ${candidateId}
+      `);
 
       return {
         success: true,

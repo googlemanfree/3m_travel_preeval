@@ -153,9 +153,9 @@ export const evisaRouter = router({
         }
 
         // Récupérer les informations de l'e-visa pour connaître les documents requis
-        const evisaResult = await db.execute(sql.raw(`
-          SELECT * FROM evisas WHERE countryCode = '${input.countryCode}' AND isActive = true
-        `));
+        const evisaResult = await db.execute(sql`
+          SELECT * FROM evisas WHERE countryCode = ${input.countryCode} AND isActive = true
+        `);
 
         const evisas = (evisaResult as any).rows || [];
         if (!evisas || evisas.length === 0) {
@@ -166,9 +166,9 @@ export const evisaRouter = router({
         }
 
         // Vérifier que le dossier existe
-        const appResult = await db.execute(sql.raw(`
-          SELECT * FROM applications WHERE dossierNumber = '${input.dossierNumber}' AND candidateId = '${candidateId}'
-        `));
+        const appResult = await db.execute(sql`
+          SELECT * FROM applications WHERE dossierNumber = ${input.dossierNumber} AND candidateId = ${candidateId}
+        `);
 
         const applications = (appResult as any).rows || [];
         if (!applications || applications.length === 0) {
@@ -178,17 +178,18 @@ export const evisaRouter = router({
           });
         }
 
+        const documentsJson = JSON.stringify(input.documents || {});
         // Créer la demande d'e-visa
-        await db.execute(sql.raw(`
+        await db.execute(sql`
           INSERT INTO evisaApplications (
-            candidateId, 
-            dossierNumber, 
-            evisaCountryCode, 
-            status, 
-            paymentAmount, 
+            candidateId,
+            dossierNumber,
+            evisaCountryCode,
+            status,
+            paymentAmount,
             documents
-          ) VALUES ('${candidateId}', '${input.dossierNumber}', '${input.countryCode}', 'pending', ${evisas[0].price}, '${JSON.stringify(input.documents || {})}')
-        `));
+          ) VALUES (${candidateId}, ${input.dossierNumber}, ${input.countryCode}, 'pending', ${evisas[0].price}, ${documentsJson})
+        `);
 
         // Demande enregistrée avec succès
         console.log(`[Evisa Application] Créée pour dossier ${input.dossierNumber} et pays ${input.countryCode}`);
