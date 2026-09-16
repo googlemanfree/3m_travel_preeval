@@ -241,7 +241,7 @@ export const adminDossierRouter = router({
   updateDossierStatus: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         dossierStatus: z.enum([
           'nouveau',
           'en_evaluation',

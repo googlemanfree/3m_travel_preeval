@@ -13,10 +13,10 @@ export const evisaFavoritesRouter = router({
   addFavorite: protectedProcedure
     .input(
       z.object({
-        countryCode: z.string(),
-        countryName: z.string(),
+        countryCode: z.string().max(10),
+        countryName: z.string().max(100),
         price: z.number().optional(),
-        processingTime: z.string().optional(),
+        processingTime: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -59,7 +59,7 @@ export const evisaFavoritesRouter = router({
 
   // Retirer un e-visa des favoris
   removeFavorite: protectedProcedure
-    .input(z.object({ countryCode: z.string() }))
+    .input(z.object({ countryCode: z.string().max(10) }))
     .mutation(async ({ ctx, input }) => {
       try {
         const candidateId = ctx.user?.id;
@@ -142,7 +142,7 @@ export const evisaFavoritesRouter = router({
 
   // Vérifier si un e-visa est dans les favoris
   isFavorite: protectedProcedure
-    .input(z.object({ countryCode: z.string() }))
+    .input(z.object({ countryCode: z.string().max(10) }))
     .query(async ({ ctx, input }) => {
       try {
         const candidateId = ctx.user?.id;

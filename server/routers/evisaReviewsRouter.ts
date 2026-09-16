@@ -14,7 +14,7 @@ export const evisaReviewsRouter = router({
   getReviewsByCountry: publicProcedure
     .input(
       z.object({
-        countryCode: z.string(),
+        countryCode: z.string().max(10),
         limit: z.number().default(10),
         offset: z.number().default(0),
         rating: z.number().optional(),
@@ -104,7 +104,7 @@ export const evisaReviewsRouter = router({
   createReview: protectedProcedure
     .input(
       z.object({
-        countryCode: z.string(),
+        countryCode: z.string().max(10),
         rating: z.number().min(1).max(5),
         title: z.string().min(5).max(100),
         comment: z.string().min(10).max(1000),

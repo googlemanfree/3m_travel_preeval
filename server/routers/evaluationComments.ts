@@ -155,7 +155,7 @@ export const evaluationCommentsRouter = router({
   getComments: publicProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         email: z.string().email().max(320),
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().default(5),
@@ -214,7 +214,7 @@ export const evaluationCommentsRouter = router({
     .input(
       z.object({
         parentCommentId: z.number(),
-        content: z.string().min(10),
+        content: z.string().min(10).max(4000),
       })
     )
     .mutation(async ({ ctx, input }) => {

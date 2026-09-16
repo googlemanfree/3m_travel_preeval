@@ -332,7 +332,7 @@ export const candidateRouter = router({
           "cv", "passeport", "diplome", "releve_notes", "photo",
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
         ]),
-        fileName: z.string(),
+        fileName: z.string().max(255),
         fileUrl: z.string().url(),
         fileKey: z.string(),
         fileSizeBytes: z.number().optional(),
@@ -626,7 +626,7 @@ export const candidateRouter = router({
   signAgreementProtocol: candidateProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         signatureName: z.string().min(2, "Le nom est requis"),
         ipAddress: z.string().optional(),
       })
@@ -691,11 +691,11 @@ export const candidateRouter = router({
   submitDocuments: candidateProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         documents: z.array(
           z.object({
             fileType: z.string(),
-            fileName: z.string(),
+            fileName: z.string().max(255),
             fileUrl: z.string(),
             fileKey: z.string(),
             fileSizeBytes: z.number().optional(),

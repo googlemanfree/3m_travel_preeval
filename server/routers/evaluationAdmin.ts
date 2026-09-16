@@ -14,7 +14,7 @@ import { generateEvaluationReportHTML } from "../evaluationService";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 const draftInput = z.object({
-  dossierNumber: z.string().min(1),
+  dossierNumber: z.string().min(1).max(50),
   finalScore: z.number().int().min(0).max(100),
   verdict: z.string().trim().min(2).max(500),
   strengths: z.array(z.string().trim().min(2).max(500)).max(6),
@@ -85,7 +85,7 @@ export const evaluationAdminRouter = router({
    * Récupérer les détails d'un dossier (admin only)
    */
   getDetails: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -209,7 +209,7 @@ export const evaluationAdminRouter = router({
 
   /** Programmer la diffusion d’un brouillon de bilan à une date et heure précises. */
   scheduleBilan: protectedProcedure
-    .input(z.object({ dossierNumber: z.string().min(1), scheduledAt: z.date() }))
+    .input(z.object({ dossierNumber: z.string().min(1).max(50), scheduledAt: z.date() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
       const now = new Date();
@@ -228,7 +228,7 @@ export const evaluationAdminRouter = router({
    * Le job à 48 h reste un filet de sécurité pour les dossiers non traités.
    */
   publishBilan: protectedProcedure
-    .input(z.object({ dossierNumber: z.string(), adminNote: z.string().trim().max(2000).optional() }))
+    .input(z.object({ dossierNumber: z.string().max(50), adminNote: z.string().trim().max(2000).optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -288,7 +288,7 @@ export const evaluationAdminRouter = router({
   updateStatus: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         newStatus: z.enum([
           "nouveau",
           "en_evaluation",
@@ -351,8 +351,8 @@ export const evaluationAdminRouter = router({
   addNote: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
-        note: z.string().min(1),
+        dossierNumber: z.string().max(50),
+        note: z.string().min(1).max(2000),
       })
     )
     .mutation(async ({ ctx, input }) => {

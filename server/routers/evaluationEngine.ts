@@ -275,7 +275,7 @@ export const evaluationEngineRouter = {
 
   // Get country-specific rules
   getCountryRules: publicProcedure
-    .input(z.object({ country: z.string() }))
+    .input(z.object({ country: z.string().max(100) }))
     .query(({ input }) => {
       const countryKey = input.country.toUpperCase().replace(/\s+/g, '_');
       return COUNTRY_RULES[countryKey] || COUNTRY_RULES.CANADA;

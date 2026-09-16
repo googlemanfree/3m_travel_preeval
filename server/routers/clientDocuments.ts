@@ -26,7 +26,7 @@ export const clientDocumentsRouter = router({
    */
   analyzePassport: publicProcedure
     .input(z.object({
-      fileName: z.string().optional(),
+      fileName: z.string().max(255).optional(),
       fileUrl: z.string().url().optional(),
     }))
     .mutation(async ({ input }) => {

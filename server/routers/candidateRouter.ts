@@ -255,7 +255,7 @@ export const candidateRouter = router({
   sendMessage: protectedProcedure
     .input(z.object({
       candidateId: z.number(),
-      content: z.string().min(1),
+      content: z.string().min(1).max(2000),
       senderRole: z.enum(["candidate", "advisor"]),
     }))
     .mutation(async ({ input }) => {

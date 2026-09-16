@@ -448,7 +448,7 @@ export const agencyDossierRouter = router({
   addNotes: protectedProcedure
     .input(z.object({
       dossierId: z.number(),
-      notes: z.string().min(1),
+      notes: z.string().min(1).max(2000),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

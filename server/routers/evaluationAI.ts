@@ -18,8 +18,8 @@ const submitEvaluationSchema = z.object({
   fullName: z.string().min(2, "Nom requis").max(255),
   email: z.string().email("Email invalide").max(320),
   whatsappNumber: z.string().min(10, "Numéro WhatsApp requis").max(50),
-  city: z.string().min(2, "Ville requise"),
-  destinationCountry: z.string().min(2, "Destination requise"),
+  city: z.string().min(2, "Ville requise").max(100),
+  destinationCountry: z.string().min(2, "Destination requise").max(100),
   projectType: z.enum(["etude", "travail", "tourisme", "residence"]),
   academicLevel: z.string().optional(),
   experienceYears: z.number().int().min(0).optional(),
@@ -274,7 +274,7 @@ export const evaluationAIRouter = router({
    * Récupérer le bilan d'un dossier
    */
   getBilan: publicProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input }) => {
       try {
         const db = await getDb();

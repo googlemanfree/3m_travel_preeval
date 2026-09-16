@@ -39,7 +39,7 @@ function ensureApplicationOwnership(application: typeof applications.$inferSelec
 
 export const cinetpayPaymentRouter = router({
   initiateDossierPayment: protectedProcedure
-    .input(z.object({ dossierNumber: z.string().min(3) }))
+    .input(z.object({ dossierNumber: z.string().min(3).max(50) }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -75,7 +75,7 @@ export const cinetpayPaymentRouter = router({
     }),
 
   getDossierPaymentInfo: protectedProcedure
-    .input(z.object({ dossierNumber: z.string().min(3) }))
+    .input(z.object({ dossierNumber: z.string().min(3).max(50) }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");

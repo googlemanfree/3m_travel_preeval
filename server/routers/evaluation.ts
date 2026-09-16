@@ -84,7 +84,7 @@ const evaluationInput = z.object({
   phone: z.string().min(8, "Numéro de téléphone invalide").max(50),
   dateOfBirth: z.string().optional(),
   nationality: z.string().max(100).optional(),
-  cityOfResidence: z.string().optional(),
+  cityOfResidence: z.string().max(100).optional(),
   maritalStatus: z.string().optional(),
   numberOfDependents: z.number().min(0).max(20).optional(),
   // Études & académique

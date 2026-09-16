@@ -817,7 +817,7 @@ export const candidateRouter = router({
           "cv", "passeport", "diplome", "releve_notes", "photo",
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre",
         ]),
-        fileName: z.string(),
+        fileName: z.string().max(255),
         fileUrl: z.string().url(),
         fileKey: z.string(),
         fileSizeBytes: z.number().optional(),
@@ -1327,7 +1327,7 @@ export const candidateRouter = router({
   signAgreementProtocol: candidateProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         signatureName: z.string().min(2, "Le nom est requis"),
         signatureDataUrl: z.string().optional(), // signature dessinée (PNG en base64), optionnelle
         ipAddress: z.string().optional(),
@@ -1410,11 +1410,11 @@ export const candidateRouter = router({
   submitDocuments: candidateProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
+        dossierNumber: z.string().max(50),
         documents: z.array(
           z.object({
             fileType: z.string(),
-            fileName: z.string(),
+            fileName: z.string().max(255),
             fileUrl: z.string(),
             fileKey: z.string(),
             fileSizeBytes: z.number().optional(),
@@ -1991,7 +1991,7 @@ export const candidateRouter = router({
   sendBilanQuestion: candidateProcedure
     .input(z.object({
       candidateEmail: z.string().email().max(320),
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       question: z.string().min(10),
     }))
     .mutation(async ({ ctx, input }) => {

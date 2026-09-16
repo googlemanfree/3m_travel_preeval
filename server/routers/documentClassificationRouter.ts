@@ -14,9 +14,9 @@ export const documentClassificationRouter = {
   classifyDocument: protectedProcedure
     .input(
       z.object({
-        fileName: z.string(),
-        fileContent: z.string(), // Base64 ou texte extrait
-        documentType: z.string().optional(),
+        fileName: z.string().max(255),
+        fileContent: z.string(),
+        documentType: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ input }: any) => {

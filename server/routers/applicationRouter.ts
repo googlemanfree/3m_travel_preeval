@@ -85,7 +85,7 @@ export const applicationRouter = router({
    */
   getByDossierNumber: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -149,7 +149,7 @@ export const applicationRouter = router({
    */
   updateStatus: protectedProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       dossierStatus: z.enum([
         "nouveau",
         "en_evaluation",
@@ -200,7 +200,7 @@ export const applicationRouter = router({
    */
   updatePaymentStatus: protectedProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       paymentStatus: z.enum(["PENDING", "SUCCESS", "FAILED", "CANCELLED"]),
       paymentTransactionId: z.string().optional(),
     }))

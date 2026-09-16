@@ -352,7 +352,7 @@ export const applicationRouter = router({
   /** Renvoyer l'OTP si expiré */
   resendApplicationOtp: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -388,7 +388,7 @@ export const applicationRouter = router({
   /** Vérifier l'OTP et initialiser le paiement CinetPay */
   verifyApplicationOtp: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       otp: z.string().length(6),
     }))
     .mutation(async ({ input }) => {
@@ -461,7 +461,7 @@ export const applicationRouter = router({
   /** Initier un paiement CinetPay direct depuis la progression */
   initiateCinetPayPayment: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       email: z.string().email().max(320),
       paymentMethod: z.enum(["mtn", "orange", "card"]).optional(),
     }))
@@ -574,7 +574,7 @@ export const applicationRouter = router({
 
   /** Récupérer un dossier par son numéro */
   getApplicationByDossierNumber: publicProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
@@ -1261,7 +1261,7 @@ export const applicationRouter = router({
    */
   sendCandidateMessage: publicProcedure
     .input(z.object({
-      dossierNumber: z.string().min(5),
+      dossierNumber: z.string().min(5).max(50),
       email: z.string().email().max(320),
       message: z.string().min(5).max(2000),
     }))

@@ -75,7 +75,7 @@ export const documentSubmissionRouter = router({
     }),
   submitDocuments: candidateProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       submissionMethod: z.enum(["en_ligne", "agence_physique"]),
       documentsUrls: z.array(z.object({
         type: z.string().max(100),
