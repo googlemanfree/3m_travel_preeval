@@ -1381,7 +1381,7 @@ export const applicationRouter = router({
    */
   getAIReport: publicProcedure
     .input(z.object({
-      reportId: z.string(),
+      reportId: z.string().max(128),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -1416,7 +1416,7 @@ export const applicationRouter = router({
    */
   retryAIReportSend: publicProcedure
     .input(z.object({
-      reportId: z.string(),
+      reportId: z.string().max(128),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

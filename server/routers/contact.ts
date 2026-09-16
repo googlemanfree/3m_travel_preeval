@@ -92,7 +92,7 @@ export const contactRouter = router({
    * Clôturer une session de chat
    */
   closeSession: publicProcedure
-    .input(z.object({ sessionId: z.string() }))
+    .input(z.object({ sessionId: z.string().max(128) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) {
@@ -166,7 +166,7 @@ export const contactRouter = router({
    * Lister les messages reçus via le formulaire de contact (réservé aux admins).
    */
   listContactMessages: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
+    .input(z.object({ sessionToken: z.string().max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
 

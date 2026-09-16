@@ -192,7 +192,7 @@ export const studyVisaEvaluationRouter = router({
 
   /** Liste + stats pour le tableau de bord admin. */
   listEvaluations: publicProcedure
-    .input(z.object({ sessionToken: z.string(), limit: z.number().min(1).max(100).default(50), offset: z.number().min(0).default(0) }))
+    .input(z.object({ sessionToken: z.string().max(512), limit: z.number().min(1).max(100).default(50), offset: z.number().min(0).default(0) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

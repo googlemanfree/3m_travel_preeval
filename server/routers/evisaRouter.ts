@@ -373,7 +373,7 @@ export const evisaRouter = router({
     .input(
       z.object({
         applicationId: z.number(),
-        transactionId: z.string(),
+        transactionId: z.string().max(64),
         status: z.enum(['paid', 'failed']),
       })
     )
@@ -709,7 +709,7 @@ export const evisaRouter = router({
    * Sauvegarder un brouillon e-Visa dans le cloud (associé à un email)
    */
   saveCloudDraft: publicProcedure
-    .input(z.object({ email: z.string().email().max(320), countryCode: z.string(), draftData: z.any() }))
+    .input(z.object({ email: z.string().email().max(320), countryCode: z.string().max(10), draftData: z.any() }))
     .mutation(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -742,7 +742,7 @@ export const evisaRouter = router({
    * Récupérer un brouillon e-Visa du cloud
    */
   getCloudDraft: publicProcedure
-    .input(z.object({ email: z.string().email().max(320), countryCode: z.string() }))
+    .input(z.object({ email: z.string().email().max(320), countryCode: z.string().max(10) }))
     .query(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';

@@ -546,7 +546,7 @@ export const evaluationRouter = router({
    */
   listForAdmin: publicProcedure
     .input(z.object({
-      sessionToken: z.string(),
+      sessionToken: z.string().max(512),
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),
     }))

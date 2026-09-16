@@ -148,7 +148,7 @@ export const signupRouter = router({
 
   // ── Vérifier l'email ────────────────────────────────────────────────────────
   verifyEmail: publicProcedure
-    .input(z.object({ token: z.string() }))
+    .input(z.object({ token: z.string().max(512) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) {

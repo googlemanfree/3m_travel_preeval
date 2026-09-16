@@ -818,10 +818,10 @@ export const candidateRouter = router({
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre",
         ]),
         fileName: z.string().max(255),
-        fileUrl: z.string().url(),
-        fileKey: z.string(),
+        fileUrl: z.string().url().max(500),
+        fileKey: z.string().max(512),
         fileSizeBytes: z.number().optional(),
-        mimeType: z.string().optional(),
+        mimeType: z.string().max(100).optional(),
         correctionComment: z.string().trim().min(3).max(1000).optional(),
         replacesFileId: z.number().int().positive().optional(),
       })
@@ -1413,12 +1413,12 @@ export const candidateRouter = router({
         dossierNumber: z.string().max(50),
         documents: z.array(
           z.object({
-            fileType: z.string(),
+            fileType: z.string().max(100),
             fileName: z.string().max(255),
-            fileUrl: z.string(),
-            fileKey: z.string(),
+            fileUrl: z.string().url().max(500),
+            fileKey: z.string().max(512),
             fileSizeBytes: z.number().optional(),
-            mimeType: z.string().optional(),
+            mimeType: z.string().max(100).optional(),
           })
         ),
       })

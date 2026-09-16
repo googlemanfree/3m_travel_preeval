@@ -31,8 +31,8 @@ export const adminDossierRouter = router({
         email: z.string().email().max(320),
         phone: z.string().max(50),
         nationality: z.string().max(100),
-        destinationCountry: z.string(),
-        visaType: z.string(),
+        destinationCountry: z.string().max(100),
+        visaType: z.string().max(100),
       })
     )
     .mutation(async ({ input, ctx }) => {

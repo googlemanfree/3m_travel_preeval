@@ -93,7 +93,7 @@ export const heartbeatRouter = router({
   /** Supprimer un job Heartbeat */
   deleteJob: protectedProcedure
     .input(z.object({
-      taskUid: z.string(),
+      taskUid: z.string().max(128),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {

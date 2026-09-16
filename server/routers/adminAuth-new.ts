@@ -334,7 +334,7 @@ export const candidateRouter = router({
         ]),
         fileName: z.string().max(255),
         fileUrl: z.string().url(),
-        fileKey: z.string(),
+        fileKey: z.string().max(512),
         fileSizeBytes: z.number().optional(),
         mimeType: z.string().optional(),
       })

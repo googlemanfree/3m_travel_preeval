@@ -57,8 +57,8 @@ export const clientDocumentsRouter = router({
         "police_clearance",
         "other"
       ]),
-      documentName: z.string(),
-      documentUrl: z.string().url(),
+      documentName: z.string().max(255),
+      documentUrl: z.string().url().max(500),
       fileSize: z.number().int().optional(),
       readabilityScore: z.number().int().optional(),
       readabilityIssues: z.any().optional(),
@@ -187,7 +187,7 @@ export const clientDocumentsRouter = router({
       amount: z.number().positive(),
       currency: z.string().default("EUR"),
       paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
-      paymentDescription: z.string(),
+      paymentDescription: z.string().max(500),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -352,9 +352,9 @@ export const clientDocumentsRouter = router({
     .input(z.object({
       evaluationId: z.number().int(),
       candidateEmail: z.string().email().max(320),
-      documentType: z.string(),
-      documentName: z.string(),
-      documentUrl: z.string().url().optional(),
+      documentType: z.string().max(100),
+      documentName: z.string().max(255),
+      documentUrl: z.string().url().max(500).optional(),
       adminNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -405,7 +405,7 @@ export const clientDocumentsRouter = router({
       amount: z.number().positive(),
       currency: z.string().default("EUR"),
       paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),
-      paymentDescription: z.string(),
+      paymentDescription: z.string().max(500),
       adminNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {

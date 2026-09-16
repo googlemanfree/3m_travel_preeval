@@ -149,7 +149,7 @@ export const customerReviewRouter = router({
     }),
 
   getPendingReviews: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
+    .input(z.object({ sessionToken: z.string().max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await requireDb();
@@ -162,7 +162,7 @@ export const customerReviewRouter = router({
     }),
 
   approveReview: publicProcedure
-    .input(z.object({ sessionToken: z.string(), reviewId: z.number().int().positive() }))
+    .input(z.object({ sessionToken: z.string().max(512), reviewId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await requireDb();
@@ -182,7 +182,7 @@ export const customerReviewRouter = router({
     }),
 
   rejectReview: publicProcedure
-    .input(z.object({ sessionToken: z.string(), reviewId: z.number().int().positive(), adminNotes: z.string().max(2000).optional() }))
+    .input(z.object({ sessionToken: z.string().max(512), reviewId: z.number().int().positive(), adminNotes: z.string().max(2000).optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await requireDb();

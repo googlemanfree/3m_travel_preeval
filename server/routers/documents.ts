@@ -10,7 +10,7 @@ export const documentsRouter = router({
    */
   listDocuments: protectedProcedure
     .input(z.object({
-      folderCode: z.string(),
+      folderCode: z.string().max(50),
     }))
     .query(async ({ input, ctx }) => {
       const { folderCode } = input;

@@ -258,7 +258,7 @@ export const paymentRouter = router({
     .input(z.object({
       dossierNumber: z.string().max(50),
       documentType: z.enum(["passport", "diplomas", "birth_certificate", "cv", "employment_letter", "other"]),
-      documentName: z.string(),
+      documentName: z.string().max(255),
       fileBase64: z.string().min(1),
       mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
     }))

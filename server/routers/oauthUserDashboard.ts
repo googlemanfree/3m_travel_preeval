@@ -100,10 +100,10 @@ export const oauthUserDashboardRouter = router({
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
         ]),
         fileName: z.string().max(255),
-        fileUrl: z.string().url(),
-        fileKey: z.string(),
+        fileUrl: z.string().url().max(500),
+        fileKey: z.string().max(512),
         fileSizeBytes: z.number().optional(),
-        mimeType: z.string().optional(),
+        mimeType: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

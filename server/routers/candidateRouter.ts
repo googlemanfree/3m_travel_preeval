@@ -69,7 +69,7 @@ export const candidateRouter = router({
   login: publicProcedure
     .input(z.object({
       email: z.string().email().max(320),
-      password: z.string(),
+      password: z.string().max(128),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();

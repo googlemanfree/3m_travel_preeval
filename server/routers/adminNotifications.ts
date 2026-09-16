@@ -46,7 +46,7 @@ export async function notifyAdmins(input: {
 
 export const adminNotificationsRouter = router({
   simulatorHealth: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
+    .input(z.object({ sessionToken: z.string().max(512) }))
     .query(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -92,7 +92,7 @@ export const adminNotificationsRouter = router({
    * sans type ciblé), les plus récentes en premier.
    */
   list: publicProcedure
-    .input(z.object({ sessionToken: z.string(), limit: z.number().min(1).max(100).default(30) }))
+    .input(z.object({ sessionToken: z.string().max(512), limit: z.number().min(1).max(100).default(30) }))
     .query(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -119,7 +119,7 @@ export const adminNotificationsRouter = router({
    * Marquer une notification comme lue.
    */
   markAsRead: publicProcedure
-    .input(z.object({ sessionToken: z.string(), notificationId: z.number() }))
+    .input(z.object({ sessionToken: z.string().max(512), notificationId: z.number() }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -137,7 +137,7 @@ export const adminNotificationsRouter = router({
    * Marquer toutes les notifications visibles par cet admin comme lues.
    */
   markAllAsRead: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
+    .input(z.object({ sessionToken: z.string().max(512) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

@@ -42,7 +42,7 @@ export const simpleAuthRouter = router({
         fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(255),
         email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").max(128),
-        confirmPassword: z.string(),
+        confirmPassword: z.string().max(128),
       })
     )
     .mutation(async () => {
@@ -139,7 +139,7 @@ export const simpleAuthRouter = router({
    * Valide le token et marque l'email comme vérifié
    */
   verifyEmail: publicProcedure
-    .input(z.object({ token: z.string() }))
+    .input(z.object({ token: z.string().max(512) }))
     .mutation(async ({ input }) => {
       const { token } = input;
       const db = await getDb();
@@ -251,7 +251,7 @@ export const simpleAuthRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        password: z.string(),
+        password: z.string().max(128),
       })
     )
     .mutation(async ({ input }) => {
@@ -360,7 +360,7 @@ export const simpleAuthRouter = router({
       z.object({
         token: z.string(),
         password: z.string().min(8).max(128),
-        confirmPassword: z.string(),
+        confirmPassword: z.string().max(128),
       })
     )
     .mutation(async ({ input }) => {
