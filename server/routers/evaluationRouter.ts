@@ -74,7 +74,7 @@ export const evaluationRouter = router({
    */
   getById: publicProcedure
     .input(z.object({
-      evaluationId: z.number(),
+      evaluationId: z.number().int().positive(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -138,7 +138,7 @@ export const evaluationRouter = router({
    */
   updateStatus: protectedProcedure
     .input(z.object({
-      evaluationId: z.number(),
+      evaluationId: z.number().int().positive(),
       status: z.enum(["pending", "reviewed", "contacted", "closed"]),
     }))
     .mutation(async ({ ctx, input }) => {

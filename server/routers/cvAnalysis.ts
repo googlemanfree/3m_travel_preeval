@@ -10,16 +10,16 @@ export const cvAnalysisRouter = router({
   analyzeCVForEvaluation: protectedProcedure
     .input(
       z.object({
-        candidateName: z.string(),
+        candidateName: z.string().max(255),
         email: z.string().email().max(320),
-        destination: z.string(),
-        visaType: z.string(),
-        education: z.string(),
+        destination: z.string().max(100),
+        visaType: z.string().max(100),
+        education: z.string().max(100),
         experience: z.number(),
-        englishLevel: z.string(),
-        currentJob: z.string(),
-        sector: z.string(),
-        cvContent: z.string(), // Contenu du CV en texte
+        englishLevel: z.string().max(50),
+        currentJob: z.string().max(255),
+        sector: z.string().max(100),
+        cvContent: z.string().max(50000),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -140,10 +140,10 @@ ${evaluationData.summary}
   analyzeCVForConsultation: protectedProcedure
     .input(
       z.object({
-        candidateName: z.string(),
+        candidateName: z.string().max(255),
         email: z.string().email().max(320),
-        targetCountry: z.string(),
-        cvContent: z.string(),
+        targetCountry: z.string().max(100),
+        cvContent: z.string().max(50000),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -198,8 +198,8 @@ Sois constructif et encourageant.`;
   generateEligibilityReport: protectedProcedure
     .input(
       z.object({
-        destination: z.string(),
-        visaType: z.string(),
+        destination: z.string().max(100),
+        visaType: z.string().max(100),
         aiScore: z.number(),
         candidateProfile: z.record(z.string(), z.any()),
       })

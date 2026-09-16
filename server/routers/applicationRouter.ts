@@ -202,7 +202,7 @@ export const applicationRouter = router({
     .input(z.object({
       dossierNumber: z.string().max(50),
       paymentStatus: z.enum(["PENDING", "SUCCESS", "FAILED", "CANCELLED"]),
-      paymentTransactionId: z.string().optional(),
+      paymentTransactionId: z.string().max(64).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
@@ -250,7 +250,7 @@ export const applicationRouter = router({
     .input(z.object({
       limit: z.number().default(50),
       offset: z.number().default(0),
-      status: z.string().optional(),
+      status: z.string().max(50).optional(),
     }))
     .query(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {

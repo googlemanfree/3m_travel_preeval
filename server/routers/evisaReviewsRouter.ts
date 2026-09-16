@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur pour la gestion des avis d'e-visas
  * Procédures pour créer, lister et modérer les avis clients
  */
@@ -184,7 +184,7 @@ export const evisaReviewsRouter = router({
   markHelpful: publicProcedure
     .input(
       z.object({
-        reviewId: z.number(),
+        reviewId: z.number().int().positive(),
         helpful: z.boolean(),
       })
     )
@@ -274,7 +274,7 @@ export const evisaReviewsRouter = router({
   moderateReview: protectedProcedure
     .input(
       z.object({
-        reviewId: z.number(),
+        reviewId: z.number().int().positive(),
         approved: z.boolean(),
         adminNote: z.string().optional(),
       })
@@ -319,7 +319,7 @@ export const evisaReviewsRouter = router({
    * Supprimer un avis (admin)
    */
   deleteReview: protectedProcedure
-    .input(z.object({ reviewId: z.number() }))
+    .input(z.object({ reviewId: z.number().int().positive() }))
     .mutation(async ({ input, ctx }: any) => {
       try {
         // Vérifier que l'utilisateur est admin

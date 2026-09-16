@@ -170,9 +170,9 @@ export const consultationRequestRouter = router({
   validateAndSend: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      requestId: z.number(),
-      finalReportContent: z.string().min(10),
-      adminNotes: z.string().optional(),
+      requestId: z.number().int().positive(),
+      finalReportContent: z.string().min(10).max(50000),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -226,7 +226,7 @@ export const consultationRequestRouter = router({
 
   /** Rejeter une demande (pas d'envoi au candidat). */
   reject: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), requestId: z.number(), adminNotes: z.string().optional() }))
+    .input(z.object({ sessionToken: z.string().max(512), requestId: z.number().int().positive(), adminNotes: z.string().optional() }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

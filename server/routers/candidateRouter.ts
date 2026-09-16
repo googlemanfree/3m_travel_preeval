@@ -118,7 +118,7 @@ export const candidateRouter = router({
    */
   getProfile: protectedProcedure
     .input(z.object({
-      candidateId: z.number(),
+      candidateId: z.number().int().positive(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -154,13 +154,13 @@ export const candidateRouter = router({
    */
   updateProfile: protectedProcedure
     .input(z.object({
-      candidateId: z.number(),
+      candidateId: z.number().int().positive(),
       fullName: z.string().max(255).optional(),
       phone: z.string().max(50).optional(),
       nationality: z.string().max(100).optional(),
-      educationLevel: z.string().optional(),
-      employmentStatus: z.string().optional(),
-      languageLevel: z.string().optional(),
+      educationLevel: z.string().max(100).optional(),
+      employmentStatus: z.string().max(100).optional(),
+      languageLevel: z.string().max(100).optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -198,7 +198,7 @@ export const candidateRouter = router({
    */
   getFiles: protectedProcedure
     .input(z.object({
-      candidateId: z.number(),
+      candidateId: z.number().int().positive(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -226,7 +226,7 @@ export const candidateRouter = router({
    */
   getMessages: protectedProcedure
     .input(z.object({
-      candidateId: z.number(),
+      candidateId: z.number().int().positive(),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -254,7 +254,7 @@ export const candidateRouter = router({
    */
   sendMessage: protectedProcedure
     .input(z.object({
-      candidateId: z.number(),
+      candidateId: z.number().int().positive(),
       content: z.string().min(1).max(2000),
       senderRole: z.enum(["candidate", "advisor"]),
     }))

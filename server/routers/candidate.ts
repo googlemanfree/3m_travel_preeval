@@ -1228,7 +1228,7 @@ export const candidateRouter = router({
     }),
 
   verifyEmail: publicProcedure
-    .input(z.object({ candidateId: z.number(), otp: z.string().length(6) }))
+    .input(z.object({ candidateId: z.number().int().positive(), otp: z.string().length(6) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1258,7 +1258,7 @@ export const candidateRouter = router({
     }),
 
   resendOtp: publicProcedure
-    .input(z.object({ candidateId: z.number() }))
+    .input(z.object({ candidateId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1329,8 +1329,8 @@ export const candidateRouter = router({
       z.object({
         dossierNumber: z.string().max(50),
         signatureName: z.string().min(2, "Le nom est requis"),
-        signatureDataUrl: z.string().optional(), // signature dessinée (PNG en base64), optionnelle
-        ipAddress: z.string().optional(),
+        signatureDataUrl: z.string().max(500000).optional(),
+        ipAddress: z.string().max(45).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

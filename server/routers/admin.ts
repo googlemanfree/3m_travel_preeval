@@ -2226,8 +2226,8 @@ export const adminRouter = router({
       country: z.string().min(2).max(100),
       category: z.string().min(2).max(100),
       fileUrl: z.string().url().max(500),
-      fileKey: z.string().min(2),
-      extractedText: z.string().optional(),
+      fileKey: z.string().min(2).max(512),
+      extractedText: z.string().max(50000).optional(),
       fileSize: z.number().optional(),
     }))
     .mutation(async ({ input }) => {

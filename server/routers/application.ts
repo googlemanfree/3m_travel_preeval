@@ -109,7 +109,7 @@ export const applicationRouter = router({
       diplomaUrl: z.string().url().max(500).optional(),
       // Scoring automatique
       scoringTotal: z.number().int().min(0).max(100).optional(),
-      scoringDetails: z.string().optional(),  // JSON string
+      scoringDetails: z.string().max(5000).optional(),
       scoringBadge: z.enum(["eligible", "admissible", "faible"]).optional(),
       // Informations complémentaires
       procedureId: z.string().max(100).optional(),
@@ -908,7 +908,7 @@ export const applicationRouter = router({
   /** Envoyer les rapports d'évaluation à tous les dossiers non évalués */
   sendBulkEvaluationReports: protectedProcedure
     .input(z.object({
-      dossierStatus: z.string().optional(),
+      dossierStatus: z.string().max(50).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -955,7 +955,7 @@ export const applicationRouter = router({
 
   evaluateCVWithAI: publicProcedure
     .input(z.object({
-      cvBase64: z.string(),
+      cvBase64: z.string().max(2000000),
       candidateName: z.string().max(255),
       destination: z.string().max(100),
       email: z.string().email().max(320),

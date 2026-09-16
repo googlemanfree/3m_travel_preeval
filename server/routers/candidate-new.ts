@@ -468,7 +468,7 @@ export const adminRouter = router({
    * Récupérer les détails complets d'un utilisateur avec tous ses dossiers et documents
    */
   getUserDetailsWithDocuments: protectedProcedure
-    .input(z.object({ userId: z.number() }))
+    .input(z.object({ userId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -744,11 +744,11 @@ export const adminRouter = router({
     .input(z.object({
       applicationId: z.number().int().positive(),
       data: z.object({
-        destinationCountry: z.string().optional(),
-        projectType: z.string().optional(),
-        studyLevel: z.string().optional(),
-        fieldOfStudy: z.string().optional(),
-        adminNotes: z.string().optional(),
+        destinationCountry: z.string().max(100).optional(),
+        projectType: z.string().max(100).optional(),
+        studyLevel: z.string().max(100).optional(),
+        fieldOfStudy: z.string().max(100).optional(),
+        adminNotes: z.string().max(2000).optional(),
       }),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -894,7 +894,7 @@ export const adminRouter = router({
   listCandidates: protectedProcedure
     .input(z.object({
       search: z.string().max(200).optional(),
-      status: z.string().optional(),
+      status: z.string().max(50).optional(),
       limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
     }))

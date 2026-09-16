@@ -188,8 +188,8 @@ ${input.fileContent}
   compareDocuments: protectedProcedure
     .input(
       z.object({
-        document1Id: z.number(),
-        document2Id: z.number(),
+        document1Id: z.number().int().positive(),
+        document2Id: z.number().int().positive(),
       })
     )
     .query(async ({ input }: any) => {

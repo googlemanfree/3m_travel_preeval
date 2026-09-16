@@ -185,7 +185,7 @@ export const clientDocumentsRouter = router({
       evaluationId: z.number().int(),
       candidateEmail: z.string().email().max(320),
       amount: z.number().positive(),
-      currency: z.string().default("EUR"),
+      currency: z.string().max(10).default("EUR"),
       paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
       paymentDescription: z.string().max(500),
     }))
@@ -270,8 +270,8 @@ export const clientDocumentsRouter = router({
     .input(z.object({
       paymentId: z.number().int(),
       status: z.enum(["confirmed", "verified", "cancelled"]),
-      adminNotes: z.string().optional(),
-      invoiceNumber: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
+      invoiceNumber: z.string().max(100).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -355,7 +355,7 @@ export const clientDocumentsRouter = router({
       documentType: z.string().max(100),
       documentName: z.string().max(255),
       documentUrl: z.string().url().max(500).optional(),
-      adminNotes: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -403,10 +403,10 @@ export const clientDocumentsRouter = router({
       evaluationId: z.number().int(),
       candidateEmail: z.string().email().max(320),
       amount: z.number().positive(),
-      currency: z.string().default("EUR"),
+      currency: z.string().max(10).default("EUR"),
       paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),
       paymentDescription: z.string().max(500),
-      adminNotes: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {

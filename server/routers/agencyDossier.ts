@@ -22,15 +22,15 @@ export const agencyDossierRouter = router({
       fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
       phone: z.string().min(5).max(50),
-      dateOfBirth: z.string().optional(),
+      dateOfBirth: z.string().max(20).optional(),
       nationality: z.string().max(100).optional(),
-      destination: z.string().min(2),
-      visaType: z.string().min(2),
-      educationLevel: z.string().optional(),
-      employmentStatus: z.string().optional(),
+      destination: z.string().min(2).max(100),
+      visaType: z.string().min(2).max(100),
+      educationLevel: z.string().max(100).optional(),
+      employmentStatus: z.string().max(100).optional(),
       monthlyIncome: z.number().optional(),
       bankBalance: z.number().optional(),
-      adminNotes: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -123,19 +123,19 @@ export const agencyDossierRouter = router({
    */
   updateDossier: protectedProcedure
     .input(z.object({
-      dossierId: z.number().int().positive(),
+      dossierId: z.number().int().positive().int().positive(),
       fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
       phone: z.string().min(5).max(50),
-      dateOfBirth: z.string().optional(),
+      dateOfBirth: z.string().max(20).optional(),
       nationality: z.string().max(100).optional(),
-      destination: z.string().min(2),
-      visaType: z.string().min(2),
-      educationLevel: z.string().optional(),
-      employmentStatus: z.string().optional(),
+      destination: z.string().min(2).max(100),
+      visaType: z.string().min(2).max(100),
+      educationLevel: z.string().max(100).optional(),
+      employmentStatus: z.string().max(100).optional(),
       monthlyIncome: z.number().optional(),
       bankBalance: z.number().optional(),
-      adminNotes: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent modifier un pré-dossier." });
@@ -174,8 +174,8 @@ export const agencyDossierRouter = router({
    */
   getDossiers: protectedProcedure
     .input(z.object({
-      status: z.string().optional(),
-      destination: z.string().optional(),
+      status: z.string().max(50).optional(),
+      destination: z.string().max(100).optional(),
       search: z.string().trim().max(120).optional(),
       includeDeleted: z.boolean().optional().default(false),
       limit: z.number().default(50),
@@ -248,7 +248,7 @@ export const agencyDossierRouter = router({
    */
   getDossierById: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierId: z.number().int().positive(),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
@@ -300,7 +300,7 @@ export const agencyDossierRouter = router({
    */
   updateStatus: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierId: z.number().int().positive(),
       newStatus: z.enum(AGENCY_DOSSIER_STATUS_VALUES),
       notes: z.string().max(2000).optional(),
     }))
@@ -432,7 +432,7 @@ export const agencyDossierRouter = router({
    * Ajouter des notes au dossier
    */
   validateEvaluation: protectedProcedure
-    .input(z.object({ dossierId: z.number().int().positive(), note: z.string().trim().max(1000).optional() }))
+    .input(z.object({ dossierId: z.number().int().positive().int().positive(), note: z.string().trim().max(1000).optional() }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -447,7 +447,7 @@ export const agencyDossierRouter = router({
     }),
   addNotes: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierId: z.number().int().positive(),
       notes: z.string().min(1).max(2000),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -512,7 +512,7 @@ export const agencyDossierRouter = router({
    */
   deleteDossier: protectedProcedure
     .input(z.object({
-      dossierId: z.number(),
+      dossierId: z.number().int().positive(),
       confirmation: z.literal("SUPPRIMER"),
       reason: z.string().trim().min(8).max(500),
     }))
@@ -571,7 +571,7 @@ export const agencyDossierRouter = router({
     }),
 
   restoreDossier: protectedProcedure
-    .input(z.object({ dossierId: z.number(), reason: z.string().trim().min(3).max(500) }))
+    .input(z.object({ dossierId: z.number().int().positive(), reason: z.string().trim().min(3).max(500) }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -585,7 +585,7 @@ export const agencyDossierRouter = router({
     }),
 
   sendManualReminder: protectedProcedure
-    .input(z.object({ dossierId: z.number(), message: z.string().trim().min(10).max(1200) }))
+    .input(z.object({ dossierId: z.number().int().positive(), message: z.string().trim().min(10).max(1200) }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });

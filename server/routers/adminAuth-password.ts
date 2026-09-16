@@ -304,8 +304,8 @@ export const adminAuthRouter = router({
     .input(z.object({
       sessionToken: z.string().max(512),
       email: z.string().email().max(320),
-      customSubject: z.string().optional(),
-      customBody: z.string().optional(),
+      customSubject: z.string().max(255).optional(),
+      customBody: z.string().max(5000).optional(),
     }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);

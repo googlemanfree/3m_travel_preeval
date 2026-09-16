@@ -213,7 +213,7 @@ export const evaluationCommentsRouter = router({
   replyToComment: protectedProcedure
     .input(
       z.object({
-        parentCommentId: z.number(),
+        parentcommentId: z.number().int().positive().int().positive(),
         content: z.string().min(10).max(4000),
       })
     )
@@ -284,7 +284,7 @@ export const evaluationCommentsRouter = router({
    * Marquer un commentaire comme résolu (admin only)
    */
   markAsResolved: protectedProcedure
-    .input(z.object({ commentId: z.number() }))
+    .input(z.object({ commentId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });

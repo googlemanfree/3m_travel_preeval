@@ -101,7 +101,7 @@ export const evisaAdminRouter = router({
    * Récupérer les détails d'une demande
    */
   getRequestDetails: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number().int().positive() }))
     .query(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
@@ -144,7 +144,7 @@ export const evisaAdminRouter = router({
   updateRequestStatus: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.number().int().positive(),
         status: z.enum(['pending', 'processing', 'approved', 'rejected']),
         notes: z.string().max(2000).optional(),
       })
@@ -220,7 +220,7 @@ export const evisaAdminRouter = router({
    * Assigner une demande à un admin
    */
   assignRequest: protectedProcedure
-    .input(z.object({ id: z.number(), adminEmail: z.string().email().max(320) }))
+    .input(z.object({ id: z.number().int().positive(), adminEmail: z.string().email().max(320) }))
     .mutation(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
@@ -256,7 +256,7 @@ export const evisaAdminRouter = router({
    * Ajouter une note admin
    */
   addAdminNote: protectedProcedure
-    .input(z.object({ id: z.number(), note: z.string().max(2000) }))
+    .input(z.object({ id: z.number().int().positive(), note: z.string().max(2000) }))
     .mutation(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
@@ -351,7 +351,7 @@ export const evisaAdminRouter = router({
    * Générer un numéro de dossier pour une demande
    */
   generateDossierNumber: protectedProcedure
-    .input(z.object({ requestId: z.number() }))
+    .input(z.object({ requestId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
@@ -386,7 +386,7 @@ export const evisaAdminRouter = router({
    * Historique des corrections manuelles des données passeport, réservé aux admins
    */
   getPassportCorrectionHistory: protectedProcedure
-    .input(z.object({ requestId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(200).default(50) }))
+    .input(z.object({ requestId: z.number().int().positive().int().positive().optional(), limit: z.number().int().min(1).max(200).default(50) }))
     .query(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Seuls les administrateurs peuvent consulter cet historique' });
@@ -436,7 +436,7 @@ export const evisaAdminRouter = router({
   adminUploadPdf: protectedProcedure
     .input(
       z.object({
-        requestId: z.number().int().positive(),
+        requestId: z.number().int().positive().int().positive(),
         fileBase64: z.string().min(1),
         fileName: z.string().min(1).max(255),
       })

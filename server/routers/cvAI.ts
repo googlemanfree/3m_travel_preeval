@@ -108,9 +108,9 @@ Respond in JSON with keys: improvedDescription, keyPoints (array), improvements 
   suggestProfessionalSummary: publicProcedure
     .input(
       z.object({
-        currentSummary: z.string(),
-        jobTitle: z.string(),
-        skills: z.array(z.string()),
+        currentSummary: z.string().max(5000),
+        jobTitle: z.string().max(150),
+        skills: z.array(z.string().max(200)).max(50),
         language: z.enum(["fr", "en"]).default("fr"),
       })
     )

@@ -336,7 +336,7 @@ export const candidateRouter = router({
         fileUrl: z.string().url().max(500),
         fileKey: z.string().max(512),
         fileSizeBytes: z.number().optional(),
-        mimeType: z.string().optional(),
+        mimeType: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -541,7 +541,7 @@ export const candidateRouter = router({
     }),
 
   verifyEmail: publicProcedure
-    .input(z.object({ candidateId: z.number(), otp: z.string().length(6) }))
+    .input(z.object({ candidateId: z.number().int().positive(), otp: z.string().length(6) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -571,7 +571,7 @@ export const candidateRouter = router({
     }),
 
   resendOtp: publicProcedure
-    .input(z.object({ candidateId: z.number() }))
+    .input(z.object({ candidateId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
