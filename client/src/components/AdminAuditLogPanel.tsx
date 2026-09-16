@@ -55,7 +55,7 @@ export default function AdminAuditLogPanel({ sessionToken }: Props) {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <div className="relative xl:col-span-2">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Rechercher admin, action ou ressource" className="pl-9" />
+            <Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Rechercher admin, action ou ressource" className="pl-9" maxLength={200} />
           </div>
           <select value={category} onChange={(event) => { setCategory(event.target.value as typeof category); setPage(1); }} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm">
             <option value="all">Toutes les catégories</option>
