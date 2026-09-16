@@ -358,7 +358,7 @@ export const simpleAuthRouter = router({
   resetPassword: publicProcedure
     .input(
       z.object({
-        token: z.string(),
+        token: z.string().max(512),
         password: z.string().min(8).max(128),
         confirmPassword: z.string().max(128),
       })

@@ -274,8 +274,8 @@ export const flightsRouter = router({
         tripType: z.enum(["ONE_WAY", "ROUND_TRIP", "MULTI"]),
         origin: z.string().length(3),
         destination: z.string().length(3),
-        departureDate: z.string(),
-        returnDate: z.string().optional(),
+        departureDate: z.string().max(20),
+        returnDate: z.string().max(20).optional(),
         adults: z.number().min(1).max(9).default(1),
         children: z.number().min(0).max(8).default(0),
         infants: z.number().min(0).max(4).default(0),
@@ -440,8 +440,8 @@ export const flightsRouter = router({
       z.object({
         origin: z.string().length(3),
         destination: z.string().length(3),
-        departureDate: z.string(),
-        returnDate: z.string(),
+        departureDate: z.string().max(20),
+        returnDate: z.string().max(20),
         adults: z.number().min(1).max(9).default(1),
         children: z.number().min(0).max(8).default(0),
         infants: z.number().min(0).max(4).default(0),
@@ -570,12 +570,12 @@ export const flightsRouter = router({
     .input(
       z.object({
         userEmail: z.string().email().max(320).optional(),
-        origin: z.string(),
-        destination: z.string(),
-        departureDate: z.string(),
-        returnDate: z.string().optional(),
+        origin: z.string().max(10),
+        destination: z.string().max(10),
+        departureDate: z.string().max(20),
+        returnDate: z.string().max(20).optional(),
         adults: z.number().default(1),
-        cabinClass: z.string().default("ECONOMY"),
+        cabinClass: z.string().max(20).default("ECONOMY"),
       })
     )
     .mutation(async ({ input }) => {
@@ -655,18 +655,18 @@ export const flightsRouter = router({
       z.object({
         email: z.string().email("Adresse email invalide").max(320),
         flightDetails: z.object({
-          airlineName: z.string(),
-          flightNumber: z.string(),
-          origin: z.string(),
-          destination: z.string(),
-          departureDate: z.string(),
-          departureTime: z.string(),
-          arrivalTime: z.string(),
-          duration: z.string(),
+          airlineName: z.string().max(100),
+          flightNumber: z.string().max(20),
+          origin: z.string().max(10),
+          destination: z.string().max(10),
+          departureDate: z.string().max(20),
+          departureTime: z.string().max(20),
+          arrivalTime: z.string().max(20),
+          duration: z.string().max(20),
           stops: z.number(),
-          cabinClass: z.string(),
+          cabinClass: z.string().max(20),
           totalPrice: z.number(),
-          pnrRef: z.string(),
+          pnrRef: z.string().max(50),
         }),
       })
     )

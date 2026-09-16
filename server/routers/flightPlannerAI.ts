@@ -47,9 +47,9 @@ Préférences : ${input.preferences || "Aucune"};`;
 
   savePlan: protectedProcedure
     .input(z.object({
-      origin: z.string(),
-      destination: z.string(),
-      planContent: z.string(),
+      origin: z.string().max(100),
+      destination: z.string().max(100),
+      planContent: z.string().max(10000),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();

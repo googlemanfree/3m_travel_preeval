@@ -170,8 +170,8 @@ export const translationRouter = router({
   uploadTranslatedDocument: protectedProcedure
     .input(z.object({
       requestId: z.number(),
-      translatedDocumentUrl: z.string().url(),
-      translatedDocumentName: z.string(),
+      translatedDocumentUrl: z.string().url().max(500),
+      translatedDocumentName: z.string().max(255),
       translatedDocumentSize: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {

@@ -1792,7 +1792,7 @@ export const adminRouter = router({
   updateCandidateStatus: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      candidateId: z.string(), // Format: "online_123" ou "agency_456"
+      candidateId: z.string().max(50), // Format: "online_123" ou "agency_456"
       newStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]),
       notifyClient: z.boolean().default(true),
     }))
@@ -1957,8 +1957,8 @@ export const adminRouter = router({
 
   revertCandidateStatus: publicProcedure
     .input(z.object({
-      sessionToken: z.string().min(1),
-      candidateId: z.string(),
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().max(50),
       reason: z.string().trim().min(5).max(1000),
       notifyClient: z.boolean().default(true),
     }))
@@ -2347,7 +2347,7 @@ export const adminRouter = router({
   getCandidateDetails: publicProcedure
     .input(z.object({
       sessionToken: z.string().max(512),
-      candidateId: z.string(), // Format: "online_123" ou "agency_456"
+      candidateId: z.string().max(50), // Format: "online_123" ou "agency_456"
     }))
     .query(async ({ input, ctx }) => {
       let admin;

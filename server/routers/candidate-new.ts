@@ -1032,7 +1032,7 @@ export const adminRouter = router({
    */
   updateCandidateStatus: protectedProcedure
     .input(z.object({
-      candidateId: z.string(), // Format: "online_123" ou "agency_456"
+      candidateId: z.string().max(50), // Format: "online_123" ou "agency_456"
       newStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]),
       notifyClient: z.boolean().default(true),
     }))
@@ -1286,7 +1286,7 @@ export const adminRouter = router({
    */
   getCandidateDetails: protectedProcedure
     .input(z.object({
-      candidateId: z.string(), // Format: "online_123" ou "agency_456"
+      candidateId: z.string().max(50), // Format: "online_123" ou "agency_456"
     }))
     .query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {

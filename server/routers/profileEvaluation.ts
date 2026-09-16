@@ -11,7 +11,7 @@ export const profileEvaluationRouter = router({
   submit: publicProcedure
     .input(
       z.object({
-        destination: z.string(),
+        destination: z.string().max(100),
         projectType: z.enum(["student", "visitor", "worker", "permanent_residence", "family_reunification", "other"]),
         currentCountry: z.string().optional(),
         communicationLanguage: z.enum(["fr", "en"]).default("fr"),

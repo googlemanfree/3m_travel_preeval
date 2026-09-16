@@ -78,7 +78,7 @@ ${input.fileContent}
     .input(
       z.object({
         documentId: z.number(),
-        documentType: z.string(),
+        documentType: z.string().max(100),
       })
     )
     .mutation(async ({ input }: any) => {
@@ -115,8 +115,8 @@ ${input.fileContent}
   getSuggestions: protectedProcedure
     .input(
       z.object({
-        documentType: z.string(),
-        issues: z.array(z.string()),
+        documentType: z.string().max(100),
+        issues: z.array(z.string().max(500)),
       })
     )
     .query(async ({ input }: any) => {
@@ -159,7 +159,7 @@ ${input.fileContent}
     .input(
       z.object({
         documentId: z.number(),
-        documentUrl: z.string(),
+        documentUrl: z.string().url().max(500),
       })
     )
     .mutation(async ({ input }: any) => {
