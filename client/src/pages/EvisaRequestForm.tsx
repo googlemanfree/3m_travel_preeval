@@ -519,7 +519,7 @@ export default function EvisaRequestForm() {
               </div>
               <div>
                 <p className="font-semibold text-blue-950">📋 Pièces obligatoires :</p>
-                <p className="text-slate-700">{evisaDetails?.data?.docs || 'Passeport valide, Photo d’identité, Justificatif de domicile'}</p>
+                <p className="text-slate-700">{evisaDetails?.data?.docs || "Passeport valide, Photo d’identité, Justificatif de domicile"}</p>
               </div>
             </div>
           </div>
@@ -694,9 +694,9 @@ export default function EvisaRequestForm() {
                     [‘firstName’, ‘Prénom(s)’, ‘Ex. AUREOL’, ‘text’, 255],
                     [‘lastName’, ‘Nom de famille’, ‘Ex. DONFACK’, ‘text’, 255],
                     [‘passportNumber’, ‘Numéro de passeport’, ‘Numéro inscrit sur le passeport’, ‘text’, 64],
-                    [‘issuingCountry’, ‘Pays d’émission’, ‘Ex. Cameroun’, ‘text’, 100],
-                    [‘issueDate’, ‘Date d’émission’, ‘’, ‘date’, undefined],
-                    [‘expiryDate’, ‘Date d’expiration’, ‘’, ‘date’, undefined],
+                    [‘issuingCountry’, "Pays d’émission", ‘Ex. Cameroun’, ‘text’, 100],
+                    [‘issueDate’, "Date d’émission", ‘’, ‘date’, undefined],
+                    [‘expiryDate’, "Date d’expiration", ‘’, ‘date’, undefined],
                     [‘gender’, ‘Genre’, ‘Ex. M ou F’, ‘text’, 10],
                     [‘placeOfBirth’, ‘Lieu de naissance’, ‘Ville et pays si disponibles’, ‘text’, 150],
                   ].map(([name, label, placeholder, type, maxLen]) => (
