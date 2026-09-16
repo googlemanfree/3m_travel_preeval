@@ -99,7 +99,7 @@ export const oauthUserDashboardRouter = router({
           "cv", "passeport", "diplome", "releve_notes", "photo",
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
         ]),
-        fileName: z.string(),
+        fileName: z.string().max(255),
         fileUrl: z.string().url(),
         fileKey: z.string(),
         fileSizeBytes: z.number().optional(),

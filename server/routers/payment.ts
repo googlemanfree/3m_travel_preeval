@@ -124,8 +124,8 @@ export const paymentRouter = router({
    */
   confirmPayment: publicProcedure
     .input(z.object({
-      transactionId: z.string(),
-      dossierNumber: z.string(),
+      transactionId: z.string().max(64),
+      dossierNumber: z.string().max(50),
       paymentMethod: z.enum(["ORANGE_MONEY", "MTN_MOMO", "CARD"]).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -209,7 +209,7 @@ export const paymentRouter = router({
    */
   getPaymentStatus: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       email: z.string().email().max(320),
     }))
     .query(async ({ input }) => {
@@ -256,7 +256,7 @@ export const paymentRouter = router({
   /** Soumettre un document après paiement, pour le propriétaire du dossier uniquement. */
   submitDocument: protectedProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
       documentType: z.enum(["passport", "diplomas", "birth_certificate", "cv", "employment_letter", "other"]),
       documentName: z.string(),
       fileBase64: z.string().min(1),
@@ -321,7 +321,7 @@ export const paymentRouter = router({
 
   /** Récupérer les documents du propriétaire du dossier uniquement. */
   getSubmittedDocuments: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });

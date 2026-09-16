@@ -18,7 +18,7 @@ export const proceduresRouter = router({
           .array(
             z.object({
               role: z.enum(["user", "assistant"]),
-              content: z.string(),
+              content: z.string().max(4000),
             })
           )
           .optional(),
@@ -76,7 +76,7 @@ Si tu ne sais pas la réponse, propose de contacter l'équipe directement.`;
    * Obtenir les FAQ pour une procédure
    */
   getFAQ: publicProcedure
-    .input(z.object({ country: z.string() }))
+    .input(z.object({ country: z.string().max(100) }))
     .query(async ({ input }) => {
       // FAQ standard pour tous les pays
       const faq = [

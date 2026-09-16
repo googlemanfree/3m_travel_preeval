@@ -13,7 +13,7 @@ export const reassuranceRouter = {
    * Récupérer la progression du dossier
    */
   getApplicationProgress: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input, ctx }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -115,10 +115,10 @@ export const reassuranceRouter = {
   publishVisaToGallery: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
-        candidateName: z.string(),
-        destination: z.string(),
-        visaType: z.string(),
+        dossierNumber: z.string().max(50),
+        candidateName: z.string().max(255),
+        destination: z.string().max(100),
+        visaType: z.string().max(100),
         approvalDate: z.date(),
         imageUrl: z.string().optional(),
       })
@@ -265,8 +265,8 @@ export const reassuranceRouter = {
   getBudgetEstimate: publicProcedure
     .input(
       z.object({
-        countryCode: z.string(),
-        visaType: z.string().optional(),
+        countryCode: z.string().max(10),
+        visaType: z.string().max(100).optional(),
       })
     )
     .query(async ({ input }: any) => {
@@ -304,9 +304,9 @@ export const reassuranceRouter = {
   addBudgetEstimate: protectedProcedure
     .input(
       z.object({
-        countryCode: z.string(),
-        countryName: z.string(),
-        visaType: z.string(),
+        countryCode: z.string().max(10),
+        countryName: z.string().max(100),
+        visaType: z.string().max(100),
         tuitionFees: z.number().default(0),
         financialGuarantee: z.number().default(0),
         visaFees: z.number().default(0),

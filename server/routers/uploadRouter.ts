@@ -13,8 +13,8 @@ export const uploadRouter = router({
   getUploadUrl: publicProcedure
     .input(
       z.object({
-        fileName: z.string(),
-        fileType: z.string(),
+        fileName: z.string().max(255),
+        fileType: z.string().max(100),
         fileSize: z.number(),
       })
     )

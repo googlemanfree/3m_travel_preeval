@@ -381,7 +381,7 @@ Rapport généré automatiquement par 3M Travel Agency - ${new Date().toLocaleSt
    * Télécharger un fichier exporté
    */
   downloadExport: adminProcedure
-    .input(z.object({ fileName: z.string() }))
+    .input(z.object({ fileName: z.string().max(255) }))
     .query(async ({ input }: any) => {
       try {
         const filePath = path.join("/tmp", input.fileName);

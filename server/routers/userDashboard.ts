@@ -19,7 +19,7 @@ export const userDashboardRouter = router({
    */
   getPaymentHistory: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -62,7 +62,7 @@ export const userDashboardRouter = router({
    */
   getDocumentsStatus: candidateProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
@@ -108,7 +108,7 @@ export const userDashboardRouter = router({
    */
   getDossierOverview: publicProcedure
     .input(z.object({
-      dossierNumber: z.string(),
+      dossierNumber: z.string().max(50),
     }))
     .query(async ({ input }) => {
       const db = await getDb();

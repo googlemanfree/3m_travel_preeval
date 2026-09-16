@@ -131,7 +131,7 @@ export const documentSubmissionRouter = router({
     }),
 
   getDocumentSubmissionStatus: candidateProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });

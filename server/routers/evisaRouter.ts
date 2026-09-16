@@ -567,7 +567,7 @@ export const evisaRouter = router({
         sessionToken: z.string().min(1),
         requestId: z.number().int().positive(),
         fileBase64: z.string().min(1),
-        fileName: z.string().min(1),
+        fileName: z.string().min(1).max(255),
       })
     )
     .mutation(async ({ input }: any) => {

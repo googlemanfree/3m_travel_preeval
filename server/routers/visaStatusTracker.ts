@@ -67,7 +67,7 @@ function deriveSteps(app: {
 
 export const visaStatusTrackerRouter = router({
   getDossierStatus: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });

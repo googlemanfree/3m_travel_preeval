@@ -206,7 +206,7 @@ export const adminDossierRouter = router({
     }),
 
   getDossierByNumber: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input }) => {
       try {
         const db = await getDb();
