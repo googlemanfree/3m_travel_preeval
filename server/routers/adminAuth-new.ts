@@ -288,13 +288,13 @@ export const candidateRouter = router({
         fullName: z.string().min(2).max(255).optional(),
         phone: z.string().max(50).optional(),
         nationality: z.string().max(100).optional(),
-        dateOfBirth: z.string().optional(),
+        dateOfBirth: z.string().max(20).optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        visaType: z.string().optional(),
-        educationLevel: z.string().optional(),
-        employmentStatus: z.string().optional(),
-        languageLevel: z.string().optional(),
-        formulaChosen: z.string().optional(),
+        visaType: z.string().max(100).optional(),
+        educationLevel: z.string().max(100).optional(),
+        employmentStatus: z.string().max(100).optional(),
+        languageLevel: z.string().max(100).optional(),
+        formulaChosen: z.string().max(100).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -627,8 +627,8 @@ export const candidateRouter = router({
     .input(
       z.object({
         dossierNumber: z.string().max(50),
-        signatureName: z.string().min(2, "Le nom est requis"),
-        ipAddress: z.string().optional(),
+        signatureName: z.string().min(2, "Le nom est requis").max(255),
+        ipAddress: z.string().max(45).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -694,12 +694,12 @@ export const candidateRouter = router({
         dossierNumber: z.string().max(50),
         documents: z.array(
           z.object({
-            fileType: z.string(),
+            fileType: z.string().max(100),
             fileName: z.string().max(255),
-            fileUrl: z.string(),
-            fileKey: z.string(),
+            fileUrl: z.string().url().max(500),
+            fileKey: z.string().max(512),
             fileSizeBytes: z.number().optional(),
-            mimeType: z.string().optional(),
+            mimeType: z.string().max(100).optional(),
           })
         ),
       })

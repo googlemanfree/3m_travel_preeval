@@ -651,7 +651,7 @@ export const adminRouter = router({
   getEvaluationsByDestinationName: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
-      destination: z.string(),
+      destination: z.string().max(100),
       status: z.enum(["pending", "reviewed", "contacted", "closed"]).optional(),
     }))
     .query(async ({ input }) => {
@@ -998,7 +998,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       search: z.string().max(200).optional(),
-      status: z.string().optional(),
+      status: z.string().max(50).optional(),
       limit: z.number().default(50),
       offset: z.number().default(0),
     }))
@@ -1249,9 +1249,9 @@ export const adminRouter = router({
       applicationId: z.number(),
       data: z.object({
       sessionToken: z.string(),
-        destinationCountry: z.string().optional(),
-        projectType: z.string().optional(),
-        studyLevel: z.string().optional(),
+        destinationCountry: z.string().max(100).optional(),
+        projectType: z.string().max(100).optional(),
+        studyLevel: z.string().max(100).optional(),
         fieldOfStudy: z.string().max(150).optional(),
         adminNotes: z.string().max(2000).optional(),
       }),
@@ -1471,7 +1471,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       search: z.string().max(200).optional(),
-       status: z.string().optional(),
+       status: z.string().max(50).optional(),
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
        source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
        destination: z.string().trim().min(1).max(100).optional(),
@@ -2961,7 +2961,7 @@ export const adminRouter = router({
       sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
         testEmail: z.string().email("Email invalide").max(320),
-        testName: z.string().min(2, "Nom trop court"),
+        testName: z.string().min(2, "Nom trop court").max(255),
       })
     )
     .query(async ({ input }) => {
@@ -3023,7 +3023,7 @@ export const adminRouter = router({
       sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
         email: z.string().email("Email invalide").max(320),
-        testName: z.string().min(2, "Nom trop court"),
+        testName: z.string().min(2, "Nom trop court").max(255),
       })
     )
     .mutation(async ({ input }) => {
@@ -4083,9 +4083,9 @@ export const adminRouter = router({
       sessionToken: z.string().min(1),
       candidateId: z.string().min(1),
       content: z.string().trim().min(3).max(12_000),
-      attachmentUrl: z.string().optional(),
-      attachmentName: z.string().optional(),
-      attachmentMimeType: z.string().optional(),
+      attachmentUrl: z.string().url().max(500).optional(),
+      attachmentName: z.string().max(255).optional(),
+      attachmentMimeType: z.string().max(100).optional(),
       attachmentSizeBytes: z.number().int().optional(),
       clarificationRequestId: z.number().int().positive().optional(),
       evisaSnapshots: z.array(z.object({
