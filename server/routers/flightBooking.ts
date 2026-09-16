@@ -76,13 +76,13 @@ export function resolveBookingRequester(
 }
 
 const passportExtractedDataSchema = z.object({
-  surname: z.string().nullable(),
-  givenNames: z.string().nullable(),
-  passportNumber: z.string().nullable(),
-  nationality: z.string().nullable(),
-  dateOfBirth: z.string().nullable(),
-  expiryDate: z.string().nullable(),
-  sex: z.string().nullable(),
+  surname: z.string().max(255).nullable(),
+  givenNames: z.string().max(255).nullable(),
+  passportNumber: z.string().max(64).nullable(),
+  nationality: z.string().max(100).nullable(),
+  dateOfBirth: z.string().max(20).nullable(),
+  expiryDate: z.string().max(20).nullable(),
+  sex: z.string().max(10).nullable(),
   validForPrefill: z.boolean(),
 });
 
@@ -872,9 +872,9 @@ export const flightBookingRouter = router({
     .input(z.object({
       sessionToken: z.string().min(1),
       requestId: z.number().int().positive(),
-      pnrReference: z.string().trim().min(1),
+      pnrReference: z.string().trim().min(1).max(64),
       fileBase64: z.string().min(1),
-      fileName: z.string().min(1),
+      fileName: z.string().min(1).max(255),
       advisorInitials: z.string().trim().min(1).max(10),
     }))
     .mutation(async ({ input }) => {
