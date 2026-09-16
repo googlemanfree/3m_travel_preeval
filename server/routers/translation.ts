@@ -22,15 +22,15 @@ export const translationRouter = router({
         "medical_report",
         "other"
       ]),
-      sourceLanguage: z.string(),
-      targetLanguage: z.string(),
+      sourceLanguage: z.string().max(10),
+      targetLanguage: z.string().max(10),
       fileUrl: z.string().url(),
-      fileName: z.string(),
+      fileName: z.string().max(255),
       fileSize: z.number(),
       numberOfPages: z.number(),
       pricePerPage: z.number(),
-      totalPrice: z.string(),
-      currency: z.string(),
+      totalPrice: z.string().max(50),
+      currency: z.string().max(10),
       candidateName: z.string().max(255),
       email: z.string().email().max(320),
       whatsapp: z.string().max(50).optional(),
@@ -103,8 +103,8 @@ export const translationRouter = router({
         "medical_report",
         "other"
       ]),
-      sourceLanguage: z.string(),
-      targetLanguage: z.string(),
+      sourceLanguage: z.string().max(10),
+      targetLanguage: z.string().max(10),
     }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
@@ -122,10 +122,10 @@ export const translationRouter = router({
   validateTranslationPayment: publicProcedure
     .input(z.object({
       requestId: z.number(),
-      transactionId: z.string(),
-      paymentMethod: z.string(),
-      amount: z.string(),
-      currency: z.string(),
+      transactionId: z.string().max(64),
+      paymentMethod: z.string().max(50),
+      amount: z.string().max(50),
+      currency: z.string().max(10),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();

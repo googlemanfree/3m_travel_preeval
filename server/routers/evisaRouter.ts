@@ -22,8 +22,8 @@ export const evisaRouter = router({
   getAllEvisas: publicProcedure
     .input(
       z.object({
-        region: z.string().optional(),
-        search: z.string().optional(),
+        region: z.string().max(100).optional(),
+        search: z.string().max(200).optional(),
         limit: z.number().default(50),
         offset: z.number().default(0),
       })
@@ -91,7 +91,7 @@ export const evisaRouter = router({
    * Récupérer les détails d'un e-visa
    */
   getEvisaByCountry: publicProcedure
-    .input(z.object({ countryCode: z.string() }))
+    .input(z.object({ countryCode: z.string().max(100) }))
     .query(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -129,8 +129,8 @@ export const evisaRouter = router({
   createEvisaApplication: protectedProcedure
     .input(
       z.object({
-        dossierNumber: z.string(),
-        countryCode: z.string(),
+        dossierNumber: z.string().max(50),
+        countryCode: z.string().max(10),
         documents: z.record(z.string(), z.string()).optional(),
       })
     )
@@ -211,7 +211,7 @@ export const evisaRouter = router({
    * Récupérer les demandes d'e-visa du candidat
    */
   getMyEvisaApplications: protectedProcedure
-    .input(z.object({ dossierNumber: z.string().optional() }))
+    .input(z.object({ dossierNumber: z.string().max(50).optional() }))
     .query(async ({ input, ctx }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -261,7 +261,7 @@ export const evisaRouter = router({
       z.object({
         applicationId: z.number(),
         status: z.enum(['pending', 'approved', 'rejected', 'processing', 'completed']),
-        rejectionReason: z.string().optional(),
+        rejectionReason: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

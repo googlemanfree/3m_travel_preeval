@@ -39,7 +39,7 @@ export const simpleAuthRouter = router({
   register: publicProcedure
     .input(
       z.object({
-        fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+        fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(255),
         email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").max(128),
         confirmPassword: z.string(),

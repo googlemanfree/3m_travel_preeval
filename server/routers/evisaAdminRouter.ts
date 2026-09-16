@@ -28,9 +28,9 @@ export const evisaAdminRouter = router({
   getAllRequests: protectedProcedure
     .input(
       z.object({
-        status: z.string().optional(),
-        countryCode: z.string().optional(),
-        search: z.string().optional(),
+        status: z.string().max(50).optional(),
+        countryCode: z.string().max(10).optional(),
+        search: z.string().max(200).optional(),
         page: z.number().default(1),
         limit: z.number().default(20),
       })
@@ -146,7 +146,7 @@ export const evisaAdminRouter = router({
       z.object({
         id: z.number(),
         status: z.enum(['pending', 'processing', 'approved', 'rejected']),
-        notes: z.string().optional(),
+        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ ctx, input }: any) => {
@@ -438,7 +438,7 @@ export const evisaAdminRouter = router({
       z.object({
         requestId: z.number().int().positive(),
         fileBase64: z.string().min(1),
-        fileName: z.string().min(1),
+        fileName: z.string().min(1).max(255),
       })
     )
     .mutation(async ({ ctx, input }: any) => {

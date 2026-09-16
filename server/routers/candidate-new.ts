@@ -108,7 +108,7 @@ export const adminRouter = router({
     .input(z.object({
       evaluationId: z.number().int(),
       newStatus: z.enum(["pending", "reviewed", "contacted", "closed"]),
-      notes: z.string().optional(),
+      notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -189,7 +189,7 @@ export const adminRouter = router({
   addEvaluationNotes: protectedProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      notes: z.string().min(10),
+      notes: z.string().min(10).max(2000),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -281,7 +281,7 @@ export const adminRouter = router({
    */
   getEvaluationsByDestinationName: protectedProcedure
     .input(z.object({
-      destination: z.string(),
+      destination: z.string().max(100),
       status: z.enum(["pending", "reviewed", "contacted", "closed"]).optional(),
     }))
     .query(async ({ ctx, input }) => {
@@ -400,7 +400,7 @@ export const adminRouter = router({
    * Valider un document
    */
   approveDocument: protectedProcedure
-    .input(z.object({ documentId: z.number(), comment: z.string().optional() }))
+    .input(z.object({ documentId: z.number(), comment: z.string().max(2000).optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -434,7 +434,7 @@ export const adminRouter = router({
    * Rejeter un document
    */
   rejectDocument: protectedProcedure
-    .input(z.object({ documentId: z.number(), comment: z.string() }))
+    .input(z.object({ documentId: z.number(), comment: z.string().min(1).max(2000) }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -514,8 +514,8 @@ export const adminRouter = router({
    */
   getAllUsersWithApplications: protectedProcedure
     .input(z.object({
-      search: z.string().optional(),
-      status: z.string().optional(),
+      search: z.string().max(200).optional(),
+      status: z.string().max(50).optional(),
       limit: z.number().default(50),
       offset: z.number().default(0),
     }))
@@ -708,7 +708,7 @@ export const adminRouter = router({
    * Mettre à jour le statut d'un dossier
    */
   updateApplicationStatus: protectedProcedure
-    .input(z.object({ applicationId: z.number(), status: z.string() }))
+    .input(z.object({ applicationId: z.number(), status: z.string().max(50) }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });

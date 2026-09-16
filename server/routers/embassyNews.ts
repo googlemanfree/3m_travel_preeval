@@ -88,8 +88,8 @@ export const embassyNewsRouter = router({
   list: publicProcedure
     .input(
       z.object({
-        category: z.string().optional(),
-        source: z.string().optional(),
+        category: z.string().max(100).optional(),
+        source: z.string().max(255).optional(),
       }).optional()
     )
     .query(({ input }) => {
