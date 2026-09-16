@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC — Gestion des jobs Heartbeat
  * Permet de créer, lister et gérer les jobs d'évaluation automatique
  */
@@ -13,7 +13,7 @@ export const heartbeatRouter = router({
   createEvaluationJob: protectedProcedure
     .input(z.object({
       cronExpression: z.string().default("0 0 8 * * *"), // Tous les jours à 8h UTC
-      description: z.string().optional(),
+      description: z.string().max(255).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {

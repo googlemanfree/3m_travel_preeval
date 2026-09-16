@@ -15,7 +15,7 @@ export const documentClassificationRouter = {
     .input(
       z.object({
         fileName: z.string().max(255),
-        fileContent: z.string(),
+        fileContent: z.string().max(200000),
         documentType: z.string().max(100).optional(),
       })
     )

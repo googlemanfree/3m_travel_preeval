@@ -1,4 +1,4 @@
-import { router, publicProcedure } from "../_core/trpc";
+﻿import { router, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "../_core/llm";
 
@@ -12,9 +12,9 @@ export const flightPlannerAIRouter = router({
     .input(z.object({
       origin: z.string().min(1, "Origine requise"),
       destination: z.string().min(1, "Destination requise"),
-      dates: z.string().optional(),
-      budget: z.string().optional(),
-      preferences: z.string().optional(),
+      dates: z.string().max(50).optional(),
+      budget: z.string().max(50).optional(),
+      preferences: z.string().max(1000).optional(),
     }))
     .mutation(async ({ input }) => {
       try {

@@ -82,25 +82,25 @@ const evaluationInput = z.object({
   fullName: z.string().min(2, "Le nom complet est requis").max(255),
   email: z.string().email("Email invalide").max(320),
   phone: z.string().min(8, "Numéro de téléphone invalide").max(50),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z.string().max(20).optional(),
   nationality: z.string().max(100).optional(),
   cityOfResidence: z.string().max(100).optional(),
-  maritalStatus: z.string().optional(),
+  maritalStatus: z.string().max(50).optional(),
   numberOfDependents: z.number().min(0).max(20).optional(),
   // Études & académique
-  educationLevel: z.string().optional(),
+  educationLevel: z.string().max(100).optional(),
   diplomaTitle: z.string().max(255).optional(),
   graduationYear: z.string().max(10).optional(),
   fieldOfStudy: z.string().max(150).optional(),
   // Expérience professionnelle
-  employmentStatus: z.string().optional(),
+  employmentStatus: z.string().max(100).optional(),
   currentJobTitle: z.string().max(150).optional(),
   yearsOfExperience: z.string().max(10).optional(),
   industrySector: z.string().max(100).optional(),
   mainTasks: z.string().max(2000).optional(),
   // Compétences linguistiques
-  frenchLevel: z.string().optional(),
-  englishLevel: z.string().optional(),
+  frenchLevel: z.string().max(50).optional(),
+  englishLevel: z.string().max(50).optional(),
   languageTestsTaken: z.string().max(100).optional(),
   // Projet & destination
   destinationCategory: destinationCategoryEnum,
@@ -119,9 +119,9 @@ const evaluationInput = z.object({
   // Message
   message: z.string().max(4000).optional(),
   // CV en base64 (optionnel)
-  cvBase64: z.string().optional(),
-  cvFileName: z.string().optional(),
-  cvMimeType: z.string().optional(),
+  cvBase64: z.string().max(2000000).optional(),
+  cvFileName: z.string().max(255).optional(),
+  cvMimeType: z.string().max(100).optional(),
   // Attribution de campagne pour relier l’entrée Facebook/WhatsApp au dossier
   acquisitionSource: acquisitionSourceEnum.default("direct"),
   acquisitionCampaign: z.string().trim().max(160).optional(),
@@ -145,12 +145,12 @@ const multiProjectEvaluationInput = z.object({
   // TRAVAIL
   sector: z.string().max(100).optional(),
   yearsOfExperience: z.number().optional(),
-  educationLevel: z.string().optional(),
+  educationLevel: z.string().max(100).optional(),
   languages: z.string().max(100).optional(),
   cvAvailable: z.boolean().optional(),
 
   // ÉTUDES
-  diplomaLevel: z.string().optional(),
+  diplomaLevel: z.string().max(100).optional(),
   averageGrade: z.string().max(10).optional(),
   admissionLetter: z.boolean().optional(),
   financialGuarantee: z.string().max(50).optional(),

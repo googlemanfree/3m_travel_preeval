@@ -436,7 +436,7 @@ export const evisaRouter = router({
         totalCost: z.number().default(25000),
         currency: z.string().max(10).default('XOF'),
         notes: z.string().max(2000).optional(),
-        passportFile: z.string().optional(),
+        passportFile: z.string().max(500).optional(),
         passportFileName: z.string().max(255).optional(),
         passportFileSize: z.number().optional(),
         passportExtractedData: z.record(z.string(), z.unknown()).optional(),

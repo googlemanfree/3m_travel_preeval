@@ -22,13 +22,13 @@ export const agencyDossierRouter = router({
       phone: z.string().min(5).max(50),
       dateOfBirth: z.string().max(20).optional(),
       nationality: z.string().max(100).optional(),
-      destination: z.string().min(2),
-      visaType: z.string().min(2),
-      educationLevel: z.string().optional(),
-      employmentStatus: z.string().optional(),
+      destination: z.string().min(2).max(100),
+      visaType: z.string().min(2).max(100),
+      educationLevel: z.string().max(100).optional(),
+      employmentStatus: z.string().max(100).optional(),
       monthlyIncome: z.number().optional(),
       bankBalance: z.number().optional(),
-      adminNotes: z.string().optional(),
+      adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

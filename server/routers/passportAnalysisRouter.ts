@@ -1,4 +1,4 @@
-import { publicProcedure, router } from '../_core/trpc';
+﻿import { publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { invokeLLM } from '../_core/llm';
@@ -25,8 +25,8 @@ export const passportAnalysisRouter = router({
   analyzePassport: publicProcedure
     .input(
       z.object({
-        passportUrl: z.string().optional(),
-        fileBase64: z.string().optional(),
+        passportUrl: z.string().url().max(500).optional(),
+        fileBase64: z.string().max(2000000).optional(),
         fileName: z.string().max(255).optional(),
         fileType: z.string().min(1).max(100),
       }).refine(input => Boolean(input.fileBase64 || input.passportUrl), {

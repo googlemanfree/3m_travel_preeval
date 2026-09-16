@@ -280,7 +280,7 @@ export const flightsRouter = router({
         children: z.number().min(0).max(8).default(0),
         infants: z.number().min(0).max(4).default(0),
         cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
-        alliance: z.string().optional(),
+        alliance: z.string().max(50).optional(),
       }).superRefine((input, ctx) => {
         const error = validateFlightDates(input);
         if (error) ctx.addIssue({ code: z.ZodIssueCode.custom, message: error, path: ["departureDate"] });
@@ -446,7 +446,7 @@ export const flightsRouter = router({
         children: z.number().min(0).max(8).default(0),
         infants: z.number().min(0).max(4).default(0),
         cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
-        departureToken: z.string().nullable().optional(),
+        departureToken: z.string().max(512).nullable().optional(),
       })
     )
     .query(async ({ input }) => {

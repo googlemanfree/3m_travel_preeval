@@ -21,9 +21,9 @@ const submitEvaluationSchema = z.object({
   city: z.string().min(2, "Ville requise").max(100),
   destinationCountry: z.string().min(2, "Destination requise").max(100),
   projectType: z.enum(["etude", "travail", "tourisme", "residence"]),
-  academicLevel: z.string().optional(),
+  academicLevel: z.string().max(100).optional(),
   experienceYears: z.number().int().min(0).optional(),
-  cvFileKey: z.string().optional(), // Clé S3 du CV uploadé
+  cvFileKey: z.string().max(512).optional(), // Clé S3 du CV uploadé
 });
 
 type SubmitEvaluationInput = z.infer<typeof submitEvaluationSchema>;

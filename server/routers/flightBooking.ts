@@ -955,8 +955,8 @@ export const flightBookingRouter = router({
     .input(z.object({ 
       sessionToken: z.string().min(1), 
       requestId: z.number().int().positive(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
+      startDate: z.string().max(20).optional(),
+      endDate: z.string().max(20).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
@@ -1107,8 +1107,8 @@ export const flightBookingRouter = router({
     .input(z.object({ 
       sessionToken: z.string().min(1), 
       requestId: z.number().int().positive(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
+      startDate: z.string().max(20).optional(),
+      endDate: z.string().max(20).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);

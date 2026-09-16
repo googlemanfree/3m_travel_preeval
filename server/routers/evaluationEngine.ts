@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
 import { protectedProcedure, publicProcedure } from './../../server/_core/trpc';
 import { TRPCError } from '@trpc/server';
@@ -141,14 +141,14 @@ export const evaluationEngineRouter = {
   generateEvaluation: protectedProcedure
     .input(
       z.object({
-        destination: z.string(),
-        visaType: z.string(),
-        education: z.string(),
-        experience: z.string(),
-        language: z.string(),
-        sector: z.string(),
-        budget: z.string(),
-        timeline: z.string(),
+        destination: z.string().max(100),
+        visaType: z.string().max(100),
+        education: z.string().max(100),
+        experience: z.string().max(50),
+        language: z.string().max(50),
+        sector: z.string().max(100),
+        budget: z.string().max(50),
+        timeline: z.string().max(50),
       })
     )
     .mutation(async ({ input, ctx }) => {

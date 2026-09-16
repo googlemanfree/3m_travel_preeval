@@ -32,8 +32,8 @@ export const evaluationRouter = router({
         "canada_tourisme",
         "autre",
       ]),
-      educationLevel: z.string().optional(),
-      employmentStatus: z.string().optional(),
+      educationLevel: z.string().max(100).optional(),
+      employmentStatus: z.string().max(100).optional(),
       message: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -178,7 +178,7 @@ export const evaluationRouter = router({
     .input(z.object({
       limit: z.number().default(50),
       offset: z.number().default(0),
-      status: z.string().optional(),
+      status: z.string().max(50).optional(),
     }))
     .query(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {

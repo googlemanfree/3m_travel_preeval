@@ -108,7 +108,7 @@ export const evisaReviewsRouter = router({
         rating: z.number().min(1).max(5),
         title: z.string().min(5).max(100),
         comment: z.string().min(10).max(1000),
-        travelDate: z.string().optional(),
+        travelDate: z.string().max(20).optional(),
         visaObtained: z.boolean().default(false),
       })
     )
@@ -276,7 +276,7 @@ export const evisaReviewsRouter = router({
       z.object({
         reviewId: z.number().int().positive(),
         approved: z.boolean(),
-        adminNote: z.string().optional(),
+        adminNote: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ input, ctx }: any) => {
