@@ -104,9 +104,9 @@ export const applicationRouter = router({
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
       candidateId: z.number().int().optional(),
       // Documents uploadés
-      passportUrl: z.string().url().optional(),
-      cvUrl: z.string().url().optional(),
-      diplomaUrl: z.string().url().optional(),
+      passportUrl: z.string().url().max(500).optional(),
+      cvUrl: z.string().url().max(500).optional(),
+      diplomaUrl: z.string().url().max(500).optional(),
       // Scoring automatique
       scoringTotal: z.number().int().min(0).max(100).optional(),
       scoringDetails: z.string().optional(),  // JSON string
@@ -604,7 +604,7 @@ export const applicationRouter = router({
   listApplications: protectedProcedure
     .input(z.object({
       paymentStatus: z.enum(["ALL", "PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("ALL"),
-      search: z.string().optional(),
+      search: z.string().max(200).optional(),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
     }))
@@ -852,7 +852,7 @@ export const applicationRouter = router({
     .input(z.object({
       id: z.number().int(),
       dossierStatus: z.enum(["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"]),
-      adminNote: z.string().optional(),
+      adminNote: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
@@ -956,8 +956,8 @@ export const applicationRouter = router({
   evaluateCVWithAI: publicProcedure
     .input(z.object({
       cvBase64: z.string(),
-      candidateName: z.string(),
-      destination: z.string(),
+      candidateName: z.string().max(255),
+      destination: z.string().max(100),
       email: z.string().email().max(320),
       applicationId: z.number().int().optional(),
       candidateId: z.number().int().optional(),
