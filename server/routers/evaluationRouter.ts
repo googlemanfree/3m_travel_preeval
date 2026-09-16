@@ -16,13 +16,13 @@ export const evaluationRouter = router({
    */
   create: publicProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      phone: z.string().min(5),
-      nationality: z.string().optional(),
-      dateOfBirth: z.string().optional(),
+      phone: z.string().min(5).max(50),
+      nationality: z.string().max(100).optional(),
+      dateOfBirth: z.string().max(20).optional(),
       destinationCategory: z.enum(["schengen", "canada", "autre"]),
-      destinationCountry: z.string().optional(),
+      destinationCountry: z.string().max(100).optional(),
       visaType: z.enum([
         "schengen_etude",
         "schengen_tourisme",

@@ -17,11 +17,11 @@ export const agencyDossierRouter = router({
    */
   createDossier: protectedProcedure
     .input(z.object({
-      fullName: z.string().min(2),
+      fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
-      phone: z.string().min(5),
-      dateOfBirth: z.string().optional(),
-      nationality: z.string().optional(),
+      phone: z.string().min(5).max(50),
+      dateOfBirth: z.string().max(20).optional(),
+      nationality: z.string().max(100).optional(),
       destination: z.string().min(2),
       visaType: z.string().min(2),
       educationLevel: z.string().optional(),
