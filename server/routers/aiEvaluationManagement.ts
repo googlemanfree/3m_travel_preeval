@@ -1,4 +1,4 @@
-
+﻿
 /**
  * Routeur tRPC — Gestion IA des évaluations (vue unifiée admin)
  *
@@ -342,7 +342,7 @@ export const aiEvaluationManagementRouter = router({
       return { success: true };
     }),
   getUnifiedDashboard: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), limit: z.number().min(1).max(1000).default(500) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), limit: z.number().min(1).max(1000).default(500) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

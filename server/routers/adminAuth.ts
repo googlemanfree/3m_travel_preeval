@@ -279,7 +279,7 @@ export const adminAuthRouter = router({
    */
   changePassword: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
       currentPassword: z.string().min(1),
       newPassword: z.string().min(8),
     }))
@@ -334,7 +334,7 @@ export const adminAuthRouter = router({
    * Déconnexion.
    */
   logout: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -361,7 +361,7 @@ export const adminAuthRouter = router({
 
   /** Statistiques globales visibles par tous les administrateurs authentifiés. */
   getGlobalStats: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
@@ -395,7 +395,7 @@ export const adminAuthRouter = router({
    */
   listAdmins: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
     }))
     .query(async ({ input }) => {
       await requireSuperAdminSession(input.sessionToken);
@@ -425,7 +425,7 @@ export const adminAuthRouter = router({
    */
   inviteAdmin: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
       email: z.string().email().max(320),
       fullName: z.string().min(2).max(255),
       phone: z.string().max(50).optional(),
@@ -499,7 +499,7 @@ export const adminAuthRouter = router({
    */
   resendInvite: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
       email: z.string().email().max(320),
       customSubject: z.string().max(255).optional(),
       customBody: z.string().max(5000).optional(),
@@ -561,7 +561,7 @@ export const adminAuthRouter = router({
    * transmis uniquement à l’adresse e-mail déjà enregistrée du compte.
    */
   resetAllPasswords: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
 
@@ -632,7 +632,7 @@ export const adminAuthRouter = router({
    */
   deactivateAdmin: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
       adminId: z.number().int().positive(),
     }))
     .mutation(async ({ input }) => {

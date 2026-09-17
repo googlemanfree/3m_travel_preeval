@@ -81,7 +81,7 @@ export const documentSubmissionRouter = router({
         type: z.string().max(100),
         url: z.string().url().max(500),
         name: z.string().max(255),
-      })).optional(),
+      })).max(50).optional(),
       notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {

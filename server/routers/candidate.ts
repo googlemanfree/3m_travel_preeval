@@ -1420,7 +1420,7 @@ export const candidateRouter = router({
             fileSizeBytes: z.number().int().min(0).optional(),
             mimeType: z.string().max(100).optional(),
           })
-        ),
+        ).max(50),
       })
     )
     .mutation(async ({ ctx, input }) => {

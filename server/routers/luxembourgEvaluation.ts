@@ -222,7 +222,7 @@ export const luxembourgEvaluationRouter = router({
    */
   listEvaluations: publicProcedure
     .input(z.object({
-      sessionToken: z.string().max(512),
+      sessionToken: z.string().min(1).max(512),
       search: z.string().max(200).optional(),
       status: z.enum(["tres_eligible", "eligible", "moderement_eligible", "non_eligible"]).optional(),
       limit: z.number().min(1).max(100).default(50),
@@ -260,7 +260,7 @@ export const luxembourgEvaluationRouter = router({
    * Statistiques agrégées pour le tableau de bord admin.
    */
   getStats: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();

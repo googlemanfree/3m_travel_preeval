@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -166,7 +166,7 @@ export const contactRouter = router({
    * Lister les messages reçus via le formulaire de contact (réservé aux admins).
    */
   listContactMessages: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
 

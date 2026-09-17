@@ -546,7 +546,7 @@ export const flightsRouter = router({
     }),
 
   updateCommission: publicProcedure
-    .input(z.object({ sessionToken: z.string().max(512), commissionPercent: z.number().min(0).max(50) }))
+    .input(z.object({ sessionToken: z.string().min(1).max(512), commissionPercent: z.number().min(0).max(50) }))
     .mutation(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
 

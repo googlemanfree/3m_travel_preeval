@@ -12,7 +12,7 @@ export const heartbeatRouter = router({
   /** Créer un job Heartbeat pour l'évaluation automatique quotidienne */
   createEvaluationJob: protectedProcedure
     .input(z.object({
-      cronExpression: z.string().default("0 0 8 * * *"), // Tous les jours à 8h UTC
+      cronExpression: z.string().max(100).default("0 0 8 * * *"), // Tous les jours à 8h UTC
       description: z.string().max(255).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
