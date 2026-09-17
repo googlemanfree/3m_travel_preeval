@@ -4086,7 +4086,7 @@ export const adminRouter = router({
       attachmentUrl: z.string().url().max(500).optional(),
       attachmentName: z.string().max(255).optional(),
       attachmentMimeType: z.string().max(100).optional(),
-      attachmentSizeBytes: z.number().int().optional(),
+      attachmentSizeBytes: z.number().int().min(0).optional(),
       clarificationRequestId: z.number().int().positive().optional(),
       evisaSnapshots: z.array(z.object({
         destinationId: z.string().trim().min(1).max(80),
