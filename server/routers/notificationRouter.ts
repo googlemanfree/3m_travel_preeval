@@ -142,7 +142,7 @@ export const notificationRouter = router({
         candidateName: z.string().max(255),
         amount: z.string().max(50),
         currency: z.string().max(10),
-        daysOverdue: z.number().optional(),
+        daysOverdue: z.number().int().min(0).max(36500).optional(),
       })
     )
     .mutation(async ({ input: data }: { input: any }) => {

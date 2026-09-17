@@ -24,8 +24,8 @@ export const evisaRouter = router({
       z.object({
         region: z.string().max(100).optional(),
         search: z.string().max(200).optional(),
-        limit: z.number().default(50),
-        offset: z.number().default(0),
+        limit: z.number().int().min(1).max(200).default(50),
+        offset: z.number().int().min(0).default(0),
       })
     )
     .query(async ({ input }: any) => {
@@ -431,14 +431,14 @@ export const evisaRouter = router({
         countryCode: z.string().min(1, 'Le code pays est requis').max(10),
         countryName: z.string().min(1, 'Le nom du pays est requis').max(100),
         evisaType: z.string().max(100).optional(),
-        visaFee: z.number().default(0),
-        accompanimentFee: z.number().default(25000),
+        visaFee: z.number().min(0).default(0),
+        accompanimentFee: z.number().min(0).default(25000),
         totalCost: z.number().positive().default(25000),
         currency: z.string().max(10).default('XOF'),
         notes: z.string().max(2000).optional(),
         passportFile: z.string().max(500).optional(),
         passportFileName: z.string().max(255).optional(),
-        passportFileSize: z.number().optional(),
+        passportFileSize: z.number().int().min(0).optional(),
         passportExtractedData: z.record(z.string(), z.unknown()).optional(),
         passportValidatedData: z.record(z.string(), z.unknown()).optional(),
       })

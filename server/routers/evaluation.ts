@@ -144,7 +144,7 @@ const multiProjectEvaluationInput = z.object({
   // Étape 2 : Champs conditionnels
   // TRAVAIL
   sector: z.string().max(100).optional(),
-  yearsOfExperience: z.number().optional(),
+  yearsOfExperience: z.number().int().min(0).max(60).optional(),
   educationLevel: z.string().max(100).optional(),
   languages: z.string().max(100).optional(),
   cvAvailable: z.boolean().optional(),

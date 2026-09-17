@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur pour la gestion des favoris d'e-visas
  */
 
@@ -15,7 +15,7 @@ export const evisaFavoritesRouter = router({
       z.object({
         countryCode: z.string().max(10),
         countryName: z.string().max(100),
-        price: z.number().optional(),
+        price: z.number().min(0).optional(),
         processingTime: z.string().max(100).optional(),
       })
     )

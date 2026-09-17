@@ -102,7 +102,7 @@ export const oauthUserDashboardRouter = router({
         fileName: z.string().max(255),
         fileUrl: z.string().url().max(500),
         fileKey: z.string().max(512),
-        fileSizeBytes: z.number().optional(),
+        fileSizeBytes: z.number().int().min(0).optional(),
         mimeType: z.string().max(100).optional(),
       })
     )

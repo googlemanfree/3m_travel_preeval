@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Routeur tRPC pour les statistiques du Dashboard Admin Avancé
  * Fournit les données pour les graphiques et KPIs
  */
@@ -142,7 +142,7 @@ export const adminDashboardStatsRouter = router({
   getRevenueChart: protectedProcedure
     .input(
       z.object({
-        days: z.number().default(30),
+        days: z.number().int().min(1).max(365).default(30),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -284,7 +284,7 @@ export const adminDashboardStatsRouter = router({
   getRecentApplications: protectedProcedure
     .input(
       z.object({
-        limit: z.number().default(10),
+        limit: z.number().int().min(1).max(200).default(10),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -339,7 +339,7 @@ export const adminDashboardStatsRouter = router({
   getRecentTransactions: protectedProcedure
     .input(
       z.object({
-        limit: z.number().default(10),
+        limit: z.number().int().min(1).max(200).default(10),
       })
     )
     .query(async ({ ctx, input }) => {

@@ -28,8 +28,8 @@ export const agencyDossierRouter = router({
       visaType: z.string().min(2).max(100),
       educationLevel: z.string().max(100).optional(),
       employmentStatus: z.string().max(100).optional(),
-      monthlyIncome: z.number().optional(),
-      bankBalance: z.number().optional(),
+      monthlyIncome: z.number().min(0).optional(),
+      bankBalance: z.number().min(0).optional(),
       adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -133,8 +133,8 @@ export const agencyDossierRouter = router({
       visaType: z.string().min(2).max(100),
       educationLevel: z.string().max(100).optional(),
       employmentStatus: z.string().max(100).optional(),
-      monthlyIncome: z.number().optional(),
-      bankBalance: z.number().optional(),
+      monthlyIncome: z.number().min(0).optional(),
+      bankBalance: z.number().min(0).optional(),
       adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -178,8 +178,8 @@ export const agencyDossierRouter = router({
       destination: z.string().max(100).optional(),
       search: z.string().trim().max(120).optional(),
       includeDeleted: z.boolean().optional().default(false),
-      limit: z.number().default(50),
-      offset: z.number().default(0),
+      limit: z.number().int().min(1).max(200).default(50),
+      offset: z.number().int().min(0).default(0),
     }))
     .query(async ({ input, ctx }) => {
       const db = await getDb();

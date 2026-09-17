@@ -15,9 +15,9 @@ export const evisaReviewsRouter = router({
     .input(
       z.object({
         countryCode: z.string().max(10),
-        limit: z.number().default(10),
-        offset: z.number().default(0),
-        rating: z.number().optional(),
+        limit: z.number().int().min(1).max(200).default(10),
+        offset: z.number().int().min(0).default(0),
+        rating: z.number().int().min(1).max(5).optional(),
       })
     )
     .query(async ({ input }: any) => {
@@ -224,8 +224,8 @@ export const evisaReviewsRouter = router({
   getPendingReviews: protectedProcedure
     .input(
       z.object({
-        limit: z.number().default(20),
-        offset: z.number().default(0),
+        limit: z.number().int().min(1).max(200).default(20),
+        offset: z.number().int().min(0).default(0),
       })
     )
     .query(async ({ input, ctx }: any) => {

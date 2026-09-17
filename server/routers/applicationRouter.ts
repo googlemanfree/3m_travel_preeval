@@ -33,9 +33,9 @@ export const applicationRouter = router({
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
       nationality: z.string().max(100).optional(),
-      age: z.number().optional(),
+      age: z.number().int().min(0).max(120).optional(),
       academicLevel: z.string().max(100).optional(),
-      experienceYears: z.number().optional(),
+      experienceYears: z.number().int().min(0).max(60).optional(),
       jobSector: z.string().max(100).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -248,8 +248,8 @@ export const applicationRouter = router({
    */
   getAll: protectedProcedure
     .input(z.object({
-      limit: z.number().default(50),
-      offset: z.number().default(0),
+      limit: z.number().int().min(1).max(200).default(50),
+      offset: z.number().int().min(0).default(0),
       status: z.string().max(50).optional(),
     }))
     .query(async ({ ctx, input }) => {

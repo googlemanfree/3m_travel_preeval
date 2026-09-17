@@ -574,7 +574,7 @@ export const flightsRouter = router({
         destination: z.string().max(10),
         departureDate: z.string().max(20),
         returnDate: z.string().max(20).optional(),
-        adults: z.number().default(1),
+        adults: z.number().int().min(1).max(9).default(1),
         cabinClass: z.string().max(20).default("ECONOMY"),
       })
     )

@@ -70,8 +70,8 @@ export const reassuranceRouter = {
   getApprovedVisasGallery: publicProcedure
     .input(
       z.object({
-        limit: z.number().default(12),
-        offset: z.number().default(0),
+        limit: z.number().int().min(1).max(200).default(12),
+        offset: z.number().int().min(0).default(0),
       })
     )
     .query(async ({ input }: any) => {
@@ -213,8 +213,8 @@ export const reassuranceRouter = {
     .input(
       z.object({
         status: z.enum(['pending', 'scheduled', 'completed', 'cancelled']).optional(),
-        limit: z.number().default(20),
-        offset: z.number().default(0),
+        limit: z.number().int().min(1).max(200).default(20),
+        offset: z.number().int().min(0).default(0),
       })
     )
     .query(async ({ input, ctx }: any) => {
@@ -307,10 +307,10 @@ export const reassuranceRouter = {
         countryCode: z.string().max(10),
         countryName: z.string().max(100),
         visaType: z.string().max(100),
-        tuitionFees: z.number().default(0),
-        financialGuarantee: z.number().default(0),
-        visaFees: z.number().default(0),
-        otherFees: z.number().default(0),
+        tuitionFees: z.number().min(0).default(0),
+        financialGuarantee: z.number().min(0).default(0),
+        visaFees: z.number().min(0).default(0),
+        otherFees: z.number().min(0).default(0),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

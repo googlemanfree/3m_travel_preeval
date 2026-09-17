@@ -38,8 +38,8 @@ export const profileEvaluationRouter = router({
         // Famille
         maritalStatus: z.enum(["celibataire", "marie", "divorce", "veuf", "union_libre"]).optional(),
         spouseName: z.string().max(255).optional(),
-        numberOfChildren: z.number().default(0),
-        dependents: z.number().default(0),
+        numberOfChildren: z.number().int().min(0).max(20).default(0),
+        dependents: z.number().int().min(0).max(20).default(0),
         familyInDestination: z.boolean().default(false),
         familyMemberRelation: z.string().max(100).optional(),
         familyMemberStatus: z.string().max(100).optional(),
@@ -48,22 +48,22 @@ export const profileEvaluationRouter = router({
         educationLevel: z.string().max(100).optional(),
         latestDiploma: z.string().max(255).optional(),
         fieldOfStudy: z.string().max(100).optional(),
-        diplomaYear: z.number().optional(),
+        diplomaYear: z.number().int().min(1900).max(2030).optional(),
         institution: z.string().max(255).optional(),
         diplomasAvailable: z.boolean().default(false),
         
         // Emploi
         currentProfession: z.string().max(255).optional(),
         currentEmployer: z.string().max(255).optional(),
-        yearsOfExperience: z.number().optional(),
+        yearsOfExperience: z.number().int().min(0).max(60).optional(),
         previousExperiences: z.string().optional(), // JSON
-        monthlyIncome: z.number().optional(),
+        monthlyIncome: z.number().min(0).optional(),
         cvAvailable: z.boolean().default(false),
         jobOfferAvailable: z.boolean().default(false),
         
         // Finances
-        bankBalance: z.number().optional(),
-        bankBalanceAverage6Months: z.number().optional(),
+        bankBalance: z.number().min(0).optional(),
+        bankBalanceAverage6Months: z.number().min(0).optional(),
         hasSponsor: z.boolean().default(false),
         sponsorName: z.string().max(255).optional(),
         fundSource: z.string().max(255).optional(),
@@ -95,7 +95,7 @@ export const profileEvaluationRouter = router({
         targetInstitution: z.string().max(255).optional(),
         admissionLetterAvailable: z.boolean().default(false),
         intendedStartDate: z.string().max(20).optional(),
-        studyBudget: z.number().optional(),
+        studyBudget: z.number().min(0).optional(),
         studyFunder: z.string().max(255).optional(),
         academicProject: z.string().max(2000).optional(),
         postStudiesProject: z.string().max(2000).optional(),
@@ -115,19 +115,19 @@ export const profileEvaluationRouter = router({
         // Conditionnel: Travailleur
         desiredPosition: z.string().max(255).optional(),
         targetCity: z.string().max(100).optional(),
-        relatedExperience: z.number().optional(),
+        relatedExperience: z.number().int().min(0).max(60).optional(),
         relatedDiplomas: z.string().optional(), // JSON
         languageLevel: z.string().max(100).optional(),
         departureAvailability: z.string().max(100).optional(),
         
         // Conditionnel: Résidence permanente
         targetCategory: z.string().max(100).optional(),
-        age: z.number().optional(),
+        age: z.number().int().min(0).max(120).optional(),
         ecaAvailable: z.boolean().default(false),
-        experienceYears: z.number().optional(),
+        experienceYears: z.number().int().min(0).max(60).optional(),
         experienceInDestination: z.boolean().default(false),
         provincialNomination: z.boolean().default(false),
-        availableFunds: z.number().optional(),
+        availableFunds: z.number().min(0).optional(),
         policeCertificatesAvailable: z.boolean().default(false),
         
         submissionNotes: z.string().max(2000).optional(),

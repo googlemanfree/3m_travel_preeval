@@ -31,8 +31,8 @@ export const evisaAdminRouter = router({
         status: z.string().max(50).optional(),
         countryCode: z.string().max(10).optional(),
         search: z.string().max(200).optional(),
-        page: z.number().default(1),
-        limit: z.number().default(20),
+        page: z.number().int().min(1).default(1),
+        limit: z.number().int().min(1).max(200).default(20),
       })
     )
     .query(async ({ ctx, input }: any) => {
