@@ -76,8 +76,8 @@ export const accessRecoveryRouter = router({
         createdAt: candidateAccessRecoveryRequests.createdAt,
       }).from(candidateAccessRecoveryRequests);
       return input.status === "all"
-        ? select.orderBy(desc(candidateAccessRecoveryRequests.createdAt))
-        : select.where(eq(candidateAccessRecoveryRequests.status, input.status)).orderBy(desc(candidateAccessRecoveryRequests.createdAt));
+        ? select.orderBy(desc(candidateAccessRecoveryRequests.createdAt)).limit(500)
+        : select.where(eq(candidateAccessRecoveryRequests.status, input.status)).orderBy(desc(candidateAccessRecoveryRequests.createdAt)).limit(500);
     }),
 
   getHistory: publicProcedure

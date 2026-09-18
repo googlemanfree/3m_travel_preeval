@@ -9,7 +9,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { studyVisaEvaluations } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 // Moteur de scoring autonome (ne dépend pas de studyVisaScoringEngine.ts,
@@ -197,9 +197,10 @@ export const studyVisaEvaluationRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(studyVisaEvaluations).orderBy(desc(studyVisaEvaluations.createdAt));
-      const total = rows.length;
-      const page = rows.slice(input.offset, input.offset + input.limit);
-      return { items: page, total };
+      const [[{ total }], items] = await Promise.all([
+        db.select({ total: count() }).from(studyVisaEvaluations),
+        db.select().from(studyVisaEvaluations).orderBy(desc(studyVisaEvaluations.createdAt)).limit(input.limit).offset(input.offset),
+      ]);
+      return { items, total };
     }),
 });

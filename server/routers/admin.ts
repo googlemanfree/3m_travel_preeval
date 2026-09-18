@@ -3293,8 +3293,10 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const incidents = await db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.createdAt));
-      const comments = await db.select().from(incidentComments).orderBy(desc(incidentComments.createdAt));
+      const [incidents, comments] = await Promise.all([
+        db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.createdAt)).limit(200),
+        db.select().from(incidentComments).orderBy(desc(incidentComments.createdAt)).limit(1000),
+      ]);
       return incidents.map((incident) => ({ ...incident, comments: comments.filter((comment) => comment.incidentId === incident.id) }));
     }),
 
