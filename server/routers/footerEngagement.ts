@@ -8,7 +8,7 @@ import { requireValidAdminSession } from "./adminAuth";
 const engagementInput = z.object({
   surface: z.enum(["footer_shortcut", "footer_social"]),
   targetKey: z.string().trim().regex(/^[a-z0-9_]{2,80}$/),
-  href: z.string().trim().min(1).max(512).refine((value) => value.startsWith("/") || value.startsWith("https://"), "Destination invalide."),
+  href: z.string().trim().min(1).max(512).refine((value) => (value.startsWith("/") && !value.startsWith("//")) || value.startsWith("https://"), "Destination invalide."),
   language: z.enum(["fr", "en"]),
 });
 

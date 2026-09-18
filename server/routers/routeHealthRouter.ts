@@ -19,7 +19,7 @@ const defaultConfig = {
 
 const linkInput = z.object({
   label: z.string().trim().min(1).max(120),
-  href: z.string().trim().min(1).max(1000).refine((value) => value.startsWith("/") || value.startsWith("https://"), "Utilisez une route interne ou une URL HTTPS."),
+  href: z.string().trim().min(1).max(1000).refine((value) => (value.startsWith("/") && !value.startsWith("//")) || value.startsWith("https://"), "Utilisez une route interne ou une URL HTTPS."),
 });
 
 const isPrivateHost = (hostname: string) => {

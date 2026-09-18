@@ -18,7 +18,7 @@ export function sanitizeRichTextHtml(value: string) {
     if (closing) return `</${tag}>`;
     if (tag !== "a") return `<${tag}>`;
     const href = /href\s*=\s*["']([^"']+)["']/i.exec(attributes)?.[1] ?? "";
-    if (!href.startsWith("https://") && !href.startsWith("/")) return "<a>";
+    if (!href.startsWith("https://") && !(href.startsWith("/") && !href.startsWith("//"))) return "<a>";
     const safeHref = href.replace(/["<>]/g, "");
     return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">`;
   }).trim();
