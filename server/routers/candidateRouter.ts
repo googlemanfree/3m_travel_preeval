@@ -5,7 +5,7 @@
 
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull, and } from "drizzle-orm";
 import { z } from "zod";
 import { candidates, candidateFiles, candidateMessages } from "../../drizzle/schema";
 import { getDb } from "../db";
@@ -82,7 +82,7 @@ export const candidateRouter = router({
         const candidate = await db
           .select()
           .from(candidates)
-          .where(eq(candidates.email, input.email))
+          .where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt)))
           .limit(1);
 
         if (candidate.length === 0) {
