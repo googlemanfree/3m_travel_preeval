@@ -9,7 +9,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { luxembourgEvaluations } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count, sql, gte, like, or, and, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 import { computeLuxembourgScore, getAlternativeDestinations } from "../luxembourgScoringEngine";
@@ -233,24 +233,29 @@ export const luxembourgEvaluationRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const rows = await db.select().from(luxembourgEvaluations).orderBy(desc(luxembourgEvaluations.createdAt));
-
-      let filtered = rows;
-      if (input.status) filtered = filtered.filter((r) => r.eligibilityStatus === input.status);
+      const conditions: ReturnType<typeof eq>[] = [];
+      if (input.status) conditions.push(eq(luxembourgEvaluations.eligibilityStatus, input.status));
       if (input.search) {
-        const q = input.search.toLowerCase();
-        filtered = filtered.filter((r) => r.fullName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+        const q = `%${input.search}%`;
+        conditions.push(or(like(luxembourgEvaluations.fullName, q), like(luxembourgEvaluations.email, q)) as any);
+      }
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [[{ total }], rows] = await Promise.all([
+        db.select({ total: count() }).from(luxembourgEvaluations).where(whereClause),
+        db.select().from(luxembourgEvaluations).where(whereClause).orderBy(desc(luxembourgEvaluations.createdAt)).limit(input.limit).offset(input.offset),
+      ]);
+
+      const pageEmails = rows.map((r) => r.email.toLowerCase());
+      const convertedSet = new Set<string>();
+      if (pageEmails.length > 0) {
+        const converted = await db.select({ email: applications.email }).from(applications).where(inArray(applications.email, pageEmails));
+        converted.forEach((a) => convertedSet.add(a.email.toLowerCase()));
       }
 
-      const total = filtered.length;
-      const page = filtered.slice(input.offset, input.offset + input.limit);
-
-      const applicationRows = await db.select({ email: applications.email }).from(applications);
-      const convertedEmails = new Set(applicationRows.map((a) => a.email.toLowerCase()));
-
-      const items = page.map((r) => ({
+      const items = rows.map((r) => ({
         ...r,
-        convertedToDossier: convertedEmails.has(r.email.toLowerCase()),
+        convertedToDossier: convertedSet.has(r.email.toLowerCase()),
       }));
 
       return { items, total };
@@ -266,29 +271,38 @@ export const luxembourgEvaluationRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const rows = await db.select().from(luxembourgEvaluations);
-      const applicationRows = await db.select({ email: applications.email }).from(applications);
-      const convertedEmails = new Set(applicationRows.map((a) => a.email.toLowerCase()));
-
-      const total = rows.length;
-      const byStatus = {
-        tres_eligible: rows.filter((r) => r.eligibilityStatus === "tres_eligible").length,
-        eligible: rows.filter((r) => r.eligibilityStatus === "eligible").length,
-        moderement_eligible: rows.filter((r) => r.eligibilityStatus === "moderement_eligible").length,
-        non_eligible: rows.filter((r) => r.eligibilityStatus === "non_eligible").length,
-      };
-      const avgScore = total > 0 ? Math.round(rows.reduce((sum, r) => sum + r.scoreTotal, 0) / total) : 0;
-      const convertedCount = rows.filter((r) => convertedEmails.has(r.email.toLowerCase())).length;
-      const conversionRate = total > 0 ? Math.round((convertedCount / total) * 1000) / 10 : 0;
-      const emailSuccessCount = rows.filter((r) => r.emailSentAt !== null).length;
-
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [[agg], recentRows] = await Promise.all([
+        db.select({
+          total: count(),
+          avgScore: sql<number>`COALESCE(ROUND(AVG(scoreTotal)), 0)`,
+          tres_eligible: count(sql`CASE WHEN eligibilityStatus = 'tres_eligible' THEN 1 END`),
+          eligible: count(sql`CASE WHEN eligibilityStatus = 'eligible' THEN 1 END`),
+          moderement_eligible: count(sql`CASE WHEN eligibilityStatus = 'moderement_eligible' THEN 1 END`),
+          non_eligible: count(sql`CASE WHEN eligibilityStatus = 'non_eligible' THEN 1 END`),
+          convertedCount: sql<number>`COALESCE(SUM(CASE WHEN LOWER(email) IN (SELECT LOWER(email) FROM applications) THEN 1 ELSE 0 END), 0)`,
+          emailSuccessCount: count(sql`emailSentAt`),
+        }).from(luxembourgEvaluations),
+        db.select({ day: sql<string>`DATE(createdAt)`, cnt: count() })
+          .from(luxembourgEvaluations)
+          .where(gte(luxembourgEvaluations.createdAt, thirtyDaysAgo))
+          .groupBy(sql`DATE(createdAt)`),
+      ]);
+
+      const total = agg.total;
+      const convertedCount = Number(agg.convertedCount);
+      const byStatus = {
+        tres_eligible: agg.tres_eligible,
+        eligible: agg.eligible,
+        moderement_eligible: agg.moderement_eligible,
+        non_eligible: agg.non_eligible,
+      };
+      const avgScore = agg.avgScore;
+      const conversionRate = total > 0 ? Math.round((convertedCount / total) * 1000) / 10 : 0;
+      const emailSuccessCount = agg.emailSuccessCount;
       const recentByDay: Record<string, number> = {};
-      for (const r of rows) {
-        if (new Date(r.createdAt) < thirtyDaysAgo) continue;
-        const day = new Date(r.createdAt).toISOString().slice(0, 10);
-        recentByDay[day] = (recentByDay[day] || 0) + 1;
-      }
+      for (const r of recentRows) recentByDay[r.day] = r.cnt;
 
       return { total, byStatus, avgScore, convertedCount, conversionRate, emailSuccessCount, recentByDay };
     }),
