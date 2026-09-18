@@ -2268,7 +2268,8 @@ export const candidateRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     return db.select().from(savedDestinationComparisons)
       .where(eq(savedDestinationComparisons.candidateId, ctx.candidate.id))
-      .orderBy(desc(savedDestinationComparisons.updatedAt));
+      .orderBy(desc(savedDestinationComparisons.updatedAt))
+      .limit(50);
   }),
 
   removeSavedDestinationComparison: candidateProcedure

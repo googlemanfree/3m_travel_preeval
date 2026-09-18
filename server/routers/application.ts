@@ -652,6 +652,7 @@ export const applicationRouter = router({
         ? await db.select().from(paymentAuditLogs)
           .where(inArray(paymentAuditLogs.paymentId, applicationIds))
           .orderBy(desc(paymentAuditLogs.createdAt))
+          .limit(5000)
         : [];
       const receiptDeliveryByApplicationId = new Map<number, {
         status: "sent" | "failed" | "not_sent";
