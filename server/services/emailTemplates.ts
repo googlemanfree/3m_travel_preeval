@@ -3,6 +3,10 @@
  * Generates VIP evaluation report emails with Resend integration
  */
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export interface EvaluationEmailData {
   fullName: string;
   email: string;
@@ -71,40 +75,40 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
 
           <!-- Content -->
           <div class="content">
-            <p>Bonjour <strong>${data.fullName}</strong>,</p>
-            <p>Votre CV a été analysé par notre département d'orientation pour votre projet vers <strong>${data.destination}</strong>. Voici votre bilan complet :</p>
+            <p>Bonjour <strong>${esc(data.fullName)}</strong>,</p>
+            <p>Votre CV a été analysé par notre département d'orientation pour votre projet vers <strong>${esc(data.destination)}</strong>. Voici votre bilan complet :</p>
 
             <!-- Score Section -->
             <div class="score-box">
               <div class="score-value">${data.score}/100</div>
-              <div class="score-label">${statusLabel} — ${data.status}</div>
+              <div class="score-label">${esc(statusLabel)} — ${esc(data.status)}</div>
             </div>
 
             <!-- Admissibility Analysis -->
             <div class="section">
-              <div class="section-title">📊 1. BILAN D'ADMISSIBILITÉ (${data.destination})</div>
+              <div class="section-title">📊 1. BILAN D'ADMISSIBILITÉ (${esc(data.destination)})</div>
               <p><strong>Score Global :</strong> ${data.score}/100</p>
-              <p><strong>Diagnostic :</strong> ${data.strategyDescription}</p>
+              <p><strong>Diagnostic :</strong> ${esc(data.strategyDescription)}</p>
               <div class="alert">
-                <strong>Analyse Technique :</strong> Votre profil a été évalué selon les critères consulaires stricts de ${data.destination}. Basé sur votre expérience, vos qualifications et votre secteur d'activité, nous avons déterminé votre score d'éligibilité.
+                <strong>Analyse Technique :</strong> Votre profil a été évalué selon les critères consulaires stricts de ${esc(data.destination)}. Basé sur votre expérience, vos qualifications et votre secteur d'activité, nous avons déterminé votre score d'éligibilité.
               </div>
             </div>
 
             <!-- Strategy Section -->
             <div class="section">
-              <div class="section-title">🚀 2. STRATÉGIE RETENUE & PASSERELLE</div>
-              <p><strong>Voie Recommandée :</strong> ${data.strategy}</p>
+              <div class="section-title">🚀 2. STRATÉGIE RETENUE &amp; PASSERELLE</div>
+              <p><strong>Voie Recommandée :</strong> ${esc(data.strategy)}</p>
               <p><strong>Atouts :</strong> Contrat garanti, conformité des pièces, garantie d'accès Espace Schengen.</p>
               <div class="highlight">
-                <strong>Recommandation :</strong> ${data.recommendation}
+                <strong>Recommandation :</strong> ${esc(data.recommendation)}
               </div>
             </div>
 
             <!-- Documents Section -->
             <div class="section">
-              <div class="section-title">🛠️ 3. PLAN D'ACTION & PIÈCES À LÉGALISER (MINREX)</div>
+              <div class="section-title">🛠️ 3. PLAN D'ACTION &amp; PIÈCES À LÉGALISER (MINREX)</div>
               <ul class="document-list">
-                ${data.requiredDocuments.map(doc => `<li>${doc}</li>`).join('')}
+                ${data.requiredDocuments.map(doc => `<li>${esc(doc)}</li>`).join('')}
               </ul>
             </div>
 
@@ -130,7 +134,7 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
                 </tr>
               </table>
               <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                <strong>Numéro de Dossier :</strong> ${data.folderId}
+                <strong>Numéro de Dossier :</strong> ${esc(data.folderId)}
               </p>
             </div>
 
@@ -138,13 +142,13 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
             <div class="section">
               <div class="section-title">📋 5. PROCHAINES ÉTAPES</div>
               <ol style="padding-left: 20px;">
-                ${data.nextSteps.map(step => `<li style="margin: 8px 0;">${step}</li>`).join('')}
+                ${data.nextSteps.map(step => `<li style="margin: 8px 0;">${esc(step)}</li>`).join('')}
               </ol>
             </div>
 
             <!-- CTA Button -->
             <div style="text-align: center;">
-              <a href="https://3mtravelagency.com/mon-espace?dossier=${data.folderId}" class="cta-button">
+              <a href="https://3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(data.folderId)}" class="cta-button">
                 👉 Valider mon Ouverture de Dossier (${(data.pricingFormulas.opening / 1000).toFixed(0)} 000 FCFA)
               </a>
             </div>
