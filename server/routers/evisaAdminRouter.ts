@@ -481,7 +481,7 @@ export const evisaAdminRouter = router({
         console.error('Erreur adminUploadPdf e-visa:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors du téléversement du document',
+          message: 'Erreur lors du téléversement du document',
         });
       }
     }),

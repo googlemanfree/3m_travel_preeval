@@ -1,4 +1,4 @@
-import { publicProcedure, router } from '../_core/trpc';
+﻿import { publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import mysql from 'mysql2/promise';
@@ -71,7 +71,7 @@ export const exchangeRatesRouter = router({
         return { success: true, eurToXaf: input.eurToXaf, usdToXaf: input.usdToXaf };
       } catch (error: any) {
         console.error('Erreur updateRates:', error);
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erreur lors de la récupération des taux de change' });
       }
     }),
 });

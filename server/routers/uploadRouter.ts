@@ -63,7 +63,7 @@ export const uploadRouter = router({
         console.error('Erreur lors de la génération de l\'URL de téléchargement:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la génération de l\'URL de téléchargement',
+          message: 'Erreur lors de la génération de l\'URL de téléchargement',
         });
       }
     }),

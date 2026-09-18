@@ -203,7 +203,7 @@ export const evisaRouter = router({
         console.error('Erreur lors de la création de la demande d\'e-visa:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la création de la demande',
+          message: 'Erreur lors de la création de la demande',
         });
       }
     }),
@@ -528,7 +528,7 @@ export const evisaRouter = router({
         console.error('Erreur lors de la soumission de la demande d\'e-visa:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la soumission de la demande',
+          message: 'Erreur lors de la soumission de la demande',
         });
       }
     }),
@@ -651,7 +651,7 @@ export const evisaRouter = router({
         if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors du téléversement du document e-Visa',
+          message: 'Erreur lors du téléversement du document e-Visa',
         });
       } finally {
         await connection?.end().catch(() => undefined);
@@ -734,7 +734,7 @@ export const evisaRouter = router({
         return { success: true, message: 'Brouillon synchronisé avec succès dans le cloud.' };
       } catch (error: any) {
         console.error('Erreur cloud draft save:', error);
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Une erreur interne est survenue' });
       }
     }),
 
@@ -847,7 +847,7 @@ export const evisaRouter = router({
         return { success: true, url: upload.url };
       } catch (error: any) {
         console.error('Erreur proforma PDF:', error);
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Une erreur interne est survenue' });
       }
     }),
 

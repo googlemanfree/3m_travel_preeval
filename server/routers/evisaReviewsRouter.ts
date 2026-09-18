@@ -93,7 +93,7 @@ export const evisaReviewsRouter = router({
         console.error('Erreur lors de la récupération des avis:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la récupération des avis',
+          message: 'Erreur lors de la récupération des avis',
         });
       }
     }),
@@ -173,7 +173,7 @@ export const evisaReviewsRouter = router({
         console.error('Erreur lors de la création de l\'avis:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la création de l\'avis',
+          message: 'Erreur lors de la création de l\'avis',
         });
       }
     }),
@@ -263,7 +263,7 @@ export const evisaReviewsRouter = router({
         console.error('Erreur lors de la récupération des avis en attente:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la récupération des avis',
+          message: 'Erreur lors de la récupération des avis',
         });
       }
     }),
@@ -310,7 +310,7 @@ export const evisaReviewsRouter = router({
         console.error('Erreur lors de la modération de l\'avis:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la modération de l\'avis',
+          message: 'Erreur lors de la modération de l\'avis',
         });
       }
     }),
@@ -343,7 +343,7 @@ export const evisaReviewsRouter = router({
         console.error('Erreur lors de la suppression de l\'avis:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Erreur lors de la suppression de l\'avis',
+          message: 'Erreur lors de la suppression de l\'avis',
         });
       }
     }),
