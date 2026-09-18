@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { parse as parseCookieHeader } from "cookie";
 import jwt from "jsonwebtoken";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { candidates } from "../drizzle/schema";
 import { getDb } from "./db";
 import { storagePut } from "./storage";
@@ -143,7 +143,7 @@ async function findOrCreateVerifiedCandidate(profile: GoogleProfile) {
   const db = await getDb();
   if (!db) throw new Error("DATABASE_UNAVAILABLE");
 
-  const existing = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+  const existing = await db.select().from(candidates).where(and(eq(candidates.email, email), isNull(candidates.deletedAt))).limit(1);
   if (existing.length) {
     const candidate = existing[0];
     if (!candidate.emailVerified) {
