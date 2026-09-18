@@ -470,7 +470,7 @@ export const unifiedRequestsRouter = router({
       const [sources, managed, advisors] = await Promise.all([
         loadSourceSnapshots(),
         db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.lastActivityAt)).limit(2000),
-        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName).limit(100),
       ]);
       const managedByKey = new Map(managed.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
       const advisorById = new Map(advisors.map((row) => [row.id, row]));
@@ -963,7 +963,7 @@ initializeEvaluationDelivery: publicProcedure
       const [sources, managedRows, advisors] = await Promise.all([
         loadSourceSnapshots(),
         db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.createdAt)).limit(5000),
-        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName).limit(100),
       ]);
       const managementByKey = new Map(managedRows.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
       const rows = sources.map((source) => managementByKey.get(`${source.sourceType}:${source.sourceRecordId}`) ?? {
