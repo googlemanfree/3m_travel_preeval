@@ -90,9 +90,9 @@ export async function sendAdminNewDossierAlertEmail(
             <h1 style="margin: 0;">🚨 Nouvelle Demande e-Visa</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p><strong>Dossier :</strong> #${dossierNumber}</p>
+            <p><strong>Dossier :</strong> #${escapeEmailHtml(dossierNumber)}</p>
             <p><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</p>
-            <p><strong>Destination :</strong> ${countryName}</p>
+            <p><strong>Destination :</strong> ${escapeEmailHtml(countryName)}</p>
             <p><strong>Montant :</strong> ${totalCost.toLocaleString("fr-FR")} ${currency}</p>
             
             <p style="text-align: center; margin-top: 30px;">
