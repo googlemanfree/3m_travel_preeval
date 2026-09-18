@@ -434,14 +434,14 @@ export async function sendDossierConfirmationEmail(
             
             <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
               <div style="font-size: 13px; color: #6b7280; margin-bottom: 6px;">NUMÉRO DE DOSSIER</div>
-              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${dossierNumber}</div>
+              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${escapeEmailHtml(dossierNumber)}</div>
               <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">Conservez ce numéro précieusement</div>
             </div>
-            
+
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
                 <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Destination</td>
-                <td style="padding: 12px; background: #f3f4f6;">${destination.toUpperCase()}</td>
+                <td style="padding: 12px; background: #f3f4f6;">${escapeEmailHtml(destination.toUpperCase())}</td>
               </tr>
               <tr>
                 <td style="padding: 12px; font-weight: 600;">Montant</td>
@@ -504,10 +504,10 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
         <ul>
           <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
           <li><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</li>
-          <li><strong>Email :</strong> ${email}</li>
-          <li><strong>WhatsApp :</strong> ${whatsappNumber}</li>
-          <li><strong>Destination :</strong> ${destination}</li>
-          <li><strong>Statut Initial :</strong> ${status}</li>
+          <li><strong>Email :</strong> ${escapeEmailHtml(email)}</li>
+          <li><strong>WhatsApp :</strong> ${escapeEmailHtml(whatsappNumber)}</li>
+          <li><strong>Destination :</strong> ${escapeEmailHtml(destination)}</li>
+          <li><strong>Statut Initial :</strong> ${escapeEmailHtml(status)}</li>
         </ul>
         <p style="text-align: center; margin-top: 30px;">
           <a href="${SITE_URL}/admin/dossier/${dossierNumber}" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
