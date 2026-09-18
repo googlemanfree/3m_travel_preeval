@@ -47,8 +47,8 @@ export const candidateAuthOTPRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      // Vérifier si l'email existe déjà
-      const existing = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      // Vérifier si l'email existe déjà (hors comptes supprimés)
+      const existing = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (existing.length > 0) {
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
@@ -95,8 +95,8 @@ export const candidateAuthOTPRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      // Vérifier si l'email existe déjà
-      const existing = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      // Vérifier si l'email existe déjà (hors comptes supprimés)
+      const existing = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (existing.length > 0) {
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
