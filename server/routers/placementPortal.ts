@@ -325,7 +325,7 @@ export const placementPortalRouter = router({
 
   employerNotifications: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
-    return db.select().from(placementEmployerNotifications).where(and(eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id))).orderBy(placementEmployerNotifications.createdAt);
+    return db.select().from(placementEmployerNotifications).where(and(eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id))).orderBy(placementEmployerNotifications.createdAt).limit(100);
   }),
 
   employerMarkNotificationRead: publicProcedure.input(z.object({ sessionToken: z.string().min(32), notificationId: z.number().int().positive() })).mutation(async ({ input }) => {
@@ -399,7 +399,7 @@ export const placementPortalRouter = router({
   employerExportCollaborationActivity: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     requireEmployerManager(account);
-    const rows = await db.select().from(placementEmployerCollaborationEvents).where(eq(placementEmployerCollaborationEvents.organizationId, organization.id)).orderBy(placementEmployerCollaborationEvents.createdAt);
+    const rows = await db.select().from(placementEmployerCollaborationEvents).where(eq(placementEmployerCollaborationEvents.organizationId, organization.id)).orderBy(placementEmployerCollaborationEvents.createdAt).limit(5000);
     const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""').replaceAll("\n", " ")}"`;
     const headers = ["Date", "Action", "Auteur", "Cible"];
     const csv = `\ufeff${headers.map(quote).join(";")}\n${rows.map((row) => [row.createdAt.toISOString(), row.action, row.actorName, row.targetName].map(quote).join(";")).join("\n")}`;

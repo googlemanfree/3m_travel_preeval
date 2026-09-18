@@ -1121,7 +1121,7 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
       
-      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt)).limit(200);
 
       if (input.startDate) {
         const startTimestamp = new Date(input.startDate).getTime();
@@ -1226,7 +1226,7 @@ export const flightBookingRouter = router({
       await assertAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
+      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(10000);
       const headers = ["ID", "Reference", "Client", "Statut", "PNR", "Date Creation", "Date Vue PNR", "Date Telechargement PNR"];
       const csvLines = [headers.join(",")];
       for (const r of rows) {
