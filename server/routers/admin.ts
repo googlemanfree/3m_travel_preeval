@@ -974,7 +974,7 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const user = await db.select().from(users).where(eq(users.id, input.userId));
+        const user = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
         if (!user.length) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur non trouvé" });
         }
@@ -982,7 +982,8 @@ export const adminRouter = router({
         const userApps = await db
           .select()
           .from(applications)
-          .where(eq(applications.candidateId, input.userId));
+          .where(eq(applications.candidateId, input.userId))
+          .limit(100);
 
         // Récupérer les documents pour chaque dossier
         const appsWithDocs = await Promise.all(
@@ -1031,7 +1032,8 @@ export const adminRouter = router({
             const userApps = await db
               .select()
               .from(applications)
-              .where(eq(applications.candidateId, user.id));
+              .where(eq(applications.candidateId, user.id))
+              .limit(50);
 
             return {
               ...user,
