@@ -205,23 +205,20 @@ export const customerReviewRouter = router({
   getStats: publicProcedure.query(async () => {
     try {
       const db = await requireDb();
-      const [totals, approved, pending, rejected, average] = await Promise.all([
-        db.select({ value: count() }).from(customerReviews),
-        db.select({ value: count() }).from(customerReviews).where(eq(customerReviews.status, "approved")),
-        db.select({ value: count() }).from(customerReviews).where(eq(customerReviews.status, "pending_review")),
-        db.select({ value: count() }).from(customerReviews).where(eq(customerReviews.status, "rejected")),
-        db
-          .select({ value: sql<string | null>`avg(${customerReviews.rating})` })
-          .from(customerReviews)
-          .where(eq(customerReviews.status, "approved")),
-      ]);
+      const [agg] = await db.select({
+        total: count(),
+        approved: count(sql`CASE WHEN status = 'approved' THEN 1 END`),
+        pending: count(sql`CASE WHEN status = 'pending_review' THEN 1 END`),
+        rejected: count(sql`CASE WHEN status = 'rejected' THEN 1 END`),
+        avgRating: sql<number>`COALESCE(AVG(CASE WHEN status = 'approved' THEN rating END), 0)`,
+      }).from(customerReviews);
 
       return {
-        totalReviews: Number(totals[0]?.value ?? 0),
-        approvedReviews: Number(approved[0]?.value ?? 0),
-        pendingReviews: Number(pending[0]?.value ?? 0),
-        rejectedReviews: Number(rejected[0]?.value ?? 0),
-        averageRating: Number(Number(average[0]?.value ?? 0).toFixed(1)),
+        totalReviews: agg?.total ?? 0,
+        approvedReviews: agg?.approved ?? 0,
+        pendingReviews: agg?.pending ?? 0,
+        rejectedReviews: agg?.rejected ?? 0,
+        averageRating: Number(Number(agg?.avgRating ?? 0).toFixed(1)),
       };
     } catch {
       return {
