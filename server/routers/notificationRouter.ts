@@ -7,6 +7,10 @@ import { publicProcedure, protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import type { TRPCError } from '@trpc/server';
 import { sendEmail as sendGenericEmail, SendEmailOptions } from '../_core/email';
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 import {
   sendWhatsAppMessage,
   sendAdmissibilityReportWhatsApp,
@@ -42,10 +46,10 @@ export const notificationRouter = router({
         // Préparer le contenu email
         const emailHtml = `
           <h2>Votre Bilan d'Admissibilité</h2>
-          <p>Bonjour ${data.candidateName},</p>
-          <p>Votre évaluation pour <strong>${data.destinationCountry}</strong> (${data.visaType}) est prête !</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
+          <p>Votre évaluation pour <strong>${esc(data.destinationCountry)}</strong> (${esc(data.visaType)}) est prête !</p>
           <h3>📊 Score d'admissibilité : ${data.scorePercentage}%</h3>
-          <p>${data.recommendation}</p>
+          <p>${esc(data.recommendation)}</p>
           <p>Consultez votre espace candidat pour les détails complets.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
@@ -95,13 +99,13 @@ export const notificationRouter = router({
       try {
         const emailHtml = `
           <h2>Confirmation de Paiement</h2>
-          <p>Bonjour ${data.candidateName},</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
           <p>Votre paiement a été confirmé avec succès ! ✅</p>
           <h3>Détails du Paiement</h3>
           <ul>
-            <li><strong>Montant :</strong> ${data.amount} ${data.currency}</li>
-            <li><strong>Facture :</strong> ${data.invoiceNumber}</li>
-            <li><strong>Transaction :</strong> ${data.transactionId}</li>
+            <li><strong>Montant :</strong> ${esc(data.amount)} ${esc(data.currency)}</li>
+            <li><strong>Facture :</strong> ${esc(data.invoiceNumber)}</li>
+            <li><strong>Transaction :</strong> ${esc(data.transactionId)}</li>
           </ul>
           <p>Prochaine étape : Soumettre vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>

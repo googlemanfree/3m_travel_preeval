@@ -676,10 +676,10 @@ export const flightBookingRouter = router({
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
             <h2 style="color: #1e3a8a; margin-top: 0;">Quittance de Paiement Validée</h2>
             <p>Bonjour,</p>
-            <p>Nous vous confirmons la validation de votre règlement pour la réservation <strong>${existing.requestRef}</strong>.</p>
+            <p>Nous vous confirmons la validation de votre règlement pour la réservation <strong>${esc(existing.requestRef)}</strong>.</p>
             <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
               <p style="margin: 0 0 8px 0;"><strong>Mode de paiement :</strong> ${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}</p>
-              <p style="margin: 0 0 8px 0;"><strong>ID de transaction :</strong> <span style="font-family: monospace; font-weight: bold;">${existing.paymentTransactionId || 'N/A'}</span></p>
+              <p style="margin: 0 0 8px 0;"><strong>ID de transaction :</strong> <span style="font-family: monospace; font-weight: bold;">${esc(existing.paymentTransactionId || 'N/A')}</span></p>
               <p style="margin: 0;"><strong>Statut :</strong> Paiement validé et vérifié par l'agence</p>
             </div>
             <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
@@ -833,9 +833,9 @@ export const flightBookingRouter = router({
                   <p>Bonjour,</p>
                   <p>Votre réservation de vol a été validée et émise par notre service de billetterie. Vous trouverez ci-dessous votre référence de réservation officielle :</p>
                   <div style="background: #F8FAFC; border-left: 4px solid #10B981; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-                    <p style="margin: 0; font-size: 14px;"><strong>Référence Dossier :</strong> ${existing.requestRef}</p>
-                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold; font-size: 16px;">${input.pnrReference}</span></p>
-                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Vol ID :</strong> ${existing.flightId}</p>
+                    <p style="margin: 0; font-size: 14px;"><strong>Référence Dossier :</strong> ${esc(existing.requestRef)}</p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold; font-size: 16px;">${esc(input.pnrReference)}</span></p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Vol ID :</strong> ${esc(existing.flightId)}</p>
                   </div>
                   ${pdfLink ? `<p style="text-align: center; margin: 24px 0;"><a href="${pdfLink}" style="background: #059669; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">📥 Télécharger votre Billet / Confirmation PDF</a></p>` : ''}
                   <p>Vous pouvez également retrouver ce document et gérer vos options de voyage à tout moment depuis votre <a href="https://www.3mtravelagency.com/mon-espace" style="color: #2563EB; text-decoration: underline;">Espace Client 3M</a>.</p>
@@ -933,9 +933,9 @@ export const flightBookingRouter = router({
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
               <h2 style="color: #1e3a8a; margin-top: 0;">Votre réservation de voyage est confirmée !</h2>
               <p>Bonjour,</p>
-              <p>Votre document PNR final pour la référence de dossier <strong>${existing.requestRef}</strong> vient d'être émis et validé par notre agence.</p>
+              <p>Votre document PNR final pour la référence de dossier <strong>${esc(existing.requestRef)}</strong> vient d'être émis et validé par notre agence.</p>
               <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                <p style="margin: 0 0 10px 0;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold;">${input.pnrReference}</span></p>
+                <p style="margin: 0 0 10px 0;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold;">${esc(input.pnrReference)}</span></p>
                 <p style="margin: 0;">Le document officiel de réservation est désormais accessible et téléchargeable depuis votre espace personnel.</p>
               </div>
               <p style="text-align: center; margin: 30px 0;">
@@ -989,9 +989,9 @@ export const flightBookingRouter = router({
       const rowsHtml = historyEntries.map(h => `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${new Date(h.createdAt).toLocaleString("fr-FR")}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-weight: bold; color: #1e3a8a;">${h.action}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${h.changedBy}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px; color: #475569;">${h.details || "—"}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-weight: bold; color: #1e3a8a;">${esc(h.action)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${esc(h.changedBy)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px; color: #475569;">${esc(h.details || "—")}</td>
         </tr>
       `).join("");
 
@@ -1019,11 +1019,11 @@ export const flightBookingRouter = router({
             <p>Historique infalsifiable des validations, contrôles et émissions PNR</p>
           </div>
           <div class="meta">
-            <p><strong>Référence Dossier :</strong> ${existing.requestRef}</p>
-            <p><strong>Client :</strong> ${existing.candidateEmail}</p>
-            <p><strong>Référence PNR / GDS :</strong> ${existing.pnrReference || "Non émis"}</p>
-            <p><strong>Statut Actuel :</strong> ${existing.status}</p>
-            <p><strong>Généré par :</strong> ${admin.email} le ${new Date().toLocaleString("fr-FR")}</p>
+            <p><strong>Référence Dossier :</strong> ${esc(existing.requestRef)}</p>
+            <p><strong>Client :</strong> ${esc(existing.candidateEmail)}</p>
+            <p><strong>Référence PNR / GDS :</strong> ${esc(existing.pnrReference || "Non émis")}</p>
+            <p><strong>Statut Actuel :</strong> ${esc(existing.status)}</p>
+            <p><strong>Généré par :</strong> ${esc(admin.email)} le ${new Date().toLocaleString("fr-FR")}</p>
           </div>
           <h3>Journal complet des événements et initiales</h3>
           <table>
@@ -1197,9 +1197,9 @@ export const flightBookingRouter = router({
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
             <h2 style="color: #1e3a8a; margin-top: 0;">Rappel : Votre billet PNR est disponible</h2>
             <p>Bonjour,</p>
-            <p>Sauf erreur de notre part, vous n'avez pas encore consulté ou téléchargé votre document PNR final pour la référence de dossier <strong>${existing.requestRef}</strong>.</p>
+            <p>Sauf erreur de notre part, vous n'avez pas encore consulté ou téléchargé votre document PNR final pour la référence de dossier <strong>${esc(existing.requestRef)}</strong>.</p>
             <div style="background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #f59e0b;">
-              <p style="margin: 0 0 10px 0; color: #b45309;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; font-weight: bold;">${existing.pnrReference || 'N/A'}</span></p>
+              <p style="margin: 0 0 10px 0; color: #b45309;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; font-weight: bold;">${esc(existing.pnrReference || 'N/A')}</span></p>
               <p style="margin: 0; color: #92400e;">Veuillez vous rendre dans votre espace personnel pour le récupérer dès que possible.</p>
             </div>
             <p style="text-align: center; margin: 30px 0;">

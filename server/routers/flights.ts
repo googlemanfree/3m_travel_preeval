@@ -10,6 +10,10 @@ import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
 import { randomInt, randomBytes } from "node:crypto";
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function getCachedSearch(key: string): any | null {
   const entry = flightSearchCache.get(key);
   if (!entry) return null;
@@ -685,16 +689,16 @@ export const flightsRouter = router({
             <p style="color: #4b5563; font-size: 14px; line-height: 1.5;">Voici le récapitulatif du vol que vous avez sélectionné sur notre plateforme. Vous pouvez le présenter à notre agence ou finaliser votre réservation via WhatsApp.</p>
             
             <div style="background: #eff6ff; border: 2px dashed #2563EB; border-radius: 12px; padding: 20px; margin: 20px 0;">
-              <div style="font-size: 12px; font-weight: bold; color: #2563EB; text-transform: uppercase; margin-bottom: 8px;">Référence PNR : ${flightDetails.pnrRef}</div>
-              <div style="font-size: 18px; font-weight: bold; color: #1E3A8A; margin-bottom: 4px;">${flightDetails.airlineName} (${flightDetails.flightNumber})</div>
-              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Itinéraire :</strong> ${flightDetails.origin} ➔ ${flightDetails.destination}</div>
-              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Départ :</strong> ${flightDetails.departureDate} à ${flightDetails.departureTime} (Arrivée: ${flightDetails.arrivalTime})</div>
-              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Durée :</strong> ${flightDetails.duration} | <strong>Escale(s) :</strong> ${flightDetails.stops === 0 ? "Direct" : flightDetails.stops + " escale(s)"}</div>
+              <div style="font-size: 12px; font-weight: bold; color: #2563EB; text-transform: uppercase; margin-bottom: 8px;">Référence PNR : ${esc(flightDetails.pnrRef)}</div>
+              <div style="font-size: 18px; font-weight: bold; color: #1E3A8A; margin-bottom: 4px;">${esc(flightDetails.airlineName)} (${esc(flightDetails.flightNumber)})</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Itinéraire :</strong> ${esc(flightDetails.origin)} ➔ ${esc(flightDetails.destination)}</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Départ :</strong> ${esc(flightDetails.departureDate)} à ${esc(flightDetails.departureTime)} (Arrivée: ${esc(flightDetails.arrivalTime)})</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Durée :</strong> ${esc(flightDetails.duration)} | <strong>Escale(s) :</strong> ${flightDetails.stops === 0 ? "Direct" : esc(flightDetails.stops) + " escale(s)"}</div>
               <div style="font-size: 16px; font-weight: bold; color: #15803d; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">Prix total estimé : ${flightDetails.totalPrice.toLocaleString("fr-FR")} XAF</div>
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="https://wa.me/237698104832?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${flightDetails.pnrRef}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
+              <a href="https://wa.me/237698104832?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${encodeURIComponent(flightDetails.pnrRef)}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
             </div>
 
             <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© ${new Date().getFullYear()} 3M Travel & Services • hello@3mtravelagency.com</p>
