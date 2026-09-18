@@ -1402,9 +1402,9 @@ export const candidateRouter = router({
         const { sendEmail } = await import("../_core/email");
         const confirmationHTML = `
           <h2>Protocole d'Accord Signé</h2>
-          <p>Bonjour ${app[0].fullName},</p>
+          <p>Bonjour ${esc(app[0].fullName)},</p>
           <p>Votre protocole d'accord a été signé avec succès le ${new Date().toLocaleDateString("fr-FR")}.</p>
-          <p><strong>Numéro de dossier :</strong> ${input.dossierNumber}</p>
+          <p><strong>Numéro de dossier :</strong> ${esc(input.dossierNumber)}</p>
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
@@ -1476,9 +1476,9 @@ export const candidateRouter = router({
         const { sendEmail } = await import("../_core/email");
         const confirmationHTML = `
           <h2>Documents Reçus</h2>
-          <p>Bonjour ${app[0].fullName},</p>
+          <p>Bonjour ${esc(app[0].fullName)},</p>
           <p>Vos ${input.documents.length} document(s) ont été reçus avec succès.</p>
-          <p><strong>Numéro de dossier :</strong> ${input.dossierNumber}</p>
+          <p><strong>Numéro de dossier :</strong> ${esc(input.dossierNumber)}</p>
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;

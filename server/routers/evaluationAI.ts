@@ -13,6 +13,10 @@ import { invokeLLM } from "../_core/llm";
 import { storagePut, storageGet } from "../storage";
 import { sendEmail } from "../_core/email";
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 // Schéma de validation pour la soumission d'évaluation
 const submitEvaluationSchema = z.object({
   fullName: z.string().min(2, "Nom requis").max(255),
@@ -123,11 +127,11 @@ async function sendConfirmationEmail(
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
       <h2 style="color: #0066cc;">3M Travel Agency</h2>
-      <p>Bonjour <strong>${fullName}</strong>,</p>
-      <p>Votre CV et votre formulaire d'évaluation ont été enregistrés sous le N° <strong>${dossierNumber}</strong>.</p>
+      <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
+      <p>Votre CV et votre formulaire d'évaluation ont été enregistrés sous le N° <strong>${esc(dossierNumber)}</strong>.</p>
       <p>Votre <strong>Bilan d'Admissibilité Officiel</strong> sera publié sur votre Espace Client et envoyé par mail dans <strong>48 heures</strong>.</p>
       <p style="text-align: center; margin: 25px 0;">
-        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}" 
            style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Suivre mon dossier en ligne
         </a>
@@ -156,31 +160,31 @@ async function sendBilanEmail(
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
       <h2 style="color: #0066cc;">3M Travel Agency - Bilan Consulaire</h2>
-      <p>Bonjour <strong>${fullName}</strong>,</p>
+      <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
       <p>L'étude de votre CV est terminée.</p>
 
       <div style="background-color: #f4f6f8; border-left: 5px solid #0066cc; padding: 15px; margin: 20px 0;">
-        <p><strong>Score d'admissibilité :</strong> <span style="font-size: 18px; color: #0066cc; font-weight: bold;">${aiReport.score} / 100</span></p>
-        <p><strong>Verdict Consulaire :</strong> ${aiReport.verdict}</p>
+        <p><strong>Score d'admissibilité :</strong> <span style="font-size: 18px; color: #0066cc; font-weight: bold;">${esc(aiReport.score)} / 100</span></p>
+        <p><strong>Verdict Consulaire :</strong> ${esc(aiReport.verdict)}</p>
       </div>
 
       <h3 style="color: #0066cc;">Points Forts</h3>
       <ul>
-        ${aiReport.strengths.map((s: string) => `<li>${s}</li>`).join("")}
+        ${aiReport.strengths.map((s: string) => `<li>${esc(s)}</li>`).join("")}
       </ul>
 
       <h3 style="color: #0066cc;">Points à Améliorer</h3>
       <ul>
-        ${aiReport.weaknesses.map((w: string) => `<li>${w}</li>`).join("")}
+        ${aiReport.weaknesses.map((w: string) => `<li>${esc(w)}</li>`).join("")}
       </ul>
 
       <h3 style="color: #0066cc;">Recommandations</h3>
       <ul>
-        ${aiReport.recommendations.map((r: string) => `<li>${r}</li>`).join("")}
+        ${aiReport.recommendations.map((r: string) => `<li>${esc(r)}</li>`).join("")}
       </ul>
 
       <p style="text-align: center; margin: 25px 0;">
-        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}" 
            style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Consulter mon Bilan Complet
         </a>

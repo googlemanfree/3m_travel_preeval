@@ -890,15 +890,15 @@ export const adminRouter = router({
           try {
             const annotationItems = Object.entries(input.markerAnnotations ?? {})
               .filter(([, value]) => value.trim().length > 0)
-              .map(([markerId, value]) => `<li><strong>${markerId}</strong> : ${value}</li>`)
+              .map(([markerId, value]) => `<li><strong>${esc(markerId)}</strong> : ${esc(value)}</li>`)
               .join("");
             await sendGenericEmail({
               to: document.candidateEmail,
               subject: "Action requise : votre document doit être corrigé — 3M Travel & Services",
               html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1f2937">
-                <div style="background:#1E3A8A;padding:24px;text-align:center;color:#fff"><h1 style="margin:0;font-size:22px">3M Travel & Services</h1></div>
-                <div style="padding:28px"><p>Bonjour,</p><p>Votre document <strong>${document.documentName}</strong> nécessite une nouvelle version avant validation.</p>
-                <div style="background:#fff7ed;border-left:4px solid #f97316;padding:14px;margin:18px 0"><strong>Commentaire du conseiller :</strong><br/>${input.comment}</div>
+                <div style="background:#1E3A8A;padding:24px;text-align:center;color:#fff"><h1 style="margin:0;font-size:22px">3M Travel &amp; Services</h1></div>
+                <div style="padding:28px"><p>Bonjour,</p><p>Votre document <strong>${esc(document.documentName)}</strong> nécessite une nouvelle version avant validation.</p>
+                <div style="background:#fff7ed;border-left:4px solid #f97316;padding:14px;margin:18px 0"><strong>Commentaire du conseiller :</strong><br/>${esc(input.comment)}</div>
                 ${annotationItems ? `<p><strong>Zones à corriger :</strong></p><ul>${annotationItems}</ul>` : ""}
                 <p>Connectez-vous à votre espace pour consulter les annotations visuelles et remplacer le document.</p>
                 <a href="https://www.3mtravelagency.com/documents" style="display:inline-block;background:#1E3A8A;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700">Accéder à mes documents</a>
@@ -1932,10 +1932,10 @@ export const adminRouter = router({
                   <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Mise à jour de votre dossier</p>
                 </div>
                 <div style="padding: 32px 28px;">
-                  <p style="color: #374151;">Bonjour <strong>${candidateName}</strong>,</p>
-                  <p style="color: #374151;">Le statut de votre dossier <strong>${folderCode}</strong> vient d'être mis à jour :</p>
+                  <p style="color: #374151;">Bonjour <strong>${esc(candidateName)}</strong>,</p>
+                  <p style="color: #374151;">Le statut de votre dossier <strong>${esc(folderCode)}</strong> vient d'être mis à jour :</p>
                   <div style="background: #eff6ff; border-left: 4px solid #2563EB; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #1E3A8A;">📋 ${statusLabel}</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #1E3A8A;">📋 ${esc(statusLabel)}</p>
                   </div>
                   <p style="color: #374151;">Vous pouvez consulter votre espace client pour plus de détails :</p>
                   <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
@@ -2195,12 +2195,12 @@ export const adminRouter = router({
                   <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Mise à jour du statut de votre document</p>
                 </div>
                 <div style="padding: 32px 28px;">
-                  <p style="color: #374151;">Bonjour <strong>${candidateName}</strong>,</p>
-                  <p style="color: #374151;">Le statut de vérification de votre document <strong>${documentName}</strong> a été mis à jour par l'administration :</p>
-                  
+                  <p style="color: #374151;">Bonjour <strong>${esc(candidateName)}</strong>,</p>
+                  <p style="color: #374151;">Le statut de vérification de votre document <strong>${esc(documentName)}</strong> a été mis à jour par l'administration :</p>
+
                   <div style="background: #f8fafc; border-left: 4px solid ${info.color}; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
                     <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: ${info.color};">${info.badge}</p>
-                    ${input.comment ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: #4b5563;"><strong>Note de l'agence :</strong> ${input.comment}</p>` : ""}
+                    ${input.comment ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: #4b5563;"><strong>Note de l'agence :</strong> ${esc(input.comment)}</p>` : ""}
                   </div>
 
                   <p style="color: #374151; font-size: 14px;">Vous pouvez consulter votre espace candidat pour suivre l'évolution complète de vos démarches :</p>
@@ -2319,12 +2319,12 @@ export const adminRouter = router({
                 <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Votre partenaire mobilité internationale</p>
               </div>
               <div style="padding: 32px 28px;">
-                <p style="color: #374151;">Bonjour <strong>${input.fullName}</strong>,</p>
+                <p style="color: #374151;">Bonjour <strong>${esc(input.fullName)}</strong>,</p>
                 <p style="color: #374151;">Votre dossier a été créé avec succès dans notre système.</p>
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 4px 0;"><strong>N° de dossier :</strong> ${folderCode}</p>
-                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${input.destinationCountry}</p>
-                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${input.projectType}</p>
+                  <p style="margin: 4px 0;"><strong>N° de dossier :</strong> ${esc(folderCode)}</p>
+                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(input.destinationCountry)}</p>
+                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(input.projectType)}</p>
                 </div>
                 <p style="color: #374151;">Notre équipe vous contactera sous peu pour les prochaines étapes.</p>
                 <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
@@ -3128,7 +3128,7 @@ export const adminRouter = router({
       if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Préparez d’abord le dossier de démonstration." });
       const recipientEmail = process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com";
       try {
-        await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M Travel préparé par ${admin.email}. Aucun client n’est concerné.</p>` });
+        await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M Travel préparé par ${esc(admin.email)}. Aucun client n’est concerné.</p>` });
         await db.update(emailDeliveryLogs).set({ status: "sent", errorDetails: `Remise interne déclenchée par ${admin.email}` }).where(eq(emailDeliveryLogs.id, demo.id));
       } catch (error) {
         await db.update(emailDeliveryLogs).set({ status: "failed", errorDetails: error instanceof Error ? error.message.slice(0, 1000) : "Échec de remise interne" }).where(eq(emailDeliveryLogs.id, demo.id));
