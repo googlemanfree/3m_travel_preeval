@@ -176,7 +176,8 @@ export const contactRouter = router({
       const messages = await db
         .select()
         .from(contactMessages)
-        .orderBy(contactMessages.createdAt);
+        .orderBy(contactMessages.createdAt)
+        .limit(1000);
 
       return messages;
     }),
