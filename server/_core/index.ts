@@ -78,9 +78,11 @@ async function startServer() {
     void handlePassportPendingWeeklyAlertJob(req, res);
   });
   app.post("/api/scheduled/external-link-check", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
     void handleExternalLinkCheckJob(req, res);
   });
   app.post("/api/scheduled/evaluation-review-deadline-alerts", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
     void handleEvaluationReviewDeadlineAlertJob(req, res);
   });
   app.get("/api/evaluation-email/open/:token.gif", async (req, res) => {
