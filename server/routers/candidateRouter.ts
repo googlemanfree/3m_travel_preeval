@@ -11,6 +11,7 @@ import { candidates, candidateFiles, candidateMessages } from "../../drizzle/sch
 import { getDb } from "../db";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
 export const candidateRouter = router({
   /**
@@ -69,9 +70,11 @@ export const candidateRouter = router({
   login: publicProcedure
     .input(z.object({
       email: z.string().email().max(320),
-      password: z.string().max(128),
+      password: z.string().min(1).max(128),
     }))
     .mutation(async ({ input }) => {
+      checkLoginAttempts(input.email);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -83,6 +86,7 @@ export const candidateRouter = router({
           .limit(1);
 
         if (candidate.length === 0) {
+          recordFailedAttempt(input.email);
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Email ou mot de passe incorrect",
@@ -91,12 +95,14 @@ export const candidateRouter = router({
 
         const isPasswordValid = await bcrypt.compare(input.password, candidate[0].passwordHash);
         if (!isPasswordValid) {
+          recordFailedAttempt(input.email);
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Email ou mot de passe incorrect",
           });
         }
 
+        resetLoginAttempts(input.email);
         return {
           success: true,
           candidateId: candidate[0].id,
