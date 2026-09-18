@@ -15,6 +15,7 @@ import { count, desc, eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
@@ -122,6 +123,8 @@ export const adminAuthRouter = router({
       twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      checkLoginAttempts(input.email);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -132,29 +135,35 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const admin = rows[0];
 
       if (admin.status !== "active") {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
+      resetLoginAttempts(input.email);
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
 

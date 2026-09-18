@@ -7,6 +7,7 @@ import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { sendPasswordResetEmail } from "../emailService";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -256,15 +257,17 @@ export const simpleAuthRouter = router({
     )
     .mutation(async ({ input }) => {
       const { email, password } = input;
+      checkLoginAttempts(email);
+
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      // Chercher l'utilisateur
       const result = await db.execute(
         sql`SELECT id, fullName, email, passwordHash, emailVerified FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
       if (!(result as any).rows || (result as any).rows.length === 0) {
+        recordFailedAttempt(email);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Email ou mot de passe incorrect",
@@ -273,24 +276,24 @@ export const simpleAuthRouter = router({
 
       const user = (result as any).rows[0];
 
-      // Vérifier le mot de passe
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
       if (!isPasswordValid) {
+        recordFailedAttempt(email);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Email ou mot de passe incorrect",
         });
       }
 
-      // Vérifier que l'email est vérifié
       if (!user.emailVerified) {
+        recordFailedAttempt(email);
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Veuillez vérifier votre email avant de vous connecter",
         });
       }
 
-      // Mettre à jour lastLoginAt
+      resetLoginAttempts(email);
       await db.execute(
         sql`UPDATE simple_users SET lastLoginAt = NOW() WHERE id = ${user.id}`
       );

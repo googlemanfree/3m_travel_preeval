@@ -43,6 +43,7 @@ import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration
 import { coarseCategoryForPreferredDestinations, isRecognizedCandidateDestination } from "../../shared/candidateDestinationOptions";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -509,25 +510,30 @@ export const candidateRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      checkLoginAttempts(input.email);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
       const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
       if (!rows.length) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const candidate = rows[0];
       const valid = await bcrypt.compare(input.password, candidate.passwordHash);
       if (!valid) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       if (!candidate.emailVerified) {
+        recordFailedAttempt(input.email);
         throw new TRPCError({ code: "FORBIDDEN", message: "EMAIL_VERIFICATION_REQUIRED" });
       }
 
-      // Mettre à jour lastLoginAt
+      resetLoginAttempts(input.email);
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
 
       const token = signCandidateToken(candidate.id);
