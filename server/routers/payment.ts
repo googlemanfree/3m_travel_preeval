@@ -336,7 +336,8 @@ export const paymentRouter = router({
         }
 
         const documents = await db.select().from(clientDocuments)
-          .where(and(eq(clientDocuments.evaluationId, application.id), eq(clientDocuments.candidateEmail, ctx.user.email)));
+          .where(and(eq(clientDocuments.evaluationId, application.id), eq(clientDocuments.candidateEmail, ctx.user.email)))
+          .limit(100);
         return {
           dossierNumber: input.dossierNumber,
           documents: documents.map((doc) => ({

@@ -132,7 +132,8 @@ export const applicationRouter = router({
           .select()
           .from(applications)
           .where(eq(applications.email, input.email))
-          .orderBy(desc(applications.createdAt));
+          .orderBy(desc(applications.createdAt))
+          .limit(20);
 
         return apps;
       } catch (err) {
