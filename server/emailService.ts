@@ -30,18 +30,18 @@ export async function sendClientDossierConfirmationEmail(
             
             <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
               <div style="font-size: 13px; color: #6b7280; margin-bottom: 6px;">NUMÉRO DE DOSSIER</div>
-              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${dossierNumber}</div>
+              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${escapeEmailHtml(dossierNumber)}</div>
               <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">Conservez ce numéro précieusement</div>
             </div>
-            
+
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
                 <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Destination</td>
-                <td style="padding: 12px; background: #f3f4f6;">${countryName}</td>
+                <td style="padding: 12px; background: #f3f4f6;">${escapeEmailHtml(countryName)}</td>
               </tr>
               <tr>
                 <td style="padding: 12px; font-weight: 600;">Montant</td>
-                <td style="padding: 12px;">${totalCost.toLocaleString("fr-FR")} ${currency}</td>
+                <td style="padding: 12px;">${totalCost.toLocaleString("fr-FR")} ${escapeEmailHtml(currency)}</td>
               </tr>
             </table>
             
@@ -137,16 +137,16 @@ export async function sendEvisaStatusUpdateEmail(
           </div>
           <div style="padding: 40px; background: #f9fafb;">
             <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Votre demande e-Visa pour <strong>${countryName}</strong> a été mise à jour.</p>
-            
+            <p>Votre demande e-Visa pour <strong>${escapeEmailHtml(countryName)}</strong> a été mise à jour.</p>
+
             <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <p style="margin: 0;"><strong>Dossier :</strong> #${dossierNumber}</p>
-              <p style="margin: 10px 0 0;"><strong>Statut :</strong> ${statusLabel}</p>
+              <p style="margin: 0;"><strong>Dossier :</strong> #${escapeEmailHtml(dossierNumber)}</p>
+              <p style="margin: 10px 0 0;"><strong>Statut :</strong> ${escapeEmailHtml(statusLabel)}</p>
             </div>
-            
+
             ${adminNotes ? `<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
               <p style="margin: 0;"><strong>Message de notre équipe :</strong></p>
-              <p style="margin: 10px 0 0;">${adminNotes}</p>
+              <p style="margin: 10px 0 0;">${escapeEmailHtml(adminNotes)}</p>
             </div>` : ""}
             
             <p style="text-align: center; margin-top: 30px;">
@@ -186,11 +186,11 @@ export async function sendPaymentConfirmationEmail(
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
                 <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Dossier</td>
-                <td style="padding: 12px; background: #f3f4f6;">#${dossierNumber}</td>
+                <td style="padding: 12px; background: #f3f4f6;">#${escapeEmailHtml(dossierNumber)}</td>
               </tr>
               <tr>
                 <td style="padding: 12px; font-weight: 600;">Montant</td>
-                <td style="padding: 12px;">${amount.toLocaleString("fr-FR")} ${currency}</td>
+                <td style="padding: 12px;">${amount.toLocaleString("fr-FR")} ${escapeEmailHtml(currency)}</td>
               </tr>
             </table>
             
@@ -502,7 +502,7 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
         ${avatarHtml}
         <p>Un nouveau dossier a été créé :</p>
         <ul>
-          <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
+          <li><strong>Numéro de Dossier :</strong> #${escapeEmailHtml(dossierNumber)}</li>
           <li><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</li>
           <li><strong>Email :</strong> ${escapeEmailHtml(email)}</li>
           <li><strong>WhatsApp :</strong> ${escapeEmailHtml(whatsappNumber)}</li>

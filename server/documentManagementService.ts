@@ -199,7 +199,8 @@ export async function getDocumentsByFolder(
     const documents = await db
       .select()
       .from(clientDocuments)
-      .where(eq(clientDocuments.candidateEmail, candidateEmail));
+      .where(eq(clientDocuments.candidateEmail, candidateEmail))
+      .limit(500);
 
     const grouped: Record<string, any[]> = {};
 
@@ -241,7 +242,8 @@ export async function getDocumentStatistics(
     const documents = await db
       .select()
       .from(clientDocuments)
-      .where(eq(clientDocuments.candidateEmail, candidateEmail));
+      .where(eq(clientDocuments.candidateEmail, candidateEmail))
+      .limit(500);
 
     const byType: Record<string, number> = {};
     const byFolder: Record<string, number> = {};
@@ -314,7 +316,8 @@ export async function getMissingDocuments(
           eq(clientDocuments.candidateEmail, candidateEmail),
           eq(clientDocuments.status, "verified")
         )
-      );
+      )
+      .limit(500);
 
     const submittedTypes = new Set(documents.map((d: any) => d.documentType));
     const missing = requiredDocumentTypes.filter((type) => !submittedTypes.has(type));
@@ -355,7 +358,8 @@ export async function generateClassificationReport(
     const documents = await db
       .select()
       .from(clientDocuments)
-      .where(eq(clientDocuments.candidateEmail, candidateEmail));
+      .where(eq(clientDocuments.candidateEmail, candidateEmail))
+      .limit(500);
 
     let highConfidence = 0;
     let mediumConfidence = 0;
