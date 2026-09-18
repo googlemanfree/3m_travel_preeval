@@ -17,7 +17,7 @@ import { createEvisaCommunicationSnapshot } from "../services/evisaCommunication
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
-import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, count } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
@@ -446,19 +446,21 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const allReports = await db.select().from(aiReportHistory);
-        const sentReports = allReports.filter(r => r.sendStatus === "sent");
-        const failedReports = allReports.filter(r => r.sendStatus === "failed");
-        const pendingReports = allReports.filter(r => r.sendStatus === "pending");
+        const [stats] = await db.select({
+          total: count(),
+          sent: count(sql`CASE WHEN sendStatus = 'sent' THEN 1 END`),
+          failed: count(sql`CASE WHEN sendStatus = 'failed' THEN 1 END`),
+          pending: count(sql`CASE WHEN sendStatus = 'pending' THEN 1 END`),
+        }).from(aiReportHistory);
 
         return {
           success: true,
           stats: {
-            total: allReports.length,
-            sent: sentReports.length,
-            failed: failedReports.length,
-            pending: pendingReports.length,
-            successRate: allReports.length > 0 ? Math.round((sentReports.length / allReports.length) * 100) : 0,
+            total: stats.total,
+            sent: stats.sent,
+            failed: stats.failed,
+            pending: stats.pending,
+            successRate: stats.total > 0 ? Math.round((stats.sent / stats.total) * 100) : 0,
           },
         };
       } catch (err) {
@@ -612,29 +614,21 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const evals = await db.select().from(evaluations);
-
-        // Grouper par destination
-        const byDestination: Record<string, any> = {};
-        evals.forEach(eval_ => {
-          const dest = eval_.destinationCountry || "Non spécifiée";
-          if (!byDestination[dest]) {
-            byDestination[dest] = {
-              destination: dest,
-              total: 0,
-              pending: 0,
-              reviewed: 0,
-              contacted: 0,
-              closed: 0,
-            };
-          }
-          byDestination[dest].total++;
-          byDestination[dest][eval_.status]++;
-        });
+        const rows = await db
+          .select({
+            destination: sql<string>`COALESCE(destinationCountry, 'Non spécifiée')`,
+            total: count(),
+            pending: count(sql`CASE WHEN status = 'pending' THEN 1 END`),
+            reviewed: count(sql`CASE WHEN status = 'reviewed' THEN 1 END`),
+            contacted: count(sql`CASE WHEN status = 'contacted' THEN 1 END`),
+            closed: count(sql`CASE WHEN status = 'closed' THEN 1 END`),
+          })
+          .from(evaluations)
+          .groupBy(sql`COALESCE(destinationCountry, 'Non spécifiée')`);
 
         return {
           success: true,
-          destinations: Object.values(byDestination),
+          destinations: rows,
         };
       } catch (err) {
         console.error("[Admin Procedures] Error:", err);
@@ -696,16 +690,22 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const allEvals = await db.select().from(evaluations);
-        
+        const [stats] = await db.select({
+          total: count(),
+          pending: count(sql`CASE WHEN status = 'pending' THEN 1 END`),
+          reviewed: count(sql`CASE WHEN status = 'reviewed' THEN 1 END`),
+          contacted: count(sql`CASE WHEN status = 'contacted' THEN 1 END`),
+          closed: count(sql`CASE WHEN status = 'closed' THEN 1 END`),
+        }).from(evaluations);
+
         return {
           success: true,
           stats: {
-            pending: allEvals.filter(e => e.status === "pending").length,
-            reviewed: allEvals.filter(e => e.status === "reviewed").length,
-            contacted: allEvals.filter(e => e.status === "contacted").length,
-            closed: allEvals.filter(e => e.status === "closed").length,
-            total: allEvals.length,
+            pending: stats.pending,
+            reviewed: stats.reviewed,
+            contacted: stats.contacted,
+            closed: stats.closed,
+            total: stats.total,
           },
         };
       } catch (err) {
@@ -729,24 +729,38 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const evals = await db.select().from(evaluations);
-        const reports = await db.select().from(aiReportHistory);
+        const [[evalStats], [reportStats]] = await Promise.all([
+          db.select({
+            total: count(),
+            pending: count(sql`CASE WHEN status = 'pending' THEN 1 END`),
+            reviewed: count(sql`CASE WHEN status = 'reviewed' THEN 1 END`),
+            contacted: count(sql`CASE WHEN status = 'contacted' THEN 1 END`),
+            closed: count(sql`CASE WHEN status = 'closed' THEN 1 END`),
+            notPending: count(sql`CASE WHEN status != 'pending' THEN 1 END`),
+          }).from(evaluations),
+          db.select({
+            total: count(),
+            sent: count(sql`CASE WHEN sendStatus = 'sent' THEN 1 END`),
+            failed: count(sql`CASE WHEN sendStatus = 'failed' THEN 1 END`),
+            pending: count(sql`CASE WHEN sendStatus = 'pending' THEN 1 END`),
+          }).from(aiReportHistory),
+        ]);
 
         const stats = {
-          totalEvaluations: evals.length,
+          totalEvaluations: evalStats.total,
           evaluationsByStatus: {
-            pending: evals.filter(e => e.status === "pending").length,
-            reviewed: evals.filter(e => e.status === "reviewed").length,
-            contacted: evals.filter(e => e.status === "contacted").length,
-            closed: evals.filter(e => e.status === "closed").length,
+            pending: evalStats.pending,
+            reviewed: evalStats.reviewed,
+            contacted: evalStats.contacted,
+            closed: evalStats.closed,
           },
           aiReports: {
-            total: reports.length,
-            sent: reports.filter(r => r.sendStatus === "sent").length,
-            failed: reports.filter(r => r.sendStatus === "failed").length,
-            pending: reports.filter(r => r.sendStatus === "pending").length,
+            total: reportStats.total,
+            sent: reportStats.sent,
+            failed: reportStats.failed,
+            pending: reportStats.pending,
           },
-          conversionRate: evals.length > 0 ? Math.round((evals.filter(e => e.status !== "pending").length / evals.length) * 100) : 0,
+          conversionRate: evalStats.total > 0 ? Math.round((evalStats.notPending / evalStats.total) * 100) : 0,
         };
 
         return {
@@ -3311,16 +3325,16 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const resolved = (await db.select().from(emailDeliveryIncidents)).filter((incident) => incident.status === "resolved" && incident.resolvedAt);
-      const byAdvisor = new Map<string, { total: number; hours: number }>();
-      for (const incident of resolved) {
-        const advisor = incident.advisorEmail;
-        const current = byAdvisor.get(advisor) ?? { total: 0, hours: 0 };
-        current.total += 1;
-        current.hours += (incident.resolvedAt!.getTime() - incident.createdAt.getTime()) / 3_600_000;
-        byAdvisor.set(advisor, current);
-      }
-      return Array.from(byAdvisor, ([advisorEmail, values]) => ({ advisorEmail, resolvedCount: values.total, averageResolutionHours: values.total ? values.hours / values.total : 0 }));
+      const rows = await db
+        .select({
+          advisorEmail: emailDeliveryIncidents.advisorEmail,
+          resolvedCount: count(),
+          averageResolutionHours: sql<number>`AVG(TIMESTAMPDIFF(SECOND, createdAt, resolvedAt)) / 3600`,
+        })
+        .from(emailDeliveryIncidents)
+        .where(sql`status = 'resolved' AND resolvedAt IS NOT NULL`)
+        .groupBy(emailDeliveryIncidents.advisorEmail);
+      return rows.map(r => ({ advisorEmail: r.advisorEmail, resolvedCount: r.resolvedCount, averageResolutionHours: Number(r.averageResolutionHours) || 0 }));
     }),
 
   // Alias de compatibilité pour les rapports et interfaces historiques.
@@ -3359,8 +3373,11 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const incidents = await db.select().from(emailDeliveryIncidents);
-      return incidents.filter((incident) => incident.status === "resolved").map((incident) => ({ advisorEmail: incident.advisorEmail, resolvedAt: incident.resolvedAt }));
+      const incidents = await db
+        .select({ advisorEmail: emailDeliveryIncidents.advisorEmail, resolvedAt: emailDeliveryIncidents.resolvedAt })
+        .from(emailDeliveryIncidents)
+        .where(eq(emailDeliveryIncidents.status, "resolved" as any));
+      return incidents;
     }),
 
   getCandidate360: publicProcedure

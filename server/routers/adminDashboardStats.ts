@@ -29,64 +29,60 @@ export const adminDashboardStatsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
     try {
-      // Compter les dossiers par statut
-      const allApplications = await db.select().from(applications);
-      const totalApplications = allApplications.length;
-      const pendingApplications = allApplications.filter(a => (a as any).status === "PENDING_48H").length;
-      const publishedApplications = allApplications.filter(a => (a as any).status === "PUBLISHED").length;
-      const submittedApplications = allApplications.filter(a => (a as any).status === "SUBMITTED").length;
-      const approvedApplications = allApplications.filter(a => (a as any).status === "APPROVED").length;
-
-      // Compter les candidats
-      const allCandidates = await db.select().from(candidates);
-      const totalCandidates = allCandidates.length;
-
-      // Compter les transactions
-      const allTransactions = await db.select().from(transactions);
-      const totalTransactions = allTransactions.length;
-      const completedTransactions = allTransactions.filter(t => t.status === "success").length;
-      const pendingTransactions = allTransactions.filter(t => t.status === "pending" || t.status === "processing").length;
-      const failedTransactions = allTransactions.filter(t => t.status === "failed" || t.status === "cancelled").length;
-
-      // Calculer le revenu total
-      const totalRevenue = allTransactions
-        .filter(t => t.status === "success")
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      // Compter les documents
-      const allDocuments = await db.select().from(clientDocuments);
-      const totalDocuments = allDocuments.length;
-      const verifiedDocuments = allDocuments.filter(d => (d as any).verificationStatus === "approved").length;
-
-      // Compter les dossiers agence
-      const allAgencyDossiers = await db.select().from(agencyDossiers);
-      const totalAgencyDossiers = allAgencyDossiers.length;
+      const [
+        [appStats],
+        [txStats],
+        [candStats],
+        [docStats],
+        [dossierStats],
+      ] = await Promise.all([
+        db.select({
+          total: count(),
+          pending: count(sql`CASE WHEN status = 'PENDING_48H' THEN 1 END`),
+          published: count(sql`CASE WHEN status = 'PUBLISHED' THEN 1 END`),
+          submitted: count(sql`CASE WHEN status = 'SUBMITTED' THEN 1 END`),
+          approved: count(sql`CASE WHEN status = 'APPROVED' THEN 1 END`),
+        }).from(applications),
+        db.select({
+          total: count(),
+          completed: count(sql`CASE WHEN status = 'success' THEN 1 END`),
+          pending: count(sql`CASE WHEN status IN ('pending','processing') THEN 1 END`),
+          failed: count(sql`CASE WHEN status IN ('failed','cancelled') THEN 1 END`),
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0)`,
+        }).from(transactions),
+        db.select({ total: count() }).from(candidates),
+        db.select({
+          total: count(),
+          verified: count(sql`CASE WHEN verificationStatus = 'approved' THEN 1 END`),
+        }).from(clientDocuments),
+        db.select({ total: count() }).from(agencyDossiers),
+      ]);
 
       return {
         success: true,
         applications: {
-          total: totalApplications,
-          pending: pendingApplications,
-          published: publishedApplications,
-          submitted: submittedApplications,
-          approved: approvedApplications,
+          total: appStats.total,
+          pending: appStats.pending,
+          published: appStats.published,
+          submitted: appStats.submitted,
+          approved: appStats.approved,
         },
         candidates: {
-          total: totalCandidates,
+          total: candStats.total,
         },
         transactions: {
-          total: totalTransactions,
-          completed: completedTransactions,
-          pending: pendingTransactions,
-          failed: failedTransactions,
-          totalRevenue,
+          total: txStats.total,
+          completed: txStats.completed,
+          pending: txStats.pending,
+          failed: txStats.failed,
+          totalRevenue: Number(txStats.totalRevenue),
         },
         documents: {
-          total: totalDocuments,
-          verified: verifiedDocuments,
+          total: docStats.total,
+          verified: docStats.verified,
         },
         agencyDossiers: {
-          total: totalAgencyDossiers,
+          total: dossierStats.total,
         },
       };
     } catch (error) {
@@ -110,22 +106,23 @@ export const adminDashboardStatsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
     try {
-      const allApplications = await db.select().from(applications);
-
-      const statusCounts = {
-        "Évaluation 48h": allApplications.filter(a => (a as any).status === "PENDING_48H").length,
-        "Bilan Disponible": allApplications.filter(a => (a as any).status === "PUBLISHED").length,
-        "Collecte Documents": allApplications.filter(a => (a as any).status === "DOCUMENTS_CHECK").length,
-        "Soumission Consulaire": allApplications.filter(a => (a as any).status === "SUBMITTED").length,
-        "Approuvé": allApplications.filter(a => (a as any).status === "APPROVED").length,
-      };
+      const [stats] = await db.select({
+        pending48h: count(sql`CASE WHEN status = 'PENDING_48H' THEN 1 END`),
+        published: count(sql`CASE WHEN status = 'PUBLISHED' THEN 1 END`),
+        documentsCheck: count(sql`CASE WHEN status = 'DOCUMENTS_CHECK' THEN 1 END`),
+        submitted: count(sql`CASE WHEN status = 'SUBMITTED' THEN 1 END`),
+        approved: count(sql`CASE WHEN status = 'APPROVED' THEN 1 END`),
+      }).from(applications);
 
       return {
         success: true,
-        data: Object.entries(statusCounts).map(([name, value]) => ({
-          name,
-          value,
-        })),
+        data: [
+          { name: "Évaluation 48h", value: stats.pending48h },
+          { name: "Bilan Disponible", value: stats.published },
+          { name: "Collecte Documents", value: stats.documentsCheck },
+          { name: "Soumission Consulaire", value: stats.submitted },
+          { name: "Approuvé", value: stats.approved },
+        ],
       };
     } catch (error) {
       console.error("[AdminDashboardStats] Error fetching applications status chart:", error);
@@ -154,36 +151,31 @@ export const adminDashboardStatsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const allTransactions = await db.select().from(transactions);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - input.days);
 
-        // Grouper par jour
-        const revenueByDay: Record<string, number> = {};
+        const rows = await db
+          .select({
+            dateStr: sql<string>`DATE(createdAt)`,
+            revenue: sql<number>`COALESCE(SUM(amount), 0)`,
+          })
+          .from(transactions)
+          .where(sql`status = 'success' AND createdAt >= ${cutoff.toISOString().split("T")[0]}`)
+          .groupBy(sql`DATE(createdAt)`)
+          .orderBy(sql`DATE(createdAt) ASC`);
+
+        const revenueMap = new Map(rows.map(r => [r.dateStr, Number(r.revenue)]));
+
         const now = new Date();
-
-        for (let i = 0; i < input.days; i++) {
-          const date = new Date(now);
-          date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split("T")[0];
-          revenueByDay[dateStr] = 0;
-        }
-
-        allTransactions
-          .filter(t => t.status === "success")
-          .forEach(t => {
-            if (t.createdAt) {
-              const dateStr = new Date(t.createdAt).toISOString().split("T")[0];
-              if (revenueByDay[dateStr] !== undefined) {
-                revenueByDay[dateStr] += t.amount || 0;
-              }
-            }
-          });
-
-        const data = Object.entries(revenueByDay)
-          .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-          .map(([date, revenue]) => ({
-            date: new Date(date).toLocaleDateString("fr-FR", { month: "short", day: "numeric" }),
-            revenue,
-          }));
+        const data = Array.from({ length: input.days }, (_, i) => {
+          const d = new Date(now);
+          d.setDate(d.getDate() - (input.days - 1 - i));
+          const dateStr = d.toISOString().split("T")[0];
+          return {
+            date: d.toLocaleDateString("fr-FR", { month: "short", day: "numeric" }),
+            revenue: revenueMap.get(dateStr) ?? 0,
+          };
+        });
 
         return {
           success: true,
@@ -210,20 +202,19 @@ export const adminDashboardStatsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
     try {
-      const allTransactions = await db.select().from(transactions);
-
-      const statusCounts = {
-        "Réussies": allTransactions.filter(t => t.status === "success").length,
-        "En Attente": allTransactions.filter(t => t.status === "pending" || t.status === "processing").length,
-        "Échouées": allTransactions.filter(t => t.status === "failed" || t.status === "cancelled").length,
-      };
+      const [stats] = await db.select({
+        success: count(sql`CASE WHEN status = 'success' THEN 1 END`),
+        pending: count(sql`CASE WHEN status IN ('pending','processing') THEN 1 END`),
+        failed: count(sql`CASE WHEN status IN ('failed','cancelled') THEN 1 END`),
+      }).from(transactions);
 
       return {
         success: true,
-        data: Object.entries(statusCounts).map(([name, value]) => ({
-          name,
-          value,
-        })),
+        data: [
+          { name: "Réussies", value: stats.success },
+          { name: "En Attente", value: stats.pending },
+          { name: "Échouées", value: stats.failed },
+        ],
       };
     } catch (error) {
       console.error("[AdminDashboardStats] Error fetching transactions status chart:", error);
@@ -246,24 +237,21 @@ export const adminDashboardStatsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
     try {
-      const allApplications = await db.select().from(applications);
+      const rows = await db
+        .select({
+          destination: sql<string>`destinationCountry`,
+          count: count(),
+        })
+        .from(applications)
+        .where(sql`destinationCountry IS NOT NULL AND destinationCountry != ''`)
+        .groupBy(sql`destinationCountry`)
+        .orderBy(sql`count(*) DESC`)
+        .limit(10);
 
-      // Grouper par destination
-      const destinationCounts: Record<string, number> = {};
-      allApplications.forEach(app => {
-        const dest = (app as any).destinationCountry;
-        if (dest) {
-          destinationCounts[dest] = (destinationCounts[dest] || 0) + 1;
-        }
-      });
-
-      const data = Object.entries(destinationCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 10)
-        .map(([destination, count]) => ({
-          destination,
-          count,
-        }));
+      const data = rows.map(r => ({
+        destination: r.destination,
+        count: r.count,
+      }));
 
       return {
         success: true,
@@ -376,35 +364,23 @@ export const adminDashboardStatsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
     try {
-      const allApplications = await db.select().from(applications);
-      const allTransactions = await db.select().from(transactions);
-      const allCandidates = await db.select().from(candidates);
+      const [[appKpi], [txKpi], [candKpi]] = await Promise.all([
+        db.select({
+          total: count(),
+          approved: count(sql`CASE WHEN status = 'APPROVED' THEN 1 END`),
+        }).from(applications),
+        db.select({
+          total: count(),
+          completed: count(sql`CASE WHEN status = 'success' THEN 1 END`),
+          totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0)`,
+        }).from(transactions),
+        db.select({ total: count() }).from(candidates),
+      ]);
 
-      // Calculer les taux
-      const approvalRate =
-        allApplications.length > 0
-          ? Math.round(
-              (allApplications.filter(a => (a as any).status === "APPROVED").length / allApplications.length) * 100
-            )
-          : 0;
-
-      const conversionRate =
-        allCandidates.length > 0
-          ? Math.round(
-              (allTransactions.filter(t => t.status === "success").length / allCandidates.length) * 100
-            )
-          : 0;
-
-      const totalRevenue = allTransactions
-        .filter(t => t.status === "success")
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      const averageTransactionValue =
-        allTransactions.filter(t => t.status === "success").length > 0
-          ? Math.round(
-              totalRevenue / allTransactions.filter(t => t.status === "success").length
-            )
-          : 0;
+      const totalRevenue = Number(txKpi.totalRevenue);
+      const approvalRate = appKpi.total > 0 ? Math.round((appKpi.approved / appKpi.total) * 100) : 0;
+      const conversionRate = candKpi.total > 0 ? Math.round((txKpi.completed / candKpi.total) * 100) : 0;
+      const averageTransactionValue = txKpi.completed > 0 ? Math.round(totalRevenue / txKpi.completed) : 0;
 
       return {
         success: true,
@@ -413,9 +389,9 @@ export const adminDashboardStatsRouter = router({
           conversionRate: `${conversionRate}%`,
           totalRevenue: `${totalRevenue.toLocaleString("fr-FR")} XOF`,
           averageTransactionValue: `${averageTransactionValue.toLocaleString("fr-FR")} XOF`,
-          totalApplications: allApplications.length,
-          totalCandidates: allCandidates.length,
-          totalTransactions: allTransactions.length,
+          totalApplications: appKpi.total,
+          totalCandidates: candKpi.total,
+          totalTransactions: txKpi.total,
         },
       };
     } catch (error) {

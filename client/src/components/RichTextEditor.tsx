@@ -31,7 +31,7 @@ export function sanitizeRichText(value: string) {
     const output = document.createElement(element.tagName.toLowerCase());
     if (element.tagName === "A") {
       const href = element.getAttribute("href") ?? "";
-      if (href.startsWith("/") || href.startsWith("https://")) {
+      if ((href.startsWith("/") && !href.startsWith("//")) || href.startsWith("https://")) {
         output.setAttribute("href", href);
         output.setAttribute("target", "_blank");
         output.setAttribute("rel", "noopener noreferrer");

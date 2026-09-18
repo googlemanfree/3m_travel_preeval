@@ -7,7 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { TRPCError } from "@trpc/server";
 import { generateEvaluationReportHTML } from "../evaluationService";
@@ -43,7 +43,12 @@ export const evaluationAdminRouter = router({
   /**
    * Lister tous les dossiers (admin only)
    */
-  listAll: protectedProcedure.query(async ({ ctx }) => {
+  listAll: protectedProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(200).default(50),
+      offset: z.number().int().min(0).default(0),
+    }).default({}))
+    .query(async ({ ctx, input }) => {
     if (ctx.user?.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
     }
@@ -54,23 +59,29 @@ export const evaluationAdminRouter = router({
         throw new Error("Base de données non disponible");
       }
 
-      const allApplications = await db.select().from(applications);
+      const [rows, [{ total }]] = await Promise.all([
+        db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          visaType: applications.visaType,
+          dossierStatus: applications.dossierStatus,
+          scoringTotal: applications.scoringTotal,
+          paymentStatus: applications.paymentStatus,
+          createdAt: applications.createdAt,
+        }).from(applications)
+          .orderBy(desc(applications.createdAt))
+          .limit(input.limit)
+          .offset(input.offset),
+        db.select({ total: count() }).from(applications),
+      ]);
 
       return {
         success: true,
-        count: allApplications.length,
-        applications: allApplications.map((app) => ({
-          id: app.id,
-          dossierNumber: app.dossierNumber,
-          fullName: app.fullName,
-          email: app.email,
-          destination: app.destination,
-          visaType: app.visaType,
-          dossierStatus: app.dossierStatus,
-          scoringTotal: app.scoringTotal,
-          paymentStatus: app.paymentStatus,
-          createdAt: app.createdAt,
-        })),
+        count: total,
+        applications: rows,
       };
     } catch (error) {
       console.error("Erreur lors de la récupération des dossiers:", error);
