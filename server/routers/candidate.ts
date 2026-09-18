@@ -884,7 +884,7 @@ export const candidateRouter = router({
 
   // ── Supprimer une pièce récente non validée ─────────────────────────────────
   deleteDocument: candidateProcedure
-    .input(z.object({ fileId: z.number().int().positive().positive() }))
+    .input(z.object({ fileId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
