@@ -14,6 +14,8 @@ import { sendEmail } from "../_core/email";
 import { getPasswordResetEmailTemplate, getPasswordResetSuccessEmailTemplate } from "../_core/emailTemplates";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 // Générer un token de réinitialisation sécurisé
 function generateResetToken(): string {
   return randomBytes(32).toString("base64url");
@@ -72,9 +74,9 @@ export const adminPasswordResetRouter = router({
         subject: "Votre mot de passe temporaire — 3M Travel",
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
           <h2 style="color:#1e40af">Mot de passe temporaire administrateur</h2>
-          <p>Bonjour ${admin.fullName || admin.email},</p>
+          <p>Bonjour ${esc(admin.fullName || admin.email)},</p>
           <p>Voici votre mot de passe temporaire pour accéder à l’espace administrateur :</p>
-          <p><strong>Adresse :</strong> ${admin.email}</p>
+          <p><strong>Adresse :</strong> ${esc(admin.email)}</p>
           <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
           <p>Après connexion, vous devrez obligatoirement créer un nouveau mot de passe personnel.</p>
           <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>

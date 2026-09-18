@@ -2,6 +2,10 @@
  * Templates d'email pour les administrateurs
  */
 
+function esc(v: string | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export interface AdminEmailTemplateParams {
   adminName: string;
   adminEmail: string;
@@ -155,7 +159,7 @@ export function getPasswordChangedEmailTemplate(params: AdminEmailTemplateParams
 
           <!-- Content -->
           <div class="content">
-            <p>Bonjour <strong>${params.adminName}</strong>,</p>
+            <p>Bonjour <strong>${esc(params.adminName)}</strong>,</p>
 
             <p>Nous vous confirmons que votre mot de passe administrateur a été modifié avec succès.</p>
 
@@ -169,17 +173,17 @@ export function getPasswordChangedEmailTemplate(params: AdminEmailTemplateParams
             <div class="info-section">
               <h3>Détails du changement</h3>
               <div class="info-item">
-                <span class="info-label">Email :</span> ${params.adminEmail}
+                <span class="info-label">Email :</span> ${esc(params.adminEmail)}
               </div>
               <div class="info-item">
-                <span class="info-label">Type d'administrateur :</span> ${params.adminType}
+                <span class="info-label">Type d'administrateur :</span> ${esc(params.adminType)}
               </div>
               <div class="info-item">
                 <span class="info-label">Date et heure :</span> ${formattedDate}
               </div>
               ${params.ipAddress ? `
               <div class="info-item">
-                <span class="info-label">Adresse IP :</span> ${params.ipAddress}
+                <span class="info-label">Adresse IP :</span> ${esc(params.ipAddress)}
               </div>
               ` : ''}
             </div>
@@ -358,7 +362,7 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
 
           <!-- Content -->
           <div class="content">
-            <p>Bonjour <strong>${params.adminName}</strong>,</p>
+            <p>Bonjour <strong>${esc(params.adminName)}</strong>,</p>
 
             <p>Vous avez demandé une réinitialisation de votre mot de passe administrateur. Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.</p>
 
@@ -534,7 +538,7 @@ export function getPasswordResetSuccessEmailTemplate(params: AdminEmailTemplateP
           </div>
 
           <div class="content">
-            <p>Bonjour <strong>${params.adminName}</strong>,</p>
+            <p>Bonjour <strong>${esc(params.adminName)}</strong>,</p>
 
             <p>Votre mot de passe administrateur a été réinitialisé avec succès.</p>
 
@@ -546,7 +550,7 @@ export function getPasswordResetSuccessEmailTemplate(params: AdminEmailTemplateP
             <div class="info-section">
               <h3>Détails de la réinitialisation</h3>
               <div class="info-item">
-                <span class="info-label">Email :</span> ${params.adminEmail}
+                <span class="info-label">Email :</span> ${esc(params.adminEmail)}
               </div>
               <div class="info-item">
                 <span class="info-label">Date et heure :</span> ${formattedDate}
@@ -663,19 +667,19 @@ export function getPasswordChangeFailedEmailTemplate(params: AdminEmailTemplateP
           </div>
 
           <div class="content">
-            <p>Bonjour <strong>${params.adminName}</strong>,</p>
+            <p>Bonjour <strong>${esc(params.adminName)}</strong>,</p>
 
             <p>Une tentative de changement de mot de passe a échoué sur votre compte administrateur.</p>
 
             <div class="alert-box">
-              <strong>Raison :</strong> ${params.reason}
+              <strong>Raison :</strong> ${esc(params.reason)}
             </div>
 
             <div class="info-section">
               <p><strong>Détails :</strong></p>
-              <p>Email : ${params.adminEmail}</p>
+              <p>Email : ${esc(params.adminEmail)}</p>
               <p>Date et heure : ${formattedDate}</p>
-              ${params.ipAddress ? `<p>Adresse IP : ${params.ipAddress}</p>` : ''}
+              ${params.ipAddress ? `<p>Adresse IP : ${esc(params.ipAddress)}</p>` : ''}
             </div>
 
             <p style="color: #dc3545;"><strong>Si ce n'est pas vous qui avez tenté cette action, veuillez contacter immédiatement l'équipe support.</strong></p>
