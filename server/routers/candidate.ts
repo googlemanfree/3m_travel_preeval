@@ -1041,6 +1041,7 @@ export const candidateRouter = router({
           inArray(documentClarificationEvents.clarificationRequestId, requestIds),
         ))
         .orderBy(asc(documentClarificationEvents.createdAt))
+        .limit(1000)
       : [];
     return requests.map((request) => ({
       ...request,
