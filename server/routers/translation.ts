@@ -81,9 +81,9 @@ export const translationRouter = router({
       ].filter(Boolean) as SQL[];
   
       if (conditions.length > 0) {
-        return db.select().from(drizzleSchema.translationRequests).where(and(...conditions));
+        return db.select().from(drizzleSchema.translationRequests).where(and(...conditions)).limit(500);
       } else {
-        return db.select().from(drizzleSchema.translationRequests);
+        return db.select().from(drizzleSchema.translationRequests).limit(500);
       }
     }),
 
@@ -247,14 +247,14 @@ export const translationRouter = router({
     .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      return db.select().from(drizzleSchema.translationLanguages).where(eq(drizzleSchema.translationLanguages.isActive, true));
+      return db.select().from(drizzleSchema.translationLanguages).where(eq(drizzleSchema.translationLanguages.isActive, true)).limit(200);
     }),
 
   getTranslationDocumentTypes: publicProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing);
+      const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing).limit(200);
       return documentTypes.map(dt => dt.documentType);
     }),
 });
