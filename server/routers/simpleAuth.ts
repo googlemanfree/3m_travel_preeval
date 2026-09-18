@@ -9,6 +9,8 @@ import { sendEmail } from "../_core/email";
 import { sendPasswordResetEmail } from "../emailService";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  * ROUTEUR D'AUTHENTIFICATION SIMPLE ET ROBUSTE
@@ -233,7 +235,7 @@ export const simpleAuthRouter = router({
         await sendEmail({
           to: email,
           subject: "✓ Confirmez votre email - 3M Travel & Services",
-          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:40px;text-align:center;color:#fff"><h1 style="margin:0">Confirmez votre email</h1></div><div style="padding:40px;background:#f9fafb"><p>Bonjour <strong>${fullName}</strong>,</p><p>Cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte 3M Travel :</p><p style="text-align:center;margin-top:30px"><a href="${verificationLink}" style="background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:12px 32px;text-decoration:none;border-radius:8px;display:inline-block">✓ Confirmer mon email</a></p><p style="font-size:13px;color:#6b7280;margin-top:20px">Ce lien est valable <strong>24 heures</strong>. Ne le partagez avec personne.</p></div></div>`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:40px;text-align:center;color:#fff"><h1 style="margin:0">Confirmez votre email</h1></div><div style="padding:40px;background:#f9fafb"><p>Bonjour <strong>${esc(fullName)}</strong>,</p><p>Cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte 3M Travel :</p><p style="text-align:center;margin-top:30px"><a href="${verificationLink}" style="background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:12px 32px;text-decoration:none;border-radius:8px;display:inline-block">✓ Confirmer mon email</a></p><p style="font-size:13px;color:#6b7280;margin-top:20px">Ce lien est valable <strong>24 heures</strong>. Ne le partagez avec personne.</p></div></div>`,
         });
       } catch (emailErr) {
         console.warn("[simpleAuth] Verification email send failed:", emailErr);
