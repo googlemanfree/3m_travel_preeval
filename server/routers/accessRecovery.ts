@@ -94,7 +94,8 @@ export const accessRecoveryRouter = router({
         createdAt: candidateAccessRecoveryEvents.createdAt,
       }).from(candidateAccessRecoveryEvents)
         .where(eq(candidateAccessRecoveryEvents.requestId, input.requestId))
-        .orderBy(desc(candidateAccessRecoveryEvents.createdAt));
+        .orderBy(desc(candidateAccessRecoveryEvents.createdAt))
+        .limit(100);
     }),
 
   review: publicProcedure

@@ -211,7 +211,8 @@ export const luxembourgEvaluationRouter = router({
 
     const rows = await db.select().from(luxembourgEvaluations)
       .where(eq(luxembourgEvaluations.email, ctx.candidate.email))
-      .orderBy(desc(luxembourgEvaluations.createdAt));
+      .orderBy(desc(luxembourgEvaluations.createdAt))
+      .limit(20);
 
     return rows;
   }),

@@ -187,7 +187,8 @@ export const studyVisaEvaluationRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     return db.select().from(studyVisaEvaluations)
       .where(eq(studyVisaEvaluations.email, ctx.candidate.email))
-      .orderBy(desc(studyVisaEvaluations.createdAt));
+      .orderBy(desc(studyVisaEvaluations.createdAt))
+      .limit(20);
   }),
 
   /** Liste + stats pour le tableau de bord admin. */

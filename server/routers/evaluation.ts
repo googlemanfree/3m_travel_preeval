@@ -10,7 +10,7 @@ import { sendEvaluationReceptionEmail } from "../emailService";
 import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, getPdfPageCount } from "../aiEvaluationService";
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
 import { logger } from "../_core/logger";
-import { and, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
@@ -347,7 +347,7 @@ export const evaluationRouter = router({
       }
 
       // Règle des 2 évaluations gratuites maximum, par adresse email.
-      const previousCount = await db.select().from(evaluations).where(eq(evaluations.email, input.email));
+      const previousCount = await db.select().from(evaluations).where(eq(evaluations.email, input.email)).limit(3);
       if (previousCount.length >= 2) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -516,7 +516,8 @@ export const evaluationRouter = router({
 
     const rows = await db.select().from(evaluations)
       .where(eq(evaluations.email, ctx.candidate.email))
-      .orderBy(evaluations.createdAt);
+      .orderBy(evaluations.createdAt)
+      .limit(10);
 
     return rows.map((evaluation) => ({
       id: evaluation.id,
@@ -555,9 +556,10 @@ export const evaluationRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Base de données non disponible");
 
-      const rows = await db.select().from(evaluations).orderBy(evaluations.createdAt);
-      const total = rows.length;
-      const page = rows.slice(input.offset, input.offset + input.limit).reverse();
+      const [[{ total }], page] = await Promise.all([
+        db.select({ total: count() }).from(evaluations),
+        db.select().from(evaluations).orderBy(desc(evaluations.createdAt)).limit(input.limit).offset(input.offset),
+      ]);
 
       return { items: page, total };
     }),

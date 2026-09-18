@@ -215,7 +215,8 @@ export const candidateRouter = router({
           .select()
           .from(candidateFiles)
           .where(eq(candidateFiles.candidateId, input.candidateId))
-          .orderBy(desc(candidateFiles.uploadedAt));
+          .orderBy(desc(candidateFiles.uploadedAt))
+          .limit(200);
 
         return files;
       } catch (err) {
@@ -243,7 +244,8 @@ export const candidateRouter = router({
           .select()
           .from(candidateMessages)
           .where(eq(candidateMessages.candidateId, input.candidateId))
-          .orderBy(desc(candidateMessages.createdAt));
+          .orderBy(desc(candidateMessages.createdAt))
+          .limit(500);
 
         return messages;
       } catch (err) {

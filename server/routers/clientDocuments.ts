@@ -161,7 +161,8 @@ export const clientDocumentsRouter = router({
               eq(clientDocuments.candidateEmail, ctx.candidate.email)
             )
           )
-          .orderBy(desc(clientDocuments.createdAt));
+          .orderBy(desc(clientDocuments.createdAt))
+          .limit(100);
 
         return docs;
       } catch (err) {
@@ -251,7 +252,8 @@ export const clientDocumentsRouter = router({
               eq(clientPayments.candidateEmail, ctx.candidate.email)
             )
           )
-          .orderBy(desc(clientPayments.createdAt));
+          .orderBy(desc(clientPayments.createdAt))
+          .limit(100);
 
         return payments;
       } catch (err) {

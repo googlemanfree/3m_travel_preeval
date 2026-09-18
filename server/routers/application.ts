@@ -597,7 +597,8 @@ export const applicationRouter = router({
         .select()
         .from(applications)
         .where(eq(applications.candidateId, input.candidateId))
-        .orderBy(desc(applications.createdAt));
+        .orderBy(desc(applications.createdAt))
+        .limit(50);
     }),
 
   /** Lister tous les dossiers (admin) */
@@ -1211,7 +1212,8 @@ export const applicationRouter = router({
               dueAt: documentRequirements.dueAt,
             })
             .from(documentRequirements)
-            .where(eq(documentRequirements.caseId, caseRecord.id));
+            .where(eq(documentRequirements.caseId, caseRecord.id))
+            .limit(100);
           const required = requirements.filter((requirement) => requirement.status !== "waived");
           const completed = required.filter((requirement) => requirement.status === "approved").length;
           const nextRequirement = required.find((requirement) => ["pending", "rejected"].includes(requirement.status));

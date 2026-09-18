@@ -627,7 +627,8 @@ export const flightsRouter = router({
       .select()
       .from(favoriteFlights)
       .where(eq(favoriteFlights.userId, ctx.candidate.id))
-      .orderBy(desc(favoriteFlights.createdAt));
+      .orderBy(desc(favoriteFlights.createdAt))
+      .limit(100);
 
     return rows.map((row) => {
       try {

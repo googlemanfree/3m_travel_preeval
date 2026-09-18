@@ -338,7 +338,8 @@ export const tourismRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const confirmed = await db.select().from(tourismServiceRequests)
       .where(or(eq(tourismServiceRequests.status, "confirmed"), eq(tourismServiceRequests.status, "completed")))
-      .orderBy(desc(tourismServiceRequests.createdAt));
+      .orderBy(desc(tourismServiceRequests.createdAt))
+      .limit(1000);
     
     let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//3M Travel & Services//Admin Calendar//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
     for (const r of confirmed) {

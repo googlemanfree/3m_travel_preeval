@@ -121,7 +121,8 @@ export const evaluationRouter = router({
           .select()
           .from(evaluations)
           .where(eq(evaluations.email, input.email))
-          .orderBy(desc(evaluations.createdAt));
+          .orderBy(desc(evaluations.createdAt))
+          .limit(10);
 
         return evals;
       } catch (err) {
