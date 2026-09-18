@@ -15,6 +15,10 @@ import { sendEmail } from '../_core/email';
 import { buildPassportCorrectionAudit } from '../services/passportCorrectionHistory';
 import { requireValidAdminSession } from './adminAuth';
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export const evisaRouter = router({
   /**
    * Récupérer tous les e-visas disponibles avec filtres
@@ -625,10 +629,10 @@ export const evisaRouter = router({
           html: `
             <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff;">
               <h2 style="color: #1e3a8a; margin-top: 0;">Votre e-Visa est approuvé et disponible !</h2>
-              <p>Bonjour <strong>${req.fullName}</strong>,</p>
-              <p>Nous avons le plaisir de vous informer que votre demande d'e-Visa pour <strong>${req.countryName}</strong> a été traitée avec succès et approuvée par les services consulaires.</p>
+              <p>Bonjour <strong>${esc(req.fullName)}</strong>,</p>
+              <p>Nous avons le plaisir de vous informer que votre demande d'e-Visa pour <strong>${esc(req.countryName)}</strong> a été traitée avec succès et approuvée par les services consulaires.</p>
               <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #bbf7d0;">
-                <p style="margin: 0 0 8px 0; color: #166534;"><strong>Destination :</strong> ${req.countryName}</p>
+                <p style="margin: 0 0 8px 0; color: #166534;"><strong>Destination :</strong> ${esc(req.countryName)}</p>
                 <p style="margin: 0 0 8px 0; color: #166534;"><strong>Référence de demande :</strong> #${req.id}</p>
                 <p style="margin: 0; color: #166534;"><strong>Statut :</strong> Approuvé & Prêt au voyage</p>
               </div>

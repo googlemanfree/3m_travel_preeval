@@ -10,6 +10,10 @@ import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { sendEmail } from "../_core/email";
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 /**
  * Envoyer un email de notification aux admins
  */
@@ -27,12 +31,12 @@ async function notifyAdminNewComment(
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
         <h2 style="color: #0066cc;">3M Travel Agency - ${isQuestion ? "Nouvelle Question" : "Nouveau Commentaire"}</h2>
-        <p><strong>Dossier :</strong> ${dossierNumber}</p>
-        <p><strong>Candidat :</strong> ${candidateName}</p>
+        <p><strong>Dossier :</strong> ${esc(dossierNumber)}</p>
+        <p><strong>Candidat :</strong> ${esc(candidateName)}</p>
         <hr />
         <p><strong>${isQuestion ? "Question" : "Commentaire"} :</strong></p>
         <blockquote style="background-color: #f4f6f8; border-left: 4px solid #0066cc; padding: 12px; margin: 10px 0;">
-          ${content.replace(/\n/g, "<br>")}
+          ${esc(content).replace(/\n/g, "<br>")}
         </blockquote>
         <p style="text-align: center; margin: 20px 0;">
           <a href="https://www.3mtravelagency.com/admin/evaluations" 
@@ -67,14 +71,14 @@ async function notifyCandidateReply(
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
         <h2 style="color: #0066cc;">3M Travel Agency - Réponse à votre question</h2>
-        <p>Bonjour <strong>${candidateName}</strong>,</p>
-        <p>Un conseiller a répondu à votre question concernant votre dossier <strong>${dossierNumber}</strong>.</p>
+        <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
+        <p>Un conseiller a répondu à votre question concernant votre dossier <strong>${esc(dossierNumber)}</strong>.</p>
         <div style="background-color: #f4f6f8; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0;">
-          <p><strong>${adminName} a écrit :</strong></p>
-          <p>${replyContent.replace(/\n/g, "<br>")}</p>
+          <p><strong>${esc(adminName)} a écrit :</strong></p>
+          <p>${esc(replyContent).replace(/\n/g, "<br>")}</p>
         </div>
         <p style="text-align: center; margin: 20px 0;">
-          <a href="https://3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+          <a href="https://3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}" 
              style="background-color: #0066cc; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
             Consulter ma réponse
           </a>

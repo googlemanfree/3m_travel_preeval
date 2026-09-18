@@ -18,6 +18,10 @@ import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../
 
 import { randomBytes } from "node:crypto";
 
+function esc(v: string | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function generateSessionToken(): string {
   return randomBytes(36).toString("hex");
 }
@@ -269,10 +273,10 @@ export const adminAuthRouter = router({
         const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
-          <p>Bonjour ${input.fullName},</p>
-          <p>${inviter.fullName} vous a donné accès à l'espace administrateur de 3M Travel & Services, avec le rôle <strong>${input.adminType}</strong>.</p>
+          <p>Bonjour ${esc(input.fullName)},</p>
+          <p>${esc(inviter.fullName)} vous a donné accès à l'espace administrateur de 3M Travel &amp; Services, avec le rôle <strong>${esc(input.adminType)}</strong>.</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="margin: 4px 0;"><strong>Email :</strong> ${input.email}</p>
+            <p style="margin: 4px 0;"><strong>Email :</strong> ${esc(input.email)}</p>
             <p style="margin: 4px 0;"><strong>Mot de passe temporaire :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${tempPassword}</code></p>
           </div>
           <p>Merci de changer ce mot de passe dès votre première connexion.</p>
@@ -337,10 +341,10 @@ export const adminAuthRouter = router({
           : `Voici votre nouveau mot de passe temporaire pour accéder à l'espace administrateur.`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Nouveau mot de passe — 3M Travel</h2>
-          <p>Bonjour ${admin.fullName},</p>
-          <p style="white-space: pre-line;">${bodyText}</p>
+          <p>Bonjour ${esc(admin.fullName)},</p>
+          <p style="white-space: pre-line;">${esc(bodyText)}</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="margin: 4px 0;"><strong>Email :</strong> ${admin.email}</p>
+            <p style="margin: 4px 0;"><strong>Email :</strong> ${esc(admin.email)}</p>
             <p style="margin: 4px 0;"><strong>Nouveau mot de passe :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${newPassword}</code></p>
           </div>
           <div style="text-align: center; margin: 24px 0;">
