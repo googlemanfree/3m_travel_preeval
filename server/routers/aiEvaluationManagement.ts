@@ -507,7 +507,7 @@ export const aiEvaluationManagementRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      return db.select().from(evaluationReviewEvents).where(eq(evaluationReviewEvents.evaluationId, input.evaluationId)).orderBy(desc(evaluationReviewEvents.createdAt));
+      return db.select().from(evaluationReviewEvents).where(eq(evaluationReviewEvents.evaluationId, input.evaluationId)).orderBy(desc(evaluationReviewEvents.createdAt)).limit(100);
     }),
 
   secondValidateEvaluationResponse: publicProcedure

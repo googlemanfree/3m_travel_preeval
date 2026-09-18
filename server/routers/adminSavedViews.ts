@@ -46,7 +46,8 @@ export const adminSavedViewsRouter = router({
       .limit(1);
     if (existing.length > 0) throw new TRPCError({ code: "CONFLICT", message: "Une vue portant ce nom existe déjà." });
     const count = await db.select({ id: adminSavedViews.id }).from(adminSavedViews)
-      .where(eq(adminSavedViews.adminAccountId, admin.id));
+      .where(eq(adminSavedViews.adminAccountId, admin.id))
+      .limit(21);
     if (count.length >= 20) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Maximum de 20 vues favorites atteint." });
     await db.insert(adminSavedViews).values({
       adminAccountId: admin.id,

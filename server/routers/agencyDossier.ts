@@ -279,7 +279,8 @@ export const agencyDossierRouter = router({
           .select()
           .from(agencyDossierHistory)
           .where(eq(agencyDossierHistory.dossierId, input.dossierId))
-          .orderBy(desc(agencyDossierHistory.createdAt));
+          .orderBy(desc(agencyDossierHistory.createdAt))
+          .limit(200);
 
         return {
           dossier: dossier[0],

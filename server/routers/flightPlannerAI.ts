@@ -66,6 +66,6 @@ Préférences : ${input.preferences || "Aucune"};`;
   getSavedPlans: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    return db.select().from(savedTravelPlans).where(eq(savedTravelPlans.userId, ctx.user.id)).orderBy(desc(savedTravelPlans.createdAt));
+    return db.select().from(savedTravelPlans).where(eq(savedTravelPlans.userId, ctx.user.id)).orderBy(desc(savedTravelPlans.createdAt)).limit(50);
   }),
 });

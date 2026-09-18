@@ -123,7 +123,7 @@ export const placementPortalRouter = router({
     if (!organization) throw new TRPCError({ code: "BAD_REQUEST", message: "Vérifiez l’organisation avant de créer son accès." });
     const temporaryPassword = randomBytes(12).toString("base64url");
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-    const existingAccounts = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.organizationId, organization.id));
+    const existingAccounts = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.organizationId, organization.id)).limit(2);
     await db.insert(placementEmployerAccounts).values({ organizationId: organization.id, fullName: input.fullName, email: input.email.toLowerCase(), passwordHash, status: "active", collaborationRole: existingAccounts.length === 0 ? "manager" : "reader", createdByAdminId: admin.id });
     return { temporaryPassword, message: "Accès créé. Remettez les identifiants par un canal approuvé après vérification humaine." };
   }),

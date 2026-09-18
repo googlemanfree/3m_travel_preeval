@@ -16,9 +16,9 @@ export const caseTrackingRouter = router({
     if (!ownedCases.length) return { cases: [], notifications: [], unreadNotifications: 0 };
     const ids = ownedCases.map(item => item.id);
     const [requirements, documents, history, notifications] = await Promise.all([
-      db.select().from(documentRequirements).where(inArray(documentRequirements.caseId, ids)),
-      db.select().from(caseDocuments).where(inArray(caseDocuments.caseId, ids)),
-      db.select().from(caseStatusHistory).where(inArray(caseStatusHistory.caseId, ids)).orderBy(desc(caseStatusHistory.createdAt)),
+      db.select().from(documentRequirements).where(inArray(documentRequirements.caseId, ids)).limit(500),
+      db.select().from(caseDocuments).where(inArray(caseDocuments.caseId, ids)).limit(500),
+      db.select().from(caseStatusHistory).where(inArray(caseStatusHistory.caseId, ids)).orderBy(desc(caseStatusHistory.createdAt)).limit(500),
       db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, ctx.candidate.id)).orderBy(desc(clientNotifications.createdAt)).limit(200),
     ]);
     return {

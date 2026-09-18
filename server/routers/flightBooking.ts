@@ -381,7 +381,8 @@ export const flightBookingRouter = router({
       updatedAt: flightBookingRequests.updatedAt,
     }).from(flightBookingRequests)
       .where(eq(flightBookingRequests.candidateId, ctx.candidate.id))
-      .orderBy(desc(flightBookingRequests.createdAt));
+      .orderBy(desc(flightBookingRequests.createdAt))
+      .limit(50);
   }),
 
   getMyLoyalty: candidateProcedure.query(async ({ ctx }) => {

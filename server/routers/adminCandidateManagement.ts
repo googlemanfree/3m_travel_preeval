@@ -1119,7 +1119,8 @@ export const adminCandidateManagementRouter = router({
         })
         .from(applications)
         .where(and(eq(applications.paymentStatus, "SUCCESS"), eq(applications.agreementSigned, false)))
-        .orderBy(desc(applications.paymentValidatedAt));
+        .orderBy(desc(applications.paymentValidatedAt))
+        .limit(500);
       return {
         count: rows.length,
         candidates: rows.map((row) => ({
@@ -1158,9 +1159,9 @@ export const adminCandidateManagementRouter = router({
         fullName: applications.fullName,
         email: applications.email,
         createdAt: applications.createdAt,
-      }).from(applications).where(and(isNull(applications.candidateId), eq(applications.paymentStatus, "PENDING"), isNull(applications.deletedAt)));
+      }).from(applications).where(and(isNull(applications.candidateId), eq(applications.paymentStatus, "PENDING"), isNull(applications.deletedAt))).limit(2000);
 
-      const linkedRows = await db.select({ email: applications.email }).from(applications).where(and(isNotNull(applications.candidateId), isNull(applications.deletedAt)));
+      const linkedRows = await db.select({ email: applications.email }).from(applications).where(and(isNotNull(applications.candidateId), isNull(applications.deletedAt))).limit(5000);
       const linkedEmails = new Set(linkedRows.map((row) => row.email.trim().toLowerCase()));
 
       const duplicates = orphans.filter((row) => linkedEmails.has(row.email.trim().toLowerCase()));
