@@ -1024,7 +1024,7 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const allUsers = await db.select().from(users).limit(input.limit).offset(input.offset);
+        const allUsers = await db.select().from(users).orderBy(desc(users.createdAt)).limit(input.limit).offset(input.offset);
 
         // Récupérer les dossiers pour chaque utilisateur
         const usersWithApps = await Promise.all(
