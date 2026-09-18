@@ -24,7 +24,8 @@ export const adminSavedViewsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const rows = await db.select().from(adminSavedViews)
       .where(eq(adminSavedViews.adminAccountId, admin.id))
-      .orderBy(desc(adminSavedViews.updatedAt));
+      .orderBy(desc(adminSavedViews.updatedAt))
+      .limit(20);
     return rows.map(row => ({
       id: row.id,
       name: row.name,

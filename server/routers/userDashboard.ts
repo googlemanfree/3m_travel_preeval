@@ -83,7 +83,8 @@ export const userDashboardRouter = router({
         .select()
         .from(candidateFiles)
         .where(eq(candidateFiles.candidateId, ctx.candidate.id))
-        .orderBy(desc(candidateFiles.uploadedAt));
+        .orderBy(desc(candidateFiles.uploadedAt))
+        .limit(200);
 
       const statusCounts = getDocumentStatusCounts(documents);
 

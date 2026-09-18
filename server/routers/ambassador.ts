@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomInt } from "node:crypto";
@@ -62,26 +62,20 @@ export const ambassadorRouter = router({
       const ambassador = ambassadorRows[0];
       if (!ambassador) throw new TRPCError({ code: "NOT_FOUND", message: "Code de parrainage introuvable." });
 
-      const referredApplications = await db.select({
-        paymentStatus: applications.paymentStatus,
-        paymentAmount: applications.paymentAmount,
-        paymentConfirmedAmount: applications.paymentConfirmedAmount,
+      const [agg] = await db.select({
+        totalReferrals: count(),
+        paidReferrals: count(sql`CASE WHEN paymentStatus = 'SUCCESS' THEN 1 END`),
+        totalCommissionXaf: sql<number>`COALESCE(SUM(CASE WHEN paymentStatus = 'SUCCESS' THEN ROUND((COALESCE(paymentConfirmedAmount, paymentAmount, 0) * ${ambassador.commissionRateBps}) / 10000) ELSE 0 END), 0)`,
       }).from(applications).where(eq(applications.referredByCode, input.referralCode));
-
-      const paidApplications = referredApplications.filter((a) => a.paymentStatus === "SUCCESS");
-      const totalCommissionXaf = paidApplications.reduce((sum, a) => {
-        const amount = a.paymentConfirmedAmount ?? a.paymentAmount ?? 0;
-        return sum + Math.round((amount * ambassador.commissionRateBps) / 10000);
-      }, 0);
 
       return {
         fullName: ambassador.fullName,
         referralCode: ambassador.referralCode,
         status: ambassador.status,
         commissionRateBps: ambassador.commissionRateBps,
-        totalReferrals: referredApplications.length,
-        paidReferrals: paidApplications.length,
-        totalCommissionXaf,
+        totalReferrals: agg.totalReferrals,
+        paidReferrals: agg.paidReferrals,
+        totalCommissionXaf: agg.totalCommissionXaf,
       };
     }),
 });
