@@ -204,9 +204,9 @@ export const placementPortalRouter = router({
   employerProfiles: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     const [submissions, favorites, receivedShares] = await Promise.all([
-      db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))),
-      db.select().from(placementEmployerFavorites).where(eq(placementEmployerFavorites.employerAccountId, account.id)),
-      db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.organizationId, organization.id), eq(placementEmployerFavoriteShares.recipientEmployerAccountId, account.id), isNull(placementEmployerFavoriteShares.revokedAt))),
+      db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))).limit(500),
+      db.select().from(placementEmployerFavorites).where(eq(placementEmployerFavorites.employerAccountId, account.id)).limit(500),
+      db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.organizationId, organization.id), eq(placementEmployerFavoriteShares.recipientEmployerAccountId, account.id), isNull(placementEmployerFavoriteShares.revokedAt))).limit(200),
     ]);
     const favoritesBySubmission = new Map(favorites.map((favorite) => [favorite.submissionId, favorite]));
     const sourceFavoriteIds = receivedShares.map((share) => share.sourceFavoriteId);
