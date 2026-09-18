@@ -79,6 +79,12 @@ export const consultationRequestRouter = router({
       if (requestId && input.cvFileUrl) {
         (async () => {
           try {
+            const _cvUrl = new URL(input.cvFileUrl!);
+            if (_cvUrl.protocol !== "https:") throw new Error("cvFileUrl must use https");
+            const _host = _cvUrl.hostname.toLowerCase();
+            if (_host === "localhost" || /^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\.|^169\.254\./.test(_host)) {
+              throw new Error("cvFileUrl points to a private address");
+            }
             const pdfResponse = await fetch(input.cvFileUrl!);
             const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
             const cvText = await extractTextFromPDF(pdfBuffer);

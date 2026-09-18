@@ -34,7 +34,11 @@ export function assertRemotePassportUrl(url: string): void {
     throw new Error('Le fichier passeport doit être téléversé avant son analyse.');
   }
 
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Le fichier passeport doit être téléversé avant son analyse.');
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || /^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\.|^169\.254\./.test(host)) {
     throw new Error('Le fichier passeport doit être téléversé avant son analyse.');
   }
 }
