@@ -252,7 +252,7 @@ export const simpleAuthRouter = router({
     .input(
       z.object({
         email: z.string().email().max(320),
-        password: z.string().max(128),
+        password: z.string().min(1).max(128),
       })
     )
     .mutation(async ({ input }) => {
