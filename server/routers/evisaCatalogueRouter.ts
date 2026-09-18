@@ -79,7 +79,7 @@ export const evisaCatalogueRouter = router({
   getPublicOverrides: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Catalogue e‑Visa indisponible." });
-    const rows = await db.select().from(managedEvisaDestinations);
+    const rows = await db.select().from(managedEvisaDestinations).limit(500);
     return rows.map(serialise);
   }),
 
@@ -91,7 +91,8 @@ export const evisaCatalogueRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Catalogue e‑Visa indisponible." });
       const rows = await db.select().from(managedEvisaDestinations)
         .where(input.includeInactive ? undefined : eq(managedEvisaDestinations.isActive, true))
-        .orderBy(managedEvisaDestinations.country);
+        .orderBy(managedEvisaDestinations.country)
+        .limit(500);
       return rows.map(serialise);
     }),
 

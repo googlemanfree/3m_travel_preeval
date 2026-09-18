@@ -56,7 +56,7 @@ export const consularRegistryRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Registre consulaire indisponible." });
-      const rows = await db.select().from(managedConsularPortals);
+      const rows = await db.select().from(managedConsularPortals).limit(500);
       return rows.map(serialise);
     }),
 
@@ -110,7 +110,7 @@ export const consularRegistryRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Registre consulaire indisponible." });
       const now = new Date();
       const deadline = new Date(now.getTime() + input.daysAhead * 24 * 60 * 60 * 1000);
-      const rows = await db.select().from(managedConsularPortals);
+      const rows = await db.select().from(managedConsularPortals).limit(500);
       return rows
         .filter((row) => row.verificationStatus === "a_completer" || !row.revalidateDueAt || row.revalidateDueAt <= deadline)
         .sort((left, right) => (left.revalidateDueAt?.getTime() ?? 0) - (right.revalidateDueAt?.getTime() ?? 0))

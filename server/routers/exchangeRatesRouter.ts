@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import mysql from 'mysql2/promise';
+import { requireValidAdminSession } from './adminAuth';
 
 /**
  * Routeur pour la gestion et la persistance des taux de change (XAF, EUR, USD) avec historique
@@ -44,11 +45,13 @@ export const exchangeRatesRouter = router({
   updateRates: publicProcedure
     .input(
       z.object({
+        sessionToken: z.string().min(1),
         eurToXaf: z.number().positive(),
         usdToXaf: z.number().positive(),
       })
     )
     .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
