@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 
 const DEFAULT_PAYMENT_AMOUNT = 65000;
@@ -133,15 +133,17 @@ export const cinetpayPaymentRouter = router({
     .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const whereClause = input.dossierNumber
+        ? and(eq(applications.candidateId, ctx.user.id), eq(applications.dossierNumber, input.dossierNumber))
+        : eq(applications.candidateId, ctx.user.id);
       const rows = await db.select().from(applications)
-        .where(eq(applications.candidateId, ctx.user.id))
+        .where(whereClause)
         .orderBy(desc(applications.updatedAt))
         .limit(input.limit)
         .offset(input.offset);
-      const filtered = input.dossierNumber ? rows.filter((row) => row.dossierNumber === input.dossierNumber) : rows;
       return {
         success: true,
-        transactions: filtered.map((row) => ({
+        transactions: rows.map((row) => ({
           transactionId: row.paymentTransactionId,
           dossierNumber: row.dossierNumber,
           status: row.paymentStatus,
@@ -149,23 +151,28 @@ export const cinetpayPaymentRouter = router({
           currency: row.paymentCurrency ?? PAYMENT_CURRENCY,
           paymentDate: row.paymentDate,
         })),
-        count: filtered.length,
+        count: rows.length,
       };
     }),
 
   getPaymentStats: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
-    const rows = await db.select().from(applications).where(eq(applications.candidateId, ctx.user.id));
-    const successful = rows.filter((row) => row.paymentStatus === "SUCCESS");
+    const [agg] = await db.select({
+      total: count(),
+      successful: count(sql`CASE WHEN paymentStatus = 'SUCCESS' THEN 1 END`),
+      totalAmountPaid: sql<number>`COALESCE(SUM(CASE WHEN paymentStatus = 'SUCCESS' THEN COALESCE(paymentAmount, ${DEFAULT_PAYMENT_AMOUNT}) ELSE 0 END), 0)`,
+      pending: count(sql`CASE WHEN paymentStatus = 'PENDING' THEN 1 END`),
+      failed: count(sql`CASE WHEN paymentStatus = 'FAILED' THEN 1 END`),
+    }).from(applications).where(eq(applications.candidateId, ctx.user.id));
     return {
       success: true,
       stats: {
-        totalTransactions: rows.length,
-        successfulPayments: successful.length,
-        totalAmountPaid: successful.reduce((sum, row) => sum + (row.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT), 0),
-        pendingPayments: rows.filter((row) => row.paymentStatus === "PENDING").length,
-        failedPayments: rows.filter((row) => row.paymentStatus === "FAILED").length,
+        totalTransactions: agg?.total ?? 0,
+        successfulPayments: agg?.successful ?? 0,
+        totalAmountPaid: Number(agg?.totalAmountPaid ?? 0),
+        pendingPayments: agg?.pending ?? 0,
+        failedPayments: agg?.failed ?? 0,
       },
     };
   }),
