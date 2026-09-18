@@ -355,7 +355,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     </div>
     
     <div class="body">
-      <p>Bonjour <strong>${app.fullName}</strong>,</p>
+      <p>Bonjour <strong>${escapeReportHtml(app.fullName)}</strong>,</p>
       <p>Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.</p>
       ${customIntro ? `<div class="recommendation"><p>${escapeReportHtml(clientText(customIntro)).replace(/\n/g, "<br/>")}</p></div>` : ""}
       
@@ -365,7 +365,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
           .map(
             s => `
           <div class="score-row">
-            <div class="destination">${DESTINATIONS[s.destination as keyof typeof DESTINATIONS]?.flag || "🌍"} ${DESTINATIONS[s.destination as keyof typeof DESTINATIONS]?.name || s.destination}</div>
+            <div class="destination">${DESTINATIONS[s.destination as keyof typeof DESTINATIONS]?.flag || "🌍"} ${DESTINATIONS[s.destination as keyof typeof DESTINATIONS]?.name || escapeReportHtml(s.destination)}</div>
             <div class="score-bar">
               <div class="bar">
                 <div class="bar-fill" style="width: ${s.score}%"></div>
@@ -390,7 +390,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       <div class="section">
         <div class="section-title">🎯 RECOMMANDATION STRATÉGIQUE & PLAN D'ACTION</div>
         <div class="recommendation">
-          <p><strong>Orientation à examiner :</strong> ${hasDestinationModel ? escapeReportHtml(selectedDestination) : DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || topScore.destination}</p>
+          <p><strong>Orientation à examiner :</strong> ${hasDestinationModel ? escapeReportHtml(selectedDestination) : DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || escapeReportHtml(topScore.destination)}</p>
           <p>${hasDestinationModel ? "Cette orientation est préliminaire et nécessite la vérification des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur." : topScore.description}</p>
           <p style="margin-top: 10px;">La décision finale relève toujours de l’autorité compétente, du programme visé et, lorsque nécessaire, de l’employeur. Ce bilan ne constitue pas une garantie de visa, d’emploi ou d’admission.</p>
         </div>

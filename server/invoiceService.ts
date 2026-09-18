@@ -7,6 +7,10 @@ import { getDb } from "./db";
 import { clientPayments, evaluations } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 /**
  * Génère le contenu HTML d'une facture
  */
@@ -109,7 +113,7 @@ export function generateInvoiceHTML(invoice: {
           </div>
           <div class="invoice-title">
             <h2>FACTURE</h2>
-            <div class="invoice-number">N° <strong>${invoice.invoiceNumber}</strong></div>
+            <div class="invoice-number">N° <strong>${esc(invoice.invoiceNumber)}</strong></div>
             <div class="invoice-date">Émise le <strong>${formattedDate}</strong></div>
           </div>
         </div>
@@ -120,8 +124,8 @@ export function generateInvoiceHTML(invoice: {
             <div class="section">
               <div class="section-title">Facturé à :</div>
               <div class="section-content">
-                <strong>${invoice.candidateName}</strong><br>
-                ${invoice.candidateEmail}
+                <strong>${esc(invoice.candidateName)}</strong><br>
+                ${esc(invoice.candidateEmail)}
               </div>
             </div>
           </div>
@@ -129,8 +133,8 @@ export function generateInvoiceHTML(invoice: {
             <div class="section">
               <div class="section-title">Destination :</div>
               <div class="section-content">
-                ${invoice.destinationCountry || "Non spécifiée"}<br>
-                ${invoice.visaType || "Type de visa non spécifié"}
+                ${esc(invoice.destinationCountry) || "Non spécifiée"}<br>
+                ${esc(invoice.visaType) || "Type de visa non spécifié"}
               </div>
             </div>
           </div>
@@ -146,7 +150,7 @@ export function generateInvoiceHTML(invoice: {
           </thead>
           <tbody>
             <tr>
-              <td>${invoice.paymentDescription}</td>
+              <td>${esc(invoice.paymentDescription)}</td>
               <td style="text-align: right;"><strong>${invoice.amount} ${invoice.currency}</strong></td>
             </tr>
           </tbody>
@@ -311,14 +315,14 @@ export function generateReceiptHTML(receipt: {
 
         <!-- Contenu -->
         <div class="content">
-          <p>Je soussigné(e), <strong>${receipt.candidateName}</strong>, reconnaît avoir remis à 3M Travel & Services le document suivant :</p>
+          <p>Je soussigné(e), <strong>${esc(receipt.candidateName)}</strong>, reconnaît avoir remis à 3M Travel &amp; Services le document suivant :</p>
         </div>
 
         <!-- Détails -->
         <div class="details">
           <div class="detail-row">
             <span class="detail-label">Numéro de reçu :</span>
-            <span class="detail-value"><strong>${receipt.receiptNumber}</strong></span>
+            <span class="detail-value"><strong>${esc(receipt.receiptNumber)}</strong></span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Date :</span>
@@ -326,15 +330,15 @@ export function generateReceiptHTML(receipt: {
           </div>
           <div class="detail-row">
             <span class="detail-label">Document :</span>
-            <span class="detail-value"><strong>${receipt.documentName}</strong></span>
+            <span class="detail-value"><strong>${esc(receipt.documentName)}</strong></span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Type :</span>
-            <span class="detail-value"><strong>${receipt.documentType}</strong></span>
+            <span class="detail-value"><strong>${esc(receipt.documentType)}</strong></span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Email :</span>
-            <span class="detail-value"><strong>${receipt.candidateEmail}</strong></span>
+            <span class="detail-value"><strong>${esc(receipt.candidateEmail)}</strong></span>
           </div>
         </div>
 
