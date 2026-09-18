@@ -213,7 +213,7 @@ export const evaluationCommentsRouter = router({
   replyToComment: protectedProcedure
     .input(
       z.object({
-        parentcommentId: z.number().int().positive().int().positive(),
+        parentCommentId: z.number().int().positive(),
         content: z.string().min(10).max(4000),
       })
     )

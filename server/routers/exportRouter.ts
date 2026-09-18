@@ -3,7 +3,7 @@
  * Génère les fichiers PDF et CSV
  */
 
-import { protectedProcedure, adminProcedure } from "../_core/trpc";
+import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
@@ -14,7 +14,7 @@ import * as path from "path";
 
 const TMP_DIR = "/tmp";
 
-export const exportRouter = {
+export const exportRouter = router({
   /**
    * Exporter les statistiques en CSV
    */
@@ -251,4 +251,4 @@ export const exportRouter = {
         });
       }
     }),
-};
+});
