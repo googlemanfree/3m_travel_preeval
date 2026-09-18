@@ -121,8 +121,9 @@ export function setupDocumentsRoutes(app: Express) {
       const mimeType = mimeTypes[ext] || "application/octet-stream";
 
       // Envoyer le fichier
+      const safeFilename = filename.replace(/[^\w.\-]/g, "_");
       res.setHeader("Content-Type", mimeType);
-      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+      res.setHeader("Content-Disposition", `inline; filename="${safeFilename}"`);
       res.sendFile(filePath);
     } catch (error) {
       console.error("Erreur lors du téléchargement:", error);

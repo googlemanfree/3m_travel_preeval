@@ -17,14 +17,14 @@ if (!fs.existsSync(uploadsDir)) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const folderCode = req.body.folderCode || 'unknown';
-    const candidateDir = path.join(uploadsDir, folderCode);
-    
-    // Créer le dossier du candidat s'il n'existe pas
+    const rawCode = (req.body.folderCode || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const candidateDir = path.resolve(uploadsDir, rawCode);
+    if (!candidateDir.startsWith(path.resolve(uploadsDir) + path.sep)) {
+      return cb(new Error("folderCode invalide"), "");
+    }
     if (!fs.existsSync(candidateDir)) {
       fs.mkdirSync(candidateDir, { recursive: true });
     }
-    
     cb(null, candidateDir);
   },
   filename: (req, file, cb) => {
@@ -86,14 +86,19 @@ export const uploadMiddleware = multer({
  * Fonction utilitaire pour obtenir le chemin d'accès d'un document
  */
 export const getDocumentPath = (folderCode: string, filename: string): string => {
-  return path.join(uploadsDir, folderCode, filename);
+  const resolved = path.resolve(uploadsDir, folderCode, filename);
+  if (!resolved.startsWith(path.resolve(uploadsDir) + path.sep)) {
+    throw new Error("Chemin invalide");
+  }
+  return resolved;
 };
 
 /**
  * Fonction utilitaire pour lister les documents d'un dossier
  */
 export const getDocumentsForFolder = (folderCode: string): string[] => {
-  const folderPath = path.join(uploadsDir, folderCode);
+  const folderPath = path.resolve(uploadsDir, folderCode);
+  if (!folderPath.startsWith(path.resolve(uploadsDir) + path.sep)) return [];
   
   if (!fs.existsSync(folderPath)) {
     return [];
