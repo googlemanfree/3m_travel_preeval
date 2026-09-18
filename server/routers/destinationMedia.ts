@@ -45,7 +45,7 @@ export const destinationMediaRouter = router({
       imageAlt: destinationMedia.imageAlt,
       flagAlt: destinationMedia.flagAlt,
       updatedAt: destinationMedia.updatedAt,
-    }).from(destinationMedia).orderBy(desc(destinationMedia.updatedAt));
+    }).from(destinationMedia).orderBy(desc(destinationMedia.updatedAt)).limit(500);
   }),
 
   getByDestination: publicProcedure
@@ -70,7 +70,7 @@ export const destinationMediaRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
     return {
       admin: { id: admin.id, email: admin.email, fullName: admin.fullName },
-      media: await db.select().from(destinationMedia).orderBy(desc(destinationMedia.updatedAt)),
+      media: await db.select().from(destinationMedia).orderBy(desc(destinationMedia.updatedAt)).limit(500),
     };
   }),
 

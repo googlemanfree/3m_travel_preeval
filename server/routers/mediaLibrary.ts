@@ -16,7 +16,7 @@ export const mediaLibraryRouter = router({
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-    return db.select().from(mediaLibrary).orderBy(desc(mediaLibrary.createdAt));
+    return db.select().from(mediaLibrary).orderBy(desc(mediaLibrary.createdAt)).limit(500);
   }),
 
   upload: publicProcedure
