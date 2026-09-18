@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
@@ -349,10 +349,10 @@ export const aiEvaluationManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
       const [genEvals, luxEvals, etudesEvals, consultations, applicationRows] = await Promise.all([
-        db.select().from(evaluations).limit(input.limit),
-        db.select().from(luxembourgEvaluations).limit(input.limit),
-        db.select().from(studyVisaEvaluations).limit(input.limit),
-        db.select().from(consultationRequests).limit(input.limit),
+        db.select().from(evaluations).orderBy(asc(evaluations.createdAt)).limit(input.limit),
+        db.select().from(luxembourgEvaluations).orderBy(asc(luxembourgEvaluations.createdAt)).limit(input.limit),
+        db.select().from(studyVisaEvaluations).orderBy(asc(studyVisaEvaluations.createdAt)).limit(input.limit),
+        db.select().from(consultationRequests).orderBy(asc(consultationRequests.createdAt)).limit(input.limit),
         db.select({ email: applications.email }).from(applications).limit(2000),
       ]);
 
