@@ -157,9 +157,9 @@ export const notificationRouter = router({
 
         const emailHtml = `
           <h2>Rappel - Paiement en Attente</h2>
-          <p>Bonjour ${data.candidateName},</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
           <p>${overdueText}</p>
-          <h3>Montant à payer : ${data.amount} ${data.currency}</h3>
+          <h3>Montant à payer : ${esc(data.amount)} ${esc(data.currency)}</h3>
           <p>Finalisez votre dossier en procédant au paiement dès maintenant.</p>
           <p>Consultez votre espace candidat pour le lien de paiement.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
@@ -202,7 +202,7 @@ export const notificationRouter = router({
       try {
         const emailHtml = `
           <h2>Documents Reçus</h2>
-          <p>Bonjour ${data.candidateName},</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
           <p>Nous avons reçu et vérifié <strong>${data.documentCount} document(s)</strong>. ✅</p>
           <p>Prochaine étape : Soumission aux agences partenaires.</p>
           <p>Nous vous tiendrons informé de l'avancement.</p>
@@ -245,8 +245,8 @@ export const notificationRouter = router({
       try {
         const emailHtml = `
           <h2>🎉 Félicitations ! Votre Visa a été Approuvé 🎉</h2>
-          <p>Bonjour ${data.candidateName},</p>
-          <p>Excellente nouvelle ! Votre visa <strong>${data.visaType}</strong> pour <strong>${data.destinationCountry}</strong> a été approuvé ! ✅</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
+          <p>Excellente nouvelle ! Votre visa <strong>${esc(data.visaType)}</strong> pour <strong>${esc(data.destinationCountry)}</strong> a été approuvé ! ✅</p>
           <p>Consultez votre espace candidat pour les détails et les prochaines étapes.</p>
           <p>Merci de votre confiance !<br/>3M Travel & Services</p>
         `;
@@ -289,13 +289,13 @@ export const notificationRouter = router({
       try {
         const emailHtml = `
           <h2>🎊 Contrat Obtenu 🎊</h2>
-          <p>Bonjour ${data.candidateName},</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
           <p>Excellente nouvelle ! Vous avez obtenu un contrat de travail ! 🎉</p>
           <h3>Détails du Contrat</h3>
           <ul>
-            <li><strong>Employeur :</strong> ${data.employerName}</li>
-            <li><strong>Poste :</strong> ${data.position}</li>
-            <li><strong>Destination :</strong> ${data.destinationCountry}</li>
+            <li><strong>Employeur :</strong> ${esc(data.employerName)}</li>
+            <li><strong>Poste :</strong> ${esc(data.position)}</li>
+            <li><strong>Destination :</strong> ${esc(data.destinationCountry)}</li>
           </ul>
           <p>Consultez votre espace candidat pour les détails et les prochaines étapes.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
@@ -338,10 +338,10 @@ export const notificationRouter = router({
       try {
         const emailHtml = `
           <h2>Mise à Jour de Votre Dossier</h2>
-          <p>Bonjour ${data.candidateName},</p>
+          <p>Bonjour ${esc(data.candidateName)},</p>
           <p>Malheureusement, votre dossier n'a pas pu être approuvé.</p>
           <h3>Raison :</h3>
-          <p>${data.reason}</p>
+          <p>${esc(data.reason)}</p>
           <p>Nous vous invitons à nous contacter pour discuter des options disponibles.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
