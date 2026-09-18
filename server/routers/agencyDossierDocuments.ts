@@ -25,10 +25,11 @@ export const agencyDossierDocumentsRouter = router({
       const where = input.verificationStatus
         ? and(eq(agencyDossierDocuments.dossierId, input.dossierId), eq(agencyDossierDocuments.verificationStatus, input.verificationStatus))
         : eq(agencyDossierDocuments.dossierId, input.dossierId);
-      const documents = await db.select().from(agencyDossierDocuments).where(where).orderBy(desc(agencyDossierDocuments.createdAt));
+      const documents = await db.select().from(agencyDossierDocuments).where(where).orderBy(desc(agencyDossierDocuments.createdAt)).limit(200);
       const annotations = await db.select().from(agencyDossierDocumentAnnotations)
         .where(eq(agencyDossierDocumentAnnotations.dossierId, input.dossierId))
-        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
+        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt))
+        .limit(500);
       const documentsWithPrivateUrls = await Promise.all(documents.map(async document => ({
         ...document,
         documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
@@ -77,7 +78,8 @@ export const agencyDossierDocumentsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       return db.select().from(agencyDossierDocumentAnnotations)
         .where(eq(agencyDossierDocumentAnnotations.documentId, input.documentId))
-        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
+        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt))
+        .limit(200);
     }),
 
   addCorrectionAnnotation: protectedProcedure
