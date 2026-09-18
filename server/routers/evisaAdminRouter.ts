@@ -21,6 +21,8 @@ function generateDossierNumber(): string {
   return `EVISA-${year}${month}${day}-${random}`;
 }
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 export const evisaAdminRouter = router({
   /**
    * Récupérer toutes les demandes e-visa (admin seulement)
@@ -197,7 +199,7 @@ export const evisaAdminRouter = router({
             await sendEmail({
               to: existingRequest.email,
               subject: `Mise à jour de votre demande e-visa — 3M Travel`,
-              html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Mise à jour de votre demande e-visa</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${existingRequest.fullName || "Client"}</strong>,</p><p>Le statut de votre demande d'e-visa a été mis à jour : votre dossier est désormais <strong>${statusLabel}</strong>.</p>${input.notes ? `<div style="background:#fff;border-left:4px solid #2563EB;padding:12px 16px;margin:16px 0"><p style="margin:0;color:#374151">${input.notes}</p></div>` : ""}<p>Pour toute question, contactez notre équipe via WhatsApp : <strong>+237 698 104 832</strong></p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
+              html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Mise à jour de votre demande e-visa</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${esc(existingRequest.fullName || "Client")}</strong>,</p><p>Le statut de votre demande d'e-visa a été mis à jour : votre dossier est désormais <strong>${esc(statusLabel)}</strong>.</p>${input.notes ? `<div style="background:#fff;border-left:4px solid #2563EB;padding:12px 16px;margin:16px 0"><p style="margin:0;color:#374151">${esc(input.notes)}</p></div>` : ""}<p>Pour toute question, contactez notre équipe via WhatsApp : <strong>+237 698 104 832</strong></p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
             });
           } catch (emailErr) {
             console.warn("[evisaAdmin] Status update email failed:", emailErr);

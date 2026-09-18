@@ -7,6 +7,8 @@ import { sendEmail } from '../_core/email';
 
 const AGENCY_EMAIL = 'hello@3mtravelagency.com';
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 async function getCandidateContact(candidateId: string) {
   const numericId = Number(candidateId.includes('_') ? candidateId.split('_').pop() : candidateId);
   if (!Number.isInteger(numericId) || numericId <= 0) return null;
@@ -190,7 +192,7 @@ async function sendPaymentValidationEmail(candidateId: string): Promise<boolean>
       to: candidate.email,
       replyTo: AGENCY_EMAIL,
       subject: '✅ Votre paiement a été validé - 3M Travel Agency',
-      html: `<h2>Paiement validé</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement de 65 000 XAF a été validé avec succès.</p><p><strong>Prochaine étape :</strong> vous pouvez maintenant déposer vos documents dans votre espace candidat.</p><p><a href="https://www.3mtravelagency.com/mon-espace">Accéder à mon espace</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
+      html: `<h2>Paiement validé</h2><p>Bonjour ${esc(candidate.fullName)},</p><p>Votre paiement de 65 000 XAF a été validé avec succès.</p><p><strong>Prochaine étape :</strong> vous pouvez maintenant déposer vos documents dans votre espace candidat.</p><p><a href="https://www.3mtravelagency.com/mon-espace">Accéder à mon espace</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
     });
     return true;
   } catch (error) {
@@ -216,7 +218,7 @@ async function sendPaymentRejectionEmail(
       to: candidate.email,
       replyTo: AGENCY_EMAIL,
       subject: '⚠️ Votre paiement a été rejeté - 3M Travel Agency',
-      html: `<h2>Paiement rejeté</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement n’a pas pu être validé.</p>${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ''}<p>Contactez notre équipe pour la suite de votre dossier.</p><p><a href="https://wa.me/237698104832">Contacter l’équipe via WhatsApp</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
+      html: `<h2>Paiement rejeté</h2><p>Bonjour ${esc(candidate.fullName)},</p><p>Votre paiement n’a pas pu être validé.</p>${reason ? `<p><strong>Motif :</strong> ${esc(reason)}</p>` : ‘’}<p>Contactez notre équipe pour la suite de votre dossier.</p><p><a href="https://wa.me/237698104832">Contacter l’équipe via WhatsApp</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
     });
     return true;
   } catch (error) {

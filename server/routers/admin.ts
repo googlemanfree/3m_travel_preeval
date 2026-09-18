@@ -2055,7 +2055,7 @@ export const adminRouter = router({
           await sendGenericEmail({
             to: candidateEmail,
             subject: `Correction du suivi de votre dossier ${dossierNumber}`,
-            html: `<p>Bonjour ${candidateName},</p><p>Une correction administrative a été appliquée au suivi de votre dossier <strong>${dossierNumber}</strong>.</p><p>Étape active : <strong>${labels[previousStatus]}</strong>.</p><p>Motif communiqué : ${input.reason.trim()}</p><p>Consultez votre espace client : <a href="https://www.3mtravelagency.com/mon-espace">www.3mtravelagency.com/mon-espace</a>.</p>`,
+            html: `<p>Bonjour ${esc(candidateName)},</p><p>Une correction administrative a été appliquée au suivi de votre dossier <strong>${esc(dossierNumber)}</strong>.</p><p>Étape active : <strong>${esc(labels[previousStatus])}</strong>.</p><p>Motif communiqué : ${esc(input.reason.trim())}</p><p>Consultez votre espace client : <a href="https://www.3mtravelagency.com/mon-espace">www.3mtravelagency.com/mon-espace</a>.</p>`,
           });
           notificationSent = true;
         } catch (emailError) {
@@ -4048,8 +4048,8 @@ export const adminRouter = router({
         ? (await db.select({ fullName: applications.fullName, email: applications.email, dossierNumber: applications.dossierNumber, candidateId: applications.candidateId }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
         : (await db.select({ fullName: agencyDossiers.fullName, email: agencyDossiers.email, dossierNumber: agencyDossiers.id, candidateId: candidates.id }).from(agencyDossiers).leftJoin(candidates, eq(candidates.email, agencyDossiers.email)).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!record?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
-      const documentList = missing.map((item) => `<li><strong>${item.documentType}</strong>${item.adminComment ? ` — ${item.adminComment}` : ""}</li>`).join("");
-      await sendGenericEmail({ to: record.email, subject: `Documents à compléter — Dossier ${String(record.dossierNumber)}`, html: `<p>Bonjour ${record.fullName},</p><p>Votre dossier nécessite encore les pièces suivantes :</p><ul>${documentList}</ul><p>Connectez-vous à votre espace 3M Travel pour déposer les documents ou répondre à votre conseiller.</p>` });
+      const documentList = missing.map((item) => `<li><strong>${esc(item.documentType)}</strong>${item.adminComment ? ` — ${esc(item.adminComment)}` : ""}</li>`).join("");
+      await sendGenericEmail({ to: record.email, subject: `Documents à compléter — Dossier ${String(record.dossierNumber)}`, html: `<p>Bonjour ${esc(record.fullName)},</p><p>Votre dossier nécessite encore les pièces suivantes :</p><ul>${documentList}</ul><p>Connectez-vous à votre espace 3M Travel pour déposer les documents ou répondre à votre conseiller.</p>` });
       if (record.candidateId) await db.insert(clientNotifications).values({ candidateId: record.candidateId, caseId: operationalCase.id, type: "documents_reminder", title: "Documents manquants à compléter", body: `${missing.length} pièce(s) restent à déposer ou à corriger. Consultez votre espace candidat.`, actionUrl: "/mon-espace?section=documents", isRead: false });
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "documents_reminder_sent", entityType: "case", entityId: String(operationalCase.id), description: `Relance envoyée pour ${missing.length} document(s) manquant(s).` });
       return { success: true, count: missing.length };
@@ -4202,13 +4202,14 @@ export const adminRouter = router({
 
       let emailSent = false;
       try {
+        const safeAttachUrl = input.attachmentUrl && /^https?:\/\//i.test(input.attachmentUrl) ? esc(input.attachmentUrl) : "#";
         const attachmentHtml = input.attachmentName && input.attachmentUrl
-          ? `<p><strong>Pièce jointe :</strong> <a href="${input.attachmentUrl}" target="_blank">${input.attachmentName}</a></p>`
+          ? `<p><strong>Pièce jointe :</strong> <a href="${safeAttachUrl}" target="_blank">${esc(input.attachmentName)}</a></p>`
           : "";
         await sendGenericEmail({
           to: sourceRecord.email,
         subject: clarification ? "Réponse à votre demande concernant une pièce justificative" : "Nouveau message concernant votre dossier 3M Travel",
-          html: `<p>Bonjour ${sourceRecord.fullName},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
+          html: `<p>Bonjour ${esc(sourceRecord.fullName)},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
         });
         emailSent = true;
       } catch (error) {

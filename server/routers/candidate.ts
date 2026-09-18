@@ -51,6 +51,7 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
 }
 const JWT_EXPIRES = "24h";
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 export function signCandidateToken(candidateId: number): string {
   return jwt.sign({ sub: candidateId, type: "candidate" }, JWT_SECRET, {
@@ -2311,7 +2312,7 @@ export const candidateRouter = router({
         await sendGenericEmail({
           to: input.recipientEmail,
           subject,
-          html: `<p>${textBody.replace(/\n/g, "<br />")}</p>`,
+          html: `<p>${esc(textBody).replace(/\n/g, "<br />")}</p>`,
         });
       } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Échec de l’envoi de l’e-mail." });
