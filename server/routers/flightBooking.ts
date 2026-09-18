@@ -413,7 +413,8 @@ export const flightBookingRouter = router({
       .where(eq(flightLoyaltyAccounts.candidateId, ctx.candidate.id)).limit(1);
     const transactions = await db.select().from(flightLoyaltyTransactions)
       .where(eq(flightLoyaltyTransactions.candidateId, ctx.candidate.id))
-      .orderBy(flightLoyaltyTransactions.createdAt);
+      .orderBy(flightLoyaltyTransactions.createdAt)
+      .limit(500);
 
     const availablePoints = account?.availablePoints ?? 0;
     const lifetimePoints = account?.lifetimePoints ?? 0;
@@ -495,7 +496,8 @@ export const flightBookingRouter = router({
       if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
       return db.select().from(flightPartnerQuotes)
         .where(and(eq(flightPartnerQuotes.requestId, input.requestId), eq(flightPartnerQuotes.isActive, true)))
-        .orderBy(flightPartnerQuotes.quotedAmountXaf);
+        .orderBy(flightPartnerQuotes.quotedAmountXaf)
+        .limit(20);
     }),
 
   getQueueSummary: publicProcedure
@@ -538,7 +540,7 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [request] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
-      const history = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+      const history = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt)).limit(200);
       return { request, history };
     }),
 
@@ -550,7 +552,8 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       return db.select().from(flightPartnerQuotes)
         .where(eq(flightPartnerQuotes.requestId, input.requestId))
-        .orderBy(desc(flightPartnerQuotes.verifiedAt));
+        .orderBy(desc(flightPartnerQuotes.verifiedAt))
+        .limit(50);
     }),
 
   addPartnerQuote: publicProcedure
@@ -650,7 +653,7 @@ export const flightBookingRouter = router({
       await assertAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
+      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(500);
       return rows;
     }),
 
@@ -965,7 +968,7 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
       
-      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt)).limit(500);
 
       if (input.startDate) {
         const startTimestamp = new Date(input.startDate).getTime();
