@@ -8,7 +8,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { applications, candidates, transactions } from "../../drizzle/schema";
-import { desc, count, sql, eq } from "drizzle-orm";
+import { desc, count, sql } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
 

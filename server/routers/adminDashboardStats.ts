@@ -14,7 +14,7 @@ import {
   clientDocuments,
   agencyDossiers,
 } from "../../drizzle/schema";
-import { eq, desc, and, gte, lte, count, sql } from "drizzle-orm";
+import { eq, desc, count, sql } from "drizzle-orm";
 
 export const adminDashboardStatsRouter = router({
   /**
