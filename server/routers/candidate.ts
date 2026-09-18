@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, asc, desc, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
@@ -136,7 +136,7 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
   const candidateId = verifyCandidateToken(token);
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-  const rows = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+  const rows = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
   if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
   return rows[0];
 }
@@ -163,7 +163,7 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
   const email = user.email;
   if (!email) throw new TRPCError({ code: "BAD_REQUEST", message: "Adresse email manquante sur le compte." });
 
-  const existing = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+  const existing = await db.select().from(candidates).where(and(eq(candidates.email, email), isNull(candidates.deletedAt))).limit(1);
   if (existing.length > 0) return existing[0];
 
   await db.insert(candidates).values({
