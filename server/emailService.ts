@@ -25,7 +25,7 @@ export async function sendClientDossierConfirmationEmail(
             <h1 style="margin: 0;">Demande e-Visa Confirmée</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>✅ Votre demande e-Visa a été <strong>soumise avec succès</strong> !</p>
             
             <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
@@ -91,7 +91,7 @@ export async function sendAdminNewDossierAlertEmail(
           </div>
           <div style="padding: 40px; background: #f9fafb;">
             <p><strong>Dossier :</strong> #${dossierNumber}</p>
-            <p><strong>Candidat :</strong> ${fullName}</p>
+            <p><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</p>
             <p><strong>Destination :</strong> ${countryName}</p>
             <p><strong>Montant :</strong> ${totalCost.toLocaleString("fr-FR")} ${currency}</p>
             
@@ -136,7 +136,7 @@ export async function sendEvisaStatusUpdateEmail(
             <h1 style="margin: 0;">Mise à jour de votre demande</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>Votre demande e-Visa pour <strong>${countryName}</strong> a été mise à jour.</p>
             
             <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 20px 0; border-radius: 8px;">
@@ -180,7 +180,7 @@ export async function sendPaymentConfirmationEmail(
             <h1 style="margin: 0;">✅ Paiement Reçu</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>Votre paiement a été <strong>reçu et confirmé</strong>.</p>
             
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -225,7 +225,7 @@ export async function sendVerificationLink(
             <h1 style="margin: 0;">Confirmez votre email</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p>
             <p>Pour finaliser votre inscription et activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
             ${priorEvaluationNotice}
@@ -260,7 +260,7 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
             <h1 style="margin: 0;">Vérification de votre email</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>Voici votre code de vérification :</p>
             <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
               <div style="font-size: 32px; font-weight: bold; color: #1E3A8A; letter-spacing: 4px;">${otp}</div>
@@ -289,7 +289,7 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
             <h1 style="margin: 0;">Réinitialisation de votre mot de passe</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour le réinitialiser :</p>
             
             <p style="text-align: center; margin-top: 30px;">
@@ -370,7 +370,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Bienvenue, ${fullName} !</h1>
+            <h1 style="margin: 0;">Bienvenue, ${escapeEmailHtml(fullName)} !</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
             <p>Nous sommes ravis de vous accueillir chez <strong>3M Travel & Services</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
@@ -413,7 +413,7 @@ export async function sendDossierConfirmationEmail(
     if (db) {
       const [cand] = await db.select().from(candidates).where(eq(candidates.email, to)).limit(1);
       if (cand?.avatarUrl) {
-        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${fullName}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #16a34a; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
+        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${escapeEmailHtml(fullName)}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #16a34a; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
       }
     }
   } catch {}
@@ -429,7 +429,7 @@ export async function sendDossierConfirmationEmail(
           </div>
           <div style="padding: 40px; background: #f9fafb;">
             ${avatarHtml}
-            <p>Bonjour <strong>${fullName}</strong>,</p>
+            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
             <p>✅ Votre dossier d'immigration a été <strong>créé avec succès</strong> !</p>
             
             <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
@@ -488,7 +488,7 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
     if (db) {
       const [cand] = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
       if (cand?.avatarUrl) {
-        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${fullName}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
+        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${escapeEmailHtml(fullName)}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
       }
     }
   } catch {}
@@ -503,7 +503,7 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
         <p>Un nouveau dossier a été créé :</p>
         <ul>
           <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
-          <li><strong>Candidat :</strong> ${fullName}</li>
+          <li><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</li>
           <li><strong>Email :</strong> ${email}</li>
           <li><strong>WhatsApp :</strong> ${whatsappNumber}</li>
           <li><strong>Destination :</strong> ${destination}</li>
