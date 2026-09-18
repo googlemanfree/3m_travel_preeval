@@ -297,28 +297,22 @@ export const adminDashboardStatsRouter = router({
 
       try {
         const recentApps = await db
-          .select()
+          .select({
+            app: applications,
+            candidateName: candidates.fullName,
+            candidateEmail: candidates.email,
+          })
           .from(applications)
+          .leftJoin(candidates, eq(candidates.id, applications.candidateId as any))
           .orderBy(desc(applications.createdAt))
           .limit(input.limit);
 
-        // Enrichir avec les données candidat
-        const enrichedApps = await Promise.all(
-          recentApps.map(async app => {
-            const candidate = await db
-              .select()
-              .from(candidates)
-              .where(eq(candidates.id, app.candidateId as any))
-              .then(result => result[0]);
-
-            return {
-              ...app,
-              candidateName: candidate?.fullName || "N/A",
-              candidateEmail: candidate?.email || "N/A",
-              candidatePhone: "N/A", // phone removed from schema
-            };
-          })
-        );
+        const enrichedApps = recentApps.map(row => ({
+          ...row.app,
+          candidateName: row.candidateName || "N/A",
+          candidateEmail: row.candidateEmail || "N/A",
+          candidatePhone: "N/A",
+        }));
 
         return {
           success: true,
