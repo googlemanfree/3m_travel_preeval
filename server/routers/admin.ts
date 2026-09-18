@@ -3194,7 +3194,8 @@ export const adminRouter = router({
       const logs = await db.select({ status: emailDeliveryLogs.status, createdAt: emailDeliveryLogs.createdAt })
         .from(emailDeliveryLogs)
         .where(gte(emailDeliveryLogs.createdAt, start))
-        .orderBy(asc(emailDeliveryLogs.createdAt));
+        .orderBy(asc(emailDeliveryLogs.createdAt))
+        .limit(10000);
       return buildEmailDeliveryTrend30Days(logs);
     }),
 
@@ -3380,7 +3381,8 @@ export const adminRouter = router({
       const incidents = await db
         .select({ advisorEmail: emailDeliveryIncidents.advisorEmail, resolvedAt: emailDeliveryIncidents.resolvedAt })
         .from(emailDeliveryIncidents)
-        .where(eq(emailDeliveryIncidents.status, "resolved" as any));
+        .where(eq(emailDeliveryIncidents.status, "resolved" as any))
+        .limit(500);
       return incidents;
     }),
 
@@ -3420,20 +3422,20 @@ export const adminRouter = router({
         }
       };
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
-        safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)), [], "requirements"),
-        safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)), [], "caseDocuments"),
+        safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)).limit(100), [], "requirements"),
+        safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)).limit(100), [], "caseDocuments"),
         linkedApplication
           ? safeCollection(db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100), [], "clientDocuments")
           : Promise.resolve([]),
-        safeCollection(db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)), [], "tasks"),
-        safeCollection(db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)), [], "notes"),
-        safeCollection(db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)), [], "statusHistory"),
-        safeCollection(db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)), [], "activityLogs"),
+        safeCollection(db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)).limit(100), [], "tasks"),
+        safeCollection(db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)).limit(100), [], "notes"),
+        safeCollection(db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)).limit(200), [], "statusHistory"),
+        safeCollection(db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)).limit(200), [], "activityLogs"),
         candidateRecord ? safeCollection(db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30), [], "notifications") : Promise.resolve([]),
         candidateRecord ? safeCollection(db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30), [], "messages") : Promise.resolve([]),
         candidateRecord ? safeCollection(db.select().from(documentClarificationRequests).where(eq(documentClarificationRequests.candidateId, candidateRecord.id)).orderBy(desc(documentClarificationRequests.createdAt)).limit(30), [], "clarifications") : Promise.resolve([]),
         candidateRecord ? safeCollection(db.select().from(documentClarificationEvents).where(eq(documentClarificationEvents.candidateId, candidateRecord.id)).orderBy(asc(documentClarificationEvents.createdAt)).limit(150), [], "clarificationEvents") : Promise.resolve([]),
-        safeCollection(db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)), [], "advisors"),
+        safeCollection(db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)).limit(50), [], "advisors"),
         safeCollection(db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30), [], "requestHistory"),
         safeCollection(db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1), [], "evaluations"),
       ]);
@@ -3495,7 +3497,7 @@ export const adminRouter = router({
         receiptApproval: receiptApproval ? { id: receiptApproval.id, approvedByName: receiptApproval.approvedByName, approvedByEmail: receiptApproval.approvedByEmail, approvedAt: receiptApproval.approvedAt, signatureLabel: receiptApproval.signatureLabel, signatureHash: receiptApproval.signatureHash } : null,
       };
       const evaluationVersions = reference.source === "online"
-        ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber))
+        ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50)
         : [];
       const nextAction = determineCandidate360NextAction({ workflowStatus: operationalCase.currentStatus, paymentStatus: paymentSnapshot?.status, pendingDocuments, openTasks, dueAt: operationalCase.dueAt });
       const latestEvaluation = latestEvaluations[0];
@@ -3941,7 +3943,7 @@ export const adminRouter = router({
       const [openCases, openTasks, activeAdmins, requestRows] = await Promise.all([
         db.select().from(cases).where(and(isNotNull(cases.dueAt), isNull(cases.closedAt))).limit(1000),
         db.select().from(caseTasks).where(and(isNotNull(caseTasks.dueAt), inArray(caseTasks.taskStatus, ["open", "in_progress"]))).limit(2000),
-        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).limit(50),
         db.select({ caseId: unifiedClientRequests.caseId, fullName: unifiedClientRequests.fullName }).from(unifiedClientRequests).where(isNotNull(unifiedClientRequests.caseId)).limit(2000),
       ]);
       const caseById = new Map(openCases.map((operationalCase) => [operationalCase.id, operationalCase]));

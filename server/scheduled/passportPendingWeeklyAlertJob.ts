@@ -54,7 +54,8 @@ export async function handlePassportPendingWeeklyAlertJob(_req: Request, res: Re
       .where(and(
         eq(clientDocuments.documentType, "passport"),
         eq(clientDocuments.verificationStatus, "pending"),
-      ));
+      ))
+      .limit(500);
     const summary = buildPendingPassportSummary(pendingDocuments);
 
     if (summary.total === 0) {
