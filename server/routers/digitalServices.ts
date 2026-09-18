@@ -120,7 +120,7 @@ export const digitalServicesRouter = router({
     await resolveDigitalAdminSession(ctx.req.headers.cookie, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db.select().from(digitalServiceRequests).orderBy(desc(digitalServiceRequests.createdAt));
+    return db.select().from(digitalServiceRequests).orderBy(desc(digitalServiceRequests.createdAt)).limit(500);
   }),
 
   updateRequest: publicProcedure.input(z.object({

@@ -231,7 +231,7 @@ export const tourismRouter = router({
     await requireTourismAdminSession(ctx.req.headers.cookie, input?.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt));
+    return db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(500);
   }),
 
   adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional(), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {

@@ -109,7 +109,7 @@ export const insuranceRequestsRouter = router({
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt));
+    return db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt)).limit(500);
   }),
 
   updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema })).mutation(async ({ input, ctx }) => {

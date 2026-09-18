@@ -99,9 +99,9 @@ export const placementPortalRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const [organizations, profiles, submissions] = await Promise.all([
-      db.select().from(placementOrganizations),
-      db.select().from(placementCandidateProfiles).where(isNull(placementCandidateProfiles.archivedAt)),
-      db.select().from(placementProfileSubmissions),
+      db.select().from(placementOrganizations).limit(200),
+      db.select().from(placementCandidateProfiles).where(isNull(placementCandidateProfiles.archivedAt)).limit(500),
+      db.select().from(placementProfileSubmissions).limit(500),
     ]);
     return { organizations, profiles, submissions };
   }),
