@@ -13,6 +13,8 @@ import {
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
+
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { candidateProcedure, findCandidateFromAuthorizationHeader, getOrCreateCandidateForPlatformUser } from "./candidate";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
@@ -639,7 +641,7 @@ export const flightBookingRouter = router({
         await sendEmail({
           to: existing.candidateEmail,
           subject: `[3M Travel] Mise à jour de votre réservation ${existing.requestRef}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${existing.requestRef}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${customerStatusLabels[input.status]}</p><p style="margin:0"><strong>Trajet :</strong> ${flightSummary.origin} → ${flightSummary.destination}<br/><strong>Départ :</strong> ${flightSummary.departure}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${input.details.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : ""}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel & Services</strong></p></div>`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${esc(existing.requestRef)}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${esc(customerStatusLabels[input.status])}</p><p style="margin:0"><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${esc(input.details).replace(/\n/g, "<br/>")}</p>` : ""}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel &amp; Services</strong></p></div>`,
         });
         notificationEmailSent = true;
       } catch (error) {
