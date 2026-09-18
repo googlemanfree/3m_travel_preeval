@@ -172,7 +172,8 @@ export const evaluationCommentsRouter = router({
           .select()
           .from(evaluationComments)
           .where(eq(evaluationComments.dossierNumber, input.dossierNumber))
-          .orderBy(desc(evaluationComments.createdAt));
+          .orderBy(desc(evaluationComments.createdAt))
+          .limit(200);
 
         // Grouper les commentaires et réponses
         const threaded = comments.map((comment) => ({

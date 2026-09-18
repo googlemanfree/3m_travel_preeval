@@ -223,7 +223,8 @@ export const tourismRouter = router({
       })
       .from(tourismServiceRequests)
       .where(or(eq(tourismServiceRequests.candidateId, ctx.candidate.id), eq(tourismServiceRequests.email, ctx.candidate.email)))
-      .orderBy(desc(tourismServiceRequests.updatedAt));
+      .orderBy(desc(tourismServiceRequests.updatedAt))
+      .limit(50);
     return requests.map((request) => ({ ...request, tracking: getTourismTrackingMeta(request.status) }));
   }),
 
