@@ -21,6 +21,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -159,14 +160,26 @@ export const placementPortalRouter = router({
   }),
 
   employerLogin: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1).max(128), twoFactorCode: z.string().trim().min(6).max(32).optional() })).mutation(async ({ input }) => {
+    checkLoginAttempts(input.email);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const account = (await db.select().from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, input.email.toLowerCase())).limit(1))[0];
-    if (!account || account.status !== "active" || !(await bcrypt.compare(input.password, account.passwordHash))) throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
+    if (!account || account.status !== "active") {
+      recordFailedAttempt(input.email);
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
+    }
+    if (!(await bcrypt.compare(input.password, account.passwordHash))) {
+      recordFailedAttempt(input.email);
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
+    }
     const organization = (await db.select().from(placementOrganizations).where(and(eq(placementOrganizations.id, account.organizationId), eq(placementOrganizations.verificationStatus, "verified"))).limit(1))[0];
     if (!organization) throw new TRPCError({ code: "FORBIDDEN", message: "Accès organisation non vérifié." });
     const twoFactor = await verifyTwoFactor("employer", account.id, input.twoFactorCode ?? "");
-    if (twoFactor.required && !twoFactor.valid) throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
+    if (twoFactor.required && !twoFactor.valid) {
+      recordFailedAttempt(input.email);
+      throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
+    }
+    resetLoginAttempts(input.email);
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));
