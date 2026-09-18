@@ -8,6 +8,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory, candidates } from "../../drizzle/schema";
+
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { eq, and, or, like, desc, isNull, isNotNull, sql, count, inArray } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
@@ -593,7 +595,7 @@ export const agencyDossierRouter = router({
       if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent envoyer une relance" });
       const [dossier] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, input.dossierId), isNull(agencyDossiers.deletedAt))).limit(1);
       if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier actif introuvable" });
-      await sendGenericEmail({ to: dossier.email, subject: "Rappel concernant votre dossier — 3M Travel & Services", html: `<p>Bonjour ${dossier.fullName},</p><p>${input.message}</p><p>Cordialement,<br/>3M Travel & Services</p>` });
+      await sendGenericEmail({ to: dossier.email, subject: "Rappel concernant votre dossier — 3M Travel & Services", html: `<p>Bonjour ${esc(dossier.fullName)},</p><p>${esc(input.message).replace(/\n/g, "<br/>")}</p><p>Cordialement,<br/>3M Travel &amp; Services</p>` });
       await db.insert(agencyDossierHistory).values({ dossierId: input.dossierId, action: "manual_reminder", changedBy: ctx.user.email || "unknown", oldValue: null, newValue: null, details: "Relance manuelle envoyée" });
       return { success: true };
     }),

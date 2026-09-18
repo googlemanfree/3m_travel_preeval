@@ -16,6 +16,8 @@ import { computeLuxembourgScore, getAlternativeDestinations } from "../luxembour
 import { generateLuxembourgPDF } from "../luxembourgPdfGenerator";
 import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
+
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { applications } from "../../drizzle/schema";
 
 const submitInput = z.object({
@@ -177,9 +179,9 @@ export const luxembourgEvaluationRouter = router({
         await sendEmail({
           to: "hello@3mtravelagency.com",
           subject: `📋 Nouvelle évaluation Luxembourg — ${input.fullName} (${result.scoreTotal}/100)`,
-          html: `<p><strong>${input.fullName}</strong> (${input.email}, ${input.phone || "N/A"}) vient de compléter l'évaluation Luxembourg.</p>
-                 <p><strong>Score :</strong> ${result.scoreTotal}/100 — ${result.statusLabel}</p>
-                 <p><strong>Poste :</strong> ${input.jobTitle} — ${input.yearsExperience} ans d'expérience — Secteur : ${input.sector}</p>`,
+          html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone || "N/A")}) vient de compléter l'évaluation Luxembourg.</p>
+                 <p><strong>Score :</strong> ${result.scoreTotal}/100 — ${esc(result.statusLabel)}</p>
+                 <p><strong>Poste :</strong> ${esc(input.jobTitle)} — ${input.yearsExperience} ans d'expérience — Secteur : ${esc(input.sector)}</p>`,
         });
       } catch (err) {
         logger.error("luxembourg_evaluation.team_notification_failed", {}, err);

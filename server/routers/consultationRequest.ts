@@ -19,6 +19,8 @@ import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationS
 import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 export const consultationRequestRouter = router({
   /**
    * Soumission du formulaire (le CV est déjà uploadé côté client via
@@ -56,7 +58,7 @@ export const consultationRequestRouter = router({
         await sendEmail({
           to: "hello@3mtravelagency.com",
           subject: `📋 Nouvelle demande de consultation — ${input.fullName}`,
-          html: `<p><strong>${input.fullName}</strong> (${input.email}, ${input.phone || "N/A"}) — Destination : ${input.targetCountry || "non précisée"}.</p>
+          html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone || "N/A")}) — Destination : ${esc(input.targetCountry || "non précisée")}.</p>
                  <p>${input.cvFileUrl ? "CV joint — analyse du dossier en cours, à valider dans le tableau de bord admin." : "Pas de CV joint — à examiner manuellement."}</p>`,
         });
       } catch (err) {
@@ -68,7 +70,7 @@ export const consultationRequestRouter = router({
         await sendEmail({
           to: input.email,
           subject: "Confirmation de votre demande — 3M Travel & Services",
-          html: `<p>Bonjour <strong>${input.fullName}</strong>,</p><p>Nous avons bien reçu votre demande de consultation${input.targetCountry ? ` pour ${input.targetCountry}` : ""}.</p><p>Notre équipe va l’examiner et vous recontactera à l’adresse <strong>${input.email}</strong>. Vous pouvez conserver cet e-mail comme confirmation de réception.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>`,
+          html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de consultation${input.targetCountry ? ` pour ${esc(input.targetCountry)}` : ""}.</p><p>Notre équipe va l’examiner et vous recontactera à l’adresse <strong>${esc(input.email)}</strong>. Vous pouvez conserver cet e-mail comme confirmation de réception.</p><p>Cordialement,<br>L’équipe 3M Travel &amp; Services</p>`,
         });
         emailSent = true;
       } catch (err) {

@@ -23,6 +23,8 @@ import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
   const raw = String(value ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   const name = String(fileName ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
@@ -2758,7 +2760,7 @@ export const adminRouter = router({
           await sendGenericEmail({
             to: file.candidateEmail,
             subject: "Action requise : document à remplacer — 3M Travel & Services",
-            html: "<div><h1>3M Travel & Services</h1><p>Bonjour,</p><p>Votre document <strong>" + file.fileName + "</strong> doit être remplacé.</p><p><strong>Motif :</strong> " + input.comment.trim() + "</p><p>Connectez-vous à votre espace candidat pour déposer une nouvelle version.</p></div>",
+            html: `<div><h1>3M Travel &amp; Services</h1><p>Bonjour,</p><p>Votre document <strong>${esc(file.fileName)}</strong> doit être remplacé.</p><p><strong>Motif :</strong> ${esc(input.comment.trim())}</p><p>Connectez-vous à votre espace candidat pour déposer une nouvelle version.</p></div>`,
           });
           notificationSent = true;
         } catch (error) {

@@ -7,6 +7,8 @@ import { eq, and } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 const sendContactEmailInput = z.object({
   name: z.string().min(2, "Le nom est requis").max(200).trim(),
   email: z.string().email("Email invalide").max(320).trim(),
@@ -143,14 +145,14 @@ export const contactRouter = router({
         await sendEmail({
           to: "hello@3mtravelagency.com",
           subject: `[Contact] ${input.subject}`,
-          html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${input.name}</p><p><strong>Email:</strong> ${input.email}</p>${input.phone ? `<p><strong>Telephone:</strong> ${input.phone}</p>` : ""}<p><strong>Sujet:</strong> ${input.subject}</p><hr /><p><strong>Message:</strong></p><p>${input.message.replace(/\n/g, "<br />")}</p>`,
+          html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${esc(input.name)}</p><p><strong>Email:</strong> ${esc(input.email)}</p>${input.phone ? `<p><strong>Telephone:</strong> ${esc(input.phone)}</p>` : ""}<p><strong>Sujet:</strong> ${esc(input.subject)}</p><hr /><p><strong>Message:</strong></p><p>${esc(input.message).replace(/\n/g, "<br />")}</p>`,
           replyTo: input.email,
         });
 
         await sendEmail({
           to: input.email,
           subject: "Confirmation de votre demande - 3M Travel & Services",
-          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${input.name},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M Travel & Services</p>`,
+          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${esc(input.name)},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M Travel &amp; Services</p>`,
         });
 
         return {

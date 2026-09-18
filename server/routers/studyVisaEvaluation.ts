@@ -12,6 +12,8 @@ import { studyVisaEvaluations } from "../../drizzle/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
+
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 // Moteur de scoring autonome (ne dépend pas de studyVisaScoringEngine.ts,
 // qui sert désormais un système d'évaluation études plus riche et séparé —
 // pour éviter tout conflit futur entre les deux).
@@ -165,8 +167,8 @@ export const studyVisaEvaluationRouter = router({
         await sendEmail({
           to: "hello@3mtravelagency.com",
           subject: `📋 Nouvelle évaluation Visa Études — ${input.fullName} (${result.scoreTotal}/100)`,
-          html: `<p><strong>${input.fullName}</strong> (${input.email}, ${input.phone || "N/A"}) — Destination : ${input.targetCountry || "non précisée"}.</p>
-                 <p><strong>Score :</strong> ${result.scoreTotal}/100 — ${result.statusLabel}</p>`,
+          html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone || "N/A")}) — Destination : ${esc(input.targetCountry || "non précisée")}.</p>
+                 <p><strong>Score :</strong> ${result.scoreTotal}/100 — ${esc(result.statusLabel)}</p>`,
         });
       } catch (err) {
         logger.error("study_visa_evaluation.team_notification_failed", {}, err);
