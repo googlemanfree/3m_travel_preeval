@@ -550,7 +550,7 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
   const safeTitle = escapeEmailHtml(input.title);
   const safeBody = escapeEmailHtml(input.body).replace(/\n/g, "<br />");
   const safeSource = escapeEmailHtml(input.sourceLabel);
-  const safeActionUrl = input.actionUrl && input.actionUrl.startsWith("/")
+  const safeActionUrl = input.actionUrl && input.actionUrl.startsWith("/") && !input.actionUrl.startsWith("//")
     ? `${baseUrl}${input.actionUrl}`
     : `${baseUrl}/mon-espace`;
 

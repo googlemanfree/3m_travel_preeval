@@ -123,7 +123,8 @@ export const consultationRequestRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const rows = await db.select().from(consultationRequests)
       .where(eq(consultationRequests.email, ctx.candidate.email))
-      .orderBy(desc(consultationRequests.createdAt));
+      .orderBy(desc(consultationRequests.createdAt))
+      .limit(50);
 
     // On ne renvoie le contenu du rapport que pour les demandes déjà validées et envoyées.
     return rows.map((r) => ({

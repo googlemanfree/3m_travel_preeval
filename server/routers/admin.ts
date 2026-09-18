@@ -3439,7 +3439,8 @@ export const adminRouter = router({
         ? await safeCollection(
             db.select().from(agencyDossierDocuments)
               .where(eq(agencyDossierDocuments.dossierId, reference.id))
-              .orderBy(desc(agencyDossierDocuments.createdAt)),
+              .orderBy(desc(agencyDossierDocuments.createdAt))
+              .limit(100),
             [],
             "agencyDossierDocuments",
           )
@@ -3936,10 +3937,10 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       const [openCases, openTasks, activeAdmins, requestRows] = await Promise.all([
-        db.select().from(cases).where(and(isNotNull(cases.dueAt), isNull(cases.closedAt))),
-        db.select().from(caseTasks).where(and(isNotNull(caseTasks.dueAt), inArray(caseTasks.taskStatus, ["open", "in_progress"]))),
+        db.select().from(cases).where(and(isNotNull(cases.dueAt), isNull(cases.closedAt))).limit(1000),
+        db.select().from(caseTasks).where(and(isNotNull(caseTasks.dueAt), inArray(caseTasks.taskStatus, ["open", "in_progress"]))).limit(2000),
         db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")),
-        db.select({ caseId: unifiedClientRequests.caseId, fullName: unifiedClientRequests.fullName }).from(unifiedClientRequests).where(isNotNull(unifiedClientRequests.caseId)),
+        db.select({ caseId: unifiedClientRequests.caseId, fullName: unifiedClientRequests.fullName }).from(unifiedClientRequests).where(isNotNull(unifiedClientRequests.caseId)).limit(2000),
       ]);
       const caseById = new Map(openCases.map((operationalCase) => [operationalCase.id, operationalCase]));
       const candidateNameByCaseId = new Map<number, string>();
@@ -4034,7 +4035,7 @@ export const adminRouter = router({
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
       const operationalCase = await ensureOperationalCase(db, reference);
-      const requirements = await db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id));
+      const requirements = await db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).limit(200);
       const missing = requirements.filter((item) => !["approved", "waived"].includes(item.status));
       if (!missing.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune pièce manquante à relancer pour ce dossier." });
       const record = reference.source === "online"
