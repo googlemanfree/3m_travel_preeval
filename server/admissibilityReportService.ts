@@ -8,6 +8,8 @@ import { evaluations, evaluationEmails } from "../drizzle/schema";
 import { eq, and, lt, isNull } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "./_core/email";
 
+function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 /**
  * Génère le rapport HTML d'admissibilité personnalisé
  */
@@ -74,14 +76,14 @@ function generateAdmissibilityReport(evaluation: any): string {
         </div>
 
         <div class="content">
-          <p>Bonjour <strong>${fullName}</strong>,</p>
+          <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
           <p>Merci d'avoir soumis votre demande d'évaluation auprès de 3M Travel & Services. Nos experts ont analysé votre profil avec attention.</p>
 
           <h2>📊 Résultat de votre Évaluation</h2>
           <div class="score-box">
             <div class="score-value">${scorePercentage}%</div>
-            <div class="score-label">${scoreLabel} pour ${destinationCountry}</div>
-            <p style="margin: 10px 0 0 0; font-size: 14px;">Type de visa : <strong>${visaType}</strong></p>
+            <div class="score-label">${scoreLabel} pour ${esc(destinationCountry)}</div>
+            <p style="margin: 10px 0 0 0; font-size: 14px;">Type de visa : <strong>${esc(visaType)}</strong></p>
           </div>
 
           <h2>📋 Analyse Détaillée</h2>
@@ -110,7 +112,7 @@ function generateAdmissibilityReport(evaluation: any): string {
 
         <div class="footer">
           <p>© 2026 3M Travel & Services. Tous droits réservés.</p>
-          <p>Cet email a été envoyé à ${email}</p>
+          <p>Cet email a été envoyé à ${esc(email)}</p>
         </div>
       </div>
     </body>
