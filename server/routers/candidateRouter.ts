@@ -134,7 +134,7 @@ export const candidateRouter = router({
         const candidate = await db
           .select()
           .from(candidates)
-          .where(eq(candidates.id, input.candidateId))
+          .where(and(eq(candidates.id, input.candidateId), isNull(candidates.deletedAt)))
           .limit(1);
 
         if (candidate.length === 0) {
