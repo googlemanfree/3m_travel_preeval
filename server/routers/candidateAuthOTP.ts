@@ -9,7 +9,7 @@
 
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { candidates } from "../../drizzle/schema";
@@ -156,7 +156,7 @@ export const candidateAuthOTPRouter = router({
         throw err;
       }
 
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      const rows = await db.select().from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) {
         recordFailedAttempt(input.email);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
@@ -200,7 +200,7 @@ export const candidateAuthOTPRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      const rows = await db.select().from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) {
         // Ne pas révéler si l'email existe
         return { success: true, message: "Si cet email existe, un lien de réinitialisation a été envoyé." };
@@ -236,7 +236,7 @@ export const candidateAuthOTPRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
+      const rows = await db.select().from(candidates).where(and(eq(candidates.passwordResetToken, input.token), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Token de réinitialisation invalide." });
       }
