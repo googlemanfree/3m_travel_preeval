@@ -3,6 +3,8 @@
  * Pour l'impression des paiements cash effectués en agence
  */
 
+function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 /**
  * Génère le contenu HTML d'un reçu A5 (format caisse)
  * Dimensions : 210mm x 148mm (A5)
@@ -152,61 +154,61 @@ export function generateReceiptA5HTML(receipt: {
         <div class="content">
           <div class="line">
             <span class="label">N° Reçu :</span>
-            <span class="value"><strong>${receipt.receiptNumber}</strong></span>
+            <span class="value"><strong>${esc(receipt.receiptNumber)}</strong></span>
           </div>
-          
+
           <div class="line">
             <span class="label">Date :</span>
             <span class="value">${formattedDate}</span>
           </div>
-          
+
           <div class="line">
             <span class="label">Heure :</span>
-            <span class="value">${receipt.time}</span>
+            <span class="value">${esc(receipt.time)}</span>
           </div>
-          
+
           <div class="line">
             <span class="label">Client :</span>
-            <span class="value">${receipt.candidateName}</span>
+            <span class="value">${esc(receipt.candidateName)}</span>
           </div>
-          
+
           ${receipt.agencyLocation ? `
           <div class="line">
             <span class="label">Agence :</span>
-            <span class="value">${receipt.agencyLocation}</span>
+            <span class="value">${esc(receipt.agencyLocation)}</span>
           </div>
           ` : ""}
-          
+
           ${receipt.agentName ? `
           <div class="line">
             <span class="label">Agent :</span>
-            <span class="value">${receipt.agentName}</span>
+            <span class="value">${esc(receipt.agentName)}</span>
           </div>
           ` : ""}
-          
+
           ${receipt.description ? `
           <div class="line">
             <span class="label">Description :</span>
-            <span class="value">${receipt.description}</span>
+            <span class="value">${esc(receipt.description)}</span>
           </div>
           ` : ""}
-          
+
           <div class="line">
             <span class="label">Méthode :</span>
-            <span class="value">${receipt.paymentMethod === "cash" ? "Espèces" : receipt.paymentMethod}</span>
+            <span class="value">${receipt.paymentMethod === "cash" ? "Espèces" : esc(receipt.paymentMethod)}</span>
           </div>
         </div>
 
         <!-- Montant -->
         <div class="amount-section">
           <div class="currency">Montant Total</div>
-          <div class="amount">${receipt.amount}</div>
-          <div class="currency">${receipt.currency}</div>
+          <div class="amount">${esc(receipt.amount)}</div>
+          <div class="currency">${esc(receipt.currency)}</div>
         </div>
 
         <!-- Pied de page -->
         <div class="footer">
-          <div class="barcode">${receipt.receiptNumber}</div>
+          <div class="barcode">${esc(receipt.receiptNumber)}</div>
           <p>Merci de votre confiance !</p>
           <p>Conservez ce reçu à titre de preuve de paiement</p>
           <p style="font-size: 9px; margin-top: 3mm;">© 2026 3M Travel & Services</p>

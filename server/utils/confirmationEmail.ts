@@ -8,6 +8,8 @@ export interface ConfirmationEmailParams {
   projectType: string;
 }
 
+function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
 export function getConfirmationEmailHTML(params: ConfirmationEmailParams): string {
   const projectTypeLabel = {
     travail: "Visa Travail",
@@ -38,17 +40,17 @@ export function getConfirmationEmailHTML(params: ConfirmationEmailParams): strin
     </div>
     
     <div class="content">
-      <p>Bonjour <strong>${params.fullName}</strong>,</p>
-      
+      <p>Bonjour <strong>${esc(params.fullName)}</strong>,</p>
+
       <p>Merci d'avoir soumis votre demande d'évaluation. Votre dossier a été enregistré avec succès.</p>
-      
+
       <div class="dossier-box">
         <p style="margin: 0 0 8px 0; font-size: 12px; color: #666; text-transform: uppercase;">Numéro de dossier</p>
-        <div class="dossier-code">${params.dossierCode}</div>
+        <div class="dossier-code">${esc(params.dossierCode)}</div>
         <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">Conservez ce numéro pour vos communications.</p>
       </div>
-      
-      <p><strong>Type de projet :</strong> ${projectTypeLabel}</p>
+
+      <p><strong>Type de projet :</strong> ${esc(projectTypeLabel)}</p>
       
       <h3>Prochaines étapes :</h3>
       <ol>

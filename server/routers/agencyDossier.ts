@@ -80,12 +80,12 @@ export const agencyDossierRouter = router({
         try {
           const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1e40af;">Bienvenue chez 3M Travel & Services</h2>
-            <p>Bonjour ${input.fullName},</p>
+            <p>Bonjour ${esc(input.fullName)},</p>
             <p>Votre dossier a été créé avec succès dans notre système.</p>
             <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #1e40af; margin-top: 0;">Détails de votre dossier:</h3>
-              <p><strong>Destination:</strong> ${input.destination}</p>
-              <p><strong>Type de Visa:</strong> ${input.visaType}</p>
+              <p><strong>Destination:</strong> ${esc(input.destination)}</p>
+              <p><strong>Type de Visa:</strong> ${esc(input.visaType)}</p>
               <p><strong>Statut:</strong> Nouveau</p>
             </div>
             <p>Notre équipe examinera votre dossier et vous contactera sous peu avec les prochaines étapes.</p>
@@ -402,9 +402,9 @@ export const agencyDossierRouter = router({
 
           const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1e40af;">Mise à jour de votre dossier</h2>
-            <p>Bonjour ${dossier[0].fullName},</p>
+            <p>Bonjour ${esc(dossier[0].fullName)},</p>
             <p>${statusMessages[input.newStatus]}</p>
-            ${input.notes ? `<p><strong>Message:</strong> ${input.notes}</p>` : ""}
+            ${input.notes ? `<p><strong>Message:</strong> ${esc(input.notes)}</p>` : ""}
             <p>Cordialement,<br/>L'équipe 3M Travel & Services</p>
           </div>`;
 

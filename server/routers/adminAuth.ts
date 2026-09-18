@@ -16,6 +16,7 @@ import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
@@ -475,11 +476,11 @@ export const adminAuthRouter = router({
         const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
-          <p>Bonjour ${input.fullName},</p>
-          <p>${inviter.fullName} vous a donné accès à l'espace administrateur de 3M Travel & Services, avec le rôle <strong>${input.adminType}</strong>.</p>
+          <p>Bonjour ${esc(input.fullName)},</p>
+          <p>${esc(inviter.fullName)} vous a donné accès à l'espace administrateur de 3M Travel &amp; Services, avec le rôle <strong>${esc(input.adminType)}</strong>.</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="margin: 4px 0;"><strong>Email :</strong> ${input.email}</p>
-            <p style="margin: 4px 0;"><strong>Mot de passe temporaire :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${tempPassword}</code></p>
+            <p style="margin: 4px 0;"><strong>Email :</strong> ${esc(input.email)}</p>
+            <p style="margin: 4px 0;"><strong>Mot de passe temporaire :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${esc(tempPassword)}</code></p>
           </div>
           <p>Merci de changer ce mot de passe dès votre première connexion.</p>
           <div style="text-align: center; margin: 24px 0;">
@@ -543,11 +544,11 @@ export const adminAuthRouter = router({
           : `Voici votre nouveau mot de passe temporaire pour accéder à l'espace administrateur.`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">Nouveau mot de passe — 3M Travel</h2>
-          <p>Bonjour ${admin.fullName},</p>
-          <p style="white-space: pre-line;">${bodyText}</p>
+          <p>Bonjour ${esc(admin.fullName)},</p>
+          <p style="white-space: pre-line;">${esc(bodyText)}</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="margin: 4px 0;"><strong>Email :</strong> ${admin.email}</p>
-            <p style="margin: 4px 0;"><strong>Nouveau mot de passe :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${newPassword}</code></p>
+            <p style="margin: 4px 0;"><strong>Email :</strong> ${esc(admin.email)}</p>
+            <p style="margin: 4px 0;"><strong>Nouveau mot de passe :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${esc(newPassword)}</code></p>
           </div>
           <div style="text-align: center; margin: 24px 0;">
             <a href="${loginUrl}" style="background-color: #1e40af; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se connecter</a>
@@ -609,10 +610,10 @@ export const adminAuthRouter = router({
             subject: "🔐 Réinitialisation de votre accès administrateur — 3M Travel",
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
               <h2 style="color:#1e40af">Réinitialisation de votre accès administrateur</h2>
-              <p>Bonjour ${admin.fullName || admin.email},</p>
+              <p>Bonjour ${esc(admin.fullName || admin.email)},</p>
               <p>Le mot de passe de votre compte administrateur 3M Travel a été réinitialisé par un administrateur autorisé.</p>
-              <p><strong>Adresse :</strong> ${admin.email}</p>
-              <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
+              <p><strong>Adresse :</strong> ${esc(admin.email)}</p>
+              <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${esc(temporaryPassword)}</code></p>
               <p>Vous devrez choisir un nouveau mot de passe dès votre première connexion.</p>
               <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>
               <p style="color:#6b7280;font-size:12px">Ne partagez jamais ce message. Si vous n’êtes pas à l’origine de cette demande, contactez la direction.</p>

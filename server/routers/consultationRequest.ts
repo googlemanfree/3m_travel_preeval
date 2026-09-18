@@ -194,13 +194,13 @@ export const consultationRequestRouter = router({
 
       const emailHtml = `<div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color:#0a2540;">
         <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 24px; border-radius: 10px 10px 0 0; text-align:center;">
-          <h1 style="color:#fff;margin:0;font-size:22px;">📋 Votre consultation ${request.targetCountry || ""}</h1>
-          <p style="color:#dbeafe;margin:6px 0 0;">3M Travel & Services SARL</p>
+          <h1 style="color:#fff;margin:0;font-size:22px;">📋 Votre consultation ${esc(request.targetCountry || "")}</h1>
+          <p style="color:#dbeafe;margin:6px 0 0;">3M Travel &amp; Services SARL</p>
         </div>
         <div style="padding:24px;border:1px solid #eee;border-top:none;">
-          <p>Bonjour ${request.fullName},</p>
+          <p>Bonjour ${esc(request.fullName)},</p>
           <p>Voici le retour de notre équipe suite à votre demande de consultation :</p>
-          <div style="background:#f4f6f8;border-left:4px solid #2563eb;padding:16px;border-radius:6px;white-space:pre-line;">${input.finalReportContent}</div>
+          <div style="background:#f4f6f8;border-left:4px solid #2563eb;padding:16px;border-radius:6px;white-space:pre-line;">${esc(input.finalReportContent).replace(/\n/g, "<br>")}</div>
           <p style="text-align:center;margin:28px 0;">
             <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon retour de consultation pour ${request.targetCountry || ""} et je souhaite en discuter.`)}"
                style="background:#28a745;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">

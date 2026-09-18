@@ -93,15 +93,15 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
       <p style="color:#dbeafe;margin:6px 0 0;">3M Travel & Services SARL</p>
     </div>
     <div style="padding:24px;border:1px solid #eee;border-top:none;">
-      <p>Bonjour <strong>${fullName}</strong>,</p>
-      <p>Voici le résultat de votre évaluation${targetCountry ? ` pour un projet d'études en <strong>${targetCountry}</strong>` : ""} :</p>
+      <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
+      <p>Voici le résultat de votre évaluation${targetCountry ? ` pour un projet d'études en <strong>${esc(targetCountry)}</strong>` : ""} :</p>
       <div style="text-align:center;margin:24px 0;">
         <div style="font-size:42px;font-weight:bold;color:#2563eb;">${result.scoreTotal}/100</div>
-        <div style="font-size:16px;font-weight:bold;margin-top:4px;">${result.statusLabel}</div>
+        <div style="font-size:16px;font-weight:bold;margin-top:4px;">${esc(result.statusLabel)}</div>
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows}</table>
       <div style="background:#f4f6f8;border-left:4px solid #2563eb;padding:14px;border-radius:6px;">
-        <p style="margin:0;">${result.recommendationText}</p>
+        <p style="margin:0;">${esc(result.recommendationText)}</p>
       </div>
       <p style="text-align:center;margin:28px 0;">
         <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Visa Études (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"
