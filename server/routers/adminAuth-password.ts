@@ -218,7 +218,8 @@ export const adminAuthRouter = router({
           createdAt: adminAccounts.createdAt,
           lastLoginAt: adminAccounts.lastLoginAt,
         })
-        .from(adminAccounts);
+        .from(adminAccounts)
+        .limit(100);
 
       return { success: true, admins };
     }),

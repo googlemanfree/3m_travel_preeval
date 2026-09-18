@@ -79,7 +79,8 @@ export const contactRouter = router({
           .select()
           .from(contactMessages)
           .where(eq(contactMessages.sessionId, input.sessionId))
-          .orderBy(contactMessages.createdAt);
+          .orderBy(contactMessages.createdAt)
+          .limit(200);
 
         return messages;
       } catch (error) {
