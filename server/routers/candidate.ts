@@ -829,7 +829,7 @@ export const candidateRouter = router({
         fileSizeBytes: z.number().int().min(0).optional(),
         mimeType: z.string().max(100).optional(),
         correctionComment: z.string().trim().min(3).max(1000).optional(),
-        replacesfileId: z.number().int().positive().positive().optional(),
+        replacesFileId: z.number().int().positive().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

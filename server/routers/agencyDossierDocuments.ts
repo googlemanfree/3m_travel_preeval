@@ -40,7 +40,7 @@ export const agencyDossierDocumentsRouter = router({
 
   updateVerificationStatus: protectedProcedure
     .input(z.object({
-      documentId: z.number().int().positive().positive(),
+      documentId: z.number().int().positive(),
       verificationStatus: z.enum(["pending", "verified", "rejected"]),
       verificationComment: z.string().max(2000).optional(),
     }))
@@ -71,7 +71,7 @@ export const agencyDossierDocumentsRouter = router({
     }),
 
   listAnnotationsForAdmin: protectedProcedure
-    .input(z.object({ documentId: z.number().int().positive().positive() }))
+    .input(z.object({ documentId: z.number().int().positive() }))
     .query(async ({ input, ctx }) => {
       adminOnly(ctx.user?.role);
       const db = await getDb();
@@ -84,7 +84,7 @@ export const agencyDossierDocumentsRouter = router({
 
   addCorrectionAnnotation: protectedProcedure
     .input(z.object({
-      documentId: z.number().int().positive().positive(),
+      documentId: z.number().int().positive(),
       message: z.string().trim().min(3).max(2000),
       areaLabel: z.string().trim().max(120).optional(),
       x: z.number().int().min(0).max(100000).optional(),
@@ -137,3 +137,4 @@ export const agencyDossierDocumentsRouter = router({
       return { success: true };
     }),
 });
+

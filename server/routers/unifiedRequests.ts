@@ -900,7 +900,7 @@ initializeEvaluationDelivery: publicProcedure
     }),
 
   sendEvaluationReminder: publicProcedure
-    .input(sessionInput.extend({ applicationId: z.number().int().positive().positive(), language: z.enum(["fr", "en"]).default("fr"), customMessage: z.string().trim().max(3000).optional() }))
+    .input(sessionInput.extend({ applicationId: z.number().int().positive(), language: z.enum(["fr", "en"]).default("fr"), customMessage: z.string().trim().max(3000).optional() }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -1029,3 +1029,4 @@ initializeEvaluationDelivery: publicProcedure
       return { generatedAt: now, total: rows.length, rows };
     }),
 });
+

@@ -82,7 +82,7 @@ export const caseTrackingRouter = router({
     return { success: true, documentId: Number((result as any)[0]?.insertId || 0), requirementId: requirement.id };
   }),
 
-  downloadMyDocument: candidateProcedure.input(z.object({ documentId: z.number().int().positive().positive() })).query(async ({ ctx, input }) => {
+  downloadMyDocument: candidateProcedure.input(z.object({ documentId: z.number().int().positive() })).query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const rows = await db.select({ fileKey: caseDocuments.fileKey, fileName: caseDocuments.fileName }).from(caseDocuments).innerJoin(cases, and(eq(caseDocuments.caseId, cases.id), eq(cases.candidateId, ctx.candidate.id))).where(eq(caseDocuments.id, input.documentId)).limit(1);
@@ -112,24 +112,25 @@ export const caseTrackingRouter = router({
     return { url: await storageGetSignedUrl(rows[0].fileKey), fileName: rows[0].fileName };
   }),
 
-  markNotificationRead: candidateProcedure.input(z.object({ notificationId: z.number().int().positive().positive() })).mutation(async ({ ctx, input }) => {
+  markNotificationRead: candidateProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(clientNotifications).set({ isRead: true }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
     return { success: true };
   }),
 
-  markNotificationUnread: candidateProcedure.input(z.object({ notificationId: z.number().int().positive().positive() })).mutation(async ({ ctx, input }) => {
+  markNotificationUnread: candidateProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(clientNotifications).set({ isRead: false }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
     return { success: true };
   }),
 
-  setNotificationArchived: candidateProcedure.input(z.object({ notificationId: z.number().int().positive().positive(), archived: z.boolean() })).mutation(async ({ ctx, input }) => {
+  setNotificationArchived: candidateProcedure.input(z.object({ notificationId: z.number().int().positive(), archived: z.boolean() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(clientNotifications).set({ isArchived: input.archived }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
     return { success: true, archived: input.archived };
   }),
 });
+

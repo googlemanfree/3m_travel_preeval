@@ -123,7 +123,7 @@ export const agencyDossierRouter = router({
    */
   updateDossier: protectedProcedure
     .input(z.object({
-      dossierId: z.number().int().positive().int().positive(),
+      dossierId: z.number().int().positive(),
       fullName: z.string().min(2).max(255),
       email: z.string().email().max(320),
       phone: z.string().min(5).max(50),
@@ -433,7 +433,7 @@ export const agencyDossierRouter = router({
    * Ajouter des notes au dossier
    */
   validateEvaluation: protectedProcedure
-    .input(z.object({ dossierId: z.number().int().positive().int().positive(), note: z.string().trim().max(1000).optional() }))
+    .input(z.object({ dossierId: z.number().int().positive(), note: z.string().trim().max(1000).optional() }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -598,3 +598,4 @@ export const agencyDossierRouter = router({
       return { success: true };
     }),
 });
+

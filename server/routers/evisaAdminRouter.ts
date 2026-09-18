@@ -386,7 +386,7 @@ export const evisaAdminRouter = router({
    * Historique des corrections manuelles des données passeport, réservé aux admins
    */
   getPassportCorrectionHistory: protectedProcedure
-    .input(z.object({ requestId: z.number().int().positive().int().positive().optional(), limit: z.number().int().min(1).max(200).default(50) }))
+    .input(z.object({ requestId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(200).default(50) }))
     .query(async ({ ctx, input }: any) => {
       if (ctx.user?.role !== 'admin') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Seuls les administrateurs peuvent consulter cet historique' });
@@ -436,7 +436,7 @@ export const evisaAdminRouter = router({
   adminUploadPdf: protectedProcedure
     .input(
       z.object({
-        requestId: z.number().int().positive().int().positive(),
+        requestId: z.number().int().positive(),
         fileBase64: z.string().min(1),
         fileName: z.string().min(1).max(255),
       })
@@ -486,3 +486,4 @@ export const evisaAdminRouter = router({
       }
     }),
 });
+

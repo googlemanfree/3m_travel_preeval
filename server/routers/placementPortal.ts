@@ -142,7 +142,7 @@ export const placementPortalRouter = router({
     return { profileId: Number((result as any)[0]?.insertId ?? 0) };
   }),
 
-  adminSubmitProfile: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive().positive(), organizationId: z.number().int().positive(), adminNote: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {
+  adminSubmitProfile: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), organizationId: z.number().int().positive(), adminNote: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -328,7 +328,7 @@ export const placementPortalRouter = router({
     return db.select().from(placementEmployerNotifications).where(and(eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id))).orderBy(placementEmployerNotifications.createdAt);
   }),
 
-  employerMarkNotificationRead: publicProcedure.input(z.object({ sessionToken: z.string().min(32), notificationId: z.number().int().positive().positive() })).mutation(async ({ input }) => {
+  employerMarkNotificationRead: publicProcedure.input(z.object({ sessionToken: z.string().min(32), notificationId: z.number().int().positive() })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     await db.update(placementEmployerNotifications).set({ readAt: new Date() }).where(and(eq(placementEmployerNotifications.id, input.notificationId), eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id)));
     return { ok: true };
@@ -429,3 +429,4 @@ export const placementPortalRouter = router({
     return { message: "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat." };
   }),
 });
+
