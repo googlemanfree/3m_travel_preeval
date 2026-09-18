@@ -1,5 +1,9 @@
 import { sendEmail } from '../_core/email';
 
+function esc(v: string | number | undefined | null): string {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export interface DossierNotification {
   candidateEmail: string;
   candidateName: string;
@@ -23,13 +27,13 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre dossier a été créé avec succès !</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #0066cc; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
-            <p><strong>Destination :</strong> ${details.destination || 'Non spécifiée'}</p>
-            <p><strong>Type de Projet :</strong> ${details.projectType || 'Non spécifié'}</p>
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
+            <p><strong>Destination :</strong> ${esc(details.destination || 'Non spécifiée')}</p>
+            <p><strong>Type de Projet :</strong> ${esc(details.projectType || 'Non spécifié')}</p>
           </div>
 
           <p>Vous pouvez maintenant accéder à votre espace client pour :</p>
@@ -40,7 +44,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </ul>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Accéder à mon Espace
             </a>
@@ -57,18 +61,18 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre dossier a été mis à jour.</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
-            <p><strong>Nouveau Statut :</strong> ${details.newStatus || 'Non spécifié'}</p>
-            <p><strong>Ancien Statut :</strong> ${details.oldStatus || 'Non spécifié'}</p>
-            ${details.notes ? `<p><strong>Notes :</strong> ${details.notes}</p>` : ''}
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
+            <p><strong>Nouveau Statut :</strong> ${esc(details.newStatus || 'Non spécifié')}</p>
+            <p><strong>Ancien Statut :</strong> ${esc(details.oldStatus || 'Non spécifié')}</p>
+            ${details.notes ? `<p><strong>Notes :</strong> ${esc(details.notes)}</p>` : ''}
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir les Détails
             </a>
@@ -85,17 +89,17 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Vos documents ont été reçus et enregistrés.</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
-            <p><strong>Documents Reçus :</strong> ${details.documentCount || 0}</p>
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
+            <p><strong>Documents Reçus :</strong> ${esc(details.documentCount || 0)}</p>
             <p><strong>Date de Réception :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir mes Documents
             </a>
@@ -112,17 +116,17 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre bilan d'admissibilité est maintenant disponible !</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
-            <p><strong>Score :</strong> ${details.score || 'N/A'}%</p>
-            <p><strong>Verdict :</strong> ${details.verdict || 'N/A'}</p>
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
+            <p><strong>Score :</strong> ${esc(details.score || 'N/A')}%</p>
+            <p><strong>Verdict :</strong> ${esc(details.verdict || 'N/A')}</p>
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Consulter mon Bilan
             </a>
@@ -139,18 +143,18 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre paiement a été reçu et enregistré.</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
-            <p><strong>Montant :</strong> ${details.amount || 'N/A'} XAF</p>
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
+            <p><strong>Montant :</strong> ${esc(details.amount || 'N/A')} XAF</p>
             <p><strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
-            <p><strong>Référence :</strong> ${details.reference || 'N/A'}</p>
+            <p><strong>Référence :</strong> ${esc(details.reference || 'N/A')}</p>
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Voir ma Facture
             </a>
@@ -167,17 +171,17 @@ export async function sendDossierNotification(notification: DossierNotification)
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
           <h2 style="color: #0066cc;">3M Travel Agency</h2>
-          <p>Bonjour <strong>${candidateName}</strong>,</p>
+          <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Vous avez reçu un nouveau message de notre équipe.</p>
-          
+
           <div style="background-color: #f4f6f8; border-left: 4px solid #9c27b0; padding: 15px; margin: 20px 0;">
-            <p><strong>Numéro de Dossier :</strong> ${dossierNumber}</p>
+            <p><strong>Numéro de Dossier :</strong> ${esc(dossierNumber)}</p>
             <p><strong>Message :</strong></p>
-            <p style="margin-top: 10px; font-style: italic;">${details.message || 'N/A'}</p>
+            <p style="margin-top: 10px; font-style: italic;">${esc(details.message || 'N/A')}</p>
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
+            <a href="https://www.3mtravelagency.com/mon-espace?dossier=${encodeURIComponent(dossierNumber)}"
                style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
               Lire le Message
             </a>

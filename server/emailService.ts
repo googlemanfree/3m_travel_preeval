@@ -93,8 +93,8 @@ export async function sendAdminNewDossierAlertEmail(
             <p><strong>Dossier :</strong> #${escapeEmailHtml(dossierNumber)}</p>
             <p><strong>Candidat :</strong> ${escapeEmailHtml(fullName)}</p>
             <p><strong>Destination :</strong> ${escapeEmailHtml(countryName)}</p>
-            <p><strong>Montant :</strong> ${totalCost.toLocaleString("fr-FR")} ${currency}</p>
-            
+            <p><strong>Montant :</strong> ${totalCost.toLocaleString("fr-FR")} ${escapeEmailHtml(currency)}</p>
+
             <p style="text-align: center; margin-top: 30px;">
               <a href="${SITE_URL}/admin/evisa/${dossierNumber}" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
                 Voir le dossier
