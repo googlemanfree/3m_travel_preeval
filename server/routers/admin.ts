@@ -3274,7 +3274,7 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      return db.select().from(advisorAlertThresholds).orderBy(asc(advisorAlertThresholds.advisorEmail));
+      return db.select().from(advisorAlertThresholds).orderBy(asc(advisorAlertThresholds.advisorEmail)).limit(500);
     }),
 
   setAdvisorThreshold: publicProcedure

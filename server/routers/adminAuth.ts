@@ -578,7 +578,7 @@ export const adminAuthRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
-      const admins = await db.select().from(adminAccounts);
+      const admins = await db.select().from(adminAccounts).limit(200);
       if (admins.length === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte administrateur à réinitialiser." });
       }
