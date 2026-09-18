@@ -907,7 +907,8 @@ export const candidateRouter = router({
     const candidate = ctx.candidate as Candidate;
     const documents = await db.select().from(clientDocuments)
       .where(and(eq(clientDocuments.candidateEmail, candidate.email), eq(clientDocuments.documentType, "passport")))
-      .orderBy(desc(clientDocuments.updatedAt));
+      .orderBy(desc(clientDocuments.updatedAt))
+      .limit(20);
 
     return documents.map((document) => {
       const analysis = document.readabilityIssues && typeof document.readabilityIssues === "object"
@@ -1030,7 +1031,8 @@ export const candidateRouter = router({
       uploadedAt: documentClarificationRequests.uploadedAt,
     }).from(documentClarificationRequests)
       .where(eq(documentClarificationRequests.candidateId, ctx.candidate.id))
-      .orderBy(desc(documentClarificationRequests.createdAt));
+      .orderBy(desc(documentClarificationRequests.createdAt))
+      .limit(100);
     const requestIds = requests.map((request) => request.id);
     const events = requestIds.length
       ? await db.select().from(documentClarificationEvents)
@@ -1629,6 +1631,7 @@ export const candidateRouter = router({
       ? await db.select().from(applicationStatusHistory)
           .where(eq(applicationStatusHistory.applicationId, app[0].id))
           .orderBy(desc(applicationStatusHistory.createdAt))
+          .limit(100)
       : [];
     const statusHistory = persistedStatusHistory.length > 0
       ? persistedStatusHistory
@@ -2097,11 +2100,11 @@ export const candidateRouter = router({
       fileRows,
       agencyDocRows,
     ] = await Promise.all([
-      db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)),
-      db.select().from(favoriteFlights).where(eq(favoriteFlights.userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
-      db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)),
-      db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
-      db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidate.id)).orderBy(desc(candidateFiles.uploadedAt)),
+      db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)).limit(20),
+      db.select().from(favoriteFlights).where(eq(favoriteFlights.userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)).limit(50),
+      db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)).limit(20),
+      db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)).limit(200),
+      db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidate.id)).orderBy(desc(candidateFiles.uploadedAt)).limit(200),
       db.select({
         id: agencyDossierDocuments.id,
         dossierId: agencyDossierDocuments.dossierId,
@@ -2115,7 +2118,7 @@ export const candidateRouter = router({
         verificationComment: agencyDossierDocuments.verificationComment,
         createdAt: agencyDossierDocuments.createdAt,
         updatedAt: agencyDossierDocuments.updatedAt,
-      }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossierDocuments.createdAt)),
+      }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(200),
     ]);
 
     // Un candidat peut accumuler plusieurs lignes "applications" (nouvelle evaluation,
