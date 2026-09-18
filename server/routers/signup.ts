@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { candidates } from "../../drizzle/schema";
@@ -53,7 +53,7 @@ export const signupRouter = router({
         const existing = await db
           .select({ id: candidates.id })
           .from(candidates)
-          .where(eq(candidates.email, cleanEmail))
+          .where(and(eq(candidates.email, cleanEmail), isNull(candidates.deletedAt)))
           .limit(1);
 
         if (existing.length > 0) {
@@ -183,7 +183,7 @@ export const signupRouter = router({
         const candidate = await db
           .select({ id: candidates.id, emailVerified: candidates.emailVerified })
           .from(candidates)
-          .where(eq(candidates.email, email))
+          .where(and(eq(candidates.email, email), isNull(candidates.deletedAt)))
           .limit(1);
 
         if (!candidate.length) {
@@ -249,7 +249,7 @@ export const signupRouter = router({
             emailVerified: candidates.emailVerified,
           })
           .from(candidates)
-          .where(eq(candidates.email, cleanEmail))
+          .where(and(eq(candidates.email, cleanEmail), isNull(candidates.deletedAt)))
           .limit(1);
 
         if (!candidate.length) {
