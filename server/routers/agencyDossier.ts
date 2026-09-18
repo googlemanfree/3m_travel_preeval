@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory, candidates } from "../../drizzle/schema";
-import { eq, and, or, like, desc, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, like, desc, isNull, isNotNull, sql, count, inArray } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
@@ -211,11 +211,11 @@ export const agencyDossierRouter = router({
           .limit(input.limit)
           .offset(input.offset);
 
-        const countResult = await db.select().from(agencyDossiers).where(whereClause);
-        const total = countResult.length;
+        const [countRow] = await db.select({ total: count() }).from(agencyDossiers).where(whereClause);
+        const total = Number(countRow?.total ?? 0);
         const emailKeys = dossiers.map((dossier) => dossier.email.toLowerCase());
         const candidateRows = emailKeys.length
-          ? await db.select({ id: candidates.id, email: candidates.email, fullName: candidates.fullName }).from(candidates)
+          ? await db.select({ id: candidates.id, email: candidates.email, fullName: candidates.fullName }).from(candidates).where(inArray(candidates.email, emailKeys))
           : [];
         const candidateByEmail = new Map(candidateRows.map((candidate) => [candidate.email.toLowerCase(), candidate]));
         const dossiersWithAccount = dossiers.map((dossier) => {

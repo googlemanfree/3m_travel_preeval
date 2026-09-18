@@ -86,7 +86,8 @@ export const oauthUserDashboardRouter = router({
       .select()
       .from(candidateFiles)
       .where(eq(candidateFiles.candidateId, c.id))
-      .orderBy(desc(candidateFiles.uploadedAt));
+      .orderBy(desc(candidateFiles.uploadedAt))
+      .limit(200);
 
     return files as CandidateFile[];
   }),
@@ -157,7 +158,8 @@ export const oauthUserDashboardRouter = router({
       .select()
       .from(candidateMessages)
       .where(eq(candidateMessages.candidateId, c.id))
-      .orderBy(candidateMessages.createdAt);
+      .orderBy(candidateMessages.createdAt)
+      .limit(200);
 
     await db
       .update(candidateMessages)
