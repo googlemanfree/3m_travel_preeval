@@ -337,7 +337,8 @@ export const evaluationCommentsRouter = router({
             eq(evaluationComments.isQuestion, true)
           )
         )
-        .orderBy(desc(evaluationComments.createdAt));
+        .orderBy(desc(evaluationComments.createdAt))
+        .limit(500);
 
       return {
         success: true,
