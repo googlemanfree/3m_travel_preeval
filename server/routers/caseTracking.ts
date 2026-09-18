@@ -12,14 +12,14 @@ export const caseTrackingRouter = router({
   getMyCases: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const ownedCases = await db.select().from(cases).where(eq(cases.candidateId, ctx.candidate.id)).orderBy(desc(cases.updatedAt));
+    const ownedCases = await db.select().from(cases).where(eq(cases.candidateId, ctx.candidate.id)).orderBy(desc(cases.updatedAt)).limit(50);
     if (!ownedCases.length) return { cases: [], notifications: [], unreadNotifications: 0 };
     const ids = ownedCases.map(item => item.id);
     const [requirements, documents, history, notifications] = await Promise.all([
       db.select().from(documentRequirements).where(inArray(documentRequirements.caseId, ids)),
       db.select().from(caseDocuments).where(inArray(caseDocuments.caseId, ids)),
       db.select().from(caseStatusHistory).where(inArray(caseStatusHistory.caseId, ids)).orderBy(desc(caseStatusHistory.createdAt)),
-      db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, ctx.candidate.id)).orderBy(desc(clientNotifications.createdAt)),
+      db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, ctx.candidate.id)).orderBy(desc(clientNotifications.createdAt)).limit(200),
     ]);
     return {
       cases: ownedCases.map(item => ({ ...item, requirements: requirements.filter(x => x.caseId === item.id), documents: documents.filter(x => x.caseId === item.id), history: history.filter(x => x.caseId === item.id) })),
@@ -93,7 +93,7 @@ export const caseTrackingRouter = router({
   getMyInsuranceRequests: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, departureDate: insuranceRequests.departureDate, returnDate: insuranceRequests.returnDate, coveragePlan: insuranceRequests.coveragePlan, status: insuranceRequests.status, couponFileName: insuranceRequests.couponFileName, attestationFileName: insuranceRequests.attestationFileName, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, ctx.candidate.email)).orderBy(desc(insuranceRequests.createdAt));
+    return db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, departureDate: insuranceRequests.departureDate, returnDate: insuranceRequests.returnDate, coveragePlan: insuranceRequests.coveragePlan, status: insuranceRequests.status, couponFileName: insuranceRequests.couponFileName, attestationFileName: insuranceRequests.attestationFileName, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, ctx.candidate.email)).orderBy(desc(insuranceRequests.createdAt)).limit(50);
   }),
 
   downloadMyInsuranceCoupon: candidateProcedure.input(z.object({ insuranceRequestId: z.number().int().positive() })).query(async ({ ctx, input }) => {

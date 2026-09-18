@@ -292,7 +292,7 @@ export const aiEvaluationManagementRouter = router({
       const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `EVAL-${evaluation.id}`)).limit(1);
       if (!operationalCase) return [];
       return db.select({ id: documentRequirements.id, documentType: documentRequirements.documentType, status: documentRequirements.status, dueAt: documentRequirements.dueAt, requestedAt: documentRequirements.requestedAt, adminComment: documentRequirements.adminComment })
-        .from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt));
+        .from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt)).limit(100);
     }),
 
   createEvaluationDocumentRequirement: publicProcedure
@@ -349,11 +349,11 @@ export const aiEvaluationManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
       const [genEvals, luxEvals, etudesEvals, consultations, applicationRows] = await Promise.all([
-        db.select().from(evaluations),
-        db.select().from(luxembourgEvaluations),
-        db.select().from(studyVisaEvaluations),
-        db.select().from(consultationRequests),
-        db.select({ email: applications.email }).from(applications),
+        db.select().from(evaluations).limit(input.limit),
+        db.select().from(luxembourgEvaluations).limit(input.limit),
+        db.select().from(studyVisaEvaluations).limit(input.limit),
+        db.select().from(consultationRequests).limit(input.limit),
+        db.select({ email: applications.email }).from(applications).limit(2000),
       ]);
 
       const convertedEmails = new Set(applicationRows.map((a) => a.email.toLowerCase()));
