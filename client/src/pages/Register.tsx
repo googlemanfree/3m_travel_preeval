@@ -13,6 +13,15 @@ import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptio
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
+const destinationsByRegion = CANDIDATE_DESTINATION_OPTIONS.reduce<Record<string, typeof CANDIDATE_DESTINATION_OPTIONS>>(
+  (acc, option) => {
+    if (!acc[option.region]) acc[option.region] = [];
+    acc[option.region].push(option);
+    return acc;
+  },
+  {},
+);
+
 const MAX_PREFERRED_DESTINATIONS = 3;
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string; rules: { ok: boolean; text: string }[] } {
@@ -340,7 +349,44 @@ export default function Register() {
               </AnimatePresence>
             </div>
 
+            {/* Téléphone WhatsApp — optionnel */}
+            <div>
+              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone / WhatsApp <span className="text-gray-400 font-normal">(optionnel)</span></Label>
+              <div className="relative mt-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+237 6XX XXX XXX"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  autoComplete="tel"
+                  className="h-12 pl-10"
+                  maxLength={50}
+                  disabled={registerMutation.isPending || showSuccessAnimation}
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">Incluez l'indicatif pays (ex. +237 pour le Cameroun).</p>
+            </div>
 
+            {/* Nationalité — optionnel */}
+            <div>
+              <Label htmlFor="nationality" className="text-sm font-semibold text-gray-700">Nationalité <span className="text-gray-400 font-normal">(optionnel)</span></Label>
+              <div className="relative mt-1">
+                <Globe2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="nationality"
+                  type="text"
+                  placeholder="Camerounaise, Ivoirienne…"
+                  value={form.nationality}
+                  onChange={e => setForm(f => ({ ...f, nationality: e.target.value }))}
+                  autoComplete="country-name"
+                  className="h-12 pl-10"
+                  maxLength={100}
+                  disabled={registerMutation.isPending || showSuccessAnimation}
+                />
+              </div>
+            </div>
 
             {/* Mot de passe */}
             <div>
@@ -452,23 +498,30 @@ export default function Register() {
             <fieldset className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
               <legend className="px-1 text-sm font-bold text-slate-800">Destination(s) de préférence *</legend>
               <p className="mt-1 text-xs leading-5 text-slate-600">Choisissez jusqu'à {MAX_PREFERRED_DESTINATIONS} pays qui vous intéressent : votre espace, vos documents à fournir et votre score d'éligibilité seront adaptés à ce choix.</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Destinations de préférence">
-                {CANDIDATE_DESTINATION_OPTIONS.map((option) => {
-                  const selected = form.preferredDestinations.includes(option.name);
-                  const disabledByLimit = !selected && form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS;
-                  return (
-                    <button
-                      key={option.name}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => toggleDestination(option.name)}
-                      disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || disabledByLimit}
-                      className={`min-h-11 rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-violet-700 bg-violet-700 text-white" : "border-violet-200 bg-white text-violet-900 hover:bg-violet-100"}`}
-                    >
-                      <span className="mr-1">{option.flag}</span>{option.name}
-                    </button>
-                  );
-                })}
+              <div className="mt-3" role="group" aria-label="Destinations de préférence">
+                {Object.entries(destinationsByRegion).map(([region, options]) => (
+                  <div key={region} className="mb-3">
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{region}</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {options.map((option) => {
+                        const selected = form.preferredDestinations.includes(option.name);
+                        const disabledByLimit = !selected && form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS;
+                        return (
+                          <button
+                            key={option.name}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => toggleDestination(option.name)}
+                            disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || disabledByLimit}
+                            className={`min-h-11 rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-violet-700 bg-violet-700 text-white" : "border-violet-200 bg-white text-violet-900 hover:bg-violet-100"}`}
+                          >
+                            <span className="mr-1">{option.flag}</span>{option.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
               {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
             </fieldset>
