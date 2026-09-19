@@ -47,7 +47,7 @@ export const evaluationAdminRouter = router({
     .input(z.object({
       limit: z.number().int().min(1).max(200).default(50),
       offset: z.number().int().min(0).default(0),
-    }).default({}))
+    }).default({ limit: 50, offset: 0 }))
     .query(async ({ ctx, input }) => {
     if (ctx.user?.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });

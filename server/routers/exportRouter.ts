@@ -45,7 +45,7 @@ export const exportRouter = router({
           amount: transactions.amount,
           status: transactions.status,
           createdAt: transactions.createdAt,
-          transactionId: transactions.transactionId,
+          id: transactions.id,
         }).from(transactions).orderBy(desc(transactions.createdAt)).limit(10),
       ]);
 
@@ -77,7 +77,7 @@ export const exportRouter = router({
         "TRANSACTIONS RÉCENTES",
         "Numéro Dossier,Montant (XOF),Statut,Date,ID Transaction",
         ...recentTxns.map(txn =>
-          `"${txn.dossierNumber}","${txn.amount || 0}","${txn.status}","${txn.createdAt ? new Date(txn.createdAt).toLocaleDateString("fr-FR") : "N/A"}","${txn.transactionId}"`
+          `"${txn.dossierNumber}","${txn.amount || 0}","${txn.status}","${txn.createdAt ? new Date(txn.createdAt).toLocaleDateString("fr-FR") : "N/A"}","${txn.id}"`
         ),
       ];
 
