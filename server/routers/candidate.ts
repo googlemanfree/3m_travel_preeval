@@ -299,7 +299,7 @@ export const candidateRouter = router({
 
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const rows = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+    const rows = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
     if (!rows.length || !rows[0].emailVerified) throw new TRPCError({ code: "UNAUTHORIZED", message: "Compte Google non disponible." });
     const candidate = rows[0];
     await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));

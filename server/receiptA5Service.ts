@@ -343,7 +343,7 @@ export function generateMultipleReceiptsA5HTML(receipts: Array<{
           <div class="content">
             <div class="line">
               <span class="label">N° Reçu :</span>
-              <span class="value"><strong>${receipt.receiptNumber}</strong></span>
+              <span class="value"><strong>${esc(receipt.receiptNumber)}</strong></span>
             </div>
             <div class="line">
               <span class="label">Date :</span>
@@ -355,16 +355,16 @@ export function generateMultipleReceiptsA5HTML(receipts: Array<{
             </div>
             <div class="line">
               <span class="label">Client :</span>
-              <span class="value">${receipt.candidateName}</span>
+              <span class="value">${esc(receipt.candidateName)}</span>
             </div>
           </div>
           <div class="amount-section">
             <div class="currency">Montant</div>
-            <div class="amount">${receipt.amount}</div>
-            <div class="currency">${receipt.currency}</div>
+            <div class="amount">${esc(receipt.amount)}</div>
+            <div class="currency">${esc(receipt.currency)}</div>
           </div>
           <div class="footer">
-            <div class="barcode">${receipt.receiptNumber}</div>
+            <div class="barcode">${esc(receipt.receiptNumber)}</div>
             <p>Merci de votre confiance !</p>
           </div>
         </div>
