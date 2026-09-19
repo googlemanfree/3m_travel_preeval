@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BriefcaseBusiness, ClipboardList, Filter, Loader2, MessageCircle, Save, Search, X } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, ClipboardList, Download, Filter, Loader2, MessageCircle, Save, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,26 @@ const statusStyles: Record<RequestStatus, string> = {
 };
 
 type RequestStatus = "new" | "contacted" | "proposal_sent" | "completed" | "cancelled";
+
+type DigitalRequest = { reference?: string; fullName?: string; service?: string; status?: string; email?: string; phone?: string; organization?: string | null; createdAt?: Date | string };
+
+function downloadCSV(rows: DigitalRequest[]) {
+  const headers = ["Référence", "Nom", "Service", "Statut", "Email", "Téléphone", "Organisation", "Date"];
+  const lines = rows.map((r) =>
+    [r.reference ?? "", r.fullName ?? "", serviceLabels[r.service ?? ""] ?? r.service ?? "",
+      statusLabels[(r.status ?? "") as RequestStatus] ?? r.status ?? "",
+      r.email ?? "", r.phone ?? "", r.organization ?? "", r.createdAt ? new Date(r.createdAt).toLocaleString("fr-FR") : ""]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","),
+  );
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `3m-digital-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function getSessionToken() {
   if (typeof window === "undefined") return "";
@@ -134,9 +154,21 @@ export default function AdminDigitalServices() {
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Contenu et demandes à traiter</h1>
             <p className="mt-2 text-slate-600">Modifiez la sous-page publiée et qualifiez chaque demande avant toute proposition.</p>
           </div>
-          <Badge className="w-fit bg-slate-900 px-3 py-1.5 text-sm text-white">
-            {requests?.length ?? 0} demande{(requests?.length ?? 0) > 1 ? "s" : ""} au total
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadCSV(filteredRequests as DigitalRequest[])}
+              disabled={filteredRequests.length === 0}
+              className="gap-1.5 text-xs"
+              title="Exporter les demandes filtrées en CSV"
+            >
+              <Download className="h-3.5 w-3.5" /> CSV
+            </Button>
+            <Badge className="bg-slate-900 px-3 py-1.5 text-sm text-white">
+              {requests?.length ?? 0} demande{(requests?.length ?? 0) > 1 ? "s" : ""} au total
+            </Badge>
+          </div>
         </header>
 
         <AdminDigitalContentEditor sessionToken={token} />

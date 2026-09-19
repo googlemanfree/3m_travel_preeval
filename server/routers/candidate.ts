@@ -633,6 +633,7 @@ export const candidateRouter = router({
         preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().max(100).optional(),
         avatarUrl: z.string().url().optional(),
+        preferredDestinations: z.array(z.string().min(1).max(100)).max(3).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -640,7 +641,11 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const updateData: Record<string, unknown> = {};
-      Object.entries(input).forEach(([k, v]) => { if (v !== undefined && k !== "avatarUrl") updateData[k] = v; });
+      Object.entries(input).forEach(([k, v]) => {
+        if (v !== undefined && k !== "avatarUrl") {
+          updateData[k] = k === "preferredDestinations" && Array.isArray(v) ? JSON.stringify(v) : v;
+        }
+      });
       if (input.avatarUrl !== undefined && input.avatarUrl !== ctx.candidate.avatarUrl) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Utilisez le parcours de vérification pour modifier votre portrait." });
       }
