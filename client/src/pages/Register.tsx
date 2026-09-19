@@ -73,6 +73,14 @@ export default function Register() {
   const passwordStrength = getPasswordStrength(form.password);
   const isPasswordInvalid = form.password.length > 0 && passwordStrength.score < 3;
   const isConfirmationInvalid = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
+  const missingRegistrationRequirements = [
+    !form.fullName.trim() ? "votre nom complet" : null,
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "une adresse e-mail valide" : null,
+    form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password) ? "un mot de passe conforme" : null,
+    form.password !== form.confirmPassword ? "la confirmation du mot de passe" : null,
+    form.preferredDestinations.length === 0 ? "au moins une destination" : null,
+    !portrait ? "un portrait vérifié" : null,
+  ].filter((value): value is string => Boolean(value));
 
   function toggleDestination(name: string) {
     setForm((prev) => {
@@ -144,6 +152,10 @@ export default function Register() {
       toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error("Veuillez saisir une adresse e-mail valide.");
+      return;
+    }
     if (form.password.length < 8) {
       toast.error("Le mot de passe doit contenir au moins 8 caractères.");
       return;
@@ -158,6 +170,10 @@ export default function Register() {
     }
     if (form.password !== form.confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    if (form.preferredDestinations.length === 0) {
+      toast.error("Sélectionnez au moins une destination de préférence.");
       return;
     }
     if (!portrait) {
@@ -568,7 +584,8 @@ export default function Register() {
             >
               <Button
                 type="submit"
-                disabled={!isFormValid || registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+                disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+                aria-describedby="registration-submit-help"
                 className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait ? (
@@ -591,6 +608,11 @@ export default function Register() {
                   </span>
                 )}
               </Button>
+              {!registerMutation.isPending && !duplicatePreflightMutation.isPending && !isUploadingPortrait && !showSuccessAnimation && missingRegistrationRequirements.length > 0 && (
+                <p id="registration-submit-help" className="mt-2 text-center text-xs text-slate-600" aria-live="polite">
+                  Pour continuer, renseignez {missingRegistrationRequirements.join(", ")}.
+                </p>
+              )}
               <AnimatePresence initial={false}>
                 {(registerMutation.isPending || isUploadingPortrait) && (
                   <motion.div

@@ -8,6 +8,8 @@ describe("soumission d’inscription", () => {
   it("bloque une nouvelle soumission pendant l’envoi ou la création", () => {
     expect(source).toContain("if (registerMutation.isPending || isUploadingPortrait || showSuccessAnimation)");
     expect(source).toContain('disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}');
+    expect(source).toContain('aria-describedby="registration-submit-help"');
+    expect(source).toContain("missingRegistrationRequirements");
   });
 
   it("annonce un chargement accessible avec une progression visible", () => {

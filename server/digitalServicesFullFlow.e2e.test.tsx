@@ -13,6 +13,19 @@ if (!HTMLElement.prototype.hasPointerCapture) {
   });
 }
 
+if (!("IntersectionObserver" in globalThis)) {
+  class MockIntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(globalThis, "IntersectionObserver", {
+    configurable: true,
+    writable: true,
+    value: MockIntersectionObserver,
+  });
+}
+
 const state = vi.hoisted(() => ({
   requests: [] as Array<any>,
   nextId: 701,
