@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle, Phone, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,8 @@ export default function Register() {
   const [form, setForm] = useState({
     fullName: "",
     email: "",
+    phone: "",
+    nationality: "",
     password: "",
     confirmPassword: "",
     evaluationAlreadyCompleted: "no" as "yes" | "no",
@@ -109,7 +111,9 @@ export default function Register() {
           ? "Compte créé ! Consultez votre boîte e-mail pour l’activer."
           : "Compte créé. Utilisez le renvoi sécurisé si l’e-mail n’arrive pas.",
       );
-      navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
+      window.setTimeout(() => {
+        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
+      }, 900);
     },
     onError: (err) => {
       const message = err.message || "Erreur lors de la création du compte.";
@@ -147,6 +151,11 @@ export default function Register() {
       toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
+    if (!portrait) {
+      toast.error("Un portrait humain vérifié est obligatoire pour finaliser l’inscription.");
+      return;
+    }
+
     try {
       const preflight = await duplicatePreflightMutation.mutateAsync({ fullName: form.fullName, email: form.email });
       if (preflight.hasDuplicate) {
@@ -157,11 +166,6 @@ export default function Register() {
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible de vérifier les doublons.");
-      return;
-    }
-
-    if (!portrait) {
-      toast.error("Un portrait humain vérifié est obligatoire pour finaliser l’inscription.");
       return;
     }
 
@@ -185,6 +189,8 @@ export default function Register() {
         portraitVerificationToken: result.portraitVerificationToken,
         evaluationAlreadyCompleted: form.evaluationAlreadyCompleted === "yes",
         preferredDestinations: form.preferredDestinations,
+        phone: form.phone || undefined,
+        nationality: form.nationality || undefined,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
@@ -509,7 +515,7 @@ export default function Register() {
             >
               <Button
                 type="submit"
-                disabled={registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+                disabled={!isFormValid || registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait || showSuccessAnimation}
                 className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending || duplicatePreflightMutation.isPending || isUploadingPortrait ? (

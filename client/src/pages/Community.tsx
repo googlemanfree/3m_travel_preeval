@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,88 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { COMPANY_CONTACTS, digitalWhatsAppUrl } from "@/lib/companyContacts";
 import { toast } from "sonner";
+
+function SkeletonPulse({ className }: { className: string }) {
+  return (
+    <motion.div
+      className={`bg-slate-200 rounded ${className}`}
+      animate={{ opacity: [0.4, 0.9, 0.4] }}
+      transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
+function CommunitySkeleton() {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero skeleton */}
+      <section className="bg-[#0b1f5e] px-4 pb-20 pt-16 sm:px-6 lg:px-8 lg:pb-28 lg:pt-24">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
+          <div className="space-y-5">
+            <SkeletonPulse className="h-6 w-48 bg-white/20" />
+            <SkeletonPulse className="h-14 w-full max-w-lg bg-white/20" />
+            <SkeletonPulse className="h-14 w-3/4 bg-white/20" />
+            <SkeletonPulse className="h-6 w-full max-w-sm bg-white/15" />
+            <SkeletonPulse className="h-6 w-2/3 bg-white/15" />
+            <div className="flex gap-3 mt-4">
+              <SkeletonPulse className="h-12 w-40 rounded-xl bg-white/25" />
+              <SkeletonPulse className="h-12 w-44 rounded-xl bg-white/15" />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <motion.div
+                key={i}
+                className="rounded-2xl border border-white/15 bg-white/10 p-5 space-y-3"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <SkeletonPulse className="h-6 w-6 bg-white/25 rounded" />
+                <SkeletonPulse className="h-4 w-24 bg-white/20" />
+                <SkeletonPulse className="h-3 w-full bg-white/15" />
+                <SkeletonPulse className="h-3 w-3/4 bg-white/15" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Expertise cards skeleton */}
+      <section className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
+        <div className="space-y-3 mb-10">
+          <SkeletonPulse className="h-4 w-32" />
+          <SkeletonPulse className="h-9 w-80" />
+          <SkeletonPulse className="h-5 w-full max-w-lg" />
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <motion.div
+              key={i}
+              className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <SkeletonPulse className="h-12 w-12 rounded-xl" />
+                <SkeletonPulse className="h-4 w-6" />
+              </div>
+              <SkeletonPulse className="h-6 w-2/3" />
+              <SkeletonPulse className="h-4 w-full" />
+              <SkeletonPulse className="h-4 w-5/6" />
+              <div className="space-y-2 mt-4">
+                {[1, 2, 3, 4].map((j) => (
+                  <SkeletonPulse key={j} className="h-4 w-full" />
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
 
 const expertise = [
   {
@@ -86,7 +169,7 @@ const deliveryExamples = [
 
 export default function Community() {
   const [form, setForm] = useState({ service: "web_platform" as keyof typeof serviceLabels, fullName: "", email: "", phone: "", organization: "", message: "" });
-  const { data: content } = trpc.digitalServices.getContent.useQuery();
+  const { data: content, isLoading: isContentLoading } = trpc.digitalServices.getContent.useQuery();
   const publishedExpertise = useMemo(() => {
     try {
       const definitions = JSON.parse(content?.serviceDefinitionsJson || "[]") as Array<{ title?: string; description?: string; points?: string[] }>;
@@ -113,6 +196,8 @@ export default function Community() {
     event.preventDefault();
     submitRequest.mutate({ ...form, organization: form.organization || undefined });
   };
+
+  if (isContentLoading) return <CommunitySkeleton />;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -183,16 +268,25 @@ export default function Community() {
             <p className="mt-4 leading-7 text-slate-600">{content?.serviceIntro || "Le pôle 3M Digital met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer."}</p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {publishedExpertise.map((item) => {
+            {publishedExpertise.map((item, index) => {
               const Icon = item.icon;
-              return <article key={item.id} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg">
-                <div className="flex items-start justify-between gap-4"><div className="rounded-xl bg-blue-50 p-3 text-blue-700"><Icon className="h-6 w-6" /></div><span className="font-mono text-sm font-bold text-slate-400">{item.id}</span></div>
-                <h3 className="mt-5 text-xl font-black text-slate-950">{item.title}</h3>
-                <p className="mt-3 leading-7 text-slate-600">{item.description}</p>
-                <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
-                  {item.points.map((point) => <li key={point} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{point}</li>)}
-                </ul>
-              </article>;
+              return (
+                <motion.article
+                  key={item.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="flex items-start justify-between gap-4"><div className="rounded-xl bg-blue-50 p-3 text-blue-700"><Icon className="h-6 w-6" /></div><span className="font-mono text-sm font-bold text-slate-400">{item.id}</span></div>
+                  <h3 className="mt-5 text-xl font-black text-slate-950">{item.title}</h3>
+                  <p className="mt-3 leading-7 text-slate-600">{item.description}</p>
+                  <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
+                    {item.points.map((point) => <li key={point} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{point}</li>)}
+                  </ul>
+                </motion.article>
+              );
             })}
           </div>
         </section>

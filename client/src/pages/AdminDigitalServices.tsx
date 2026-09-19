@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BriefcaseBusiness, ClipboardList, Loader2, MessageCircle, Save } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, ClipboardList, Filter, Loader2, MessageCircle, Save, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import AdminDigitalContentEditor from "@/components/AdminDigitalContentEditor";
@@ -45,6 +46,9 @@ export default function AdminDigitalServices() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [draftStatus, setDraftStatus] = useState<RequestStatus>("new");
   const [notes, setNotes] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<RequestStatus | "all">("all");
+  const [filterService, setFilterService] = useState<string>("all");
   const utils = trpc.useUtils();
 
   const { data: requests, isLoading, error } = trpc.digitalServices.adminList.useQuery(
@@ -52,7 +56,20 @@ export default function AdminDigitalServices() {
     { enabled: Boolean(token), retry: false },
   );
 
-  const selected = requests?.find((request) => request.id === selectedId) ?? requests?.[0] ?? null;
+  const filteredRequests = useMemo(() => {
+    if (!requests) return [];
+    const query = searchQuery.toLowerCase().trim();
+    return requests.filter((r) => {
+      const matchesSearch = !query || [r.fullName, r.email, r.reference, r.phone, r.organization ?? ""].some(
+        (field) => field?.toLowerCase().includes(query),
+      );
+      const matchesStatus = filterStatus === "all" || r.status === filterStatus;
+      const matchesService = filterService === "all" || r.service === filterService;
+      return matchesSearch && matchesStatus && matchesService;
+    });
+  }, [requests, searchQuery, filterStatus, filterService]);
+
+  const selected = filteredRequests.find((request) => request.id === selectedId) ?? filteredRequests[0] ?? null;
 
   useEffect(() => {
     if (!selected) return;
@@ -118,7 +135,7 @@ export default function AdminDigitalServices() {
             <p className="mt-2 text-slate-600">Modifiez la sous-page publiée et qualifiez chaque demande avant toute proposition.</p>
           </div>
           <Badge className="w-fit bg-slate-900 px-3 py-1.5 text-sm text-white">
-            {requests?.length ?? 0} demande{(requests?.length ?? 0) > 1 ? "s" : ""}
+            {requests?.length ?? 0} demande{(requests?.length ?? 0) > 1 ? "s" : ""} au total
           </Badge>
         </header>
 
@@ -131,9 +148,69 @@ export default function AdminDigitalServices() {
         ) : (
           <div className="mt-8 grid gap-6 lg:grid-cols-[.82fr_1.18fr]">
             <Card className="overflow-hidden border-slate-200 bg-white">
-              <div className="border-b border-slate-100 px-5 py-4"><p className="font-black text-slate-950">File opérationnelle</p></div>
-              <div className="max-h-[620px] overflow-y-auto">
-                {(requests ?? []).map((request) => {
+              <div className="border-b border-slate-100 px-5 py-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-black text-slate-950">File opérationnelle</p>
+                  <div className="flex items-center gap-1.5">
+                    <Filter className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-xs text-slate-500">
+                      {filteredRequests.length}/{requests?.length ?? 0}
+                    </span>
+                  </div>
+                </div>
+                {/* Recherche */}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Nom, e-mail, référence…"
+                    className="pl-8 h-8 text-sm bg-slate-50 border-slate-200"
+                    aria-label="Rechercher une demande"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                {/* Filtres statut + service */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as RequestStatus | "all")}>
+                    <SelectTrigger className="h-8 text-xs bg-slate-50 border-slate-200" aria-label="Filtrer par statut">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les statuts</SelectItem>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterService} onValueChange={setFilterService}>
+                    <SelectTrigger className="h-8 text-xs bg-slate-50 border-slate-200" aria-label="Filtrer par service">
+                      <SelectValue placeholder="Service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les services</SelectItem>
+                      {Object.entries(serviceLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Réinitialiser les filtres */}
+                {(filterStatus !== "all" || filterService !== "all" || searchQuery) && (
+                  <button
+                    onClick={() => { setSearchQuery(""); setFilterStatus("all"); setFilterService("all"); }}
+                    className="text-xs text-blue-700 hover:text-blue-900 font-medium flex items-center gap-1"
+                  >
+                    <X className="h-3 w-3" /> Réinitialiser les filtres
+                  </button>
+                )}
+              </div>
+              <div className="max-h-[540px] overflow-y-auto">
+                {filteredRequests.map((request) => {
                   const requestStatus = request.status as RequestStatus;
                   return (
                     <button
@@ -150,8 +227,13 @@ export default function AdminDigitalServices() {
                     </button>
                   );
                 })}
-                {(requests ?? []).length === 0 && (
-                  <div className="p-10 text-center text-slate-500"><ClipboardList className="mx-auto mb-3 h-8 w-8 text-slate-300" />Aucune demande 3M Digital pour le moment.</div>
+                {filteredRequests.length === 0 && (
+                  <div className="p-10 text-center text-slate-500">
+                    <ClipboardList className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+                    {(requests?.length ?? 0) > 0
+                      ? "Aucune demande ne correspond aux filtres."
+                      : "Aucune demande 3M Digital pour le moment."}
+                  </div>
                 )}
               </div>
             </Card>

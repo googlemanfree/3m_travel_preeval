@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, FileText, MapPin, AlertCircle } from "lucide-react";
+import { CheckCircle2, Download, FileText, Loader2, MapPin, AlertCircle } from "lucide-react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Checklist documents par pays et type de visa
 const DOCUMENTS_BY_COUNTRY_VISA: Record<string, Record<string, string[]>> = {
@@ -131,46 +133,124 @@ interface EvaluationResultProps {
 
 export default function EvaluationResult() {
   const { isAuthenticated } = useCandidateAuth();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [country, setCountry] = useState("Canada");
   const [visaType, setVisaType] = useState("Étudiant");
   const [checkedDocuments, setCheckedDocuments] = useState<Record<string, boolean>>({});
-  const [showOnlineOption, setShowOnlineOption] = useState(false);
-  const [showAgencyOption, setShowAgencyOption] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Récupérer les documents requis
   const requiredDocuments = DOCUMENTS_BY_COUNTRY_VISA[country]?.[visaType] || [];
-
-  // Calculer le pourcentage de documents complétés
   const completedCount = Object.values(checkedDocuments).filter(Boolean).length;
-  const completionPercentage = Math.round((completedCount / requiredDocuments.length) * 100);
+  const completionPercentage = requiredDocuments.length > 0
+    ? Math.round((completedCount / requiredDocuments.length) * 100)
+    : 0;
 
   const handleDocumentCheck = (doc: string) => {
-    setCheckedDocuments(prev => ({
-      ...prev,
-      [doc]: !prev[doc]
-    }));
+    setCheckedDocuments(prev => ({ ...prev, [doc]: !prev[doc] }));
   };
 
   const handleDepositOnline = () => {
-    if (!isAuthenticated) {
-      setLocation("/login");
-      return;
-    }
+    if (!isAuthenticated) { setLocation("/login"); return; }
     setLocation("/submit-documents");
   };
 
-  const handleScheduleAgency = () => {
-    setLocation("/contact");
+  const handleScheduleAgency = () => { setLocation("/contact"); };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // En-tête
+      doc.setFillColor(11, 31, 94);
+      doc.rect(0, 0, pageWidth, 32, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("3M Travel & Services", 14, 13);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text("Résultat d'évaluation — Checklist de documents", 14, 22);
+
+      // Métadonnées
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Destination : ${country}`, 14, 44);
+      doc.text(`Type de visa : ${visaType}`, 14, 52);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Date d'export : ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, 14, 60);
+      doc.text(`Progression : ${completedCount}/${requiredDocuments.length} documents (${completionPercentage}%)`, 14, 68);
+
+      // Barre de progression
+      doc.setDrawColor(220, 220, 220);
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(14, 73, pageWidth - 28, 5, 2, 2, "F");
+      if (completionPercentage > 0) {
+        doc.setFillColor(37, 99, 235);
+        doc.roundedRect(14, 73, ((pageWidth - 28) * completionPercentage) / 100, 5, 2, 2, "F");
+      }
+
+      // Table de documents
+      autoTable(doc, {
+        startY: 85,
+        head: [["État", "Document requis", "Statut"]],
+        body: requiredDocuments.map((d) => [
+          checkedDocuments[d] ? "✓" : "○",
+          d,
+          checkedDocuments[d] ? "Prêt" : "À préparer",
+        ]),
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold", fontSize: 10 },
+        bodyStyles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 14, halign: "center" },
+          1: { cellWidth: "auto" },
+          2: { cellWidth: 36, halign: "center" },
+        },
+        alternateRowStyles: { fillColor: [245, 247, 255] },
+        didDrawCell: (data) => {
+          if (data.column.index === 0 && data.section === "body") {
+            const isChecked = data.cell.text[0] === "✓";
+            doc.setTextColor(isChecked ? 22 : 100, isChecked ? 163 : 100, isChecked ? 74 : 100);
+          }
+        },
+      });
+
+      // Pied de page
+      const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text("Ce document est généré automatiquement par la plateforme 3M Travel & Services.", 14, finalY);
+      doc.text("Les exigences officielles peuvent évoluer ; vérifiez toujours auprès des autorités compétentes.", 14, finalY + 6);
+
+      doc.save(`evaluation-3m-${country.toLowerCase().replace(/\s/g, "-")}-${visaType.toLowerCase().replace(/\s/g, "-")}.pdf`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-gray-900">Résultat de Votre Évaluation</h1>
           <p className="text-lg text-gray-600">Voici la liste des documents requis pour votre dossier</p>
+          <Button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            variant="outline"
+            className="inline-flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+          >
+            {isExporting ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Génération du PDF…</>
+            ) : (
+              <><Download className="w-4 h-4" /> Télécharger en PDF</>
+            )}
+          </Button>
         </div>
 
         {/* Selection Pays et Type Visa */}
