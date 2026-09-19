@@ -10,6 +10,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { PortraitCapture, PortraitCaptureResult } from "@/components/PortraitCapture";
 import { toast } from "sonner";
 import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptions";
+import CountryFlag from "@/components/CountryFlag";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
@@ -528,7 +529,7 @@ export default function Register() {
                       setDestinationQuery("");
                     }
                   }}
-                  placeholder="Rechercher Canada, France, Allemagne…"
+                  placeholder="Rechercher Canada, France, Pologne…"
                   aria-autocomplete="list"
                   aria-controls="destination-suggestions"
                   className="h-12 bg-white pl-10 pr-10"
@@ -557,7 +558,7 @@ export default function Register() {
                           }}
                           className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-violet-50 ${selected ? "bg-violet-100 font-bold text-violet-800" : "text-slate-700"}`}
                         >
-                          <span><span className="mr-2">{option.flag}</span>{option.name}</span>
+                          <span className="flex items-center gap-2"><CountryFlag flag={option.flag} />{option.name}</span>
                           <span className="text-xs text-slate-400">{option.region}</span>
                         </button>
                       );
@@ -571,13 +572,13 @@ export default function Register() {
                     const option = CANDIDATE_DESTINATION_OPTIONS.find((item) => item.name === name);
                     return (
                       <button key={name} type="button" onClick={() => toggleDestination(name)} disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation} className="inline-flex items-center gap-1 rounded-full bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-800 disabled:opacity-60">
-                        <span>{option?.flag}</span>{name}<X className="h-3 w-3" aria-hidden="true" />
+                        {option && <CountryFlag flag={option.flag} />}{name}<X className="h-3 w-3" aria-hidden="true" />
                       </button>
                     );
                   })}
                 </div>
               )}
-              <p className="mt-2 text-xs text-slate-500">Destinations populaires : Canada, France, Allemagne, Luxembourg et Royaume-Uni.</p>
+              <p className="mt-2 text-xs text-slate-500">Destinations populaires : Canada, Luxembourg, Pologne, France et Royaume-Uni.</p>
               {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
             </fieldset>
 

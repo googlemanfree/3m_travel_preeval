@@ -58,3 +58,32 @@ export function coarseCategoryForPreferredDestinations(preferredDestinations: st
   if (!first) return "autre";
   return getCandidateDestinationOption(first)?.coarseCategory ?? "autre";
 }
+
+/** Nombre maximal de destinations de préférence qu'un candidat peut déclarer. */
+export const MAX_PREFERRED_DESTINATIONS = 3;
+
+/**
+ * Remet une liste de destinations à l'orthographe officielle, sans doublon et dans l'ordre reçu
+ * (le premier pays reste la destination principale). Les valeurs inconnues sont remontées à part.
+ */
+export function normalizeCandidateDestinations(names: string[]): { destinations: string[]; unrecognized: string[] } {
+  const destinations: string[] = [];
+  const unrecognized: string[] = [];
+  for (const name of names) {
+    const option = getCandidateDestinationOption(name);
+    if (!option) unrecognized.push(name);
+    else if (!destinations.includes(option.name)) destinations.push(option.name);
+  }
+  return { destinations, unrecognized };
+}
+
+/**
+ * Code ISO 3166-1 alpha-2 (minuscules) d'un drapeau emoji, ou null si ce n'est pas un drapeau.
+ * Windows n'affiche pas les emoji drapeaux (simples lettres « CA », « FR »...) : ce code permet
+ * d'afficher une vraie image de drapeau partout.
+ */
+export function flagEmojiToIsoCode(flag: string): string | null {
+  const points = Array.from(flag).map((char) => char.codePointAt(0) ?? 0);
+  if (points.length !== 2 || points.some((point) => point < 0x1f1e6 || point > 0x1f1ff)) return null;
+  return points.map((point) => String.fromCharCode(point - 0x1f1e6 + 97)).join("");
+}

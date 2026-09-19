@@ -28,6 +28,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import ClientMessagesPanel from "@/components/ClientMessagesPanel";
 import ClientProfilePanel from "@/components/ClientProfilePanel";
+import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
@@ -462,47 +463,7 @@ export default function EvaluationSpace() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
-              {/* Barre de progression du profil */}
-              {(() => {
-                const profileSteps = [
-                  { label: "Portrait", done: !portraitIsMissing },
-                  { label: "Téléphone", done: Boolean((cProfile as any).phone) },
-                  { label: "Nationalité", done: Boolean((cProfile as { nationality?: unknown }).nationality) },
-                  { label: "Date de naissance", done: Boolean((cProfile as any).dateOfBirth) },
-                  { label: "Destinations favorites", done: preferredDestinationsList.length > 0 },
-                  { label: "Évaluation", done: Boolean(latestEvaluation) || cProfile.evaluationDeclarationStatus === "validated" },
-                ];
-                const doneCount = profileSteps.filter((s) => s.done).length;
-                const pct = Math.round((doneCount / profileSteps.length) * 100);
-                if (pct === 100) return null;
-                return (
-                  <Card className="border-blue-100 bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <p className="font-bold text-slate-900">Complétez votre profil</p>
-                      <span className="text-sm font-semibold text-blue-700">{pct}%</span>
-                    </div>
-                    <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                      <div
-                        className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {profileSteps.map((step) => (
-                        <span key={step.label} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", step.done ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"].join(" ")}>
-                          {step.done ? "✓" : "○"} {step.label}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-xs text-slate-500">
-                      Un profil complet accélère le traitement de votre dossier par l’agence.{" "}
-                      <button type="button" className="font-semibold text-blue-700 underline-offset-2 hover:underline" onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }}>
-                        Compléter maintenant
-                      </button>
-                    </p>
-                  </Card>
-                );
-              })()}
+              <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               {/* Widgets statistiques et progression */}
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-gradient-to-r from-violet-50 via-white to-amber-50 p-6 shadow-md" role="region" aria-labelledby="quick-evaluation-title">

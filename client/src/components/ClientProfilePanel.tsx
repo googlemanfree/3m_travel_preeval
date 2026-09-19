@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Loader2, Mail, Save, ShieldCheck, UserRound, X } from "lucide-react";
+import { Loader2, Mail, Save, ShieldCheck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,16 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import CandidateAvatar from "@/components/CandidateAvatar";
-import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptions";
+import CountryFlag from "@/components/CountryFlag";
+import FavoriteDestinationsCard from "@/components/FavoriteDestinationsCard";
 
 const destinationOptions = [
-  { value: "canada", label: "🇨🇦 Canada" },
-  { value: "luxembourg", label: "🇱🇺 Luxembourg" },
-  { value: "pologne", label: "🇵🇱 Pologne" },
-  { value: "europe", label: "🌍 Europe / Schengen" },
-  { value: "golfe", label: "🕌 Golfe et Moyen-Orient" },
-  { value: "autre", label: "🌐 Autre destination" },
+  { value: "canada", label: "Canada", flag: "🇨🇦" },
+  { value: "luxembourg", label: "Luxembourg", flag: "🇱🇺" },
+  { value: "pologne", label: "Pologne", flag: "🇵🇱" },
+  { value: "europe", label: "Europe / Schengen", flag: "🇪🇺" },
+  { value: "golfe", label: "Golfe et Moyen-Orient", flag: "🕌" },
+  { value: "autre", label: "Autre destination", flag: "🌐" },
 ] as const;
 
 type ProfileForm = {
@@ -31,8 +32,16 @@ type ProfileForm = {
   educationLevel: string;
   employmentStatus: string;
   languageLevel: string;
-  preferredDestinations: string[];
 };
+
+function parseFavoriteDestinations(raw: string | null | undefined): string[] {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string" && value.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function ClientProfilePanel() {
   const { candidate, isAuthenticated } = useCandidateAuth();
@@ -51,18 +60,12 @@ export default function ClientProfilePanel() {
     educationLevel: "",
     employmentStatus: "",
     languageLevel: "",
-    preferredDestinations: [],
   });
   const [newEmail, setNewEmail] = useState("");
 
   useEffect(() => {
     const profile = profileQuery.data;
     if (!profile) return;
-    let savedDestinations: string[] = [];
-    try {
-      const parsed = JSON.parse((profile as any).preferredDestinations || "[]");
-      savedDestinations = Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
-    } catch { /* ignore */ }
     setForm({
       fullName: profile.fullName ?? "",
       phone: profile.phone ?? "",
@@ -75,7 +78,6 @@ export default function ClientProfilePanel() {
       educationLevel: profile.educationLevel ?? "",
       employmentStatus: profile.employmentStatus ?? "",
       languageLevel: profile.languageLevel ?? "",
-      preferredDestinations: savedDestinations,
     });
   }, [profileQuery.data]);
 
@@ -84,6 +86,7 @@ export default function ClientProfilePanel() {
       await Promise.all([
         utils.candidate.getProfile.invalidate(),
         utils.candidate.getMyDossierData.invalidate(),
+        utils.candidate.getClientDashboardSummary.invalidate(),
       ]);
       toast.success("Votre profil a été mis à jour.");
     },
@@ -188,52 +191,26 @@ export default function ClientProfilePanel() {
           <div className="space-y-2"><Label htmlFor="client-employment">Situation professionnelle</Label><Input id="client-employment" value={form.employmentStatus} onChange={(event) => update("employmentStatus", event.target.value)} maxLength={150} /></div>
           <div className="space-y-2"><Label htmlFor="client-language">Niveau de langue</Label><Input id="client-language" value={form.languageLevel} onChange={(event) => update("languageLevel", event.target.value)} placeholder="IELTS 7, DELF B2…" maxLength={100} /></div>
         </div>
-        <div className="space-y-2 sm:max-w-md"><Label>Destination principale</Label><Select value={form.destination} onValueChange={(value) => update("destination", value)}><SelectTrigger><SelectValue placeholder="Choisir une destination" /></SelectTrigger><SelectContent>{destinationOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Heart className="h-4 w-4 text-rose-500" />
-            <Label>Destinations favorites <span className="font-normal text-slate-400">(max 3)</span></Label>
-          </div>
-          <p className="text-xs text-slate-500">Sélectionnez jusqu'à 3 pays qui vous intéressent le plus.</p>
-          <div className="flex flex-wrap gap-2">
-            {CANDIDATE_DESTINATION_OPTIONS.map((option) => {
-              const isSelected = form.preferredDestinations.includes(option.name);
-              const isDisabled = !isSelected && form.preferredDestinations.length >= 3;
-              return (
-                <button
-                  key={option.name}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    setForm((current) => ({
-                      ...current,
-                      preferredDestinations: isSelected
-                        ? current.preferredDestinations.filter((d) => d !== option.name)
-                        : [...current.preferredDestinations, option.name],
-                    }));
-                  }}
-                  className={[
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors",
-                    isSelected
-                      ? "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100"
-                      : isDisabled
-                        ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-50"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800",
-                  ].join(" ")}
-                  aria-pressed={isSelected}
-                >
-                  <span aria-hidden="true">{option.flag}</span>
-                  {option.name}
-                  {isSelected && <X className="h-3 w-3" />}
-                </button>
-              );
-            })}
-          </div>
+        <div className="space-y-2 sm:max-w-md">
+          <Label>Destination principale</Label>
+          <Select value={form.destination} onValueChange={(value) => update("destination", value)}>
+            <SelectTrigger><SelectValue placeholder="Choisir une destination" /></SelectTrigger>
+            <SelectContent>
+              {destinationOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className="flex items-center gap-2"><CountryFlag flag={option.flag} />{option.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
         <Button type="submit" disabled={updateMutation.isPending} className="h-11 rounded-xl bg-blue-700 px-5 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
       </form>
+
+      <FavoriteDestinationsCard
+        saved={parseFavoriteDestinations(profileQuery.data.preferredDestinations)}
+        onSaved={(destination) => setForm((current) => ({ ...current, destination }))}
+      />
 
       <section className="mt-8 border-t border-slate-100 pt-6" aria-labelledby="email-change-title">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

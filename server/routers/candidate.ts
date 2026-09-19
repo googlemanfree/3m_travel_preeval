@@ -40,7 +40,8 @@ import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVeri
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
-import { coarseCategoryForPreferredDestinations, isRecognizedCandidateDestination } from "../../shared/candidateDestinationOptions";
+import { coarseCategoryForPreferredDestinations, isRecognizedCandidateDestination, MAX_PREFERRED_DESTINATIONS, normalizeCandidateDestinations } from "../../shared/candidateDestinationOptions";
+import { computeProfileCompletion } from "../../shared/profileCompletion";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
@@ -633,7 +634,7 @@ export const candidateRouter = router({
         preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().max(100).optional(),
         avatarUrl: z.string().url().optional(),
-        preferredDestinations: z.array(z.string().min(1).max(100)).max(3).optional(),
+        preferredDestinations: z.array(z.string().min(1).max(100)).min(1, "Choisissez au moins une destination").max(MAX_PREFERRED_DESTINATIONS, `${MAX_PREFERRED_DESTINATIONS} destinations maximum`).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -641,13 +642,19 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const updateData: Record<string, unknown> = {};
-      Object.entries(input).forEach(([k, v]) => {
-        if (v !== undefined && k !== "avatarUrl") {
-          updateData[k] = k === "preferredDestinations" && Array.isArray(v) ? JSON.stringify(v) : v;
-        }
-      });
+      Object.entries(input).forEach(([k, v]) => { if (v !== undefined && k !== "avatarUrl" && k !== "preferredDestinations") updateData[k] = v; });
       if (input.avatarUrl !== undefined && input.avatarUrl !== ctx.candidate.avatarUrl) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Utilisez le parcours de vérification pour modifier votre portrait." });
+      }
+      if (input.preferredDestinations !== undefined) {
+        // Mêmes garanties qu'à l'inscription : pays reconnus uniquement, orthographe officielle, sans
+        // doublon, et l'ancienne catégorie large `destination` redérivée du premier pays choisi.
+        const { destinations, unrecognized } = normalizeCandidateDestinations(input.preferredDestinations);
+        if (unrecognized.length > 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `Destination(s) non reconnue(s) : ${unrecognized.join(", ")}.` });
+        }
+        updateData.preferredDestinations = JSON.stringify(destinations);
+        updateData.destination = coarseCategoryForPreferredDestinations(destinations);
       }
 
       await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
@@ -2180,22 +2187,17 @@ export const candidateRouter = router({
       reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null,
     }));
 
-    let profileFieldsFilled = 0;
-    const totalProfileFields = 5;
-    if (candidate.fullName) profileFieldsFilled++;
-    if (candidate.email) profileFieldsFilled++;
-    if (candidate.phone) profileFieldsFilled++;
-    if (candidate.destination) profileFieldsFilled++;
-    if (candidate.avatarVerificationStatus === "verified") profileFieldsFilled++;
-    const profileCompletionPercent = Math.round((profileFieldsFilled / totalProfileFields) * 100);
+    const profileCompletion = computeProfileCompletion(candidate);
 
     return {
+      profileCompletion,
       candidate: {
         id: candidate.id,
         fullName: candidate.fullName,
         email: candidate.email,
         phone: candidate.phone,
         destination: candidate.destination,
+        preferredDestinations: candidate.preferredDestinations ?? null,
         avatarUrl: (candidate as any).avatarUrl || null,
         avatarVerificationStatus: candidate.avatarVerificationStatus,
         avatarVerificationMethod: candidate.avatarVerificationMethod,
@@ -2239,7 +2241,7 @@ export const candidateRouter = router({
         totalFavoriteFlights: favFlights.length,
         totalDocuments: fileRows.length + agencyDocRows.length,
         unreadMessages: messageRows.filter((m: any) => m.senderRole === "advisor" && !m.isRead).length,
-        profileCompletionPercent,
+        profileCompletionPercent: profileCompletion.percent,
       },
     };
   }),
