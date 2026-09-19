@@ -28,7 +28,7 @@ describe("liens WhatsApp des e-mails et pages client", () => {
 });
 
 describe("mentions de copyright dans les e-mails transactionnels", () => {
-  const FILES_WITH_COPYRIGHT = ["server/emailService.ts", "server/routers/admin.ts", "server/routers/candidate-new.ts", "server/routers/flights.ts"];
+  const FILES_WITH_COPYRIGHT = ["server/emailService.ts", "server/routers/admin.ts", "server/routers/flights.ts"];
 
   it.each(FILES_WITH_COPYRIGHT)("%s n'affiche plus l'année 2024 figée en dur et utilise l'année courante", (path) => {
     const source = read(path);

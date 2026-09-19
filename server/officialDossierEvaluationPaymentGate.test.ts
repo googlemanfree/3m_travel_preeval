@@ -36,11 +36,12 @@ describe("official dossier evaluation and payment gate", () => {
   });
 
   it("protects the inherited admin status mutation for online and agency records", () => {
-    const source = read("server/routers/candidate-new.ts");
-    expect(source).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
-    expect(source).toContain("Le dossier agence ne peut pas passer en traitement : l’évaluation doit être validée et le paiement doit être validé par un administrateur.");
-    expect(source).toContain("confirmedAgencyPayment");
-    expect(source).toContain("const paymentConfirmed =");
+    const adminDossier = read("server/routers/adminDossier.ts");
+    const admin = read("server/routers/admin.ts");
+    expect(admin).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
+    expect(adminDossier).toContain("agencyPaymentConfirmed");
+    expect(adminDossier).toContain("const paymentConfirmed =");
+    expect(adminDossier).toContain("Création bloquée");
   });
 
   it("does not promote a paid application before the evaluation and agreement gates", () => {

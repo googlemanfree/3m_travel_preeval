@@ -36,6 +36,7 @@ const payload = {
   email: "candidate.declaree@example.test",
   password: "Motdepasse1!",
   portraitVerificationToken: "p".repeat(64),
+  preferredDestinations: ["Canada"],
 };
 
 describe("candidate.register — déclaration d’évaluation préalable", () => {
