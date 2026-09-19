@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordResetEmailTemplate, getPasswordResetSuccessEmailTemplate } from "../_core/emailTemplates";
 import { createHash, randomBytes, randomInt } from "node:crypto";
+import { checkLoginAttempts, recordFailedAttempt } from "../loginAttemptsService";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -54,6 +55,8 @@ export const adminPasswordResetRouter = router({
     .input(z.object({ email: z.string().email("Email invalide").max(320) }))
     .mutation(async ({ input }) => {
       const genericMessage = "Si cette adresse correspond à un compte administrateur actif, un mot de passe temporaire sera envoyé par e-mail.";
+      checkLoginAttempts(`pwreset:${input.email.toLowerCase()}`);
+      recordFailedAttempt(`pwreset:${input.email.toLowerCase()}`);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -105,6 +108,8 @@ export const adminPasswordResetRouter = router({
       email: z.string().email("Email invalide").max(320),
     }))
     .mutation(async ({ input }) => {
+      checkLoginAttempts(`pwreset:${input.email.toLowerCase()}`);
+      recordFailedAttempt(`pwreset:${input.email.toLowerCase()}`);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
