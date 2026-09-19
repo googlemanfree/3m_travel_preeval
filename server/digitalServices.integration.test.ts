@@ -21,7 +21,10 @@ const requestRow: any = {
 
 const fakeDb = {
   insert: vi.fn(() => ({ values: vi.fn((value: unknown) => { inserted.push(value); return { onDuplicateKeyUpdate: vi.fn(async () => undefined), then: (resolve: (value: unknown) => unknown) => Promise.resolve(undefined).then(resolve) }; }) })),
-  select: vi.fn(() => ({ from: vi.fn(() => ({ orderBy: vi.fn(async () => [requestRow]), where: vi.fn(() => ({ limit: vi.fn(async () => [requestRow]) })) })) })),
+  select: vi.fn(() => ({ from: vi.fn(() => ({
+    orderBy: vi.fn(() => ({ limit: vi.fn(async () => [requestRow]) })),
+    where: vi.fn(() => ({ limit: vi.fn(async () => [requestRow]) })),
+  })) })),
   update: vi.fn(() => ({ set: vi.fn((value: unknown) => { updates.push(value); Object.assign(requestRow, value); return { where: vi.fn(async () => undefined) }; }) })),
 };
 

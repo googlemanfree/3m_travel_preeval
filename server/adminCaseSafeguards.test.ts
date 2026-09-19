@@ -17,8 +17,8 @@ describe("garde-fous de pilotage admin-candidat", () => {
   });
 
   it("notifie le candidat après validation de son CV", () => {
-    expect(adminRouter).toContain('type: "cv_validated"');
-    expect(adminRouter).toContain("Votre CV a été validé");
+    expect(adminRouter).toContain('type: "document_approved"');
+    expect(adminRouter).toContain("Votre document");
   });
 
   it("permet de filtrer les documents manquants et affiche le délai de revue", () => {

@@ -25,7 +25,7 @@ describe("Réinitialisation globale des mots de passe admin", () => {
 
   it("ne crée pas de doublon pour l’adresse admin déjà existante", () => {
     const source = read("server/routers/adminAuth.ts");
-    expect(source).toContain("const admins = await db.select().from(adminAccounts);");
+    expect(source).toContain("const admins = await db.select().from(adminAccounts).limit(200);");
     expect(source).not.toContain("INSERT INTO admin_accounts");
   });
 

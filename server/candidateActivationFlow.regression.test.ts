@@ -40,8 +40,8 @@ describe("candidate activation flow", () => {
   // renders), but the explicit "no officially verified steps configured" empty-state copy below could
   // not be found anywhere in the current codebase.
   it("shows official-source coverage or an explicit unavailable-source state", () => {
-    expect(sourceCatalog).toContain(‘"canada"’);
-    expect(sourceCatalog).toContain(‘"luxembourg"’);
+    expect(sourceCatalog).toContain('"canada"');
+    expect(sourceCatalog).toContain('"luxembourg"');
     expect(mySpace).toContain("CandidateCountryJourney");
     expect(mySpace).toContain("destination={cProfile.destination}");
   });

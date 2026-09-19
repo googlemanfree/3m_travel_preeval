@@ -21,11 +21,11 @@ describe("redirection Google et suivi candidat", () => {
   // current status-progress renderer) does not use the aria-labels or currentStatus.action asserted below.
   it("utilise le statut réel du dossier et expose une progression synchronisée", () => {
     const dashboard = read("client/src/pages/EvaluationSpace.tsx");
-    expect(dashboard).toContain(‘dossierStatus={cProfile.dossierStatus}’);
-    expect(dashboard).toContain(‘<DossierProgressTimeline’);
-    expect(dashboard).toContain(‘currentDossierStatusLabel’);
-    expect(dashboard).toContain(‘Avancement de votre procédure’);
-    expect(dashboard).not.toContain(‘status: "draft"’);
+    expect(dashboard).toContain('dossierStatus={cProfile.dossierStatus}');
+    expect(dashboard).toContain('<DossierProgressTimeline');
+    expect(dashboard).toContain('currentDossierStatusLabel');
+    expect(dashboard).toContain('Avancement de votre procédure');
+    expect(dashboard).not.toContain('status: "draft"');
   });
 
   it("priorise les prérequis du dossier dans l’espace candidat", () => {

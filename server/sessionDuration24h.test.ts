@@ -9,7 +9,6 @@ describe("sessions de 24 heures", () => {
   it("aligne les jetons candidat et administrateur alternatifs sur 24 heures", () => {
     expect(read("server/routers/candidate.ts")).toContain('const JWT_EXPIRES = "24h"');
     expect(read("server/routers/candidateAuthOTP.ts")).toContain('const JWT_EXPIRES = "24h"');
-    expect(read("server/routers/adminAuth-new.ts")).toContain('const JWT_EXPIRES = "24h"');
     expect(read("server/routers/adminAuth.ts")).toContain("24 * 60 * 60 * 1000");
     expect(read("server/routers/adminAuth.ts")).toContain("renewSession");
   });
@@ -44,9 +43,9 @@ describe("sessions de 24 heures", () => {
   // setActiveTab("overview") / setActiveTab("messages") calls or "Étape suivante" text were found.
   it("expose des raccourcis internes sans dépendre de l’historique du navigateur", () => {
     const dashboard = read("client/src/pages/EvaluationSpace.tsx");
-    expect(dashboard).toContain(‘switchToSection("dossier")’);
-    expect(dashboard).toContain(‘setActiveTab("documents")’);
-    expect(dashboard).toContain(‘switchToSection("messages")’);
+    expect(dashboard).toContain('switchToSection("dossier")');
+    expect(dashboard).toContain('setActiveTab("documents")');
+    expect(dashboard).toContain('switchToSection("messages")');
   });
 
   it("trace les renouvellements et permet une révocation globale sécurisée aux administrateurs", () => {

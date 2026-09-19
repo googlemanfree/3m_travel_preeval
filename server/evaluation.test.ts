@@ -7,7 +7,9 @@ vi.mock("./db", () => ({
   getDb: vi.fn().mockResolvedValue({
     select: vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([]),
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
       }),
     }),
     insert: vi.fn().mockReturnValue({

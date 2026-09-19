@@ -36,7 +36,7 @@ describe("Espace client unifié", () => {
     expect(adminRouter).toContain("replyToCandidate: publicProcedure");
     expect(adminRouter).toContain('senderRole: "advisor"');
     expect(adminRouter).toContain("notifiedCandidate");
-    expect(adminRouter).toContain("fullName: z.string().trim().min(2).max(160).optional()");
+    expect(adminRouter).toContain("fullName: z.string().trim().min(2).max(255).optional()");
     expect(adminRouter).toContain("L’équipe a également actualisé certaines informations de votre profil.");
   });
 });
