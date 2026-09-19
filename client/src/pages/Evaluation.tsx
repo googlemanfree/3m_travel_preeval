@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
+import { toast } from 'sonner';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -107,7 +108,66 @@ export default function Evaluation() {
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
   const [customDestinationMode, setCustomDestinationMode] = useState(false);
 
-  const submitMutation = trpc.evaluation.submit.useMutation();
+  const DRAFT_KEY = 'eval_draft';
+  const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  // Le brouillon contient des données personnelles : il est lié au compte connecté et expire,
+  // pour ne jamais réapparaître chez un autre candidat sur un poste partagé.
+  const draftOwner = candidate?.email ?? '';
+  const initialSnapshot = useRef(JSON.stringify(initialProjectForm));
+  const draftTouched = useRef(false);
+  const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ } };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState> };
+      const expired = typeof saved.savedAt !== 'number' || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS;
+      if (!saved.form || expired || saved.owner !== draftOwner) { clearDraft(); return; }
+      // Un projet choisi explicitement dans l'URL prime sur un ancien brouillon.
+      if (isEvaluationProjectType(projectFromUrl) && saved.form.projectType !== projectFromUrl) return;
+      const restored = { ...initialProjectForm, ...saved.form };
+      formRef.current = restored;
+      setForm(restored);
+      toast.info('Brouillon restauré', {
+        description: 'Votre saisie précédente a été récupérée. Sur un ordinateur partagé, effacez-la.',
+        duration: 10000,
+        action: { label: 'Effacer', onClick: () => { clearDraft(); draftTouched.current = false; formRef.current = initialProjectForm; setForm(initialProjectForm); } },
+      });
+    } catch { clearDraft(); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (JSON.stringify(form) === initialSnapshot.current) {
+          if (draftTouched.current) clearDraft();
+          return;
+        }
+        draftTouched.current = true;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }));
+      } catch { /* quota exceeded — ignore */ }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form, draftOwner]);
+
+  // Sections renseignées (0-6). « Historique » n'a que des champs facultatifs : il compte une fois les cinq autres complétées.
+  const sectionsDone = useMemo(() => {
+    const done = [
+      Boolean(form.fullName && form.email && form.phone),
+      Boolean(form.educationLevel),
+      Boolean(form.employmentStatus),
+      Boolean(form.frenchLevel),
+      Boolean(form.destinationCountry),
+    ];
+    return [...done, done.every(Boolean)];
+  }, [form.fullName, form.email, form.phone, form.educationLevel, form.employmentStatus, form.frenchLevel, form.destinationCountry]);
+  const sectionProgress = sectionsDone.filter(Boolean).length;
+
+  const submitMutation = trpc.evaluation.submit.useMutation({
+    onSuccess: clearDraft,
+  });
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
   const availableCountries = getCountriesForProject(form.projectType);
@@ -455,6 +515,37 @@ export default function Evaluation() {
               <strong>Parcours identifié :</strong> {acquisitionSource === "whatsapp" ? "WhatsApp Business" : "Facebook"}{acquisitionCampaign ? ` — campagne « ${acquisitionCampaign} »` : ""}. Votre demande sera rattachée à ce contexte pour faciliter le suivi par notre équipe.
             </div>
           )}
+        </div>
+
+        {/* Barre de progression multi-étapes */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Progression du formulaire</span>
+            <span className="text-xs font-black text-blue-700">{Math.round((sectionProgress / 6) * 100)} %</span>
+          </div>
+          <div
+            className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200"
+            role="progressbar"
+            aria-label="Progression du formulaire"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round((sectionProgress / 6) * 100)}
+          >
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full bg-blue-600"
+              initial={{ width: 0 }}
+              animate={{ width: `${(sectionProgress / 6) * 100}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
+          <div className="mt-2 grid grid-cols-6 gap-1" aria-hidden="true">
+            {["État civil", "Études", "Expérience", "Langues", "Projet", "Historique"].map((label, i) => (
+              <div key={label} className="text-center">
+                <div className={`mx-auto mb-1 h-1.5 rounded-full ${sectionsDone[i] ? "bg-blue-600" : "bg-slate-200"}`} />
+                <span className={`hidden text-[10px] font-medium leading-tight sm:block ${sectionsDone[i] ? "text-blue-700" : "text-slate-500"}`}>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <Card className="p-6 md:p-8">

@@ -1,8 +1,23 @@
-/**
- * Tests pour le service de génération de numéros de dossier
- */
+import { describe, it, expect, vi } from "vitest";
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+// ── Mock de la couche base de données ─────────────────────────────────────
+// getDb() renvoie null sans DATABASE_URL ; on simule un DB vide.
+vi.mock("../db", () => {
+  function makeChain() {
+    const rows: unknown[] = [];
+    return Object.assign(Promise.resolve(rows), {
+      limit: () => Promise.resolve(rows),
+    });
+  }
+  return {
+    getDb: () =>
+      Promise.resolve({
+        select: () => ({ from: () => ({ where: makeChain }) }),
+      }),
+  };
+});
+// ──────────────────────────────────────────────────────────────────────────
+
 import {
   generateDossierNumber,
   validateDossierNumber,
@@ -121,22 +136,17 @@ describe("dossierNumberService", () => {
 
   describe("Intégration complète", () => {
     it("devrait supporter un flux complet de génération", async () => {
-      // Générer un dossier
       const dossierNumber = await generateDossierNumber();
 
-      // Valider le format
       expect(validateDossierNumber(dossierNumber)).toBe(true);
 
-      // Extraire les informations
       const year = extractYearFromDossierNumber(dossierNumber);
       const sequence = extractSequenceFromDossierNumber(dossierNumber);
 
-      // Vérifier la cohérence
       expect(year).toBe(new Date().getFullYear());
       expect(sequence).toBeGreaterThan(0);
       expect(sequence).toBeLessThanOrEqual(9999);
 
-      // Vérifier les statistiques
       const stats = await getDossierStats();
       expect(stats.dossiersThisYear).toBeGreaterThanOrEqual(sequence);
     });

@@ -28,6 +28,9 @@ const fakeDb = {
   update: vi.fn(() => ({ set: vi.fn((value: unknown) => { updates.push(value); Object.assign(requestRow, value); return { where: vi.fn(async () => undefined) }; }) })),
 };
 
+const { sendEmail } = vi.hoisted(() => ({ sendEmail: vi.fn(async (_options: { to: string; subject: string; html: string }) => undefined) }));
+
+vi.mock("./_core/email", () => ({ sendEmail }));
 vi.mock("./db", () => ({ getDb: vi.fn(async () => fakeDb) }));
 vi.mock("./routers/adminAuth", () => ({ requireValidAdminSession: vi.fn(async () => ({ email: "admin@3mtravelagency.com", fullName: "Admin 3M" })) }));
 
@@ -53,6 +56,35 @@ describe("cycle complet des demandes 3M Digital", () => {
     expect((updates[0] as { handledAt?: unknown }).handledAt).toBeInstanceOf(Date);
     expect(requestRow).toMatchObject({ status: "contacted", adminNotes: "Appel de qualification prévu demain.", handledByAdminEmail: "admin@3mtravelagency.com" });
     expect(requestRow.handledAt).toBeInstanceOf(Date);
+  });
+
+  it("notifie l'équipe et confirme au client, en échappant le HTML saisi par le visiteur", async () => {
+    const caller = digitalServicesRouter.createCaller(ctx);
+    const created = await caller.createRequest({ service: "it_support", fullName: "<img src=x onerror=alert(1)> Client", email: "client@example.test", phone: "+237690000000", message: "Besoin d'un audit <script>alert(1)</script> du réseau." });
+
+    expect(sendEmail).toHaveBeenCalledTimes(2);
+    const [team, customer] = sendEmail.mock.calls.map(([options]) => options);
+    expect(team.to).toBe("hello@3mtravelagency.com");
+    expect(team.subject).toContain("Infrastructure & support IT");
+    expect(customer.to).toBe("client@example.test");
+    expect(customer.subject).toContain(created.reference);
+    for (const { html } of [team, customer]) {
+      expect(html).not.toContain("<img");
+      expect(html).not.toContain("<script>");
+    }
+    expect(team.html).toContain("&lt;img src=x onerror=alert(1)&gt; Client");
+    expect(team.html).toContain("&lt;script&gt;");
+  });
+
+  it("enregistre la demande et renvoie sa référence même si l'envoi des e-mails échoue", async () => {
+    sendEmail.mockRejectedValue(new Error("SMTP indisponible"));
+    const caller = digitalServicesRouter.createCaller(ctx);
+    const created = await caller.createRequest({ service: "web_platform", fullName: "Client Digital", email: "client@example.test", phone: "+237690000000", message: "Nous souhaitons lancer une plateforme de réservation." });
+
+    expect(created.reference).toMatch(/^DGT-\d{4}-\d{6}$/);
+    expect(inserted).toHaveLength(2);
+    expect(sendEmail).toHaveBeenCalledTimes(2);
+    sendEmail.mockResolvedValue(undefined);
   });
 
   it("enregistre une grille de cadrage administrable sans créer de tarif contractuel", async () => {

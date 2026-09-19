@@ -1,10 +1,12 @@
 ﻿import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { adminNotifications, digitalServiceContent, digitalServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
+import { sendEmail } from "../_core/email";
+import { logger } from "../_core/logger";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 
 const serviceSchema = z.enum(["web_platform", "digital_growth", "it_support", "professional_training"]);
@@ -113,7 +115,28 @@ export const digitalServicesRouter = router({
       relatedId: reference,
       targetAdminType: "accompagnement",
     });
+
+    const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const serviceMap: Record<string, string> = { web_platform: "Site web & plateforme", digital_growth: "Croissance digitale", it_support: "Infrastructure & support IT", professional_training: "Formation professionnelle" };
+    const serviceLabel = serviceMap[input.service] ?? input.service;
+
+    try {
+      await sendEmail({ to: "hello@3mtravelagency.com", subject: `📩 Nouvelle demande 3M Digital — ${input.fullName} (${serviceLabel})`, html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone)}) a soumis une demande <strong>${esc(serviceLabel)}</strong>.</p><p>Référence : <code>${esc(reference)}</code>${input.organization ? `<br>Organisation : ${esc(input.organization)}` : ""}</p><p>${esc(input.message)}</p>` });
+    } catch (err) { logger.error("digital_services.team_notification_failed", { reference }, err); }
+
+    try {
+      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Digital — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Digital vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Digital — 3M Travel & Services</p>` });
+    } catch (err) { logger.error("digital_services.candidate_confirmation_failed", { reference }, err); }
+
     return { reference };
+  }),
+
+  adminCountNew: publicProcedure.input(z.object({ sessionToken: z.string().min(1) })).query(async ({ input, ctx }) => {
+    await resolveDigitalAdminSession(ctx.req.headers.cookie, input.sessionToken);
+    const db = await getDb();
+    if (!db) return 0;
+    const rows = await db.select({ count: sql<string>`count(*)` }).from(digitalServiceRequests).where(eq(digitalServiceRequests.status, "new"));
+    return Number(rows[0]?.count ?? 0);
   }),
 
   adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(1) })).query(async ({ input, ctx }) => {

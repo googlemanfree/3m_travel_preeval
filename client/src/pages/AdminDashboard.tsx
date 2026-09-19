@@ -1064,6 +1064,8 @@ export default function AdminDashboard() {
   });
   const trpcUtils = trpc.useUtils();
   const archivedRecordsQuery = trpc.admin.listArchivedRecords.useQuery({ sessionToken, search: archiveSearch || undefined }, { enabled: showArchiveView });
+  const digitalNewCountQuery = trpc.digitalServices.adminCountNew.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), refetchInterval: 60_000 });
+  const digitalNewCount = digitalNewCountQuery.data ?? 0;
   const restoreArchivedMutation = trpc.admin.restoreArchivedRecord.useMutation({
     onSuccess: () => { toast({ title: "Archive restaurée", description: "L’enregistrement est de nouveau visible dans la liste active." }); void archivedRecordsQuery.refetch(); void trpcUtils.admin.listCandidates.invalidate(); },
     onError: (error) => toast({ title: "Restauration impossible", description: error.message, variant: "destructive" }),
@@ -1869,7 +1871,14 @@ export default function AdminDashboard() {
 
         <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
           <div><p className="font-black text-blue-950">Pôle 3M Digital</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
-          <a href="/admin/digital-services" className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Ouvrir les demandes 3M Digital</a>
+          <a href="/admin/digital-services" className="relative inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Ouvrir les demandes 3M Digital
+            {digitalNewCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-black text-amber-950">
+                {digitalNewCount}
+              </span>
+            )}
+          </a>
         </div>
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">

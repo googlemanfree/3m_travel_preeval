@@ -86,6 +86,7 @@ const EvisaDetailPage = lazyWithTimeout(() => import("./pages/EvisaDetailPage"))
 const DocumentCompliancePage = lazyWithTimeout(() => import("./pages/DocumentCompliancePage"));
 const PaymentSuccessPage = lazyWithTimeout(() => import("./pages/PaymentSuccessPage"));
 const PaymentErrorPage = lazyWithTimeout(() => import("./pages/PaymentErrorPage"));
+const ConsultationBooking = lazyWithTimeout(() => import("./pages/ConsultationBooking"));
 import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
@@ -173,6 +174,8 @@ function Router() {
       <Route path={"/payment/success"} component={PaymentSuccessPage} />
       <Route path={"/payment/error"} component={PaymentErrorPage} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
+      <Route path={"/consultation"} component={ConsultationBooking} />
+      <Route path={"/prise-de-rdv"}>{() => <Redirect to="/consultation" />}</Route>
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
