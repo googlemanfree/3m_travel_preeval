@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle, Phone, Globe2 } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle, Phone, Globe2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,15 +12,6 @@ import { toast } from "sonner";
 import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptions";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
-
-const destinationsByRegion = CANDIDATE_DESTINATION_OPTIONS.reduce<Record<string, typeof CANDIDATE_DESTINATION_OPTIONS>>(
-  (acc, option) => {
-    if (!acc[option.region]) acc[option.region] = [];
-    acc[option.region].push(option);
-    return acc;
-  },
-  {},
-);
 
 const MAX_PREFERRED_DESTINATIONS = 3;
 
@@ -58,6 +49,8 @@ export default function Register() {
   const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
   const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
   const [duplicateConflict, setDuplicateConflict] = useState<string | null>(null);
+  const [destinationQuery, setDestinationQuery] = useState("");
+  const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -73,6 +66,10 @@ export default function Register() {
   const passwordStrength = getPasswordStrength(form.password);
   const isPasswordInvalid = form.password.length > 0 && passwordStrength.score < 3;
   const isConfirmationInvalid = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
+  const filteredDestinationOptions = CANDIDATE_DESTINATION_OPTIONS.filter((option) => {
+    const query = destinationQuery.trim().toLowerCase();
+    return !query || option.name.toLowerCase().includes(query) || option.region.toLowerCase().includes(query);
+  }).slice(0, 8);
   const missingRegistrationRequirements = [
     !form.fullName.trim() ? "votre nom complet" : null,
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "une adresse e-mail valide" : null,
@@ -130,7 +127,7 @@ export default function Register() {
       );
       window.setTimeout(() => {
         navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
-      }, 900);
+      }, 1600);
     },
     onError: (err) => {
       const message = err.message || "Erreur lors de la création du compte.";
@@ -514,31 +511,73 @@ export default function Register() {
             <fieldset className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
               <legend className="px-1 text-sm font-bold text-slate-800">Destination(s) de préférence *</legend>
               <p className="mt-1 text-xs leading-5 text-slate-600">Choisissez jusqu'à {MAX_PREFERRED_DESTINATIONS} pays qui vous intéressent : votre espace, vos documents à fournir et votre score d'éligibilité seront adaptés à ce choix.</p>
-              <div className="mt-3" role="group" aria-label="Destinations de préférence">
-                {Object.entries(destinationsByRegion).map(([region, options]) => (
-                  <div key={region} className="mb-3">
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{region}</p>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {options.map((option) => {
-                        const selected = form.preferredDestinations.includes(option.name);
-                        const disabledByLimit = !selected && form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS;
-                        return (
-                          <button
-                            key={option.name}
-                            type="button"
-                            aria-pressed={selected}
-                            onClick={() => toggleDestination(option.name)}
-                            disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || disabledByLimit}
-                            className={`min-h-11 rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-violet-700 bg-violet-700 text-white" : "border-violet-200 bg-white text-violet-900 hover:bg-violet-100"}`}
-                          >
-                            <span className="mr-1">{option.flag}</span>{option.name}
-                          </button>
-                        );
-                      })}
-                    </div>
+              <div className="relative mt-3" role="combobox" aria-expanded={isDestinationMenuOpen} aria-haspopup="listbox" aria-label="Rechercher une destination">
+                <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-violet-500" aria-hidden="true" />
+                <Input
+                  value={destinationQuery}
+                  onChange={(event) => {
+                    setDestinationQuery(event.target.value);
+                    setIsDestinationMenuOpen(true);
+                  }}
+                  onFocus={() => setIsDestinationMenuOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setIsDestinationMenuOpen(false);
+                    if (event.key === "Enter" && filteredDestinationOptions[0]) {
+                      event.preventDefault();
+                      toggleDestination(filteredDestinationOptions[0].name);
+                      setDestinationQuery("");
+                    }
+                  }}
+                  placeholder="Rechercher Canada, France, Allemagne…"
+                  aria-autocomplete="list"
+                  aria-controls="destination-suggestions"
+                  className="h-12 bg-white pl-10 pr-10"
+                  disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS}
+                />
+                {destinationQuery && (
+                  <button type="button" aria-label="Effacer la recherche de destination" onClick={() => setDestinationQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-slate-400 hover:text-slate-700">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                {isDestinationMenuOpen && form.preferredDestinations.length < MAX_PREFERRED_DESTINATIONS && (
+                  <div id="destination-suggestions" role="listbox" className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-violet-200 bg-white p-1 shadow-xl">
+                    {filteredDestinationOptions.length > 0 ? filteredDestinationOptions.map((option) => {
+                      const selected = form.preferredDestinations.includes(option.name);
+                      return (
+                        <button
+                          key={option.name}
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            toggleDestination(option.name);
+                            setDestinationQuery("");
+                            setIsDestinationMenuOpen(false);
+                          }}
+                          className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-violet-50 ${selected ? "bg-violet-100 font-bold text-violet-800" : "text-slate-700"}`}
+                        >
+                          <span><span className="mr-2">{option.flag}</span>{option.name}</span>
+                          <span className="text-xs text-slate-400">{option.region}</span>
+                        </button>
+                      );
+                    }) : <p className="p-3 text-sm text-slate-500">Aucune destination ne correspond à votre recherche.</p>}
                   </div>
-                ))}
+                )}
               </div>
+              {form.preferredDestinations.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2" aria-label="Destinations sélectionnées">
+                  {form.preferredDestinations.map((name) => {
+                    const option = CANDIDATE_DESTINATION_OPTIONS.find((item) => item.name === name);
+                    return (
+                      <button key={name} type="button" onClick={() => toggleDestination(name)} disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation} className="inline-flex items-center gap-1 rounded-full bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-800 disabled:opacity-60">
+                        <span>{option?.flag}</span>{name}<X className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="mt-2 text-xs text-slate-500">Destinations populaires : Canada, France, Allemagne, Luxembourg et Royaume-Uni.</p>
               {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
             </fieldset>
 
@@ -683,18 +722,28 @@ export default function Register() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-6 backdrop-blur-sm"
+                role="status"
+                aria-live="polite"
               >
                 <motion.div
-                  className="bg-white rounded-full p-8 shadow-2xl"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 0.6, repeat: Infinity }}
+                  initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
+                  className="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl"
                 >
                   <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    initial={{ scale: 0.65, rotate: -12 }}
+                    animate={{ scale: [0.65, 1.12, 1], rotate: [-12, 4, 0] }}
+                    transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50"
                   >
-                    <CheckCircle className="w-16 h-16 text-green-500" />
+                    <CheckCircle className="h-12 w-12 text-emerald-600" />
+                  </motion.div>
+                  <motion.h2 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="mt-5 text-xl font-bold text-slate-900">Compte créé avec succès</motion.h2>
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-2 text-sm leading-6 text-slate-600">Votre espace personnel est prêt. Confirmez votre adresse e-mail pour y accéder en toute sécurité.</motion.p>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }} className="mt-5 flex items-center justify-center gap-2 text-xs font-semibold text-blue-700">
+                    <Loader className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Redirection vers la confirmation e-mail…
                   </motion.div>
                 </motion.div>
               </motion.div>

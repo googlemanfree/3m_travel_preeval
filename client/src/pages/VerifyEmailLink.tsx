@@ -18,6 +18,7 @@ export default function VerifyEmailLink() {
   const params = new URLSearchParams(queryString);
   const token = params.get("token")?.trim() ?? "";
   const redirect = params.get("redirect") ?? "/dashboard";
+  const requestedRedirect = redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : null;
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -48,11 +49,11 @@ export default function VerifyEmailLink() {
       const candidate = data.candidate;
       const needsEvaluation = candidate?.evaluationDeclarationStatus === "not_declared";
       const priorEvaluationValidated = candidate?.evaluationDeclarationStatus === "validated";
-      const destination = needsEvaluation
+      const destination = requestedRedirect ?? (needsEvaluation
         ? "/evaluation?onboarding=registration"
         : priorEvaluationValidated
           ? "/mon-espace?section=documents"
-          : "/mon-espace";
+          : "/mon-espace");
       if (candidate && data.token) {
         const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem("3m_candidate_token", data.token);

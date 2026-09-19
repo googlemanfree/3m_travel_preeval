@@ -482,6 +482,11 @@ export const candidateRouter = router({
       try {
         await sendVerificationLink(normalizedEmail, input.fullName, rawToken, {
           priorEvaluationRecognized: Boolean(priorDeliveredEvaluation),
+          redirect: priorDeliveredEvaluation
+            ? "/mon-espace?section=documents"
+            : input.evaluationAlreadyCompleted
+              ? "/mon-espace"
+              : "/evaluation?onboarding=registration",
         });
       } catch (err) {
         activationEmailSent = false;

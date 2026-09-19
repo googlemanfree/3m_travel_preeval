@@ -208,10 +208,13 @@ export async function sendVerificationLink(
   to: string,
   fullName: string,
   verificationToken: string,
-  options: { priorEvaluationRecognized?: boolean } = {},
+  options: { priorEvaluationRecognized?: boolean; redirect?: string } = {},
 ): Promise<void> {
   const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
-  const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
+  const allowedRedirect = options.redirect && options.redirect.startsWith("/") && !options.redirect.startsWith("//")
+    ? options.redirect
+    : undefined;
+  const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}${allowedRedirect ? `&redirect=${encodeURIComponent(allowedRedirect)}` : ""}`;
   const priorEvaluationNotice = options.priorEvaluationRecognized
     ? `<p>Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour déposer les pièces justificatives indiquées dans votre communication.</p>`
     : "";
