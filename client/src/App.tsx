@@ -175,7 +175,6 @@ function Router() {
       <Route path={"/payment/error"} component={PaymentErrorPage} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
       <Route path={"/consultation"} component={ConsultationBooking} />
-      <Route path={"/prise-de-rdv"}>{() => <Redirect to="/consultation" />}</Route>
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />

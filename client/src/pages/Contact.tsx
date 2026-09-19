@@ -121,6 +121,13 @@ export default function Contact() {
             <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Notre équipe est à votre disposition pour répondre à vos questions et vous accompagner dans vos démarches de visas, eVisas, légalisations, traductions et assurances voyage.
             </p>
+
+            <a
+              href="/consultation"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-6 py-3 font-bold text-white transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+            >
+              Prendre rendez-vous
+            </a>
           </motion.div>
         </div>
 

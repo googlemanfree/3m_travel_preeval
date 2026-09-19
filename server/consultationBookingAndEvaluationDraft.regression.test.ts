@@ -1,16 +1,45 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { composePublicPrerender, getIndexablePublicPaths } from "./publicPrerender";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const source = (relativePath: string) => readFileSync(resolve(projectRoot, relativePath), "utf8");
+const shell = "<!doctype html><html lang=\"fr\"><head><title>t</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
 
 describe("wizard de prise de rendez-vous", () => {
-  it("est chargé à la demande, accessible publiquement et l'ancien alias redirige vers lui", () => {
+  it("est chargé à la demande et accessible publiquement", () => {
     const app = source("client/src/App.tsx");
     expect(app).toContain('const ConsultationBooking = lazyWithTimeout(() => import("./pages/ConsultationBooking"))');
     expect(app).toContain('<Route path={"/consultation"} component={ConsultationBooking} />');
-    expect(app).toContain('<Route path={"/prise-de-rdv"}>{() => <Redirect to="/consultation" />}</Route>');
+  });
+
+  it("est servi en 200 indexable par le serveur de production, jamais en 404", () => {
+    const rendered = composePublicPrerender(shell, "/consultation");
+    expect(rendered.status).toBe(200);
+    expect(rendered.noindex).toBe(false);
+    expect(rendered.html).toContain("<h1>Prendre rendez-vous avec un conseiller</h1>");
+    expect(rendered.html).toContain('<link rel="canonical" href="https://www.3mtravelagency.com/consultation" />');
+    expect(getIndexablePublicPaths()).toContain("/consultation");
+  });
+
+  it("respecte les plafonds SEO des pages prioritaires", () => {
+    const html = composePublicPrerender(shell, "/consultation").html;
+    const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+    const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "";
+    const keywords = html.match(/<meta name="keywords" content="([^"]*)"/)?.[1].split(", ") ?? [];
+    expect(title.length).toBeGreaterThanOrEqual(30);
+    expect(title.length).toBeLessThanOrEqual(60);
+    expect(description.length).toBeGreaterThanOrEqual(50);
+    expect(description.length).toBeLessThanOrEqual(160);
+    expect(keywords.length).toBeGreaterThanOrEqual(3);
+    expect(keywords.length).toBeLessThanOrEqual(8);
+  });
+
+  it("est joignable depuis la page Contact", () => {
+    const contact = source("client/src/pages/Contact.tsx");
+    expect(contact).toContain('href="/consultation"');
+    expect(contact).toContain("Prendre rendez-vous");
   });
 
   it("réutilise la mutation serveur existante et valide chaque étape avant de continuer", () => {
