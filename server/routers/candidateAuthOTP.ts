@@ -44,6 +44,7 @@ export const candidateAuthOTPRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      checkLoginAttempts(`otp:${input.email.toLowerCase()}`);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
@@ -59,6 +60,7 @@ export const candidateAuthOTPRouter = router({
 
       // Stocker temporairement en cache (en prod, utiliser Redis)
       // Pour cette démo, on envoie juste l'OTP par email
+      recordFailedAttempt(`otp:${input.email.toLowerCase()}`);
       try {
         await sendVerificationOtp(input.email, input.fullName, otp);
       } catch (err) {
@@ -197,6 +199,8 @@ export const candidateAuthOTPRouter = router({
   requestPasswordReset: publicProcedure
     .input(z.object({ email: z.string().email("Email invalide").max(320) }))
     .mutation(async ({ input }) => {
+      checkLoginAttempts(`pwreset:${input.email.toLowerCase()}`);
+      recordFailedAttempt(`pwreset:${input.email.toLowerCase()}`);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
