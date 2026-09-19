@@ -23,6 +23,29 @@ describe("wizard de prise de rendez-vous", () => {
     expect(page).toContain("Numéro de téléphone invalide.");
   });
 
+  it("n'ajoute pas de seconde barre de navigation : App.tsx fournit déjà la barre globale", () => {
+    const page = source("client/src/pages/ConsultationBooking.tsx");
+    const app = source("client/src/App.tsx");
+    expect(app).toContain("<Navbar />");
+    expect(page).not.toMatch(/import\s+Navbar/);
+    expect(page).not.toContain("<Navbar");
+  });
+
+  it("garde le champ pays propre et range le type de consultation dans le message", () => {
+    const page = source("client/src/pages/ConsultationBooking.tsx");
+    expect(page).toContain("targetCountry: form.targetCountry,");
+    expect(page).toContain("Type de consultation : ${serviceLabel}");
+    expect(page).not.toMatch(/targetCountry:\s*`/);
+    expect(page).toContain("maxLength={1800}");
+  });
+
+  it("annonce les erreurs et l'étape courante aux technologies d'assistance", () => {
+    const page = source("client/src/pages/ConsultationBooking.tsx");
+    expect(page.match(/role="alert"/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(page).toContain('role="progressbar"');
+    expect(page).toContain("aria-valuenow={step}");
+  });
+
   it("s'appuie sur une mutation publique qui notifie l'équipe et confirme au client", () => {
     const router = source("server/routers/consultationRequest.ts");
     expect(router).toContain("submit: publicProcedure");
