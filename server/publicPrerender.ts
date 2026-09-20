@@ -6,6 +6,7 @@ import { getInstitutionalProcedureSource } from "../client/src/data/institutiona
 import { COMPANY_PROFILE } from "../client/src/lib/companyContacts";
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
+import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
@@ -92,6 +93,25 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
     lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with support from 3M Travel & Services in Yaoundé.`,
     keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name} Yaoundé`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "3M Travel"],
   };
+};
+
+const evisaMetaForPath = (path: string): PublicMeta | undefined => {
+  const match = path.match(/^\/evisa\/([^/]+)$/);
+  if (!match) return undefined;
+  const destination = evisasDatabaseComplete.find((entry) => entry.id === match[1]);
+  if (!destination) return undefined;
+  return {
+    title: `${destination.country} e‑Visa | ${SITE}`,
+    description: `Repères e‑Visa pour ${destination.country} : type, documents, délais et portail officiel à vérifier avant toute démarche.`,
+    keywords: [`e‑Visa ${destination.country}`, `visa ${destination.country}`, "e‑Visa Cameroun", "3M Travel"],
+    heading: `e‑Visa ${destination.country}`,
+    lead: `Consultez les repères disponibles pour ${destination.country} et vérifiez toujours l’éligibilité, les frais et les conditions sur le portail officiel.`,
+  };
+};
+
+const studyArticleForPath = (path: string) => {
+  const match = path.match(/^\/blog\/etudes\/([^/]+)$/);
+  return match ? getStudyDestinationArticle(match[1]) : undefined;
 };
 
 // Paires FR<->EN pour l'émission des balises hreflang, limitées aux pages
@@ -265,6 +285,22 @@ const routeSpecificPrerender = (path: string) => {
     const catalogue = evisasDatabaseComplete.slice(0, 18).map((entry) => `<li><a href="/evisa/${encodeURIComponent(entry.country.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}">${esc(entry.country)}</a> — ${esc(entry.type)} · ${esc(entry.region)}</li>`).join("");
     return `<section aria-label="Aperçu de l’annuaire e-Visa"><h2>Annuaire des procédures e-Visa</h2><p>Les conditions de délivrance, nationalités admises, frais et délais doivent être confirmés sur le portail officiel de la destination avant toute démarche.</p><ul>${catalogue}</ul><p><a href="/contact">Demander une orientation à 3M Travel</a></p></section>`;
   }
+  const evisaMatch = path.match(/^\/evisa\/([^/]+)$/);
+  if (evisaMatch) {
+    const destination = evisasDatabaseComplete.find((entry) => entry.id === evisaMatch[1]);
+    if (!destination) return "";
+    const steps = destination.steps.map((step) => `<li>${esc(step)}</li>`).join("");
+    const officialPortal = destination.officialPortalUrl
+      ? `<p><a href="${esc(destination.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(destination.officialPortalLabel || "Consulter le portail officiel")}</a>${destination.officialVerifiedAt ? ` · Vérifié le ${esc(destination.officialVerifiedAt)}` : ""}</p>`
+      : `<p>Le portail officiel doit être vérifié avant tout paiement ou dépôt de document.</p>`;
+    return `<section aria-label="Détails e-Visa"><h2>${esc(destination.country)} : repères e-Visa</h2><p>${esc(destination.culture)}</p><p><strong>Type :</strong> ${esc(destination.type)} · <strong>Durée :</strong> ${esc(destination.duration)} · <strong>Délai :</strong> ${esc(destination.delay)} · <strong>Frais :</strong> ${esc(destination.fee)}</p><h2>Étapes à vérifier</h2><ol>${steps}</ol><p><strong>Documents :</strong> ${esc(destination.docs)}</p>${officialPortal}<p><a href="/evisas">Retourner à l’annuaire e-Visa</a> · <a href="/contact">Demander une orientation</a></p></section>`;
+  }
+  const studyArticle = studyArticleForPath(path);
+  if (studyArticle) {
+    const steps = studyArticle.steps.map((step) => `<li>${esc(step)}</li>`).join("");
+    const documents = studyArticle.documents.map((document) => `<li>${esc(document)}</li>`).join("");
+    return `<article aria-label="Article études ${esc(studyArticle.country)}"><p>${esc(studyArticle.overview)}</p><h2>Le point de départ du projet</h2><p>${esc(studyArticle.focus)}</p><h2>Étapes de préparation</h2><ol>${steps}</ol><h2>Documents à anticiper</h2><ul>${documents}</ul><h2>Budget et vérification</h2><p>${esc(studyArticle.budget)}</p><p><a href="${esc(studyArticle.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(studyArticle.sourceLabel)}</a> · <a href="/blog">Retour aux ressources</a></p></article>`;
+  }
   return "";
 };
 
@@ -281,15 +317,22 @@ export function getIndexablePublicPaths() {
     .map((detail) => getEnglishContentByFrId(detail.procedure.id))
     .filter((entry): entry is ProcedureEnglishContent => Boolean(entry))
     .map((entry) => `/en/procedures/${entry.enSlug}`);
+  const evisaPaths = evisasDatabaseComplete.map((entry) => `/evisa/${entry.id}`);
+  const studyArticlePaths = studyDestinationArticles.map((entry) => `/blog/etudes/${entry.slug}`);
   return staticPaths
     .concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1))
-    .concat(englishProcedurePaths.filter((path) => staticPaths.indexOf(path) === -1));
+    .concat(englishProcedurePaths.filter((path) => staticPaths.indexOf(path) === -1))
+    .concat(evisaPaths.filter((path) => staticPaths.indexOf(path) === -1))
+    .concat(studyArticlePaths.filter((path) => staticPaths.indexOf(path) === -1));
 }
 
 export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
   const isEnPath = path === "/en" || path.startsWith("/en/");
-  const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
+  const studyArticle = studyArticleForPath(path);
+  const blogArticle = studyArticle
+    ? { title: `${studyArticle.seoTitle} | ${SITE}`, description: studyArticle.description, heading: studyArticle.title, lead: studyArticle.description }
+    : undefined;
   const procedurePage = procedureMetaForPath(path) ?? procedureMetaForPathEn(path);
   const procedureDetail = procedurePage
     ? isEnPath
@@ -311,7 +354,8 @@ export function composePublicPrerender(template: string, url: string) {
       ? { name: englishContentForPath.name, visaType: procedureDetail.procedure.visaType }
       : procedureDetail.procedure
     : undefined;
-  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
+  const evisaPage = evisaMetaForPath(path);
+  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle;
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {

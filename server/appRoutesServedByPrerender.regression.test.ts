@@ -6,6 +6,8 @@ import express from "express";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { LEGACY_PUBLIC_REDIRECTS, legacyRedirectLocation, registerLegacyAliasRedirects } from "./legacyPublicRedirects";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
+import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
+import { studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 
 // En production, le catch-all Express répond avec le statut de composePublicPrerender
 // et l’hébergeur transforme un 404 en écran de maintenance : une route qui s’affiche
@@ -126,9 +128,35 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
     }
   });
 
-  // Les fiches /evisa/:evisaId sont liées depuis /evisas mais répondent encore 404 côté
-  // serveur : elles demandent des métadonnées propres à chaque pays (suivi séparé).
-  it.todo("sert les fiches /evisa/:evisaId en 200 avec un titre et une description par pays");
+  it("sert les fiches e-Visa valides en 200 indexable avec des métadonnées par pays", () => {
+    for (const destination of evisasDatabaseComplete.slice(0, 3)) {
+      const path = `/evisa/${destination.id}`;
+      const rendered = render(path);
+      expect(rendered.status, path).toBe(200);
+      expect(rendered.noindex, path).toBe(false);
+      expect(rendered.html, path).toContain("<title>");
+      expect(rendered.html, path).toContain("e‑Visa | 3M Travel &amp; Services</title>");
+      expect(rendered.html, path).toContain("Détails e-Visa");
+      expect(getIndexablePublicPaths(), path).toContain(path);
+    }
+  });
+
+  it("sert les articles d’études valides en 200 indexable avec leur contenu", () => {
+    for (const article of studyDestinationArticles.slice(0, 3)) {
+      const path = `/blog/etudes/${article.slug}`;
+      const rendered = render(path);
+      expect(rendered.status, path).toBe(200);
+      expect(rendered.noindex, path).toBe(false);
+      expect(rendered.html, path).toContain(`<h1>${article.title}</h1>`);
+      expect(rendered.html, path).toContain("Étapes de préparation");
+    }
+  });
+
+  it("conserve une vraie 404 pour les identifiants e-Visa et slugs blog inconnus", () => {
+    for (const path of ["/evisa/pays-inconnu", "/blog/etudes/pays-inconnu"]) {
+      expect(render(path).status, path).toBe(404);
+    }
+  });
 });
 
 describe("alias historiques redirigés par un 301 serveur", () => {
