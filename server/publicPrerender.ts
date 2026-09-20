@@ -109,6 +109,15 @@ for (const detail of PUBLIC_DESTINATION_DETAILS) {
   HREFLANG_PAIRS[enPath] = frPath;
 }
 
+// Pages personnelles ou transactionnelles : shell 200 non indexable, absent du sitemap.
+const privateShell = (heading: string, description: string, lead = "Cette page est liée à une démarche personnelle et n’est pas indexée."): PublicMeta => ({
+  title: `${heading} | ${SITE}`,
+  description,
+  heading,
+  lead,
+  noindex: true,
+});
+
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/en": {
     title: `3M Travel & Services | International Mobility from Yaoundé`,
@@ -168,6 +177,32 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/cv-generator": { title: `Générateur de CV | ${SITE}`, description: "Créez un CV professionnel adapté aux standards des pays de destination avec l’outil gratuit de 3M Travel & Services.", keywords: ["générateur CV", "CV professionnel", "CV immigration", "modèle CV visa", "3M Travel"], heading: "Créer votre CV professionnel", lead: "Générez un CV structuré selon les standards attendus par les employeurs et les autorités de votre pays de destination." },
   "/evisa": { title: `e-Visas | ${SITE}`, description: "Accédez à l’annuaire complet des procédures e-Visa par destination avec 3M Travel & Services.", keywords: ["e-visa", "visa électronique", "demande evisa", "visa en ligne", "3M Travel"], heading: "Services e-Visa", lead: "Consultez les procédures e-Visa disponibles, les conditions d’éligibilité et les étapes de demande vérifiées par l’agence." },
   "/conformite-documents": { title: `Conformité de documents | ${SITE}`, description: "Vérifiez la conformité de vos documents avant de constituer votre dossier de mobilité internationale.", keywords: ["conformité documents", "vérification pièces", "contrôle dossier", "documents visa", "3M Travel"], heading: "Vérification de la conformité de vos documents", lead: "Assurez-vous que vos pièces sont conformes aux exigences de la destination avant de soumettre votre dossier." },
+  // Guides formation et travail qualifié rendus par App.tsx sans fiche procédure équivalente.
+  "/procedures/allemagne-formation": { title: `Allemagne : formation et visa | ${SITE}`, description: "Cours de langue intensif ou Ausbildung en Allemagne : conditions, étapes du visa et documents à prévoir, avec un accompagnement depuis Yaoundé.", keywords: ["visa Allemagne", "Ausbildung Allemagne", "cours de langue Allemagne", "formation professionnelle", "3M Travel"], heading: "Formation professionnelle en Allemagne", lead: "Repères sur le cours de langue intensif et l’Ausbildung : conditions, étapes du visa et documents à confirmer auprès des autorités compétentes, sans promesse de résultat." },
+  "/procedures/autriche-formation": { title: `Autriche : apprentissage et visa | ${SITE}`, description: "Apprentissage (Lehre) et Red-White-Red Card en Autriche : conditions, étapes du visa et documents à prévoir, avec un accompagnement depuis Yaoundé.", keywords: ["visa Autriche", "apprentissage Autriche", "Lehre Autriche", "Red-White-Red Card", "3M Travel"], heading: "Apprentissage en Autriche", lead: "Repères sur la Lehre et les dispositifs d’accès des ressortissants de pays tiers ; les conditions applicables sont à confirmer auprès des autorités compétentes." },
+  "/procedures/suisse-formation": { title: `Suisse : apprentissage et visa | ${SITE}`, description: "Formation professionnelle initiale en Suisse : conditions d’engagement, étapes du visa et documents à prévoir, avec un accompagnement depuis Yaoundé.", keywords: ["visa Suisse", "apprentissage Suisse", "formation professionnelle Suisse", "permis de travail Suisse", "3M Travel"], heading: "Apprentissage en Suisse", lead: "Repères sur la formation professionnelle initiale et l’engagement d’apprentis étrangers ; chaque canton et chaque employeur reste décisionnaire." },
+  "/procedures/emirats": { title: `Émirats Arabes Unis : visa de travail | ${SITE}`, description: "Employment Visa ou Golden Visa aux Émirats Arabes Unis : dispositifs, secteurs porteurs et étapes à confirmer, avec un accompagnement depuis Yaoundé.", keywords: ["visa Émirats Arabes Unis", "travail Dubaï", "Employment Visa", "Golden Visa", "3M Travel"], heading: "Travailler aux Émirats Arabes Unis", lead: "Repères sur l’Employment Visa et le Golden Visa ; seuils, délais et conditions sont à confirmer auprès des autorités émiraties avant toute démarche." },
+  "/procedures/arabie-saoudite": { title: `Arabie Saoudite : visa de travail | ${SITE}`, description: "Visa de travail sponsorisé en Arabie Saoudite : secteurs concernés, étapes et points de vigilance contractuels, avec un accompagnement depuis Yaoundé.", keywords: ["visa Arabie Saoudite", "travail Arabie Saoudite", "visa sponsorisé", "Vision 2030", "3M Travel"], heading: "Travailler en Arabie Saoudite", lead: "Repères sur le visa de travail sponsorisé par l’employeur ; vérifiez attentivement les conditions contractuelles avant toute signature." },
+  "/procedures/coree-du-sud": { title: `Corée du Sud : visa de travail E-9 | ${SITE}`, description: "Programme EPS et visa E-9 en Corée du Sud : test de coréen, conditions d’accès et étapes à vérifier avant tout engagement, depuis Yaoundé.", keywords: ["visa Corée du Sud", "visa E-9", "programme EPS", "test EPS-TOPIK", "3M Travel"], heading: "Travailler en Corée du Sud", lead: "Repères sur le programme EPS et le visa E-9 ; l’éligibilité dépend d’un accord bilatéral à vérifier au cas par cas avant tout engagement." },
+  "/procedures/japon": { title: `Japon : stage technique et visa | ${SITE}`, description: "Programme de stagiaires techniques (TITP) et visas de spécialistes au Japon : secteurs, étapes et vigilance sur les organismes agréés.", keywords: ["visa Japon", "stage technique Japon", "TITP", "travail Japon", "3M Travel"], heading: "Travailler au Japon", lead: "Repères sur le programme de stagiaires techniques et les visas de spécialistes ; ne traitez qu’avec des organismes agréés et vérifiés." },
+  // Parcours personnels, transactionnels ou doublons d’une page de référence : servis en 200 non indexable.
+  "/complete-profile": privateShell("Compléter mon profil", "Renseignez les informations manquantes de votre profil pour finaliser votre espace client 3M Travel & Services."),
+  "/forgot-password": privateShell("Mot de passe oublié", "Demandez un lien sécurisé pour réinitialiser le mot de passe de votre espace client 3M Travel & Services."),
+  "/reset-password": privateShell("Nouveau mot de passe", "Définissez un nouveau mot de passe grâce au lien sécurisé reçu par e-mail pour retrouver l’accès à votre espace client."),
+  "/payment/method-selection": privateShell("Choisir un mode de paiement", "Sélectionnez le mode de règlement d’un dossier 3M Travel & Services depuis votre espace client."),
+  "/payment/agency-confirmation": privateShell("Paiement en agence", "Confirmation d’une demande de paiement en agence pour un dossier 3M Travel & Services."),
+  "/payment/success": privateShell("Retour de paiement", "Page de retour après un paiement en ligne ; le statut définitif du règlement est confirmé par l’agence."),
+  "/payment-success": privateShell("Retour de paiement", "Page de retour après un paiement en ligne ; le statut définitif du règlement est confirmé par l’agence."),
+  "/payment/error": privateShell("Paiement non abouti", "Page de retour après un paiement interrompu ou refusé, avec les options pour réessayer ou contacter l’agence."),
+  "/payment-failed": privateShell("Paiement non abouti", "Page de retour après un paiement interrompu ou refusé, avec les options pour réessayer ou contacter l’agence."),
+  "/dossier-confirmation": privateShell("Confirmation de dossier", "Confirmation de la réception de votre dossier par 3M Travel & Services et prochaines étapes."),
+  "/open-dossier": privateShell("Ouvrir un dossier", "Ouverture sécurisée d’un dossier depuis votre espace client 3M Travel & Services."),
+  "/submit-documents": privateShell("Dépôt de vos documents", "Dépôt sécurisé des pièces de votre dossier depuis votre espace client 3M Travel & Services."),
+  "/evaluation-result": privateShell("Résultat de votre évaluation", "Liste des documents à prévoir issue de votre évaluation préalable, à confirmer avec l’agence."),
+  "/evisas/request": privateShell("Demande d’e-Visa", "Formulaire sécurisé de demande d’e-Visa avec validation du dossier par l’équipe 3M Travel & Services."),
+  "/procedures/comparaison": privateShell("Comparateur de destinations", "Comparez vos destinations favorites selon votre profil ; les scores sont indicatifs et enregistrés sur votre appareil."),
+  "/3m-booking": privateShell("3M Booking", "Accès historique à la recherche de vols 3M Booking, dont la page de référence est /billets.", "Accès alternatif à une page existante ; cette adresse n’est pas indexée."),
+  "/assurance-inscription": privateShell("Inscription assurance voyage", "Accès alternatif au formulaire d’assurance voyage, dont la page de référence est /assurance.", "Accès alternatif à une page existante ; cette adresse n’est pas indexée."),
 };
 
 const esc = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char] ?? char);
@@ -277,7 +312,7 @@ export function composePublicPrerender(template: string, url: string) {
       : procedureDetail.procedure
     : undefined;
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
-  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
+  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
     title: unknown ? `Page introuvable | ${SITE}` : SITE,

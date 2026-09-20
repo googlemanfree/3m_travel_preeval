@@ -10,6 +10,7 @@ import { canonicalRedirectFromHosts } from "../canonicalDomain";
 import { renderOgImageSvg } from "../seoAssets";
 import { renderRobotsTxt, renderSitemapXml } from "../seoRoutes";
 import { getPublicBuildMarker } from "../publicBuildMarker";
+import { registerLegacyAliasRedirects } from "../legacyPublicRedirects";
 
 function registerSeoAssetRoutes(app: Express) {
   app.get("/api/og", (req, res) => {
@@ -61,6 +62,8 @@ function registerLegacyPublicRedirects(app: Express) {
     res.set({ "Cache-Control": "public, max-age=3600" });
     return res.redirect(301, "/#evaluation-multi");
   });
+  // Autres alias d’App.tsx (<Redirect>) : table dédiée, cibles vérifiées par test.
+  registerLegacyAliasRedirects(app);
 }
 export async function setupVite(app: Express, server: Server) {
   applyCanonicalDomainRedirect(app);
