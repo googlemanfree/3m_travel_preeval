@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import express from "express";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { LEGACY_PUBLIC_REDIRECTS, legacyRedirectLocation, registerLegacyAliasRedirects } from "./legacyPublicRedirects";
-import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
+import { composePublicPrerender, evisaMetaForPath, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 
@@ -173,6 +173,103 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
     for (const path of ["/evisa/pays-inconnu", "/blog/etudes/pays-inconnu"]) {
       expect(render(path).status, path).toBe(404);
     }
+  });
+});
+
+describe("fiches e-Visa /evisa/:evisaId : les 39 fiches du catalogue", () => {
+  // Le pré-rendu écrit « e‑Visa » avec un trait d’union insécable (U+2011).
+  const eVisa = `e${String.fromCharCode(0x2011)}Visa`;
+  const evisaSection = (html: string) => html.match(/<section aria-label="Détails e-Visa">[\s\S]*?<\/section>/)?.[0] ?? "";
+
+  it("s’appuie sur l’id du catalogue, celui que lie et que résout le client", () => {
+    const ids = evisasDatabaseComplete.map((destination) => destination.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(read("client/src/pages/EvisasAdvanced.tsx")).toContain("/evisa/${destination.id}");
+    expect(read("client/src/pages/EvisaDetailPage.tsx")).toContain("e.id === evisaId");
+  });
+
+  it("sert chaque fiche en 200 indexable, avec canonical, fil d’Ariane et une seule entrée au sitemap", () => {
+    const sitemap = getIndexablePublicPaths();
+    for (const destination of evisasDatabaseComplete) {
+      const path = `/evisa/${destination.id}`;
+      const rendered = render(path);
+      expect(rendered.status, path).toBe(200);
+      expect(rendered.noindex, path).toBe(false);
+      expect(rendered.html, path).toContain('name="robots" content="index,follow"');
+      expect(rendered.html, path).toContain(`<link rel="canonical" href="https://www.3mtravelagency.com${path}" />`);
+      expect(rendered.html, path).toContain('"@type":"BreadcrumbList"');
+      expect(sitemap.filter((entry) => entry === path), path).toHaveLength(1);
+    }
+    expect(new Set(sitemap).size).toBe(sitemap.length);
+  });
+
+  it("respecte les bornes SEO pour chaque fiche, même pour les noms de pays très longs", () => {
+    for (const destination of evisasDatabaseComplete) {
+      const meta = evisaMetaForPath(`/evisa/${destination.id}`);
+      expect(meta, destination.id).toBeDefined();
+      expect(meta!.title.length, `${destination.id} titre`).toBeGreaterThanOrEqual(30);
+      expect(meta!.title.length, `${destination.id} titre`).toBeLessThanOrEqual(60);
+      expect(meta!.description.length, `${destination.id} description`).toBeGreaterThanOrEqual(50);
+      expect(meta!.description.length, `${destination.id} description`).toBeLessThanOrEqual(160);
+      expect(meta!.keywords?.length ?? 0, `${destination.id} mots-clés`).toBeGreaterThanOrEqual(3);
+      expect(meta!.keywords?.length ?? 0, `${destination.id} mots-clés`).toBeLessThanOrEqual(8);
+    }
+    const titles = evisasDatabaseComplete.map((destination) => evisaMetaForPath(`/evisa/${destination.id}`)!.title);
+    expect(new Set(titles).size).toBe(titles.length);
+  });
+
+  it("pré-rend le portail officiel et un avertissement « à confirmer », sans promesse d’obtention", () => {
+    for (const destination of evisasDatabaseComplete) {
+      const rendered = render(`/evisa/${destination.id}`);
+      const section = evisaSection(rendered.html);
+      expect(section, destination.id).not.toBe("");
+      expect(section, destination.id).toContain(`href="${destination.officialPortalUrl}"`);
+      expect(section, destination.id).toContain("à confirmer sur le portail officiel");
+      expect(section, destination.id).toContain("n’en garantit ni l’obtention ni les délais");
+      expect(section, destination.id).not.toMatch(/garanti[es]?\b/i);
+    }
+    const kenya = render("/evisa/kenya").html;
+    expect(kenya).toContain(`<h1>${eVisa} Kenya</h1>`);
+    expect(kenya).toContain("https://www.etakenya.go.ke/");
+    expect(kenya).toContain("eTA Électronique");
+    expect(kenya).toContain("Passeport biométrique (+6 mois)");
+  });
+
+  it("échappe les caractères spéciaux des noms de pays", () => {
+    expect(render("/evisa/tanzanie").html).toContain(`<h1>${eVisa} Tanzanie &amp; Zanzibar</h1>`);
+  });
+
+  it("garde une vraie 404 pour un id inconnu, une autre casse, l’ancien slug dérivé du nom ou un chemin plus profond", () => {
+    for (const path of ["/evisa/inconnu-xyz", "/evisa/Kenya", "/evisa/tanzanie-zanzibar", "/evisa/kenya/extra", "/evisa/%E0%A4%A"]) {
+      const rendered = render(path);
+      expect(rendered.status, path).toBe(404);
+      expect(rendered.html, path).toContain("Page introuvable");
+    }
+  });
+
+  it("fait pointer chaque lien /evisa/ du pré-rendu de /evisas vers une fiche servie en 200", () => {
+    const html = render("/evisas").html;
+    const linked = Array.from(html.matchAll(/href="\/evisa\/([^"]+)"/g), (match) => decodeURIComponent(match[1]));
+    expect([...linked].sort()).toEqual(evisasDatabaseComplete.map((destination) => destination.id).sort());
+    for (const id of linked) expect(render(`/evisa/${id}`).status, id).toBe(200);
+  });
+});
+
+describe("chemin demandé reflété dans le pré-rendu", () => {
+  it("n’insère jamais un chemin hostile tel quel dans canonical, og:url et twitter:url", () => {
+    for (const path of ['/x"><script>alert(1)</script>', '/evisa/kenya"><img src=x onerror=alert(1)>', "/l'hotel", "/a&b"]) {
+      const { html } = render(path);
+      expect(html, path).not.toContain("<script>alert(1)</script>");
+      expect(html, path).not.toContain("<img src=x");
+      const canonical = html.match(/<link rel="canonical" href="([^"]*)" \/>/)?.[1];
+      const ogUrl = html.match(/<meta property="og:url" content="([^"]*)" \/>/)?.[1];
+      const twitterUrl = html.match(/<meta name="twitter:url" content="([^"]*)" \/>/)?.[1];
+      expect(canonical, path).toBeDefined();
+      expect(ogUrl, path).toBe(canonical);
+      expect(twitterUrl, path).toBe(canonical);
+      expect(canonical, path).not.toMatch(/[<>']/);
+    }
+    expect(render("/a&b").html).toContain('<link rel="canonical" href="https://www.3mtravelagency.com/a&amp;b" />');
   });
 });
 

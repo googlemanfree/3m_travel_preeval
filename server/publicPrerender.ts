@@ -119,13 +119,17 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
   };
 };
 
-const evisaMetaForPath = (path: string): PublicMeta | undefined => {
+// Les noms de pays très longs (« République démocratique du Congo ») font sortir le titre
+// des 30-60 caractères : on retient la première variante qui tient.
+const fitTitle = (candidates: string[]) => candidates.find((candidate) => candidate.length >= 30 && candidate.length <= 60) ?? candidates[candidates.length - 1];
+
+export const evisaMetaForPath = (path: string): PublicMeta | undefined => {
   const match = path.match(/^\/evisa\/([^/]+)$/);
   if (!match) return undefined;
   const destination = evisasDatabaseComplete.find((entry) => entry.id === match[1]);
   if (!destination) return undefined;
   return {
-    title: `${destination.country} e‑Visa | ${SITE}`,
+    title: fitTitle([`${destination.country} e‑Visa | ${SITE}`, `${destination.country} e‑Visa | 3M Travel`]),
     description: `Repères e‑Visa pour ${destination.country} : type, documents, délais et portail officiel à vérifier avant toute démarche.`,
     keywords: [`e‑Visa ${destination.country}`, `visa ${destination.country}`, "e‑Visa Cameroun", "3M Travel"],
     heading: `e‑Visa ${destination.country}`,
@@ -306,7 +310,7 @@ const routeSpecificPrerender = (path: string) => {
     return `<section aria-label="Catalogue des procédures"><h2>107 procédures par destination</h2><p>Recherchez une destination puis vérifiez les informations applicables auprès du portail institutionnel associé.</p><ul>${procedures}</ul></section>`;
   }
   if (path === "/evisas") {
-    const catalogue = evisasDatabaseComplete.slice(0, 18).map((entry) => `<li><a href="/evisa/${encodeURIComponent(entry.country.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}">${esc(entry.country)}</a> — ${esc(entry.type)} · ${esc(entry.region)}</li>`).join("");
+    const catalogue = evisasDatabaseComplete.map((entry) => `<li><a href="/evisa/${encodeURIComponent(entry.id)}">${esc(entry.country)}</a> — ${esc(entry.type)} · ${esc(entry.region)}</li>`).join("");
     return `<section aria-label="Aperçu de l’annuaire e-Visa"><h2>Annuaire des procédures e-Visa</h2><p>Les conditions de délivrance, nationalités admises, frais et délais doivent être confirmés sur le portail officiel de la destination avant toute démarche.</p><ul>${catalogue}</ul><p><a href="/contact">Demander une orientation à 3M Travel</a></p></section>`;
   }
   const evisaMatch = path.match(/^\/evisa\/([^/]+)$/);
@@ -317,7 +321,7 @@ const routeSpecificPrerender = (path: string) => {
     const officialPortal = destination.officialPortalUrl
       ? `<p><a href="${esc(destination.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(destination.officialPortalLabel || "Consulter le portail officiel")}</a>${destination.officialVerifiedAt ? ` · Vérifié le ${esc(destination.officialVerifiedAt)}` : ""}</p>`
       : `<p>Le portail officiel doit être vérifié avant tout paiement ou dépôt de document.</p>`;
-    return `<section aria-label="Détails e-Visa"><h2>${esc(destination.country)} : repères e-Visa</h2><p>${esc(destination.culture)}</p><p><strong>Type :</strong> ${esc(destination.type)} · <strong>Durée :</strong> ${esc(destination.duration)} · <strong>Délai :</strong> ${esc(destination.delay)} · <strong>Frais :</strong> ${esc(destination.fee)}</p><h2>Étapes à vérifier</h2><ol>${steps}</ol><p><strong>Documents :</strong> ${esc(destination.docs)}</p>${officialPortal}<p><a href="/evisas">Retourner à l’annuaire e-Visa</a> · <a href="/contact">Demander une orientation</a></p></section>`;
+    return `<section aria-label="Détails e-Visa"><h2>${esc(destination.country)} : repères e-Visa</h2><p>${esc(destination.culture)}</p><p><strong>Type :</strong> ${esc(destination.type)} · <strong>Durée :</strong> ${esc(destination.duration)} · <strong>Délai :</strong> ${esc(destination.delay)} · <strong>Frais :</strong> ${esc(destination.fee)}</p><h2>Étapes à vérifier</h2><ol>${steps}</ol><p><strong>Documents :</strong> ${esc(destination.docs)}</p>${officialPortal}<p>Ces informations sont indicatives et à confirmer sur le portail officiel avant toute démarche, paiement ou réservation. La délivrance relève de l’autorité compétente : 3M Travel &amp; Services n’en garantit ni l’obtention ni les délais.</p><p><a href="/evisas">Retourner à l’annuaire e-Visa</a> · <a href="/contact">Demander une orientation</a></p></section>`;
   }
   const studyArticle = studyArticleForPath(path);
   if (studyArticle) {
@@ -392,6 +396,8 @@ export function composePublicPrerender(template: string, url: string) {
     noindex: privatePath || unknown,
   };
   const canonical = `${ORIGIN}${path}`;
+  // Le chemin vient de l’URL demandée : le JSON-LD l’échappe déjà, pas les attributs HTML.
+  const canonicalAttr = esc(canonical);
   const socialImage = socialImageFor(current.title, path);
   const robot = current.noindex ? `<meta name="robots" content="noindex,follow" />` : `<meta name="robots" content="index,follow" />`;
   const breadcrumb = path !== "/" && !current.noindex ? {
@@ -442,14 +448,14 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta name="description" content="${esc(current.description)}" />`,
     ...(current.keywords?.length ? [`<meta name="keywords" content="${esc(current.keywords.join(", "))}" />`] : []),
     robot,
-    `<link rel="canonical" href="${canonical}" />`,
+    `<link rel="canonical" href="${canonicalAttr}" />`,
     ...hreflangTags,
     `<meta property="og:type" content="${socialType}" />`,
     `<meta property="og:locale" content="${isEnPath ? "en_US" : "fr_FR"}" />`,
     `<meta property="og:site_name" content="${SITE}" />`,
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
-    `<meta property="og:url" content="${canonical}" />`,
+    `<meta property="og:url" content="${canonicalAttr}" />`,
     `<meta property="og:image" content="${socialImage}" />`,
     `<meta property="og:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
     `<meta property="og:image:type" content="image/png" />`,
@@ -459,7 +465,7 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(current.title)}" />`,
     `<meta name="twitter:description" content="${esc(current.description)}" />`,
-    `<meta name="twitter:url" content="${canonical}" />`,
+    `<meta name="twitter:url" content="${canonicalAttr}" />`,
     `<meta name="twitter:image" content="${socialImage}" />`,
     `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
     structuredDataTag,
