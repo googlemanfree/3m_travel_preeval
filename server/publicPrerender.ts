@@ -356,6 +356,8 @@ export function composePublicPrerender(template: string, url: string) {
     : undefined;
   const evisaPage = evisaMetaForPath(path);
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle;
+  const isStudyArticle = Boolean(studyArticle);
+  const socialType = isStudyArticle ? "article" : "website";
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
@@ -418,7 +420,7 @@ export function composePublicPrerender(template: string, url: string) {
     robot,
     `<link rel="canonical" href="${canonical}" />`,
     ...hreflangTags,
-    `<meta property="og:type" content="website" />`,
+    `<meta property="og:type" content="${socialType}" />`,
     `<meta property="og:locale" content="${isEnPath ? "en_US" : "fr_FR"}" />`,
     `<meta property="og:site_name" content="${SITE}" />`,
     `<meta property="og:title" content="${esc(current.title)}" />`,
@@ -426,9 +428,14 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta property="og:url" content="${canonical}" />`,
     `<meta property="og:image" content="${socialImage}" />`,
     `<meta property="og:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
+    `<meta property="og:image:type" content="image/png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    ...(isStudyArticle ? [`<meta property="article:publisher" content="${esc(COMPANY_PROFILE.website)}" />`] : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(current.title)}" />`,
     `<meta name="twitter:description" content="${esc(current.description)}" />`,
+    `<meta name="twitter:url" content="${canonical}" />`,
     `<meta name="twitter:image" content="${socialImage}" />`,
     `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
     structuredDataTag,

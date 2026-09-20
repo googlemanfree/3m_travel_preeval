@@ -137,6 +137,10 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
       expect(rendered.html, path).toContain("<title>");
       expect(rendered.html, path).toContain("e‑Visa | 3M Travel &amp; Services</title>");
       expect(rendered.html, path).toContain("Détails e-Visa");
+      expect(rendered.html, path).toContain('<meta property="og:type" content="website" />');
+      expect(rendered.html, path).toContain(`<meta property="og:url" content="https://www.3mtravelagency.com${path}" />`);
+      expect(rendered.html, path).toContain('<meta name="twitter:card" content="summary_large_image" />');
+      expect(rendered.html, path).toContain(`<meta name="twitter:url" content="https://www.3mtravelagency.com${path}" />`);
       expect(getIndexablePublicPaths(), path).toContain(path);
     }
   });
@@ -149,6 +153,10 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
       expect(rendered.noindex, path).toBe(false);
       expect(rendered.html, path).toContain(`<h1>${article.title}</h1>`);
       expect(rendered.html, path).toContain("Étapes de préparation");
+      expect(rendered.html, path).toContain('<meta property="og:type" content="article" />');
+      expect(rendered.html, path).toContain('<meta property="article:publisher" content="https://www.3mtravelagency.com" />');
+      expect(rendered.html, path).toContain('<meta name="twitter:card" content="summary_large_image" />');
+      expect(rendered.html, path).toContain(`<meta name="twitter:url" content="https://www.3mtravelagency.com${path}" />`);
     }
   });
 
