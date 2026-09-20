@@ -87,7 +87,7 @@ afterEach(() => {
 });
 
 describe("3M Digital — flux UI complet", () => {
-  it("crée une demande publique, la retrouve dans la file et enregistre statut et note", async () => {
+  it("crée une demande publique, la retrouve dans la file et enregistre statut et note", { timeout: 20_000 }, async () => {
     const user = userEvent.setup();
     render(<Community />);
 

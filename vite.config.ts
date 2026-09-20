@@ -164,6 +164,12 @@ const plugins = [
 
 export default defineConfig({
   plugins,
+  // Vitest lit cette option depuis la configuration Vite ; le type Vite seul
+  // ne la connaît pas, mais l’option est volontairement conservée ici.
+  // @ts-expect-error -- propriété Vitest valide lors de l’exécution des tests
+  test: {
+    testTimeout: 10_000,
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

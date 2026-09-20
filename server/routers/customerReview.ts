@@ -214,10 +214,13 @@ export const customerReviewRouter = router({
       }).from(customerReviews);
 
       return {
-        totalReviews: agg?.total ?? 0,
-        approvedReviews: agg?.approved ?? 0,
-        pendingReviews: agg?.pending ?? 0,
-        rejectedReviews: agg?.rejected ?? 0,
+        // MySQL peut renvoyer COUNT() sous forme de bigint selon la
+        // configuration du driver. Le contrat public attend des nombres JSON
+        // ordinaires : normaliser ici évite une transformation tRPC fragile.
+        totalReviews: Number(agg?.total ?? 0),
+        approvedReviews: Number(agg?.approved ?? 0),
+        pendingReviews: Number(agg?.pending ?? 0),
+        rejectedReviews: Number(agg?.rejected ?? 0),
         averageRating: Number(Number(agg?.avgRating ?? 0).toFixed(1)),
       };
     } catch {
