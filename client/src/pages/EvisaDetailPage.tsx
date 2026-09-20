@@ -4,6 +4,7 @@ import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { SocialShareButtons } from '@/components/SocialShareButtons';
 import { evisasDatabaseComplete, EvisaDestination } from '@/data/evisasDatabaseComplete';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -79,6 +80,7 @@ export default function EvisaDetailPage() {
             {isFavorite ? 'Enregistré en favori' : 'Ajouter aux favoris'}
           </Button>
         </div>
+        <SocialShareButtons title={`${destination.country} e‑Visa | 3M Travel & Services`} />
 
         {/* Hero Section */}
         <motion.div 

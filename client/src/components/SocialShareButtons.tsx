@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy, Facebook, Linkedin, Twitter } from "lucide-react";
+import { toast } from "sonner";
 
 type SocialShareButtonsProps = {
   title: string;
@@ -29,9 +30,11 @@ export function SocialShareButtons({ title, className = "" }: SocialShareButtons
     try {
       await navigator.clipboard.writeText(pageUrl);
       setCopied(true);
+      toast.success("Lien copié", { description: "Le lien de cette page est prêt à être partagé." });
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
       setCopied(false);
+      toast.error("Copie indisponible", { description: "Votre navigateur n’autorise pas l’accès au presse-papiers." });
     }
   };
 
