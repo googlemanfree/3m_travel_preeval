@@ -15,7 +15,31 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
   name: COMPANY_PROFILE.legalName,
   url: COMPANY_PROFILE.website,
   email: COMPANY_PROFILE.publicEmail,
-  telephone: COMPANY_PROFILE.offices.cameroon.phoneDisplay,
+  telephone: [
+    COMPANY_PROFILE.offices.cameroon.phoneDisplay,
+    COMPANY_PROFILE.offices.cameroon.whatsappDisplay,
+    COMPANY_PROFILE.offices.ottawa.whatsappDisplay,
+  ],
+  contactPoint: [
+    {
+      "@type": "ContactPoint",
+      telephone: COMPANY_PROFILE.offices.cameroon.phoneDisplay,
+      contactType: "customer service",
+      areaServed: "CM",
+    },
+    {
+      "@type": "ContactPoint",
+      telephone: COMPANY_PROFILE.offices.cameroon.whatsappDisplay,
+      contactType: "customer service",
+      areaServed: "CM",
+    },
+    {
+      "@type": "ContactPoint",
+      telephone: COMPANY_PROFILE.offices.ottawa.whatsappDisplay,
+      contactType: "customer service",
+      areaServed: "CA",
+    },
+  ],
   address: {
     "@type": "PostalAddress",
     streetAddress: COMPANY_PROFILE.offices.cameroon.addressLines.join(", "),
