@@ -47,8 +47,8 @@ export function SocialShareButtons({ title, className = "" }: SocialShareButtons
   return (
     <section aria-labelledby="social-share-title" className={`flex flex-wrap items-center gap-3 ${className}`}>
       <h2 id="social-share-title" className="mr-1 text-sm font-bold text-slate-700">Partager cette page</h2>
-      <button type="button" onClick={copyLink} aria-label="Copier le lien de cette page" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800 shadow-sm transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.02] hover:border-blue-400 hover:bg-blue-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
-        {copied ? <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+      <button type="button" onClick={copyLink} aria-label="Copier le lien de cette page" className="group inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800 shadow-sm transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.02] hover:border-blue-400 hover:bg-blue-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
+        {copied ? <Check className="h-4 w-4 text-emerald-600 motion-safe:animate-bounce" aria-hidden="true" /> : <Copy className="h-4 w-4 transition-transform duration-200 group-active:scale-90" aria-hidden="true" />}
         <span>{copied ? "Lien copié" : "Copier le lien"}</span>
       </button>
       <p role="status" aria-live="polite" className="sr-only">{copied ? "Le lien a été copié dans le presse-papiers." : ""}</p>
