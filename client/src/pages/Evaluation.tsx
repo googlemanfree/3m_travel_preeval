@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
+import { CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
@@ -407,6 +408,13 @@ export default function Evaluation() {
     const missingProjectFields = requiredProjectFields.filter((field) => field.required && !form.projectDetails[field.key]?.trim());
     if (missingProjectFields.length) return setFormError(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`);
 
+    // Le CV est l'élément clé de la finalisation : sans lui, l'évaluation ne peut pas être validée.
+    if (!cvFile) {
+      setCvAnalysisNotice(CV_REQUIRED_MESSAGE);
+      document.getElementById('cv-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return setFormError(CV_REQUIRED_MESSAGE);
+    }
+
     let cvBase64: string | undefined;
     if (cvFile) {
       try {
@@ -722,10 +730,10 @@ export default function Evaluation() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <Label htmlFor="cv-upload" className="text-sm font-semibold text-blue-950">
-                    CV (PDF, JPG ou PNG, optionnel mais recommandé)
+                    CV (obligatoire — PDF, JPG ou PNG)
                   </Label>
                   <p className="mt-1 text-xs text-blue-800/75">
-                    Ajoutez votre CV pour permettre une évaluation plus précise. PDF, JPG ou PNG, 5 Mo maximum. Les images sont lues par OCR sécurisé.
+                    Votre CV est l’élément clé pour finaliser votre évaluation : elle ne peut pas être validée sans lui. PDF, JPG ou PNG, 5 Mo maximum. Les images sont lues par OCR sécurisé.
                   </p>
                   <input
                     id="cv-upload"

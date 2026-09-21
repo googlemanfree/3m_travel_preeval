@@ -101,5 +101,5 @@ test("analyse un CV image PNG via OCR et applique les champs vérifiables", asyn
   await expect(page.getByText("2 champ(s) pré-rempli(s) depuis votre CV — repérez le badge « Pré-rempli par IA » et vérifiez chaque valeur.")).toBeVisible();
   await expect(page.locator('input[value="Licence en gestion"]')).toBeVisible();
   await expect(page.locator('input[value="Comptable"]')).toBeVisible();
-  await expect(page.getByText("CV (PDF, JPG ou PNG, optionnel mais recommandé)")).toBeVisible();
+  await expect(page.getByText("CV (obligatoire — PDF, JPG ou PNG)")).toBeVisible();
 });

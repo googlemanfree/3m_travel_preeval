@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
-import { AlertTriangle, CheckCircle2, Loader2, Mail, MailQuestion, RefreshCw, Save, Send, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileText, Loader2, Mail, MailQuestion, RefreshCw, Save, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
 import EvaluationVersionForm from "@/components/EvaluationVersionForm";
 import { availabilityFor, describeValue, linesToList, sameVersion } from "@/lib/evaluationValidationForm";
+import { CV_MISSING_FOR_PUBLICATION } from "@shared/evaluationCv";
 import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, ROUTE_LABELS, SCORE_CRITERIA, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
 import type { AppRouter } from "../../../server/routers";
 
@@ -227,7 +228,9 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
     if (dirty) blockers.push("Enregistrez d’abord vos modifications : la publication porte sur la version enregistrée.");
     if (view.incompleteFields.length > 0) blockers.push(`À compléter avant publication : ${view.incompleteFields.join(", ")}.`);
     if (view.previewError) blockers.push(view.previewError);
+    if (!view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
   }
+  const cvLink = view.evaluation.cvFileUrl && /^https?:\/\//i.test(view.evaluation.cvFileUrl) ? view.evaluation.cvFileUrl : null;
   const canPublishNow = availability.canPublish && blockers.length === 0 && !save.isPending;
   const sendEmail = publishMode === "notify";
   const missing = publishMode ? missingChecklistItems(checked, { sendEmail }) : [];
@@ -248,6 +251,26 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
         {view.needsSecondValidation && !published && <Badge className="bg-amber-100 text-amber-900">Seconde validation requise</Badge>}
       </div>
       <p className="text-xs text-slate-600">Rien n’est visible du candidat ni envoyé tant que vous n’avez pas publié. Le candidat ne voit que l’avis « dossier reçu » jusqu’à votre validation.</p>
+      {view.evaluation.cvOnFile ? (
+        <p className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" data-testid="cv-status">
+          <FileText className="h-4 w-4" aria-hidden="true" />
+          <span className="font-semibold">CV au dossier</span>
+          {cvLink ? (
+            <a href={cvLink} target="_blank" rel="noopener noreferrer" className="font-medium underline">
+              {view.evaluation.cvFileName || "Ouvrir le CV"}
+            </a>
+          ) : (
+            <span>{view.evaluation.cvFileName}</span>
+          )}
+        </p>
+      ) : (
+        !published && (
+          <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900" data-testid="cv-status">
+            <AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden="true" />
+            <strong>CV manquant.</strong> {CV_MISSING_FOR_PUBLICATION}
+          </p>
+        )
+      )}
 
       {notice && <p role="status" className={`rounded-md border p-3 text-sm ${notice.tone === "warning" ? "border-amber-300 bg-amber-50 text-amber-900" : notice.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-blue-200 bg-blue-50 text-blue-900"}`}>{notice.text}</p>}
       {view.case.aiDraftError && <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><AlertTriangle className="mr-1 inline h-4 w-4" />Le brouillon IA n’a pas pu être généré ({view.case.aiDraftError}). La version administrateur est vierge : saisissez-la à la main ou relancez la génération.</p>}

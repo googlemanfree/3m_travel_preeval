@@ -69,10 +69,14 @@ export class InMemoryValidationStore implements ValidationStore {
   private nextId = 1;
   private beforeNextUpdate: (() => Promise<void>) | null = null;
 
+  private readonly contexts: EvaluationContext[];
+
   constructor(
-    private readonly contexts: EvaluationContext[],
+    contexts: EvaluationContext[],
     private readonly clock: () => Date = () => new Date("2026-09-21T09:00:00.000Z"),
-  ) {}
+  ) {
+    this.contexts = contexts.map((context) => ({ ...context })); // copie : le dépôt d'un CV ne doit pas modifier la constante partagée des tests
+  }
 
   /** Simule un administrateur concurrent qui écrit entre la lecture et l'écriture de l'appelant. */
   interceptNextUpdate(action: () => Promise<void>) {
@@ -81,6 +85,15 @@ export class InMemoryValidationStore implements ValidationStore {
 
   async loadEvaluationContext(evaluationId: number) {
     return this.contexts.find((context) => context.evaluationId === evaluationId) ?? null;
+  }
+
+  async attachCv(evaluationId: number, cv: { url: string; fileName: string }) {
+    const context = this.contexts.find((entry) => entry.evaluationId === evaluationId);
+    if (!context) return false;
+    context.cvOnFile = true;
+    context.cvFileName = cv.fileName;
+    context.cvFileUrl = cv.url;
+    return true;
   }
 
   private snapshot(row: ValidationCase): ValidationCase {
@@ -220,4 +233,12 @@ export function missingTablesError(): Error {
   });
 }
 
-export const CANDIDATE_CONTEXT: EvaluationContext = { evaluationId: 1, candidateName: "Aïcha Nkolo", candidateEmail: "aicha@example.com", candidateCountry: "Canada" };
+export const CANDIDATE_CONTEXT: EvaluationContext = {
+  evaluationId: 1,
+  candidateName: "Aïcha Nkolo",
+  candidateEmail: "aicha@example.com",
+  candidateCountry: "Canada",
+  cvOnFile: true,
+  cvFileName: "cv-aicha-nkolo.pdf",
+  cvFileUrl: "https://files.example.com/cv-uploads/1_cv-aicha-nkolo.pdf",
+};

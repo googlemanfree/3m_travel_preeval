@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { CV_MISSING_FOR_PUBLICATION } from "../../shared/evaluationCv";
 import {
   ADMIN_DRAFT_BADGE,
   AI_DRAFT_LABEL,
@@ -56,6 +57,7 @@ export type ValidationFlowErrorCode =
   | "STALE_VERSION"
   | "SECOND_VALIDATION_REQUIRED"
   | "NO_RECIPIENT"
+  | "CV_REQUIRED"
   | "CONFLICT";
 
 export class ValidationFlowError extends Error {
@@ -159,10 +161,19 @@ export type EvaluationContext = {
   candidateEmail: string;
   /** Pays choisi par le candidat : toujours le pays prioritaire. */
   candidateCountry: string;
+  /** CV au dossier : élément clé, l'évaluation ne peut pas être publiée sans lui. */
+  cvOnFile: boolean;
+  cvFileName: string | null;
+  /** Lien d'ouverture du CV, réservé à l'administrateur (jamais renvoyé au candidat). */
+  cvFileUrl: string | null;
 };
+
+export type CandidateCv = { onFile: boolean; fileName: string | null };
 
 export interface ValidationStore {
   loadEvaluationContext(evaluationId: number): Promise<EvaluationContext | null>;
+  /** Remplace le CV du dossier (dépôt par le candidat) ; renvoie false si l'évaluation n'existe pas. */
+  attachCv(evaluationId: number, cv: { url: string; fileName: string }): Promise<boolean>;
   getLatestCase(evaluationId: number): Promise<ValidationCase | null>;
   getLatestPublishedCase(evaluationId: number): Promise<ValidationCase | null>;
   listCases(evaluationId: number): Promise<ValidationCase[]>;
@@ -544,6 +555,8 @@ export async function publishEvaluation(deps: ValidationDeps, admin: Actor, eval
   if (incomplete.length > 0) throw new ValidationFlowError("INCOMPLETE_VERSION", `Complétez avant de publier : ${incomplete.join(", ")}.`, { missing: incomplete });
 
   const context = await requireContext(deps.store, evaluationId);
+  // Le CV est l'élément clé de la finalisation : sans lui, ni publication ni première validation.
+  if (!context.cvOnFile) throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
   const now = deps.now();
   const report = buildReport(version, { candidateName: context.candidateName, validatedAt: isoDate(now) });
   const rendered = input.sendEmail ? renderEmailFor(deps, version, context.candidateEmail) : null;
@@ -778,16 +791,35 @@ export type CandidateEvaluationView = {
   infoRequest: { message: string; items: InfoRequestItem[] } | null;
   report: ClientReport | null;
   publishedAt: string | null;
+  /** État du CV : sans lui l'évaluation ne peut pas être finalisée ; le lien du fichier n'est jamais renvoyé. */
+  cv: CandidateCv;
 };
+
+/**
+ * Dépôt (ou remplacement) du CV par le candidat. Refusé une fois l'évaluation publiée : le CV validé fait
+ * partie du dossier. `upload` n'est appelé qu'après ce contrôle, pour ne pas stocker un fichier refusé.
+ */
+export async function attachCandidateCv(deps: ValidationDeps, evaluationId: number, cv: { fileName: string; upload: () => Promise<string> }): Promise<CandidateCv> {
+  const latest = await deps.store.getLatestCase(evaluationId);
+  if (latest && (latest.workflowStatus === "validee_publiee" || latest.workflowStatus === "validee_publiee_notifiee")) {
+    throw new ValidationFlowError("INVALID_STATE", "Votre évaluation est déjà validée : le CV ne peut plus être remplacé. Contactez notre équipe si nécessaire.");
+  }
+  const context = await requireContext(deps.store, evaluationId);
+  const url = await cv.upload();
+  const attached = await deps.store.attachCv(context.evaluationId, { url, fileName: cv.fileName });
+  if (!attached) throw new ValidationFlowError("NOT_FOUND", "Évaluation introuvable.");
+  return { onFile: true, fileName: cv.fileName };
+}
 
 /**
  * Ce que le candidat a le droit de voir. Construit champ par champ (jamais par copie d'objet) :
  * ni brouillon IA, ni score initial, ni version administrateur non publiée, ni commentaire interne,
  * ni identité de l'administrateur n'en font partie.
  */
-export function buildCandidateView(input: { latest: ValidationCase | null; latestPublished: ValidationCase | null }): CandidateEvaluationView {
+export function buildCandidateView(input: { latest: ValidationCase | null; latestPublished: ValidationCase | null; cv: CandidateCv }): CandidateEvaluationView {
   const { latest, latestPublished } = input;
-  if (!latest) return { stage: "not_started", pendingNotice: null, infoRequest: null, report: null, publishedAt: null };
+  const cv: CandidateCv = { onFile: input.cv.onFile === true, fileName: input.cv.onFile === true ? (input.cv.fileName ?? null) : null };
+  if (!latest) return { stage: "not_started", pendingNotice: null, infoRequest: null, report: null, publishedAt: null, cv };
 
   const visibility = candidateVisibility(latest.workflowStatus, latestPublished?.publishedReport != null);
   const report = visibility.showFinalReport ? (latestPublished?.publishedReport ?? null) : null;
@@ -800,5 +832,6 @@ export function buildCandidateView(input: { latest: ValidationCase | null; lates
     infoRequest: request ? { message: request.message, items: request.items.map((item) => ({ id: item.id, label: item.label })) } : null,
     report,
     publishedAt: report ? iso(latestPublished?.publishedAt ?? null) : null,
+    cv,
   };
 }

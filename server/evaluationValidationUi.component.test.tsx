@@ -61,6 +61,7 @@ vi.mock("@/lib/trpc", () => ({
       resendEmail: mutation("resendEmail"),
       startReevaluation: mutation("startReevaluation"),
       respondToInfoRequest: mutation("respondToInfoRequest"),
+      attachCv: mutation("attachCv"),
     },
   },
 }));
@@ -76,13 +77,15 @@ const NOW = new Date("2026-09-21T09:00:00.000Z");
 const ADMIN = { email: "admin.a@3m.test" };
 const FULL_CHECKLIST = Object.fromEntries(PUBLICATION_CHECKLIST.map((item) => [item.key, true]));
 
-function makeDeps(): ValidationDeps & { store: InMemoryValidationStore; mailer: FakeMailer } {
-  const store = new InMemoryValidationStore([CANDIDATE_CONTEXT], () => NOW);
+const WITHOUT_CV = { ...CANDIDATE_CONTEXT, cvOnFile: false, cvFileName: null, cvFileUrl: null };
+
+function makeDeps(context = CANDIDATE_CONTEXT): ValidationDeps & { store: InMemoryValidationStore; mailer: FakeMailer } {
+  const store = new InMemoryValidationStore([context], () => NOW);
   return { store, mailer: new FakeMailer(store.timeline), now: () => NOW, portalUrl: "https://www.3mtravelagency.com/evaluation" };
 }
 
-async function draftView(mutate?: (deps: ReturnType<typeof makeDeps>) => Promise<void>) {
-  const deps = makeDeps();
+async function draftView(mutate?: (deps: ReturnType<typeof makeDeps>) => Promise<void>, context = CANDIDATE_CONTEXT) {
+  const deps = makeDeps(context);
   await recordAiDraft(deps, 1, { ok: true, draft: sampleAiDraft(), model: "gemini-test" });
   if (mutate) await mutate(deps);
   return { deps, view: await buildAdminView(deps, 1) };
@@ -114,16 +117,16 @@ describe("espace candidat : suivi de l'évaluation", () => {
     await saveAdminVersion(deps, ADMIN, 1, { ...current.adminVersion!, totalOverride: 68, internalComment: "SECRET-INTERNE-42", improvements: ["Passer un test de langue officiel"] });
     const fresh = (await deps.store.getLatestCase(1))!;
     await publishEvaluation(deps, ADMIN, 1, { checklist: FULL_CHECKLIST, sendEmail: false, reviewedVersionStamp: versionStamp(fresh.adminVersion!) });
-    return buildCandidateView({ latest: await deps.store.getLatestCase(1), latestPublished: await deps.store.getLatestPublishedCase(1) }) as CandidateEvaluationViewData;
+    return buildCandidateView({ latest: await deps.store.getLatestCase(1), latestPublished: await deps.store.getLatestPublishedCase(1), cv: { onFile: true, fileName: null } }) as CandidateEvaluationViewData;
   };
 
   it("n'affiche rien avant qu'une évaluation existe", () => {
-    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "not_started", pendingNotice: null, infoRequest: null, report: null, publishedAt: null }} />);
+    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "not_started", pendingNotice: null, infoRequest: null, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }} />);
     expect(container.innerHTML).toBe("");
   });
 
   it("affiche uniquement l'avis « dossier reçu » tant que rien n'est publié : ni score, ni rapport, ni brouillon", () => {
-    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null }} />);
+    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }} />);
     expect(screen.getByRole("heading", { name: CANDIDATE_PENDING_NOTICE.title })).toBeTruthy();
     expect(screen.getByText(CANDIDATE_PENDING_NOTICE.body)).toBeTruthy();
     expect(screen.getByText("Analyse en cours")).toBeTruthy();
@@ -131,11 +134,11 @@ describe("espace candidat : suivi de l'évaluation", () => {
     expect(screen.queryByRole("article")).toBeNull();
   });
 
-  it("montre un avancement animé en trois étapes et un message de statut clair, sans jamais parler d'IA ni de brouillon", () => {
-    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null }} />);
+  it("montre un avancement animé en quatre étapes et un message de statut clair, sans jamais parler d'IA ni de brouillon", () => {
+    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }} />);
     const steps = within(screen.getByRole("list", { name: "Avancement de votre évaluation" })).getAllByRole("listitem");
-    expect(steps.map((step) => step.textContent)).toEqual(["Dossier reçu", "Vérification par notre équipe", "Évaluation publiée dans votre espace"]);
-    expect(steps.map((step) => step.getAttribute("aria-current"))).toEqual([null, "step", null]); // seule l'étape en cours est signalée
+    expect(steps.map((step) => step.textContent)).toEqual(["Dossier reçu", "CV joint", "Vérification par notre équipe", "Évaluation publiée dans votre espace"]);
+    expect(steps.map((step) => step.getAttribute("aria-current"))).toEqual([null, null, "step", null]); // seule l'étape en cours est signalée
     const spinner = screen.getByTestId("evaluation-progress-spinner");
     expect(spinner.getAttribute("class")).toContain("animate-spin");
     expect(spinner.getAttribute("class")).toContain("motion-reduce:animate-none"); // pas d'animation si l'appareil demande moins de mouvement
@@ -153,12 +156,12 @@ describe("espace candidat : suivi de l'évaluation", () => {
       await recordAiDraft(deps, 1, { ok: true, draft: sampleAiDraft(), model: "gemini-test" });
       const current = (await deps.store.getLatestCase(1))!;
       await publishEvaluation(deps, ADMIN, 1, { checklist: FULL_CHECKLIST, sendEmail: false, reviewedVersionStamp: versionStamp(current.adminVersion!) });
-      return buildCandidateView({ latest: await deps.store.getLatestCase(1), latestPublished: await deps.store.getLatestPublishedCase(1) }) as CandidateEvaluationViewData;
+      return buildCandidateView({ latest: await deps.store.getLatestCase(1), latestPublished: await deps.store.getLatestPublishedCase(1), cv: { onFile: true, fileName: null } }) as CandidateEvaluationViewData;
     })();
     const first = render(<CandidateEvaluationStatus evaluationId={1} view={published} />);
     expect(screen.queryByTestId("evaluation-progress")).toBeNull();
     first.unmount();
-    render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "info_requested", pendingNotice: null, infoRequest: { message: "", items: [{ id: "q1", label: "Diplôme" }] }, report: null, publishedAt: null }} />);
+    render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "info_requested", pendingNotice: null, infoRequest: { message: "", items: [{ id: "q1", label: "Diplôme" }] }, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }} />);
     expect(screen.queryByTestId("evaluation-progress")).toBeNull();
   });
 
@@ -185,7 +188,7 @@ describe("espace candidat : suivi de l'évaluation", () => {
       <CandidateEvaluationStatus
         evaluationId={7}
         onChanged={onChanged}
-        view={{ stage: "info_requested", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: { message: "Merci de compléter votre dossier.", items: [{ id: "q1", label: "Relevé de notes" }, { id: "q2", label: "Attestation de travail" }] }, report: null, publishedAt: null }}
+        view={{ stage: "info_requested", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: { message: "Merci de compléter votre dossier.", items: [{ id: "q1", label: "Relevé de notes" }, { id: "q2", label: "Attestation de travail" }] }, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }}
       />,
     );
     expect(screen.getByText("Merci de compléter votre dossier.")).toBeTruthy();
@@ -202,7 +205,7 @@ describe("espace candidat : suivi de l'évaluation", () => {
   it("accepte une simple précision sans réponse par élément, et signale une erreur d'envoi", async () => {
     state.next.respondToInfoRequest = (handlers) => handlers.onError?.({ message: "Aucune information complémentaire n’est attendue pour ce dossier." });
     const user = userEvent.setup();
-    render(<CandidateEvaluationStatus evaluationId={7} view={{ stage: "info_requested", pendingNotice: null, infoRequest: { message: "", items: [{ id: "q1", label: "Diplôme" }] }, report: null, publishedAt: null }} />);
+    render(<CandidateEvaluationStatus evaluationId={7} view={{ stage: "info_requested", pendingNotice: null, infoRequest: { message: "", items: [{ id: "q1", label: "Diplôme" }] }, report: null, publishedAt: null, cv: { onFile: true, fileName: null } }} />);
     await user.type(screen.getByLabelText(/Précisions/), "Je vous écris par la messagerie.");
     await user.click(screen.getByRole("button", { name: "Envoyer mes réponses" }));
     expect(lastCall("respondToInfoRequest")).toEqual({ evaluationId: 7, answers: [], note: "Je vous écris par la messagerie." });
@@ -217,7 +220,108 @@ describe("espace candidat : suivi de l'évaluation", () => {
   });
 });
 
+describe("espace candidat : CV, élément clé de la finalisation", () => {
+  const pendingWithoutCv = (): CandidateEvaluationViewData => ({ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null, cv: { onFile: false, fileName: null } });
+  const fileInput = () => screen.getByLabelText("Fichier du CV") as HTMLInputElement;
+  const choose = (file: File) => fireEvent.change(fileInput(), { target: { files: [file] } }); // contourne l'attribut accept : le contrôle testé est celui du composant
+  const pdf = (name = "cv-aicha.pdf") => new File(["%PDF-1.4 contenu"], name, { type: "application/pdf" });
+
+  it("demande le CV et affiche l'attente du CV plutôt que « vérification en cours » quand il manque", () => {
+    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={pendingWithoutCv()} />);
+    expect(screen.getByRole("heading", { name: "Ajoutez votre CV pour finaliser votre évaluation" })).toBeTruthy();
+    const steps = within(screen.getByRole("list", { name: "Avancement de votre évaluation" })).getAllByRole("listitem");
+    expect(steps.map((step) => step.textContent)).toEqual(["Dossier reçu", "CV à ajouter", "Vérification par notre équipe", "Évaluation publiée dans votre espace"]);
+    expect(steps.map((step) => step.getAttribute("aria-current"))).toEqual([null, "step", null, null]);
+    expect(screen.getByText(/Statut : en attente de votre CV/)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/vérification en cours par notre équipe/);
+    expect((screen.getByRole("button", { name: "Envoyer mon CV" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("ne propose pas le dépôt quand le CV est déjà au dossier, ni une fois l'évaluation publiée", () => {
+    render(<CandidateEvaluationStatus evaluationId={1} view={{ ...pendingWithoutCv(), cv: { onFile: true, fileName: "cv.pdf" } }} />);
+    expect(screen.queryByTestId("cv-upload-card")).toBeNull();
+    cleanup();
+    render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "published", pendingNotice: null, infoRequest: null, report: null, publishedAt: "2026-09-21T09:00:00.000Z", cv: { onFile: false, fileName: null } }} />);
+    expect(screen.queryByTestId("cv-upload-card")).toBeNull(); // le dossier validé n'est plus modifiable
+  });
+
+  it("propose le dépôt même si le dossier n'est pas encore ouvert dans la validation structurée", () => {
+    render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "not_started", pendingNotice: null, infoRequest: null, report: null, publishedAt: null, cv: { onFile: false, fileName: null } }} />);
+    expect(screen.getByTestId("cv-upload-card")).toBeTruthy();
+    expect(screen.queryByTestId("evaluation-progress")).toBeNull();
+  });
+
+  it("refuse localement un mauvais format ou un fichier trop lourd, sans appeler le serveur", async () => {
+    render(<CandidateEvaluationStatus evaluationId={1} view={pendingWithoutCv()} />);
+    choose(new File(["texte"], "cv.txt", { type: "text/plain" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Le CV doit être au format PDF, JPG ou PNG.");
+    expect((screen.getByRole("button", { name: "Envoyer mon CV" }) as HTMLButtonElement).disabled).toBe(true);
+    choose(new File([new Uint8Array(5 * 1024 * 1024 + 1)], "gros.pdf", { type: "application/pdf" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Le CV ne doit pas dépasser 5 Mo.");
+    choose(new File([], "vide.pdf", { type: "application/pdf" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Le fichier du CV est vide.");
+    expect(state.calls.attachCv).toBeUndefined();
+  });
+
+  it("envoie le CV choisi puis confirme et rafraîchit l'espace", async () => {
+    const onChanged = vi.fn();
+    state.next.attachCv = (handlers) => handlers.onSuccess?.({});
+    const user = userEvent.setup();
+    render(<CandidateEvaluationStatus evaluationId={7} view={pendingWithoutCv()} onChanged={onChanged} />);
+    choose(pdf());
+    expect(screen.getByText("cv-aicha.pdf")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
+    await waitFor(() => expect(state.calls.attachCv).toHaveLength(1));
+    const sent = lastCall("attachCv");
+    expect(sent.evaluationId).toBe(7);
+    expect(sent.fileName).toBe("cv-aicha.pdf");
+    expect(sent.base64.startsWith("data:application/pdf;base64,")).toBe(true);
+    expect(onChanged).toHaveBeenCalledTimes(1);
+    expect(state.toastSuccess).toHaveBeenCalled();
+  });
+
+  it("affiche le motif de refus du serveur et laisse réessayer", async () => {
+    state.next.attachCv = (handlers) => handlers.onError?.({ message: "Le CV doit être au format PDF, JPG ou PNG." });
+    const user = userEvent.setup();
+    render(<CandidateEvaluationStatus evaluationId={7} view={pendingWithoutCv()} />);
+    choose(pdf());
+    await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Le CV doit être au format PDF, JPG ou PNG.");
+    expect((screen.getByRole("button", { name: "Envoyer mon CV" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
 // ── Côté administrateur ──────────────────────────────────────────────────────
+
+describe("panneau administrateur : le CV conditionne la publication", () => {
+  it("affiche le CV au dossier avec son lien d'ouverture", async () => {
+    state.view = (await draftView()).view;
+    panel();
+    const status = screen.getByTestId("cv-status");
+    expect(status.textContent).toContain("CV au dossier");
+    const link = within(status).getByRole("link", { name: "cv-aicha-nkolo.pdf" }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("https://files.example.com/cv-uploads/1_cv-aicha-nkolo.pdf");
+    expect(link.getAttribute("rel")).toContain("noopener");
+    expect(screen.queryByText(/CV manquant/)).toBeNull();
+  });
+
+  it("n'ouvre jamais un lien qui n'est pas en http(s)", async () => {
+    state.view = (await draftView(undefined, { ...CANDIDATE_CONTEXT, cvFileUrl: "javascript:alert(1)" })).view;
+    panel();
+    expect(within(screen.getByTestId("cv-status")).queryByRole("link")).toBeNull();
+  });
+
+  it("signale le CV manquant et bloque la publication tant qu'il n'est pas au dossier", async () => {
+    state.view = (await draftView(undefined, WITHOUT_CV)).view;
+    panel();
+    expect(screen.getByTestId("cv-status").textContent).toContain("CV manquant");
+    expect(screen.getAllByText(/ne peut pas être publiée sans le CV du candidat/).length).toBeGreaterThan(0);
+    expect((screen.getByRole("button", { name: "Publier sans email" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Publier et envoyer l’email" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+// ── Côté administrateur (validation structurée) ──────────────────────────────
 
 describe("panneau administrateur : validation structurée", () => {
   it("propose d'ouvrir le dossier tant qu'aucune version n'existe (génération IA ou saisie manuelle)", async () => {

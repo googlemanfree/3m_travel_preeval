@@ -64,7 +64,7 @@ async function publishInput(s: Setup, overrides: Partial<{ checklist: Record<str
   return { checklist: FULL_CHECKLIST, sendEmail: false, reviewedVersionStamp: versionStamp(current.adminVersion!), ...overrides };
 }
 
-const candidateView = async (s: Setup) => buildCandidateView({ latest: await s.store.getLatestCase(1), latestPublished: await s.store.getLatestPublishedCase(1) });
+const candidateView = async (s: Setup) => buildCandidateView({ latest: await s.store.getLatestCase(1), latestPublished: await s.store.getLatestPublishedCase(1), cv: { onFile: true, fileName: null } });
 
 describe("ouverture du dossier et brouillon IA", () => {
   it("crée une seule version « DOSSIER REÇU », de façon idempotente", async () => {

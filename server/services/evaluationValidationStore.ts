@@ -238,17 +238,26 @@ export class DrizzleValidationStore implements ValidationStore {
 
   async loadEvaluationContext(evaluationId: number): Promise<EvaluationContext | null> {
     const [row] = await this.db
-      .select({ id: evaluations.id, fullName: evaluations.fullName, email: evaluations.email, destinationCountry: evaluations.destinationCountry, destinationCategory: evaluations.destinationCategory })
+      .select({ id: evaluations.id, fullName: evaluations.fullName, email: evaluations.email, destinationCountry: evaluations.destinationCountry, destinationCategory: evaluations.destinationCategory, cvFileUrl: evaluations.cvFileUrl, cvFileName: evaluations.cvFileName })
       .from(evaluations)
       .where(eq(evaluations.id, evaluationId))
       .limit(1);
     if (!row) return null;
+    const cvFileUrl = row.cvFileUrl?.trim() || null;
     return {
       evaluationId: row.id,
       candidateName: row.fullName,
       candidateEmail: row.email,
       candidateCountry: row.destinationCountry?.trim() || COUNTRY_BY_CATEGORY[row.destinationCategory] || "",
+      cvOnFile: cvFileUrl !== null,
+      cvFileName: cvFileUrl !== null ? (row.cvFileName?.trim() || null) : null,
+      cvFileUrl,
     };
+  }
+
+  async attachCv(evaluationId: number, cv: { url: string; fileName: string }) {
+    const [result] = await this.db.update(evaluations).set({ cvFileUrl: cv.url, cvFileName: cv.fileName }).where(eq(evaluations.id, evaluationId));
+    return ((result as { affectedRows?: number } | undefined)?.affectedRows ?? 0) > 0;
   }
 
   async getLatestCase(evaluationId: number) {

@@ -44,8 +44,9 @@ const modelOutput = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowForDraft> } = {}) {
-  const store = new InMemoryValidationStore([CANDIDATE_CONTEXT], () => NOW);
+function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowForDraft>; withoutCv?: boolean } = {}) {
+  const store = new InMemoryValidationStore([options.withoutCv ? { ...CANDIDATE_CONTEXT, cvOnFile: false, cvFileName: null, cvFileUrl: null } : CANDIDATE_CONTEXT], () => NOW);
+  const stored: Array<{ evaluationId: number; fileName: string; mimeType: string; size: number }> = [];
   const mailer = new FakeMailer(store.timeline);
   const deps: ValidationDeps = { store, mailer, now: () => NOW, portalUrl: "https://www.3mtravelagency.com/evaluation" };
   const invoke = vi.fn(async () => ({ choices: [{ message: { content: JSON.stringify(modelOutput()) } }] }) as never);
@@ -61,16 +62,22 @@ function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowFo
       return { email };
     },
     async findOwnEvaluation(candidate) {
-      return candidate.email === "aicha@example.com" ? { id: 1, referenceCode: "EVAL-0001" } : null;
+      if (candidate.email !== "aicha@example.com") return null;
+      const context = await store.loadEvaluationContext(1);
+      return { id: 1, referenceCode: "EVAL-0001", cv: { onFile: context!.cvOnFile, fileName: context!.cvFileName } };
     },
     async ownsEvaluation(candidate, id) {
       return candidate.email === "aicha@example.com" && id === 1;
+    },
+    async storeCv(file) {
+      stored.push({ evaluationId: file.evaluationId, fileName: file.fileName, mimeType: file.mimeType, size: file.bytes.length });
+      return `https://files.example.com/cv-uploads/${file.evaluationId}_${file.fileName}`;
     },
     aiRun: { loadRow: async () => evaluationRow(options.row), generator: { invoke } },
   };
   const candidateAs = (identity: { id: number; email: string }) => publicProcedure.use(({ next }) => next({ ctx: { candidate: identity } as never })) as never;
   const build = (identity = { id: 7, email: "aicha@example.com" }) => createEvaluationValidationRouter(ports, candidateAs(identity)).createCaller({} as never);
-  return { store, mailer, deps, invoke, resolveDeps, ports, caller: build(), build };
+  return { store, mailer, deps, invoke, resolveDeps, ports, stored, caller: build(), build };
 }
 type Setup = ReturnType<typeof setup>;
 
@@ -314,6 +321,90 @@ describe("côté candidat", () => {
   });
 });
 
+const PDF_BASE64 = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n").toString("base64");
+const PNG_BASE64 = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("données")]).toString("base64");
+
+describe("CV : élément clé de la finalisation", () => {
+  it("refuse la publication tant que le CV n'est pas au dossier, sans rien publier ni envoyer", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    await expect(s.caller.publish(await publishArgs(s, { sendEmail: true }))).rejects.toMatchObject({ code: "PRECONDITION_FAILED", message: expect.stringContaining("CV manquant") });
+    const { view } = await s.caller.getCase(admin());
+    expect(view!.case.workflowStatus).toBe("attente_validation_admin"); // rien n'a changé : le brouillon attend toujours la validation
+    expect(view!.evaluation).toMatchObject({ cvOnFile: false, cvFileName: null, cvFileUrl: null });
+    expect(s.mailer.sent).toHaveLength(0);
+    expect(s.store.legacyPublications).toHaveLength(0);
+  });
+
+  it("autorise la publication une fois le CV déposé par le candidat", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    await s.caller.attachCv({ evaluationId: 1, fileName: "cv-aicha.pdf", base64: PDF_BASE64 });
+    const { view } = await s.caller.getCase(admin());
+    expect(view!.evaluation).toMatchObject({ cvOnFile: true, cvFileName: "cv-aicha.pdf", cvFileUrl: "https://files.example.com/cv-uploads/1_cv-aicha.pdf" });
+    const result = await s.caller.publish(await publishArgs(s));
+    expect(result.outcome).toBe("published");
+  });
+
+  it("indique au candidat si son CV est au dossier, sans jamais lui renvoyer le lien du fichier", async () => {
+    const without = setup({ withoutCv: true });
+    await openedCase(without);
+    const missing = await without.caller.myEvaluation();
+    expect(missing.view.cv).toEqual({ onFile: false, fileName: null });
+    const present = setup();
+    await openedCase(present);
+    const view = (await present.caller.myEvaluation()).view;
+    expect(view.cv).toEqual({ onFile: true, fileName: "cv-aicha-nkolo.pdf" });
+    expect(JSON.stringify(view)).not.toContain("files.example.com");
+  });
+
+  it("enregistre un PDF ou un PNG valide, avec un nom de fichier nettoyé, et met à jour la vue du candidat", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    expect(await s.caller.attachCv({ evaluationId: 1, fileName: "../../mon CV (final).pdf", base64: `data:application/pdf;base64,${PDF_BASE64}` })).toEqual({ cv: { onFile: true, fileName: "mon_CV__final_.pdf" } });
+    expect(s.stored).toEqual([{ evaluationId: 1, fileName: "mon_CV__final_.pdf", mimeType: "application/pdf", size: Buffer.from(PDF_BASE64, "base64").length }]);
+    await s.caller.attachCv({ evaluationId: 1, fileName: "scan.png", base64: PNG_BASE64 });
+    expect(s.stored.at(-1)).toMatchObject({ fileName: "scan.png", mimeType: "image/png" });
+    expect((await s.caller.myEvaluation()).view.cv).toEqual({ onFile: true, fileName: "scan.png" }); // remplacement possible tant que rien n'est publié
+  });
+
+  it("refuse un fichier dont le contenu n'est pas un PDF, un JPEG ou un PNG, même si le nom dit le contraire", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    const script = Buffer.from("<script>alert(1)</script>").toString("base64");
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: script })).rejects.toMatchObject({ code: "BAD_REQUEST", message: "Le CV doit être au format PDF, JPG ou PNG." });
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: "!!! pas du base64 !!!" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(s.stored).toHaveLength(0);
+    expect((await s.store.loadEvaluationContext(1))!.cvOnFile).toBe(false);
+  });
+
+  it("refuse un fichier trop lourd sans le stocker", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    const tooBig = Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(5 * 1024 * 1024)]).toString("base64");
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "gros.pdf", base64: tooBig })).rejects.toMatchObject({ code: "BAD_REQUEST", message: "Le CV ne doit pas dépasser 5 Mo." });
+    expect(s.stored).toHaveLength(0);
+  });
+
+  it("n'accepte le dépôt que pour l'évaluation du candidat connecté", async () => {
+    const s = setup({ withoutCv: true });
+    await openedCase(s);
+    const stranger = s.build({ id: 99, email: "autre@example.com" });
+    await expect(stranger.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(s.caller.attachCv({ evaluationId: 2, fileName: "cv.pdf", base64: PDF_BASE64 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(s.stored).toHaveLength(0);
+  });
+
+  it("ne remplace plus le CV d'une évaluation déjà publiée, et ne stocke alors aucun fichier", async () => {
+    const s = setup();
+    await openedCase(s);
+    await s.caller.publish(await publishArgs(s));
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "nouveau.pdf", base64: PDF_BASE64 })).rejects.toMatchObject({ code: "CONFLICT", message: expect.stringContaining("déjà validée") });
+    expect(s.stored).toHaveLength(0);
+    expect((await s.store.loadEvaluationContext(1))!.cvFileName).toBe("cv-aicha-nkolo.pdf");
+  });
+});
+
 describe("traduction des erreurs", () => {
   it.each([
     ["NOT_FOUND", "NOT_FOUND"],
@@ -324,6 +415,7 @@ describe("traduction des erreurs", () => {
     ["CHECKLIST_INCOMPLETE", "BAD_REQUEST"],
     ["INCOMPLETE_VERSION", "BAD_REQUEST"],
     ["NO_RECIPIENT", "BAD_REQUEST"],
+    ["CV_REQUIRED", "PRECONDITION_FAILED"],
     ["SECOND_VALIDATION_REQUIRED", "FORBIDDEN"],
   ] as const)("%s devient %s", (flow, trpc) => {
     const error = toTrpcError(new ValidationFlowError(flow, "Message lisible"));

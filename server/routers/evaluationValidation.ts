@@ -2,11 +2,14 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { evaluations } from "../../drizzle/schema";
+import { CV_MAX_BYTES, checkCvUpload, safeCvFileName } from "../../shared/evaluationCv";
 import { AdminEvaluationVersionSchema, ClientTextViolationError, SensitiveDataError, WORKFLOW_STATUS_LABELS } from "../../shared/evaluationValidation";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
+import { storagePut } from "../storage";
 import {
   ValidationFlowError,
+  attachCandidateCv,
   buildAdminView,
   buildCandidateView,
   findAdminView,
@@ -16,6 +19,7 @@ import {
   saveAdminVersion,
   startReevaluation,
   submitCandidateReply,
+  type CandidateCv,
   type ValidationDeps,
   type ValidationFlowErrorCode,
 } from "../services/evaluationValidationCore";
@@ -40,6 +44,7 @@ const FLOW_TO_TRPC: Record<ValidationFlowErrorCode, TRPCError["code"]> = {
   CHECKLIST_INCOMPLETE: "BAD_REQUEST",
   INCOMPLETE_VERSION: "BAD_REQUEST",
   NO_RECIPIENT: "BAD_REQUEST",
+  CV_REQUIRED: "PRECONDITION_FAILED",
   SECOND_VALIDATION_REQUIRED: "FORBIDDEN",
 };
 
@@ -68,8 +73,10 @@ export type ValidationRouterPorts = {
   resolveDeps: () => Promise<ValidationDeps>;
   requireAdmin: (sessionToken: string) => Promise<{ email: string }>;
   /** Évaluation la plus récente du candidat (lien par e-mail ou par identifiant, comme le tableau de bord). */
-  findOwnEvaluation: (candidate: CandidateIdentity) => Promise<{ id: number; referenceCode: string | null } | null>;
+  findOwnEvaluation: (candidate: CandidateIdentity) => Promise<{ id: number; referenceCode: string | null; cv: CandidateCv } | null>;
   ownsEvaluation: (candidate: CandidateIdentity, evaluationId: number) => Promise<boolean>;
+  /** Enregistre le fichier du CV dans le stockage et renvoie son lien. */
+  storeCv: (file: { evaluationId: number; fileName: string; mimeType: string; bytes: Uint8Array }) => Promise<string>;
   aiRun?: AiDraftRunOptions;
 };
 
@@ -85,8 +92,19 @@ export const productionPorts: ValidationRouterPorts = {
   async findOwnEvaluation(candidate) {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const [row] = await db.select({ id: evaluations.id, referenceCode: evaluations.referenceCode }).from(evaluations).where(ownedBy(candidate)).orderBy(desc(evaluations.createdAt)).limit(1);
-    return row ?? null;
+    const [row] = await db
+      .select({ id: evaluations.id, referenceCode: evaluations.referenceCode, cvFileUrl: evaluations.cvFileUrl, cvFileName: evaluations.cvFileName })
+      .from(evaluations)
+      .where(ownedBy(candidate))
+      .orderBy(desc(evaluations.createdAt))
+      .limit(1);
+    if (!row) return null;
+    const onFile = Boolean(row.cvFileUrl?.trim());
+    return { id: row.id, referenceCode: row.referenceCode, cv: { onFile, fileName: onFile ? (row.cvFileName?.trim() || null) : null } };
+  },
+  async storeCv(file) {
+    const { url } = await storagePut(`cv-uploads/${file.evaluationId}_${Date.now()}_${safeCvFileName(file.fileName)}`, Buffer.from(file.bytes), file.mimeType);
+    return url;
   },
   async ownsEvaluation(candidate, evaluationId) {
     const db = await getDb();
@@ -95,6 +113,9 @@ export const productionPorts: ValidationRouterPorts = {
     return Boolean(row);
   },
 };
+
+/** Longueur maximale d'un CV de 5 Mo une fois encodé en base64 (+ marge pour un préfixe « data: »). */
+const CV_MAX_BASE64_LENGTH = Math.ceil((CV_MAX_BYTES * 4) / 3) + 200;
 
 const evaluationId = z.number().int().positive();
 const adminInput = z.object({ sessionToken: z.string().min(1), evaluationId });
@@ -202,19 +223,38 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
       guard(async () => {
         const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
         const own = await ports.findOwnEvaluation(candidate);
-        const empty = { available: true as const, evaluationId: null, referenceCode: null, view: buildCandidateView({ latest: null, latestPublished: null }) };
+        const empty = { available: true as const, evaluationId: null, referenceCode: null, view: buildCandidateView({ latest: null, latestPublished: null, cv: { onFile: true, fileName: null } }) };
         if (!own) return empty;
         try {
           const deps = await ports.resolveDeps();
           const [latest, latestPublished] = await Promise.all([deps.store.getLatestCase(own.id), deps.store.getLatestPublishedCase(own.id)]);
-          return { available: true as const, evaluationId: own.id, referenceCode: own.referenceCode, view: buildCandidateView({ latest, latestPublished }) };
+          return { available: true as const, evaluationId: own.id, referenceCode: own.referenceCode, view: buildCandidateView({ latest, latestPublished, cv: own.cv }) };
         } catch (error) {
-          // migration non appliquée : l'ancien parcours reste en vigueur
-          if (isMissingTableError(error)) return { available: false as const, evaluationId: own.id, referenceCode: own.referenceCode, view: buildCandidateView({ latest: null, latestPublished: null }) };
+          // migration non appliquée : l'ancien parcours reste en vigueur (le dépôt du CV reste possible)
+          if (isMissingTableError(error)) return { available: false as const, evaluationId: own.id, referenceCode: own.referenceCode, view: buildCandidateView({ latest: null, latestPublished: null, cv: own.cv }) };
           throw error;
         }
       }),
     ),
+
+    /** Dépôt (ou remplacement) du CV : PDF, JPG ou PNG de 5 Mo maximum, type vérifié sur le contenu du fichier. */
+    attachCv: candidateProc
+      .input(z.object({ evaluationId, fileName: z.string().min(1).max(255), base64: z.string().min(4).max(CV_MAX_BASE64_LENGTH) }))
+      .mutation(({ ctx, input }) =>
+        guard(async () => {
+          const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
+          if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+          const checked = checkCvUpload(input.base64);
+          if (checked.ok === false) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });
+          const deps = await ports.resolveDeps();
+          const fileName = safeCvFileName(input.fileName);
+          const cv = await attachCandidateCv(deps, input.evaluationId, {
+            fileName,
+            upload: () => ports.storeCv({ evaluationId: input.evaluationId, fileName, mimeType: checked.mime, bytes: checked.bytes }),
+          });
+          return { cv };
+        }),
+      ),
 
     respondToInfoRequest: candidateProc
       .input(z.object({ evaluationId, answers: z.array(z.object({ id: z.string().min(1).max(20), answer: z.string().max(2000) })).max(12), note: z.string().max(2000) }))
@@ -224,8 +264,8 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
           if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
           const deps = await ports.resolveDeps();
           await submitCandidateReply(deps, input.evaluationId, { answers: input.answers, note: input.note });
-          const [latest, latestPublished] = await Promise.all([deps.store.getLatestCase(input.evaluationId), deps.store.getLatestPublishedCase(input.evaluationId)]);
-          return { view: buildCandidateView({ latest, latestPublished }) };
+          const [latest, latestPublished, context] = await Promise.all([deps.store.getLatestCase(input.evaluationId), deps.store.getLatestPublishedCase(input.evaluationId), deps.store.loadEvaluationContext(input.evaluationId)]);
+          return { view: buildCandidateView({ latest, latestPublished, cv: { onFile: context?.cvOnFile === true, fileName: context?.cvFileName ?? null } }) };
         }),
       ),
   });
