@@ -5,7 +5,9 @@ import {
   CANDIDATE_DESTINATION_OPTIONS,
   flagEmojiToIsoCode,
   MAX_PREFERRED_DESTINATIONS,
+  getCandidateDestinationOption,
   normalizeCandidateDestinations,
+  POPULAR_DESTINATION_NAMES,
 } from "../shared/candidateDestinationOptions";
 import { computeProfileCompletion } from "../shared/profileCompletion";
 
@@ -18,10 +20,10 @@ describe("destinations favorites — normalisation partagée", () => {
     expect(result.unrecognized).toEqual([]);
   });
 
-  it("signale les pays qui ne figurent pas dans la liste supportée", () => {
+  it("signale ce qui n'est pas un pays connu", () => {
     const result = normalizeCandidateDestinations(["Canada", "Allemagne", "Atlantide"]);
-    expect(result.destinations).toEqual(["Canada"]);
-    expect(result.unrecognized).toEqual(["Allemagne", "Atlantide"]);
+    expect(result.destinations).toEqual(["Canada", "Allemagne"]);
+    expect(result.unrecognized).toEqual(["Atlantide"]);
   });
 
   it("limite les destinations de préférence à trois", () => {
@@ -124,24 +126,26 @@ describe("destinations favorites et progression — câblage", () => {
     const favorites = read("client/src/components/FavoriteDestinationsCard.tsx");
     expect(panel).toContain("<FavoriteDestinationsCard");
     expect(favorites).toContain("saveMutation.mutate({ preferredDestinations: selected })");
-    expect(favorites).toContain("aria-pressed={isSelected}");
+    expect(favorites).toContain("<DestinationPicker");
   });
 
-  it("affiche de vraies miniatures de drapeaux dans les menus de destinations", () => {
-    expect(read("client/src/pages/Register.tsx")).toContain("<CountryFlag flag={option.flag} />");
-    expect(read("client/src/components/ClientProfilePanel.tsx")).toContain("<CountryFlag flag={option.flag} />");
-    expect(read("client/src/components/FavoriteDestinationsCard.tsx")).toContain("<CountryFlag flag={option.flag} />");
+  it("affiche de vraies miniatures de drapeaux dans les sélecteurs de pays et le résumé du profil", () => {
+    expect(read("client/src/components/CountryPicker.tsx")).toContain("<CountryFlag flag={option.flag} />");
+    expect(read("client/src/components/ClientProfilePanel.tsx")).toContain("<CountryFlag flag={primaryDestinationOption.flag} />");
+    expect(read("client/src/pages/Register.tsx")).toContain("<DestinationPicker");
   });
 
-  it("ne suggère à l'inscription que des destinations réellement sélectionnables", () => {
-    const register = read("client/src/pages/Register.tsx");
-    const hint = /Destinations populaires : ([^<.]+)\./.exec(register);
-    const placeholder = /placeholder="Rechercher ([^"…]+)…"/.exec(register);
-    expect(hint).not.toBeNull();
+  it("ne suggère que des pays réellement sélectionnables, tous dotés d'un guide", () => {
+    expect(POPULAR_DESTINATION_NAMES.length).toBeGreaterThanOrEqual(6);
+    for (const name of POPULAR_DESTINATION_NAMES) {
+      const option = getCandidateDestinationOption(name);
+      expect(option, name).toBeDefined();
+      expect(option!.hasGuide, name).toBe(true);
+    }
+    const picker = read("client/src/components/CountryPicker.tsx");
+    const placeholder = /placeholder = "Rechercher un pays : ([^"…]+)…"/.exec(picker);
     expect(placeholder).not.toBeNull();
-    const names = [hint![1], placeholder![1]].flatMap((text) => text.split(/,| et /)).map((name) => name.trim()).filter(Boolean);
-    expect(names.length).toBeGreaterThanOrEqual(6);
-    for (const name of names) {
+    for (const name of placeholder![1].split(",").map((item) => item.trim())) {
       expect(normalizeCandidateDestinations([name]).unrecognized, name).toEqual([]);
     }
   });

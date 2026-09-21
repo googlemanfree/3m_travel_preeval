@@ -13,6 +13,8 @@ import React from "react";
 import { useLocation } from "wouter";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
+import { CountrySelect } from "@/components/CountryPicker";
+import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -120,13 +122,14 @@ export function SimpleMultiProjectForm() {
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const projectParam = searchParams.get("project") as ProjectType | null;
   const destinationParam = searchParams.get("destination") || "";
+  const canonicalDestinationParam = destinationParam ? (getCandidateDestinationOption(destinationParam)?.name ?? destinationParam) : "";
   const isPostRegistrationOnboarding = searchParams.get("onboarding") === "evaluation";
   const initialProject = projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail";
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
   const [contactTouched, setContactTouched] = React.useState({ email: false, whatsappPhone: false });
-  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: destinationParam, projectType: initialProject, geminiAnalysisConsent: false });
+  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: canonicalDestinationParam, projectType: initialProject, geminiAnalysisConsent: false });
   const [selectedDocuments, setSelectedDocuments] = React.useState<Array<{ file: File; documentType: "passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other" }>>([]);
   const [selectedDocumentType, setSelectedDocumentType] = React.useState<"passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other">("other");
   const [uploadedDocumentCount, setUploadedDocumentCount] = React.useState(0);
@@ -144,8 +147,8 @@ export function SimpleMultiProjectForm() {
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
-    if (destinationParam) setFormData((prev) => ({ ...prev, destinationCountry: destinationParam }));
-  }, [destinationParam, projectParam]);
+    if (canonicalDestinationParam) setFormData((prev) => ({ ...prev, destinationCountry: canonicalDestinationParam }));
+  }, [canonicalDestinationParam, projectParam]);
 
   React.useEffect(() => {
     if (!isPostRegistrationOnboarding || !candidate) return;
@@ -280,8 +283,8 @@ export function SimpleMultiProjectForm() {
                 </div>}
                 {currentStep === 1 && <div className="space-y-5">
                   <Field label="Type de projet *"><Select value={formData.projectType} onValueChange={(value) => setFormData((prev) => ({ ...prev, projectType: value as ProjectType, destinationCountry: "" }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="travail">Travail / professionnel</SelectItem><SelectItem value="etudes">Études</SelectItem><SelectItem value="tourisme">Tourisme / visite</SelectItem></SelectContent></Select></Field>
-                  <Field label="Pays de destination *"><Select value={formData.destinationCountry} onValueChange={(value) => update("destinationCountry", value)}><SelectTrigger><SelectValue placeholder="Sélectionner un pays" /></SelectTrigger><SelectContent>{COUNTRIES_BY_PROJECT[formData.projectType].map((country) => <SelectItem key={country.value} value={country.value}>{country.flag} {country.label} — {country.hint}</SelectItem>)}</SelectContent></Select></Field>
-                  {formData.destinationCountry && <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>Repère pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry]}</div>}
+                  <Field label="Pays de destination *"><CountrySelect id="home-evaluation-destination" ariaLabel="Pays de destination" placeholder="Sélectionner un pays" value={formData.destinationCountry === "Autre pays" ? "" : formData.destinationCountry} priority={COUNTRIES_BY_PROJECT[formData.projectType].filter((country) => country.value !== "Autre pays").map((country) => country.value)} onChange={(country) => update("destinationCountry", country)} /></Field>
+                  {formData.destinationCountry && <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>Repère pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry] ?? COUNTRY_GUIDANCE["Autre pays"]}</div>}
                   {officialPortal && <a href={officialPortal.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-900 underline underline-offset-2 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Consulter le portail institutionnel : {officialPortal.label} ↗</a>}
                 </div>}
                 {currentStep === 2 && <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

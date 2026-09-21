@@ -69,70 +69,10 @@ export const evaluationRouter = router({
       }
     }),
 
-  /**
-   * Récupérer une évaluation par ID
-   */
-  getById: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int().positive(),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const eval_data = await db
-          .select()
-          .from(evaluations)
-          .where(eq(evaluations.id, input.evaluationId))
-          .limit(1);
-
-        if (eval_data.length === 0) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Évaluation non trouvée",
-          });
-        }
-
-        return eval_data[0];
-      } catch (err) {
-        console.error("[Evaluation] Get by ID error:", err);
-        if (err instanceof TRPCError) throw err;
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération de l'évaluation",
-        });
-      }
-    }),
-
-  /**
-   * Récupérer les évaluations d'un email
-   */
-  getByEmail: publicProcedure
-    .input(z.object({
-      email: z.string().email().max(320),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const evals = await db
-          .select()
-          .from(evaluations)
-          .where(eq(evaluations.email, input.email))
-          .orderBy(desc(evaluations.createdAt))
-          .limit(10);
-
-        return evals;
-      } catch (err) {
-        console.error("[Evaluation] Get by email error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des évaluations",
-        });
-      }
-    }),
+  // getById / getByEmail ont été RETIRÉS : ces lectures publiques renvoyaient des lignes `evaluations` entières
+  // (brouillon IA, texte de revue, e-mails d'administrateurs, téléphone, date de naissance) sans aucune
+  // authentification, énumérables par identifiant. Le candidat lit ses évaluations via `evaluation.getMyEvaluations`
+  // (projection filtrée) et l'administrateur via `aiEvaluationManagement` / `evaluationValidation`.
 
   /**
    * Mettre à jour le statut d'une évaluation

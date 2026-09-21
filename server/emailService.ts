@@ -1,4 +1,5 @@
 import { sendEmail as sendGenericEmail } from "./_core/email";
+import { getCandidateDestinationOption } from "../shared/candidateDestinationOptions";
 
 import { getDb } from "./db";
 import { candidates } from "../drizzle/schema";
@@ -365,7 +366,9 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
     golfe: "🇦🇪 Golfe & Moyen-Orient",
     autre: "International",
   };
-  const destLabel = destLabels[destination] ?? "International";
+  // Le pays précis (ex. « France ») prime sur la catégorie large historique (« europe »).
+  const country = getCandidateDestinationOption(destination);
+  const destLabel = country ? `${country.flag} ${country.name}` : destLabels[destination] ?? "International";
   try {
     await sendGenericEmail({
       to,

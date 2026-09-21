@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { CountrySelect } from "@/components/CountryPicker";
 
 const evaluationFormSchema = z.object({
   fullName: z.string().min(2, "Nom requis"),
@@ -40,6 +41,7 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<EvaluationFormData>({
     resolver: zodResolver(evaluationFormSchema),
   });
@@ -231,13 +233,16 @@ export function EvaluationFormModal({ isOpen, onClose }: EvaluationFormModalProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="destinationCountry">Destination *</Label>
-                <Input
-                  id="destinationCountry"
-                  {...register("destinationCountry")}
-                  placeholder="Canada"
-                  className="mt-1"
-                  maxLength={100}
-                />
+                <div className="mt-1">
+                  <CountrySelect
+                    id="destinationCountry"
+                    ariaLabel="Pays de destination"
+                    placeholder="Rechercher un pays…"
+                    invalid={Boolean(errors.destinationCountry)}
+                    value={watch("destinationCountry") ?? ""}
+                    onChange={(country) => setValue("destinationCountry", country, { shouldValidate: true, shouldDirty: true })}
+                  />
+                </div>
                 {errors.destinationCountry && (
                   <p className="text-red-500 text-sm mt-1">{errors.destinationCountry.message}</p>
                 )}

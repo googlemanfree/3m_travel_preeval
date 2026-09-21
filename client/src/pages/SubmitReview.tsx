@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Star, CheckCircle, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { CountrySelect } from "@/components/CountryPicker";
 
 export default function SubmitReview({ embedded = false }: { embedded?: boolean }) {
   const [formData, setFormData] = useState({
@@ -187,12 +188,13 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                   <Label htmlFor="destination" className="text-sm font-semibold">
                     Destination (Optionnel)
                   </Label>
-                  <Input
+                  <CountrySelect
                     id="destination"
+                    ariaLabel="Destination"
+                    placeholder="Rechercher un pays…"
                     value={formData.destinationCountry}
-                    onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
-                    placeholder="ex: Canada, France"
-                    maxLength={100}
+                    onChange={(country) => setFormData({ ...formData, destinationCountry: country })}
+                    allowClear
                   />
                 </div>
 

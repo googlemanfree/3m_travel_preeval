@@ -12,7 +12,7 @@ describe("évaluation mondiale", () => {
 
     expect(page).toContain('value="autre">Monde — laissez-nous comparer les possibilités</option>');
     expect(page).toContain("getCountriesForProject(form.projectType)");
-    expect(page).toContain("getDestinationOptionsForProject(form.projectType)");
+    expect(page).toContain("getAllDestinationOptionsForProject(form.projectType)");
     expect(page).toContain("getProceduresForCountry(form.projectType, form.destinationCountry)");
     expect(page).toContain("DestinationAutocomplete");
     expect(page).toContain("Recherchez par pays, sélectionnez une destination avec son drapeau");

@@ -3,19 +3,14 @@ import { Heart, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import CountryFlag from "@/components/CountryFlag";
+import { DestinationPicker } from "@/components/CountryPicker";
 import {
-  CANDIDATE_DESTINATION_OPTIONS,
   MAX_PREFERRED_DESTINATIONS,
   coarseCategoryForPreferredDestinations,
+  getCandidateDestinationOption,
+  normalizeCandidateDestinations,
   type CoarseDestinationCategory,
 } from "@shared/candidateDestinationOptions";
-
-const destinationsByRegion = CANDIDATE_DESTINATION_OPTIONS.reduce<Record<string, typeof CANDIDATE_DESTINATION_OPTIONS>>((acc, option) => {
-  if (!acc[option.region]) acc[option.region] = [];
-  acc[option.region].push(option);
-  return acc;
-}, {});
 
 type FavoriteDestinationsCardProps = {
   saved: string[];
@@ -24,8 +19,9 @@ type FavoriteDestinationsCardProps = {
 
 export default function FavoriteDestinationsCard({ saved, onSaved }: FavoriteDestinationsCardProps) {
   const utils = trpc.useUtils();
-  const savedKey = saved.join("|");
-  const [selected, setSelected] = useState<string[]>(saved);
+  const savedList = normalizeCandidateDestinations(saved).destinations;
+  const savedKey = savedList.join("|");
+  const [selected, setSelected] = useState<string[]>(savedList);
   const [baselineKey, setBaselineKey] = useState(savedKey);
 
   useEffect(() => {
@@ -34,24 +30,18 @@ export default function FavoriteDestinationsCard({ saved, onSaved }: FavoriteDes
   }, [savedKey]);
 
   const isDirty = selected.join("|") !== baselineKey;
+  const primary = selected[0] ? getCandidateDestinationOption(selected[0]) : undefined;
 
   const saveMutation = trpc.candidate.updateProfile.useMutation({
     onSuccess: async (_data, variables) => {
-      const savedList = (variables ? variables.preferredDestinations : undefined) ?? [];
-      setBaselineKey(savedList.join("|"));
-      onSaved?.(coarseCategoryForPreferredDestinations(savedList));
+      const persisted = (variables ? variables.preferredDestinations : undefined) ?? [];
+      setBaselineKey(persisted.join("|"));
+      onSaved?.(coarseCategoryForPreferredDestinations(persisted));
       await utils.candidate.getClientDashboardSummary.invalidate();
       toast.success("Vos destinations favorites ont été enregistrées.");
     },
     onError: (error) => toast.error(error.message || "Impossible d’enregistrer vos destinations pour le moment."),
   });
-
-  const toggle = (name: string) =>
-    setSelected((current) => {
-      if (current.includes(name)) return current.filter((item) => item !== name);
-      if (current.length >= MAX_PREFERRED_DESTINATIONS) return current;
-      return [...current, name];
-    });
 
   return (
     <section className="mt-8 border-t border-slate-100 pt-6" aria-labelledby="favorite-destinations-title">
@@ -61,52 +51,23 @@ export default function FavoriteDestinationsCard({ saved, onSaved }: FavoriteDes
             <Heart className="h-4 w-4 text-rose-500" aria-hidden="true" /> Mes destinations favorites
           </h3>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-            Choisissez jusqu’à {MAX_PREFERRED_DESTINATIONS} pays. Le premier choisi est votre destination principale : c’est lui qui sert à préparer la liste de documents de votre dossier.
+            Choisissez jusqu’à {MAX_PREFERRED_DESTINATIONS} pays, parmi tous les pays du monde. Le premier choisi est votre destination principale : c’est lui qui sert à préparer la liste de documents de votre dossier.
           </p>
         </div>
         <span className="text-xs font-semibold text-slate-600" aria-live="polite">{selected.length}/{MAX_PREFERRED_DESTINATIONS} choisies</span>
       </div>
 
-      <div className="mt-4 space-y-4">
-        {Object.entries(destinationsByRegion).map(([region, options]) => (
-          <div key={region} role="group" aria-label={region}>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{region}</p>
-            <div className="flex flex-wrap gap-2">
-              {options.map((option) => {
-                const rank = selected.indexOf(option.name);
-                const isSelected = rank !== -1;
-                const isLocked = !isSelected && selected.length >= MAX_PREFERRED_DESTINATIONS;
-                const tone = isSelected
-                  ? "border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100"
-                  : isLocked
-                    ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-60"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:bg-rose-50/60";
-                return (
-                  <button
-                    key={option.name}
-                    type="button"
-                    aria-pressed={isSelected}
-                    disabled={isLocked}
-                    onClick={() => toggle(option.name)}
-                    className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${tone}`}
-                  >
-                    <CountryFlag flag={option.flag} />
-                    {option.name}
-                    {isSelected && (
-                      <>
-                        {" "}
-                        <span className="rounded-full bg-rose-600 px-1.5 text-[10px] font-black uppercase leading-4 text-white">
-                          {rank === 0 ? "Principale" : <><span className="sr-only">Choix </span>{rank + 1}</>}
-                        </span>
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <div className="mt-4 max-w-2xl">
+        <DestinationPicker id="favorite-destinations" value={selected} onChange={setSelected} />
       </div>
+
+      {primary && (
+        <p className={`mt-3 max-w-2xl rounded-lg border px-3 py-2 text-xs leading-5 ${primary.hasGuide ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
+          {primary.hasGuide
+            ? `Guide 3M disponible pour ${primary.name} : liste de documents et étapes propres à ce pays.`
+            : `Pas encore de guide détaillé pour ${primary.name} : un conseiller étudie votre projet avec vous et complète votre parcours.`}
+        </p>
+      )}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Button

@@ -41,6 +41,7 @@ import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
+import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 
 export default function EvaluationSpace() {
@@ -72,6 +73,9 @@ export default function EvaluationSpace() {
     retry: 3,
     retryDelay: 1000,
   });
+  // Évaluation à validation administrateur : avis d’attente, demandes de complément puis rapport PUBLIÉ (jamais de brouillon).
+  const structuredEvaluationQuery = trpc.evaluationValidation.myEvaluation.useQuery(undefined, { enabled: isAuthenticated, refetchOnWindowFocus: true, retry: 1 });
+  const structuredEvaluation = structuredEvaluationQuery.data;
   // Les hooks doivent rester inconditionnels : la section dossier réutilise ce résultat sans remonter d’erreur de rendu.
   const evisaEmail = dashboardData?.candidate?.email ?? "";
   const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery(
@@ -332,7 +336,7 @@ export default function EvaluationSpace() {
   const agreementAfterPaymentRequired = Boolean(workflow?.showAgreementAfterPayment);
   const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
   const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
-  const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(cProfile.destination || "general")}`);
+  const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(primaryDestination || "general")}`);
   // Les onglets Documents/Dossier n'ont de sens qu'une fois l'évaluation soumise : avant cela, le
   // candidat n'a ni pays précis validé ni base pour une checklist ou un suivi réels. On bloque
   // réellement l'accès (pas une simple incitation) plutôt que d'afficher un espace vide ou générique.
@@ -480,6 +484,9 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
+              {structuredEvaluation?.available && structuredEvaluation.evaluationId !== null && structuredEvaluation.view.stage !== "not_started" && (
+                <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
+              )}
               {agreementAfterPaymentRequired && (
                 <Card className="border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-6 shadow-md" role="region" aria-labelledby="agreement-after-payment-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -579,7 +586,7 @@ export default function EvaluationSpace() {
                 </h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <CandidateCountryJourney destination={cProfile.destination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
+              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
 
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priority.tone}`}>
@@ -687,7 +694,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <CandidateCountryJourney destination={cProfile.destination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
+              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

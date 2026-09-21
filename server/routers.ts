@@ -6,7 +6,8 @@ import { COOKIE_NAME } from "../shared/const";
 // Import des routeurs existants
 import { evaluationRouter } from "./routers/evaluation";
 import { flightsRouter } from "./routers/flights";
-import { candidateRouter } from "./routers/candidate";
+import { candidateProcedure, candidateRouter } from "./routers/candidate";
+import { evaluationValidationRouterFor } from "./routers/evaluationValidation";
 import { applicationRouter } from "./routers/application";
 import { heartbeatRouter } from "./routers/heartbeat";
 import { profileEvaluationRouter } from "./routers/profileEvaluation";
@@ -196,6 +197,8 @@ export const appRouter = router({
   luxembourgEvaluation: luxembourgEvaluationRouter,
   consultationRequest: consultationRequestRouter,
   aiEvaluationManagement: aiEvaluationManagementRouter,
+  // Évaluation IA à validation administrateur obligatoire (brouillon interne → rapport publié)
+  evaluationValidation: evaluationValidationRouterFor(candidateProcedure),
   studyVisaEvaluation: studyVisaEvaluationRouter,
   procedures: proceduresRouter,
   evaluationEngine: router(evaluationEngineRouter),

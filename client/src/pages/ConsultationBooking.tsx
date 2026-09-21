@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { CountrySelect } from "@/components/CountryPicker";
 
 const SERVICE_OPTIONS = [
   { id: "immigration", icon: Globe, label: "Immigration & Résidence permanente", desc: "Canada, Europe, Golfe — procédures et critères d'éligibilité" },
@@ -17,7 +18,7 @@ const SERVICE_OPTIONS = [
   { id: "other", icon: MapPin, label: "Autre projet", desc: "Mobilité internationale ou question générale" },
 ];
 
-const COUNTRIES = ["Canada", "France", "Belgique", "Portugal", "Espagne", "Allemagne", "Italie", "UAE / Dubaï", "Qatar", "Arabie Saoudite", "Royaume-Uni", "États-Unis", "Australie", "Autre"];
+const COUNTRIES = ["Canada", "France", "Belgique", "Portugal", "Espagne", "Allemagne", "Italie", "UAE / Dubaï", "Qatar", "Arabie Saoudite", "Royaume-Uni", "États-Unis", "Australie"];
 
 interface FormData {
   service: string;
@@ -143,6 +144,19 @@ export default function ConsultationBooking() {
                       {country}
                     </button>
                   ))}
+                </div>
+                <div className="mt-4">
+                  <Label htmlFor="cb-other-country">Un autre pays ? Recherchez-le parmi tous les pays</Label>
+                  <div className="mt-1">
+                    <CountrySelect
+                      id="cb-other-country"
+                      ariaLabel="Rechercher un autre pays"
+                      placeholder="Rechercher un pays…"
+                      value={COUNTRIES.includes(form.targetCountry) ? "" : form.targetCountry}
+                      onChange={(country) => update("targetCountry", country)}
+                      allowClear
+                    />
+                  </div>
                 </div>
               </motion.div>
             )}

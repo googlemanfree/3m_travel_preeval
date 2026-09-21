@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
+import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -457,6 +458,19 @@ export default function AdminAIEvaluationDashboard() {
 
   const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
 
+  // Validation structurée (brouillon IA → version administrateur → publication) : statut affiché par évaluation.
+  // Tant que la migration n’est pas appliquée, la liste est vide et l’ancien éditeur reste seul en vigueur.
+  const pagedEvaluationIds = useMemo(
+    () => pagedItems.filter((item) => item.type === "evaluation").map((item) => Number(item.id.split("-").at(-1))).filter((id) => Number.isInteger(id) && id > 0),
+    [pagedItems],
+  );
+  const validationStatusesQuery = trpc.evaluationValidation.listStatuses.useQuery(
+    { sessionToken, evaluationIds: pagedEvaluationIds },
+    { enabled: !!sessionToken && pagedEvaluationIds.length > 0, refetchOnWindowFocus: false, retry: false },
+  );
+  const validationStatusById = useMemo(() => new Map((validationStatusesQuery.data ?? []).map((entry) => [entry.evaluationId, entry])), [validationStatusesQuery.data]);
+  const [validationOpenId, setValidationOpenId] = useState<string | null>(null);
+
   const requestSecondValidation = (item: DashboardItem) => {
     const note = window.prompt("Note de seconde validation (8 caractères minimum) :")?.trim();
     const evaluationId = evaluationNumericId(item);
@@ -645,7 +659,18 @@ export default function AdminAIEvaluationDashboard() {
               {item.referenceCode && <p className="mt-1 text-xs font-semibold text-slate-700">Référence : {item.referenceCode}</p>}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
-              {item.type === "evaluation" && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              {item.type === "evaluation" && (
+                <div className="mt-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {validationStatusById.get(evaluationNumericId(item)) && <Badge className="bg-indigo-100 text-indigo-900">{validationStatusById.get(evaluationNumericId(item))?.label}</Badge>}
+                    <Button type="button" size="sm" variant="outline" className="gap-1 border-violet-300 text-violet-900 hover:bg-violet-50" aria-expanded={validationOpenId === item.id} onClick={() => setValidationOpenId(validationOpenId === item.id ? null : item.id)}>
+                      <Sparkles className="h-3.5 w-3.5" /> {validationOpenId === item.id ? "Masquer la validation" : "Validation structurée"}
+                    </Button>
+                  </div>
+                  {validationOpenId === item.id && <EvaluationValidationPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} />}
+                </div>
+              )}
+              {item.type === "evaluation" && !validationStatusById.has(evaluationNumericId(item)) && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p>{item.preparationState === "ready" && <Badge className="bg-violet-100 text-violet-800">Brouillon IA disponible</Badge>}{item.preparationState === "unavailable" && <Badge className="bg-amber-100 text-amber-800">IA indisponible — revue manuelle</Badge>}</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => loadProjectTemplate(item)} disabled={Boolean(item.reviewedAt) || !item.projectType || applyResponseTemplate.isPending}>Charger un modèle</Button><Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => requestPreparationRestart(item)} disabled={Boolean(item.reviewedAt) || retryPreparation.isPending}><RefreshCw className={`h-3.5 w-3.5 ${retryPreparation.isPending ? "animate-spin" : ""}`} /> {item.preparationState === "ready" ? "Régénérer le brouillon IA" : "Générer le brouillon IA"}</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)}>Gérer les pièces</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div></div>
                 {item.preparationState === "ready" && item.preparationDraft && <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-700"><p className="font-semibold text-slate-950">Contexte préparatoire interne</p><p className="mt-1 leading-5">{item.preparationDraft.summary}</p>{item.preparationDraft.gapsToClarify.length > 0 && <p className="mt-2 leading-5"><strong>À vérifier :</strong> {item.preparationDraft.gapsToClarify.join(" · ")}</p>}{item.preparationDraft.advisorQuestions.length > 0 && <p className="mt-2 leading-5"><strong>Questions préparées :</strong> {item.preparationDraft.advisorQuestions.join(" · ")}</p>}</div>}
                 {item.luxembourgReview && <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"><p className="font-semibold">Luxembourg — {item.luxembourgReview.label}</p><p className="mt-1 leading-5">{item.luxembourgReview.detail}</p><a href="https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html" target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">Vérifier la procédure officielle Guichet.lu ↗</a></div>}

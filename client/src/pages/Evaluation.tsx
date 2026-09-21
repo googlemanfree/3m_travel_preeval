@@ -11,7 +11,7 @@ import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
-import { getCountriesForProject, getDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
+import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { toast } from 'sonner';
 
@@ -171,7 +171,7 @@ export default function Evaluation() {
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
   const availableCountries = getCountriesForProject(form.projectType);
-  const destinationOptions = getDestinationOptionsForProject(form.projectType);
+  const destinationOptions = getAllDestinationOptionsForProject(form.projectType);
   const isLibraryCountry = availableCountries.includes(form.destinationCountry);
   const availableProcedures = form.destinationCountry ? getProceduresForCountry(form.projectType, form.destinationCountry) : [];
   const selectedProcedure = getProcedureById(form.projectDetails.procedureId);

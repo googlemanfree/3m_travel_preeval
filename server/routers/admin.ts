@@ -21,6 +21,7 @@ import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, cou
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -1545,6 +1546,8 @@ export const adminRouter = router({
             fullName: candidates.fullName,
             phone: candidates.phone,
             destination: candidates.destination,
+            preferredDestinations: candidates.preferredDestinations,
+            visaType: candidates.visaType,
             dossierStatus: candidates.dossierStatus,
             evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
             evaluationDeclaredAt: candidates.evaluationDeclaredAt,
@@ -1710,8 +1713,10 @@ export const adminRouter = router({
             email: candidate.email,
             whatsapp: candidate.phone || "",
             city: "Compte en ligne",
-            destinationCountry: candidate.destination || "Non spécifiée",
-            projectType: "À qualifier",
+            // Pays précis et projet déclarés à l'inscription (et non la catégorie large historique).
+            destinationCountry: destinationLabelForStaff(candidate),
+            preferredDestinations: parsePreferredDestinations(candidate.preferredDestinations),
+            projectType: candidate.visaType || "À qualifier",
             status: mapDossierStatus(candidate.dossierStatus),
             internalStatus: candidate.dossierStatus,
             source: "ACCOUNT_ONLY" as const,
@@ -2413,8 +2418,17 @@ export const adminRouter = router({
               email: account.email,
               whatsapp: account.phone || "",
               city: "Compte en ligne",
-              destinationCountry: account.destination || "Non spécifiée",
-              projectType: "À qualifier",
+              destinationCountry: destinationLabelForStaff(account),
+              projectType: account.visaType || "À qualifier",
+              // Tout ce que le candidat a déclaré à l'inscription, visible par l'équipe.
+              registrationProfile: {
+                preferredDestinations: parsePreferredDestinations(account.preferredDestinations),
+                visaType: account.visaType || null,
+                educationLevel: account.educationLevel || null,
+                employmentStatus: account.employmentStatus || null,
+                languageLevel: account.languageLevel || null,
+                nationality: account.nationality || null,
+              },
               status: "PENDING_48H",
               internalStatus: account.dossierStatus,
               source: "ACCOUNT_ONLY" as const,

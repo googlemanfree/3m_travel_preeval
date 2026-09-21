@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle, Phone, Globe2, Search, X } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle, Phone, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,12 +9,15 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { PortraitCapture, PortraitCaptureResult } from "@/components/PortraitCapture";
 import { toast } from "sonner";
-import { CANDIDATE_DESTINATION_OPTIONS } from "@shared/candidateDestinationOptions";
-import CountryFlag from "@/components/CountryFlag";
+import { MAX_PREFERRED_DESTINATIONS, REGISTRATION_PROJECT_TYPES, getCandidateDestinationOption, getDestinationFormProfile, type RegistrationProjectField } from "@shared/candidateDestinationOptions";
+import { DestinationPicker } from "@/components/CountryPicker";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
-const MAX_PREFERRED_DESTINATIONS = 3;
+// Listes courtes pour les questions de projet (facultatives) proposées selon le pays et le type de projet.
+const EDUCATION_LEVEL_OPTIONS = ["Baccalauréat", "Formation professionnelle / BTS", "Licence / Bachelor", "Master", "Doctorat", "Autre"];
+const EMPLOYMENT_STATUS_OPTIONS = ["Salarié(e)", "Indépendant(e) / entrepreneur", "Étudiant(e)", "Sans emploi", "Autre"];
+const PROJECT_SELECT_CLASS = "mt-1 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-60";
 
 function getPasswordStrength(password: string): { score: number; label: string; color: string; rules: { ok: boolean; text: string }[] } {
   const rules = [
@@ -50,8 +53,6 @@ export default function Register() {
   const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
   const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
   const [duplicateConflict, setDuplicateConflict] = useState<string | null>(null);
-  const [destinationQuery, setDestinationQuery] = useState("");
-  const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -61,16 +62,32 @@ export default function Register() {
     confirmPassword: "",
     evaluationAlreadyCompleted: "no" as "yes" | "no",
     preferredDestinations: [] as string[],
+    visaType: "",
+    educationLevel: "",
+    employmentStatus: "",
+    languageLevel: "",
   });
   const isFullNameInvalid = form.fullName.length > 0 && form.fullName.trim().length < 2;
   const isEmailInvalid = form.email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
   const passwordStrength = getPasswordStrength(form.password);
   const isPasswordInvalid = form.password.length > 0 && passwordStrength.score < 3;
   const isConfirmationInvalid = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
-  const filteredDestinationOptions = CANDIDATE_DESTINATION_OPTIONS.filter((option) => {
-    const query = destinationQuery.trim().toLowerCase();
-    return !query || option.name.toLowerCase().includes(query) || option.region.toLowerCase().includes(query);
-  }).slice(0, 8);
+  // Le formulaire s'adapte au pays principal : questions de projet en plus quand le site a un
+  // guide détaillé, version courte sinon. Seuls les champs affichés sont envoyés.
+  const primaryDestination = form.preferredDestinations[0];
+  const primaryDestinationOption = primaryDestination ? getCandidateDestinationOption(primaryDestination) : undefined;
+  const destinationProfile = getDestinationFormProfile(primaryDestination, form.visaType);
+  const projectFields: Record<RegistrationProjectField, string> = {
+    visaType: form.visaType,
+    educationLevel: form.educationLevel,
+    employmentStatus: form.employmentStatus,
+    languageLevel: form.languageLevel,
+  };
+  const visibleProjectFields = Object.fromEntries(
+    destinationProfile.extraFields
+      .map((field) => [field, projectFields[field].trim()] as const)
+      .filter(([, value]) => value.length > 0),
+  ) as Partial<Record<RegistrationProjectField, string>>;
   const missingRegistrationRequirements = [
     !form.fullName.trim() ? "votre nom complet" : null,
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "une adresse e-mail valide" : null,
@@ -79,15 +96,6 @@ export default function Register() {
     form.preferredDestinations.length === 0 ? "au moins une destination" : null,
     !portrait ? "un portrait vérifié" : null,
   ].filter((value): value is string => Boolean(value));
-
-  function toggleDestination(name: string) {
-    setForm((prev) => {
-      const already = prev.preferredDestinations.includes(name);
-      if (already) return { ...prev, preferredDestinations: prev.preferredDestinations.filter((value) => value !== name) };
-      if (prev.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS) return prev;
-      return { ...prev, preferredDestinations: [...prev.preferredDestinations, name] };
-    });
-  }
 
   function handleGoogleRegister() {
     if (!googleOAuthConfigured) {
@@ -140,6 +148,8 @@ export default function Register() {
       }
     },
   });
+
+  const registrationBusy = registerMutation.isPending || isUploadingPortrait || showSuccessAnimation;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -214,6 +224,7 @@ export default function Register() {
         preferredDestinations: form.preferredDestinations,
         phone: form.phone || undefined,
         nationality: form.nationality || undefined,
+        ...visibleProjectFields,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
@@ -511,75 +522,58 @@ export default function Register() {
             {/* Destination(s) de préférence — obligatoire */}
             <fieldset className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
               <legend className="px-1 text-sm font-bold text-slate-800">Destination(s) de préférence *</legend>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Choisissez jusqu'à {MAX_PREFERRED_DESTINATIONS} pays qui vous intéressent : votre espace, vos documents à fournir et votre score d'éligibilité seront adaptés à ce choix.</p>
-              <div className="relative mt-3" role="combobox" aria-expanded={isDestinationMenuOpen} aria-haspopup="listbox" aria-label="Rechercher une destination">
-                <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-violet-500" aria-hidden="true" />
-                <Input
-                  value={destinationQuery}
-                  onChange={(event) => {
-                    setDestinationQuery(event.target.value);
-                    setIsDestinationMenuOpen(true);
-                  }}
-                  onFocus={() => setIsDestinationMenuOpen(true)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") setIsDestinationMenuOpen(false);
-                    if (event.key === "Enter" && filteredDestinationOptions[0]) {
-                      event.preventDefault();
-                      toggleDestination(filteredDestinationOptions[0].name);
-                      setDestinationQuery("");
-                    }
-                  }}
-                  placeholder="Rechercher Canada, France, Pologne…"
-                  aria-autocomplete="list"
-                  aria-controls="destination-suggestions"
-                  className="h-12 bg-white pl-10 pr-10"
-                  disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation || form.preferredDestinations.length >= MAX_PREFERRED_DESTINATIONS}
+              <p className="mt-1 text-xs leading-5 text-slate-600">Choisissez jusqu'à {MAX_PREFERRED_DESTINATIONS} pays parmi tous les pays du monde : votre espace, vos documents à fournir et votre score d'éligibilité seront adaptés à ce choix. Le premier pays choisi est votre destination principale.</p>
+              <div className="mt-3">
+                <DestinationPicker
+                  id="register-destinations"
+                  value={form.preferredDestinations}
+                  onChange={(names) => setForm((prev) => ({ ...prev, preferredDestinations: names }))}
+                  disabled={registrationBusy}
                 />
-                {destinationQuery && (
-                  <button type="button" aria-label="Effacer la recherche de destination" onClick={() => setDestinationQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-slate-400 hover:text-slate-700">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-                {isDestinationMenuOpen && form.preferredDestinations.length < MAX_PREFERRED_DESTINATIONS && (
-                  <div id="destination-suggestions" role="listbox" className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-violet-200 bg-white p-1 shadow-xl">
-                    {filteredDestinationOptions.length > 0 ? filteredDestinationOptions.map((option) => {
-                      const selected = form.preferredDestinations.includes(option.name);
-                      return (
-                        <button
-                          key={option.name}
-                          type="button"
-                          role="option"
-                          aria-selected={selected}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            toggleDestination(option.name);
-                            setDestinationQuery("");
-                            setIsDestinationMenuOpen(false);
-                          }}
-                          className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-violet-50 ${selected ? "bg-violet-100 font-bold text-violet-800" : "text-slate-700"}`}
-                        >
-                          <span className="flex items-center gap-2"><CountryFlag flag={option.flag} />{option.name}</span>
-                          <span className="text-xs text-slate-400">{option.region}</span>
-                        </button>
-                      );
-                    }) : <p className="p-3 text-sm text-slate-500">Aucune destination ne correspond à votre recherche.</p>}
-                  </div>
-                )}
               </div>
-              {form.preferredDestinations.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2" aria-label="Destinations sélectionnées">
-                  {form.preferredDestinations.map((name) => {
-                    const option = CANDIDATE_DESTINATION_OPTIONS.find((item) => item.name === name);
-                    return (
-                      <button key={name} type="button" onClick={() => toggleDestination(name)} disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation} className="inline-flex items-center gap-1 rounded-full bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-800 disabled:opacity-60">
-                        {option && <CountryFlag flag={option.flag} />}{name}<X className="h-3 w-3" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
+              {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
+
+              {primaryDestinationOption && (
+                <div className="mt-4 rounded-xl border border-violet-200 bg-white p-3" role="group" aria-labelledby="registration-project-title">
+                  <p id="registration-project-title" className="text-sm font-bold text-slate-800">Votre projet pour {primaryDestinationOption.name} <span className="font-normal text-slate-500">(facultatif)</span></p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600" role="status">{destinationProfile.message}</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {destinationProfile.extraFields.includes("visaType") && (
+                      <div>
+                        <Label htmlFor="register-visa-type" className="text-xs font-semibold text-slate-700">Type de projet</Label>
+                        <select id="register-visa-type" value={form.visaType} onChange={(event) => setForm((prev) => ({ ...prev, visaType: event.target.value }))} disabled={registrationBusy} className={PROJECT_SELECT_CLASS}>
+                          <option value="">Je ne sais pas encore</option>
+                          {REGISTRATION_PROJECT_TYPES.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    {destinationProfile.extraFields.includes("educationLevel") && (
+                      <div>
+                        <Label htmlFor="register-education-level" className="text-xs font-semibold text-slate-700">Niveau d’études</Label>
+                        <select id="register-education-level" value={form.educationLevel} onChange={(event) => setForm((prev) => ({ ...prev, educationLevel: event.target.value }))} disabled={registrationBusy} className={PROJECT_SELECT_CLASS}>
+                          <option value="">Non précisé</option>
+                          {EDUCATION_LEVEL_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    {destinationProfile.extraFields.includes("employmentStatus") && (
+                      <div>
+                        <Label htmlFor="register-employment-status" className="text-xs font-semibold text-slate-700">Situation professionnelle</Label>
+                        <select id="register-employment-status" value={form.employmentStatus} onChange={(event) => setForm((prev) => ({ ...prev, employmentStatus: event.target.value }))} disabled={registrationBusy} className={PROJECT_SELECT_CLASS}>
+                          <option value="">Non précisée</option>
+                          {EMPLOYMENT_STATUS_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    {destinationProfile.extraFields.includes("languageLevel") && (
+                      <div>
+                        <Label htmlFor="register-language-level" className="text-xs font-semibold text-slate-700">Niveau de langue</Label>
+                        <Input id="register-language-level" value={form.languageLevel} onChange={(event) => setForm((prev) => ({ ...prev, languageLevel: event.target.value }))} placeholder={destinationProfile.languageHint} maxLength={100} disabled={registrationBusy} className="mt-1 h-11 bg-white" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-              <p className="mt-2 text-xs text-slate-500">Destinations populaires : Canada, Luxembourg, Pologne, France et Royaume-Uni.</p>
-              {form.preferredDestinations.length === 0 && <p className="mt-3 text-xs font-medium text-violet-800">Sélectionnez au moins une destination pour continuer.</p>}
             </fieldset>
 
             {/* Portrait humain obligatoire */}

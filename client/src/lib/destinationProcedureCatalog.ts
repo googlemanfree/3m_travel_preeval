@@ -1,4 +1,5 @@
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
+import { CANDIDATE_DESTINATION_OPTIONS, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
 import type { EvaluationProjectType, ProjectDetailField } from "./projectEvaluationConfig";
 
@@ -136,6 +137,14 @@ export const getDestinationOptionsForProject = (projectType: EvaluationProjectTy
     if (!options.has(key)) options.set(key, { country: procedure.country, flag: procedure.flag || "🌐" });
   });
   return Array.from(options.values()).sort((left, right) => left.country.localeCompare(right.country, "fr"));
+};
+
+/** Pays du catalogue de procédures d'abord, puis tous les autres pays du monde (parcours générique, conseiller). */
+export const getAllDestinationOptionsForProject = (projectType: EvaluationProjectType): DestinationOption[] => {
+  const withProcedures = getDestinationOptionsForProject(projectType);
+  const known = new Set(withProcedures.map((option) => getCandidateDestinationOption(option.country)?.code ?? normalize(option.country)));
+  const others = CANDIDATE_DESTINATION_OPTIONS.filter((option) => !known.has(option.code)).map((option) => ({ country: option.name, flag: option.flag }));
+  return [...withProcedures, ...others];
 };
 
 export const getProceduresForCountry = (projectType: EvaluationProjectType, country: string): ProcedureGuide[] => {

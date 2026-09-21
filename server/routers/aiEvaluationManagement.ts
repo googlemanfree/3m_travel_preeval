@@ -25,7 +25,27 @@ import { requireValidAdminSession } from "./adminAuth";
 import { sendValidatedEvaluationResponseEmail } from "../emailService";
 import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "../services/evaluationResponseTemplates";
 import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
+import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
+
+/**
+ * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
+ * par l'ancien circuit de validation/envoi : il enverrait un e-mail depuis l'ancien texte de réponse et
+ * contournerait la checklist obligatoire. Sans la migration, l'ancien circuit reste seul en vigueur.
+ */
+async function assertNotManagedByStructuredValidation(evaluationId: number) {
+  try {
+    const store = await getValidationStore();
+    const latest = store ? await store.getLatestCase(evaluationId) : null;
+    if (latest) {
+      throw new TRPCError({ code: "CONFLICT", message: "Cette évaluation est gérée par la validation structurée (brouillon IA, checklist, publication) : utilisez ce parcours." });
+    }
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    if (isMissingTableError(error)) return;
+    throw error;
+  }
+}
 
 type Priority = "haute" | "moyenne" | "basse";
 type EvaluationType = "evaluation" | "luxembourg" | "etudes" | "consultation";
@@ -471,6 +491,7 @@ export const aiEvaluationManagementRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
         const current = await db.select({ id: evaluations.id, reviewedAt: evaluations.reviewedAt }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!current[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        await assertNotManagedByStructuredValidation(input.evaluationId);
         if (current[0].reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée. Créez une nouvelle évaluation pour toute reprise." });
         await db.update(evaluations).set({ reviewDraft: input.draft, reviewDraftUpdatedAt: new Date(), reviewDraftUpdatedBy: admin.email }).where(eq(evaluations.id, input.evaluationId));
         await db.insert(evaluationReviewEvents).values({ evaluationId: input.evaluationId, adminEmail: admin.email, action: "draft_saved", note: input.reason });
@@ -486,6 +507,7 @@ export const aiEvaluationManagementRouter = router({
         const current = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         const evaluation = current[0];
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        await assertNotManagedByStructuredValidation(evaluation.id);
         if (!evaluation.reviewDraft?.trim()) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un projet de réponse avant de le valider." });
         if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: evaluation.secondReviewRequired && !evaluation.secondReviewedAt ? "Une seconde validation admin est requise avant l’envoi." : "Cette réponse est déjà validée." });
         const now = new Date();
@@ -518,6 +540,7 @@ export const aiEvaluationManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [evaluation] = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
       if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+      await assertNotManagedByStructuredValidation(evaluation.id);
       if (!evaluation.reviewedAt || !evaluation.secondReviewRequired) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation ne nécessite pas de seconde validation." });
       if (evaluation.secondReviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde validation est déjà enregistrée." });
       if (evaluation.reviewedBy && evaluation.reviewedBy.toLowerCase() === admin.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "Un second conseiller différent du premier est obligatoire pour cette évaluation." });

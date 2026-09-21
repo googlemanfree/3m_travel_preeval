@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -12,22 +11,13 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import CountryFlag from "@/components/CountryFlag";
 import FavoriteDestinationsCard from "@/components/FavoriteDestinationsCard";
-
-const destinationOptions = [
-  { value: "canada", label: "Canada", flag: "🇨🇦" },
-  { value: "luxembourg", label: "Luxembourg", flag: "🇱🇺" },
-  { value: "pologne", label: "Pologne", flag: "🇵🇱" },
-  { value: "europe", label: "Europe / Schengen", flag: "🇪🇺" },
-  { value: "golfe", label: "Golfe et Moyen-Orient", flag: "🕌" },
-  { value: "autre", label: "Autre destination", flag: "🌐" },
-] as const;
+import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 
 type ProfileForm = {
   fullName: string;
   phone: string;
   nationality: string;
   dateOfBirth: string;
-  destination: (typeof destinationOptions)[number]["value"];
   visaType: string;
   educationLevel: string;
   employmentStatus: string;
@@ -55,7 +45,6 @@ export default function ClientProfilePanel() {
     phone: "",
     nationality: "",
     dateOfBirth: "",
-    destination: "autre",
     visaType: "",
     educationLevel: "",
     employmentStatus: "",
@@ -71,9 +60,6 @@ export default function ClientProfilePanel() {
       phone: profile.phone ?? "",
       nationality: profile.nationality ?? "",
       dateOfBirth: profile.dateOfBirth ?? "",
-      destination: destinationOptions.some((option) => option.value === profile.destination)
-        ? profile.destination as ProfileForm["destination"]
-        : "autre",
       visaType: profile.visaType ?? "",
       educationLevel: profile.educationLevel ?? "",
       employmentStatus: profile.employmentStatus ?? "",
@@ -163,6 +149,9 @@ export default function ClientProfilePanel() {
     return <Card className="p-6 text-sm text-red-700">Votre profil n’est pas disponible pour le moment. Veuillez actualiser la page.</Card>;
   }
 
+  const savedDestinations = parseFavoriteDestinations(profileQuery.data.preferredDestinations);
+  const primaryDestinationOption = savedDestinations[0] ? getCandidateDestinationOption(savedDestinations[0]) : undefined;
+
   return (
     <Card className="border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="client-profile-title">
       <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
@@ -191,26 +180,17 @@ export default function ClientProfilePanel() {
           <div className="space-y-2"><Label htmlFor="client-employment">Situation professionnelle</Label><Input id="client-employment" value={form.employmentStatus} onChange={(event) => update("employmentStatus", event.target.value)} maxLength={150} /></div>
           <div className="space-y-2"><Label htmlFor="client-language">Niveau de langue</Label><Input id="client-language" value={form.languageLevel} onChange={(event) => update("languageLevel", event.target.value)} placeholder="IELTS 7, DELF B2…" maxLength={100} /></div>
         </div>
-        <div className="space-y-2 sm:max-w-md">
+        <div className="space-y-1 sm:max-w-md">
           <Label>Destination principale</Label>
-          <Select value={form.destination} onValueChange={(value) => update("destination", value)}>
-            <SelectTrigger><SelectValue placeholder="Choisir une destination" /></SelectTrigger>
-            <SelectContent>
-              {destinationOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <span className="flex items-center gap-2"><CountryFlag flag={option.flag} />{option.label}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <p className="flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800" data-testid="primary-destination">
+            {primaryDestinationOption ? <><CountryFlag flag={primaryDestinationOption.flag} />{primaryDestinationOption.name}</> : <span className="font-normal text-slate-500">Aucune destination choisie</span>}
+          </p>
+          <p className="text-xs text-slate-500">C’est le premier pays de « Mes destinations favorites » ci-dessous : modifiez-le à cet endroit.</p>
         </div>
         <Button type="submit" disabled={updateMutation.isPending} className="h-11 rounded-xl bg-blue-700 px-5 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
       </form>
 
-      <FavoriteDestinationsCard
-        saved={parseFavoriteDestinations(profileQuery.data.preferredDestinations)}
-        onSaved={(destination) => setForm((current) => ({ ...current, destination }))}
-      />
+      <FavoriteDestinationsCard saved={savedDestinations} />
 
       <section className="mt-8 border-t border-slate-100 pt-6" aria-labelledby="email-change-title">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

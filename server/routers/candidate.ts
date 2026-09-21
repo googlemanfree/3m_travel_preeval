@@ -191,6 +191,18 @@ const PORTRAIT_DASHBOARD_PATHS = new Set(["candidate.getClientDashboardSummary",
 // Contrat de la requête de synthèse consommée par l’espace candidat après actualisation.
 export const CANDIDATE_DASHBOARD_CONTRACT = "candidate.getClientDashboardSummary";
 
+/** Pays principal déclaré ; retombe sur la catégorie large historique pour les anciens comptes. */
+function primaryDestinationOf(candidate: { destination?: string | null; preferredDestinations?: string | null }): string {
+  try {
+    const parsed = JSON.parse(candidate.preferredDestinations || "[]");
+    const first = Array.isArray(parsed) ? parsed.find((value) => typeof value === "string" && value.trim()) : undefined;
+    if (first) return first;
+  } catch {
+    // valeur historique illisible : on utilise la catégorie large
+  }
+  return candidate.destination ?? "autre";
+}
+
 export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
   // un statut historique « missing » ou « pending ». On ne bloque pas ces
@@ -370,11 +382,15 @@ export const candidateRouter = router({
         email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
         phone: z.string().max(50).optional(),
-        // Jusqu'à 3 pays précis parmi les destinations réellement couvertes par le site
-        // (destinations20.ts) : condition obligatoire pour que la checklist documentaire et le
-        // score d'éligibilité, tous deux construits pour un pays précis, s'appliquent réellement.
-        preferredDestinations: z.array(z.string().min(1)).min(1, "Choisissez au moins une destination").max(3, "3 destinations maximum"),
+        // Jusqu'à 3 pays précis parmi tous les pays du monde (shared/worldCountries.ts) : le pays
+        // principal pilote la checklist, le parcours et le score. Les questions de projet ci-dessous
+        // sont facultatives ; le formulaire les propose selon le pays (getDestinationFormProfile).
+        preferredDestinations: z.array(z.string().min(1)).min(1, "Choisissez au moins une destination").max(MAX_PREFERRED_DESTINATIONS, `${MAX_PREFERRED_DESTINATIONS} destinations maximum`),
         nationality: z.string().max(100).optional(),
+        visaType: z.string().trim().max(100).optional(),
+        educationLevel: z.string().trim().max(100).optional(),
+        employmentStatus: z.string().trim().max(100).optional(),
+        languageLevel: z.string().trim().max(100).optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
         evaluationAlreadyCompleted: z.boolean().default(false),
       })
@@ -388,6 +404,8 @@ export const candidateRouter = router({
       if (unrecognizedDestinations.length > 0) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `Destination(s) non reconnue(s) : ${unrecognizedDestinations.join(", ")}.` });
       }
+      // On enregistre l'orthographe officielle (et non la saisie brute), sans doublon.
+      const { destinations: preferredDestinations } = normalizeCandidateDestinations(input.preferredDestinations);
 
       // Vérifier si l'email existe déjà (hors comptes supprimés)
       const existing = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, normalizedEmail), isNull(candidates.deletedAt))).limit(1);
@@ -443,9 +461,13 @@ export const candidateRouter = router({
           email: normalizedEmail,
           passwordHash,
           phone: input.phone ?? null,
-          destination: coarseCategoryForPreferredDestinations(input.preferredDestinations),
-          preferredDestinations: JSON.stringify(input.preferredDestinations),
+          destination: coarseCategoryForPreferredDestinations(preferredDestinations),
+          preferredDestinations: JSON.stringify(preferredDestinations),
           nationality: input.nationality ?? null,
+          visaType: input.visaType || null,
+          educationLevel: input.educationLevel || null,
+          employmentStatus: input.employmentStatus || null,
+          languageLevel: input.languageLevel || null,
           dossierStatus: "nouveau",
           ...priorEvaluationFields,
           emailVerified: false,
@@ -1249,7 +1271,7 @@ export const candidateRouter = router({
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
       const token = signCandidateToken(candidate.id);
       return { success: true, token, candidate: activationCandidatePayload(candidate), message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -1279,7 +1301,7 @@ export const candidateRouter = router({
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
       const token = signCandidateToken(input.candidateId);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),

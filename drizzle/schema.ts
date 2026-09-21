@@ -1,4 +1,4 @@
-import { boolean, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, date, decimal, index, int, json, mediumtext, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 export * from "./caseTrackingSchema";
 export * from "./consularPortalSchema";
 export * from "./destinationComparisonSchema";
@@ -165,6 +165,65 @@ export const evaluationReviewEvents = mysqlTable("evaluation_review_events", {
 ]);
 export type EvaluationReviewEvent = typeof evaluationReviewEvents.$inferSelect;
 export type InsertEvaluationReviewEvent = typeof evaluationReviewEvents.$inferInsert;
+
+/**
+ * Évaluation structurée à validation administrateur obligatoire (une ligne par version).
+ * - `aiDraftJson` : brouillon IA initial, conservé tel quel et JAMAIS réécrit ni exposé au candidat ;
+ * - `adminVersionJson` : version modifiable par l'administrateur ;
+ * - `publishedReportJson` : instantané immuable du rapport publié, seule donnée lue côté candidat.
+ * Les statuts sont des chaînes (règles dans shared/evaluationValidation.ts) pour éviter toute
+ * migration d'enum. Tables additives : aucune colonne ajoutée aux tables existantes.
+ */
+export const evaluationValidationCases = mysqlTable("evaluation_validation_cases", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  versionNumber: int("versionNumber").default(1).notNull(),
+  workflowStatus: varchar("workflowStatus", { length: 40 }).default("dossier_recu").notNull(),
+  aiDraftJson: mediumtext("aiDraftJson"),
+  aiDraftGeneratedAt: timestamp("aiDraftGeneratedAt"),
+  aiDraftModel: varchar("aiDraftModel", { length: 80 }),
+  aiDraftWarningsJson: text("aiDraftWarningsJson"),
+  aiDraftError: text("aiDraftError"),
+  adminVersionJson: mediumtext("adminVersionJson"),
+  adminVersionUpdatedAt: timestamp("adminVersionUpdatedAt"),
+  adminVersionUpdatedBy: varchar("adminVersionUpdatedBy", { length: 320 }),
+  firstValidatedBy: varchar("firstValidatedBy", { length: 320 }),
+  firstValidatedAt: timestamp("firstValidatedAt"),
+  infoRequestJson: mediumtext("infoRequestJson"),
+  infoRequestedAt: timestamp("infoRequestedAt"),
+  infoRequestedBy: varchar("infoRequestedBy", { length: 320 }),
+  publishedReportJson: mediumtext("publishedReportJson"),
+  publishedAt: timestamp("publishedAt"),
+  publishedBy: varchar("publishedBy", { length: 320 }),
+  publishedChecklistJson: text("publishedChecklistJson"),
+  emailSubject: varchar("emailSubject", { length: 200 }),
+  emailSentAt: timestamp("emailSentAt"),
+  emailError: text("emailError"),
+  emailClaimedAt: timestamp("emailClaimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  uniqueIndex("uq_evaluation_validation_case_version").on(table.evaluationId, table.versionNumber),
+  index("idx_evaluation_validation_case_status").on(table.workflowStatus, table.updatedAt),
+]);
+export type EvaluationValidationCase = typeof evaluationValidationCases.$inferSelect;
+export type InsertEvaluationValidationCase = typeof evaluationValidationCases.$inferInsert;
+
+/** Historique champ par champ des modifications administrateur : auteur, date, ancienne et nouvelle valeur. */
+export const evaluationValidationChanges = mysqlTable("evaluation_validation_changes", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  versionNumber: int("versionNumber").default(1).notNull(),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  field: varchar("field", { length: 80 }).notNull(),
+  oldValueJson: mediumtext("oldValueJson"),
+  newValueJson: mediumtext("newValueJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_evaluation_validation_changes_evaluation").on(table.evaluationId, table.createdAt),
+]);
+export type EvaluationValidationChange = typeof evaluationValidationChanges.$inferSelect;
+export type InsertEvaluationValidationChange = typeof evaluationValidationChanges.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ESPACE CANDIDAT

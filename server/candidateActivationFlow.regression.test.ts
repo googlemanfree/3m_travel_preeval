@@ -43,7 +43,9 @@ describe("candidate activation flow", () => {
     expect(sourceCatalog).toContain('"canada"');
     expect(sourceCatalog).toContain('"luxembourg"');
     expect(mySpace).toContain("CandidateCountryJourney");
-    expect(mySpace).toContain("destination={cProfile.destination}");
+    // le parcours reçoit le pays précis (jamais la catégorie large « europe » / « autre », sans source officielle)
+    expect(mySpace).toContain("destination={primaryDestination}");
+    expect(mySpace).not.toContain("destination={cProfile.destination}");
   });
 
   it("keeps the new workflow markers nullable and non-destructive", () => {

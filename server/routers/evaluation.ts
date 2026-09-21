@@ -9,6 +9,7 @@ import { generateDossierCode } from "../utils/generateDossierCode";
 import { sendEvaluationReceptionEmail } from "../emailService";
 import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, getPdfPageCount } from "../aiEvaluationService";
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
+import { openStructuredEvaluation } from "../services/structuredEvaluationPipeline";
 import { logger } from "../_core/logger";
 import { and, count, desc, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -246,6 +247,9 @@ export const evaluationRouter = router({
       const inserted = await db.insert(evaluations).values(evaluationData).$returningId();
       const evaluationId = inserted[0]?.id;
       if (!evaluationId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La référence d’évaluation n’a pas pu être créée." });
+      // Évaluation à validation administrateur obligatoire : le dossier « reçu » est créé tout de suite, l'analyse IA
+      // (interne, soumise au consentement) tourne en arrière-plan. Ne lève jamais : la soumission du candidat prime.
+      await openStructuredEvaluation(evaluationId);
       if (input.geminiAnalysisConsent) {
         const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
         const dynamicDetails = Object.fromEntries(input.dynamicResponses.flatMap((response, index) => [
@@ -280,7 +284,10 @@ export const evaluationRouter = router({
             await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
             logger.info("evaluation.preparation_draft.completed", { evaluationId });
           } catch {
-            await db.update(evaluations).set({ aiProcessingError: "Brouillon préparatoire indisponible ; revue manuelle requise." }).where(eq(evaluations.id, evaluationId));
+            // ce bloc s'exécute hors requête : une base indisponible ne doit jamais devenir une promesse rejetée non gérée
+            try {
+              await db.update(evaluations).set({ aiProcessingError: "Brouillon préparatoire indisponible ; revue manuelle requise." }).where(eq(evaluations.id, evaluationId));
+            } catch {}
             logger.info("evaluation.preparation_draft.unavailable", { evaluationId });
           }
         })();
@@ -428,6 +435,8 @@ export const evaluationRouter = router({
       }).$returningId();
 
       const evaluationId = inserted[0]?.id;
+      // Dossier « reçu » créé tout de suite, analyse IA interne en arrière-plan (jamais bloquant, soumise au consentement).
+      if (evaluationId) await openStructuredEvaluation(evaluationId);
 
       // Le parcours historique est conservé, mais aucun score ni rapport
       // OpenAI n’est plus produit. Le brouillon Gemini est facultatif,

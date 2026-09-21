@@ -8,18 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { CountrySelect } from "@/components/CountryPicker";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
-const DESTINATIONS = [
-  { value: "canada", label: "🇨🇦 Canada" },
-  { value: "luxembourg", label: "🇱🇺 Luxembourg" },
-  { value: "pologne", label: "🇵🇱 Pologne" },
-  { value: "europe", label: "🇪🇺 Europe" },
-  { value: "golfe", label: "🇦🇪 Golfe & Moyen-Orient" },
-  { value: "autre", label: "Autre" },
-];
 
 const VISA_TYPES = [
   { value: "travail", label: "Visa de travail" },
@@ -179,7 +172,7 @@ export default function CompleteProfile() {
     }
 
     updateProfileMutation.mutate({
-      destination: formData.destination as any,
+      preferredDestinations: [formData.destination],
       visaType: formData.visaType,
       educationLevel: formData.occupation,
       ...(portraitVerificationToken && finalAvatarUrl ? { avatarUrl: finalAvatarUrl } : {}),
@@ -227,18 +220,7 @@ export default function CompleteProfile() {
                 <Label htmlFor="destination" className="text-gray-700 font-semibold mb-2 block">
                   Sélectionnez une destination
                 </Label>
-                <Select value={formData.destination} onValueChange={(value) => handleSelectChange("destination", value)}>
-                  <SelectTrigger id="destination" className="w-full">
-                    <SelectValue placeholder="Choisir une destination..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DESTINATIONS.map((dest) => (
-                      <SelectItem key={dest.value} value={dest.value}>
-                        {dest.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CountrySelect id="destination" ariaLabel="Pays de destination" placeholder="Choisir une destination…" value={formData.destination} onChange={(country) => handleSelectChange("destination", country)} />
               </div>
             </div>
 

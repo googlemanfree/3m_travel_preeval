@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle2, Copy, Mail, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { CountrySelect } from '@/components/CountryPicker';
 
 export default function AdminAddDossier() {
   const [formData, setFormData] = useState({
@@ -50,6 +51,10 @@ export default function AdminAddDossier() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.destinationCountry) {
+      toast.error('Sélectionnez le pays de destination.');
+      return;
+    }
     setIsLoading(true);
     try {
       await createDossierMutation.mutateAsync(formData);
@@ -137,23 +142,14 @@ export default function AdminAddDossier() {
 
               <div>
                 <Label htmlFor="destinationCountry">Pays de Destination *</Label>
-                <select
+                <CountrySelect
                   id="destinationCountry"
                   name="destinationCountry"
+                  ariaLabel="Pays de destination"
+                  placeholder="Sélectionner un pays"
                   value={formData.destinationCountry}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 outline-none mt-1"
-                >
-                  <option value="">Sélectionner un pays</option>
-                  <option value="Canada">Canada</option>
-                  <option value="France">France</option>
-                  <option value="Allemagne">Allemagne</option>
-                  <option value="Luxembourg">Luxembourg</option>
-                  <option value="Pologne">Pologne</option>
-                  <option value="Belgique">Belgique</option>
-                  <option value="Suisse">Suisse</option>
-                </select>
+                  onChange={(country) => setFormData((prev) => ({ ...prev, destinationCountry: country }))}
+                />
               </div>
 
               <div>
