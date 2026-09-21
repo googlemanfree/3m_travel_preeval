@@ -246,6 +246,7 @@ export function DocumentUploader({
                     key={category.id}
                     onClick={() => {
                       setSelectedCategory(category.id);
+                      setFiles((previous) => previous.map((file) => file.status === "pending" ? { ...file, category: category.id } : file));
                       setShowCategoryDropdown(false);
                     }}
                     role="option"

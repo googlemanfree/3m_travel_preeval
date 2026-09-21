@@ -66,7 +66,7 @@ const DOCUMENT_TYPE_ALIASES: Record<string, string> = {
   visa_documents: "visa",
   visa: "visa",
   language_test: "language_test",
-  professional_documents: "certificate",
+  professional_documents: "professional_documents",
   travel_documents: "travel_document",
   cv: "cv",
   resume: "cv",
@@ -83,6 +83,16 @@ function normalizeDocumentType(value: string): string {
   const normalized = value.trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   return DOCUMENT_TYPE_ALIASES[normalized] || "";
 }
+
+function inferCandidateFileType(documentType: string, fileName: string): "cv" | "passeport" | "diplome" | "autre" {
+  const normalizedName = fileName.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  if (documentType === "cv" || (documentType === "professional_documents" && /(^|[^a-z])(cv|resume|curriculum)([^a-z]|$)/i.test(normalizedName))) return "cv";
+  if (documentType === "passport") return "passeport";
+  if (documentType === "diploma") return "diplome";
+  return "autre";
+}
+
+export { inferCandidateFileType };
 const publicUploadAttempts = new Map<string, { count: number; resetAt: number }>();
 
 const upload = multer({
@@ -285,10 +295,7 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       assertClarificationUploadEligibility(clarificationRequestId, clarification);
       const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
-      const candidateFileType = documentType === "passport" ? "passeport"
-        : documentType === "diploma" ? "diplome"
-        : documentType === "cv" ? "cv"
-        : "autre";
+      const candidateFileType = inferCandidateFileType(documentType, safeName);
       const candidateFileResult = await db.insert(candidateFiles).values({
         candidateId,
         fileType: candidateFileType,

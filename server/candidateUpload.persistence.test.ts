@@ -34,7 +34,7 @@ vi.mock("./db", () => ({
   })),
 }));
 
-import { registerCandidateUploadRoute } from "./routers/candidateUpload";
+import { inferCandidateFileType, registerCandidateUploadRoute } from "./routers/candidateUpload";
 
 describe("POST /api/candidate/upload — persistance centralisée", () => {
   beforeEach(() => {
@@ -56,5 +56,10 @@ describe("POST /api/candidate/upload — persistance centralisée", () => {
     expect(state.inserted[0]).toMatchObject({ candidateId: 42, fileType: "cv", fileName: "cv.pdf", status: "uploaded" });
     expect(state.notifications[0]).toMatchObject({ candidateEmail: "candidate@example.test", documentType: "cv" });
     expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ documentId: 701, synchronized: true }));
+  });
+
+  it("classe un CV nommé depuis la catégorie Documents professionnels comme cv", () => {
+    expect(inferCandidateFileType("professional_documents", "cv-qa-e2e-20260921.pdf")).toBe("cv");
+    expect(inferCandidateFileType("professional_documents", "lettre-recommandation.pdf")).toBe("autre");
   });
 });

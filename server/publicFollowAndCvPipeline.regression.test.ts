@@ -22,7 +22,7 @@ describe("Suivi public et pipeline CV candidat", () => {
     const upload = read("server/routers/candidateUpload.ts");
     const admin = read("server/routers/admin.ts");
     const uploadPage = read("client/src/pages/DocumentUploadPage.tsx");
-    expect(upload).toContain('documentType === "cv" ? "cv"');
+    expect(upload).toContain("inferCandidateFileType(documentType, safeName)");
     expect(upload).toContain("dossierId: agencyDossier.id");
     expect(upload).toContain('source: "candidate_upload"');
     expect(admin).toContain("agencyDossierDocuments");
