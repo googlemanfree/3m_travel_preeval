@@ -5,7 +5,7 @@ import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplet
 import { compareMarker, DEFAULT_WITNESSES, evaluateWitness, parseArgs } from "../scripts/verify-deploy";
 import { LEGACY_PUBLIC_REDIRECTS, legacyRedirectLocation } from "./legacyPublicRedirects";
 import { composePublicPrerender } from "./publicPrerender";
-import { extractBuildMarker, injectBuildMarker, resolveBuildMarker, sanitizeBuildMarker } from "./publicBuildMarker";
+import { extractBuildMarker, injectBuildMarker, parseBuildMarker, resolveBuildMarker, sanitizeBuildMarker } from "./publicBuildMarker";
 
 // « Publié avec succès » ne prouve pas qu'un commit est en ligne : la balise 3m-build-marker,
 // posée à la compilation, et le script verify:deploy donnent une preuve lisible sur toute page.
@@ -15,14 +15,25 @@ const indexHtml = read("client/index.html");
 const shell = '<!doctype html><html><head><title>t</title></head><body><div id="root"><!--prerender-app--></div></body></html>';
 
 describe("balise de build posée à la compilation", () => {
-  it("préfère PUBLIC_BUILD_MARKER, puis le commit git, et ignore toute autre valeur", () => {
-    expect(resolveBuildMarker({ PUBLIC_BUILD_MARKER: " release-42 " }, () => "abcdef12")).toBe("release-42");
-    expect(resolveBuildMarker({}, () => "abcdef12\n")).toBe("abcdef12");
-    expect(resolveBuildMarker({}, () => "fatal: not a git repository")).toBeUndefined();
-    expect(resolveBuildMarker({}, () => undefined)).toBeUndefined();
+  it("préfère PUBLIC_BUILD_MARKER, puis commit et date de build, et à défaut « nogit » avec la date", () => {
+    const now = new Date(Date.UTC(2026, 8, 21, 16, 32, 45));
+    expect(resolveBuildMarker({ PUBLIC_BUILD_MARKER: " release-42 " }, () => "abcdef12", now)).toBe("release-42");
+    expect(resolveBuildMarker({}, () => "abcdef12\n", now)).toBe("abcdef12.202609211632");
+    expect(resolveBuildMarker({}, () => "fatal: not a git repository", now)).toBe("nogit.202609211632");
+    expect(resolveBuildMarker({}, () => undefined, now)).toBe("nogit.202609211632");
     expect(resolveBuildMarker({}, () => {
       throw new Error("git introuvable");
-    })).toBeUndefined();
+    }, now)).toBe("nogit.202609211632");
+  });
+
+  it("relit commit et date de build depuis la balise, ancien format et balise sans commit compris", () => {
+    const builtAt = new Date(Date.UTC(2026, 8, 21, 16, 32));
+    expect(parseBuildMarker("abcdef12.202609211632")).toEqual({ commit: "abcdef12", builtAt });
+    expect(parseBuildMarker("nogit.202609211632")).toEqual({ commit: undefined, builtAt });
+    expect(parseBuildMarker("abcdef12")).toEqual({ commit: "abcdef12" });
+    expect(parseBuildMarker("admin-bilan-online-reference-2026-09-04-v1")).toEqual({});
+    expect(parseBuildMarker("nogit.202613991699")).toEqual({});
+    expect(parseBuildMarker(undefined)).toEqual({});
   });
 
   it("nettoie un marqueur hostile avant de l’insérer dans un attribut HTML", () => {
@@ -58,11 +69,20 @@ describe("vérification d’un déploiement (scripts/verify-deploy.ts)", () => {
   const unknown = () => undefined;
 
   it("reconnaît le commit attendu, un build qui le contient, un ancien build et un build inconnu", () => {
+    expect(compareMarker("abcdef12.202609211632", "abcdef1234567890", unknown)).toBe("exact");
     expect(compareMarker("abcdef12", "abcdef1234567890", unknown)).toBe("exact");
-    expect(compareMarker("abcdef1234567890", "abcdef12", unknown)).toBe("exact");
-    expect(compareMarker("1234567a", "abcdef12", (ancestor, descendant) => ancestor === "abcdef12" && descendant === "1234567a")).toBe("descendant");
-    expect(compareMarker("1234567a", "abcdef12", () => false)).toBe("older");
-    expect(compareMarker("1234567a", "abcdef12", unknown)).toBe("unknown");
+    expect(compareMarker("abcdef1234567890.202609211632", "abcdef12", unknown)).toBe("exact");
+    expect(compareMarker("1234567a.202609211632", "abcdef12", (ancestor, descendant) => ancestor === "abcdef12" && descendant === "1234567a")).toBe("descendant");
+    expect(compareMarker("1234567a.202609211632", "abcdef12", () => false)).toBe("older");
+    expect(compareMarker("1234567a.202609211632", "abcdef12", unknown)).toBe("unknown");
+  });
+
+  it("compare la date d’un build sans git à celle du commit attendu", () => {
+    const committedAt = () => new Date(Date.UTC(2026, 8, 21, 12, 26, 30));
+    expect(compareMarker("nogit.202609211632", "abcdef12", unknown, committedAt)).toBe("built-after");
+    expect(compareMarker("nogit.202609211226", "abcdef12", unknown, committedAt)).toBe("built-after");
+    expect(compareMarker("nogit.202609211100", "abcdef12", unknown, committedAt)).toBe("built-before");
+    expect(compareMarker("nogit.202609211632", "abcdef12", unknown)).toBe("unknown");
   });
 
   it("traite une balise sans commit comme un ancien build", () => {

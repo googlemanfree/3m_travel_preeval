@@ -1,6 +1,6 @@
 /**
  * Vérifie ce qui tourne réellement en ligne, sans se fier au statut annoncé par la publication :
- * balise de build (commit compilé), sitemap complet et routes témoins.
+ * balise de build (commit et date de compilation), sitemap complet et routes témoins.
  *
  *   pnpm run verify:deploy -- --expect <sha ou référence git>   le commit est-il en ligne ?
  *   pnpm run verify:deploy                                      état courant, sans commit attendu
@@ -12,10 +12,10 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractBuildMarker } from "../server/publicBuildMarker";
+import { extractBuildMarker, parseBuildMarker } from "../server/publicBuildMarker";
 
 export type Witness = { path: string; status: number; location?: string };
-export type MarkerVerdict = "exact" | "descendant" | "older" | "unknown" | "no-marker";
+export type MarkerVerdict = "exact" | "descendant" | "older" | "built-after" | "built-before" | "unknown" | "no-marker";
 export type VerifyOptions = { base: string; expect?: string; sitemapCount?: number };
 
 export const DEFAULT_BASE_URL = "https://www.3mtravelagency.com";
@@ -49,11 +49,21 @@ export function compareMarker(
   marker: string | undefined,
   expected: string,
   isAncestor: (ancestor: string, descendant: string) => boolean | undefined,
+  commitTime: () => Date | undefined = () => undefined,
 ): MarkerVerdict {
-  if (!marker || !isHexCommit(marker)) return "no-marker";
-  const shared = Math.min(marker.length, expected.length);
-  if (marker.slice(0, shared) === expected.slice(0, shared)) return "exact";
-  const contained = isAncestor(expected, marker);
+  const parsed = parseBuildMarker(marker);
+  if (!parsed.commit) {
+    if (!parsed.builtAt) return "no-marker";
+    // Build sans git : seule la date est connue (précision d'une minute), donc la preuve est
+    // « probable » et non exacte : un build daté après le commit peut encore venir d'un état plus ancien.
+    const committedAt = commitTime();
+    if (!committedAt) return "unknown";
+    return parsed.builtAt.getTime() >= committedAt.getTime() - 60_000 ? "built-after" : "built-before";
+  }
+  const liveCommit = parsed.commit;
+  const shared = Math.min(liveCommit.length, expected.length);
+  if (liveCommit.slice(0, shared) === expected.slice(0, shared)) return "exact";
+  const contained = isAncestor(expected, liveCommit);
   if (contained === true) return "descendant";
   if (contained === false) return "older";
   return "unknown";
@@ -66,6 +76,16 @@ export function gitIsAncestor(ancestor: string, descendant: string): boolean | u
   } catch (error) {
     // Statut 1 : pas un ancêtre. Autre statut : commit inconnu localement, donc indéterminé.
     return (error as { status?: number }).status === 1 ? false : undefined;
+  }
+}
+
+export function gitCommitTime(reference: string): Date | undefined {
+  try {
+    const iso = execFileSync("git", ["show", "-s", "--format=%cI", reference], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  } catch {
+    return undefined;
   }
 }
 
@@ -145,12 +165,14 @@ export async function runVerification(options: VerifyOptions) {
   else if (!options.expect) lines.push(`INFO   balise de build : ${marker ?? "absente"}`);
   else {
     const expected = resolveExpected(options.expect);
-    const verdict = compareMarker(marker, expected, gitIsAncestor);
+    const verdict = compareMarker(marker, expected, gitIsAncestor, () => gitCommitTime(expected));
     const label = `commit ${expected.slice(0, 8)}`;
     if (verdict === "exact") record(true, label, `en ligne (balise ${marker})`);
     else if (verdict === "descendant") record(true, label, `en ligne, contenu dans le build ${marker}`);
     else if (verdict === "older") record(false, label, `absent du build en ligne (${marker}) : publication non effective`);
-    else if (verdict === "no-marker") record(false, label, `la balise en ligne (${marker ?? "absente"}) ne porte pas de commit : ancien build, ou build sans git`);
+    else if (verdict === "built-after") record(true, label, `probable : build sans git daté du ${marker}, postérieur au commit (à recouper avec les routes témoins)`);
+    else if (verdict === "built-before") record(false, label, `le build en ligne (${marker}) est antérieur au commit : publication non effective`);
+    else if (verdict === "no-marker") record(false, label, `la balise en ligne (${marker ?? "absente"}) n'identifie aucun build : ancien build, antérieur à la balise`);
     else {
       inconclusive = true;
       lines.push(`????   ${label} : le build en ligne (${marker}) est inconnu localement, faire git fetch puis relancer`);
