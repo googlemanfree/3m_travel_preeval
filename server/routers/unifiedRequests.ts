@@ -675,6 +675,16 @@ initializeEvaluationDelivery: publicProcedure
       };
     }),
 
+  listEvaluationDeliveryHistory: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select({ id: evaluationEmails.id, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, createdAt: evaluationEmails.createdAt, reportContent: evaluationEmails.reportContent, candidateEmail: evaluationEmails.candidateEmail, emailType: evaluationEmails.emailType, failureReason: evaluationEmails.failureReason }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, input.sourceRecordId)).orderBy(desc(evaluationEmails.createdAt)).limit(30);
+      return rows.map((row) => ({ ...row, contentText: row.reportContent ? richTextToPlainText(row.reportContent) : "", reportContent: undefined }));
+    }),
+
   previewEvaluationDeliveryPdf: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
@@ -838,7 +848,7 @@ initializeEvaluationDelivery: publicProcedure
     }),
 
   sendEvaluationNow: publicProcedure
-    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), attachments: z.array(z.object({ name: z.string().trim().min(1).max(255), mimeType: z.enum(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]), contentBase64: z.string().min(1).max(8_000_000), size: z.number().int().positive().max(5 * 1024 * 1024) })).max(3).default([]) }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -855,6 +865,7 @@ initializeEvaluationDelivery: publicProcedure
       const latestVersion = versionAuditTrail[0];
       const versionNumber = latestVersion?.versionNumber ?? 1;
       const finalPdf = await createFinalEvaluationPdf(application, versionNumber, versionAuditTrail);
+      const extraAttachments = input.attachments.map((attachment) => ({ filename: attachment.name.replace(/[\\/]/g, "_"), content: Buffer.from(attachment.contentBase64, "base64"), contentType: attachment.mimeType }));
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
       const emailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
@@ -866,7 +877,7 @@ initializeEvaluationDelivery: publicProcedure
           to: application.email,
           subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
           html: availabilityHtml,
-          attachments: [{ filename: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }],
+          attachments: [{ filename: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }, ...extraAttachments],
         });
         if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: availabilityHtml }).where(eq(evaluationEmails.id, trackingEmailId));
       } catch (error) {
