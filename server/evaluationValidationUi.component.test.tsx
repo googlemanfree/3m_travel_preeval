@@ -131,6 +131,37 @@ describe("espace candidat : suivi de l'évaluation", () => {
     expect(screen.queryByRole("article")).toBeNull();
   });
 
+  it("montre un avancement animé en trois étapes et un message de statut clair, sans jamais parler d'IA ni de brouillon", () => {
+    const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "pending", pendingNotice: { ...CANDIDATE_PENDING_NOTICE }, infoRequest: null, report: null, publishedAt: null }} />);
+    const steps = within(screen.getByRole("list", { name: "Avancement de votre évaluation" })).getAllByRole("listitem");
+    expect(steps.map((step) => step.textContent)).toEqual(["Dossier reçu", "Vérification par notre équipe", "Évaluation publiée dans votre espace"]);
+    expect(steps.map((step) => step.getAttribute("aria-current"))).toEqual([null, "step", null]); // seule l'étape en cours est signalée
+    const spinner = screen.getByTestId("evaluation-progress-spinner");
+    expect(spinner.getAttribute("class")).toContain("animate-spin");
+    expect(spinner.getAttribute("class")).toContain("motion-reduce:animate-none"); // pas d'animation si l'appareil demande moins de mouvement
+    expect(container.querySelector(".animate-pulse")?.getAttribute("class")).toContain("motion-reduce:animate-none");
+    expect(screen.getByText(/Statut : vérification en cours par notre équipe/)).toBeTruthy();
+    expect(screen.getByText(/Vous n’avez rien à faire pour le moment/)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/\bIA\b|intelligence artificielle|brouillon|\/100|score/i);
+    // les éléments décoratifs sont masqués aux lecteurs d'écran
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3);
+  });
+
+  it("n'affiche pas l'avancement d'attente une fois le rapport publié, ni pendant une demande de complément sans rapport", async () => {
+    const published = await (async () => {
+      const deps = makeDeps();
+      await recordAiDraft(deps, 1, { ok: true, draft: sampleAiDraft(), model: "gemini-test" });
+      const current = (await deps.store.getLatestCase(1))!;
+      await publishEvaluation(deps, ADMIN, 1, { checklist: FULL_CHECKLIST, sendEmail: false, reviewedVersionStamp: versionStamp(current.adminVersion!) });
+      return buildCandidateView({ latest: await deps.store.getLatestCase(1), latestPublished: await deps.store.getLatestPublishedCase(1) }) as CandidateEvaluationViewData;
+    })();
+    const first = render(<CandidateEvaluationStatus evaluationId={1} view={published} />);
+    expect(screen.queryByTestId("evaluation-progress")).toBeNull();
+    first.unmount();
+    render(<CandidateEvaluationStatus evaluationId={1} view={{ stage: "info_requested", pendingNotice: null, infoRequest: { message: "", items: [{ id: "q1", label: "Diplôme" }] }, report: null, publishedAt: null }} />);
+    expect(screen.queryByTestId("evaluation-progress")).toBeNull();
+  });
+
   it("affiche le rapport validé avec le score de l'administrateur, les statuts de documents et l'avertissement légal — sans rien d'interne", async () => {
     const view = await reportView();
     const { container } = render(<CandidateEvaluationStatus evaluationId={1} view={view} />);

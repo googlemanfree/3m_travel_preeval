@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
+import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -365,6 +366,21 @@ export default function AdminAIEvaluationDashboard() {
     acquisitionSources: Array.from(new Set(items.map((item) => item.acquisitionSource).filter(Boolean) as string[])).sort(),
   }), [items]);
 
+  // Validation structurée (brouillon IA → version administrateur → publication) : statut de TOUTES les évaluations,
+  // pour le filtre « À valider » comme pour les pastilles. Tant que la migration n’est pas appliquée, la liste est vide
+  // et l’ancien éditeur reste seul en vigueur.
+  const allEvaluationIds = useMemo(
+    () => items.filter((item) => item.type === "evaluation").map((item) => Number(item.id.split("-").at(-1))).filter((id) => Number.isInteger(id) && id > 0).slice(0, 500),
+    [items],
+  );
+  const validationStatusesQuery = trpc.evaluationValidation.listStatuses.useQuery(
+    { sessionToken, evaluationIds: allEvaluationIds },
+    { enabled: !!sessionToken && allEvaluationIds.length > 0, refetchOnWindowFocus: false, retry: false },
+  );
+  const validationStatusById = useMemo(() => new Map((validationStatusesQuery.data ?? []).map((entry) => [entry.evaluationId, entry])), [validationStatusesQuery.data]);
+  const [validationFilter, setValidationFilter] = useState<ValidationFilter>("all");
+  const validationCounts = useMemo(() => countByValidationFilter(allEvaluationIds.map((id) => validationStatusById.get(id)?.status)), [allEvaluationIds, validationStatusById]);
+
   const visibleItems = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = items.filter((item) => {
@@ -379,7 +395,9 @@ export default function AdminAIEvaluationDashboard() {
       const matchesEmployment = employmentFilter === "all" || item.employmentStatus === employmentFilter;
       const matchesStatus = statusFilter === "all" || item.status === statusFilter;
       const matchesAcquisitionSource = acquisitionSourceFilter === "all" || (item.acquisitionSource ?? "direct") === acquisitionSourceFilter;
-      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource;
+      // seules les évaluations ont un dossier de validation structurée : un filtre actif écarte les autres types
+      const matchesValidation = validationFilter === "all" || (item.type === "evaluation" && matchesValidationFilter(validationFilter, validationStatusById.get(Number(item.id.split("-").at(-1)))?.status));
+      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource && matchesValidation;
     });
     if (scoreSort === "default") return filtered;
     return [...filtered].sort((a, b) => {
@@ -387,14 +405,14 @@ export default function AdminAIEvaluationDashboard() {
       const bScore = typeof b.score === "number" ? b.score : -1;
       return scoreSort === "desc" ? bScore - aScore : aScore - bScore;
     });
-  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly]);
+  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, validationStatusById]);
 
   const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
   const pagedItems = useMemo(() => visibleItems.slice((currentPage - 1) * pageSize, currentPage * pageSize), [visibleItems, currentPage]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly]);
+  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter]);
 
   useEffect(() => {
     if (currentPage > pageCount) setCurrentPage(pageCount);
@@ -458,17 +476,6 @@ export default function AdminAIEvaluationDashboard() {
 
   const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
 
-  // Validation structurée (brouillon IA → version administrateur → publication) : statut affiché par évaluation.
-  // Tant que la migration n’est pas appliquée, la liste est vide et l’ancien éditeur reste seul en vigueur.
-  const pagedEvaluationIds = useMemo(
-    () => pagedItems.filter((item) => item.type === "evaluation").map((item) => Number(item.id.split("-").at(-1))).filter((id) => Number.isInteger(id) && id > 0),
-    [pagedItems],
-  );
-  const validationStatusesQuery = trpc.evaluationValidation.listStatuses.useQuery(
-    { sessionToken, evaluationIds: pagedEvaluationIds },
-    { enabled: !!sessionToken && pagedEvaluationIds.length > 0, refetchOnWindowFocus: false, retry: false },
-  );
-  const validationStatusById = useMemo(() => new Map((validationStatusesQuery.data ?? []).map((entry) => [entry.evaluationId, entry])), [validationStatusesQuery.data]);
   const [validationOpenId, setValidationOpenId] = useState<string | null>(null);
 
   const requestSecondValidation = (item: DashboardItem) => {
@@ -641,6 +648,7 @@ export default function AdminAIEvaluationDashboard() {
             <label className="text-xs font-medium text-slate-600">Statut<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les statuts</option>{options.statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
             <label className="text-xs font-medium text-slate-600">Score IA<select value={scoreFilter} onChange={(event) => setScoreFilter(event.target.value as typeof scoreFilter)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les scores</option><option value="scored">Score disponible</option><option value="pending">Score en attente</option></select></label>
             <label className="text-xs font-medium text-slate-600">Tri<select value={scoreSort} onChange={(event) => setScoreSort(event.target.value as typeof scoreSort)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="default">Priorité de suivi</option><option value="desc">Score décroissant</option><option value="asc">Score croissant</option></select></label>
+            <label className="text-xs font-medium text-slate-600">Validation<select aria-label="Filtrer par état de validation" value={validationFilter} onChange={(event) => setValidationFilter(event.target.value as ValidationFilter)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm">{VALIDATION_FILTERS.map((filter) => <option key={filter} value={filter}>{VALIDATION_FILTER_LABELS[filter]}{validationStatusesQuery.isSuccess || filter === "all" ? ` (${validationCounts[filter]})` : ""}</option>)}</select></label>
           </div>
           <p className="mt-3 text-xs text-slate-500">{visibleItems.length} résultat(s) filtré(s) — page {currentPage} sur {pageCount}. Les exports utilisent toute la sélection filtrée. La file prioritaire regroupe les évaluations nécessitant encore une revue humaine.</p>
         </Card>
@@ -649,7 +657,7 @@ export default function AdminAIEvaluationDashboard() {
 
         {reviewSla && <Card className="mb-8 border-t-4 border-[#C8A451] bg-gradient-to-br from-white to-amber-50/50 p-5 print:hidden"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-800">Pilotage interne</p><h2 className="mt-1 text-xl font-black text-[#0B2A52]">Délais de revue — objectif {reviewSla.targetHours} h</h2><p className="mt-1 text-sm text-slate-600">Indicateurs calculés sur les pré-évaluations ; aucune donnée individuelle n’est affichée ici.</p></div><Badge className={reviewSla.overdue ? "w-fit bg-red-100 text-red-800" : "w-fit bg-emerald-100 text-emerald-800"}>{reviewSla.overdue ? `${reviewSla.overdue} échéance(s) dépassée(s)` : "Aucune échéance dépassée"}</Badge></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"><div className="border-b-2 border-slate-200 pb-2"><p className="text-xs text-slate-500">Reçues</p><p className="mt-1 text-2xl font-black text-slate-900">{reviewSla.received}</p></div><div className="border-b-2 border-amber-300 pb-2"><p className="text-xs text-slate-500">En attente</p><p className="mt-1 text-2xl font-black text-amber-700">{reviewSla.pending}</p></div><div className="border-b-2 border-red-300 pb-2"><p className="text-xs text-slate-500">Dépassées</p><p className="mt-1 text-2xl font-black text-red-700">{reviewSla.overdue}</p></div><div className="border-b-2 border-emerald-300 pb-2"><p className="text-xs text-slate-500">Revues ≤ 24 h</p><p className="mt-1 text-2xl font-black text-emerald-700">{reviewSla.reviewedWithinTarget}</p></div><div className="border-b-2 border-slate-300 pb-2"><p className="text-xs text-slate-500">Taux dans l’objectif</p><p className="mt-1 text-2xl font-black text-[#0B2A52]">{reviewSla.onTimeRate === null ? "—" : `${reviewSla.onTimeRate}%`}</p></div><div className="border-b-2 border-slate-300 pb-2"><p className="text-xs text-slate-500">Délai moyen</p><p className="mt-1 text-2xl font-black text-[#0B2A52]">{reviewSla.averageReviewHours === null ? "—" : `${reviewSla.averageReviewHours} h`}</p></div></div><div className="mt-6"><div className="mb-2 flex items-center justify-between text-xs text-slate-500"><span>Tendance sur 7 jours (UTC)</span><span>Bleu : reçues · Or : revues</span></div><div className="grid h-32 grid-cols-7 items-end gap-2 border-b border-slate-200 px-1">{reviewSla.days.map((day) => <div key={day.day} className="flex h-full min-w-0 flex-col items-center justify-end gap-1"><div className="flex h-24 items-end gap-1"><span title={`${day.received} reçue(s)`} className="w-3 rounded-t bg-[#0B2A52]" style={{ height: `${Math.max(day.received ? 7 : 0, (day.received / reviewSlaMaximum) * 100)}%` }} /><span title={`${day.reviewed} revue(s)`} className="w-3 rounded-t bg-[#C8A451]" style={{ height: `${Math.max(day.reviewed ? 7 : 0, (day.reviewed / reviewSlaMaximum) * 100)}%` }} /></div><span className="text-[10px] text-slate-500">{new Date(`${day.day}T00:00:00Z`).toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "")}</span></div>)}</div></div></Card>}
 
-        {isLoading ? <div className="flex justify-center py-16"><Loader className="h-6 w-6 animate-spin text-blue-600" /></div> : pagedItems.length === 0 ? <p className="py-16 text-center text-gray-500">Aucune évaluation correspondant à ces critères.</p> : <div className="space-y-3">{pagedItems.map((item) => {
+        {isLoading ? <div className="flex justify-center py-16"><Loader className="h-6 w-6 animate-spin text-blue-600" /></div> : pagedItems.length === 0 ? <p className="py-16 text-center text-gray-500">{validationFilter !== "all" && validationStatusesQuery.isLoading ? "Chargement des statuts de validation…" : "Aucune évaluation correspondant à ces critères."}</p> : <div className="space-y-3">{pagedItems.map((item) => {
           const priorityStyle = PRIORITY_STYLES[item.priority] ?? PRIORITY_STYLES.basse;
           const statusOptions = statusOptionsFor(item);
           return <Card key={item.id} className={`flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between ${priorityStyle.border}`}>

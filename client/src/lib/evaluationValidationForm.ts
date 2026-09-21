@@ -1,4 +1,4 @@
-import { SCORE_MAX_TOTAL, nextWorkflowStatus, type AdminEvaluationVersion, type WorkflowStatus } from "@shared/evaluationValidation";
+import { SCORE_MAX_TOTAL, isPublishedStatus, nextWorkflowStatus, type AdminEvaluationVersion, type WorkflowStatus } from "@shared/evaluationValidation";
 
 /** Une ligne par élément : les lignes vides sont ignorées. */
 export const linesToList = (text: string): string[] =>
@@ -50,4 +50,43 @@ export function describeValue(value: unknown, max = 140): string {
   if (value === null || value === undefined || value === "") return "—";
   const text = typeof value === "string" ? value : JSON.stringify(value);
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+// ── Filtre « file d'attente de validation » du tableau de bord administrateur ─────────────────────────────────
+
+export const VALIDATION_FILTERS = ["all", "to_validate", "info_requested", "published", "legacy"] as const;
+export type ValidationFilter = (typeof VALIDATION_FILTERS)[number];
+
+export const VALIDATION_FILTER_LABELS: Record<ValidationFilter, string> = {
+  all: "Toutes les évaluations",
+  to_validate: "À valider",
+  info_requested: "Compléments demandés",
+  published: "Publiées",
+  legacy: "Sans validation structurée",
+};
+
+const TO_VALIDATE: ReadonlySet<WorkflowStatus> = new Set<WorkflowStatus>(["dossier_recu", "attente_validation_admin", "en_revue_admin"]);
+
+/**
+ * Une évaluation correspond-elle au filtre ? `status` est le statut du dossier structuré ; absent (undefined/null) =
+ * évaluation restée sur l'ancien parcours (ou dossier pas encore ouvert).
+ */
+export function matchesValidationFilter(filter: ValidationFilter, status: WorkflowStatus | null | undefined): boolean {
+  if (filter === "all") return true;
+  if (!status) return filter === "legacy";
+  if (filter === "to_validate") return TO_VALIDATE.has(status);
+  if (filter === "info_requested") return status === "informations_complementaires";
+  if (filter === "published") return isPublishedStatus(status);
+  return false;
+}
+
+/** Effectifs affichés à côté de chaque choix du filtre. */
+export function countByValidationFilter(statuses: Array<WorkflowStatus | null | undefined>): Record<ValidationFilter, number> {
+  const counts = { all: statuses.length, to_validate: 0, info_requested: 0, published: 0, legacy: 0 } as Record<ValidationFilter, number>;
+  for (const status of statuses) {
+    for (const filter of VALIDATION_FILTERS) {
+      if (filter !== "all" && matchesValidationFilter(filter, status)) counts[filter] += 1;
+    }
+  }
+  return counts;
 }

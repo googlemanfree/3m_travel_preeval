@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, MailQuestion } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Loader2, MailQuestion } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -41,9 +41,50 @@ export default function CandidateEvaluationStatus({ evaluationId, view, onChange
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">{view.pendingNotice.body}</p>
             </div>
           </div>
+          <PendingProgress />
         </Card>
       )}
       {view.report && <EvaluationReportView report={view.report} />}
+    </div>
+  );
+}
+
+const PENDING_STEPS = [
+  { label: "Dossier reçu", state: "done" },
+  { label: "Vérification par notre équipe", state: "active" },
+  { label: "Évaluation publiée dans votre espace", state: "todo" },
+] as const;
+
+/**
+ * Avancement affiché tant que rien n'est publié : trois étapes et un message de statut clair. Il ne dit rien du
+ * contenu ni de la manière dont l'évaluation est préparée ; les animations s'arrêtent si l'appareil demande de
+ * réduire les mouvements.
+ */
+function PendingProgress() {
+  return (
+    <div className="mt-5" data-testid="evaluation-progress">
+      <ol aria-label="Avancement de votre évaluation" className="grid gap-2 sm:grid-cols-3">
+        {PENDING_STEPS.map((step) => (
+          <li
+            key={step.label}
+            aria-current={step.state === "active" ? "step" : undefined}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${step.state === "active" ? "border-blue-300 bg-white font-semibold text-blue-950" : step.state === "done" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-slate-50 text-slate-500"}`}
+          >
+            {step.state === "done" ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+            ) : step.state === "active" ? (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-700 motion-reduce:animate-none" aria-hidden="true" data-testid="evaluation-progress-spinner" />
+            ) : (
+              <Circle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
+            <span>{step.label}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-3 h-1.5 overflow-hidden rounded bg-blue-100" aria-hidden="true">
+        <div className="h-full w-1/2 animate-pulse rounded bg-blue-600 motion-reduce:animate-none" />
+      </div>
+      <p className="mt-3 text-sm font-medium text-blue-950">Statut : vérification en cours par notre équipe. Vous n’avez rien à faire pour le moment ; vous serez notifié dès la publication de votre évaluation.</p>
     </div>
   );
 }

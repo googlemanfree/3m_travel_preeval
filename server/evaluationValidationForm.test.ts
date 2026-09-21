@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { WORKFLOW_ACTIONS, WORKFLOW_STATUSES, nextWorkflowStatus } from "../shared/evaluationValidation";
-import { availabilityFor, clampScore, describeValue, linesToList, listToLines, parseOptionalTotal, sameVersion } from "../client/src/lib/evaluationValidationForm";
+import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, availabilityFor, clampScore, countByValidationFilter, describeValue, linesToList, listToLines, matchesValidationFilter, parseOptionalTotal, sameVersion } from "../client/src/lib/evaluationValidationForm";
 import { blankAdminVersion } from "../shared/evaluationValidation";
 
 describe("utilitaires du formulaire de validation", () => {
@@ -60,5 +60,38 @@ describe("utilitaires du formulaire de validation", () => {
     expect(describeValue(15)).toBe("15");
     expect(describeValue(["a", "b"])).toBe('["a","b"]');
     expect(describeValue("x".repeat(300), 20)).toHaveLength(20);
+  });
+});
+
+describe("filtre « file d'attente de validation » du tableau de bord", () => {
+  it("classe chaque statut du workflow dans exactement un choix (hors « toutes »)", () => {
+    for (const status of WORKFLOW_STATUSES) {
+      const matching = VALIDATION_FILTERS.filter((filter) => filter !== "all" && matchesValidationFilter(filter, status));
+      expect(matching, status).toHaveLength(1);
+    }
+    expect(WORKFLOW_STATUSES.filter((status) => matchesValidationFilter("to_validate", status))).toEqual(["dossier_recu", "attente_validation_admin", "en_revue_admin"]);
+    expect(WORKFLOW_STATUSES.filter((status) => matchesValidationFilter("info_requested", status))).toEqual(["informations_complementaires"]);
+    expect(WORKFLOW_STATUSES.filter((status) => matchesValidationFilter("published", status))).toEqual(["validee_publiee", "validee_publiee_notifiee"]);
+  });
+
+  it("une évaluation sans dossier structuré n'est « à valider » qu'à l'ancienne façon : seulement dans « sans validation structurée »", () => {
+    for (const missing of [undefined, null]) {
+      expect(matchesValidationFilter("legacy", missing)).toBe(true);
+      expect(matchesValidationFilter("all", missing)).toBe(true);
+      for (const filter of ["to_validate", "info_requested", "published"] as const) expect(matchesValidationFilter(filter, missing), filter).toBe(false);
+    }
+    expect(matchesValidationFilter("legacy", "en_revue_admin")).toBe(false);
+  });
+
+  it("compte les évaluations par choix, et la somme des choix (hors « toutes ») égale le total", () => {
+    const counts = countByValidationFilter(["dossier_recu", "attente_validation_admin", "en_revue_admin", "informations_complementaires", "validee_publiee", "validee_publiee_notifiee", undefined, undefined, null]);
+    expect(counts).toEqual({ all: 9, to_validate: 3, info_requested: 1, published: 2, legacy: 3 });
+    expect(counts.to_validate + counts.info_requested + counts.published + counts.legacy).toBe(counts.all);
+    expect(countByValidationFilter([])).toEqual({ all: 0, to_validate: 0, info_requested: 0, published: 0, legacy: 0 });
+  });
+
+  it("a un libellé français pour chaque choix", () => {
+    for (const filter of VALIDATION_FILTERS) expect(VALIDATION_FILTER_LABELS[filter].length, filter).toBeGreaterThan(3);
+    expect(VALIDATION_FILTER_LABELS.to_validate).toBe("À valider");
   });
 });

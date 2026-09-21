@@ -123,7 +123,7 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
     ),
 
     /** Statuts de workflow d'une liste d'évaluations (pastilles du tableau de bord). Vide tant que la migration n'est pas appliquée. */
-    listStatuses: publicProcedure.input(z.object({ sessionToken: z.string().min(1), evaluationIds: z.array(evaluationId).max(200) })).query(({ input }) =>
+    listStatuses: publicProcedure.input(z.object({ sessionToken: z.string().min(1), evaluationIds: z.array(evaluationId).max(500) })).query(({ input }) =>
       guard(async () => {
         await ports.requireAdmin(input.sessionToken);
         try {
