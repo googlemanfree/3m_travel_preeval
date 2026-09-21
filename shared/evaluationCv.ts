@@ -5,6 +5,9 @@
 
 export const CV_MAX_BYTES = 5 * 1024 * 1024;
 
+/** Longueur maximale d'un CV de 5 Mo une fois encodé en base64 (+ marge pour un préfixe « data: »). */
+export const CV_MAX_BASE64_LENGTH = Math.ceil((CV_MAX_BYTES * 4) / 3) + 200;
+
 export const CV_ACCEPTED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"] as const;
 export type CvMimeType = (typeof CV_ACCEPTED_MIME_TYPES)[number];
 
@@ -15,6 +18,7 @@ export const CV_MISSING_FOR_PUBLICATION = "L’évaluation ne peut pas être pub
 export const CV_FORMAT_MESSAGE = "Le CV doit être au format PDF, JPG ou PNG.";
 export const CV_TOO_LARGE_MESSAGE = "Le CV ne doit pas dépasser 5 Mo.";
 export const CV_EMPTY_MESSAGE = "Le fichier du CV est vide.";
+export const CV_NOT_STORED_MESSAGE = "Votre évaluation est enregistrée, mais votre CV n’a pas pu être enregistré. Ajoutez-le depuis votre espace candidat : elle ne peut pas être finalisée sans lui.";
 
 const EXTENSION_TO_MIME: Record<string, CvMimeType> = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };
 

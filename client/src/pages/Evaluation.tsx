@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
-import { CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
+import { CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
@@ -492,6 +492,12 @@ export default function Evaluation() {
             <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm text-blue-900" role="status" aria-live="polite">
               <strong>Prochaine étape :</strong> surveillez votre boîte email et votre espace candidat pour consulter votre rapport.
             </div>
+            {submitMutation.data?.cvStored === false && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-800" role="alert" data-testid="cv-not-stored">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{CV_NOT_STORED_MESSAGE}</span>
+              </div>
+            )}
             {submitMutation.data?.emailSent ? (
               <div className="mt-3 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-left text-sm text-green-800" role="status">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />

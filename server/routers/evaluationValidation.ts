@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { evaluations } from "../../drizzle/schema";
-import { CV_MAX_BYTES, checkCvUpload, safeCvFileName } from "../../shared/evaluationCv";
+import { CV_MAX_BASE64_LENGTH, checkCvUpload, safeCvFileName } from "../../shared/evaluationCv";
 import { AdminEvaluationVersionSchema, ClientTextViolationError, SensitiveDataError, WORKFLOW_STATUS_LABELS } from "../../shared/evaluationValidation";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -113,9 +113,6 @@ export const productionPorts: ValidationRouterPorts = {
     return Boolean(row);
   },
 };
-
-/** Longueur maximale d'un CV de 5 Mo une fois encodé en base64 (+ marge pour un préfixe « data: »). */
-const CV_MAX_BASE64_LENGTH = Math.ceil((CV_MAX_BYTES * 4) / 3) + 200;
 
 const evaluationId = z.number().int().positive();
 const adminInput = z.object({ sessionToken: z.string().min(1), evaluationId });

@@ -1,5 +1,22 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CV_ACCEPTED_MIME_TYPES, CV_MAX_BYTES, checkCvUpload, cvMimeFromName, cvProblemForFile, detectCvMime, safeCvFileName } from "../shared/evaluationCv";
+import { CV_ACCEPTED_MIME_TYPES, CV_MAX_BASE64_LENGTH, CV_MAX_BYTES, checkCvUpload, cvMimeFromName, cvProblemForFile, detectCvMime, safeCvFileName } from "../shared/evaluationCv";
+
+describe("CV : limite de la soumission du formulaire", () => {
+  it("laisse passer un CV de 5 Mo (préfixe « data: » compris) dans la borne du schéma, et refuse au-delà", () => {
+    const encoded = `data:application/pdf;base64,${Buffer.alloc(CV_MAX_BYTES).toString("base64")}`;
+    expect(encoded.length).toBeLessThanOrEqual(CV_MAX_BASE64_LENGTH);
+    expect(CV_MAX_BASE64_LENGTH).toBeGreaterThan(2_000_000); // l'ancienne borne rejetait tout CV de plus d'environ 1,5 Mo
+    expect(Buffer.alloc(CV_MAX_BYTES + 1024).toString("base64").length).toBeGreaterThan(CV_MAX_BASE64_LENGTH);
+  });
+
+  it("est bien utilisée par la procédure de soumission, qui signale un CV non enregistré", () => {
+    const source = readFileSync(new URL("./routers/evaluation.ts", import.meta.url), "utf8");
+    expect(source).toMatch(/cvBase64: z\.string\(\)\.max\(CV_MAX_BASE64_LENGTH\)\.optional\(\)/);
+    expect(source).not.toMatch(/cvBase64: z\.string\(\)\.max\(2000000\)/);
+    expect(source).toMatch(/cvStored: Boolean\(cvFileUrl\)/);
+  });
+});
 
 const PDF = [0x25, 0x50, 0x44, 0x46, 0x2d, 0x31];
 const JPEG = [0xff, 0xd8, 0xff, 0xe0];

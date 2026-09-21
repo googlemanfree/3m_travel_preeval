@@ -4,6 +4,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
+import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { sendEvaluationReceptionEmail } from "../emailService";
@@ -119,8 +120,9 @@ const evaluationInput = z.object({
   familyAbroad: z.boolean().optional(),
   // Message
   message: z.string().max(4000).optional(),
-  // CV en base64 (optionnel)
-  cvBase64: z.string().max(2000000).optional(),
+  // CV en base64 : 5 Mo maximum une fois décodé (le formulaire annonce cette limite ; l'ancienne borne de 2 Mo d'encodage
+  // rejetait tout CV de plus d'environ 1,5 Mo). Sans CV, l'évaluation ne peut pas être publiée.
+  cvBase64: z.string().max(CV_MAX_BASE64_LENGTH).optional(),
   cvFileName: z.string().max(255).optional(),
   cvMimeType: z.string().max(100).optional(),
   // Attribution de campagne pour relier l’entrée Facebook/WhatsApp au dossier
@@ -380,8 +382,8 @@ export const evaluationRouter = router({
           cvFileUrl = url;
           cvFileName = input.cvFileName;
         } catch (err) {
-          console.error("[Evaluation] CV upload failed:", err);
-          // On continue sans le CV si l'upload échoue
+          logger.error("evaluation.cv_upload.failed", {}, err);
+          // L'évaluation est créée malgré tout ; `cvStored: false` en informe le candidat, qui peut redéposer son CV dans son espace.
         }
       }
 
@@ -514,7 +516,7 @@ export const evaluationRouter = router({
         await db.update(evaluations).set({ receiptSentAt: new Date() }).where(eq(evaluations.id, evaluationId));
       }
 
-      return { success: true, message: "Votre évaluation est reçue et placée en revue humaine.", emailSent, dossierCode, reviewDeadline };
+      return { success: true, message: "Votre évaluation est reçue et placée en revue humaine.", emailSent, dossierCode, reviewDeadline, cvStored: Boolean(cvFileUrl) };
     }),
 
   /** Évaluations du candidat connecté : uniquement les éléments de suivi
