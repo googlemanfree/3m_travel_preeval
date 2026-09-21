@@ -41,10 +41,10 @@ const evaluationDraftSchema = z.object({
   sourceRecordId: z.number().int().positive(),
   destination: z.enum(evaluationDestinations),
   finalScore: z.number().int().min(0).max(100),
-  verdict: z.string().trim().min(2).max(500),
+  verdict: z.string().trim().max(500),
   strengths: z.array(z.string().trim().min(2).max(500)).max(6),
   weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
-  recommendations: z.array(z.string().trim().min(2).max(800)).min(1).max(8),
+  recommendations: z.array(z.string().trim().min(2).max(800)).max(8),
   message: z.string().trim().max(12000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
@@ -675,16 +675,6 @@ initializeEvaluationDelivery: publicProcedure
       };
     }),
 
-  listEvaluationDeliveryHistory: publicProcedure
-    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
-    .query(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const rows = await db.select({ id: evaluationEmails.id, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, createdAt: evaluationEmails.createdAt, reportContent: evaluationEmails.reportContent, candidateEmail: evaluationEmails.candidateEmail, emailType: evaluationEmails.emailType, failureReason: evaluationEmails.failureReason }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, input.sourceRecordId)).orderBy(desc(evaluationEmails.createdAt)).limit(30);
-      return rows.map((row) => ({ ...row, contentText: row.reportContent ? richTextToPlainText(row.reportContent) : "", reportContent: undefined }));
-    }),
-
   previewEvaluationDeliveryPdf: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
@@ -898,6 +888,37 @@ initializeEvaluationDelivery: publicProcedure
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }
       return { success: true, dossierNumber: application.dossierNumber, message: "Bilan validé et envoyé immédiatement dans l’espace client et par e-mail." };
     }),
+  listEvaluationDeliveryHistory: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select({ id: evaluationEmails.id, evaluationId: evaluationEmails.evaluationId, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, createdAt: evaluationEmails.createdAt, reportContent: evaluationEmails.reportContent, candidateEmail: evaluationEmails.candidateEmail, candidateName: evaluationEmails.candidateName, destinationCountry: evaluationEmails.destinationCountry, visaType: evaluationEmails.visaType, emailType: evaluationEmails.emailType, failureReason: evaluationEmails.failureReason }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, input.sourceRecordId)).orderBy(desc(evaluationEmails.createdAt)).limit(30);
+      return rows.map((row) => ({ ...row, contentText: row.reportContent ? richTextToPlainText(row.reportContent) : "", reportContent: undefined }));
+    }),
+
+  resendEvaluationHistory: publicProcedure
+    .input(sessionInput.extend({ emailId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const row = (await db.select().from(evaluationEmails).where(eq(evaluationEmails.id, input.emailId)).limit(1))[0];
+      if (!row?.reportContent) throw new TRPCError({ code: "NOT_FOUND", message: "Le contenu de ce bilan historique n’est plus disponible." });
+      const subject = `Rappel de votre bilan d’évaluation - 3M Travel`;
+      const inserted = await db.insert(evaluationEmails).values({ evaluationId: row.evaluationId, candidateEmail: row.candidateEmail, candidateName: row.candidateName, destinationCountry: row.destinationCountry, visaType: row.visaType, emailType: "follow_up", language: row.language, scheduledAt: new Date(), status: "pending", reportContent: row.reportContent, secureLink: row.secureLink });
+      const trackingId = Number((inserted as any)[0]?.insertId ?? 0);
+      try {
+        await sendEmail({ to: row.candidateEmail, subject, html: row.reportContent });
+        if (trackingId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date() }).where(eq(evaluationEmails.id, trackingId));
+        return { success: true, message: `Bilan renvoyé à ${row.candidateEmail}.`, actor: admin.email };
+      } catch (error) {
+        if (trackingId > 0) await db.update(evaluationEmails).set({ status: "failed", failureReason: error instanceof Error ? error.message : String(error) }).where(eq(evaluationEmails.id, trackingId));
+        throw error;
+      }
+    }),
+
 
   listUnviewedEvaluationReports: publicProcedure
     .input(sessionInput)
