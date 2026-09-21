@@ -1,10 +1,12 @@
 import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { injectBuildMarker, resolveBuildMarker } from "./server/publicBuildMarker";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,6 +152,22 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
+// Pose le commit compilé dans la balise 3m-build-marker de index.html : c'est le témoin qui
+// permet de vérifier, sur n'importe quelle page en ligne, quel commit a réellement été publié.
+// Sans git ni PUBLIC_BUILD_MARKER, la balise garde sa valeur d'origine.
+function buildMarkerPlugin(): Plugin {
+  let marker: string | undefined | null = null;
+  const readGitCommit = () =>
+    execFileSync("git", ["rev-parse", "--short=8", "HEAD"], { cwd: PROJECT_ROOT, stdio: ["ignore", "pipe", "ignore"], timeout: 5000 }).toString();
+  return {
+    name: "3m-build-marker",
+    transformIndexHtml(html) {
+      if (marker === null) marker = resolveBuildMarker(process.env, readGitCommit);
+      return marker ? injectBuildMarker(html, marker) : html;
+    },
+  };
+}
+
 // Les métadonnées de localisation JSX et le collecteur navigateur sont utiles au
 // développement, mais augmentent fortement la mémoire de Rollup sans rien
 // apporter au bundle publié. Les exclure en production évite de réutiliser un
@@ -159,6 +177,7 @@ const plugins = [
   react(),
   tailwindcss(),
   vitePluginManusRuntime(),
+  buildMarkerPlugin(),
   ...(!isProductionBuild ? [jsxLocPlugin(), vitePluginManusDebugCollector()] : []),
 ];
 
