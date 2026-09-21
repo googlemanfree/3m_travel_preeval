@@ -12,8 +12,10 @@ describe("candidate evaluation visibility", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/components/EvaluationDeliveryEditor.tsx"), "utf8");
     expect(source).toContain("Envoyer");
     expect(source).toContain("e-mail");
-    expect(source).toContain('id="candidate-bilan-message"');
+    expect(source).toContain('data-testid="candidate-bilan-editor"');
     expect(source).toContain("Bilan à envoyer au candidat");
-    expect(source).not.toContain("<RichTextEditor");
+    expect(source).toContain("<RichTextEditor");
+    expect(source).toContain("Enregistrer le brouillon");
+    expect(source).toContain("Aperçu espace candidat");
   });
 });
