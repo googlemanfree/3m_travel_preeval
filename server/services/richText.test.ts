@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { richTextToPlainText, sanitizeRichTextHtml } from "./richText";
+import { normalizeAdminMessage, richTextToPlainText, sanitizeRichTextHtml } from "./richText";
 
 describe("richText", () => {
   it("conserve seulement les balises de mise en forme autorisées", () => {
@@ -26,5 +26,11 @@ describe("richText", () => {
 
   it("produit une version texte compatible avec notifications et historique", () => {
     expect(richTextToPlainText("<p>Bonjour <strong>candidat</strong></p><ul><li>Document</li></ul>")).toContain("Bonjour candidat");
+  });
+
+  it("transforme une saisie texte admin en paragraphes sûrs pour l’espace candidat et l’e-mail", () => {
+    const html = normalizeAdminMessage("Bonjour candidat\n\nVotre bilan est disponible.");
+    expect(html).toBe("<p>Bonjour candidat</p><p>Votre bilan est disponible.</p>");
+    expect(normalizeAdminMessage("<script>alert(1)</script><p>Message</p>")).not.toContain("script");
   });
 });

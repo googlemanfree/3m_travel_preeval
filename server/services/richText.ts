@@ -24,6 +24,14 @@ export function sanitizeRichTextHtml(value: string) {
   }).trim();
 }
 
+export function normalizeAdminMessage(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/<\/?[a-z][^>]*>/i.test(trimmed)) return sanitizeRichTextHtml(trimmed);
+  const escaped = trimmed.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return escaped.split(/\n\s*\n/).map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br>")}</p>`).join("");
+}
+
 export function richTextToPlainText(value: string) {
   return decodeEntities(value
     .replace(/<\s*br\s*\/?>/gi, "\n")

@@ -30,7 +30,7 @@ import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
 import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
-import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
+import { normalizeAdminMessage, richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 
@@ -758,7 +758,7 @@ initializeEvaluationDelivery: publicProcedure
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
-      const messageHtml = input.message ? sanitizeRichTextHtml(input.message) : null;
+      const messageHtml = input.message ? normalizeAdminMessage(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
       if (input.message && messagePlainText.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Le message d’accompagnement doit contenir au moins trois caractères lisibles." });
       const updatedApplication = { ...application, destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
@@ -1029,4 +1029,3 @@ initializeEvaluationDelivery: publicProcedure
       return { generatedAt: now, total: rows.length, rows };
     }),
 });
-
