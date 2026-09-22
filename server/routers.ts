@@ -88,7 +88,10 @@ import { ambassadorRouter } from "./routers/ambassador";
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
 import { applicationRouter as applicationRouterNew } from "./routers/applicationRouter";
-import { evaluationRouter as evaluationRouterNew } from "./routers/evaluationRouter";
+// evaluationRouterNew (routers/evaluationRouter.ts, ex-`evaluationV2`) a été RETIRÉ : `create` était public,
+// sans authentification ni consentement, et insérait dans la même table `evaluations` que le vrai parcours
+// (évaluation IA à validation administrateur), sans CV, sans code dossier, sans limite de débit — sans que
+// rien côté client ni serveur ne l'appelle jamais. Le candidat crée son évaluation via `evaluation.submit`.
 
 export const appRouter = router({
   // Système et authentification
@@ -185,8 +188,7 @@ export const appRouter = router({
   // Nouveaux routeurs créés (versions simplifiées)
   candidateV2: candidateRouterNew,
   applicationV2: applicationRouterNew,
-  evaluationV2: evaluationRouterNew,
-  
+
   // Réinitialisation de mot de passe
   adminPasswordReset: adminPasswordResetRouter,
   
