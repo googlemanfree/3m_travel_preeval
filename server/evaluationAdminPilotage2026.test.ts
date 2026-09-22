@@ -118,6 +118,10 @@ describe("reprise et aperçu du bilan", () => {
     expect(page).toContain("trpc.admin.getBilanViewStatuses.useQuery");
     expect(page).toContain("Non consulté");
     expect(page).toContain("Ouvrir le dossier");
+    expect(page).toContain("Non consultés uniquement");
+    expect(page).toContain("sendEvaluationReminder");
+    expect(page).toContain("Nouveau");
+    expect(adminRouter).toContain("evaluationReportReminderSentAt");
   });
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
     const router = read("server/routers/unifiedRequests.ts");

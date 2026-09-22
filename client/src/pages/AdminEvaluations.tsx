@@ -18,6 +18,7 @@ export default function AdminEvaluations() {
   const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [viewFilter, setViewFilter] = useState<"all" | "unviewed" | "viewed">("all");
 
   // Vérifier qu'une session admin existe
   useEffect(() => {
@@ -37,10 +38,11 @@ export default function AdminEvaluations() {
     { sessionToken },
     { enabled: !!sessionToken }
   );
-  const { data: bilanViewStatuses = [], isLoading: isLoadingViewStatuses } = trpc.admin.getBilanViewStatuses.useQuery(
+  const bilanViewStatusesQuery = trpc.admin.getBilanViewStatuses.useQuery(
     { sessionToken },
     { enabled: !!sessionToken, refetchInterval: 30_000 }
   );
+  const { data: bilanViewStatuses = [], isLoading: isLoadingViewStatuses } = bilanViewStatusesQuery;
 
   // Mutation pour publier le bilan
   const publishBilanMutation = trpc.admin.publishBilanToClient.useMutation({
@@ -79,6 +81,12 @@ export default function AdminEvaluations() {
   const applications = applicationsData || [];
   const viewedBilanCount = bilanViewStatuses.filter((item: any) => Boolean(item.viewedAt)).length;
   const unviewedBilanCount = bilanViewStatuses.length - viewedBilanCount;
+  const recentlyViewedBilanCount = bilanViewStatuses.filter((item: any) => item.viewedAt && Date.now() - new Date(item.viewedAt).getTime() <= 7 * 24 * 60 * 60 * 1000).length;
+  const reminderMutation = trpc.unifiedRequests.sendEvaluationReminder.useMutation({
+    onSuccess: async (result) => { toast.success(result.message); await bilanViewStatusesQuery.refetch(); },
+    onError: (error) => toast.error(error.message),
+  });
+  const visibleBilanViewStatuses = bilanViewStatuses.filter((item: any) => viewFilter === "all" || (viewFilter === "unviewed" ? !item.viewedAt : Boolean(item.viewedAt)));
 
   // Filtrer les bilans
   const filteredBilans = (bilans as any[]).filter((bilan: any) => {
@@ -175,16 +183,17 @@ export default function AdminEvaluations() {
                 <CardTitle className="flex items-center gap-2 text-indigo-950"><Eye className="h-5 w-5" />Suivi de consultation des bilans</CardTitle>
                 <p className="mt-1 text-sm text-indigo-800">Vérifiez si le candidat a ouvert son bilan dans son espace personnel.</p>
               </div>
-              <div className="flex items-center gap-2 text-xs font-semibold"><Badge className="bg-emerald-100 text-emerald-800">{viewedBilanCount} consulté(s)</Badge><Badge className="bg-amber-100 text-amber-800">{unviewedBilanCount} non consulté(s)</Badge></div>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold"><Badge className="bg-emerald-100 text-emerald-800">{viewedBilanCount} consulté(s)</Badge><Badge className="bg-amber-100 text-amber-800">{unviewedBilanCount} non consulté(s)</Badge>{recentlyViewedBilanCount > 0 && <Badge className="bg-indigo-100 text-indigo-800"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-indigo-500" />{recentlyViewedBilanCount} récent(s)</Badge>}</div>
             </div>
           </CardHeader>
           <CardContent>
-            {isLoadingViewStatuses ? <p className="text-sm text-indigo-700">Actualisation du suivi…</p> : bilanViewStatuses.length === 0 ? <p className="text-sm text-indigo-700">Aucun bilan envoyé avec PDF n’est disponible pour le suivi.</p> : <div className="space-y-2">
-              {bilanViewStatuses.slice(0, 8).map((item: any) => <div key={item.applicationId} className="flex flex-col gap-3 rounded-lg border border-indigo-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-3 flex flex-wrap items-center gap-2"><span className="text-xs font-semibold text-indigo-950">Afficher :</span><select aria-label="Filtrer les consultations de bilan" value={viewFilter} onChange={(event) => setViewFilter(event.target.value as typeof viewFilter)} className="rounded-md border border-indigo-200 bg-white px-3 py-1.5 text-sm text-slate-700"><option value="all">Tous les bilans</option><option value="unviewed">Non consultés uniquement</option><option value="viewed">Déjà consultés</option></select></div>
+            {isLoadingViewStatuses ? <p className="text-sm text-indigo-700">Actualisation du suivi…</p> : visibleBilanViewStatuses.length === 0 ? <p className="text-sm text-indigo-700">Aucun bilan ne correspond à ce filtre.</p> : <div className="space-y-2">
+              {visibleBilanViewStatuses.slice(0, 8).map((item: any) => <div key={item.applicationId} className={`flex flex-col gap-3 rounded-lg border bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between ${item.viewedAt && Date.now() - new Date(item.viewedAt).getTime() <= 7 * 24 * 60 * 60 * 1000 ? "border-indigo-300 ring-1 ring-indigo-100" : "border-indigo-100"}`}>
                 <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.candidateName || "Candidat"} <span className="font-normal text-slate-500">· {item.dossierNumber}</span></p><p className="text-xs text-slate-500">Envoyé le {item.sentAt ? new Date(item.sentAt).toLocaleString("fr-FR") : "date inconnue"}</p></div>
-                <div className="flex flex-wrap items-center gap-2">{item.viewedAt ? <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Consulté le {new Date(item.viewedAt).toLocaleString("fr-FR")}</Badge> : <Badge className="bg-amber-100 text-amber-800"><Clock className="mr-1 h-3.5 w-3.5" />Non consulté</Badge>}<Button size="sm" variant="outline" className="gap-1 border-indigo-200 text-indigo-800 hover:bg-indigo-50" onClick={() => setLocation(`/admin/agency-dossiers?search=${encodeURIComponent(item.candidateEmail || item.dossierNumber)}`)}><FolderOpen className="h-3.5 w-3.5" />Ouvrir le dossier</Button></div>
+                <div className="flex flex-wrap items-center gap-2">{item.viewedAt ? <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Consulté le {new Date(item.viewedAt).toLocaleString("fr-FR")}{Date.now() - new Date(item.viewedAt).getTime() <= 7 * 24 * 60 * 60 * 1000 && <span className="ml-1 rounded-full bg-indigo-500 px-1.5 py-0.5 text-[10px] text-white">Nouveau</span>}</Badge> : <><Badge className="bg-amber-100 text-amber-800"><Clock className="mr-1 h-3.5 w-3.5" />Non consulté</Badge><Button size="sm" variant="outline" className="gap-1 border-amber-300 text-amber-800 hover:bg-amber-50" onClick={() => reminderMutation.mutate({ sessionToken, applicationId: item.applicationId })} disabled={reminderMutation.isPending}><Mail className="h-3.5 w-3.5" />{reminderMutation.isPending ? "Envoi…" : "Relancer"}</Button></>}<Button size="sm" variant="outline" className="gap-1 border-indigo-200 text-indigo-800 hover:bg-indigo-50" onClick={() => setLocation(`/admin/agency-dossiers?search=${encodeURIComponent(item.candidateEmail || item.dossierNumber)}`)}><FolderOpen className="h-3.5 w-3.5" />Ouvrir le dossier</Button></div>
               </div>)}
-              {bilanViewStatuses.length > 8 && <p className="pt-1 text-xs text-indigo-700">{bilanViewStatuses.length - 8} autre(s) bilan(s) suivi(s) dans la liste complète.</p>}
+              {visibleBilanViewStatuses.length > 8 && <p className="pt-1 text-xs text-indigo-700">{visibleBilanViewStatuses.length - 8} autre(s) bilan(s) correspondant au filtre.</p>}
             </div>}
           </CardContent>
         </Card>

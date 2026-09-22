@@ -1109,6 +1109,7 @@ export const adminRouter = router({
         candidateEmail: applications.email,
         sentAt: applications.evaluationCompletedAt,
         viewedAt: applications.evaluationReportViewedAt,
+        reminderSentAt: applications.evaluationReportReminderSentAt,
       })
         .from(applications)
         .where(and(eq(applications.evaluationDeliveryStatus, "sent"), isNotNull(applications.evaluationReportPdfUrl)))
