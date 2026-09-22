@@ -487,8 +487,8 @@ export function AdminTourismRequests() {
 
             <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setSelectedRequest(null)}>Fermer</Button>
-              <Button onClick={() => updateDetails.mutate({ id: selectedRequest.id, quotedPriceXaf: quotedPrice ? Number(quotedPrice) : undefined, adminNotes: adminNotes || undefined, sessionToken })} className="bg-blue-700 text-white hover:bg-blue-800">
-                Enregistrer le devis & les notes
+              <Button onClick={() => updateDetails.mutate({ id: selectedRequest.id, quotedPriceXaf: quotedPrice ? Number(quotedPrice) : undefined, adminNotes: adminNotes || undefined, sessionToken })} disabled={updateDetails.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
+                {updateDetails.isPending ? "Enregistrement…" : "Enregistrer le devis & les notes"}
               </Button>
             </DialogFooter>
           </DialogContent>

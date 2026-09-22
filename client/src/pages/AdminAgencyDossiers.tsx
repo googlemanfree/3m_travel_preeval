@@ -658,11 +658,11 @@ export default function AdminAgencyDossiers() {
                                   <StickyNote className="w-4 h-4" />
                                 </Button>
                                 {showTrash ? (
-                                  <Button size="icon" variant="ghost" onClick={() => { const reason = window.prompt("Motif de restauration du dossier :"); if (reason?.trim()) restoreMutation.mutate({ dossierId: d.id, reason: reason.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/10" title="Restaurer" aria-label={`Restaurer le dossier de ${d.fullName}`}>
+                                  <Button size="icon" variant="ghost" disabled={restoreMutation.isPending} onClick={() => { const reason = window.prompt("Motif de restauration du dossier :"); if (reason?.trim()) restoreMutation.mutate({ dossierId: d.id, reason: reason.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/10" title="Restaurer" aria-label={`Restaurer le dossier de ${d.fullName}`}>
                                     <RotateCcw className="w-4 h-4" />
                                   </Button>
                                 ) : (
-                                  <Button size="icon" variant="ghost" onClick={() => { const message = window.prompt("Message de relance au candidat :"); if (message?.trim()) reminderMutation.mutate({ dossierId: d.id, message: message.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-cyan-300 hover:bg-cyan-400/10" title="Envoyer une relance" aria-label={`Envoyer une relance à ${d.fullName}`}>
+                                  <Button size="icon" variant="ghost" disabled={reminderMutation.isPending} onClick={() => { const message = window.prompt("Message de relance au candidat :"); if (message?.trim()) reminderMutation.mutate({ dossierId: d.id, message: message.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-cyan-300 hover:bg-cyan-400/10" title="Envoyer une relance" aria-label={`Envoyer une relance à ${d.fullName}`}>
                                     <Bell className="w-4 h-4" />
                                   </Button>
                                 )}

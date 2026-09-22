@@ -280,6 +280,7 @@ export default function AdminMediaLibrary() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={removeMutation.isPending}
                     onClick={() => {
                       if (confirm(`Voulez-vous vraiment supprimer "${item.title}" ?`)) {
                         removeMutation.mutate({ id: item.id });

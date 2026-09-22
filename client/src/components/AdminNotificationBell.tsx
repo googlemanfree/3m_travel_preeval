@@ -67,7 +67,8 @@ export default function AdminNotificationBell() {
             <button
               type="button"
               onClick={() => markAllAsRead.mutate({ sessionToken })}
-              className="text-xs text-blue-600 hover:underline"
+              disabled={markAllAsRead.isPending}
+              className="text-xs text-blue-600 hover:underline disabled:opacity-50"
             >
               Tout marquer comme lu
             </button>
@@ -96,8 +97,9 @@ export default function AdminNotificationBell() {
                     <button
                       type="button"
                       onClick={() => markAsRead.mutate({ sessionToken, notificationId: n.id })}
+                      disabled={markAsRead.isPending}
                       aria-label="Marquer comme lu"
-                      className="flex-shrink-0 text-gray-300 hover:text-blue-600"
+                      className="flex-shrink-0 text-gray-300 hover:text-blue-600 disabled:opacity-50"
                     >
                       <X className="w-4 h-4" />
                     </button>

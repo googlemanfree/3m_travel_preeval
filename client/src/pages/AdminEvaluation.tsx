@@ -212,9 +212,10 @@ export default function AdminEvaluation() {
                       retryReportMutation.mutate({ reportId: selectedReport.reportId });
                       setSelectedReport(null);
                     }}
+                    disabled={retryReportMutation.isPending}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
-                    Retenter l'envoi
+                    {retryReportMutation.isPending ? 'Envoi…' : "Retenter l'envoi"}
                   </Button>
                 </div>
               </div>
