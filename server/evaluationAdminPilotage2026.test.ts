@@ -109,6 +109,16 @@ describe("reprise et aperçu du bilan", () => {
     expect(router).toContain("orderBy(desc(applications.createdAt)).limit(1)");
   });
 
+  it("expose le statut de consultation du bilan et un raccourci vers le dossier", () => {
+    const adminRouter = read("server/routers/admin.ts");
+    const page = read("client/src/pages/AdminEvaluations.tsx");
+    expect(adminRouter).toContain("getBilanViewStatuses: publicProcedure");
+    expect(adminRouter).toContain("evaluationReportViewedAt");
+    expect(adminRouter).toContain('evaluationDeliveryStatus, "sent"');
+    expect(page).toContain("trpc.admin.getBilanViewStatuses.useQuery");
+    expect(page).toContain("Non consulté");
+    expect(page).toContain("Ouvrir le dossier");
+  });
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
     const router = read("server/routers/unifiedRequests.ts");
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
@@ -123,4 +133,3 @@ describe("reprise et aperçu du bilan", () => {
     expect(editor).not.toContain("isLoading || isFetching ?");
   });
 });
-

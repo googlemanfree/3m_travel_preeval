@@ -1095,6 +1095,27 @@ export const adminRouter = router({
       }
     }),
 
+  /** Suivi des bilans envoyés : indique si le candidat a ouvert son bilan. */
+  getBilanViewStatuses: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db.select({
+        applicationId: applications.id,
+        dossierNumber: applications.dossierNumber,
+        candidateName: applications.fullName,
+        candidateEmail: applications.email,
+        sentAt: applications.evaluationCompletedAt,
+        viewedAt: applications.evaluationReportViewedAt,
+      })
+        .from(applications)
+        .where(and(eq(applications.evaluationDeliveryStatus, "sent"), isNotNull(applications.evaluationReportPdfUrl)))
+        .orderBy(desc(applications.evaluationCompletedAt))
+        .limit(100);
+    }),
+
   /**
    * Valider et envoyer un bilan au candidat
    */
