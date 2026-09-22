@@ -534,7 +534,6 @@ export default function EvaluationSpace() {
                   <p className="mt-3 text-xs leading-5 text-violet-800">{evaluationStatusDetail}</p>
                   {reviewDueLabel && <p className="mt-2 text-xs font-semibold text-violet-900">Revue estimée au plus tard le {reviewDueLabel}</p>}
                   {validatedEvaluationResponse && <p className="mt-2 text-xs font-semibold text-emerald-800">Réponse validée par l’agence.</p>}
-                  {latestEvaluation?.finalReviewedAt && latestEvaluation?.finalReviewedBy && <p className="mt-2 text-xs text-slate-600">Validée le {new Date(latestEvaluation.finalReviewedAt).toLocaleString("fr-FR")} par <span className="font-semibold text-slate-800">{latestEvaluation.finalReviewedBy}</span>.</p>}
                 </Card>
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">

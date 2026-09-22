@@ -541,12 +541,10 @@ export const evaluationRouter = router({
       receiptSentAt: evaluation.receiptSentAt,
       reviewDeadline: evaluation.reviewDeadline,
       reviewedAt: evaluation.reviewedAt,
-      reviewedBy: evaluation.reviewedBy,
+      // Ni reviewedBy, ni secondReviewedBy : ce sont des adresses e-mail internes à l'agence, jamais dues au candidat.
       secondReviewRequired: evaluation.secondReviewRequired,
       secondReviewedAt: evaluation.secondReviewedAt,
-      secondReviewedBy: evaluation.secondReviewedBy,
       finalReviewedAt: evaluation.secondReviewRequired ? evaluation.secondReviewedAt : evaluation.reviewedAt,
-      finalReviewedBy: evaluation.secondReviewRequired ? evaluation.secondReviewedBy : evaluation.reviewedBy,
       finalResponseSentAt: evaluation.finalResponseSentAt,
       reviewDraft: evaluation.finalResponseSentAt && (!evaluation.secondReviewRequired || evaluation.secondReviewedAt) ? evaluation.reviewDraft : null,
     }));
