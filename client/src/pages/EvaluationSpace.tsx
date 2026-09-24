@@ -43,6 +43,8 @@ import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
+import NextStepCard from "@/components/NextStepCard";
+import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 
 export default function EvaluationSpace() {
@@ -379,6 +381,19 @@ export default function EvaluationSpace() {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
   };
+  const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
+  const nextStep = computeNextStep({
+    evaluationRequired,
+    evaluationStage: structuredStage,
+    cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
+    agreementSignatureRequired: agreementAfterPaymentRequired,
+    requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
+  });
+  const actOnNextStep = (step: NextStep) => {
+    if (step.action.kind === "evaluation") openEvaluation();
+    else if (step.action.kind === "section") switchToSection(step.action.section);
+    else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const openDocumentClarification = (documentLabel: string) => {
     setClarificationDocument(documentLabel);
     setClarificationDetails("");
@@ -484,6 +499,7 @@ export default function EvaluationSpace() {
         <div id="candidate-space-content" className="mt-6" role="tabpanel" tabIndex={-1}>
           {activeTab === "overview" && (
             <div className="space-y-6">
+              <NextStepCard step={nextStep} onAct={actOnNextStep} />
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               {/* Widgets statistiques et progression */}
@@ -503,7 +519,9 @@ export default function EvaluationSpace() {
                 </Card>
               )}
               {structuredEvaluation?.available && structuredEvaluation.evaluationId !== null && structuredEvaluation.view.stage !== "not_started" && (
-                <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
+                <div id={EVALUATION_ANCHOR_ID} className="scroll-mt-24">
+                  <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
+                </div>
               )}
               {agreementAfterPaymentRequired && (
                 <Card className="border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-6 shadow-md" role="region" aria-labelledby="agreement-after-payment-title">
