@@ -139,6 +139,11 @@ export default function ServicesOverviewSection() {
             </motion.div>
           ))}
         </div>
+        <p className="mt-8 text-center">
+          <a href="/services" className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-bold text-blue-800 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+            Voir tous nos services
+          </a>
+        </p>
       </div>
     </section>
   );

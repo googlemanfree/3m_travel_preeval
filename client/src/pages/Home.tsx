@@ -33,6 +33,7 @@ import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import ServicesOverviewSection from "@/components/ServicesOverviewSection";
+import QuickActionsSection from "@/components/QuickActionsSection";
 import DestinationsShowcaseSection from "@/components/DestinationsShowcaseSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
@@ -602,6 +603,9 @@ export default function Home() {
         logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
+      <QuickActionsSection />
 
       <ProfileVerificationModule />
 

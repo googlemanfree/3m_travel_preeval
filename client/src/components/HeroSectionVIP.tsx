@@ -172,7 +172,7 @@ export default function HeroSectionVIP({
           custom={3}
           className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-7"
         >
-          Votre Avenir Commence Ici — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Voyages & Immigrations d'Exception</span>
+          Visas, voyages et démarches administratives — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">un seul interlocuteur à Yaoundé</span>
         </motion.h2>
 
         {/* Description de marque haut de gamme */}
@@ -183,7 +183,7 @@ export default function HeroSectionVIP({
           custom={4}
           className="text-slate-100 text-xl md:text-2xl max-w-4xl mx-auto mb-9 leading-relaxed font-normal"
         >
-          Spécialistes de la mobilité internationale vers le <strong className="text-white font-semibold">Canada</strong>, l'<strong className="text-white font-semibold">Europe Schengen</strong> et les <strong className="text-white font-semibold">États-Unis</strong>. Nous transformons vos projets d'études, de carrière ou d'installation en réalité grâce à un accompagnement sur-mesure et une expertise reconnue.
+          <strong className="text-white font-semibold">Immigration et visas</strong> (Canada, Europe Schengen, États-Unis), <strong className="text-white font-semibold">billets d'avion, hôtels et assurance voyage</strong>, <strong className="text-white font-semibold">CNI, passeport et e-Visa</strong> : 3M Travel &amp; Services prépare votre dossier et vous accompagne de la demande jusqu'au suivi.
         </motion.p>
 
         {/* CTAs principales */}
@@ -260,11 +260,11 @@ export default function HeroSectionVIP({
           variants={fadeUp}
           custom={5.8}
           className="flex flex-wrap justify-center gap-2 mb-7"
-          aria-label="Destinations principales"
+          aria-label="Nos trois pôles d'activité"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🇨🇦 Canada</span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🇪🇺 Schengen</span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🌍 Mobilité internationale</span>
+          <a href="/services#mobilite" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">🌍 Mobilité internationale</a>
+          <a href="/services#travel" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">✈️ Travel</a>
+          <a href="/services#services" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">🛂 Services</a>
         </motion.div>
 
         {/* Repères de service */}
