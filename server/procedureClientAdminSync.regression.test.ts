@@ -10,7 +10,7 @@ const candidatePageSource = readFileSync(join(projectRoot, "client/src/pages/Eva
 describe("suivi Procédures client-administration", () => {
   it("construit un suivi procédural après vérification du numéro de dossier et de l’e-mail", () => {
     const endpointStart = applicationRouterSource.indexOf("getDossierStatus: publicProcedure");
-    const endpointEnd = applicationRouterSource.indexOf("sendCandidateMessage: publicProcedure");
+    const endpointEnd = applicationRouterSource.indexOf("replyToCandidate: protectedProcedure");
     const endpoint = applicationRouterSource.slice(endpointStart, endpointEnd);
 
     expect(endpoint).toContain("const matchedEmail");

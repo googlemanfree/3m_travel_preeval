@@ -12,11 +12,9 @@ describe("client communication wording", () => {
     expect(cleaned).toContain("conseiller 3M Travel");
   });
 
-  it("sanitizes outgoing report emails but keeps raw report content for admin review", () => {
+  it("sanitizes outgoing report emails (the direct CV-to-email flow evaluateCVWithAI was removed)", () => {
     const application = readProjectFile("server/routers/application.ts");
-    expect(application).toContain("sanitizeClientCommunicationHtml(report)");
     expect(application).toContain("sanitizeClientCommunicationHtml(report.reportContent)");
-    expect(application).toContain("reportContent: report");
   });
 
   it("keeps technical wording confined to the admin editor surfaces", () => {

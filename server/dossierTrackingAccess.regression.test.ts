@@ -15,7 +15,7 @@ describe("suivi de dossier prudent", () => {
 
   it("ne retourne aucun lien de document privé, note interne ou score dans la vue publique de suivi", () => {
     const router = read("server/routers/application.ts");
-    const section = router.slice(router.indexOf("getDossierStatus:"), router.indexOf("sendCandidateMessage:"));
+    const section = router.slice(router.indexOf("getDossierStatus:"), router.indexOf("replyToCandidate:"));
     expect(section).not.toContain("passportUrl:");
     expect(section).not.toContain("cvUrl:");
     expect(section).not.toContain("diplomaUrl:");

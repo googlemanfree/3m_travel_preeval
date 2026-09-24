@@ -19,14 +19,11 @@ describe("communications client neutres", () => {
   it("emploie des intitulés de rapports et d’évaluation non techniques", () => {
     const cvAnalysis = readProjectFile("server/routers/cvAnalysis.ts");
     const evaluation = readProjectFile("server/routers/evaluation.ts");
-    const application = readProjectFile("server/routers/application.ts");
 
     expect(cvAnalysis).toContain("Rapport préparé le");
     expect(cvAnalysis).not.toContain("Rapport généré par l'IA");
     expect(evaluation).toContain("Brouillon préparatoire indisponible ; revue manuelle requise.");
     expect(evaluation).not.toContain("SCORE D'ADMISSIBILITÉ");
     expect(evaluation).not.toContain("generateAIEvaluationReport");
-    expect(application).toContain("Rapport d\\'évaluation généré et envoyé avec succès");
-    expect(application).not.toContain("Rapport d\\'évaluation IA généré et envoyé avec succès");
   });
 });

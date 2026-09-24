@@ -12,7 +12,6 @@ import { and, eq, desc, inArray, or, like, ilike, isNull, sql } from "drizzle-or
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { generateEvaluationReportHTML } from "../evaluationService";
-import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
@@ -977,111 +976,11 @@ export const applicationRouter = router({
       };
     }),
 
-  evaluateCVWithAI: publicProcedure
-    .input(z.object({
-      cvBase64: z.string().max(2000000),
-      candidateName: z.string().max(255),
-      destination: z.string().max(100),
-      email: z.string().email().max(320),
-      applicationId: z.number().int().positive().optional(),
-      candidateId: z.number().int().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const reportId = `3M-AI-${Date.now()}`;
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
-      
-      try {
-        // Créer l'enregistrement d'historique avec statut pending
-        await db.insert(aiReportHistory).values({
-          applicationId: input.applicationId,
-          candidateId: input.candidateId,
-          candidateName: input.candidateName,
-          candidateEmail: input.email,
-          destination: input.destination,
-          reportId,
-          sendStatus: 'pending',
-          sendAttempts: 0,
-        });
-        
-        const cvBuffer = Buffer.from(input.cvBase64, 'base64');
-        const cvText = await extractTextFromPDF(cvBuffer);
-        const openaiKey = process.env.OPENAI_API_KEY;
-        const report = await generateAIEvaluationReport(
-          cvText,
-          input.candidateName,
-          input.destination,
-          openaiKey
-        );
-        
-        // Mettre à jour l'enregistrement avec le contenu du rapport
-        await db
-          .update(aiReportHistory)
-          .set({ reportContent: report })
-          .where(eq(aiReportHistory.reportId, reportId));
-        
-        let emailSendSuccess = false;
-        try {
-          await sendEvisaStatusUpdateEmail(
-            input.email,
-            input.candidateName,
-            reportId,
-            "autre",
-            "processing",
-            `<pre style="font-family: monospace; white-space: pre-wrap;">${sanitizeClientCommunicationHtml(report)}</pre>`
-          );
-          emailSendSuccess = true;
-          
-          // Mettre à jour l'historique avec le statut sent
-          await db
-            .update(aiReportHistory)
-            .set({ sendStatus: 'sent', sentAt: new Date() })
-            .where(eq(aiReportHistory.reportId, reportId));
-        } catch (emailErr) {
-          console.error('[AI Evaluation] Email send error:', emailErr);
-          
-          // Mettre à jour l'historique avec le statut failed
-          await db
-            .update(aiReportHistory)
-            .set({
-              sendStatus: 'failed',
-              lastSendError: emailErr instanceof Error ? emailErr.message : 'Erreur d\'envoi inconnue',
-              sendAttempts: 1,
-            })
-            .where(eq(aiReportHistory.reportId, reportId));
-        }
-        
-        return {
-          success: true,
-          report,
-          reportId,
-          emailSent: emailSendSuccess,
-          message: emailSendSuccess
-            ? 'Rapport d\'évaluation généré et envoyé avec succès'
-            : 'Rapport généré mais l\'envoi par email a échoué',
-        };
-      } catch (err) {
-        console.error('[AI Evaluation] Error:', err);
-        
-        // Mettre à jour l'historique avec l'erreur
-        try {
-          await db
-            .update(aiReportHistory)
-            .set({
-              sendStatus: 'failed',
-              lastSendError: err instanceof Error ? err.message : 'Erreur inconnue',
-            })
-            .where(eq(aiReportHistory.reportId, reportId));
-        } catch (updateErr) {
-          console.error('[AI Evaluation] Failed to update history:', updateErr);
-        }
-        
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Erreur lors de la préparation de l\'évaluation du CV',
-        });
-      }
-    }),
+  // `evaluateCVWithAI` a été RETIRÉE (avec son composant orphelin `ScoringForm`, monté nulle part) : publique,
+  // sans authentification ni limite, elle déclenchait un appel OpenAI payant pour n'importe quel visiteur et
+  // envoyait le rapport IA à l'adresse e-mail de son choix, en contournant la validation administrateur
+  // obligatoire de l'évaluation. `sendCandidateMessage` (aucun appelant) l'est aussi : elle ajoutait sans borne
+  // du texte dans `adminNote` sur la seule foi du couple numéro de dossier + e-mail.
 
   // ─── Signature du Protocole d'Accord ─────────────────────────────────────────
   // Réservée au propriétaire du dossier : l'`id` est séquentiel, et la version publique laissait n'importe qui
@@ -1287,45 +1186,6 @@ export const applicationRouter = router({
         createdAt: app!.createdAt,
         updatedAt: app!.updatedAt,
       };
-    }),
-
-  /**
-   * Envoyer un message au conseiller depuis le tableau de bord candidat
-   */
-  sendCandidateMessage: publicProcedure
-    .input(z.object({
-      dossierNumber: z.string().min(5).max(50),
-      email: z.string().email().max(320),
-      message: z.string().min(5).max(2000),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
-      // Vérifier que le dossier existe et que l'email correspond
-      const [app] = await db
-        .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
-        .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
-        .limit(1);
-      if (!app || app.email.toLowerCase() !== input.email.toLowerCase()) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès non autorisé.' });
-      }
-      // Stocker le message dans adminNote (append)
-      const [current] = await db
-        .select({ adminNote: applications.adminNote })
-        .from(applications)
-        .where(eq(applications.id, app.id))
-        .limit(1);
-      const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
-      const newNote = `[MSG CANDIDAT — ${timestamp}]\n${input.message}`;
-      const updatedNote = current?.adminNote
-        ? `${current.adminNote}\n\n${newNote}`
-        : newNote;
-      await db
-        .update(applications)
-        .set({ adminNote: updatedNote })
-        .where(eq(applications.id, app.id));
-      return { success: true, message: 'Message envoyé à votre conseiller.' };
     }),
 
   /**

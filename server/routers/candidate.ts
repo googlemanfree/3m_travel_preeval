@@ -299,6 +299,9 @@ function parseChecklistStepIds(value: string | null | undefined): string[] {
 const otpVerifyLimiter = createFixedWindowLimiter({ limit: 6, windowMs: 15 * 60_000 });
 const otpResendLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 15 * 60_000 });
 const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
+// Réinitialisation de mot de passe : 3 demandes par adresse saisie et 10 par adresse cliente et par heure.
+const passwordResetEmailLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 60 * 60_000 });
+const passwordResetClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
@@ -1346,7 +1349,15 @@ export const candidateRouter = router({
 
   requestPasswordReset: publicProcedure
     .input(z.object({ email: z.string().email().max(320) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Plafond indépendant de l'existence du compte (clé = adresse saisie) : pas d'énumération, mais plus
+      // d'envois en rafale vers la boîte d'un tiers.
+      const perEmail = passwordResetEmailLimiter.check(input.email.trim().toLowerCase());
+      const client = clientKeyOf(ctx?.req as any);
+      const perClient = client ? passwordResetClientLimiter.check(client) : ({ allowed: true } as const);
+      if (!perEmail.allowed || !perClient.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de demandes de réinitialisation. Réessayez dans quelques minutes." });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
