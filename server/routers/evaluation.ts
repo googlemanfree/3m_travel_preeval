@@ -133,6 +133,8 @@ const evaluationInput = z.object({
   acquisitionSource: acquisitionSourceEnum.default("direct"),
   acquisitionCampaign: z.string().trim().max(160).optional(),
   geminiAnalysisConsent: z.boolean().default(false),
+  /** Accord DISTINCT (décoché par défaut) pour que l'outil d'analyse lise le texte du CV joint. */
+  cvAnalysisConsent: z.boolean().default(false),
 });
 
 // Schéma pour le formulaire multi-projets
@@ -429,6 +431,9 @@ export const evaluationRouter = router({
           ...(input.projectDetails ?? {}),
           preparatoryAnalysisConsent: input.geminiAnalysisConsent,
           preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
+          // Consentement DISTINCT à la lecture du CV : jamais déduit du consentement général, et sans effet sans CV enregistré.
+          preparatoryCvAnalysisConsent: Boolean(input.geminiAnalysisConsent && input.cvAnalysisConsent && cvFileUrl),
+          preparatoryCvAnalysisConsentRecordedAt: input.geminiAnalysisConsent && input.cvAnalysisConsent && cvFileUrl ? new Date().toISOString() : null,
         }) : undefined,
         priorVisaRefusal: input.priorVisaRefusal,
         priorVisaRefusalCountry: input.priorVisaRefusalCountry,

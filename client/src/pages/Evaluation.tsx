@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
-import { CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
+import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
@@ -95,6 +95,9 @@ export default function Evaluation() {
   const acquisitionCampaign = acquisitionParams.get("campaign") || acquisitionParams.get("campagne") || undefined;
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
+  // Accords facultatifs, décochés par défaut et volontairement hors du brouillon enregistré : à redonner à chaque envoi.
+  const [aiAnalysisConsent, setAiAnalysisConsent] = useState(false);
+  const [cvAnalysisConsent, setCvAnalysisConsent] = useState(false);
   const [isExtractingCv, setIsExtractingCv] = useState(false);
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   const [autoFilledValues, setAutoFilledValues] = useState<Partial<FormState>>({});
@@ -463,6 +466,8 @@ export default function Evaluation() {
       cvMimeType: cvFile?.type,
       acquisitionSource,
       acquisitionCampaign,
+      geminiAnalysisConsent: aiAnalysisConsent,
+      cvAnalysisConsent: aiAnalysisConsent && cvAnalysisConsent && Boolean(cvFile),
     });
   };
 
@@ -838,6 +843,28 @@ export default function Evaluation() {
             </div>
 
             <div><Label>Message complémentaire</Label><Textarea value={form.message} onChange={(e) => update('message', e.target.value)} rows={3} maxLength={2000} className="mt-1" /></div>
+
+            <fieldset className="rounded-xl border border-violet-100 bg-violet-50/40 p-4" aria-label="Accords facultatifs sur l’analyse par intelligence artificielle">
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={aiAnalysisConsent}
+                  onChange={(event) => { setAiAnalysisConsent(event.target.checked); if (!event.target.checked) setCvAnalysisConsent(false); }}
+                  className="mt-1 h-4 w-4 accent-violet-700"
+                />
+                <span><strong>{AI_ANALYSIS_CONSENT_LABEL}</strong><br /><span className="text-xs leading-5 text-slate-600">{AI_ANALYSIS_CONSENT_DETAIL}</span></span>
+              </label>
+              <label className={`mt-3 flex items-start gap-3 text-sm ${aiAnalysisConsent && cvFile ? 'cursor-pointer text-slate-800' : 'cursor-not-allowed text-slate-400'}`}>
+                <input
+                  type="checkbox"
+                  checked={cvAnalysisConsent}
+                  disabled={!aiAnalysisConsent || !cvFile}
+                  onChange={(event) => setCvAnalysisConsent(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-violet-700"
+                />
+                <span><strong>{CV_ANALYSIS_CONSENT_LABEL}</strong><br /><span className="text-xs leading-5">{CV_ANALYSIS_CONSENT_DETAIL}</span></span>
+              </label>
+            </fieldset>
 
             {(formError || submitMutation.error) && (
               <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

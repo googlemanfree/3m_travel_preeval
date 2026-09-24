@@ -18,6 +18,14 @@ export const CV_MISSING_FOR_PUBLICATION = "L’évaluation ne peut pas être pub
 export const CV_FORMAT_MESSAGE = "Le CV doit être au format PDF, JPG ou PNG.";
 export const CV_TOO_LARGE_MESSAGE = "Le CV ne doit pas dépasser 5 Mo.";
 export const CV_EMPTY_MESSAGE = "Le fichier du CV est vide.";
+
+/** Accords facultatifs et DISTINCTS, décochés par défaut : l'analyse des réponses, puis la lecture du CV. */
+export const AI_ANALYSIS_CONSENT_LABEL = "J’autorise l’analyse préparatoire de mes réponses par un outil d’intelligence artificielle.";
+export const AI_ANALYSIS_CONSENT_DETAIL =
+  "Elle produit un brouillon interne, relu et validé par un conseiller de 3M avant toute communication : aucun résultat automatique ne vous est envoyé. Vous pouvez refuser, votre évaluation sera alors préparée à la main.";
+export const CV_ANALYSIS_CONSENT_LABEL = "J’autorise aussi la lecture du texte de mon CV pour cette analyse.";
+export const CV_ANALYSIS_CONSENT_DETAIL =
+  "Seul le texte d’un CV au format PDF est lu (les premières pages) ; e-mails, liens et numéros sont masqués avant l’analyse. Sans cet accord, votre CV n’est lu que par notre équipe.";
 export const CV_NOT_STORED_MESSAGE = "Votre évaluation est enregistrée, mais votre CV n’a pas pu être enregistré. Ajoutez-le depuis votre espace candidat : elle ne peut pas être finalisée sans lui.";
 
 const EXTENSION_TO_MIME: Record<string, CvMimeType> = { pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };

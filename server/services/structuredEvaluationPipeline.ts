@@ -4,6 +4,8 @@ import { sendEmail } from "../_core/email";
 import { getDb } from "../db";
 import { ValidationFlowError, ensureCase, recordAiDraft, type Mailer, type ValidationCase, type ValidationDeps } from "./evaluationValidationCore";
 import { getValidationStore, isMissingTableError } from "./evaluationValidationStore";
+import type { CvExcerpt } from "./cvExcerpt";
+import { cvAnalysisConsented, loadCvExcerpt } from "./cvTextLoader";
 import { NO_CONSENT_MESSAGE, generateStructuredDraft, hasAnalysisConsent, type EvaluationRowForDraft, type StructuredDraftDeps } from "./structuredEvaluationDraft";
 
 /**
@@ -40,6 +42,8 @@ export async function loadEvaluationRow(evaluationId: number): Promise<Evaluatio
 
 export type AiDraftRunOptions = {
   loadRow?: (evaluationId: number) => Promise<EvaluationRowForDraft | null>;
+  /** Lecture du texte du CV (injectable pour les tests) ; ne s'appelle que si le candidat a consenti à la lecture de son CV. */
+  loadCv?: (cvFileUrl: string | null | undefined) => Promise<CvExcerpt | null>;
   generator?: StructuredDraftDeps;
   /** Demande explicite d'un administrateur : l'absence de consentement lui est signalée au lieu d'être ignorée. */
   explicit?: boolean;
@@ -83,7 +87,9 @@ async function runAiDraftOnce(deps: ValidationDeps, evaluationId: number, option
     console.warn("[structuredEvaluation] plafond de débit atteint : analyse automatique différée (l’administrateur peut la lancer)", { evaluationId });
     return current;
   }
-  const outcome = await generateStructuredDraft(row, deps.now(), options.generator);
+  // Le CV n'est lu qu'avec un consentement DISTINCT (le consentement général promet que les fichiers joints ne sont pas utilisés).
+  const cv = cvAnalysisConsented(row) ? await (options.loadCv ?? loadCvExcerpt)(row.cvFileUrl) : null;
+  const outcome = await generateStructuredDraft(row, deps.now(), options.generator, cv);
   return recordAiDraft(deps, evaluationId, outcome);
 }
 

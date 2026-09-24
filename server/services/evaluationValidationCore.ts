@@ -282,7 +282,8 @@ export async function ensureCase(deps: ValidationDeps, evaluationId: number): Pr
   return created ?? (await requireLatest(deps, evaluationId));
 }
 
-export type AiDraftOutcome = { ok: true; draft: AiEvaluationDraft; model: string } | { ok: false; error: string };
+/** `notes` : informations de traçabilité à montrer à l'administrateur (ex. « CV lu par l'IA »), ajoutées aux points signalés. */
+export type AiDraftOutcome = { ok: true; draft: AiEvaluationDraft; model: string; notes?: AiDraftWarning[] } | { ok: false; error: string };
 
 /**
  * Enregistre le brouillon IA. Il n'est écrit qu'une fois et n'est jamais réécrit (le score initial de
@@ -314,7 +315,7 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
     };
     audit = { adminEmail: SYSTEM_ACTOR, action: "structured_ai_failed", note: error };
   } else {
-    const warnings: AiDraftWarning[] = [];
+    const warnings: AiDraftWarning[] = (outcome.notes ?? []).map((note) => ({ field: truncate(note.field, 80), message: truncate(note.message, 400) }));
     let draft: AiEvaluationDraft = JSON.parse(JSON.stringify(outcome.draft));
     if (chosenCountry && !sameCountry(draft.priorityCountry, chosenCountry)) {
       warnings.push({ field: "Pays prioritaire", message: `L’IA proposait « ${draft.priorityCountry} » ; le pays choisi par le candidat (« ${chosenCountry} ») a été conservé.` });
