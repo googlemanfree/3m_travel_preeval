@@ -423,7 +423,7 @@ export default function ApprovedReviewsSection() {
         </motion.div>
 
         {displayedReviews.length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div id="approved-reviews-grid" className="grid md:grid-cols-3 gap-6 mb-8">
             <AnimatePresence mode="popLayout">
             {displayedReviews.map((review, index) => (
               <motion.div
@@ -506,6 +506,8 @@ export default function ApprovedReviewsSection() {
             <button
               type="button"
               onClick={() => setVisibleCount((current) => current + REVIEWS_PAGE_SIZE)}
+              aria-label={labels.showMore}
+              aria-controls="approved-reviews-grid"
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             >
               {labels.showMore}

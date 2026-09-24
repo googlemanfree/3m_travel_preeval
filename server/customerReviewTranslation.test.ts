@@ -16,4 +16,11 @@ describe("traduction des avis clients approuvés", () => {
     expect(componentSource).toContain("Voir le texte original");
     expect(componentSource).toContain("showOriginal");
   });
+
+  it("charge progressivement la suite des avis approuvés", () => {
+    expect(componentSource).toContain("const REVIEWS_PAGE_SIZE = 6");
+    expect(componentSource).toContain("const hasMoreReviews = visibleCount < filteredReviews.length");
+    expect(componentSource).toContain("setVisibleCount((current) => current + REVIEWS_PAGE_SIZE)");
+    expect(componentSource).toContain('aria-controls="approved-reviews-grid"');
+  });
 });
