@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { initialTourismServices } from "@/lib/tourismService";
 
 type Service = "hotel" | "vehicle" | "pack";
 
@@ -44,7 +45,7 @@ const PACKS = [
 export default function Tourism() {
   const [, navigate] = useLocation();
   const { candidate, isAuthenticated } = useCandidateAuth();
-  const [services, setServices] = useState<Service[]>(["hotel"]);
+  const [services, setServices] = useState<Service[]>(() => initialTourismServices(typeof window === "undefined" ? "" : window.location.search));
   const [pack, setPack] = useState("escapade");
   const [notice, setNotice] = useState("");
   const [form, setForm] = useState({

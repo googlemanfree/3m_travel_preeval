@@ -37,8 +37,8 @@ const CATEGORIES: ServiceCategory[] = [
     description: "Tout ce qu'il faut pour préparer et sécuriser un déplacement, ici comme à l'étranger.",
     items: [
       { label: "Billets d'avion", href: "/flights" },
-      { label: "Hôtels", href: "/consultation" },
-      { label: "Location de véhicules", href: "/consultation" },
+      { label: "Hôtels", href: "/tourisme?service=hotel" },
+      { label: "Location de véhicules", href: "/tourisme?service=vehicle" },
       { label: "Assurance voyage", href: "/assurance" },
     ],
     cta: { label: "Réserver un vol", href: "/flights" },
@@ -49,10 +49,10 @@ const CATEGORIES: ServiceCategory[] = [
     title: "Services",
     description: "Des démarches administratives et numériques que 3M gère aussi, au-delà du voyage.",
     items: [
-      { label: "CNI & passeport", href: "/consultation" },
+      { label: "CNI & passeport", href: "/cni-passeport" },
       { label: "e-Visa Cameroun", href: "/evisas" },
       { label: "Technologies", href: "/3m-digital" },
-      { label: "Formations", href: "/3m-digital" },
+      { label: "Formations", href: "/formation" },
       { label: "Solutions de sécurité", href: "/3m-digital" },
     ],
     cta: { label: "Découvrir 3M Digital", href: "/3m-digital" },

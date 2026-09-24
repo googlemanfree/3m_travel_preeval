@@ -6,6 +6,10 @@ import { contactMessages } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
+import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
+
+/** Le formulaire de contact alimente aussi les demandes CNI & passeport, devis de vol, etc. : même garde que les évaluations. */
+export const contactSubmissionGuard = createSubmissionGuard(EVALUATION_SUBMISSION_LIMITS);
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -117,7 +121,8 @@ export const contactRouter = router({
 
   sendContactEmail: publicProcedure
     .input(sendContactEmailInput)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      contactSubmissionGuard.assertAllowed(ctx?.req, input.email);
       const db = await getDb();
 
       // Enregistrer le message en base pour garder une trace consultable

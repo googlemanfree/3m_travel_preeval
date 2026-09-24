@@ -19,8 +19,14 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
   it("ne renvoie que vers des routes réellement déclarées (aucun lien mort)", () => {
     const section = read("client/src/components/ServicesOverviewSection.tsx");
     const app = read("client/src/App.tsx");
-    const liens = Array.from(new Set(Array.from(section.matchAll(/href: "(\/[^"]*)"/g)).map((match) => match[1])));
+    // Le chemin seul (sans ?service=…) doit correspondre à une route déclarée.
+    const liens = Array.from(new Set(Array.from(section.matchAll(/href: "(\/[^"?#]*)/g)).map((match) => match[1])));
     expect(liens.length).toBeGreaterThan(4);
+    // Hôtels, location de véhicules et CNI & passeport ont désormais leur propre destination (plus de repli générique).
+    expect(section).toContain('href: "/tourisme?service=hotel"');
+    expect(section).toContain('href: "/tourisme?service=vehicle"');
+    expect(section).toContain('href: "/cni-passeport"');
+    expect(section).toContain('{ label: "Formations", href: "/formation" }');
     // Les deux syntaxes JSX existent dans App.tsx : path="/x" et path={"/x"}
     for (const lien of liens) expect(app.includes(`path="${lien}"`) || app.includes(`path={"${lien}"}`), lien).toBe(true);
   });
