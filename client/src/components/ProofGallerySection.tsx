@@ -1,106 +1,42 @@
-import { useState } from "react";
-import { ShieldCheck, X } from "lucide-react";
-
-const PROOF_PHOTOS = [
-  {
-    src: "/proof-photos/proof-letter-1.jpg",
-    alt: "Lettre de confirmation IRCC — résidence permanente Canada, informations personnelles masquées",
-    caption: "Confirmation officielle IRCC — traitement de résidence permanente",
-  },
-  {
-    src: "/proof-photos/proof-passports-letters-1.jpg",
-    alt: "Confirmations de résidence permanente et passeports de clients, informations personnelles masquées",
-    caption: "Dossiers de résidence permanente Canada traités par 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-visas-2x2-1.jpg",
-    alt: "Visas Canada approuvés dans des passeports de clients, informations personnelles masquées",
-    caption: "Visas Canada obtenus par des candidats accompagnés depuis Yaoundé",
-  },
-  {
-    src: "/proof-photos/proof-china-visa-1.jpg",
-    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa de travail Chine obtenu grâce à l'accompagnement 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-china-visa-2.jpg",
-    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Dossier de visa Chine traité et validé pour un candidat camerounais",
-  },
-  {
-    src: "/proof-photos/proof-pr-letters-passports-1.jpg",
-    alt: "Confirmations de résidence permanente Canada et passeports de clients, informations personnelles masquées",
-    caption: "Quatre dossiers de résidence permanente Canada traités simultanément",
-  },
-  {
-    src: "/proof-photos/proof-express-entry-letter-1.jpg",
-    alt: "Lettre IRCC de suivi de dossier Entrée express, informations personnelles masquées",
-    caption: "Suivi officiel IRCC — dossier Entrée express en voie de finalisation",
-  },
-  {
-    src: "/proof-photos/proof-canada-visa-1.jpg",
-    alt: "Visa Canada approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa de résident permanent Canada obtenu par un candidat accompagné",
-  },
-  {
-    src: "/proof-photos/proof-china-visa-3.jpg",
-    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Chine délivré à Yaoundé pour un candidat suivi par 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-china-visa-4.jpg",
-    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Nouveau dossier de visa Chine mené à terme depuis Yaoundé",
-  },
-  {
-    src: "/proof-photos/proof-schengen-visa-1.jpg",
-    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen obtenu pour un candidat accompagné par 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-schengen-visa-2.jpg",
-    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Dossier de visa Schengen traité et validé depuis Yaoundé",
-  },
-  {
-    src: "/proof-photos/proof-schengen-visa-3.jpg",
-    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen pour travail saisonnier obtenu par un candidat suivi par 3M Travel",
-  },
-  {
-    src: "/proof-photos/proof-schengen-visa-4.jpg",
-    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Nouveau dossier de visa Schengen mené à terme depuis Yaoundé",
-  },
-  {
-    src: "/proof-photos/proof-schengen-visa-5.jpg",
-    alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen délivré à un candidat accompagné de bout en bout par 3M Travel",
-  },
-  {
-    src: "/proof-photos/proof-visa-espagne-1.jpg",
-    alt: "Visa Schengen Espagne approuvé, informations personnelles masquées",
-    caption: "Visa Schengen Espagne obtenu pour un candidat accompagné par 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-visa-france-1.jpg",
-    alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
-    caption: "Visa Schengen France — tourisme — obtenu pour un candidat accompagné par 3M Travel",
-  },
-  {
-    src: "/proof-photos/proof-visa-france-2.jpg",
-    alt: "Visa Schengen France (visite familiale) approuvé, informations personnelles masquées",
-    caption: "Visa Schengen France — visite familiale — dossier traité par 3M Travel & Services",
-  },
-  {
-    src: "/proof-photos/proof-visa-france-3.jpg",
-    alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
-    caption: "Nouveau visa Schengen France mené à terme depuis Yaoundé",
-  },
-];
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { PROOF_COLLAPSED_COUNT, PROOF_PHOTOS, filterProofPhotos, neighbourIndex, proofFilterCounts, type ProofFilter } from "@/data/proofPhotos";
 
 export default function ProofGallerySection() {
+  const [filter, setFilter] = useState<ProofFilter>("all");
+  const [expanded, setExpanded] = useState(false);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocused = useRef<HTMLElement | null>(null);
+
+  const filters = proofFilterCounts(PROOF_PHOTOS);
+  const filtered = filterProofPhotos(PROOF_PHOTOS, filter);
+  const visible = expanded ? filtered : filtered.slice(0, PROOF_COLLAPSED_COUNT);
+  const hiddenCount = filtered.length - visible.length;
+
+  // Le diaporama parcourt les photos du filtre courant, y compris celles repliées dans la grille.
+  const open = openIndex !== null ? filtered[openIndex] : null;
+
+  useEffect(() => {
+    if (openIndex === null) return;
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenIndex(null);
+      else if (event.key === "ArrowRight") setOpenIndex((current) => (current === null ? null : neighbourIndex(current, filtered.length, 1)));
+      else if (event.key === "ArrowLeft") setOpenIndex((current) => (current === null ? null : neighbourIndex(current, filtered.length, -1)));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      lastFocused.current?.focus();
+    };
+  }, [openIndex === null, filtered.length]);
+
+  const choose = (next: ProofFilter) => {
+    setFilter(next);
+    setExpanded(false);
+    setOpenIndex(null);
+  };
 
   return (
     <section aria-labelledby="proof-gallery-title" className="py-14 px-4 bg-white">
@@ -113,14 +49,36 @@ export default function ProofGallerySection() {
           <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600">
             Extraits de dossiers réellement traités par 3M Travel &amp; Services. Toutes les informations personnelles (noms, numéros de passeport, dates de naissance, codes-barres) ont été masquées avant publication, avec l'accord des candidats concernés.
           </p>
+          <p className="mt-3 text-sm font-bold text-blue-800" data-testid="proof-count" aria-live="polite">
+            {PROOF_PHOTOS.length} preuves publiées
+          </p>
+        </div>
+
+        <div role="group" aria-label="Filtrer les preuves par destination" className="mb-6 flex flex-wrap justify-center gap-2">
+          {filters.map((entry) => (
+            <button
+              key={entry.filter}
+              type="button"
+              aria-pressed={filter === entry.filter}
+              onClick={() => choose(entry.filter)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
+                filter === entry.filter ? "border-blue-700 bg-blue-700 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              {entry.label} <span className={filter === entry.filter ? "text-blue-100" : "text-slate-400"}>({entry.count})</span>
+            </button>
+          ))}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
-          {PROOF_PHOTOS.map((photo, index) => (
+          {visible.map((photo, index) => (
             <button
               key={photo.src}
               type="button"
-              onClick={() => setOpenIndex(index)}
+              onClick={(event) => {
+                lastFocused.current = event.currentTarget;
+                setOpenIndex(index);
+              }}
               className="group text-left rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               <div className="aspect-[4/3] overflow-hidden bg-slate-100">
@@ -136,17 +94,31 @@ export default function ProofGallerySection() {
             </button>
           ))}
         </div>
+
+        {(hiddenCount > 0 || expanded) && filtered.length > PROOF_COLLAPSED_COUNT && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((current) => !current)}
+              className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-bold text-blue-800 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              {expanded ? "Réduire la galerie" : `Voir les ${hiddenCount} autres preuves`}
+            </button>
+          </div>
+        )}
       </div>
 
-      {openIndex !== null && (
+      {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label={PROOF_PHOTOS[openIndex].caption}
+          aria-label={open.caption}
           onClick={() => setOpenIndex(null)}
         >
           <button
+            ref={closeRef}
             type="button"
             onClick={() => setOpenIndex(null)}
             className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -154,12 +126,38 @@ export default function ProofGallerySection() {
           >
             <X className="h-6 w-6" />
           </button>
-          <img
-            src={PROOF_PHOTOS[openIndex].src}
-            alt={PROOF_PHOTOS[openIndex].alt}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain"
-            onClick={(event) => event.stopPropagation()}
-          />
+          {filtered.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setOpenIndex(neighbourIndex(openIndex as number, filtered.length, -1));
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Preuve précédente"
+              >
+                <ChevronLeft className="h-7 w-7" />
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setOpenIndex(neighbourIndex(openIndex as number, filtered.length, 1));
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Preuve suivante"
+              >
+                <ChevronRight className="h-7 w-7" />
+              </button>
+            </>
+          )}
+          <figure className="flex max-h-[90vh] max-w-full flex-col items-center" onClick={(event) => event.stopPropagation()}>
+            <img src={open.src} alt={open.alt} className="max-h-[80vh] max-w-full rounded-lg object-contain" />
+            <figcaption className="mt-3 max-w-xl text-center text-sm text-white">
+              {open.caption} <span className="text-white/60">({(openIndex as number) + 1}/{filtered.length})</span>
+            </figcaption>
+          </figure>
         </div>
       )}
     </section>

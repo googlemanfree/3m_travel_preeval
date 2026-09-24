@@ -39,7 +39,7 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
   });
 
   it("ajoute les quatre visas Schengen à la galerie, avec des fichiers existants et légers", () => {
-    const gallery = read("client/src/components/ProofGallerySection.tsx");
+    const gallery = read("client/src/data/proofPhotos.ts");
     for (const fichier of ["proof-visa-espagne-1.jpg", "proof-visa-france-1.jpg", "proof-visa-france-2.jpg", "proof-visa-france-3.jpg"]) {
       expect(gallery, fichier).toContain(`/proof-photos/${fichier}`);
       expect(existsSync(resolve(root, "client/public/proof-photos", fichier)), fichier).toBe(true);
@@ -47,7 +47,7 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
   });
 
   it("chaque photo de la galerie existe sur le disque et déclare des informations masquées", () => {
-    const gallery = read("client/src/components/ProofGallerySection.tsx");
+    const gallery = read("client/src/data/proofPhotos.ts");
     const sources = Array.from(gallery.matchAll(/src: "\/proof-photos\/([^"]+)"/g)).map((match) => match[1]);
     expect(sources.length).toBeGreaterThanOrEqual(19);
     for (const fichier of sources) expect(existsSync(resolve(root, "client/public/proof-photos", fichier)), fichier).toBe(true);
