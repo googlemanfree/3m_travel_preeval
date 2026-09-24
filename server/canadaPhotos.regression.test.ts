@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -19,11 +19,11 @@ const photos = [
 describe("page Canada : photos et crédits", () => {
   for (const photo of photos) {
     it(`${photo.file} existe, est un vrai JPEG, est référencée et créditée`, () => {
-      const path = resolve(root, "client/public/canada", photo.file);
+      const path = resolve(root, "client/public/photos-canada", photo.file);
       expect(existsSync(path), "fichier absent").toBe(true);
       expect(statSync(path).size).toBeGreaterThan(50_000);
       expect(readFileSync(path).subarray(0, 3).toString("hex")).toBe("ffd8ff");
-      expect(page).toContain(`/canada/${photo.file}`);
+      expect(page).toContain(`/photos-canada/${photo.file}`);
       expect(page).toContain(photo.author);
       expect(page).toContain(photo.license);
     });
@@ -46,5 +46,17 @@ describe("page Canada : photos et crédits", () => {
     expect(page).toContain("/manus-storage/canada-hero-original_5fe49ae0.jpg");
     expect(page).toContain('id="simulateur-crs-canada"');
     expect(page).toContain("jamais de garantir une décision d’IRCC");
+  });
+
+  it("aucun dossier de client/public ne porte le nom d'une page de l'application", () => {
+    // Un dossier statique nommé comme une route (`/canada`) peut être redirigé (`/canada/`) ou masquer la page par
+    // la plateforme d'hébergement, avant même que l'application Express ne reçoive la requête.
+    const app = readFileSync(resolve(root, "client/src/App.tsx"), "utf8");
+    const publicDir = resolve(root, "client/public");
+    const directories = readdirSync(publicDir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+    expect(directories).toContain("photos-canada");
+    for (const name of directories) {
+      expect(app, `dossier public « ${name} » et route /${name}`).not.toMatch(new RegExp(`path=\\{?["']/${name}["']\\}?`));
+    }
   });
 });

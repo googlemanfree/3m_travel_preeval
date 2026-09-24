@@ -28,29 +28,29 @@ const officialResources = [
   { label: "Visiter le Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html", note: "Visa de visiteur, AVE/eTA et séjour temporaire." },
 ];
 
-// Photos hébergées dans /public/canada. Toutes proviennent de Wikimedia Commons ; les crédits exigés par chaque
+// Photos hébergées dans /public/photos-canada (jamais dans /public/canada : ce nom est celui de la page). Toutes proviennent de Wikimedia Commons ; les crédits exigés par chaque
 // licence sont affichés sous la galerie.
 const canadaRegions = [
   {
-    src: "/canada/canada-vancouver.jpg",
+    src: "/photos-canada/canada-vancouver.jpg",
     alt: "Vue du centre-ville de Vancouver, du port et des montagnes, avec le drapeau du Canada au premier plan",
     region: "Colombie-Britannique",
     note: "Façade Pacifique : Vancouver et sa région.",
   },
   {
-    src: "/canada/canada-banff-lac-moraine.jpg",
+    src: "/photos-canada/canada-banff-lac-moraine.jpg",
     alt: "Le lac Moraine, dans le parc national de Banff, entouré de sommets enneigés des Rocheuses",
     region: "Alberta",
     note: "Rocheuses, parcs nationaux et grandes villes de l’Ouest.",
   },
   {
-    src: "/canada/canada-ottawa-parlement.jpg",
+    src: "/photos-canada/canada-ottawa-parlement.jpg",
     alt: "L’édifice du Centre du Parlement du Canada et sa tour de la Paix, à Ottawa",
     region: "Ontario · Ottawa",
     note: "Capitale fédérale ; l’Ontario compte aussi Toronto.",
   },
   {
-    src: "/canada/canada-quebec-chateau-frontenac.jpg",
+    src: "/photos-canada/canada-quebec-chateau-frontenac.jpg",
     alt: "Le Château Frontenac et la ville de Québec illuminés de nuit",
     region: "Québec",
     note: "Sélection distincte et français comme langue commune.",
@@ -360,7 +360,7 @@ export default function Canada() {
         introduction="Les règles, frais, délais et documents sont susceptibles d’évoluer. Consultez toujours IRCC et les autorités compétentes avant toute décision."
       >
         <div className="relative mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-slate-900 shadow-sm">
-          <img src="/canada/canada-ottawa-parlement.jpg" alt="" aria-hidden="true" width={1280} height={962} loading="lazy" decoding="async" className="h-60 w-full object-cover object-[50%_35%] sm:h-56" />
+          <img src="/photos-canada/canada-ottawa-parlement.jpg" alt="" aria-hidden="true" width={1280} height={962} loading="lazy" decoding="async" className="h-60 w-full object-cover object-[50%_35%] sm:h-56" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-slate-950/10" aria-hidden="true" />
           <div className="absolute inset-0 flex flex-col justify-center p-5 sm:p-8">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-300">Source de référence</p>
