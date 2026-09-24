@@ -28,6 +28,42 @@ const officialResources = [
   { label: "Visiter le Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html", note: "Visa de visiteur, AVE/eTA et séjour temporaire." },
 ];
 
+// Photos hébergées dans /public/canada. Toutes proviennent de Wikimedia Commons ; les crédits exigés par chaque
+// licence sont affichés sous la galerie.
+const canadaRegions = [
+  {
+    src: "/canada/canada-vancouver.jpg",
+    alt: "Vue du centre-ville de Vancouver, du port et des montagnes, avec le drapeau du Canada au premier plan",
+    region: "Colombie-Britannique",
+    note: "Façade Pacifique : Vancouver et sa région.",
+  },
+  {
+    src: "/canada/canada-banff-lac-moraine.jpg",
+    alt: "Le lac Moraine, dans le parc national de Banff, entouré de sommets enneigés des Rocheuses",
+    region: "Alberta",
+    note: "Rocheuses, parcs nationaux et grandes villes de l’Ouest.",
+  },
+  {
+    src: "/canada/canada-ottawa-parlement.jpg",
+    alt: "L’édifice du Centre du Parlement du Canada et sa tour de la Paix, à Ottawa",
+    region: "Ontario · Ottawa",
+    note: "Capitale fédérale ; l’Ontario compte aussi Toronto.",
+  },
+  {
+    src: "/canada/canada-quebec-chateau-frontenac.jpg",
+    alt: "Le Château Frontenac et la ville de Québec illuminés de nuit",
+    region: "Québec",
+    note: "Sélection distincte et français comme langue commune.",
+  },
+];
+
+const photoCredits = [
+  { place: "Vancouver", author: "Quintin Soloviev", license: "CC BY 4.0", licenseUrl: "https://creativecommons.org/licenses/by/4.0/", fileUrl: "https://commons.wikimedia.org/wiki/File:Skyline_of_Vancouver,_BC.jpg" },
+  { place: "Lac Moraine", author: "Gorgo", license: "domaine public", licenseUrl: "https://commons.wikimedia.org/wiki/File:Moraine_Lake_17092005.jpg", fileUrl: "https://commons.wikimedia.org/wiki/File:Moraine_Lake_17092005.jpg" },
+  { place: "Parlement, Ottawa", author: "Saffron Blaze", license: "CC BY-SA 3.0", licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/", fileUrl: "https://commons.wikimedia.org/wiki/File:Centre_Block_-_Parliament_Hill.jpg" },
+  { place: "Château Frontenac", author: "Wilfredor", license: "CC0", licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/", fileUrl: "https://commons.wikimedia.org/wiki/File:Chateau_Frontenac_illuminated_at_night_in_Quebec_City.jpg" },
+];
+
 const canadaFaq = [
   { question: "Quelle est la différence entre Entrée express et une nomination provinciale ?", answer: "Entrée express est un système fédéral qui gère des profils dans un bassin pour certains programmes. Une nomination provinciale relève d’une province ou d’un territoire et suit ses propres critères. Les deux parcours ne sont pas interchangeables et une invitation ou nomination n’est jamais garantie." },
   { question: "Dois-je obligatoirement avoir une offre d’emploi pour immigrer au Canada ?", answer: "Pas nécessairement. Certaines voies peuvent être examinées sans offre d’emploi, tandis que d’autres reposent sur un employeur, un poste admissible ou une désignation. Le programme pertinent dépend de votre profil et des critères en vigueur au moment de l’analyse." },
@@ -114,6 +150,40 @@ export default function Canada() {
         title="Étape 1 : Évaluez votre score CRS avant de continuer"
         introduction="Avant de vous engager dans une procédure ou de consulter les voies détaillées, calculez votre score indicatif. Cela vous permet de vérifier si votre profil répond aux seuils compétitifs habituels."
       >
+        <figure aria-label="Quatre régions du Canada en images" className="mb-6">
+          <ul className="grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4">
+            {canadaRegions.map((item) => (
+              <li key={item.region} className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-slate-900 shadow-sm">
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  width={1280}
+                  height={860}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[4/5] h-full w-full object-cover transition duration-500 group-hover:scale-105 sm:aspect-[4/3] lg:aspect-[4/3]"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/55 to-transparent p-3 pt-10 sm:p-4 sm:pt-12">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-amber-300">{item.region}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/90 sm:text-[13px]">{item.note}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <figcaption className="mt-2 text-[11px] leading-5 text-slate-500">
+            Photos d’illustration : les critères et possibilités varient selon la province et le programme.{" "}
+            <span className="font-semibold">Crédits :</span>{" "}
+            {photoCredits.map((credit, index) => (
+              <span key={credit.place}>
+                {index > 0 ? " · " : ""}
+                {credit.place}, <a href={credit.fileUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-blue-700">{credit.author}</a>{" "}
+                (<a href={credit.licenseUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-blue-700">{credit.license}</a>)
+              </span>
+            ))}
+            {" "}— via Wikimedia Commons.
+          </figcaption>
+        </figure>
+
         <div className="my-2 rounded-2xl border-2 border-blue-300 bg-white p-6 shadow-md">
           <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 p-4 text-blue-900">
             <AlertCircle className="h-5 w-5 shrink-0 text-blue-700" />
@@ -289,6 +359,15 @@ export default function Canada() {
         title="Les sources officielles à consulter"
         introduction="Les règles, frais, délais et documents sont susceptibles d’évoluer. Consultez toujours IRCC et les autorités compétentes avant toute décision."
       >
+        <div className="relative mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-slate-900 shadow-sm">
+          <img src="/canada/canada-ottawa-parlement.jpg" alt="" aria-hidden="true" width={1280} height={962} loading="lazy" decoding="async" className="h-60 w-full object-cover object-[50%_35%] sm:h-56" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-slate-950/10" aria-hidden="true" />
+          <div className="absolute inset-0 flex flex-col justify-center p-5 sm:p-8">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-300">Source de référence</p>
+            <h3 className="mt-2 max-w-md text-xl font-black leading-tight text-white sm:text-2xl">Les décisions d’immigration relèvent d’IRCC</h3>
+            <p className="mt-2 max-w-lg text-xs leading-5 text-slate-200 sm:text-sm sm:leading-6">Immigration, Réfugiés et Citoyenneté Canada publie les programmes, frais et formulaires officiels. 3M Travel n’est pas affilié au gouvernement du Canada.</p>
+          </div>
+        </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {officialResources.map((resource) => (
             <a key={resource.href} href={resource.href} target="_blank" rel="noreferrer" className="group flex min-h-28 items-start gap-3 rounded-xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
