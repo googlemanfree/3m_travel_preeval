@@ -8,11 +8,21 @@ import { AlertCircle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 export default function AdminEvaluation() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
 
+  // Ces trois procédures exigent la session administrateur (`requireValidAdminSession`) : sans jeton, la page
+  // restait vide car le serveur rejetait la requête.
+  const sessionToken = typeof window !== 'undefined' ? localStorage.getItem('adminSessionToken') || '' : '';
+
   // Récupérer les rapports en attente
-  const { data: reportsData, isLoading: reportsLoading, refetch: refetchReports } = trpc.admin.getEvaluationPendingReports.useQuery();
+  const { data: reportsData, isLoading: reportsLoading, refetch: refetchReports } = trpc.admin.getEvaluationPendingReports.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
 
   // Récupérer les statistiques
-  const { data: statsData, isLoading: statsLoading } = trpc.admin.getEvaluationStats.useQuery();
+  const { data: statsData, isLoading: statsLoading } = trpc.admin.getEvaluationStats.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
 
   // Retenter l'envoi d'un rapport
   const retryReportMutation = trpc.application.retryAIReportSend.useMutation({
@@ -152,7 +162,7 @@ export default function AdminEvaluation() {
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            retryReportMutation.mutate({ reportId: report.reportId });
+                            retryReportMutation.mutate({ sessionToken, reportId: report.reportId });
                           }}
                           size="sm"
                           variant="outline"
@@ -209,7 +219,7 @@ export default function AdminEvaluation() {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => {
-                      retryReportMutation.mutate({ reportId: selectedReport.reportId });
+                      retryReportMutation.mutate({ sessionToken, reportId: selectedReport.reportId });
                       setSelectedReport(null);
                     }}
                     disabled={retryReportMutation.isPending}

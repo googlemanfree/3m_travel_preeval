@@ -25,7 +25,6 @@ import { candidateAuthOTPRouter } from "./routers/candidateAuthOTP";
 import { monitoringRouter } from "./routers/monitoring";
 import { evaluationAIRouter } from "./routers/evaluationAI";
 import { evaluationAdminRouter } from "./routers/evaluationAdmin";
-import { evaluationCommentsRouter } from "./routers/evaluationComments";
 import { paymentRouter } from "./routers/payment";
 import { documentsRouter } from "./routers/documents";
 import { userDashboardRouter } from "./routers/userDashboard";
@@ -96,6 +95,10 @@ import { ambassadorRouter } from "./routers/ambassador";
 // données personnelles, statut de paiement, notes internes — sans vérifier que l'appelant est le candidat
 // concerné. Rien côté client ni serveur ne les appelait jamais. Le candidat utilise `candidate.*`,
 // l'administrateur `adminDossier`/`agencyDossier`/`adminCandidateManagement`.
+// evaluationCommentsRouter (routers/evaluationComments.ts) a aussi été RETIRÉ, avec son unique client
+// `CommentsSection` que plus aucune page ne monte : `getComments` était publique, ignorait l'e-mail reçu et
+// renvoyait `authorEmail` (dont ceux des administrateurs) pour n'importe quel numéro de dossier ; `postComment`
+// écrivait et notifiait l'agence sans vérifier que le dossier appartient à l'e-mail fourni.
 
 export const appRouter = router({
   // Système et authentification
@@ -125,7 +128,6 @@ export const appRouter = router({
   evaluation: evaluationRouter,
   evaluationAI: evaluationAIRouter,
   evaluationAdmin: evaluationAdminRouter,
-  evaluationComments: evaluationCommentsRouter,
   profileEvaluation: profileEvaluationRouter,
   cvAI: cvAIRouter,
   cvAnalysis: cvAnalysisRouter,

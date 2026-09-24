@@ -8,7 +8,6 @@ import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
 import { storagePut, storageGet } from "../storage";
 import { sendEmail } from "../_core/email";
@@ -274,63 +273,7 @@ export const evaluationAIRouter = router({
       }
     }),
 
-  /**
-   * Récupérer le bilan d'un dossier
-   */
-  getBilan: publicProcedure
-    .input(z.object({ dossierNumber: z.string().max(50) }))
-    .query(async ({ input }) => {
-      try {
-        const db = await getDb();
-        if (!db) {
-          throw new Error("Base de données non disponible");
-        }
-
-        const [application] = await db
-          .select()
-          .from(applications)
-          .where(eq(applications.dossierNumber, input.dossierNumber))
-          .limit(1);
-
-        if (!application) {
-          throw new Error("Dossier introuvable");
-        }
-
-        // Vérifier si 48h se sont écoulées
-        const now = new Date();
-        const createdAt = application.createdAt instanceof Date ? application.createdAt : new Date(application.createdAt);
-        const elapsedMs = now.getTime() - createdAt.getTime();
-        const elapsed48h = elapsedMs >= 48 * 60 * 60 * 1000;
-
-        if (!elapsed48h) {
-          const remainingMs = 48 * 60 * 60 * 1000 - elapsedMs;
-          const remainingHours = Math.ceil(remainingMs / (60 * 60 * 1000));
-
-          return {
-            success: true,
-            bilanAvailable: false,
-            remainingHours,
-            message: `Votre bilan sera disponible dans ${remainingHours} heures`,
-          };
-        }
-
-        // Bilan disponible
-        const report = JSON.parse(application.scoringDetails || "{}");
-
-        return {
-          success: true,
-          bilanAvailable: true,
-          dossierNumber: application.dossierNumber,
-          fullName: application.fullName,
-          score: report.score,
-          verdict: report.verdict,
-          strengths: report.strengths || [],
-          weaknesses: report.weaknesses || [],
-          recommendations: report.recommendations || [],
-        };
-      } catch (error) {
-        console.error("Erreur lors de la récupération du bilan:", error);
-        throw new Error("Erreur lors de la récupération de votre bilan");
-      }
-    }),
+  // `getBilan` (lecture publique du bilan IA par numéro de dossier, sans appelant) a été RETIRÉE : le numéro
+  // `3M-AAAA-NNNN` est énumérable et la procédure livrait le nom et le bilan sans passer par la validation
+  // administrateur. Le candidat lit son bilan publié via `evaluation.*` / `candidate.*`.
 });

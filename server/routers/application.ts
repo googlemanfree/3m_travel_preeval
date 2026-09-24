@@ -18,6 +18,7 @@ import { candidateProcedure } from "./candidate";
 import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
+import { requireValidAdminSession } from "./adminAuth";
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 
@@ -1337,13 +1338,15 @@ export const applicationRouter = router({
   // rapports, filtrables par e-mail ou sans filtre du tout) ont été RETIRÉES : aucun appelant.
 
   /**
-   * Retenter l'envoi d'un rapport IA qui a échoué
+   * Retenter l'envoi d'un rapport IA qui a échoué (administrateur uniquement : renvoie un e-mail au candidat)
    */
   retryAIReportSend: publicProcedure
     .input(z.object({
+      sessionToken: z.string().min(1).max(512),
       reportId: z.string().max(128),
     }))
     .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
 
