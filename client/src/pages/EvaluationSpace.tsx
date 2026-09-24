@@ -43,6 +43,7 @@ import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
+import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -67,29 +68,30 @@ export default function EvaluationSpace() {
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
 
   // Requête unique pour le résumé complet du tableau de bord client
-  const { data: dashboardData, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
+  // Les données que l'administrateur fait évoluer se rafraîchissent seules (onglet visible) : voir clientSpaceSync.
+  const { data: dashboardData, dataUpdatedAt: dashboardUpdatedAt, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
     enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
+    ...clientSpacePolling(CLIENT_SPACE_SUMMARY_POLL_MS),
     retry: 3,
     retryDelay: 1000,
   });
   // Évaluation à validation administrateur : avis d’attente, demandes de complément puis rapport PUBLIÉ (jamais de brouillon).
-  const structuredEvaluationQuery = trpc.evaluationValidation.myEvaluation.useQuery(undefined, { enabled: isAuthenticated, refetchOnWindowFocus: true, retry: 1 });
+  const structuredEvaluationQuery = trpc.evaluationValidation.myEvaluation.useQuery(undefined, { enabled: isAuthenticated, ...clientSpacePolling(), retry: 1 });
   const structuredEvaluation = structuredEvaluationQuery.data;
   // Les hooks doivent rester inconditionnels : la section dossier réutilise ce résultat sans remonter d’erreur de rendu.
   const evisaEmail = dashboardData?.candidate?.email ?? "";
   const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery(
     undefined,
-    { enabled: isAuthenticated && Boolean(evisaEmail), refetchOnWindowFocus: false, retry: 1 },
+    { enabled: isAuthenticated && Boolean(evisaEmail), ...clientSpacePolling(), retry: 1 },
   );
-  const { data: caseTrackingData, refetch: refetchCaseTracking } = trpc.caseTracking.getMyCases.useQuery(undefined, {
+  const { data: caseTrackingData, dataUpdatedAt: caseTrackingUpdatedAt, refetch: refetchCaseTracking } = trpc.caseTracking.getMyCases.useQuery(undefined, {
     enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
+    ...clientSpacePolling(),
     retry: 2,
   });
   const { data: insuranceRequests } = trpc.caseTracking.getMyInsuranceRequests.useQuery(undefined, {
     enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
+    ...clientSpacePolling(),
     retry: false,
   });
   const downloadInsuranceCoupon = async (id: number) => {
@@ -110,8 +112,7 @@ export default function EvaluationSpace() {
   };
   const { data: documentClarifications = [] } = trpc.candidate.getDocumentClarifications.useQuery(undefined, {
     enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
-    refetchInterval: 30_000,
+    ...clientSpacePolling(),
   });
   const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
     onSuccess: () => {
@@ -157,6 +158,21 @@ export default function EvaluationSpace() {
     seenAnsweredClarificationIds.current = currentIds;
   }, [documentClarifications]);
 
+  // Ce que l'équipe change côté back-office (état d'un dossier, pièce validée ou à corriger, évaluation publiée,
+  // e-Visa, assurance, message) est annoncé au candidat ; la première lecture sert de référence, sans annonce.
+  const previousSpaceSnapshot = useRef<ClientSpaceSnapshot | null>(null);
+  useEffect(() => {
+    const next = buildClientSpaceSnapshot({ evaluation: structuredEvaluation, cases: caseTrackingData, insurance: insuranceRequests, evisa: evisaReqs });
+    const changes = diffClientSpace(previousSpaceSnapshot.current, next);
+    previousSpaceSnapshot.current = mergeClientSpaceSnapshots(previousSpaceSnapshot.current, next);
+    for (const change of limitAnnouncements(changes)) {
+      const options = { id: change.id, description: change.description, duration: 8_000 };
+      if (change.tone === "success") toast.success(change.title, options);
+      else if (change.tone === "warning") toast.warning(change.title, options);
+      else toast.info(change.title, options);
+    }
+  }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs]);
+
   useEffect(() => {
     if (!isLoading) {
       setLoadingTimeoutReached(false);
@@ -173,9 +189,11 @@ export default function EvaluationSpace() {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
+  // « Mise à jour à » suit la dernière lecture réussie, pas seulement un changement de contenu.
+  const lastDataUpdate = Math.max(dashboardUpdatedAt || 0, caseTrackingUpdatedAt || 0);
   useEffect(() => {
-    if (dashboardData) setLastSyncedAt(Date.now());
-  }, [dashboardData]);
+    if (lastDataUpdate) setLastSyncedAt(lastDataUpdate);
+  }, [lastDataUpdate]);
 
   useEffect(() => {
     if (searchParams.get("section")) {
