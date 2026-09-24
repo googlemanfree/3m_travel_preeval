@@ -11,7 +11,7 @@ let activationErrorMessage: string | null = null;
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ admin: { getCandidateDetails: { invalidate: vi.fn() } }, adminCandidateManagement: {} }),
+    useUtils: () => ({ admin: { getCandidateDetails: { invalidate: vi.fn() } }, adminCandidateManagement: {}, unifiedRequests: { getEvaluationDelivery: { invalidate: vi.fn() } } }),
     adminAuth: {
       bootstrapPlatformSession: { useQuery: () => ({ data: null, isLoading: false }) },
     },
@@ -29,6 +29,8 @@ vi.mock("@/lib/trpc", () => ({
       previewEvaluationDeliveryEmail: { useQuery: () => ({ data: null, isLoading: false }) },
       previewEvaluationDeliveryPdf: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       sendEvaluationTestEmail: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      listEvaluationDeliveryHistory: { useQuery: () => ({ data: [], isLoading: false, isFetching: false, refetch: vi.fn() }) },
+      resendEvaluationHistory: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
     admin: {
       getCandidateDetails: { useQuery: (...args: unknown[]) => getCandidateDetails(...args) },

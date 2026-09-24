@@ -15,8 +15,8 @@ describe("evaluation required flow", () => {
 
   it("keeps the admin editor manual and removes visible AI generation controls", () => {
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("Bloc-notes du conseiller");
-    expect(editor).toContain("Valider et envoyer par e-mail");
+    expect(editor).toContain("Rédigez directement le bilan dans cet espace de travail");
+    expect(editor).toContain("Valider et envoyer");
     expect(editor).toContain("Ouvrir WhatsApp avec le bilan");
     expect(editor).not.toContain("Générer un brouillon IA");
     expect(editor).not.toContain("Assistant IA — éléments à contrôler");
