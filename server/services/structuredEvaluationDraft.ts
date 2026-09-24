@@ -13,7 +13,7 @@ import {
 import { invokeLLM, type OutputSchema } from "../_core/llm";
 import { GEMINI_EVALUATION_MODEL } from "../geminiEvaluationDraftService";
 import type { AiDraftOutcome } from "./evaluationValidationCore";
-import type { CvExcerpt } from "./cvExcerpt";
+import { maskPersonalData, type CvExcerpt } from "./cvExcerpt";
 
 /**
  * Génération du BROUILLON IA structuré (interne, jamais visible du candidat).
@@ -103,6 +103,9 @@ const compact = (value: unknown, max: number): string | undefined => {
   return text || undefined;
 };
 
+/** Texte libre du candidat destiné au modèle : coordonnées, liens et identifiants masqués AVANT la troncature. */
+const compactFree = (value: unknown, max: number): string | undefined => (typeof value === "string" ? compact(maskPersonalData(value).text, max) : undefined);
+
 const COUNTRY_BY_CATEGORY: Record<string, string> = { canada: "Canada", schengen: "Espace Schengen" };
 
 // Un nom de pays : lettres, chiffres, espaces et quelques signes ; pas de guillemets, chevrons, retours à la ligne.
@@ -184,16 +187,22 @@ function scalarDetails(json: string | null | undefined): Record<string, string |
   for (const [key, value] of Object.entries(parsed).slice(0, 40)) {
     if (EXCLUDED_DETAIL_KEYS.has(key) || PRIVATE_DETAIL_KEY.test(key)) continue;
     if (typeof value === "string" && looksPrivate(value)) continue;
-    if (typeof value === "string" && value.trim()) result[key.slice(0, 60)] = value.trim().slice(0, 300);
+    if (typeof value === "string") {
+      const text = compactFree(value, 300);
+      if (text) result[key.slice(0, 60)] = text;
+    }
     else if (typeof value === "number" || typeof value === "boolean") result[key.slice(0, 60)] = value;
   }
   // questions complémentaires du parcours multi-projets : « question → réponse »
   if (Array.isArray(parsed.dynamicResponses)) {
     parsed.dynamicResponses.slice(0, 10).forEach((entry, index) => {
       const item = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
-      const question = compact(item.question, 150);
-      const answer = compact(item.answer, 300);
-      if (question && answer && !looksPrivate(question) && !looksPrivate(answer)) result[`reponse_complementaire_${index + 1}`] = `${question} → ${answer}`;
+      const rawQuestion = compact(item.question, 150);
+      const rawAnswer = compact(item.answer, 300);
+      if (!rawQuestion || !rawAnswer || looksPrivate(rawQuestion) || looksPrivate(rawAnswer)) return;
+      const question = compactFree(rawQuestion, 150);
+      const answer = compactFree(rawAnswer, 300);
+      if (question && answer) result[`reponse_complementaire_${index + 1}`] = `${question} → ${answer}`;
     });
   }
   return Object.keys(result).length > 0 ? result : undefined;
@@ -217,29 +226,29 @@ export function buildDeclaredProfile(row: EvaluationRowForDraft, now: Date): Dec
     projectType: normalizeProjectType(row.projectType, row.visaType),
     fullName: row.fullName,
     age: ageFromBirthDate(row.dateOfBirth, now) ?? (declaredAge >= 10 && declaredAge <= 100 ? Math.round(declaredAge) : undefined),
-    nationality: compact(row.nationality, 100),
-    cityOfResidence: compact(row.cityOfResidence, 150) ?? detailText(details, "currentCity"),
-    maritalStatus: compact(row.maritalStatus, 50),
+    nationality: compactFree(row.nationality, 100),
+    cityOfResidence: compactFree(row.cityOfResidence, 150) ?? detailText(details, "currentCity"),
+    maritalStatus: compactFree(row.maritalStatus, 50),
     numberOfDependents: typeof row.numberOfDependents === "number" ? row.numberOfDependents : undefined,
-    educationLevel: compact(row.educationLevel, 100) ?? detailText(details, "diplomaLevel"),
-    diploma: compact(row.diplomaTitle, 255),
-    fieldOfStudy: compact(row.fieldOfStudy, 255),
-    graduationYear: compact(row.graduationYear, 10),
-    employmentStatus: compact(row.employmentStatus, 100),
-    currentJobTitle: compact(row.currentJobTitle, 255),
-    yearsOfExperience: compact(row.yearsOfExperience, 20) ?? detailText(details, "yearsOfExperience"),
-    industrySector: compact(row.industrySector, 150) ?? detailText(details, "sector"),
-    mainTasks: compact(row.mainTasks, 600),
-    frenchLevel: compact(row.frenchLevel, 50),
-    englishLevel: compact(row.englishLevel, 50),
-    languageTests: compact(row.languageTestsTaken, 255),
+    educationLevel: compactFree(row.educationLevel, 100) ?? detailText(details, "diplomaLevel"),
+    diploma: compactFree(row.diplomaTitle, 255),
+    fieldOfStudy: compactFree(row.fieldOfStudy, 255),
+    graduationYear: compactFree(row.graduationYear, 10),
+    employmentStatus: compactFree(row.employmentStatus, 100),
+    currentJobTitle: compactFree(row.currentJobTitle, 255),
+    yearsOfExperience: compactFree(row.yearsOfExperience, 20) ?? detailText(details, "yearsOfExperience"),
+    industrySector: compactFree(row.industrySector, 150) ?? detailText(details, "sector"),
+    mainTasks: compactFree(row.mainTasks, 600),
+    frenchLevel: compactFree(row.frenchLevel, 50),
+    englishLevel: compactFree(row.englishLevel, 50),
+    languageTests: compactFree(row.languageTestsTaken, 255),
     languagesDeclared: detailText(details, "languages"),
-    availableBudget: compact(row.availableBudget, 100) ?? detailText(details, "financialGuarantee"),
-    travelReason: compact(row.travelReason, 255),
+    availableBudget: compactFree(row.availableBudget, 100) ?? detailText(details, "financialGuarantee"),
+    travelReason: compactFree(row.travelReason, 255),
     priorVisaRefusal: row.priorVisaRefusal ?? undefined,
-    priorVisaRefusalCountry: compact(row.priorVisaRefusalCountry, 150),
+    priorVisaRefusalCountry: compactFree(row.priorVisaRefusalCountry, 150),
     familyAbroad: row.familyAbroad ?? undefined,
-    candidateMessage: compact(row.message, 800),
+    candidateMessage: compactFree(row.message, 800),
     projectDetails: details,
     cvProvided: Boolean(row.cvFileUrl || row.cvFileName),
   };

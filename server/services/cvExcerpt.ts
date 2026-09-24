@@ -31,17 +31,19 @@ const MASKS: Array<{ label: string; pattern: RegExp }> = [
   // numéro international : +237 6 98 10 48 32, 00237698104832
   { label: "[numéro]", pattern: /(?:\+|\b00)\d[\d ().-]{7,}\d/g },
   // numéro par groupes de deux chiffres séparés (69 81 04 83 2) : les années collées (2018-2021) ne correspondent pas
-  { label: "[numéro]", pattern: /\b\d{2}([ .-])\d{2}\1\d{2}(?:\1\d{2})+\b/g },
+  // (un chiffre isolé peut précéder : 6 98 10 48 32)
+  { label: "[numéro]", pattern: /\b(?:\d[ .-]?)?\d{2}([ .-])\d{2}\1\d{2}(?:\1\d{2})+\b/g },
+  // numéro nord-américain : 514 555 0123, (514) 555-0123
+  { label: "[numéro]", pattern: /\(?\b\d{3}\)?[ .-]\d{3}[ .-]\d{4}\b/g },
   // longue suite de chiffres collés : pièce d'identité, compte, numéro de sécurité sociale
   { label: "[numéro]", pattern: /\b\d{9,}\b/g },
   // identifiant de passeport ou de carte : une ou deux lettres suivies de six à neuf chiffres
   { label: "[numéro]", pattern: /\b[A-Z]{1,2}\d{6,9}\b/g },
 ];
 
-export function prepareCvExcerpt(raw: string | null | undefined): CvExcerpt | null {
-  if (!raw) return null;
-  let text = raw.replace(INVISIBLE, "").replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-
+/** Masque coordonnées, liens et identifiants dans un texte libre (CV, message du candidat) ; renvoie le nombre de masquages. */
+export function maskPersonalData(raw: string): { text: string; masked: number } {
+  let text = raw.replace(INVISIBLE, "");
   let masked = 0;
   for (const { label, pattern } of MASKS) {
     text = text.replace(pattern, () => {
@@ -49,6 +51,14 @@ export function prepareCvExcerpt(raw: string | null | undefined): CvExcerpt | nu
       return label;
     });
   }
+  return { text, masked };
+}
+
+export function prepareCvExcerpt(raw: string | null | undefined): CvExcerpt | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(INVISIBLE, "").replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const { text: maskedText, masked } = maskPersonalData(cleaned);
+  let text = maskedText;
 
   if (text.length < CV_EXCERPT_MIN_CHARS) return null; // scan sans texte, page vide, ou presque rien d'exploitable
   let truncated = false;
