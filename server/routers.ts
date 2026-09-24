@@ -38,7 +38,6 @@ import { reassuranceRouter } from "./routers/reassuranceRouter";
 import { documentClassificationRouter } from "./routers/documentClassificationRouter";
 import { evisaFavoritesRouter } from "./routers/evisaFavoritesRouter";
 import { evisaReviewsRouter } from "./routers/evisaReviewsRouter";
-import { uploadRouter } from "./routers/uploadRouter";
 import { passportAnalysisRouter } from "./routers/passportAnalysisRouter";
 import { evisaAdminRouter } from "./routers/evisaAdminRouter";
 import { simpleAuthRouter } from "./routers/simpleAuth";
@@ -99,6 +98,9 @@ import { ambassadorRouter } from "./routers/ambassador";
 // Rien côté client n'appelait ce routeur : l'inscription passe par `candidate.register` et `candidate.verifyEmail`.
 // signupRouter (routers/signup.ts) a aussi été RETIRÉ : inscription désactivée (FORBIDDEN), aucun appelant, et son
 // `resendVerificationEmail` révélait (« Compte introuvable ») quelles adresses ont un compte candidat.
+// uploadRouter (routers/uploadRouter.ts) a aussi été RETIRÉ : `getUploadUrl` délivrait à n'importe qui une URL
+// d'écriture présignée sur le stockage de l'agence, sans limite de type ni de taille et avec le nom de fichier brut
+// dans la clé ; aucun appelant (les dépôts passent par `candidateUpload`).
 // evaluationCommentsRouter (routers/evaluationComments.ts) a aussi été RETIRÉ, avec son unique client
 // `CommentsSection` que plus aucune page ne monte : `getComments` était publique, ignorait l'e-mail reçu et
 // renvoyait `authorEmail` (dont ceux des administrateurs) pour n'importe quel numéro de dossier ; `postComment`
@@ -189,7 +191,6 @@ export const appRouter = router({
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
   oauthUserDashboard: oauthUserDashboardRouter,
-  upload: uploadRouter,
   passportAnalysis: passportAnalysisRouter,
   evisaAdmin: evisaAdminRouter,
 

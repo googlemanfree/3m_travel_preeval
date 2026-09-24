@@ -9,6 +9,15 @@ import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
 import { randomInt, randomBytes } from "node:crypto";
+import { createSubmissionGuard } from "../_core/publicRateLimit";
+
+// Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
+// 200 au total par heure pour borner le pire cas même si l'en-tête `x-forwarded-for` est falsifié.
+const flightSummaryGuard = createSubmissionGuard({
+  perClient: { limit: 10, windowMs: 60 * 60_000 },
+  perEmail: { limit: 3, windowMs: 60 * 60_000 },
+  global: { limit: 200, windowMs: 60 * 60_000 },
+});
 
 function esc(v: string | number | undefined | null): string {
   return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -665,7 +674,10 @@ export const flightsRouter = router({
         }),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Appel public qui envoie un e-mail aux couleurs de l'agence à l'adresse saisie : sans plafond, c'était un
+      // relais de spam et d'hameçonnage depuis notre domaine.
+      flightSummaryGuard.assertAllowed(ctx?.req as any, input.email);
       const { email, flightDetails } = input;
       const subject = `✈️ Récapitulatif de votre vol — Réf PNR #${flightDetails.pnrRef}`;
       const html = `

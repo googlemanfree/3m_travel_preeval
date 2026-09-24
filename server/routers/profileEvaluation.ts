@@ -147,20 +147,7 @@ export const profileEvaluationRouter = router({
       };
     }),
 
-  /**
-   * Récupérer une évaluation par ID
-   */
-  getById: publicProcedure
-    .input(z.object({ id: z.number().int().positive() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return null;
-      const evaluation = await db
-        .select()
-        .from(profileEvaluations)
-        .where(eq(profileEvaluations.id, input.id))
-        .limit(1);
-      
-      return evaluation[0] || null;
-    }),
+  // `getById` a été RETIRÉE (aucun appelant) : publique, elle renvoyait la fiche complète d'évaluation de profil
+  // (identité, numéro de passeport, date de naissance, adresse, téléphone, e-mail) pour n'importe quel `id`
+  // séquentiel.
 });
