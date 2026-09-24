@@ -32,6 +32,7 @@ import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
+import ServicesOverviewSection from "@/components/ServicesOverviewSection";
 import DestinationsShowcaseSection from "@/components/DestinationsShowcaseSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
@@ -603,6 +604,9 @@ export default function Home() {
       />
 
       <ProfileVerificationModule />
+
+      {/* ─── NOS SERVICES : mobilité internationale, travel et services administratifs/numériques ── */}
+      <ServicesOverviewSection />
 
       {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">

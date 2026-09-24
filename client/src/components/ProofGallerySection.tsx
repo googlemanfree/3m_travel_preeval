@@ -77,6 +77,26 @@ const PROOF_PHOTOS = [
     alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
     caption: "Visa Schengen délivré à un candidat accompagné de bout en bout par 3M Travel",
   },
+  {
+    src: "/proof-photos/proof-visa-espagne-1.jpg",
+    alt: "Visa Schengen Espagne approuvé, informations personnelles masquées",
+    caption: "Visa Schengen Espagne obtenu pour un candidat accompagné par 3M Travel & Services",
+  },
+  {
+    src: "/proof-photos/proof-visa-france-1.jpg",
+    alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
+    caption: "Visa Schengen France — tourisme — obtenu pour un candidat accompagné par 3M Travel",
+  },
+  {
+    src: "/proof-photos/proof-visa-france-2.jpg",
+    alt: "Visa Schengen France (visite familiale) approuvé, informations personnelles masquées",
+    caption: "Visa Schengen France — visite familiale — dossier traité par 3M Travel & Services",
+  },
+  {
+    src: "/proof-photos/proof-visa-france-3.jpg",
+    alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
+    caption: "Nouveau visa Schengen France mené à terme depuis Yaoundé",
+  },
 ];
 
 export default function ProofGallerySection() {
