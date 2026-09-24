@@ -122,6 +122,10 @@ describe("reprise et aperçu du bilan", () => {
     expect(page).toContain("sendEvaluationReminder");
     expect(page).toContain("Nouveau");
     expect(adminRouter).toContain("evaluationReportReminderSentAt");
+    expect(page).toContain("exportBilanStatusesCsv");
+    expect(page).toContain("Statut du bilan");
+    expect(page).toContain("Exporter CSV");
+    expect(page).toContain("text/csv;charset=utf-8");
   });
   it("génère un aperçu e-mail en lecture seule sans appeler la diffusion", () => {
     const router = read("server/routers/unifiedRequests.ts");

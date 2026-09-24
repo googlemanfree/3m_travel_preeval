@@ -88,6 +88,35 @@ export default function AdminEvaluations() {
   });
   const visibleBilanViewStatuses = bilanViewStatuses.filter((item: any) => viewFilter === "all" || (viewFilter === "unviewed" ? !item.viewedAt : Boolean(item.viewedAt)));
 
+  const exportBilanStatusesCsv = () => {
+    const escapeCsv = (value: unknown) => {
+      const text = String(value ?? "").replace(/[\r\n]+/g, " ");
+      const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+      return `"${safeText.replace(/"/g, '""')}"`;
+    };
+    const headers = ["Candidat", "Email", "N° dossier", "Statut du bilan", "Envoyé le", "Consulté le", "Dernière relance"];
+    const rows = visibleBilanViewStatuses.map((item: any) => [
+      item.candidateName || "Candidat",
+      item.candidateEmail || "",
+      item.dossierNumber || "",
+      item.viewedAt ? "Consulté" : "Non consulté",
+      item.sentAt ? new Date(item.sentAt).toLocaleString("fr-FR") : "",
+      item.viewedAt ? new Date(item.viewedAt).toLocaleString("fr-FR") : "",
+      item.reminderSentAt ? new Date(item.reminderSentAt).toLocaleString("fr-FR") : "",
+    ].map(escapeCsv).join(";"));
+    const csv = `\uFEFF${[headers.map(escapeCsv).join(";"), ...rows].join("\n")}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `suivi-bilans-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${visibleBilanViewStatuses.length} candidat(s) exporté(s) au format CSV`);
+  };
+
   // Filtrer les bilans
   const filteredBilans = (bilans as any[]).filter((bilan: any) => {
     const matchesSearch = 
@@ -183,7 +212,7 @@ export default function AdminEvaluations() {
                 <CardTitle className="flex items-center gap-2 text-indigo-950"><Eye className="h-5 w-5" />Suivi de consultation des bilans</CardTitle>
                 <p className="mt-1 text-sm text-indigo-800">Vérifiez si le candidat a ouvert son bilan dans son espace personnel.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold"><Badge className="bg-emerald-100 text-emerald-800">{viewedBilanCount} consulté(s)</Badge><Badge className="bg-amber-100 text-amber-800">{unviewedBilanCount} non consulté(s)</Badge>{recentlyViewedBilanCount > 0 && <Badge className="bg-indigo-100 text-indigo-800"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-indigo-500" />{recentlyViewedBilanCount} récent(s)</Badge>}</div>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold"><Badge className="bg-emerald-100 text-emerald-800">{viewedBilanCount} consulté(s)</Badge><Badge className="bg-amber-100 text-amber-800">{unviewedBilanCount} non consulté(s)</Badge>{recentlyViewedBilanCount > 0 && <Badge className="bg-indigo-100 text-indigo-800"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-indigo-500" />{recentlyViewedBilanCount} récent(s)</Badge>}<Button size="sm" variant="outline" className="gap-1 border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-100" onClick={exportBilanStatusesCsv} disabled={visibleBilanViewStatuses.length === 0}><Download className="h-3.5 w-3.5" />Exporter CSV</Button></div>
             </div>
           </CardHeader>
           <CardContent>
