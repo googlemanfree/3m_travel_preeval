@@ -41,7 +41,6 @@ import { evisaReviewsRouter } from "./routers/evisaReviewsRouter";
 import { uploadRouter } from "./routers/uploadRouter";
 import { passportAnalysisRouter } from "./routers/passportAnalysisRouter";
 import { evisaAdminRouter } from "./routers/evisaAdminRouter";
-import { signupRouter } from "./routers/signup";
 import { simpleAuthRouter } from "./routers/simpleAuth";
 import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 import { adminPasswordResetRouter } from "./routers/adminPasswordReset";
@@ -98,6 +97,8 @@ import { ambassadorRouter } from "./routers/ambassador";
 // jamais le code (« pour cette démo, on accepte simplement l'OTP ») et créait un compte déjà vérifié pour
 // n'importe quelle adresse e-mail, dont celle d'un candidat existant, dont les dossiers sont rattachés par e-mail.
 // Rien côté client n'appelait ce routeur : l'inscription passe par `candidate.register` et `candidate.verifyEmail`.
+// signupRouter (routers/signup.ts) a aussi été RETIRÉ : inscription désactivée (FORBIDDEN), aucun appelant, et son
+// `resendVerificationEmail` révélait (« Compte introuvable ») quelles adresses ont un compte candidat.
 // evaluationCommentsRouter (routers/evaluationComments.ts) a aussi été RETIRÉ, avec son unique client
 // `CommentsSection` que plus aucune page ne monte : `getComments` était publique, ignorait l'e-mail reçu et
 // renvoyait `authorEmail` (dont ceux des administrateurs) pour n'importe quel numéro de dossier ; `postComment`
@@ -114,7 +115,6 @@ export const appRouter = router({
       checkedAt: new Date(),
     })),
   }),
-  signup: signupRouter,
   simpleAuth: simpleAuthRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

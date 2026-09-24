@@ -8,6 +8,21 @@ import { sql } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { sendPasswordResetEmail } from "../emailService";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
+
+// Renvoi d'e-mail de vérification et réinitialisation : 3 demandes par adresse saisie et 10 par adresse cliente
+// et par heure. La clé est l'adresse saisie, pas l'existence du compte, donc aucune énumération.
+const emailActionLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 60 * 60_000 });
+const emailActionClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
+
+function assertEmailActionAllowed(ctx: { req?: unknown } | undefined, email: string) {
+  const perEmail = emailActionLimiter.check(email.trim().toLowerCase());
+  const client = clientKeyOf(ctx?.req as any);
+  const perClient = client ? emailActionClientLimiter.check(client) : ({ allowed: true } as const);
+  if (!perEmail.allowed || !perClient.allowed) {
+    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de demandes. Réessayez dans quelques minutes." });
+  }
+}
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -189,8 +204,9 @@ export const simpleAuthRouter = router({
    */
   resendVerificationEmail: publicProcedure
     .input(z.object({ email: z.string().email().max(320) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { email } = input;
+      assertEmailActionAllowed(ctx, email);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -199,22 +215,13 @@ export const simpleAuthRouter = router({
         sql`SELECT id, fullName, emailVerified FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
-      if (!(result as any).rows || (result as any).rows.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Cet email n'existe pas",
-        });
-      }
+      // Réponse identique que le compte existe, soit déjà vérifié ou non : ne pas révéler quelles adresses sont inscrites.
+      const uniformResponse = { success: true, message: "Si un compte existe avec cet email, un nouvel email de vérification a été envoyé." };
+      if (!(result as any).rows || (result as any).rows.length === 0) return uniformResponse;
 
       const user = (result as any).rows[0];
 
-      // Vérifier que l'email n'est pas déjà vérifié
-      if (user.emailVerified) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Cet email est déjà vérifié",
-        });
-      }
+      if (user.emailVerified) return uniformResponse;
 
       // Générer un nouveau token
       const verificationToken = generateToken();
@@ -243,7 +250,7 @@ export const simpleAuthRouter = router({
 
       return {
         success: true,
-        message: "Un nouvel email de vérification a été envoyé",
+        message: "Si un compte existe avec cet email, un nouvel email de vérification a été envoyé.",
       };
     }),
 
@@ -316,8 +323,9 @@ export const simpleAuthRouter = router({
    */
   forgotPassword: publicProcedure
     .input(z.object({ email: z.string().email().max(320) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { email } = input;
+      assertEmailActionAllowed(ctx, email);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 

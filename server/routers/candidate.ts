@@ -302,6 +302,9 @@ const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 6
 // Réinitialisation de mot de passe : 3 demandes par adresse saisie et 10 par adresse cliente et par heure.
 const passwordResetEmailLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 60 * 60_000 });
 const passwordResetClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
+// Renvoi du lien de vérification d'e-mail : 3 par adresse saisie et 10 par adresse cliente et par heure.
+const verificationLinkEmailLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 60 * 60_000 });
+const verificationLinkClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
@@ -345,7 +348,15 @@ export const candidateRouter = router({
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
     .input(z.object({ email: z.string().email().max(320) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Chaque appel remplace le jeton de vérification en base : sans plafond, un tiers pouvait invalider en boucle
+      // le lien reçu par le candidat et inonder sa boîte. Clé = adresse saisie, donc aucune énumération.
+      const perEmail = verificationLinkEmailLimiter.check(input.email.trim().toLowerCase());
+      const client = clientKeyOf(ctx?.req as any);
+      const perClient = client ? verificationLinkClientLimiter.check(client) : ({ allowed: true } as const);
+      if (!perEmail.allowed || !perClient.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de demandes de lien. Réessayez dans quelques minutes." });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
