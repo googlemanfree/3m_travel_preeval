@@ -79,7 +79,7 @@ export default function EvaluationSpace() {
   // Les hooks doivent rester inconditionnels : la section dossier réutilise ce résultat sans remonter d’erreur de rendu.
   const evisaEmail = dashboardData?.candidate?.email ?? "";
   const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery(
-    { email: evisaEmail },
+    undefined,
     { enabled: isAuthenticated && Boolean(evisaEmail), refetchOnWindowFocus: false, retry: 1 },
   );
   const { data: caseTrackingData, refetch: refetchCaseTracking } = trpc.caseTracking.getMyCases.useQuery(undefined, {

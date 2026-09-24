@@ -4,6 +4,7 @@
  */
 
 import { protectedProcedure, publicProcedure, router } from '../_core/trpc';
+import { candidateProcedure } from './candidate';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { randomBytes } from 'node:crypto';
@@ -538,19 +539,21 @@ export const evisaRouter = router({
     }),
 
   /**
-   * Récupérer les demandes d'e-visa par email candidat (pour le suivi espace client)
+   * Demandes d'e-visa du candidat connecté (suivi espace client). L'e-mail vient du compte authentifié, jamais
+   * d'un paramètre : l'ancienne version publique livrait `SELECT *` (passeport, date de naissance, téléphone,
+   * notes internes) pour n'importe quelle adresse e-mail connue.
    */
-  getMyEvisaRequests: publicProcedure
-    .input(z.object({ email: z.string().email().max(320) }))
-    .query(async ({ input }: any) => {
+  getMyEvisaRequests: candidateProcedure
+    .query(async ({ ctx }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
         const [requests] = await connection.execute(`
-          SELECT * FROM evisa_requests 
-          WHERE email = ? 
+          SELECT id, countryCode, countryName, evisaType, totalCost, currency, status, issuedPdfUrl, createdAt, updatedAt
+          FROM evisa_requests
+          WHERE email = ?
           ORDER BY createdAt DESC
-        `, [input.email]);
+        `, [ctx.candidate.email]);
         await connection.end();
         return { success: true, data: requests || [] };
       } catch (error) {
@@ -713,7 +716,12 @@ export const evisaRouter = router({
    * Sauvegarder un brouillon e-Visa dans le cloud (associé à un email)
    */
   saveCloudDraft: publicProcedure
-    .input(z.object({ email: z.string().email().max(320), countryCode: z.string().max(10), draftData: z.any() }))
+    .input(z.object({
+      email: z.string().email().max(320),
+      countryCode: z.string().max(10),
+      // Un brouillon de formulaire tient en quelques Ko : sans borne, n'importe qui pouvait remplir la base.
+      draftData: z.any().refine(value => JSON.stringify(value ?? null).length <= 50_000, "Brouillon trop volumineux"),
+    }))
     .mutation(async ({ input }: any) => {
       try {
         const dbUrl = process.env.DATABASE_URL || '';
@@ -743,7 +751,9 @@ export const evisaRouter = router({
     }),
 
   /**
-   * Récupérer un brouillon e-Visa du cloud
+   * Indique seulement si un brouillon e-Visa existe dans le cloud pour cette adresse et ce pays. Le contenu
+   * (identité, passeport…) n'est jamais renvoyé : l'appel est public et l'e-mail n'est pas une preuve, et le
+   * formulaire n'utilise que ce signal pour afficher le badge « Synchronisé Cloud ».
    */
   getCloudDraft: publicProcedure
     .input(z.object({ email: z.string().email().max(320), countryCode: z.string().max(10) }))
@@ -762,11 +772,11 @@ export const evisaRouter = router({
           )
         `);
         const [rows]: any = await connection.execute(`
-          SELECT draftData FROM evisa_drafts WHERE email = ? AND countryCode = ? LIMIT 1
+          SELECT id FROM evisa_drafts WHERE email = ? AND countryCode = ? LIMIT 1
         `, [input.email, input.countryCode]);
         await connection.end();
         if (rows && rows.length > 0) {
-          return { success: true, data: JSON.parse(rows[0].draftData) };
+          return { success: true, data: { synced: true } };
         }
         return { success: true, data: null };
       } catch (error) {
