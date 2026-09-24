@@ -76,6 +76,12 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     category: "chine",
   },
   {
+    src: "/proof-photos/proof-china-visa-5.jpg",
+    alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
+    caption: "Visa Chine obtenu par un candidat accompagné par 3M Travel & Services",
+    category: "chine",
+  },
+  {
     src: "/proof-photos/proof-schengen-visa-1.jpg",
     alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
     caption: "Visa Schengen obtenu pour un candidat accompagné par 3M Travel & Services",
