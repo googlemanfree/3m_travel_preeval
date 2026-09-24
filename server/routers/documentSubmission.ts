@@ -7,6 +7,7 @@ import { z } from "zod";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
 import { classifyDocument, classifyMultipleDocuments } from "../documentClassificationService";
 import { candidateProcedure } from "./candidate";
+import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 
 export const documentSubmissionRouter = router({
@@ -85,6 +86,7 @@ export const documentSubmissionRouter = router({
       notes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      await assertEvaluationCompleted(ctx.candidate);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 

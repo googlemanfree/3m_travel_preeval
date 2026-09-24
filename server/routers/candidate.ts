@@ -32,6 +32,7 @@ import {
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { getDb } from "../db";
+import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
@@ -873,6 +874,7 @@ export const candidateRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertEvaluationCompleted(ctx.candidate);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -1099,6 +1101,7 @@ export const candidateRouter = router({
       details: z.string().trim().max(1_500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      await assertEvaluationCompleted(ctx.candidate);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const documentLabel = input.documentLabel.replace(/\s+/g, " ").trim();
@@ -1473,6 +1476,7 @@ export const candidateRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      await assertEvaluationCompleted(ctx.candidate);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -1570,6 +1574,7 @@ export const candidateRouter = router({
   }),
 
   requestDossierActivation: candidateProcedure.mutation(async ({ ctx }) => {
+    await assertEvaluationCompleted(ctx.candidate);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const [application] = await db.select().from(applications)
