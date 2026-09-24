@@ -29,6 +29,25 @@ async function requireDb() {
   return db;
 }
 
+/**
+ * Contrat public volontairement JSON-only : ne jamais exposer directement une
+ * ligne Drizzle, car son type peut varier selon le driver SQL (Date, bigint,
+ * ou valeurs nullables) et provoquer une erreur de transformation tRPC.
+ */
+function toPublicApprovedReview(review: typeof customerReviews.$inferSelect) {
+  return {
+    id: Number(review.id),
+    displayName: getDisplayName(review.fullName, review.displayNameChoice),
+    destinationCountry: review.destinationCountry ?? undefined,
+    serviceType: review.serviceType ?? undefined,
+    rating: Number(review.rating),
+    reviewText: review.reviewText,
+    createdAt: review.createdAt instanceof Date
+      ? review.createdAt.toISOString()
+      : String(review.createdAt),
+  };
+}
+
 // ⚠️ NE JAMAIS utiliser protectedProcedure/ctx.user.role ici — ce routeur
 // est administré depuis le vrai système de session admin (adminAuth.ts),
 // pas depuis la session plateforme. Toujours publicProcedure + sessionToken
@@ -83,10 +102,7 @@ export const customerReviewRouter = router({
       .orderBy(desc(customerReviews.createdAt), asc(customerReviews.id))
       .limit(30);
 
-    return rows.map((review) => ({
-      ...review,
-      displayName: getDisplayName(review.fullName, review.displayNameChoice),
-    }));
+    return rows.map(toPublicApprovedReview);
   }),
 
   translateApproved: publicProcedure
