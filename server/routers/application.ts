@@ -572,33 +572,36 @@ export const applicationRouter = router({
       return { dossierNumber: app.dossierNumber, paymentUrl: result.paymentUrl, amount, currency: "XAF" as const };
     }),
 
-  /** Récupérer un dossier par son numéro */
+  /**
+   * Récupérer un dossier par son numéro, pour les pages de paiement publiques (CinetPayPayment, PaymentSuccess).
+   * Le numéro `3M-AAAA-NNNN` ne compte que 10 000 valeurs par an : il est énumérable, donc jamais un secret.
+   * On ne renvoie que ce que ces deux pages affichent ; l'ancienne version renvoyait la ligne entière
+   * (passeport, CV, date de naissance, revenus, notes admin, empreinte du code secret de paiement…).
+   * `getMyApplications` (lecture publique par `candidateId` numérique, sans appelant) a été retirée.
+   */
   getApplicationByDossierNumber: publicProcedure
     .input(z.object({ dossierNumber: z.string().max(50) }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       const [app] = await db
-        .select()
+        .select({
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          whatsappNumber: applications.whatsappNumber,
+          destination: applications.destination,
+          paymentAmount: applications.paymentAmount,
+          paymentCurrency: applications.paymentCurrency,
+          paymentTransactionId: applications.paymentTransactionId,
+          paymentDate: applications.paymentDate,
+          paymentMethod: applications.paymentMethod,
+        })
         .from(applications)
         .where(eq(applications.dossierNumber, input.dossierNumber))
         .limit(1);
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
       return app;
-    }),
-
-  /** Récupérer les dossiers d'un candidat */
-  getMyApplications: publicProcedure
-    .input(z.object({ candidateId: z.number().int() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
-      return db
-        .select()
-        .from(applications)
-        .where(eq(applications.candidateId, input.candidateId))
-        .orderBy(desc(applications.createdAt))
-        .limit(50);
     }),
 
   /** Lister tous les dossiers (admin) */
@@ -1330,89 +1333,8 @@ export const applicationRouter = router({
     }),
 
   // ─── Historique des rapports IA ──────────────────────────────────────────
-
-  /**
-   * Récupérer l'historique des rapports IA envoyés
-   */
-  getAIReportHistory: publicProcedure
-    .input(z.object({
-      applicationId: z.number().int().positive().optional(),
-      candidateId: z.number().int().optional(),
-      email: z.string().email().max(320).optional(),
-      limit: z.number().int().default(50),
-      offset: z.number().int().default(0),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
-
-      try {
-        let whereCondition: any = undefined;
-
-        if (input.applicationId) {
-          whereCondition = eq(aiReportHistory.applicationId, input.applicationId);
-        } else if (input.candidateId) {
-          whereCondition = eq(aiReportHistory.candidateId, input.candidateId);
-        } else if (input.email) {
-          whereCondition = eq(aiReportHistory.candidateEmail, input.email);
-        }
-
-        const query = db.select().from(aiReportHistory);
-        const baseQuery = whereCondition ? query.where(whereCondition) : query;
-
-        const reports = await baseQuery
-          .orderBy(desc(aiReportHistory.createdAt))
-          .limit(input.limit)
-          .offset(input.offset);
-
-        return {
-          success: true,
-          reports,
-          count: reports.length,
-        };
-      } catch (err) {
-        console.error('[AI Report History] Error:', err);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Erreur lors de la récupération de l\'historique',
-        });
-      }
-    }),
-
-  /**
-   * Récupérer un rapport IA spécifique par son ID
-   */
-  getAIReport: publicProcedure
-    .input(z.object({
-      reportId: z.string().max(128),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
-
-      try {
-        const [report] = await db
-          .select()
-          .from(aiReportHistory)
-          .where(eq(aiReportHistory.reportId, input.reportId))
-          .limit(1);
-
-        if (!report) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouvé' });
-        }
-
-        return {
-          success: true,
-          report,
-        };
-      } catch (err) {
-        console.error('[AI Report] Error:', err);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Erreur lors de la récupération du rapport',
-        });
-      }
-    }),
+  // `getAIReportHistory` et `getAIReport` (lectures publiques de `aiReportHistory`, contenu complet des
+  // rapports, filtrables par e-mail ou sans filtre du tout) ont été RETIRÉES : aucun appelant.
 
   /**
    * Retenter l'envoi d'un rapport IA qui a échoué
