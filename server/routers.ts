@@ -21,7 +21,6 @@ import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
 import { agencyDossierDocumentsRouter } from "./routers/agencyDossierDocuments";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
-import { candidateAuthOTPRouter } from "./routers/candidateAuthOTP";
 import { monitoringRouter } from "./routers/monitoring";
 import { evaluationAIRouter } from "./routers/evaluationAI";
 import { evaluationAdminRouter } from "./routers/evaluationAdmin";
@@ -95,6 +94,10 @@ import { ambassadorRouter } from "./routers/ambassador";
 // données personnelles, statut de paiement, notes internes — sans vérifier que l'appelant est le candidat
 // concerné. Rien côté client ni serveur ne les appelait jamais. Le candidat utilise `candidate.*`,
 // l'administrateur `adminDossier`/`agencyDossier`/`adminCandidateManagement`.
+// candidateAuthOTPRouter (routers/candidateAuthOTP.ts) a aussi été RETIRÉ : `verifyOTPAndRegister` ne contrôlait
+// jamais le code (« pour cette démo, on accepte simplement l'OTP ») et créait un compte déjà vérifié pour
+// n'importe quelle adresse e-mail, dont celle d'un candidat existant, dont les dossiers sont rattachés par e-mail.
+// Rien côté client n'appelait ce routeur : l'inscription passe par `candidate.register` et `candidate.verifyEmail`.
 // evaluationCommentsRouter (routers/evaluationComments.ts) a aussi été RETIRÉ, avec son unique client
 // `CommentsSection` que plus aucune page ne monte : `getComments` était publique, ignorait l'e-mail reçu et
 // renvoyait `authorEmail` (dont ceux des administrateurs) pour n'importe quel numéro de dossier ; `postComment`
@@ -139,7 +142,6 @@ export const appRouter = router({
   candidate: candidateRouter,
   accessRecovery: accessRecoveryRouter,
   dossierVerification: dossierVerificationRouter,
-  candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,
   heartbeat: heartbeatRouter,
   contact: contactRouter,

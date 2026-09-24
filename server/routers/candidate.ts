@@ -34,6 +34,7 @@ import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/cand
 import { getDb } from "../db";
 import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { publicProcedure, router } from "../_core/trpc";
+import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
@@ -292,6 +293,12 @@ function parseChecklistStepIds(value: string | null | undefined): string[] {
     return [];
   }
 }
+
+// Plafonds des codes de vérification d'e-mail : 6 essais par compte et par quart d'heure (la durée de vie du code),
+// 3 renvois par compte et 10 par adresse cliente pour ne pas inonder la boîte d'un tiers.
+const otpVerifyLimiter = createFixedWindowLimiter({ limit: 6, windowMs: 15 * 60_000 });
+const otpResendLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 15 * 60_000 });
+const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
@@ -1282,14 +1289,20 @@ export const candidateRouter = router({
   verifyEmail: publicProcedure
     .input(z.object({ candidateId: z.number().int().positive(), otp: z.string().length(6) }))
     .mutation(async ({ input }) => {
+      // Code à 6 chiffres et `candidateId` séquentiel : sans plafond de tentatives, la force brute était triviale.
+      const attempt = otpVerifyLimiter.check(`verify:${input.candidateId}`);
+      if (!attempt.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Trop de tentatives. Réessayez dans ${Math.ceil((attempt as { retryAfterSeconds: number }).retryAfterSeconds / 60)} minute(s).` });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
       if (candidate.emailVerified) {
-        const token = signCandidateToken(input.candidateId);
-        return { success: true, token, message: "Email déjà vérifié." };
+        // Jamais de jeton de session ici : le code n'est pas contrôlé pour un compte déjà vérifié, donc renvoyer
+        // un jeton donnait la session de n'importe quel candidat (identifiant séquentiel, code quelconque).
+        return { success: true, alreadyVerified: true, message: "Email déjà vérifié. Connectez-vous avec votre mot de passe." };
       }
       if (!candidate.emailOtp || candidate.emailOtp !== input.otp) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Code incorrect. Vérifiez votre email et réessayez." });
@@ -1311,7 +1324,13 @@ export const candidateRouter = router({
 
   resendOtp: publicProcedure
     .input(z.object({ candidateId: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const perAccount = otpResendLimiter.check(`resend:${input.candidateId}`);
+      const client = clientKeyOf(ctx?.req as any);
+      const perClient = client ? otpResendClientLimiter.check(client) : ({ allowed: true } as const);
+      if (!perAccount.allowed || !perClient.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de demandes de code. Réessayez dans quelques minutes." });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);

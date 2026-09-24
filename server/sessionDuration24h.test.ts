@@ -8,7 +8,6 @@ const read = (file: string) => readFileSync(resolve(root, file), "utf8");
 describe("sessions de 24 heures", () => {
   it("aligne les jetons candidat et administrateur alternatifs sur 24 heures", () => {
     expect(read("server/routers/candidate.ts")).toContain('const JWT_EXPIRES = "24h"');
-    expect(read("server/routers/candidateAuthOTP.ts")).toContain('const JWT_EXPIRES = "24h"');
     expect(read("server/routers/adminAuth.ts")).toContain("24 * 60 * 60 * 1000");
     expect(read("server/routers/adminAuth.ts")).toContain("renewSession");
   });

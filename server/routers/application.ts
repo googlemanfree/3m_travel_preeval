@@ -19,6 +19,13 @@ import { caseApplicants, caseStatusHistory, cases, clientNotifications, document
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { requireValidAdminSession } from "./adminAuth";
+import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
+
+// Plafonds des codes de vérification d'e-mail d'un dossier : 6 essais et 3 renvois par dossier et par quart
+// d'heure (durée de vie du code), 10 renvois par adresse cliente et par heure.
+const otpVerifyLimiter = createFixedWindowLimiter({ limit: 6, windowMs: 15 * 60_000 });
+const otpResendLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 15 * 60_000 });
+const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 
@@ -355,7 +362,13 @@ export const applicationRouter = router({
     .input(z.object({
       dossierNumber: z.string().max(50),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const perDossier = otpResendLimiter.check(`resend:${input.dossierNumber}`);
+      const client = clientKeyOf(ctx?.req as any);
+      const perClient = client ? otpResendClientLimiter.check(client) : ({ allowed: true } as const);
+      if (!perDossier.allowed || !perClient.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de demandes de code. Réessayez dans quelques minutes." });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
 
@@ -393,6 +406,11 @@ export const applicationRouter = router({
       otp: z.string().length(6),
     }))
     .mutation(async ({ input }) => {
+      // Code à 6 chiffres sur un numéro de dossier énumérable : sans plafond, la force brute était réaliste.
+      const attempt = otpVerifyLimiter.check(`verify:${input.dossierNumber}`);
+      if (!attempt.allowed) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Trop de tentatives. Réessayez dans ${Math.ceil((attempt as { retryAfterSeconds: number }).retryAfterSeconds / 60)} minute(s).` });
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
