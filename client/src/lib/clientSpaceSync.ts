@@ -4,6 +4,8 @@
  * et le candidat doit en être averti. Logique pure : le composant ne fait que rafraîchir, comparer et afficher.
  */
 
+import { clientCaseStatusLabel, clientEvisaStatusLabel, clientInsuranceStatusLabel, humanizeStatus } from "../../../shared/caseStatusLabels";
+
 export const CLIENT_SPACE_POLL_MS = 30_000;
 export const CLIENT_SPACE_SUMMARY_POLL_MS = 60_000;
 export const CLIENT_SPACE_MAX_ANNOUNCEMENTS = 3;
@@ -35,10 +37,7 @@ const asArray = (value: unknown): Array<Record<string, unknown>> =>
 const text = (value: unknown, max = 160): string => (typeof value === "string" ? value.trim().slice(0, max) : "");
 const idOf = (value: unknown): string | null => (typeof value === "number" || typeof value === "string") && String(value).trim() !== "" ? String(value) : null;
 
-export function humanizeStatus(status: string): string {
-  const spaced = status.replace(/[_-]+/g, " ").trim();
-  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : "";
-}
+export { humanizeStatus };
 
 /** Instantané des données que l'administrateur peut faire évoluer ; chaque entrée est lue avec prudence (données serveur). */
 export function buildClientSpaceSnapshot(input: { evaluation?: unknown; cases?: unknown; insurance?: unknown; evisa?: unknown }): ClientSpaceSnapshot {
@@ -122,7 +121,7 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
     for (const [id, current] of Object.entries(next.cases)) {
       const before = previous.cases[id];
       if (!before) changes.push({ id: `case-new-${id}`, tone: "info", title: "Un dossier a été ouvert pour vous", description: `Dossier N° ${current.label}.` });
-      else if (before.status !== current.status && current.status && !announcedCases.has(id)) changes.push({ id: `case-${id}`, tone: "info", title: `Votre dossier N° ${current.label} a évolué`, description: `Nouvel état : ${humanizeStatus(current.status)}.` });
+      else if (before.status !== current.status && current.status && !announcedCases.has(id)) changes.push({ id: `case-${id}`, tone: "info", title: `Votre dossier N° ${current.label} a évolué`, description: `Nouvel état : ${clientCaseStatusLabel(current.status)}.` });
     }
   }
 
@@ -141,7 +140,7 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
       if (!before) continue;
       if (!before.coupon && current.coupon) changes.push({ id: `insurance-coupon-${id}`, tone: "success", title: "Votre coupon d’assurance voyage est disponible", description: `Demande ${current.label}.` });
       else if (!before.attestation && current.attestation) changes.push({ id: `insurance-attestation-${id}`, tone: "success", title: "Votre attestation d’assurance voyage est disponible", description: `Demande ${current.label}.` });
-      else if (before.status !== current.status && current.status) changes.push({ id: `insurance-${id}`, tone: "info", title: `Assurance voyage ${current.label} : statut mis à jour`, description: `Nouvel état : ${humanizeStatus(current.status)}.` });
+      else if (before.status !== current.status && current.status) changes.push({ id: `insurance-${id}`, tone: "info", title: `Assurance voyage ${current.label} : statut mis à jour`, description: `Nouvel état : ${clientInsuranceStatusLabel(current.status)}.` });
     }
   }
 
@@ -151,7 +150,7 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
       if (!before) continue;
       if (!before.issued && current.issued) changes.push({ id: `evisa-issued-${id}`, tone: "success", title: `Votre e-Visa ${current.label} est disponible`, description: "Téléchargez-le depuis la section Dossier." });
       else if (before.status !== current.status && current.status === "rejected") changes.push({ id: `evisa-${id}`, tone: "warning", title: `Demande d’e-Visa ${current.label} : refusée`, description: "Contactez l’agence pour connaître la suite." });
-      else if (before.status !== current.status && current.status) changes.push({ id: `evisa-${id}`, tone: "info", title: `Demande d’e-Visa ${current.label} : statut mis à jour`, description: `Nouvel état : ${humanizeStatus(current.status)}.` });
+      else if (before.status !== current.status && current.status) changes.push({ id: `evisa-${id}`, tone: "info", title: `Demande d’e-Visa ${current.label} : statut mis à jour`, description: `Nouvel état : ${clientEvisaStatusLabel(current.status)}.` });
     }
   }
   return changes;

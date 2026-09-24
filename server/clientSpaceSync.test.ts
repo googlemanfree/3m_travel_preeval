@@ -73,10 +73,10 @@ describe("ce qui est annoncé au candidat", () => {
 
   it("annonce le changement d'état d'un dossier et l'ouverture d'un nouveau dossier", () => {
     const before = snap({ cases: caseData({ status: "nouveau" }) });
-    const changed = diffClientSpace(before, snap({ cases: caseData({ status: "en_traitement" }) }));
+    const changed = diffClientSpace(before, snap({ cases: caseData({ status: "documents_review" }) }));
     expect(changed).toHaveLength(1);
     expect(changed[0].title).toContain("3M-2026-005");
-    expect(changed[0].description).toBe("Nouvel état : En traitement.");
+    expect(changed[0].description).toBe("Nouvel état : Documents à compléter.");
     const opened = diffClientSpace(snap({ cases: { cases: [], notifications: [] } }), snap({ cases: caseData() }));
     expect(opened.map((c) => c.id)).toEqual(["case-new-5"]);
   });
@@ -111,7 +111,7 @@ describe("ce qui est annoncé au candidat", () => {
     const before = snap({ insurance: item({}) });
     expect(diffClientSpace(before, snap({ insurance: item({ couponFileName: "c.pdf" }) }))[0].title).toContain("coupon");
     expect(diffClientSpace(before, snap({ insurance: item({ attestationFileName: "a.pdf" }) }))[0].title).toContain("attestation");
-    expect(diffClientSpace(before, snap({ insurance: item({ status: "paid" }) }))[0].description).toBe("Nouvel état : Paid.");
+    expect(diffClientSpace(before, snap({ insurance: item({ status: "quote_sent" }) }))[0].description).toBe("Nouvel état : Devis envoyé.");
   });
 
   it("annonce un e-Visa disponible, refusé ou en évolution", () => {
@@ -119,7 +119,7 @@ describe("ce qui est annoncé au candidat", () => {
     const before = snap({ evisa: item({}) });
     expect(diffClientSpace(before, snap({ evisa: item({ status: "approved", issuedPdfUrl: "https://x/f.pdf" }) }))[0]).toMatchObject({ tone: "success", title: "Votre e-Visa Kenya est disponible" });
     expect(diffClientSpace(before, snap({ evisa: item({ status: "rejected" }) }))[0].tone).toBe("warning");
-    expect(diffClientSpace(before, snap({ evisa: item({ status: "processing" }) }))[0].description).toBe("Nouvel état : Processing.");
+    expect(diffClientSpace(before, snap({ evisa: item({ status: "processing" }) }))[0].description).toBe("Nouvel état : En cours de traitement.");
   });
 
   it("une facette pas encore chargée n'est pas comparée, et la fusion garde ce qui est déjà connu", () => {
