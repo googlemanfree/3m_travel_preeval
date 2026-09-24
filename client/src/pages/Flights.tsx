@@ -18,6 +18,8 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
+import { FlightLowerSections, FlightPopularRoutes, FlightServiceTabs } from "@/components/FlightDiscoverySections";
+import { FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -750,6 +752,23 @@ export default function Flights() {
     setDestination(tmp);
   };
 
+  // Un parcours fréquent lance directement la recherche, avec des dates modifiables ensuite.
+  function pickRoute(route: FlightRoute) {
+    const departure = minDate(14);
+    setTripType(route.tripType);
+    setOrigin(route.from.iata);
+    setDestination(route.to.iata);
+    setDepartureDate(departure);
+    setReturnDate(addDaysToIsoDate(departure, 14));
+    setSelectedAirlines([]);
+    setSelectedAlliance("ALL");
+    setMaxStops(null);
+    searchStartedAtRef.current = Date.now();
+    setIsSearchSubmitting(true);
+    setSearchEnabled(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -768,6 +787,8 @@ export default function Flights() {
               <ArrowRight className="h-3.5 w-3.5" />
             </a>
           </motion.div>
+
+          <FlightServiceTabs />
 
           {/* Trip type tabs */}
           <div className="flex gap-2 mb-6 justify-center">
@@ -830,6 +851,21 @@ export default function Flights() {
 
               {/* Passengers */}
               <PassengerSelector {...passengers} onChange={setPassengers} />
+            </div>
+
+            <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+              <label htmlFor="flight-max-stops" className="text-xs font-bold uppercase tracking-wide text-[#1E3A8A]">Escales</label>
+              <select
+                id="flight-max-stops"
+                value={maxStops === null ? "" : String(maxStops)}
+                onChange={(event) => setMaxStops(event.target.value === "" ? null : Number(event.target.value))}
+                className="rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 focus:border-[#2563EB] focus:outline-none"
+              >
+                {FLIGHT_STOP_OPTIONS.map((option) => (
+                  <option key={String(option.value)} value={option.value === null ? "" : String(option.value)}>{option.label}</option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-500">Compagnies et alliances : filtrables avec les résultats.</span>
             </div>
 
             <div className="mt-5 flex justify-center">
@@ -943,15 +979,11 @@ export default function Flights() {
         </motion.div>
       </div>
 
+      <div className="order-4"><FlightLowerSections onPick={pickRoute} /></div>
+
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
-        {!searchEnabled && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <Plane className="w-16 h-16 text-blue-200 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-400 mb-2">Prêt à décoller ?</h2>
-            <p className="text-gray-400 text-sm">Renseignez votre destination et lancez la recherche pour voir les vols disponibles.</p>
-          </motion.div>
-        )}
+        {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 
         {isFetching && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24 bg-white rounded-3xl border border-blue-100 shadow-xl max-w-xl mx-auto my-12 p-8">
