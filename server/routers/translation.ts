@@ -121,53 +121,10 @@ export const translationRouter = router({
       return pricing.length > 0 ? pricing[0] : null;
     }),
 
-  validateTranslationPayment: publicProcedure
-    .input(z.object({
-      requestId: z.number().int().positive(),
-      transactionId: z.string().max(64),
-      paymentMethod: z.string().max(50),
-      amount: z.string().max(50),
-      currency: z.string().max(10),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
-  
-      const request = await db.select().from(drizzleSchema.translationRequests).where(
-        eq(drizzleSchema.translationRequests.id, input.requestId)
-      ).limit(1);
-  
-      if (!request || request.length === 0) {
-        throw new Error("Translation request not found");
-      }
-  
-      await db.update(drizzleSchema.translationRequests).set({
-        paymentStatus: "completed",
-        paymentTransactionId: input.transactionId,
-        paymentMethod: input.paymentMethod,
-        paymentDate: new Date(),
-        totalPrice: input.amount,
-        currency: input.currency,
-        status: "pending_translation", // Move to next stage after payment
-        updatedAt: new Date(),
-      }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
-  
-      // Send payment confirmation to client
-      const req = request[0];
-      if (req.candidateEmail) {
-        try {
-          await sendEmail({
-            to: req.candidateEmail,
-            subject: "Paiement reçu — Traduction de document 3M Travel",
-            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Paiement confirmé ✅</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${esc(req.candidateName || req.candidateEmail)}</strong>,</p><p>Nous avons bien reçu votre paiement de <strong>${esc(String(req.totalPrice))} ${esc(req.currency)}</strong> pour la traduction de votre document.</p><p>Notre équipe prend en charge votre demande et vous transmettra le document traduit dans les meilleurs délais.</p><p>Pour toute question : <strong>+237 698 104 832</strong> (WhatsApp)</p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel &amp; Services SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
-          });
-        } catch (emailErr) {
-          console.warn("[translation] Payment confirmation email failed:", emailErr);
-        }
-      }
-
-      return { success: true };
-    }),
+  // `validateTranslationPayment` et `downloadTranslatedDocument` ont été RETIRÉES (aucun appelant) : elles étaient
+  // publiques et ne demandaient que l'`id` séquentiel de la demande — la première marquait n'importe quelle demande
+  // comme payée avec un montant et une transaction fournis par l'appelant, la seconde livrait l'URL du document
+  // traduit d'un autre client.
 
   uploadTranslatedDocument: protectedProcedure
     .input(z.object({
@@ -216,33 +173,6 @@ export const translationRouter = router({
       }
 
       return { success: true };
-    }),
-
-  downloadTranslatedDocument: publicProcedure
-    .input(z.object({
-      requestId: z.number().int().positive(),
-    }))
-    .query(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
-  
-      const request = await db.select().from(drizzleSchema.translationRequests).where(
-        eq(drizzleSchema.translationRequests.id, input.requestId)
-      ).limit(1);
-  
-      if (!request || request.length === 0) {
-        throw new Error("Translation request not found");
-      }
-  
-      const translation = request[0];
-  
-      if (translation.status !== "completed" || !translation.translatedDocumentUrl) {
-        throw new Error("Translated document not available for download");
-      }
-  
-      // TODO: Implement secure, temporary URL generation for download
-      // For now, returning the direct URL (which should be S3 pre-signed URL)
-      return { url: translation.translatedDocumentUrl };
     }),
 
   getTranslationLanguages: publicProcedure

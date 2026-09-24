@@ -1066,7 +1066,9 @@ export const applicationRouter = router({
     }),
 
   // ─── Signature du Protocole d'Accord ─────────────────────────────────────────
-  signAgreement: publicProcedure
+  // Réservée au propriétaire du dossier : l'`id` est séquentiel, et la version publique laissait n'importe qui
+  // « signer » à la place d'un autre candidat (nom de signature et adresse IP enregistrés comme preuve).
+  signAgreement: candidateProcedure
     .input(z.object({
       applicationId: z.number().int().positive(),
       signatureName: z.string().min(2).max(255),
@@ -1077,7 +1079,13 @@ export const applicationRouter = router({
       const [app] = await db
         .select()
         .from(applications)
-        .where(eq(applications.id, input.applicationId))
+        .where(and(
+          eq(applications.id, input.applicationId),
+          or(
+            eq(applications.candidateId, ctx.candidate.id),
+            sql`LOWER(${applications.email}) = LOWER(${ctx.candidate.email})`,
+          ),
+        ))
         .limit(1);
       if (!app) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable' });

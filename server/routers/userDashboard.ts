@@ -6,7 +6,7 @@
 import { getDb } from "../db";
 import { applications, candidateFiles } from "../../drizzle/schema";
 // import { clientDocuments } from "../../drizzle/schema"; // Table supprimée
-import { publicProcedure, router } from "../_core/trpc";
+import { router } from "../_core/trpc";
 import { candidateProcedure } from "./candidate";
 import { getDocumentStatusCounts, toDisplayDocumentStatus } from "../services/documentStatus";
 import { TRPCError } from "@trpc/server";
@@ -14,48 +14,9 @@ import { z } from "zod";
 import { and, eq, or, desc } from "drizzle-orm";
 
 export const userDashboardRouter = router({
-  /**
-   * Récupérer l'historique des paiements pour un dossier
-   */
-  getPaymentHistory: publicProcedure
-    .input(z.object({
-      dossierNumber: z.string().max(50),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-
-      const [app] = await db
-        .select()
-        .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
-        .limit(1);
-
-      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
-
-      // Construire l'historique des paiements
-      const paymentHistory = [
-        {
-          id: 1,
-          date: app.createdAt || new Date(),
-          type: "OUVERTURE_DOSSIER",
-          amount: app.paymentAmount || 65000,
-          currency: app.paymentCurrency || "XAF",
-          status: app.paymentStatus || "PENDING",
-          transactionId: app.paymentTransactionId || null,
-          description: "Frais d'ouverture de dossier immigration",
-          method: app.paymentMethod || null,
-        },
-      ];
-
-      return {
-        dossierNumber: input.dossierNumber,
-        totalAmount: app.paymentAmount || 65000,
-        totalPaid: app.paymentStatus === "SUCCESS" ? (app.paymentAmount || 65000) : 0,
-        paymentStatus: app.paymentStatus || "PENDING",
-        paymentHistory,
-      };
-    }),
+  // `getPaymentHistory` et `getDossierOverview` ont été RETIRÉES (la seconde avec son composant orphelin
+  // `DossierOverview`) : publiques, elles livraient nom, e-mail, transaction et statut de paiement à partir du
+  // seul numéro de dossier `3M-AAAA-NNNN`, énumérable. Le candidat utilise `candidate.*`.
 
   /**
    * Récupérer le statut des documents soumis
@@ -101,71 +62,6 @@ export const userDashboardRouter = router({
           rejectionReason: d.rejectionReason || null,
           url: d.fileUrl,
         })),
-      };
-    }),
-
-  /**
-   * Récupérer les infos synthétiques du dossier
-   */
-  getDossierOverview: publicProcedure
-    .input(z.object({
-      dossierNumber: z.string().max(50),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-
-      const [app] = await db
-        .select()
-        .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
-        .limit(1);
-
-      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
-
-      // Récupérer les documents pour calculer la progression (stub pour maintenant)
-      const documents: any[] = [];
-
-      const verifiedCount = documents.filter(d => d.status === "verified").length;
-
-      // Déterminer l'étape actuelle du dossier
-      let currentStep = "Création";
-      let stepProgress = 0;
-
-      if (app.paymentStatus === "SUCCESS") {
-        currentStep = "Paiement confirmé";
-        stepProgress = 25;
-      }
-      if (documents.length > 0) {
-        currentStep = "Documents en cours";
-        stepProgress = 50;
-      }
-      if (verifiedCount === documents.length && documents.length > 0) {
-        currentStep = "Documents validés";
-        stepProgress = 75;
-      }
-      if (app.dossierStatus === "en_evaluation") {
-        currentStep = "En évaluation";
-        stepProgress = 85;
-      }
-      if (app.dossierStatus === "bilan_envoye") {
-        currentStep = "Bilan disponible";
-        stepProgress = 100;
-      }
-
-      return {
-        dossierNumber: input.dossierNumber,
-        fullName: app.fullName,
-        email: app.email,
-        destination: app.destination,
-        formulaChosen: app.formulaChosen,
-        createdAt: app.createdAt,
-        paymentStatus: app.paymentStatus,
-        dossierStatus: app.dossierStatus,
-        currentStep,
-        stepProgress,
-        scoringBadge: app.scoringBadge,
-        scoringTotal: app.scoringTotal,
       };
     }),
 });

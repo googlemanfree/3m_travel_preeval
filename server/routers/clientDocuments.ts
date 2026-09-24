@@ -177,57 +177,9 @@ export const clientDocumentsRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
   // PAIEMENTS CLIENTS
   // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Soumettre un paiement (côté client)
-   */
-  submitPayment: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email().max(320),
-      amount: z.number().positive(),
-      currency: z.string().max(10).default("EUR"),
-      paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
-      paymentDescription: z.string().max(500),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        // Vérifier que l'évaluation existe
-        const evals = await db
-          .select()
-          .from(evaluations)
-          .where(eq(evaluations.id, input.evaluationId))
-          .limit(1);
-
-        if (evals.length === 0) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
-        }
-
-        await db.insert(clientPayments).values({
-          evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
-          amount: parseFloat(input.amount.toString()),
-          currency: input.currency,
-          paymentMethod: input.paymentMethod as any,
-          paymentDescription: input.paymentDescription,
-          status: "pending" as any,
-        });
-
-        return {
-          success: true,
-          message: "Paiement soumis avec succès. En attente de confirmation.",
-        };
-      } catch (err) {
-        console.error("[Submit Payment] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la soumission du paiement",
-        });
-      }
-    }),
+  // `submitPayment` (publique, sans appelant) a été RETIRÉE : elle enregistrait un paiement « en attente » pour
+  // n'importe quelle évaluation et n'importe quelle adresse, sans vérifier l'identité de l'appelant. Les paiements
+  // passent par CinetPay (`application.initiateCinetPayPayment`) ou par l'administrateur (`adminAddPayment`).
 
   /**
    * Récupérer les paiements d'une évaluation

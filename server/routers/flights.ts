@@ -597,18 +597,8 @@ export const flightsRouter = router({
       return { success: true };
     }),
 
-  getSearchHistory: publicProcedure
-    .input(z.object({ userEmail: z.string().email().max(320) }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return [];
-      return await db
-        .select()
-        .from(flightSearchHistory)
-        .where(eq(flightSearchHistory.userEmail, input.userEmail))
-        .orderBy(desc(flightSearchHistory.createdAt))
-        .limit(20);
-    }),
+  // `getSearchHistory` (historique de recherches de vols lu par simple adresse e-mail, sans appelant) a été
+  // RETIRÉE : une adresse e-mail n'est pas une preuve d'identité.
 
   saveFavoriteFlight: candidateProcedure
     .input(z.object({ flight: z.record(z.string(), z.any()) }))
