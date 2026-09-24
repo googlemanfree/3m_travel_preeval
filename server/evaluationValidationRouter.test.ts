@@ -237,7 +237,8 @@ describe("publication via le routeur", () => {
   it("gère la réévaluation et les statuts affichés dans le tableau de bord", async () => {
     const s = setup();
     await openedCase(s);
-    expect(await s.caller.listStatuses({ sessionToken: "token-a", evaluationIds: [1, 2] })).toEqual([{ evaluationId: 1, status: "attente_validation_admin", label: "EN ATTENTE DE VALIDATION ADMINISTRATEUR", versionNumber: 1 }]);
+    const listed = await s.caller.listStatuses({ sessionToken: "token-a", evaluationIds: [1, 2] });
+    expect(listed).toEqual([{ evaluationId: 1, status: "attente_validation_admin", label: "EN ATTENTE DE VALIDATION ADMINISTRATEUR", versionNumber: 1, updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) }]);
     await s.caller.publish(await publishArgs(s));
     const view = (await s.caller.startReevaluation({ ...admin("token-b"), reason: "Nouveau diplôme reçu" })).view;
     expect(view.case).toMatchObject({ versionNumber: 2, workflowStatus: "en_revue_admin" });

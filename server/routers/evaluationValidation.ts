@@ -147,7 +147,7 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
         try {
           const deps = await ports.resolveDeps();
           const statuses = await deps.store.latestStatuses(input.evaluationIds);
-          return Array.from(statuses.entries()).map(([id, entry]) => ({ evaluationId: id, status: entry.status, label: WORKFLOW_STATUS_LABELS[entry.status], versionNumber: entry.versionNumber }));
+          return Array.from(statuses.entries()).map(([id, entry]) => ({ evaluationId: id, status: entry.status, label: WORKFLOW_STATUS_LABELS[entry.status], versionNumber: entry.versionNumber, updatedAt: entry.updatedAt.toISOString() }));
         } catch (error) {
           if (isMissingTableError(error)) return [];
           throw error;
