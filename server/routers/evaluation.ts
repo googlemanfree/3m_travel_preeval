@@ -5,6 +5,7 @@ import { getDb } from "../db";
 import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
+import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { sendEvaluationReceptionEmail } from "../emailService";
@@ -16,6 +17,9 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
+
+/** Freine l'envoi en rafale et l'usage des formulaires publics pour écrire à des tiers (e-mail de réception). */
+export const evaluationSubmissionGuard = createSubmissionGuard(EVALUATION_SUBMISSION_LIMITS);
 
 const visaTypeEnum = z.enum([
   "schengen_etude",
@@ -188,7 +192,8 @@ export const evaluationRouter = router({
 
   submitEvaluation: publicProcedure
     .input(multiProjectEvaluationInput)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      evaluationSubmissionGuard.assertAllowed(ctx?.req, input.email);
       const db = await getDb();
       if (!db) {
         throw new Error("Base de données non disponible");
@@ -349,7 +354,8 @@ export const evaluationRouter = router({
 
   submit: publicProcedure
     .input(evaluationInput)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      evaluationSubmissionGuard.assertAllowed(ctx?.req, input.email);
       const db = await getDb();
       if (!db) {
         throw new Error("Base de données non disponible");
