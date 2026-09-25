@@ -1,4 +1,4 @@
-import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, FileText,
   FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
@@ -20,6 +20,7 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
+import ProcedureStepper from "@/components/ProcedureStepper";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
@@ -639,43 +640,19 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
-          {data.candidateJourney?.steps?.length > 0 && (() => {
-            const INTERNAL_STEPS_COUNT = 13;
-            const internalSteps = data.candidateJourney.steps.filter((step: any) => step.index < INTERNAL_STEPS_COUNT);
-            const internalCompletedCount = internalSteps.filter((step: any) => step.state === "completed").length;
-            const internalProgressPercent = internalSteps.length ? Math.round((internalCompletedCount / internalSteps.length) * 100) : 0;
-            return <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
-            <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-              <div><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Parcours synchronisé</p><h4 className="mt-1 text-lg font-bold text-slate-950">{data.candidateJourney.title}</h4><p className="mt-1 text-sm text-slate-600">La même séquence est affichée dans l’espace candidat. Une étape verrouillée ne doit pas être validée avant la précédente.</p></div>
-              <Badge className="border-blue-200 bg-blue-50 text-blue-800">Étape {Math.min(data.candidateJourney.currentStepIndex + 1, data.candidateJourney.steps.length)} / {data.candidateJourney.steps.length}</Badge>
-            </div>
-            <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3" aria-label="Avancement du traitement interne">
-              <div className="flex items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-blue-800">Traitement interne 3M Travel & Services</p><p className="text-xs font-black text-blue-900">{internalProgressPercent}% <span className="font-medium text-slate-600">({internalCompletedCount}/{internalSteps.length})</span></p></div>
-              <Progress className="mt-2 h-2 bg-blue-100" value={internalProgressPercent} aria-label={`Avancement des étapes internes : ${internalProgressPercent}%`} />
-            </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">{data.candidateJourney.steps.map((step: any) => {
-              const isBlocked = step.state === "locked";
-              const isCompleted = step.state === "completed";
-              const missingRequirement = step.index > data.candidateJourney.currentStepIndex ? "L’étape précédente doit être validée avant de poursuivre." : "Les prérequis serveur de cette étape ne sont pas encore réunis.";
-              return <Fragment key={step.id}>
-                {step.index === INTERNAL_STEPS_COUNT && <div className="col-span-full my-1 flex items-center gap-3" role="separator" aria-label="Fin du traitement interne, début des étapes officielles du pays"><div className="h-px flex-1 bg-slate-200" /><span className="whitespace-nowrap rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-600">Étapes officielles du pays</span><div className="h-px flex-1 bg-slate-200" /></div>}
-                <div className={`rounded-lg border p-3 ${isCompleted ? "border-emerald-200 bg-emerald-50" : step.state === "current" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{step.index + 1}. {step.label}</p>
-                    <div className="flex items-center gap-1.5">{isBlocked && <Tooltip><TooltipTrigger asChild><span className="inline-flex cursor-help text-slate-500" aria-label={`Étape bloquée : ${missingRequirement}`}><LockKeyhole className="h-4 w-4" /></span></TooltipTrigger><TooltipContent>{missingRequirement}</TooltipContent></Tooltip>}<span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{isCompleted ? "Terminé" : step.state === "current" ? "En cours" : "Verrouillé"}</span></div>
-                  </div>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">{step.description}</p>
-                  {isBlocked && <p className="mt-2 text-xs font-medium text-amber-700">Progression indisponible : {missingRequirement}</p>}
-                  {step.sourceUrl && <a href={step.sourceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-blue-700 underline">Source officielle</a>}
-                  {step.state === "current" && <Button type="button" size="sm" variant="outline" className="mt-3 w-full border-blue-300 bg-white text-blue-800 hover:bg-blue-50" disabled={journeyStepMutation.isPending || actionLocks.journeyStep} onClick={() => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}>{journeyStepMutation.isPending ? "Validation…" : "Marquer l’étape comme faite"}</Button>}
-                  {isBlocked && <Button type="button" size="sm" variant="outline" className="mt-3 w-full border-amber-300 bg-white text-amber-800 hover:bg-amber-50" disabled={journeyStepMutation.isPending || actionLocks.journeyStep} title="Déverrouiller cette étape manuellement, hors séquence normale" onClick={() => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}>Déverrouiller manuellement</Button>}
-                  {isCompleted && <Button type="button" size="sm" variant="ghost" className="mt-3 w-full text-rose-700 hover:bg-rose-50 hover:text-rose-800" disabled={journeyStepMutation.isPending || actionLocks.journeyStep} title="Annuler cette validation" onClick={() => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}>Annuler la validation</Button>}
-                </div>
-              </Fragment>;
-            })}</div>
-            {data.candidateJourney.officialSources?.length > 0 ? <p className="mt-4 text-xs text-slate-500">Sources institutionnelles : {data.candidateJourney.officialSources.join(" · ")}</p> : <p className="mt-4 text-xs font-medium text-amber-700">Source institutionnelle à vérifier avant toute étape spécifique.</p>}
-          </section>;
-          })()}
+          {data.candidateJourney?.steps?.length > 0 && (
+            <ProcedureStepper
+              title={data.candidateJourney.title}
+              steps={data.candidateJourney.steps}
+              currentStepIndex={data.candidateJourney.currentStepIndex}
+              internalCount={13}
+              officialSources={data.candidateJourney.officialSources}
+              busy={journeyStepMutation.isPending || actionLocks.journeyStep}
+              onValidate={(step) => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}
+              onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}
+              onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
+            />
+          )}
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-700 p-2.5 text-white"><Gauge className="h-5 w-5" /></div><div><div className="flex flex-wrap items-center gap-2"><h4 className="text-lg font-bold text-slate-950">Pilotage du dossier</h4><StateBadge status={workflowStatus} /><Badge className={priority === "urgent" ? "border-rose-200 bg-rose-50 text-rose-800" : priority === "high" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-700"}>{PRIORITY_LABELS[priority]}</Badge></div><p className="mt-1 max-w-2xl text-sm text-slate-600">Modifiez les paramètres, préparez les relances et enregistrez une seule mise à jour synchronisée pour l’espace candidat.</p></div></div>
@@ -720,14 +697,20 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 <p className="mt-1 text-xs text-slate-600">Une échéance dépassée nécessite une revue humaine et une note de suivi.</p>
               </div>
             </div>
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4" aria-label="Contrôle de cohérence avant action">
+            <details className="mt-4 rounded-xl border border-slate-200 bg-white" data-testid="coherence-details">
+              <summary className="cursor-pointer select-none p-3 text-sm font-semibold text-slate-800">Contrôle avant action : {coherenceChecks.filter((check: any) => check.ok).length}/{coherenceChecks.length} conditions remplies</summary>
+            <div className="mx-3 mb-3 rounded-xl border border-slate-200 bg-white p-4" aria-label="Contrôle de cohérence avant action">
               <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contrôle de cohérence avant action</p><h4 className="mt-1 text-base font-bold text-slate-950">Prérequis de progression</h4></div><Badge className={coherenceChecks.every((check) => check.ok) ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}>{coherenceChecks.filter((check) => check.ok).length}/{coherenceChecks.length} validés</Badge></div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">{coherenceChecks.map((check) => <div key={check.label} className={`rounded-lg border p-3 ${check.ok ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50/60"}`}><div className="flex items-center gap-2">{check.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-700" /> : <CircleAlert className="h-4 w-4 text-amber-700" />}<p className="text-sm font-semibold text-slate-900">{check.label}</p></div><p className="mt-1 text-xs leading-4 text-slate-600">{check.detail}</p></div>)}</div>
             </div>
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-label="Activité récente du dossier">
+            </details>
+            <details className="mt-2 rounded-xl border border-slate-200 bg-white" data-testid="activity-details">
+              <summary className="cursor-pointer select-none p-3 text-sm font-semibold text-slate-800">Journal d’activité récent ({(data.activity ?? []).length})</summary>
+            <div className="mx-3 mb-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4" aria-label="Activité récente du dossier">
               <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Journal d’activité</p><h4 className="mt-1 text-base font-bold text-slate-950">Dernières actions du dossier</h4></div><Badge className="border-slate-200 bg-white text-slate-700">{(data.activity ?? []).length} événement(s)</Badge></div>
               {(data.activity ?? []).length ? <div className="mt-3 grid gap-2 md:grid-cols-2">{(data.activity ?? []).slice(0, 4).map((item: any, index: number) => <div key={`${item.createdAt}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3"><div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold text-slate-800">{item.description || "Action enregistrée"}</p><span className="shrink-0 text-[11px] text-slate-500">{formatDate(item.createdAt)}</span></div><p className="mt-1 text-xs text-slate-500">Acteur : {item.actor || "administration"}</p></div>)}</div> : <p className="mt-3 text-sm text-slate-500">Aucune activité récente n’est encore enregistrée pour ce dossier.</p>}
             </div>
+            </details>
 
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               {quickWorkflowOptions.map((option) => { const Icon = option.icon; const active = workflowStatus === option.value; return <button type="button" key={option.value} onClick={() => setWorkflowStatus(option.value)} className={`min-h-[86px] rounded-xl border p-3 text-left transition-colors ${active ? "border-blue-600 bg-blue-700 text-white shadow-sm" : option.tone}`}><Icon className="h-4 w-4" /><p className="mt-2 text-sm font-semibold">{option.label}</p><p className={`mt-0.5 text-xs ${active ? "text-blue-100" : "opacity-75"}`}>{option.description}</p></button>; })}
