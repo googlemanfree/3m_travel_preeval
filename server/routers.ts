@@ -61,6 +61,7 @@ import { adminCandidateManagementRouter } from "./routers/adminCandidateManageme
 import { adminSavedViewsRouter } from "./routers/adminSavedViews";
 import { insuranceRequestsRouter } from "./routers/insuranceRequests";
 import { caseTrackingRouter } from "./routers/caseTracking";
+import { adminCaseDeskRouter } from "./routers/adminCaseDesk";
 import { destinationMediaRouter } from "./routers/destinationMedia";
 import { embassyNewsRouter } from "./routers/embassyNews";
 import { mediaLibraryRouter } from "./routers/mediaLibrary";
@@ -153,6 +154,7 @@ export const appRouter = router({
   adminSavedViews: adminSavedViewsRouter,
   insuranceRequests: insuranceRequestsRouter,
   caseTracking: caseTrackingRouter,
+  adminCaseDesk: adminCaseDeskRouter,
   destinationMedia: destinationMediaRouter,
   embassyNews: embassyNewsRouter,
   mediaLibrary: mediaLibraryRouter,

@@ -344,7 +344,7 @@ export function determineCandidate360NextAction(input: { workflowStatus: string;
   return { key: "follow_up", label: "Planifier le suivi", description: "Le dossier est à jour. Programmez la prochaine relance ou clôturez le traitement.", urgency: "low" as const };
 }
 
-async function ensureOperationalCase(db: any, reference: { source: "online" | "agency"; id: number }) {
+export async function ensureOperationalCase(db: any, reference: { source: "online" | "agency"; id: number }) {
   const [existing] = await db.select().from(cases).where(reference.source === "online" ? eq(cases.legacyApplicationId, reference.id) : eq(cases.legacyAgencyDossierId, reference.id)).limit(1);
   if (existing) return existing;
 

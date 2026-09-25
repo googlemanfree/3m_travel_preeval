@@ -44,6 +44,7 @@ import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
+import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 
@@ -96,6 +97,14 @@ export default function EvaluationSpace() {
     ...clientSpacePolling(),
     retry: false,
   });
+  const downloadCaseDocument = async (documentId: number) => {
+    try {
+      const result = await trpcUtils.caseTracking.downloadMyDocument.fetch({ documentId });
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Document indisponible pour le moment.");
+    }
+  };
   const downloadInsuranceCoupon = async (id: number) => {
     try {
       const result = await trpcUtils.caseTracking.downloadMyInsuranceCoupon.fetch({ insuranceRequestId: id });
@@ -896,6 +905,7 @@ export default function EvaluationSpace() {
               <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} />
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />
               {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetch()]); }} /></Card>}
+              <CaseDocumentsPanel documents={agencyDepositedDocuments(caseTrackingData?.cases)} onDownload={(documentId) => { void downloadCaseDocument(documentId); }} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
