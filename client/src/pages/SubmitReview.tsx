@@ -10,13 +10,16 @@ import { Card } from "@/components/ui/card";
 import { Star, CheckCircle, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { CountrySelect } from "@/components/CountryPicker";
+import { parseReviewInviteParams } from "@/lib/reviewInvitation";
 
 export default function SubmitReview({ embedded = false }: { embedded?: boolean }) {
+  // Un lien d'invitation de l'équipe peut préremplir le service et la destination (rien d'autre, jamais de données personnelles).
+  const invite = parseReviewInviteParams(typeof window !== "undefined" ? window.location.search : "");
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    destinationCountry: "",
-    serviceType: "",
+    destinationCountry: invite.destinationCountry ?? "",
+    serviceType: invite.serviceType ?? "",
     rating: 5,
     reviewText: "",
     consentToPublish: false,
