@@ -6,6 +6,8 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { requireValidAdminSession } from "./adminAuth";
 import { invokeLLM } from "../_core/llm";
+import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { notifyAdmins } from "./adminNotifications";
 
 const displayNameChoiceSchema = z.enum(["full_name", "first_name_only", "initials"]);
 type DisplayNameChoice = z.infer<typeof displayNameChoiceSchema>;
@@ -65,8 +67,16 @@ const reviewInput = z.object({
   displayNameChoice: displayNameChoiceSchema.default("first_name_only"),
 });
 
+// Formulaire public sans compte : plafonné pour ne pas noyer la file de modération (aucun avis n'est publié sans validation).
+const reviewSubmissionGuard = createSubmissionGuard({
+  perClient: { limit: 5, windowMs: 60 * 60_000 },
+  perEmail: { limit: 3, windowMs: 60 * 60_000 },
+  global: { limit: 100, windowMs: 60 * 60_000 },
+});
+
 export const customerReviewRouter = router({
-  submit: publicProcedure.input(reviewInput).mutation(async ({ input }) => {
+  submit: publicProcedure.input(reviewInput).mutation(async ({ ctx, input }) => {
+    reviewSubmissionGuard.assertAllowed(ctx?.req as any, input.email);
     if (!input.consentToPublish) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -75,6 +85,16 @@ export const customerReviewRouter = router({
     }
 
     const db = await requireDb();
+    const email = input.email.toLowerCase();
+    // Même avis renvoyé (double clic, rechargement) : on ne crée pas de doublon à modérer.
+    const duplicate = await db
+      .select({ id: customerReviews.id })
+      .from(customerReviews)
+      .where(and(eq(customerReviews.email, email), eq(customerReviews.reviewText, input.reviewText)))
+      .limit(1);
+    if (duplicate.length > 0) {
+      return { success: true, message: "Votre avis a été reçu et sera publié après validation par notre équipe." };
+    }
     await db.insert(customerReviews).values({
       fullName: input.fullName,
       email: input.email.toLowerCase(),
@@ -85,6 +105,15 @@ export const customerReviewRouter = router({
       consentToPublish: true,
       displayNameChoice: input.displayNameChoice,
       status: "pending_review",
+    });
+
+    // La cloche de l'administration signale l'avis à modérer (jamais publié automatiquement).
+    await notifyAdmins({
+      type: "new_contact_message",
+      title: "Nouvel avis client à modérer",
+      message: `${input.fullName} — ${input.rating}/5${input.destinationCountry ? ` — ${input.destinationCountry}` : ""}`,
+      relatedId: `avis-${email}`,
+      targetAdminType: "accompagnement",
     });
 
     return {
