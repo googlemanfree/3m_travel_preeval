@@ -14,6 +14,15 @@ interface HeroSectionVIPProps {
 
 const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";
 
+// Prestations réelles du site, chacune renvoie vers une page existante.
+const HERO_OFFERS = [
+  { icon: "🇨🇦", label: "Canada", href: "/canada" },
+  { icon: "🇪🇺", label: "Europe Schengen", href: "/schengen" },
+  { icon: "🇺🇸", label: "États-Unis", href: "/procedures" },
+  { icon: "✈️", label: "Billets, hôtels & assurance", href: "/services#travel" },
+  { icon: "🛂", label: "CNI, passeport & e-Visa", href: "/services#services" },
+];
+
 export default function HeroSectionVIP({ 
   onEvalClick, 
   logoUrl = "/logo-3m.webp",
@@ -85,7 +94,7 @@ export default function HeroSectionVIP({
   return (
     <section
       ref={heroRef}
-      className="relative py-18 md:py-28 overflow-hidden text-center text-white"
+      className="relative py-10 md:py-28 overflow-hidden text-center text-white"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
@@ -113,7 +122,8 @@ export default function HeroSectionVIP({
             style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
           />
         </picture>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/65 via-[#0a1d3a]/45 to-[#07162c]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/75 via-[#0a1d3a]/62 to-[#07162c]/88" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.55)_0%,transparent_70%)]" />
         <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
         <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>
         <div className="absolute right-1/4 bottom-10 text-[7rem] leading-none opacity-[0.12] select-none">🇺🇸</div>
@@ -127,10 +137,10 @@ export default function HeroSectionVIP({
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-base font-semibold mb-6"
+          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-sm sm:text-base font-semibold mb-4 sm:mb-6"
         >
           <Star className="w-4 h-4 text-yellow-300" aria-hidden="true" />
-          ⭐ Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
+          Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
         </motion.div>
 
         {/* Logo parfaitement centré avec effet lumineux professionnel */}
@@ -139,17 +149,16 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mb-6 flex justify-center items-center"
+          className="mb-5 flex justify-center items-center"
         >
           <div className="relative inline-block">
-            <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-60 blur-md" />
             <img
               src={logoUrl}
               alt="3M Travel Agency"
-              width={176}
-              height={176}
+              width={96}
+              height={96}
               decoding="async"
-              className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white/40 shadow-2xl object-cover bg-white"
+              className="relative w-16 h-16 md:w-24 md:h-24 rounded-full border-2 border-white/50 shadow-xl object-cover bg-white"
             />
           </div>
         </motion.div>
@@ -160,7 +169,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
+          className="text-4xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-4 sm:mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
           3M Travel &amp; Services
         </motion.h1>
@@ -171,21 +180,38 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={3}
-          className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-7"
+          className="text-lg sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-4 sm:mb-7"
         >
           Visas, voyages et démarches administratives — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">un seul interlocuteur à Yaoundé</span>
         </motion.h2>
 
-        {/* Description de marque haut de gamme */}
+        {/* Slogan court + repères de prestations */}
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={4}
-          className="text-slate-100 text-xl md:text-2xl max-w-4xl mx-auto mb-9 leading-relaxed font-normal"
+          className="text-white text-base sm:text-xl md:text-2xl max-w-3xl mx-auto mb-4 sm:mb-5 leading-relaxed font-medium"
         >
-          <strong className="text-white font-semibold">Immigration et visas</strong> (Canada, Europe Schengen, États-Unis), <strong className="text-white font-semibold">billets d'avion, hôtels et assurance voyage</strong>, <strong className="text-white font-semibold">CNI, passeport et e-Visa</strong> : 3M Travel &amp; Services prépare votre dossier et vous accompagne de la demande jusqu'au suivi.
+          Nous préparons votre dossier, de la demande jusqu'au suivi.
         </motion.p>
+        <motion.ul
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={4.5}
+          className="flex flex-wrap justify-center gap-2 mb-6 sm:mb-9"
+          aria-label="Prestations principales"
+          data-testid="hero-offers"
+        >
+          {HERO_OFFERS.map((offer) => (
+            <li key={offer.href}>
+              <a href={offer.href} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#07162c]/60 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">
+                <span aria-hidden="true">{offer.icon}</span>{offer.label}
+              </a>
+            </li>
+          ))}
+        </motion.ul>
 
         {/* CTAs principales */}
         <motion.div
