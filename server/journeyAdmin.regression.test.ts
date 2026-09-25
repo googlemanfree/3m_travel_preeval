@@ -19,7 +19,9 @@ describe("admin journey checklist contract", () => {
   it("renders an explicit admin action on the synchronized journey", () => {
     const source = read("client/src/components/Candidate360Workspace.tsx");
     expect(source).toContain("updateCandidateJourneyStep");
-    expect(source).toContain("Marquer l’étape comme faite");
     expect(source).toContain("journeyStepMutation.isPending");
+    // l'action visible est portée par la frise d'avancement (une étape en cours, une action principale)
+    expect(source).toContain("<ProcedureStepper");
+    expect(read("client/src/components/ProcedureStepper.tsx")).toContain("Marquer l’étape comme faite");
   });
 });

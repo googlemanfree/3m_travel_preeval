@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, ChevronDown, Lock, Play } from "lucide-react";
+import { Check, ChevronDown, LockKeyhole, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { buildStepperView, lockedReason, type ProcedureStep, type StepGroup } from "@/lib/procedureStepper";
@@ -22,11 +22,12 @@ function StepRow({ step, currentStepIndex, busy, onUnlock, onUndo }: { step: Pro
   return (
     <li className="flex items-center gap-3 px-3 py-2" data-testid={`stepper-row-${step.index}`} data-state={step.state} title={step.description ?? undefined}>
       <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${done ? "bg-emerald-600 text-white" : current ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-500"}`} aria-hidden="true">
-        {done ? <Check className="h-3.5 w-3.5" /> : current ? <Play className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+        {done ? <Check className="h-3.5 w-3.5" /> : current ? <Play className="h-3 w-3" /> : <LockKeyhole className="h-3 w-3" />}
       </span>
       <span className={`min-w-0 flex-1 truncate text-sm ${current ? "font-semibold text-slate-900" : done ? "text-slate-700" : "text-slate-500"}`}>{step.index + 1}. {step.label}</span>
+      {step.state === "locked" && <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verrouillé</span>}
       {done && <button type="button" disabled={busy} onClick={() => onUndo(step)} className="text-xs font-semibold text-rose-700 hover:underline disabled:opacity-50" aria-label={`Annuler la validation de l’étape ${step.index + 1}`}>Annuler</button>}
-      {step.state === "locked" && <button type="button" disabled={busy} onClick={() => onUnlock(step)} title={lockedReason(step, currentStepIndex)} className="text-xs font-semibold text-amber-700 hover:underline disabled:opacity-50" aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}>Déverrouiller</button>}
+      {step.state === "locked" && <button type="button" disabled={busy} onClick={() => onUnlock(step)} title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`} className="text-xs font-semibold text-amber-700 hover:underline disabled:opacity-50" aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}>Déverrouiller</button>}
     </li>
   );
 }
@@ -75,6 +76,7 @@ export default function ProcedureStepper({ title, steps, currentStepIndex, inter
         <div className="mt-3" data-testid="stepper-upcoming">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ensuite</p>
           <ul className="mt-1 space-y-0.5">{view.upcoming.map((step) => <li key={step.id} className="truncate text-sm text-slate-600">{step.index + 1}. {step.label}</li>)}</ul>
+          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700" data-testid="stepper-blocked-note"><LockKeyhole className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>Progression indisponible : {lockedReason(view.upcoming[0], currentStepIndex)}</span></p>
         </div>
       )}
 
