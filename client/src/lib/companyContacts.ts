@@ -15,7 +15,7 @@ export type CompanyOffice = {
 };
 
 export const COMPANY_PROFILE = {
-  publicName: "3M Travel & Services",
+  publicName: "3M TRAVEL AGENCY",
   legalName: "3M Travel Agency SARL",
   publicEmail: "hello@3mtravelagency.com",
   website: "https://www.3mtravelagency.com",

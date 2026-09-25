@@ -171,7 +171,7 @@ export default function HeroSectionVIP({
           custom={2}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-4 sm:mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
-          3M Travel &amp; Services
+          3M TRAVEL AGENCY
         </motion.h1>
 
         {/* Sous-titre percutant */}
