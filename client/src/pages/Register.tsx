@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { MAX_PREFERRED_DESTINATIONS, REGISTRATION_PROJECT_TYPES, getCandidateDestinationOption, getDestinationFormProfile, type RegistrationProjectField } from "@shared/candidateDestinationOptions";
 import { DestinationPicker } from "@/components/CountryPicker";
 
-const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
+const LOGO_URL = "/logo-3m.webp";
 
 // Listes courtes pour les questions de projet (facultatives) proposées selon le pays et le type de projet.
 const EDUCATION_LEVEL_OPTIONS = ["Baccalauréat", "Formation professionnelle / BTS", "Licence / Bachelor", "Master", "Doctorat", "Autre"];

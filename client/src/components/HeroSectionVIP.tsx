@@ -16,7 +16,7 @@ const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";
 
 export default function HeroSectionVIP({ 
   onEvalClick, 
-  logoUrl = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg",
+  logoUrl = "/logo-3m.webp",
   whatsappNumber = "237698104832"
 }: HeroSectionVIPProps) {
   const heroRef = useRef<HTMLElement | null>(null);
@@ -129,9 +129,7 @@ export default function HeroSectionVIP({
           variants={fadeUp}
           className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-base font-semibold mb-6"
         >
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity }}>
-            <Star className="w-4 h-4 text-yellow-300" />
-          </motion.div>
+          <Star className="w-4 h-4 text-yellow-300" aria-hidden="true" />
           ⭐ Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
         </motion.div>
 
@@ -144,10 +142,13 @@ export default function HeroSectionVIP({
           className="mb-6 flex justify-center items-center"
         >
           <div className="relative inline-block">
-            <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-75 blur-md animate-pulse" />
+            <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-60 blur-md" />
             <img
               src={logoUrl}
               alt="3M Travel Agency"
+              width={176}
+              height={176}
+              decoding="async"
               className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white/40 shadow-2xl object-cover bg-white"
             />
           </div>
@@ -161,7 +162,7 @@ export default function HeroSectionVIP({
           custom={2}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
-          3M Travel Agency
+          3M Travel &amp; Services
         </motion.h1>
 
         {/* Sous-titre percutant */}

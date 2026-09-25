@@ -32,7 +32,7 @@ export default function PageLoadingFallback() {
       <div className="w-full max-w-2xl rounded-[2rem] border border-white/15 bg-slate-950/25 p-5 shadow-[0_28px_80px_rgba(0,0,0,.35)] backdrop-blur-sm sm:p-8">
         <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
           <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl border border-amber-200/60 bg-white/95 p-2 shadow-[0_0_32px_rgba(244,185,66,.25)]">
-            <img src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="" className="h-full w-full object-contain" />
+            <img src="/logo-3m.webp" alt="" className="h-full w-full object-contain" />
             <span aria-hidden="true" className="absolute -inset-1 rounded-[1.65rem] border border-amber-200/35 motion-safe:animate-pulse" />
           </div>
 

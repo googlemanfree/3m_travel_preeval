@@ -25,7 +25,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ServicesSection from "@/components/ServicesSection";
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import EmbassyNewsWidget from "@/components/EmbassyNewsWidget";
-import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
 import CurrencyConverterWidget from "@/components/CurrencyConverterWidget";
 import TravelSearchHero from "@/components/TravelSearchHero";
 import { PublicFAQ } from "@/components/PublicFAQ";
@@ -446,7 +445,7 @@ export default function Home() {
   const evalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "3M Travel Agency | Mobilité internationale en confiance";
+    document.title = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
   }, []);
 
   useEffect(() => {
@@ -600,7 +599,7 @@ export default function Home() {
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSectionVIP
         onEvalClick={() => setShowEvalModal(true)}
-        logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
+        logoUrl="/logo-3m.webp"
         whatsappNumber={WHATSAPP_NUMBER}
       />
 

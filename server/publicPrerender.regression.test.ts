@@ -16,18 +16,22 @@ describe("pré-rendu public indexable", () => {
 
   it("respecte les plafonds SEO stricts de la page d’accueil", () => {
     const rendered = composePublicPrerender(template, "/");
-    const title = rendered.html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
-    const description = rendered.html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "";
+    const decode = (value: string) => value.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+    const title = decode(rendered.html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "");
+    const description = decode(rendered.html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "");
     const keywords = rendered.html.match(/<meta name="keywords" content="([^"]*)"/)?.[1].split(", ") ?? [];
     const heading = rendered.html.match(/<h2>([^<]*)<\/h2>/)?.[1] ?? "";
+    // Titre et description fixés par l'agence : exactement ces textes, dans des bornes raisonnables.
+    expect(title).toBe("3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale");
+    expect(description).toBe("3M Travel & Services à Yaoundé accompagne vos projets de voyage, études à l'étranger, visas, immigration, travail, billets d'avion et services administratifs.");
     expect(title.length).toBeGreaterThanOrEqual(30);
-    expect(title.length).toBeLessThanOrEqual(60);
+    expect(title.length).toBeLessThanOrEqual(75);
     expect(description.length).toBeGreaterThanOrEqual(50);
     expect(description.length).toBeLessThanOrEqual(160);
     expect(keywords.length).toBeGreaterThanOrEqual(3);
     expect(keywords.length).toBeLessThanOrEqual(8);
     expect(heading.length).toBeLessThanOrEqual(80);
-    expect(rendered.html).toContain("3M Travel Agency | Mobilité internationale en confiance");
+    expect(rendered.html).toContain("<h1>3M Travel &amp; Services : voyages, visas, études et mobilité internationale depuis Yaoundé</h1>");
     expect(rendered.html).toContain("<h2>Informations vérifiables avant toute démarche</h2>");
     expect(rendered.html).toContain('<script type="application/ld+json">');
     expect(rendered.html).toContain('"@type":"Organization"');

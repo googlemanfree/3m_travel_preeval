@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { CountryData } from '@/data/countriesData';
-import { PDFPreviewModal } from '@/components/PDFPreviewModal';
+
+// La visionneuse PDF (react-pdf, ~400 Ko) ne se charge qu'à l'ouverture d'un aperçu, pas avec la page d'accueil.
+const PDFPreviewModal = lazy(() => import('@/components/PDFPreviewModal').then((module) => ({ default: module.PDFPreviewModal })));
 
 interface CountrySearchResultsProps {
   countries: CountryData[];
@@ -135,14 +137,16 @@ export const CountrySearchResults: React.FC<CountrySearchResultsProps> = ({
       </motion.div>
 
       {/* Modale d'aperçu PDF */}
-      {selectedCountry && (
-        <PDFPreviewModal
-          isOpen={showPDFModal}
-          onClose={() => setShowPDFModal(false)}
-          fileName={`Guide - ${selectedCountry.name}`}
-          pdfUrl={selectedCountry.pdfGuide}
-          downloadUrl={selectedCountry.pdfGuide}
-        />
+      {selectedCountry && showPDFModal && (
+        <Suspense fallback={null}>
+          <PDFPreviewModal
+            isOpen={showPDFModal}
+            onClose={() => setShowPDFModal(false)}
+            fileName={`Guide - ${selectedCountry.name}`}
+            pdfUrl={selectedCountry.pdfGuide}
+            downloadUrl={selectedCountry.pdfGuide}
+          />
+        </Suspense>
       )}
     </AnimatePresence>
   );

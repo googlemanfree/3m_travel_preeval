@@ -3,9 +3,12 @@
 
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="3m-build-marker" content="admin-bilan-online-reference-2026-09-04-v1" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <script>document.documentElement.classList.add('js-enabled');</script>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1E3A8A" />
@@ -63,7 +66,9 @@
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Police chargée sans bloquer l'affichage (connexions mobiles lentes) : texte visible tout de suite avec la police système, puis Inter. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" /></noscript>
     <!-- Google Analytics 4 — propriété 3M Travel & Services -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4HBHHH37VL"></script>
     <script>

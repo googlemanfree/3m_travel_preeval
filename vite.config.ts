@@ -207,6 +207,11 @@ export default defineConfig({
       maxParallelFileOps: 1,
       output: {
         manualChunks(id) {
+          // Utilitaire de préchargement de Vite, requis par le point d'entrée : sans règle explicite, Rollup le rangeait
+          // dans « pdf-vendor », et la page d'accueil téléchargeait alors 1,5 Mo de bibliothèque PDF au démarrage.
+          if (id.includes("vite/preload-helper")) {
+            return "vendor";
+          }
           if (id.includes("node_modules")) {
             if (id.includes("@tensorflow") || id.includes("/tfjs/") || id.includes("blazeface")) {
               return "portrait-vendor";
