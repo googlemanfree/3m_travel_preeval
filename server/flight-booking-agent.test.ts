@@ -53,7 +53,8 @@ describe("flight booking agent workflow", () => {
   it("calcule l’urgence à partir du départ, alerte les conseillers et filtre la file opérationnelle", () => {
     expect(router).toContain("getAutomaticFlightPriority");
     expect(router).toContain("hoursUntilDeparture <= 48");
-    expect(router).toContain('to: "hello@3mtravelagency.com"');
+    expect(router).toContain("resolveDeskRecipients(process.env)"); // comptoir : FLIGHT_DESK_EMAILS, sinon hello@3mtravelagency.com
+    expect(router).toContain("await notifyAdmins({");
     expect(router).toContain("assigned advisor notification failed");
     expect(agentDashboard).toContain("Filtrer par compagnie");
     expect(agentDashboard).toContain("Filtrer par trajet");
