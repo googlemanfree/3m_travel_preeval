@@ -10,8 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { toast } from "sonner";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE } from "@/data/crsHistoricalRounds";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
@@ -201,7 +200,10 @@ export default function CanadaScoreSimulator() {
 
   const completedRecommendationCount = recommendations.filter((recommendation) => completedRecommendations[recommendation.title]).length;
 
-  const createPdfDocument = () => {
+  // Les bibliothèques PDF (~120 Ko compressés) ne sont chargées qu'au moment d'un aperçu ou d'un téléchargement,
+  // pas avec la page d'accueil qui embarque ce simulateur.
+  const createPdfDocument = async () => {
+      const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const generatedAt = new Date().toLocaleDateString("fr-FR", {
         day: "2-digit",
@@ -286,12 +288,12 @@ export default function CanadaScoreSimulator() {
       return doc;
   };
 
-  const handlePreviewPDF = () => {
+  const handlePreviewPDF = async () => {
     setPdfPreviewError(null);
     setIsPreviewOpen(true);
     try {
       if (pdfPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(pdfPreviewUrl);
-      const previewBlob = createPdfDocument().output("blob");
+      const previewBlob = (await createPdfDocument()).output("blob");
       setPdfPreviewUrl(URL.createObjectURL(previewBlob));
     } catch {
       setPdfPreviewUrl(null);
@@ -299,12 +301,14 @@ export default function CanadaScoreSimulator() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     setIsExporting(true);
     try {
-      createPdfDocument().save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
+      (await createPdfDocument()).save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 4000);
+    } catch {
+      toast.error("Le rapport PDF n’a pas pu être généré. Vérifiez votre connexion puis réessayez.");
     } finally {
       setIsExporting(false);
     }

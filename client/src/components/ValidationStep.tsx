@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle2, Download, FileCheck2, RotateCcw, Save, Upload, UserRoundCheck } from 'lucide-react';
-import jsPDF from 'jspdf';
 import { normalizeManualPassportData, validateManualPassportData } from '@/lib/passportValidation';
 
 interface ExtractedData {
@@ -106,8 +105,10 @@ export function ValidationStep({
     onConfirm(normalizeManualPassportData(editedData));
   };
 
-  const downloadValidatedPdf = () => {
+  const downloadValidatedPdf = async () => {
     const data = normalizeManualPassportData(editedData);
+    // chargée au clic seulement : ne pèse pas sur l'ouverture du formulaire
+    const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFillColor(15, 23, 42);

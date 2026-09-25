@@ -216,11 +216,10 @@ export default defineConfig({
             if (id.includes("@tensorflow") || id.includes("/tfjs/") || id.includes("blazeface")) {
               return "portrait-vendor";
             }
-            if (id.includes("pdfjs-dist") || id.includes("react-pdf")) {
-              return "pdf-viewer-vendor";
-            }
-            if (id.includes("jspdf") || id.includes("html2pdf") || id.includes("html2canvas")) {
-              return "pdf-vendor";
+            // Bibliothèques PDF : laissées au découpage automatique. Un chunk manuel commun leur faisait imposer un import
+            // (effet de bord) à CHAQUE page, soit ~450 Ko compressés téléchargés même sur l'accueil.
+            if (id.includes("pdfjs-dist") || id.includes("react-pdf") || id.includes("jspdf") || id.includes("html2pdf") || id.includes("html2canvas")) {
+              return undefined;
             }
             if (id.includes("recharts")) {
               return "recharts-vendor";

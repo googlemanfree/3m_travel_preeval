@@ -28,7 +28,9 @@ describe("phase 4 performance and accessibility contracts", () => {
   it("keeps route-level vendor chunks explicit for mobile caching", () => {
     const viteConfig = readProjectFile("vite.config.ts");
 
-    expect(viteConfig).toContain('return "pdf-vendor"');
+    // Un chunk manuel « pdf-vendor » faisait importer ~450 Ko compressés par CHAQUE page : les PDF restent en découpage
+    // automatique (voir publicPageWeight.regression.test.ts).
+    expect(viteConfig).not.toContain('return "pdf-vendor"');
     expect(viteConfig).not.toContain('return "react-ui-vendor"');
     expect(viteConfig).not.toContain('return "radix-vendor"');
     expect(viteConfig).toContain('return "vendor"');
