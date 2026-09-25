@@ -169,7 +169,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-4 sm:mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-4 sm:mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
           3M Travel &amp; Services
         </motion.h1>
@@ -180,7 +180,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={3}
-          className="text-lg sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-4 sm:mb-7"
+          className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-4 sm:mb-7"
         >
           Visas, voyages et démarches administratives — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">un seul interlocuteur à Yaoundé</span>
         </motion.h2>
@@ -191,7 +191,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={4}
-          className="text-white text-base sm:text-xl md:text-2xl max-w-3xl mx-auto mb-4 sm:mb-5 leading-relaxed font-medium"
+          className="text-white text-xl md:text-2xl max-w-3xl mx-auto mb-4 sm:mb-5 leading-relaxed font-medium"
         >
           Nous préparons votre dossier, de la demande jusqu'au suivi.
         </motion.p>
