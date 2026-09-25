@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
+import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
+import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -60,6 +62,7 @@ export function AdminDocumentsManagement() {
   const [uploadTargetSearch, setUploadTargetSearch] = useState("");
   const [uploadConfirmationOpen, setUploadConfirmationOpen] = useState(false);
   const [uploadDocumentType, setUploadDocumentType] = useState("autre");
+  const [viewMode, setViewMode] = useState<"candidates" | "list">("candidates");
   const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
   useEffect(() => {
     setPreviewAcknowledged(false);
@@ -281,6 +284,19 @@ export function AdminDocumentsManagement() {
   const staleDossierNumbers = new Set(staleDossiers.map((dossier) => dossier.dossierNumber));
   const filteredDocuments = staleOnly ? baseFilteredDocuments.filter((document) => staleDossierNumbers.has(document.dossierNumber)) : baseFilteredDocuments;
   const selectedDocuments = filteredDocuments.filter((document) => selectedDocumentKeys.includes(`${document.source}:${document.id}`));
+
+  const candidateGroups = groupDocumentsByCandidate(filteredDocuments);
+  // « Ajouter une pièce remise en agence » : présélectionne le dossier du candidat dans le dépôt rapide, type « remis en main propre ».
+  const handleAddDocumentsFor = (group: CandidateDocumentGroup<Document>) => {
+    const match = (candidateDirectory?.candidates ?? []).find((candidate: any) => String(candidate.folderCode || "").toLowerCase() === group.dossierNumber.toLowerCase());
+    if (!match) {
+      toast.error("Dossier introuvable dans l'annuaire", { description: "Choisissez le dossier dans « Dépôt rapide administrateur »." });
+    } else {
+      setUploadCandidateId(`${match.source === "AGENCY_PHYSICAL" ? "agency" : "candidate"}:${match.internalId}`);
+      setUploadDocumentType("document_remis_main_propre");
+    }
+    document.getElementById("admin-quick-upload")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const toggleDocumentSelection = (document: Document) => {
     const key = `${document.source}:${document.id}`;
@@ -681,7 +697,7 @@ export function AdminDocumentsManagement() {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-          <Card className="border-dashed border-2 border-blue-200 bg-blue-50/30">
+          <Card id="admin-quick-upload" className="border-dashed border-2 border-blue-200 bg-blue-50/30">
             <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-4 w-4 text-blue-700" />Dépôt rapide administrateur</CardTitle><CardDescription>Glissez des pièces reçues en agence, choisissez le dossier, puis envoyez-les dans la file documentaire.</CardDescription></CardHeader>
             <CardContent className="space-y-3">
               <div onDragOver={(event) => { event.preventDefault(); setIsDraggingFiles(true); }} onDragLeave={() => setIsDraggingFiles(false)} onDrop={(event) => { event.preventDefault(); setIsDraggingFiles(false); acceptDroppedFiles(event.dataTransfer.files); }} className={`rounded-xl border-2 border-dashed p-5 text-center transition ${isDraggingFiles ? "border-blue-600 bg-blue-100" : "border-blue-200 bg-white"}`}>
@@ -810,7 +826,12 @@ export function AdminDocumentsManagement() {
               <Filter className="w-3.5 h-3.5 text-violet-500" />
               <span>{filteredDocuments.length} document(s) affiché(s) avec classification IA, source, type et statut recherchables.</span>
             </div>
-            {selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold" role="group" aria-label="Mode d'affichage des documents">
+              {([["candidates", "Par candidat"], ["list", "Liste complète"]] as const).map(([mode, label]) => (
+                <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} className={`rounded-md px-3 py-1.5 ${viewMode === mode ? "bg-white text-blue-800 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
+              ))}
+            </div>
+            {viewMode === "list" && selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
 
             {/* Tableau */}
             {isLoadingDocs ? (
@@ -822,6 +843,18 @@ export function AdminDocumentsManagement() {
                 <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p>Aucun document trouvé</p>
               </div>
+            ) : viewMode === "candidates" ? (
+              <AdminDocumentsByCandidate<Document>
+                groups={candidateGroups}
+                busy={isLoading}
+                typeLabel={getDocumentTypeLabel}
+                onPreview={setPreviewingDoc}
+                onDownload={(doc) => handleDownloadDocument(doc.documentUrl, doc.documentName)}
+                onApprove={handleApproveDocument}
+                onSetPending={handleSetPendingDocument}
+                onReject={handleRejectDocument}
+                onAddDocuments={handleAddDocumentsFor}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
