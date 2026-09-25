@@ -27,6 +27,9 @@ import { candidateProcedure, findCandidateFromAuthorizationHeader, getOrCreateCa
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { notifyAdmins } from "./adminNotifications";
+import { buildDeskAlertEmail, resolveDeskRecipients, resolveDeskWhatsApp } from "../services/flightDeskAlert";
+import { extractDeskAlertData } from "../../shared/flightDeskAlert";
 import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
@@ -362,16 +365,24 @@ export const flightBookingRouter = router({
         newValue: "pending_review",
         details: `${requester.isGuest ? "Demande de réservation invitée créée depuis le checkout en ligne." : "Demande de réservation créée depuis le checkout candidat."} Priorité automatique : ${priority}.`,
       });
+      // Signalement du comptoir, pour qu'un agent effectue une VRAIE réservation (option) en attendant l'émission :
+      // cloche de l'administration, puis e-mail détaillé avec liens WhatsApp (envoi WhatsApp automatique : compte Business requis).
+      const deskAlertData = extractDeskAlertData({ requestRef, priority, flightData: input.flightData, passengerData: input.passengerData, requesterEmail: requester.email });
+      await notifyAdmins({
+        type: "new_contact_message",
+        title: priority === "urgent" ? "URGENT — Nouvelle réservation de vol" : "Nouvelle réservation de vol",
+        message: `${requester.fullName} — ${flightSummary.origin} → ${flightSummary.destination} — ${flightSummary.departure} — ${requestRef}`,
+        relatedId: requestRef,
+        targetAdminType: "accompagnement",
+      });
       let notificationEmailSent = false;
       try {
-        await sendEmail({
-          to: "hello@3mtravelagency.com",
-          subject: `[3M Travel] Nouvelle réservation ${requestRef} — ${flightSummary.origin} → ${flightSummary.destination}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Nouvelle demande de réservation de vol</h2><p>Une demande est prête à être traitée dans le tableau de bord administrateur.</p><p><strong>Référence :</strong> ${esc(requestRef)}<br/><strong>Client :</strong> ${esc(requester.fullName)} · ${esc(requester.email)}<br/><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Compagnie :</strong> ${esc(flightSummary.airline)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}<br/><strong>Priorité :</strong> ${esc(priority)}</p><p>Ouvrez l’onglet <strong>Réservations vols</strong> pour affecter un conseiller et traiter la demande.</p></div>`,
-        });
+        const siteUrl = (process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
+        const deskAlert = buildDeskAlertEmail(deskAlertData, { adminUrl: `${siteUrl}/admin`, deskWhatsApp: resolveDeskWhatsApp(process.env) });
+        await sendEmail({ to: resolveDeskRecipients(process.env).join(","), subject: deskAlert.subject, html: deskAlert.html });
         notificationEmailSent = true;
       } catch (error) {
-        console.error("[FlightBooking] advisor notification failed", error);
+        console.error("[FlightBooking] desk notification failed", error);
       }
       // Le client reçoit sa référence par e-mail (il la perdrait en fermant la fenêtre) ; un échec n'annule pas la demande.
       let confirmationEmailSent = false;
