@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
+import PaymentFallbackPanel from '@/components/PaymentFallbackPanel';
 
 export default function PaymentErrorPage() {
   const [, navigate] = useLocation();
@@ -75,6 +76,11 @@ export default function PaymentErrorPage() {
             <strong>Conseil :</strong> Vérifiez votre compte et réessayez. Vous pouvez aussi contacter notre support via WhatsApp.
           </p>
         </motion.div>
+
+        {/* Repli : virement, dépôt Mobile Money ou agence, après contact avec l'agence */}
+        <div className="mb-6 text-left">
+          <PaymentFallbackPanel reason="failed" reference={new URLSearchParams(window.location.search).get('dossier') ?? ''} />
+        </div>
 
         {/* Boutons */}
         <motion.div

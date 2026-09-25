@@ -79,6 +79,7 @@ import {
 } from "recharts";
 import { useLocation } from "wouter";
 import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
+import { AdminPaymentInstructions } from "@/components/AdminPaymentInstructions";
 import { AdminReservationPayments } from "@/components/AdminReservationPayments";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
@@ -2639,6 +2640,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
+            <AdminPaymentInstructions sessionToken={sessionToken || ""} />
             <AdminPaymentManagement
               sessionToken={sessionToken || ""}
               onPaymentUpdated={() => {

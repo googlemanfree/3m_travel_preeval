@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { COMPANY_CONTACTS } from '@/lib/companyContacts';
 
 export default function PaymentMethodSelection() {
   const [, navigate] = useLocation();
@@ -40,15 +41,12 @@ export default function PaymentMethodSelection() {
     setSelectedMethod(method);
     setLoading(true);
 
-    // Simuler un délai de traitement
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (method === 'online') {
-      // Rediriger vers Paystack
-      navigate('/payment/paystack');
+    // Paiement en ligne : la page de paiement du dossier ; sinon, la page des moyens de paiement (virement, dépôt, agence).
+    const dossier = new URLSearchParams(window.location.search).get('dossier');
+    if (method === 'online' && dossier) {
+      navigate(`/payment/${encodeURIComponent(dossier)}`);
     } else {
-      // Rediriger vers confirmation paiement en agence
-      navigate('/payment/agency-confirmation');
+      navigate(dossier ? `/paiement?ref=${encodeURIComponent(dossier)}` : '/paiement');
     }
   };
 
@@ -162,7 +160,7 @@ export default function PaymentMethodSelection() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Sécurisé</p>
-                  <p className="text-sm text-gray-600">Paiement chiffré avec Paystack</p>
+                  <p className="text-sm text-gray-600">Paiement sécurisé via CinetPay</p>
                 </div>
               </div>
 
@@ -182,7 +180,7 @@ export default function PaymentMethodSelection() {
                 <span className="font-semibold">Montant :</span> 65 000 XAF
               </p>
               <p className="text-xs text-gray-600 mt-2">
-                Cartes bancaires, Mobile Money (MTN, Orange, Airtel)
+                Cartes bancaires, Mobile Money (MTN, Orange)
               </p>
             </div>
 
@@ -327,7 +325,7 @@ export default function PaymentMethodSelection() {
             <div>
               <p className="font-semibold text-gray-900 mb-2">Paiement en agence</p>
               <p className="text-sm text-gray-600 mb-3">
-                Adresse : Douala, Cameroun
+                Adresse : {COMPANY_CONTACTS.yaounde.address}
               </p>
               <a
                 href="https://wa.me/237698104832"

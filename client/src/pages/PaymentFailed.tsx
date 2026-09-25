@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
 import { XCircle, RefreshCw, MessageCircle, Home } from "lucide-react";
+import PaymentFallbackPanel from "@/components/PaymentFallbackPanel";
 
 export default function PaymentFailed() {
   const params = new URLSearchParams(window.location.search);
@@ -52,6 +53,10 @@ export default function PaymentFailed() {
                 {cause}
               </div>
             ))}
+          </div>
+
+          <div className="text-left">
+            <PaymentFallbackPanel reason="failed" reference={dossierNumber} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

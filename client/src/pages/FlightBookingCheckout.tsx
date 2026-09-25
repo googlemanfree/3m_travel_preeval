@@ -468,6 +468,10 @@ export default function FlightBookingCheckout() {
                 <p>Les coordonnées du vol sélectionné et vos informations de passeport sont prêtes à être vérifiées par nos conseillers avant toute émission.</p>
               </div>
 
+              <a href={`/paiement?ref=${encodeURIComponent(dossierRef)}&type=vol`} data-testid="how-to-pay" className="mb-6 flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white p-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50">
+                Comment payer ? Virement, dépôt Mobile Money ou agence
+              </a>
+
               <div className="grid gap-3 sm:grid-cols-3">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 font-bold text-emerald-800 transition hover:bg-emerald-100">
                   <MessageCircle className="mb-2 h-6 w-6 text-emerald-600" /> WhatsApp

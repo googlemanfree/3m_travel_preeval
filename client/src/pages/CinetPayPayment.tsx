@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/lib/trpc';
+import PaymentFallbackPanel from '@/components/PaymentFallbackPanel';
 
 type PaymentStatus = 'idle' | 'registering' | 'opening' | 'waiting' | 'success' | 'failed' | 'error';
 
@@ -226,6 +227,17 @@ export default function CinetPayPayment() {
               Vous serez redirigé vers CinetPay pour sécuriser votre paiement
             </p>
           </Card>
+
+          {/* Autres moyens (virement, dépôt Mobile Money, agence) ; mis en avant si le paiement en ligne échoue */}
+          <div className="mt-6">
+            <PaymentFallbackPanel
+              reference={dossierNumber}
+              kind="dossier"
+              amount={application.paymentAmount ?? 65000}
+              name={application.fullName}
+              reason={status === 'failed' || status === 'error' ? 'failed' : 'alternatives'}
+            />
+          </div>
         </motion.div>
       </div>
     </div>

@@ -51,6 +51,7 @@ const Billets = lazyWithTimeout(() => import("./pages/Billets"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const CniPasseport = lazyWithTimeout(() => import("./pages/CniPasseport"));
 const Services = lazyWithTimeout(() => import("./pages/Services"));
+const Paiement = lazyWithTimeout(() => import("./pages/Paiement"));
 const ProcedureLuxembourg = lazyWithTimeout(() => import("./pages/ProcedureLuxembourg"));
 const ProcedureAllemagneFormation = lazyWithTimeout(() => import("./pages/ProcedureAllemagneFormation"));
 const ProcedureAutricheSuisseFormation = lazyWithTimeout(() => import("./pages/ProcedureAutricheSuisseFormation"));
@@ -248,6 +249,7 @@ function Router() {
       <Route path={"/formation"} component={Formation} />
       <Route path={"/cni-passeport"} component={CniPasseport} />
       <Route path={"/services"} component={Services} />
+      <Route path={"/paiement"} component={Paiement} />
       <Route path="/procedures" component={ProceduresAdvanced} />
       {/* Aliases legacy : certains anciens CTA utilisaient le singulier. */}
       <Route path="/procedure">{() => <Redirect to="/procedures" />}</Route>
