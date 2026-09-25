@@ -1,22 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { useLocation } from "wouter";
 import { OFFICE_CONTACTS, officeWhatsAppUrl } from "@/lib/officeContacts";
+import { whatsAppMessageForPage } from "@/lib/whatsappContext";
 
 /**
  * Point de contact WhatsApp global.
  * Le bouton Aureol est monté séparément par App.tsx et se place au-dessus/
  * à gauche selon la largeur d'écran afin d'éviter tout chevauchement.
+ * Le message est adapté à la page consultée (procédure, vols, assurance…) : le conseiller sait de quoi il s'agit.
  */
 export function FloatingActionMenu() {
   const [isHovered, setIsHovered] = useState(false);
+  const [location] = useLocation();
   const office = OFFICE_CONTACTS.cameroon;
-  const whatsappUrl = officeWhatsAppUrl(office, "Bonjour, je souhaiterais obtenir des informations sur les procédures de visa 3M Travel.");
+  const urlForCurrentPage = () => officeWhatsAppUrl(office, whatsAppMessageForPage({ pathname: window.location.pathname, pageTitle: document.title }));
+  const [whatsappUrl, setWhatsappUrl] = useState(() => officeWhatsAppUrl(office, whatsAppMessageForPage({ pathname: "/" })));
+
+  // Le titre de la page est posé après le rendu de la route : on attend un instant, et on recalcule aussi au clic.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWhatsappUrl(urlForCurrentPage()), 350);
+    return () => window.clearTimeout(timer);
+  }, [location]);
 
   return (
     <div className="safe-bottom-floating safe-bottom-floating-whatsapp fixed right-4 z-40 md:right-6">
       <motion.a
         href={whatsappUrl}
+        onClick={(event) => { event.currentTarget.href = urlForCurrentPage(); }}
+        onFocus={(event) => { event.currentTarget.href = urlForCurrentPage(); }}
         target="_blank"
         rel="noopener noreferrer"
         onMouseEnter={() => setIsHovered(true)}
