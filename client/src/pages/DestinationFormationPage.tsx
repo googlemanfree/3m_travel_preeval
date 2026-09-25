@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { AlertTriangle, ArrowLeft, ArrowRight, Briefcase, FileCheck2, Globe2, MapPin } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Briefcase, ExternalLink, FileCheck2, Globe2, MapPin } from "lucide-react";
 import { getDestination20 } from "@/data/destinations20";
+import { DESTINATION_OFFICIAL_SOURCES } from "@/data/destinationOfficialSources";
 
 interface DestinationFormationPageProps {
   slug: string;
@@ -31,6 +32,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
     );
   }
 
+  const sources = DESTINATION_OFFICIAL_SOURCES[destination.slug] ?? [];
   const evalLink = `/evaluation?project=etudes&destination=${encodeURIComponent(destination.name)}`;
 
   return (
@@ -115,6 +117,22 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
             Démarrer mon évaluation gratuite <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </section>
+
+        {sources.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" data-testid="official-sources">
+            <h2 className="text-sm font-black uppercase tracking-[.14em] text-slate-500">Sources officielles à consulter</h2>
+            <ul className="mt-3 space-y-2">
+              {sources.map((source) => (
+                <li key={source.url}>
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-blue-700 underline-offset-2 hover:underline">
+                    <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />{source.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Cette fiche est un repère : vérifiez toujours les conditions en vigueur sur le site de l'autorité avant de déposer un dossier.</p>
+          </section>
+        )}
 
         <footer className="mt-8 rounded-2xl bg-amber-50 p-6">
           <p className="text-sm leading-6 text-amber-900">
