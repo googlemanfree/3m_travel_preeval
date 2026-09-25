@@ -851,3 +851,13 @@ html.high-contrast .form-group textarea:focus {
 html.high-contrast .premium-action,
 html.high-contrast .btn-next,
 html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c !important; }
+
+/* Mobile : iOS Safari zoome la page quand un champ a une police inferieure a 16 px. Le zoom manuel reste possible
+   (le viewport ne l'interdit plus), mais la saisie ne doit pas deplacer la page. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

@@ -55,7 +55,6 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
         stops: flight.stops,
         cabinClass: flight.cabinClass,
         totalPrice: flight.totalPrice,
-        pnrRef: flight.pnrRef,
       },
     });
   };
@@ -74,7 +73,7 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-slate-950/55 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <motion.div initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.2 }} className="glass-dialog bg-white/85 dark:bg-slate-950/85 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 dark:border-white/10 backdrop-blur-2xl">
             <h3 className="font-bold text-slate-800 text-base mb-2">Recevoir le récapitulatif par e-mail</h3>
-            <p className="text-xs text-slate-500 mb-4">Entrez votre adresse e-mail pour recevoir les détails de ce vol (PNR #{flight.pnrRef}).</p>
+            <p className="text-xs text-slate-500 mb-4">Entrez votre adresse e-mail pour recevoir le récapitulatif de cette sélection (sans engagement).</p>
             
             <form onSubmit={handleSend} className="space-y-4">
               <input
@@ -117,15 +116,11 @@ export type Flight = {
   stops: number;
   stopDetails: { airport: string; airportName: string; duration: string }[];
   cabinClass: string;
+  /** Prix total en FCFA pour les voyageurs demandés (adultes + enfants), relevé auprès du fournisseur. */
   pricePerPax: number; totalPrice: number;
+  pricedPassengers?: number;
   currency: string;
-  seatsLeft: number;
-  baggage: string;
-  refundable: boolean;
-  pnrRef: string;
-  gdsFareBasis?: string;
-  gdsBookingClass?: string;
-  gdsTaxesAndFees?: number;
+  /** Uniquement des informations fournies par la source : jamais de bagages, remboursabilité, places ou taxes supposés. */
   isLiveGoogleFlights?: boolean;
   /** Présent uniquement sur les vols aller d'une recherche aller-retour en direct : nécessaire
    * pour interroger ensuite les vraies options de vol retour (flights.searchReturnFlights). */
@@ -347,7 +342,7 @@ export function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { flight: Flight; searchParams: any; isSimulated: boolean; servedFromCache: boolean }) {
+function FlightCard({ flight, searchParams, servedFromCache }: { flight: Flight; searchParams: any; servedFromCache: boolean }) {
   const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
@@ -362,7 +357,6 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
       sessionStorage.setItem("3m-selected-flight", JSON.stringify({
         flight,
         searchParams,
-        isSimulated,
         selectedAt: Date.now(),
       }));
     } catch {
@@ -378,7 +372,7 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
       subtitle: `${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination}) · ${flight.departureDate}`,
       price: flight.totalPrice,
       currency: flight.currency,
-      priceStatus: isSimulated ? "indicative" : "live",
+      priceStatus: "live",
       metadata: {
         departureTime: flight.departureTime,
         arrivalTime: flight.arrivalTime,
@@ -388,11 +382,9 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
         adults: searchParams.adults,
         children: searchParams.children,
         infants: searchParams.infants,
-        pnrRef: flight.pnrRef,
-        gdsFareBasis: flight.gdsFareBasis,
       },
     });
-    toast({ title: "Vol ajouté au panier", description: isSimulated ? "Tarif indicatif : revalidation obligatoire avant confirmation." : "Tarif en direct ajouté, revalidation fournisseur avant émission." });
+    toast({ title: "Vol ajouté au panier", description: "Tarif relevé en direct : un conseiller le confirme avant toute réservation ou paiement." });
   };
 
   const handleSaveFavorite = () => {
@@ -405,7 +397,7 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
   };
 
   function buildWhatsAppMsg() {
-    const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Prix total : ${formatXAF(flight.totalPrice)}\n📋 Réf. : ${flight.pnrRef}\n\nMerci de me contacter pour finaliser la réservation.`;
+    const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Tarif relevé : ${formatXAF(flight.totalPrice)}\n\nMerci de vérifier la disponibilité et le tarif, puis de me contacter pour finaliser la réservation.`;
     return `https://wa.me/237698104832?text=${encodeURIComponent(msg)}`;
   }
 
@@ -423,12 +415,7 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
           <span>✨ En direct de Google Flights</span>
         </div>
       )}
-      {isSimulated && (
-        <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" /> Tarif indicatif — Simulation
-        </div>
-      )}
-      {!isSimulated && servedFromCache && (
+      {servedFromCache && (
         <div className="absolute top-6 right-0 bg-gradient-to-l from-slate-600 to-slate-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
           <RefreshCw className="w-3 h-3" /> Résultat en cache
         </div>
@@ -481,9 +468,6 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
             <div className="text-right">
               <div className="text-2xl font-black text-[#1E3A8A]">{formatXAF(flight.totalPrice)}</div>
               <div className="text-xs text-gray-500">pour {searchParams.adults + searchParams.children} passager{searchParams.adults + searchParams.children > 1 ? "s" : ""}</div>
-              {flight.seatsLeft <= 4 && (
-                <div className="text-xs text-red-600 font-semibold">⚡ Plus que {flight.seatsLeft} places</div>
-              )}
             </div>
             <div className="flex flex-col gap-2">
               <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
@@ -535,33 +519,17 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
           >
             <div className="px-5 pb-5 pt-2 border-t border-gray-100 bg-blue-50/30 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Luggage className="w-4 h-4 text-[#2563EB]" />
-                <div>
-                  <div className="text-xs text-gray-500">Bagages autorisés</div>
-                  <div className="font-semibold text-gray-800">{flight.baggage}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-[#2563EB]" />
-                <div>
-                  <div className="text-xs text-gray-500">Conditions tarifaires</div>
-                  <div className={`font-semibold ${flight.refundable ? "text-green-600" : "text-amber-600"}`}>
-                    {flight.refundable ? "Modifiable / Remboursable" : "Non remboursable / Frais de mod."}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Classe & Fare Basis (GDS)</div>
-                  <div className="font-mono font-semibold text-gray-800">{CABIN_LABELS[flight.cabinClass]} ({flight.gdsBookingClass || 'Y'} · {flight.gdsFareBasis || 'YFLEX'})</div>
+                  <div className="text-xs text-gray-500">Cabine</div>
+                  <div className="font-semibold text-gray-800">{CABIN_LABELS[flight.cabinClass]}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-[#2563EB]" />
+              <div className="flex items-start gap-2 col-span-2 md:col-span-3">
+                <Luggage className="mt-0.5 w-4 h-4 shrink-0 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Taxes aéroport & PNR</div>
-                  <div className="font-semibold text-gray-800">Taxes incl. (~{formatXAF(flight.gdsTaxesAndFees || Math.round(flight.pricePerPax * 0.18))}) · PNR: <span className="font-mono font-bold text-[#1E3A8A]">{flight.pnrRef}</span></div>
+                  <div className="text-xs text-gray-500">Bagages, changement, remboursement et taxes</div>
+                  <div className="font-semibold text-gray-800">Confirmés par un conseiller avant réservation : ils dépendent du tarif exact de la compagnie.</div>
                 </div>
               </div>
               {flight.stopDetails.length > 0 && (
@@ -724,7 +692,6 @@ export default function Flights() {
 
   // Derived filtered/sorted results
   const outbound: Flight[] = data?.outbound ?? [];
-  const isSimulated = Boolean(data?.isDemo);
   const servedFromCache = Boolean(data?.cache?.servedFromCache);
   const filtered = outbound
     .filter((f) => maxStops === null || f.stops <= maxStops)
@@ -1100,7 +1067,7 @@ export default function Flights() {
               {/* Flight cards */}
               <div className="space-y-4">
                 {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} isSimulated={isSimulated} servedFromCache={servedFromCache} />
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} />
                 ))}
                 {filtered.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -1112,28 +1079,17 @@ export default function Flights() {
                 )}
               </div>
 
-              {isSimulated ? (
-                <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-900 space-y-1">
-                    <div><strong>Tarifs indicatifs — mode simulation :</strong></div>
-                    <p className="text-xs text-amber-800">
-                      La source Google Flights est actuellement indisponible ou a atteint son quota. Les tarifs marqués « Simulation » sont indicatifs et doivent être confirmés par l’agence avant toute réservation.
-                    </p>
-                    <p className="text-xs font-semibold text-amber-900 pt-1">
-                      L’administration peut contrôler l’état de SearchAPI et mettre à jour la clé sécurisée <code>SEARCHAPI_KEY</code> dans les Paramètres du projet.
-                    </p>
-                  </div>
+              <div className="mt-8 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3" data-testid="fare-provenance">
+                <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-emerald-900">
+                  <strong>
+                    {data?.retrievedAt ? `Tarifs relevés à ${new Date(data.retrievedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} auprès de Google Flights` : "Tarifs relevés auprès de Google Flights"}
+                    {servedFromCache ? " (résultat mémorisé)" : ""}
+                  </strong>
+                  <p className="text-xs text-emerald-800 mt-1">Prix converti en FCFA (parité fixe : 1 € = 655,957 FCFA), total pour les voyageurs demandés. Bagages, conditions, taxes et disponibilité sont confirmés par l’agence avant toute réservation ou paiement.</p>
+                  {data?.providerNotice && <p className="text-xs text-emerald-800 mt-1">{data.providerNotice}</p>}
                 </div>
-              ) : (
-                <div className="mt-8 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
-                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-emerald-900">
-                    <strong>{servedFromCache ? "Résultat mémorisé pour préserver le quota" : "Tarifs issus de Google Flights"}</strong>
-                    <p className="text-xs text-emerald-800 mt-1">Les disponibilités et tarifs restent à confirmer par l’agence au moment de l’émission du billet.</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )}
@@ -1150,8 +1106,8 @@ export default function Flights() {
         {searchEnabled && !isFetching && !error && outbound.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
             <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">Aucun vol trouvé pour cette recherche.</p>
-            <p className="text-gray-400 text-sm mt-2">Essayez d’autres dates ou élargissez votre destination.</p>
+            <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
+            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
           </motion.div>
         )}
       </div>

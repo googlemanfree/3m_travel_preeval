@@ -18,10 +18,11 @@ describe("recherche du vrai vol retour (aller-retour Google Flights via SearchAP
     expect(source).toContain("departureToken: item.departure_token ?? null");
   });
 
-  it("retombe sur des vols retour de demonstration (jamais un tableau vide) quand l'API ou le token sont indisponibles", () => {
+  it("n'affiche aucune option de retour fabriquée quand l'API ou le jeton sont indisponibles : liste vide et message honnête", () => {
     const source = read("server/routers/flights.ts");
     expect(source).toContain("!apiKey || !input.departureToken");
-    expect(source).toContain("generateFlights(input.destination, input.origin, input.returnDate");
+    expect(source).toContain('returnResult([], apiKey ? "no_departure_token" : "not_configured", NO_LIVE_FARES_NOTICE)');
+    expect(source).not.toContain("generateFlights");
   });
 
   it("le client interroge bien la nouvelle procedure et affiche une selection de vol retour avant la demande de reservation", () => {
@@ -35,6 +36,6 @@ describe("recherche du vrai vol retour (aller-retour Google Flights via SearchAP
     const source = read("client/src/pages/Billets.tsx");
     // Le vol aller reste étalé au premier niveau de flightData (compatibilité admin/e-mails
     // existante) ; le vol retour est ajouté en plus, jamais en remplacement.
-    expect(source).toContain("flightData: { ...flight, returnFlight: returnFlight ?? null }");
+    expect(source).toContain("flightData: { ...flight, returnFlight: returnFlight ?? null, quotedTotalPrice }");
   });
 });

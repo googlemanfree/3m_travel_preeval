@@ -8,7 +8,6 @@ import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
-import { randomInt, randomBytes } from "node:crypto";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
@@ -88,22 +87,10 @@ const AIRLINES: Record<string, { name: string; code: string; logo: string; color
   WB: { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", color: "#00A0E3", alliance: "Autre" },
 };
 
-function randomBetween(min: number, max: number) {
-  return randomInt(min, max + 1);
-}
-
 function formatDuration(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h${m.toString().padStart(2, "0")}`;
-}
-
-function addMinutes(timeStr: string, minutes: number) {
-  const [h, m] = timeStr.split(":").map(Number);
-  const total = h * 60 + m + minutes;
-  const newH = Math.floor(total / 60) % 24;
-  const newM = total % 60;
-  return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
 }
 
 function parseSearchApiPrice(value: unknown): number | null {
@@ -114,91 +101,36 @@ function parseSearchApiPrice(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-const AGENCY_MARKUP = 0.08;
 // SearchAPI ne prend pas XAF en charge. Le franc CFA est rattaché à l'euro
 // par une parité fixe : les tarifs live peuvent donc être présentés en FCFA.
 const XAF_PER_EUR = 655.957;
 
-function applyMarkup(price: number) {
-  return Math.round(price * (1 + AGENCY_MARKUP));
+// Rien n'est inventé dans les résultats : chaque tarif et chaque horaire vient du fournisseur (Google Flights via
+// SearchAPI.io). Quand il ne répond pas, on n'affiche AUCUN tarif plutôt qu'un tarif de remplacement.
+const NO_LIVE_FARES_NOTICE = "La recherche en direct est momentanément indisponible. Nous préférons n’afficher aucun tarif plutôt qu’un tarif non vérifié : un conseiller 3M vous communique les tarifs réels par WhatsApp ou par e-mail.";
+const INFANT_PRICE_NOTICE = "Le tarif affiché ne comprend pas les bébés : un conseiller confirme le prix exact avant toute réservation.";
+
+/** Réponse de recherche, toujours de même forme ; `retrievedAt` n'est renseigné que pour des tarifs relevés en direct. */
+function searchResult(
+  input: Record<string, unknown> & { tripType: string },
+  fields: { outbound: any[]; providerStatus: string; providerNotice?: string | null; retrievedAt?: string | null },
+) {
+  return {
+    tripType: input.tripType,
+    outbound: fields.outbound,
+    inbound: [] as any[],
+    searchParams: input,
+    currency: "XAF",
+    isDemo: false as const,
+    providerStatus: fields.providerStatus,
+    providerNotice: fields.providerNotice ?? null,
+    retrievedAt: fields.retrievedAt ?? null,
+    cache: { servedFromCache: false },
+  };
 }
 
-function generateFlights(
-  origin: string,
-  destination: string,
-  departureDate: string,
-  passengers: number,
-  cabinClass: string
-) {
-  const airlineKeys = Object.keys(AIRLINES);
-  const results = [];
-  const count = randomBetween(6, 12);
-
-  const basePrice: Record<string, number> = {
-    ECONOMY: randomBetween(280, 650),
-    PREMIUM_ECONOMY: randomBetween(600, 1200),
-    BUSINESS: randomBetween(1500, 3500),
-    FIRST: randomBetween(4000, 8000),
-  };
-  const base = basePrice[cabinClass] ?? basePrice.ECONOMY;
-  const departureTimes = ["06:15", "07:30", "09:00", "10:45", "12:30", "14:00", "15:45", "17:20", "19:00", "21:30", "23:00"];
-
-  for (let i = 0; i < count; i++) {
-    const airlineCode = airlineKeys[i % airlineKeys.length];
-    const airline = AIRLINES[airlineCode];
-    const flightNumber = `${airlineCode}${randomBetween(100, 999)}`;
-    const stops = i < 4 ? 0 : i < 8 ? 1 : 2;
-    const durationMinutes = stops === 0 ? randomBetween(240, 480) : stops === 1 ? randomBetween(480, 720) : randomBetween(720, 1080);
-    const depTime = departureTimes[i % departureTimes.length];
-    const arrTime = addMinutes(depTime, durationMinutes);
-    const pricePerPax = applyMarkup(base + randomBetween(-50, 150) + stops * 30);
-    const totalPrice = pricePerPax * passengers;
-
-    const stopDetails = [];
-    if (stops >= 1) {
-      const layoverAirports = ["ADD", "CMN", "DXB", "IST", "CDG", "NBO"];
-      const layover1 = layoverAirports[randomBetween(0, layoverAirports.length - 1)];
-      stopDetails.push({
-        airport: layover1,
-        airportName: AIRPORTS[layover1]?.name ?? layover1,
-        duration: `${randomBetween(1, 3)}h${randomBetween(0, 5) * 10}`,
-      });
-    }
-
-    results.push({
-      id: `FL-${i + 1}-${Date.now()}`,
-      airline: { ...airline },
-      flightNumber,
-      origin,
-      originName: AIRPORTS[origin]?.name ?? origin,
-      originCity: AIRPORTS[origin]?.city ?? origin,
-      destination,
-      destinationName: AIRPORTS[destination]?.name ?? destination,
-      destinationCity: AIRPORTS[destination]?.city ?? destination,
-      departureDate,
-      departureTime: depTime,
-      arrivalTime: arrTime,
-      duration: formatDuration(durationMinutes),
-      durationMinutes,
-      stops,
-      stopDetails,
-      cabinClass,
-      pricePerPax,
-      totalPrice,
-      currency: "XAF",
-      seatsLeft: randomBetween(2, 9),
-      baggage: cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
-      refundable: i % 3 === 0,
-      pnrRef: `3M${randomBytes(3).toString("hex").toUpperCase()}`,
-      gdsFareBasis: `${cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
-      gdsBookingClass: cabinClass === "BUSINESS" ? "J" : cabinClass === "FIRST" ? "F" : "Y",
-      gdsTaxesAndFees: Math.round(pricePerPax * 0.18),
-      isLiveGoogleFlights: false,
-      departureToken: null,
-    });
-  }
-
-  return results.sort((a, b) => a.totalPrice - b.totalPrice);
+function returnResult(inbound: any[], providerStatus: string, providerNotice: string | null = null, retrievedAt: string | null = null) {
+  return { inbound, isDemo: false as const, providerStatus, providerNotice, retrievedAt };
 }
 
 type SearchApiLegParams = {
@@ -232,6 +164,12 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
   const knownAirline = AIRLINES[airlineCode];
   const airline = knownAirline || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A", alliance: "Autre" };
 
+  // Le fournisseur renvoie le prix TOTAL pour les voyageurs demandés (adultes + enfants), pas un prix par personne :
+  // le multiplier encore par le nombre de voyageurs doublait le total dès deux adultes. Les bébés ne sont pas
+  // demandés au fournisseur : ils ne sont donc pas inclus (voir INFANT_PRICE_NOTICE).
+  const pricedPassengers = Math.max(1, params.adults + params.children);
+  const totalPriceXaf = Math.round(sourcePrice * XAF_PER_EUR);
+
   return {
     id: `${params.idPrefix}-${index}-${firstLeg.flight_number}`,
     airline,
@@ -250,18 +188,12 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
     stops,
     stopDetails,
     cabinClass: params.cabinClass,
-    pricePerPax: Math.round(sourcePrice * XAF_PER_EUR),
-    totalPrice: Math.round(Math.round(sourcePrice * XAF_PER_EUR) * (params.adults + (params.children * 0.75) + (params.infants * 0.1))),
+    pricePerPax: Math.round(totalPriceXaf / pricedPassengers),
+    totalPrice: totalPriceXaf,
+    pricedPassengers,
     currency: "XAF",
     sourceCurrency: "EUR",
     sourcePrice,
-    seatsLeft: randomBetween(2, 9),
-    baggage: params.cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
-    refundable: true,
-    pnrRef: `3M${randomBytes(3).toString("hex").toUpperCase()}`,
-    gdsFareBasis: `${params.cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
-    gdsBookingClass: params.cabinClass === "BUSINESS" ? "J" : params.cabinClass === "FIRST" ? "F" : "Y",
-    gdsTaxesAndFees: Math.round(sourcePrice * XAF_PER_EUR * 0.18),
     isLiveGoogleFlights: true,
     departureToken: item.departure_token ?? null,
   };
@@ -300,7 +232,8 @@ export const flightsRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const cacheKey = `${input.tripType}-${input.origin}-${input.destination}-${input.departureDate}-${input.returnDate || ""}-${input.adults}-${input.cabinClass}-${input.alliance || "ALL"}`;
+      // La clé de cache couvre TOUS les paramètres qui changent le prix (enfants et bébés compris).
+      const cacheKey = `${input.tripType}-${input.origin}-${input.destination}-${input.departureDate}-${input.returnDate || ""}-${input.adults}-${input.children}-${input.infants}-${input.cabinClass}-${input.alliance || "ALL"}`;
       const cached = getCachedSearch(cacheKey);
       if (cached) {
         return cached;
@@ -308,26 +241,10 @@ export const flightsRouter = router({
 
       const apiKey = process.env.SEARCHAPI_KEY;
 
+      // Jamais de tarif fabriqué : sans fournisseur, on n'affiche aucun tarif (et on ne met rien en cache).
       if (!apiKey) {
         flightSearchCache.markNotConfigured();
-        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
-        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPaxForCalc, input.cabinClass);
-        if (input.alliance && input.alliance !== "ALL") {
-          outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
-        }
-        const result = {
-          tripType: input.tripType,
-          outbound,
-          inbound: [],
-          searchParams: input,
-          currency: "XAF",
-          agencyMarkup: AGENCY_MARKUP,
-          isDemo: true,
-          providerStatus: "not_configured",
-          cache: { servedFromCache: false },
-        };
-        setCachedSearch(cacheKey, result);
-        return result;
+        return searchResult(input, { outbound: [], providerStatus: "not_configured", providerNotice: NO_LIVE_FARES_NOTICE });
       }
 
       try {
@@ -368,19 +285,10 @@ export const flightsRouter = router({
         const json = await res.json();
 
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
+        const infantNotice = input.infants > 0 ? INFANT_PRICE_NOTICE : null;
         if (allResults.length === 0) {
           flightSearchCache.recordLiveResult();
-          const result = {
-            tripType: input.tripType,
-            outbound: [],
-            inbound: [],
-            searchParams: input,
-            currency: "XAF",
-            agencyMarkup: AGENCY_MARKUP,
-            isDemo: false,
-            providerStatus: "live_no_results",
-            cache: { servedFromCache: false },
-          };
+          const result = searchResult(input, { outbound: [], providerStatus: "live_no_results", providerNotice: infantNotice, retrievedAt: new Date().toISOString() });
           setCachedSearch(cacheKey, result);
           return result;
         }
@@ -402,43 +310,16 @@ export const flightsRouter = router({
         }
 
         flightSearchCache.recordLiveResult();
-        const result = {
-          tripType: input.tripType,
-          outbound,
-          inbound: [],
-          searchParams: input,
-          currency: "XAF",
-          agencyMarkup: AGENCY_MARKUP,
-          isDemo: false,
-          providerStatus: "live",
-          cache: { servedFromCache: false },
-        };
+        const result = searchResult(input, { outbound, providerStatus: "live", providerNotice: infantNotice, retrievedAt: new Date().toISOString() });
         setCachedSearch(cacheKey, result);
         return result;
       } catch (err) {
-        console.error("SearchAPI error, falling back to mock:", err);
+        console.error("SearchAPI error :", err);
         if (!flightSearchCache.getStatus().lastError) {
           flightSearchCache.recordUnavailable("error", err instanceof Error ? err.message : "Erreur SearchAPI inconnue");
         }
-        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
-        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPaxForCalc, input.cabinClass);
-        if (input.alliance && input.alliance !== "ALL") {
-          outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
-        }
-        const result = {
-          tripType: input.tripType,
-          outbound,
-          inbound: [],
-          searchParams: input,
-          providerNotice: "Service fournisseur momentanément indisponible : affichage d’offres indicatives à confirmer par un conseiller.",
-          currency: "XAF",
-          agencyMarkup: AGENCY_MARKUP,
-          isDemo: true,
-          providerStatus: flightSearchCache.getStatus().apiStatus,
-          cache: { servedFromCache: false },
-        };
-        setCachedSearch(cacheKey, result);
-        return result;
+        // Panne du fournisseur : aucun tarif de remplacement, et rien n'est mis en cache.
+        return searchResult(input, { outbound: [], providerStatus: flightSearchCache.getStatus().apiStatus, providerNotice: NO_LIVE_FARES_NOTICE });
       }
     }),
 
@@ -476,10 +357,9 @@ export const flightsRouter = router({
         idPrefix: "SA-RET",
       };
 
+      // Jamais d'option de retour fabriquée : sans fournisseur ou sans jeton de départ, aucune option n'est affichée.
       if (!apiKey || !input.departureToken) {
-        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
-        const inbound = generateFlights(input.destination, input.origin, input.returnDate, totalPaxForCalc, input.cabinClass);
-        return { inbound, isDemo: true, providerStatus: apiKey ? "no_departure_token" : "not_configured" };
+        return returnResult([], apiKey ? "no_departure_token" : "not_configured", NO_LIVE_FARES_NOTICE);
       }
 
       try {
@@ -512,21 +392,15 @@ export const flightsRouter = router({
         }
         const json = await res.json();
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
+        const infantNotice = input.infants > 0 ? INFANT_PRICE_NOTICE : null;
         if (allResults.length === 0) {
-          return { inbound: [], isDemo: false, providerStatus: "live_no_results" };
+          return returnResult([], "live_no_results", infantNotice, new Date().toISOString());
         }
         const inbound = allResults.map((item, i) => mapSearchApiFlightItem(item, i, returnLegParams)).filter(Boolean);
-        return { inbound, isDemo: false, providerStatus: "live" };
+        return returnResult(inbound, "live", infantNotice, new Date().toISOString());
       } catch (err) {
-        console.error("SearchAPI error (retour), falling back to mock:", err);
-        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
-        const inbound = generateFlights(input.destination, input.origin, input.returnDate, totalPaxForCalc, input.cabinClass);
-        return {
-          inbound,
-          isDemo: true,
-          providerStatus: "error",
-          providerNotice: "Service fournisseur momentanément indisponible pour le vol retour : offres indicatives à confirmer par un conseiller.",
-        };
+        console.error("SearchAPI error (retour) :", err);
+        return returnResult([], "error", NO_LIVE_FARES_NOTICE);
       }
     }),
 
@@ -670,7 +544,7 @@ export const flightsRouter = router({
           stops: z.number().int().min(0).max(10),
           cabinClass: z.string().max(20),
           totalPrice: z.number().positive(),
-          pnrRef: z.string().max(50),
+          searchRef: z.string().max(50).optional(),
         }),
       })
     )
@@ -679,7 +553,7 @@ export const flightsRouter = router({
       // relais de spam et d'hameçonnage depuis notre domaine.
       flightSummaryGuard.assertAllowed(ctx?.req as any, input.email);
       const { email, flightDetails } = input;
-      const subject = `✈️ Récapitulatif de votre vol — Réf PNR #${flightDetails.pnrRef}`;
+      const subject = `✈️ Récapitulatif de votre sélection de vol — ${flightDetails.origin} → ${flightDetails.destination}`;
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px; border-radius: 16px;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 30px; text-align: center; color: white; border-radius: 12px 12px 0 0;">
@@ -691,16 +565,16 @@ export const flightsRouter = router({
             <p style="color: #4b5563; font-size: 14px; line-height: 1.5;">Voici le récapitulatif du vol que vous avez sélectionné sur notre plateforme. Vous pouvez le présenter à notre agence ou finaliser votre réservation via WhatsApp.</p>
             
             <div style="background: #eff6ff; border: 2px dashed #2563EB; border-radius: 12px; padding: 20px; margin: 20px 0;">
-              <div style="font-size: 12px; font-weight: bold; color: #2563EB; text-transform: uppercase; margin-bottom: 8px;">Référence PNR : ${esc(flightDetails.pnrRef)}</div>
+              <div style="font-size: 12px; font-weight: bold; color: #2563EB; text-transform: uppercase; margin-bottom: 8px;">Sélection de vol (sans engagement)</div>
               <div style="font-size: 18px; font-weight: bold; color: #1E3A8A; margin-bottom: 4px;">${esc(flightDetails.airlineName)} (${esc(flightDetails.flightNumber)})</div>
               <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Itinéraire :</strong> ${esc(flightDetails.origin)} ➔ ${esc(flightDetails.destination)}</div>
               <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Départ :</strong> ${esc(flightDetails.departureDate)} à ${esc(flightDetails.departureTime)} (Arrivée: ${esc(flightDetails.arrivalTime)})</div>
               <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Durée :</strong> ${esc(flightDetails.duration)} | <strong>Escale(s) :</strong> ${flightDetails.stops === 0 ? "Direct" : esc(flightDetails.stops) + " escale(s)"}</div>
-              <div style="font-size: 16px; font-weight: bold; color: #15803d; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">Prix total estimé : ${flightDetails.totalPrice.toLocaleString("fr-FR")} XAF</div>
+              <div style="font-size: 16px; font-weight: bold; color: #15803d; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">Tarif relevé : ${flightDetails.totalPrice.toLocaleString("fr-FR")} XAF <span style="font-size: 12px; font-weight: normal; color: #64748b;">(à confirmer par un conseiller avant toute réservation ou paiement)</span></div>
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-              <a href="https://wa.me/237698104832?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${encodeURIComponent(flightDetails.pnrRef)}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
+              <a href="https://wa.me/237698104832?text=Bonjour,%20je%20souhaite%20réserver%20le%20vol%20${encodeURIComponent(flightDetails.flightNumber)}%20du%20${encodeURIComponent(flightDetails.departureDate)}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
             </div>
 
             <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© ${new Date().getFullYear()} 3M Travel & Services • hello@3mtravelagency.com</p>

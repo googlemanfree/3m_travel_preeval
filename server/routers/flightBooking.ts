@@ -15,9 +15,19 @@ import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+// Demande de réservation publique : chaque envoi écrit en base et déclenche un e-mail à l'agence puis au client.
+// Sans plafond, c'était un moyen de saturer la file des conseillers et d'envoyer des e-mails à des tiers.
+const bookingRequestGuard = createSubmissionGuard({
+  perClient: { limit: 8, windowMs: 60 * 60_000 },
+  perEmail: { limit: 4, windowMs: 60 * 60_000 },
+  global: { limit: 200, windowMs: 60 * 60_000 },
+});
 import { candidateProcedure, findCandidateFromAuthorizationHeader, getOrCreateCandidateForPlatformUser } from "./candidate";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
+import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -320,6 +330,8 @@ export const flightBookingRouter = router({
       if (JSON.stringify(value).length > 120_000) ctx.addIssue({ code: "custom", message: "Données de réservation trop volumineuses." });
     }))
     .mutation(async ({ ctx, input }) => {
+      const firstPassengerEmail = input.passengerData[0]?.email;
+      bookingRequestGuard.assertAllowed(ctx?.req as any, typeof firstPassengerEmail === "string" ? firstPassengerEmail : "");
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
@@ -361,7 +373,23 @@ export const flightBookingRouter = router({
       } catch (error) {
         console.error("[FlightBooking] advisor notification failed", error);
       }
-      return { success: true, requestId, requestRef, status: "pending_review" as const, priority, notificationEmailSent, requiresAccountActivation: requester.isGuest };
+      // Le client reçoit sa référence par e-mail (il la perdrait en fermant la fenêtre) ; un échec n'annule pas la demande.
+      let confirmationEmailSent = false;
+      try {
+        const confirmation = buildBookingConfirmationEmail({
+          requestRef,
+          fullName: requester.fullName,
+          origin: flightSummary.origin,
+          destination: flightSummary.destination,
+          airline: flightSummary.airline,
+          departure: flightSummary.departure,
+        });
+        await sendEmail({ to: requester.email, subject: confirmation.subject, html: confirmation.html });
+        confirmationEmailSent = true;
+      } catch (error) {
+        console.error("[FlightBooking] customer confirmation failed", error);
+      }
+      return { success: true, requestId, requestRef, status: "pending_review" as const, priority, notificationEmailSent, confirmationEmailSent, requiresAccountActivation: requester.isGuest };
     }),
 
   getMyRequests: candidateProcedure.query(async ({ ctx }) => {
@@ -747,6 +775,10 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(and(eq(flightBookingRequests.id, input.requestId), eq(flightBookingRequests.candidateId, ctx.candidate.id))).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      // Sans ce contrôle, un client pouvait rouvrir une réservation déjà émise ou annulée (statut « en attente de paiement »).
+      if (existing.status === "issued" || existing.status === "cancelled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réservation est terminée (billet émis ou demande annulée) : elle ne peut plus être validée." });
+      }
       await db.update(flightBookingRequests).set({
         clientValidated: true,
         paymentMethod: input.paymentMethod,

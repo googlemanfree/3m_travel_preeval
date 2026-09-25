@@ -45,14 +45,11 @@ type CheckoutFlight = {
   cabinClass: string;
   totalPrice: number;
   currency: string;
-  baggage: string;
-  pnrRef: string;
 };
 
 type CheckoutSelection = {
   flight: CheckoutFlight;
   searchParams: { adults: number; children: number; infants: number };
-  isSimulated: boolean;
   selectedAt: number;
 };
 
@@ -98,29 +95,6 @@ export default function FlightBookingCheckout() {
   });
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
   const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
-
-  const [selectedSeat, setSelectedSeat] = useState<string>("12A");
-  const [isSeatModalOpen, setIsSeatModalOpen] = useState(false);
-  const [extraBaggage, setExtraBaggage] = useState<number>(0);
-  const [specialMeal, setSpecialMeal] = useState<string>("Standard");
-  const [timeLeft, setTimeLeft] = useState<number>(900);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimeLeft = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
-  const baggagePrice = extraBaggage * 45000;
-  const mealPrice = specialMeal !== "Standard" ? 15000 : 0;
-  const totalWithOptions = (selectedFlight?.totalPrice || 0) + baggagePrice + mealPrice;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -174,7 +148,7 @@ export default function FlightBookingCheckout() {
   const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
   const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
-  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nPrix indicatif: ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
+  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nTarif relevé (à confirmer par un conseiller): ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
@@ -292,8 +266,8 @@ export default function FlightBookingCheckout() {
         `Arrivée : ${selectedFlight.arrivalTime} · Durée : ${selectedFlight.duration}`,
         `Escales : ${selectedFlight.stops === 0 ? "Vol direct" : `${selectedFlight.stops} escale(s)`}`,
         `Classe : ${selectedFlight.cabinClass}`,
-        `Bagages : ${selectedFlight.baggage}`,
-        `Prix ${selection?.isSimulated ? "indicatif" : "estimé"} : ${formatXaf(selectedFlight.totalPrice)}`,
+        "Bagages, conditions et taxes : confirmés par un conseiller avant réservation",
+        `Tarif relevé (à confirmer) : ${formatXaf(selectedFlight.totalPrice)}`,
         "",
         "VALIDATION",
         "Le tarif, les places et l’émission doivent être revalidés par 3M Travel Agency avant tout paiement ou émission définitive.",
@@ -466,10 +440,10 @@ export default function FlightBookingCheckout() {
                   <div className="flex justify-between gap-3"><span>Vol :</span><span className="font-mono text-right font-bold text-slate-900">{selectedFlight?.flightNumber || "Non sélectionné"}</span></div>
                   <div className="flex justify-between gap-3"><span>Itinéraire :</span><span className="text-right font-semibold text-slate-900">{selectedFlight ? `${selectedFlight.origin} → ${selectedFlight.destination}` : "À sélectionner"}</span></div>
                   <div className="flex justify-between gap-3"><span>Classe :</span><span className="font-semibold text-blue-700">{selectedFlight?.cabinClass || "À confirmer"}</span></div>
-                  <div className="flex justify-between gap-3"><span>Bagages :</span><span className="text-right font-semibold text-slate-900">{selectedFlight?.baggage || "À confirmer"}</span></div>
+                  <div className="flex justify-between gap-3"><span>Bagages et conditions :</span><span className="text-right font-semibold text-slate-900">Confirmés par un conseiller</span></div>
                 </div>
                 <div className="my-4 border-t border-slate-100" />
-                <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Total {selection?.isSimulated ? "indicatif" : "estimé"}</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Tarif relevé (à confirmer)</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
                 
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                   <div className="flex items-center gap-2 font-black text-amber-950">
@@ -631,89 +605,6 @@ export default function FlightBookingCheckout() {
             )}
           </AnimatePresence>
 
-          {isSeatModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="presentation">
-              <motion.div role="dialog" aria-modal="true" aria-labelledby="seat-selection-title" className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div>
-                    <h3 id="seat-selection-title" className="text-lg font-black text-slate-900">Sélection interactive de la cabine</h3>
-                    <p className="text-xs text-slate-500">Choisissez votre emplacement exact à bord (Boeing / Airbus)</p>
-                  </div>
-                  <button type="button" aria-label="Fermer la sélection de siège" onClick={() => setIsSeatModalOpen(false)} className="rounded-full p-2 hover:bg-slate-100 text-slate-500">
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto p-2">
-                  <div className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest pb-2">Front de l'appareil (Cockpit)</div>
-                  {[10, 11, 12, 14, 15, 16, 18, 19, 20].map((row) => (
-                    <div key={row} className="flex items-center justify-center gap-3">
-                      <span className="w-8 text-right font-mono text-xs font-bold text-slate-400">{row}</span>
-                      <div className="flex gap-1.5">
-                        {["A", "B", "C"].map((col) => {
-                          const seatId = `${row}${col}`;
-                          const isSelected = selectedSeat === seatId;
-                          const isOccupied = [`10B`, `12C`, `15A`].includes(seatId);
-                          return (
-                            <button
-                              key={seatId}
-                              type="button"
-                              disabled={isOccupied}
-                              onClick={() => {
-                                setSelectedSeat(seatId);
-                                setFormData(prev => ({ ...prev, seatPreference: col === "A" ? "Hublot" : col === "C" ? "Couloir" : "Milieu" }));
-                              }}
-                              className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
-                                isOccupied ? "bg-slate-200 text-slate-400 cursor-not-allowed" :
-                                isSelected ? "bg-blue-600 text-white shadow-md scale-105" :
-                                "bg-slate-50 border border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50"
-                              }`}
-                            >
-                              {seatId}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="w-6" />
-                      <div className="flex gap-1.5">
-                        {["H", "J", "K"].map((col) => {
-                          const seatId = `${row}${col}`;
-                          const isSelected = selectedSeat === seatId;
-                          const isOccupied = [`11K`, `14H`, `19J`].includes(seatId);
-                          return (
-                            <button
-                              key={seatId}
-                              type="button"
-                              disabled={isOccupied}
-                              onClick={() => {
-                                setSelectedSeat(seatId);
-                                setFormData(prev => ({ ...prev, seatPreference: col === "K" ? "Hublot" : col === "H" ? "Couloir" : "Milieu" }));
-                              }}
-                              className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
-                                isOccupied ? "bg-slate-200 text-slate-400 cursor-not-allowed" :
-                                isSelected ? "bg-blue-600 text-white shadow-md scale-105" :
-                                "bg-slate-50 border border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50"
-                              }`}
-                            >
-                              {seatId}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="text-xs text-slate-500">Siège sélectionné : <span className="font-bold text-blue-700 font-mono">{selectedSeat}</span></div>
-                  <Button type="button" onClick={() => setIsSeatModalOpen(false)} className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow">
-                    Confirmer le siège
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-
           {/* Fenêtre modale de confirmation */}
           <AnimatePresence>
             {showConfirmModal && (
@@ -742,7 +633,7 @@ export default function FlightBookingCheckout() {
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4">
                       <div className="flex justify-between text-xs text-slate-500"><span>Prestation :</span><span className="font-bold text-slate-800">Vol GDS international</span></div>
-                       <div className="mt-2 flex justify-between gap-3 text-base font-black text-blue-900"><span>Montant {selection?.isSimulated ? "indicatif" : "estimé"} :</span><span className="text-right">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                       <div className="mt-2 flex justify-between gap-3 text-base font-black text-blue-900"><span>Tarif relevé (à confirmer) :</span><span className="text-right">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
                      </div>
                      <p className="text-xs text-slate-500">En confirmant, vous préparez votre demande. L’agence doit revalider le tarif et les disponibilités avant toute émission.</p>
                   </div>

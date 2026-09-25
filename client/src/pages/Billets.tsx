@@ -96,7 +96,7 @@ function AirlineLogo({ airline }: { airline: Flight["airline"] }) {
   );
 }
 
-function FlightResultCard({ flight, isSimulated, onView, onRequest }: { flight: Flight; isSimulated: boolean; onView: () => void; onRequest: () => void }) {
+function FlightResultCard({ flight, onView, onRequest }: { flight: Flight; onView: () => void; onRequest: () => void }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -107,7 +107,6 @@ function FlightResultCard({ flight, isSimulated, onView, onRequest }: { flight: 
             <p className="text-xs text-slate-500">Vol {flight.flightNumber} · {CABIN_LABELS[flight.cabinClass] || flight.cabinClass}</p>
           </div>
         </div>
-        {isSimulated && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-800">Tarif indicatif — Simulation</span>}
       </div>
 
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -126,13 +125,9 @@ function FlightResultCard({ flight, isSimulated, onView, onRequest }: { flight: 
         </div>
       </div>
 
-      {flight.baggage && (
-        <p className="mt-3 flex items-center gap-2 text-xs text-slate-600"><Luggage className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />{flight.baggage}</p>
-      )}
-
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
         <div>
-          <p className="text-xs text-slate-500">À partir de</p>
+          <p className="text-xs text-slate-500">Tarif relevé{flight.pricedPassengers && flight.pricedPassengers > 1 ? ` · ${flight.pricedPassengers} voyageurs` : ""}</p>
           <p className="text-xl font-black text-blue-800">{formatXAF(flight.totalPrice)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -218,7 +213,8 @@ export default function Billets() {
   );
 
   const outbound: Flight[] = data?.outbound ?? [];
-  const isSimulated = Boolean(data?.isDemo);
+  const providerUnavailable = Boolean(data && data.outbound.length === 0 && ["not_configured", "error", "quota_limited", "unavailable"].includes(data.providerStatus));
+  const retrievedAtLabel = data?.retrievedAt ? new Date(data.retrievedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : null;
 
   const returnFlightsQuery = trpc.flights.searchReturnFlights.useQuery(
     {
@@ -235,7 +231,6 @@ export default function Billets() {
     { enabled: Boolean(pendingOutboundFlight) && tripType === "ROUND_TRIP", retry: 1 },
   );
   const returnFlightOptions: Flight[] = returnFlightsQuery.data?.inbound ?? [];
-  const isReturnSimulated = Boolean(returnFlightsQuery.data?.isDemo);
 
   const availableAirlines = useMemo(() => {
     const map = new Map<string, string>();
@@ -411,8 +406,8 @@ export default function Billets() {
               </div>
             ) : outbound.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-                <h2 className="text-lg font-black text-slate-950">Aucun vol trouvé pour cette recherche</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Nous n'avons pas trouvé de disponibilité correspondant exactement à vos critères. Notre équipe peut effectuer une recherche personnalisée.</p>
+                <h2 className="text-lg font-black text-slate-950">{providerUnavailable ? "La recherche en direct est momentanément indisponible" : "Aucun vol trouvé pour cette recherche"}</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{providerUnavailable ? (data?.providerNotice ?? "Aucun tarif n'est affiché plutôt qu'un tarif non vérifié : notre équipe vous communique les tarifs réels.") : "Nous n'avons pas trouvé de disponibilité correspondant exactement à vos critères. Notre équipe peut effectuer une recherche personnalisée."}</p>
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => { trackEvent("personalized_search_requested"); trackEvent("whatsapp_clicked", { context: "no_results" }); }} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-800">Demander une recherche personnalisée</a>
                   <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-5 py-2.5 text-sm font-black text-emerald-800 hover:bg-emerald-50"><MessageCircle className="h-4 w-4" aria-hidden="true" /> Contacter 3M sur WhatsApp</a>
@@ -433,6 +428,11 @@ export default function Billets() {
                     <button type="button" onClick={() => setShowFilters((value) => !value)} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Filtres</button>
                   </div>
                 </div>
+
+                <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-900" data-testid="fare-provenance">
+                  {retrievedAtLabel ? `Tarifs relevés à ${retrievedAtLabel}` : "Tarifs relevés"} auprès de Google Flights et convertis en FCFA (parité fixe : 1 € = 655,957 FCFA). Le prix affiché est le total pour {passengers.adults + passengers.children} voyageur{passengers.adults + passengers.children > 1 ? "s" : ""}. Bagages, conditions, taxes et disponibilité sont confirmés par un conseiller avant toute réservation ou paiement ; aucun paiement n’est demandé à cette étape.
+                  {data?.providerNotice ? ` ${data.providerNotice}` : ""}
+                </p>
 
                 {showFilters && (
                   <div className="mb-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
@@ -462,7 +462,7 @@ export default function Billets() {
 
                 <div className="grid gap-4">
                   {filteredResults.map((flight) => (
-                    <FlightResultCard key={flight.id} flight={flight} isSimulated={isSimulated} onView={() => { setDetailFlight(flight); trackEvent("flight_selected", { flightId: flight.id }); }} onRequest={() => requestFlight(flight)} />
+                    <FlightResultCard key={flight.id} flight={flight} onView={() => { setDetailFlight(flight); trackEvent("flight_selected", { flightId: flight.id }); }} onRequest={() => requestFlight(flight)} />
                   ))}
                 </div>
               </>
@@ -566,7 +566,7 @@ export default function Billets() {
       </section>
 
       {detailFlight && (
-        <FlightDetailModal flight={detailFlight} isSimulated={isSimulated} onClose={() => setDetailFlight(null)} onRequest={() => { requestFlight(detailFlight); setDetailFlight(null); }} />
+        <FlightDetailModal flight={detailFlight} onClose={() => setDetailFlight(null)} onRequest={() => { requestFlight(detailFlight); setDetailFlight(null); }} />
       )}
       {pendingOutboundFlight && (
         <ReturnFlightModal
@@ -574,7 +574,7 @@ export default function Billets() {
           options={returnFlightOptions}
           isLoading={returnFlightsQuery.isFetching}
           isError={Boolean(returnFlightsQuery.error)}
-          isSimulated={isReturnSimulated}
+          notice={returnFlightsQuery.data?.providerNotice ?? null}
           onRetry={() => returnFlightsQuery.refetch()}
           onClose={() => setPendingOutboundFlight(null)}
           onSelect={(chosenReturn) => {
@@ -592,7 +592,7 @@ export default function Billets() {
   );
 }
 
-function FlightDetailModal({ flight, isSimulated, onClose, onRequest }: { flight: Flight; isSimulated: boolean; onClose: () => void; onRequest: () => void }) {
+function FlightDetailModal({ flight, onClose, onRequest }: { flight: Flight; onClose: () => void; onRequest: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6" onClick={(event) => event.stopPropagation()}>
@@ -606,7 +606,6 @@ function FlightDetailModal({ flight, isSimulated, onClose, onRequest }: { flight
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
         </div>
-        {isSimulated && <span className="mt-3 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-800">Tarif indicatif — Simulation</span>}
         <div className="mt-4 space-y-2 text-sm text-slate-700">
           <p><strong>Itinéraire :</strong> {flight.originCity} ({flight.origin}) → {flight.destinationCity} ({flight.destination})</p>
           <p><strong>Départ :</strong> {flight.departureDate} à {flight.departureTime}</p>
@@ -615,12 +614,12 @@ function FlightDetailModal({ flight, isSimulated, onClose, onRequest }: { flight
           <p className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" aria-hidden="true" /> {flight.stops === 0 ? "Vol direct" : `${flight.stops} escale${flight.stops > 1 ? "s" : ""}`}</p>
           {flight.stopDetails?.length > 0 && <p className="text-xs text-slate-500">Escale(s) : {flight.stopDetails.map((stop) => `${stop.airportName} (${stop.duration})`).join(", ")}</p>}
           <p><strong>Cabine :</strong> {CABIN_LABELS[flight.cabinClass] || flight.cabinClass}</p>
-          {flight.baggage && <p className="flex items-center gap-2"><Luggage className="h-4 w-4 text-slate-400" aria-hidden="true" /> {flight.baggage}</p>}
-          {typeof flight.seatsLeft === "number" && <p><strong>Places restantes indiquées :</strong> {flight.seatsLeft}</p>}
+          <p className="flex items-start gap-2 text-xs text-slate-500"><Luggage className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /> Bagages, conditions de changement et de remboursement, taxes : confirmés par un conseiller avant réservation.</p>
         </div>
         <div className="mt-5 rounded-xl bg-blue-50 p-4">
-          <p className="text-xs text-blue-800">Tarif indicatif</p>
+          <p className="text-xs text-blue-800">Tarif relevé en direct{flight.pricedPassengers && flight.pricedPassengers > 1 ? ` · total pour ${flight.pricedPassengers} voyageurs` : ""}</p>
           <p className="text-2xl font-black text-blue-900">{formatXAF(flight.totalPrice)}</p>
+          <p className="mt-1 text-[11px] text-blue-800">À confirmer par un conseiller avant toute réservation ou paiement.</p>
         </div>
         <button type="button" onClick={onRequest} className="mt-5 w-full rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white hover:bg-blue-800">Demander ce vol</button>
       </div>
@@ -636,11 +635,19 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
   const [comment, setComment] = useState("");
   const [consent, setConsent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ requestRef: string } | null>(null);
+  const [success, setSuccess] = useState<{ requestRef: string; confirmationEmailSent: boolean } | null>(null);
+  const quotedTotalPrice = returnFlight?.totalPrice ?? flight.totalPrice;
+
+  // Échap ferme la fenêtre (accessibilité clavier).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   const createRequestMutation = trpc.flightBooking.createRequest.useMutation({
     onSuccess: (result) => {
-      setSuccess({ requestRef: result.requestRef });
+      setSuccess({ requestRef: result.requestRef, confirmationEmailSent: Boolean((result as { confirmationEmailSent?: boolean }).confirmationEmailSent) });
       trackEvent("booking_request_submitted", { flightId: flight.id, requestRef: result.requestRef });
     },
     onError: (mutationError) => setSubmitError(mutationError.message || "L'envoi de la demande a échoué. Veuillez réessayer."),
@@ -657,7 +664,7 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
       // Le vol aller reste au premier niveau (compatibilité avec l'affichage admin/e-mails
       // existant qui lit flightData.departureDate, flightData.airline, etc.) ; le vol retour
       // choisi est ajouté en plus, jamais en remplacement.
-      flightData: { ...flight, returnFlight: returnFlight ?? null } as any,
+      flightData: { ...flight, returnFlight: returnFlight ?? null, quotedTotalPrice } as any,
       passengerData: [{ fullName: `${firstName.trim()} ${lastName.trim()}`, email: email.trim(), phone: whatsapp.trim(), comment: comment.trim(), travelers: adults + children }],
     });
   }
@@ -676,6 +683,7 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
           <div className="mt-4">
             <div className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="h-5 w-5" aria-hidden="true" /><span className="text-sm font-black">Référence : {success.requestRef}</span></div>
             <p className="mt-3 text-sm leading-6 text-slate-700">Votre demande de réservation a bien été transmise à 3M Travel &amp; Services. Notre équipe va vérifier la disponibilité et le tarif avant toute confirmation.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{success.confirmationEmailSent ? `Un e-mail de confirmation avec votre référence a été envoyé à ${email.trim()}.` : "Notez votre référence : elle vous permet de suivre votre demande auprès de l’équipe."}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">Vous pouvez également nous contacter directement sur WhatsApp pour accélérer le traitement.</p>
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "booking_confirmation" })} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white hover:bg-emerald-700"><MessageCircle className="h-4 w-4" aria-hidden="true" /> Contacter 3M sur WhatsApp</a>
           </div>
@@ -692,16 +700,17 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
                   <p>{returnFlight.departureDate} à {returnFlight.departureTime} · {returnFlight.airline.name}</p>
                 </>
               )}
-              <p className="mt-2 font-black">Tarif indicatif {returnFlight ? "aller-retour" : ""} : {formatXAF(flight.totalPrice)}</p>
+              <p className="mt-2 font-black">Tarif relevé{returnFlight ? " aller-retour" : ""} : {formatXAF(quotedTotalPrice)}</p>
+              <p className="mt-1 text-xs font-normal text-blue-800">À confirmer par un conseiller avant toute réservation. Aucun paiement n’est demandé à cette étape.</p>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div><label className="mb-1 block text-xs font-semibold text-slate-600">Nom</label><input value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={255} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
-              <div><label className="mb-1 block text-xs font-semibold text-slate-600">Prénom</label><input value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={255} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
-              <div><label className="mb-1 block text-xs font-semibold text-slate-600">Numéro WhatsApp</label><input value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} placeholder="+237 6XX XXX XXX" maxLength={50} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
-              <div><label className="mb-1 block text-xs font-semibold text-slate-600">E-mail</label><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
+              <div><label htmlFor="booking-last-name" className="mb-1 block text-xs font-semibold text-slate-600">Nom</label><input id="booking-last-name" autoFocus autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={255} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-base focus:border-blue-600 focus:outline-none" /></div>
+              <div><label htmlFor="booking-first-name" className="mb-1 block text-xs font-semibold text-slate-600">Prénom</label><input id="booking-first-name" autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={255} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-base focus:border-blue-600 focus:outline-none" /></div>
+              <div><label htmlFor="booking-whatsapp" className="mb-1 block text-xs font-semibold text-slate-600">Numéro WhatsApp</label><input id="booking-whatsapp" type="tel" inputMode="tel" autoComplete="tel" value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} placeholder="+237 6XX XXX XXX" maxLength={50} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-base focus:border-blue-600 focus:outline-none" /></div>
+              <div><label htmlFor="booking-email" className="mb-1 block text-xs font-semibold text-slate-600">E-mail</label><input id="booking-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-base focus:border-blue-600 focus:outline-none" /></div>
             </div>
-            <div className="mt-3"><label className="mb-1 block text-xs font-semibold text-slate-600">Commentaire (facultatif)</label><textarea value={comment} onChange={(event) => setComment(event.target.value)} rows={2} maxLength={2000} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-sm focus:border-blue-600 focus:outline-none" /></div>
+            <div className="mt-3"><label htmlFor="booking-comment" className="mb-1 block text-xs font-semibold text-slate-600">Commentaire (facultatif)</label><textarea id="booking-comment" value={comment} onChange={(event) => setComment(event.target.value)} rows={2} maxLength={2000} className="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-base focus:border-blue-600 focus:outline-none" /></div>
 
             <label className="mt-4 flex items-start gap-2 text-xs text-slate-600">
               <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-0.5 h-4 w-4" />
@@ -719,13 +728,13 @@ function BookingRequestModal({ flight, returnFlight, adults, children, cabinLabe
 }
 
 function ReturnFlightModal({
-  outboundFlight, options, isLoading, isError, isSimulated, onRetry, onClose, onSelect,
+  outboundFlight, options, isLoading, isError, notice, onRetry, onClose, onSelect,
 }: {
   outboundFlight: Flight;
   options: Flight[];
   isLoading: boolean;
   isError: boolean;
-  isSimulated: boolean;
+  notice: string | null;
   onRetry: () => void;
   onClose: () => void;
   onSelect: (flight: Flight) => void;
@@ -750,10 +759,10 @@ function ReturnFlightModal({
             <button type="button" onClick={onRetry} className="mt-3 rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-black text-rose-800 hover:bg-rose-100">Réessayer</button>
           </div>
         ) : options.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">Aucun vol retour trouvé pour ces dates. Notre équipe peut effectuer une recherche personnalisée après votre demande.</div>
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">{notice ?? "Aucun vol retour trouvé pour ces dates. Notre équipe peut effectuer une recherche personnalisée après votre demande."}</div>
         ) : (
           <>
-            {isSimulated && <span className="mt-4 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-amber-800">Vols retour indicatifs — Simulation</span>}
+            {notice && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{notice}</p>}
             <div className="mt-3 grid gap-3">
               {options.map((option) => (
                 <button key={option.id} type="button" onClick={() => onSelect(option)} className="rounded-xl border border-slate-200 p-4 text-left hover:border-blue-400 hover:bg-blue-50/40">
@@ -771,10 +780,11 @@ function ReturnFlightModal({
                     <span className="font-black text-slate-950">{option.departureTime} → {option.arrivalTime}</span>
                     <span className="text-xs text-slate-500">{option.duration}</span>
                   </div>
+                  <p className="mt-2 text-sm font-black text-blue-800">Total aller-retour : {formatXAF(option.totalPrice)}</p>
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-xs text-slate-500">Le tarif affiché pour l'aller-retour inclut déjà ce vol retour — aucun supplément à ce stade.</p>
+            <p className="mt-3 text-xs text-slate-500">Le total indiqué pour chaque option est le tarif relevé de l'aller-retour complet avec ce vol retour ; il est confirmé par un conseiller avant toute réservation.</p>
           </>
         )}
       </div>

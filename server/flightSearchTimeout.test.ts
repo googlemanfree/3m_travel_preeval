@@ -7,6 +7,9 @@ const source = readFileSync(resolve(process.cwd(), "server/routers/flights.ts"),
 describe("délai maximal de recherche de vols", () => {
   it("interrompt la source externe avant qu’elle ne bloque le parcours client", () => {
     expect(source).toContain("AbortSignal.timeout(8_000)");
-    expect(source).toContain("offres indicatives");
+    // Au-delà du délai : aucun tarif de remplacement, un message honnête et la panne n'est pas mise en cache.
+    expect(source).toContain("NO_LIVE_FARES_NOTICE");
+    expect(source).toContain("plutôt qu’un tarif non vérifié");
+    expect(source).not.toContain("offres indicatives");
   });
 });

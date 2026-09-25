@@ -37,13 +37,14 @@ describe("flight booking regression contracts", () => {
     expect(checkout).not.toContain("20260901T100000Z");
   });
 
-  it("keeps the provider status and simulation badge explicit", () => {
+  it("garde le statut du fournisseur explicite et n'affiche jamais un tarif de démonstration", () => {
     const flightsRouter = readProjectFile("server/routers/flights.ts");
     const flightsPage = readProjectFile("client/src/pages/Flights.tsx");
 
     expect(flightsRouter).toContain("providerStatus: \"live\"");
-    expect(flightsRouter).toContain("isDemo: true");
-    expect(flightsPage).toContain("Tarif indicatif — Simulation");
+    expect(flightsRouter).not.toContain("isDemo: true");
+    expect(flightsPage).not.toContain("Tarif indicatif — Simulation");
+    expect(flightsPage).toContain('data-testid="fare-provenance"');
   });
 
   it("expose la file opérationnelle des réservations dans le tableau de bord administrateur", () => {

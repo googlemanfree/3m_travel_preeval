@@ -94,6 +94,14 @@ describe("mobile : zoom, polices et icônes", () => {
     expect(viewport).toContain("viewport-fit=cover");
   });
 
+  it("les champs de saisie font 16 px sur mobile : le zoom étant autorisé, iOS ne doit pas zoomer à la saisie", () => {
+    const css = read("client/src/index.css");
+    const rule = css.slice(css.indexOf("@media (max-width: 767px) {\n  input:not("));
+    expect(rule).toContain('input:not([type="checkbox"])');
+    expect(rule).toContain("textarea");
+    expect(rule).toContain("font-size: 16px;");
+  });
+
   it("charge la police sans bloquer l'affichage", () => {
     const withoutNoscript = indexHtml.replace(/<noscript>[\s\S]*?<\/noscript>/g, "");
     expect(withoutNoscript).not.toMatch(/<link[^>]+fonts\.googleapis\.com[^>]+rel="stylesheet"/);

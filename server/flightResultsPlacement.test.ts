@@ -11,10 +11,11 @@ describe("positionnement des résultats de vols", () => {
     expect(flightsPage).toContain('<div className="order-3"><FlightQuoteRequest /></div>');
   });
 
-  it("ouvre les détails compagnie, bagages et conditions de chaque offre par défaut", () => {
+  it("ouvre les détails de chaque offre par défaut, sans afficher de bagages, conditions ou taxes que la source ne fournit pas", () => {
     expect(flightsPage).toContain("const [expanded, setExpanded] = useState(true);");
-    expect(flightsPage).toContain("Bagages autorisés");
-    expect(flightsPage).toContain("Conditions tarifaires");
-    expect(flightsPage).toContain("Taxes aéroport & PNR");
+    expect(flightsPage).toContain("Bagages, changement, remboursement et taxes");
+    expect(flightsPage).toContain("Confirmés par un conseiller avant réservation");
+    expect(flightsPage).not.toContain("Bagages autorisés");
+    expect(flightsPage).not.toContain("Taxes aéroport & PNR");
   });
 });
