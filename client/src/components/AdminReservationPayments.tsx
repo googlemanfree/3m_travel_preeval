@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { MANUAL_METHOD_CODES, paymentMethodLabel } from "@shared/paymentMethods";
 
 export function AdminReservationPayments() {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "active_session" : "active_session";
@@ -48,7 +49,7 @@ export function AdminReservationPayments() {
     const rows = filtered.map(p => [
       p.requestRef,
       `"${p.candidateEmail}"`,
-      p.paymentMethod === "orange_money" ? "Orange Money" : p.paymentMethod === "agency" ? "Guichet Agence" : "Non spécifié",
+      paymentMethodLabel(p.paymentMethod),
       p.paymentTransactionId || "N/A",
       p.clientValidated ? "Oui" : "Non",
       p.status,
@@ -122,6 +123,9 @@ export function AdminReservationPayments() {
                 <SelectItem value="all">Tous les modes</SelectItem>
                 <SelectItem value="orange_money">Orange Money</SelectItem>
                 <SelectItem value="agency">Guichet Agence</SelectItem>
+                <SelectItem value={MANUAL_METHOD_CODES.bank_transfer}>{paymentMethodLabel(MANUAL_METHOD_CODES.bank_transfer)}</SelectItem>
+                <SelectItem value={MANUAL_METHOD_CODES.mobile_money_deposit}>Dépôt Mobile Money</SelectItem>
+                <SelectItem value={MANUAL_METHOD_CODES.cash_agency}>Paiement en agence (espèces)</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -164,6 +168,8 @@ export function AdminReservationPayments() {
                         <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-800 font-semibold">🍊 Orange Money</Badge>
                       ) : p.paymentMethod === "agency" ? (
                         <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-800 font-semibold">🏢 Guichet Agence</Badge>
+                      ) : p.paymentMethod ? (
+                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900 font-semibold" data-testid="manual-payment-badge">{paymentMethodLabel(p.paymentMethod)}</Badge>
                       ) : (
                         <Badge variant="outline" className="text-slate-500">Non renseigné</Badge>
                       )}

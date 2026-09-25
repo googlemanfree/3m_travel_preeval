@@ -150,6 +150,16 @@ export function describePaymentMethods(instructions: PaymentInstructions, online
   ];
 }
 
+/** Libellé lisible d'un mode de paiement enregistré (réservations de vol et dossiers : anciens codes et règlements manuels). */
+export function paymentMethodLabel(code: string | null | undefined): string {
+  if (!code) return "Non spécifié";
+  if (code === "orange_money") return "Orange Money";
+  if (code === "agency") return "Guichet agence";
+  const manual = (Object.keys(MANUAL_METHOD_CODES) as ManualMethodId[]).find((id) => MANUAL_METHOD_CODES[id] === code);
+  if (manual) return MANUAL_METHOD_LABELS[manual];
+  return "Autre mode";
+}
+
 export function formatAmount(amount: number | null | undefined, currency = "XAF"): string {
   return typeof amount === "number" && Number.isFinite(amount) ? `${new Intl.NumberFormat("fr-FR").format(amount)} ${currency}` : "montant à confirmer";
 }

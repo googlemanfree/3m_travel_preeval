@@ -11,6 +11,7 @@ import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
 import { FlightDeskActions } from "@/components/FlightDeskActions";
+import { paymentMethodLabel } from "@shared/paymentMethods";
 
 const STATUS_LABELS = {
   pending_review: "À traiter",
@@ -104,7 +105,7 @@ function FlightRequestOverview({ request }: { request: any }) {
   const primaryPassenger = passengers[0] ?? {};
   const stopDetails = Array.isArray(flight.stopDetails) ? flight.stopDetails.map(getRecord) : [];
   const currency = flight.currency;
-  const paymentMethod = request.paymentMethod === "orange_money" ? "Orange Money" : request.paymentMethod === "agency" ? "Paiement en agence" : "En attente";
+  const paymentMethod = request.paymentMethod ? paymentMethodLabel(request.paymentMethod) : "En attente";
 
   return <div id="flight-request-detail" className="space-y-4">
     <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950 via-blue-800 to-sky-700 p-4 text-white">

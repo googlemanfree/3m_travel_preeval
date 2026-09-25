@@ -31,6 +31,7 @@ import { notifyAdmins } from "./adminNotifications";
 import { buildDeskAlertEmail, resolveDeskRecipients, resolveDeskWhatsApp } from "../services/flightDeskAlert";
 import { extractDeskAlertData } from "../../shared/flightDeskAlert";
 import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
+import { buildPaymentDeclaredAlert, buildPaymentDecisionEmail, paymentHintHtml, refusePaymentDecision, refuseStatusChange } from "../services/flightWorkflow";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -672,6 +673,8 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
       if (existing.status === input.status) return { success: true, unchanged: true, notificationEmailSent: false };
+      const refusedChange = refuseStatusChange(existing.status, input.status);
+      if (refusedChange) throw new TRPCError({ code: "BAD_REQUEST", message: refusedChange });
       await db.update(flightBookingRequests).set({ status: input.status, agentNotes: input.details ?? existing.agentNotes }).where(eq(flightBookingRequests.id, input.requestId));
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "status_changed", changedBy: admin.email, oldValue: existing.status, newValue: input.status, details: input.details ?? null });
       let notificationEmailSent = false;
@@ -680,7 +683,7 @@ export const flightBookingRouter = router({
         await sendEmail({
           to: existing.candidateEmail,
           subject: `[3M Travel] Mise à jour de votre réservation ${existing.requestRef}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${esc(existing.requestRef)}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${esc(customerStatusLabels[input.status])}</p><p style="margin:0"><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${esc(input.details).replace(/\n/g, "<br/>")}</p>` : ""}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel &amp; Services</strong></p></div>`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${esc(existing.requestRef)}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${esc(customerStatusLabels[input.status])}</p><p style="margin:0"><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${esc(input.details).replace(/\n/g, "<br/>")}</p>` : ""}${paymentHintHtml(input.status, process.env.SITE_URL || "https://www.3mtravelagency.com", existing.requestRef)}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel &amp; Services</strong></p></div>`,
         });
         notificationEmailSent = true;
       } catch (error) {
@@ -804,7 +807,23 @@ export const flightBookingRouter = router({
         newValue: "awaiting_payment",
         details: `Client a validé la réservation. Mode: ${input.paymentMethod}, ID Transaction: ${input.paymentTransactionId}`,
       });
-      return { success: true };
+      await notifyAdmins({
+        type: "payment_received",
+        title: "Paiement déclaré à vérifier",
+        message: `${existing.requestRef} — ${input.paymentMethod} — ${input.paymentTransactionId}`,
+        relatedId: existing.requestRef,
+        targetAdminType: "accompagnement",
+      });
+      let deskNotified = false;
+      try {
+        const siteUrl = (process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
+        const alert = buildPaymentDeclaredAlert({ requestRef: existing.requestRef, clientEmail: ctx.candidate.email, method: input.paymentMethod, transactionId: input.paymentTransactionId, adminUrl: `${siteUrl}/admin` });
+        await sendEmail({ to: resolveDeskRecipients(process.env).join(","), subject: alert.subject, html: alert.html });
+        deskNotified = true;
+      } catch (error) {
+        console.error("[FlightBooking] payment declaration desk alert failed", error);
+      }
+      return { success: true, deskNotified };
     }),
 
   adminValidatePayment: publicProcedure
@@ -815,6 +834,8 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const refusedDecision = refusePaymentDecision(existing.status);
+      if (refusedDecision) throw new TRPCError({ code: "BAD_REQUEST", message: refusedDecision });
       const newStatus = input.approved ? "revalidated" : "pending_review";
       await db.update(flightBookingRequests).set({
         clientValidated: input.approved,
@@ -828,7 +849,15 @@ export const flightBookingRouter = router({
         newValue: newStatus,
         details: input.approved ? "Paiement validé par l'administrateur." : "Paiement rejeté par l'administrateur.",
       });
-      return { success: true };
+      let notificationEmailSent = false;
+      try {
+        const decision = buildPaymentDecisionEmail({ requestRef: existing.requestRef, approved: input.approved, siteUrl: process.env.SITE_URL || "https://www.3mtravelagency.com", whatsappDisplay: "+237 6 98 10 48 32" });
+        await sendEmail({ to: existing.candidateEmail, subject: decision.subject, html: decision.html });
+        notificationEmailSent = true;
+      } catch (error) {
+        console.error("[FlightBooking] payment decision notification failed", error);
+      }
+      return { success: true, notificationEmailSent };
     }),
 
   updatePnrAndIssuedPdf: publicProcedure
@@ -843,6 +872,9 @@ export const flightBookingRouter = router({
       if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
+      if (existing.status === "cancelled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réservation est annulée : aucun billet ne peut être émis. Rouvrez d'abord la demande." });
+      }
       await db.update(flightBookingRequests).set({
         pnrReference: input.pnrReference,
         issuedPdfUrl: input.issuedPdfUrl || existing.issuedPdfUrl,
@@ -854,7 +886,7 @@ export const flightBookingRouter = router({
         changedBy: admin.email,
         oldValue: existing.status,
         newValue: "issued",
-        details: `PNR / référence GDS émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.pnrReference}`,
+        details: `PNR / référence GDS émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.pnrReference}${existing.pnrReference && existing.pnrReference !== input.pnrReference ? ` (remplace ${existing.pnrReference})` : ""}`,
       });
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
 
@@ -948,6 +980,9 @@ export const flightBookingRouter = router({
 
       const { url } = await storagePut(`pnr-documents/${existing.requestRef}-${Date.now()}-${input.fileName}`, buffer, "application/pdf");
 
+      if (existing.status === "cancelled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réservation est annulée : aucun billet ne peut être émis. Rouvrez d'abord la demande." });
+      }
       await db.update(flightBookingRequests).set({
         pnrReference: input.pnrReference,
         issuedPdfUrl: url,
