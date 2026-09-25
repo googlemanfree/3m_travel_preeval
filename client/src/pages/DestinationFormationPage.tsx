@@ -3,6 +3,10 @@ import { Link } from "wouter";
 import { AlertTriangle, ArrowLeft, ArrowRight, Briefcase, ExternalLink, FileCheck2, Globe2, MapPin } from "lucide-react";
 import { getDestination20 } from "@/data/destinations20";
 import { DESTINATION_OFFICIAL_SOURCES } from "@/data/destinationOfficialSources";
+import { CountryPhotoGallery } from "@/components/CountryPhotoGallery";
+import { CountryFactsPanel } from "@/components/CountryFactsPanel";
+import { getCountryPhotos } from "@/data/countryPhotos";
+import { getCountryFacts } from "@/data/countryFacts";
 
 interface DestinationFormationPageProps {
   slug: string;
@@ -33,12 +37,21 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
   }
 
   const sources = DESTINATION_OFFICIAL_SOURCES[destination.slug] ?? [];
+  const photos = getCountryPhotos(destination.slug);
+  const facts = getCountryFacts(destination.slug);
+  const heroPhoto = photos[0];
   const evalLink = `/evaluation?project=etudes&destination=${encodeURIComponent(destination.name)}`;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)] px-4 pb-16 pt-16 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
+        {heroPhoto && (
+          <>
+            <img src={heroPhoto.src} alt="" aria-hidden="true" width={heroPhoto.width} height={heroPhoto.height} decoding="async" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/95 via-[#0a3264]/90 to-[#0a3264]/85 lg:via-[#0a3264]/88 lg:to-[#0e5b9f]/70" aria-hidden="true" />
+          </>
+        )}
+        <div className="relative mx-auto max-w-4xl">
           <Link href="/destinations" className="inline-flex items-center gap-2 text-sm font-bold text-blue-100 hover:text-white">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />Toutes les destinations
           </Link>
@@ -54,7 +67,16 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
 
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-          <div className="grid gap-5 sm:grid-cols-2">
+          {photos.length > 1 && <CountryPhotoGallery photos={photos} country={destination.name} />}
+          {facts && (
+            <CountryFactsPanel
+              country={destination.name}
+              facts={facts}
+              citiesLabel="Villes principales"
+              note="Repères généraux, à titre d’orientation : les conditions d’entrée, de séjour et de travail sont fixées par les autorités du pays."
+            />
+          )}
+          <div className={`grid gap-5 sm:grid-cols-2 ${photos.length > 1 || facts ? "mt-10" : ""}`}>
             <div className="flex gap-3 rounded-xl bg-blue-50 p-4">
               <Briefcase className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" aria-hidden="true" />
               <div>

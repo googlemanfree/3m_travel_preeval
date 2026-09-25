@@ -7,11 +7,16 @@ import { CountryFactsPanel } from "../client/src/components/CountryFactsPanel";
 import { CountryPhotoGallery } from "../client/src/components/CountryPhotoGallery";
 import { countryFacts, getCountryFacts } from "../client/src/data/countryFacts";
 import { countryPhotos, getCountryPhotos } from "../client/src/data/countryPhotos";
+import { DESTINATIONS_20 } from "../client/src/data/destinations20";
 import { studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 
 const root = resolve(import.meta.dirname, "..");
 const pageSource = readFileSync(resolve(root, "client/src/pages/StudyDestinationArticle.tsx"), "utf8");
-const slugs = studyDestinationArticles.map((article) => article.slug);
+const studySlugs = studyDestinationArticles.map((article) => article.slug);
+// Le Luxembourg a sa propre page dédiée (ProcedureLuxembourg) : il n'utilise pas DestinationFormationPage.
+const destinationSlugs = DESTINATIONS_20.map((d) => d.slug).filter((slug) => slug !== "luxembourg");
+const slugs = Array.from(new Set([...studySlugs, ...destinationSlugs]));
+const destinationPageSource = readFileSync(resolve(root, "client/src/pages/DestinationFormationPage.tsx"), "utf8");
 
 /**
  * Les guides d'études par pays affichent une photo d'en-tête, une photo de galerie, leurs crédits et des repères
@@ -19,7 +24,7 @@ const slugs = studyDestinationArticles.map((article) => article.slug);
  * de la photo non conforme.
  */
 describe("guides d'études : photos, crédits et repères pour chaque pays", () => {
-  it("chaque pays du catalogue a deux photos et des repères, et rien n'existe pour un pays inconnu", () => {
+  it("chaque pays des guides d'études et des pages de procédures a deux photos et des repères, et rien n'existe pour un pays inconnu", () => {
     expect(Object.keys(countryPhotos).sort()).toEqual([...slugs].sort());
     expect(Object.keys(countryFacts).sort()).toEqual([...slugs].sort());
     expect(getCountryPhotos("pays-inconnu")).toEqual([]);
@@ -81,5 +86,21 @@ describe("guides d'études : photos, crédits et repères pour chaque pays", () 
     // Le texte du guide et les liens existants restent en place.
     expect(pageSource).toContain("article.sourceUrl");
     expect(pageSource).toContain("Évaluer mon projet d’études");
+  });
+
+  it("la page de procédure d'une destination affiche la photo d'en-tête, la galerie, les repères et garde ses sources officielles", () => {
+    expect(destinationPageSource).toContain("<CountryPhotoGallery");
+    expect(destinationPageSource).toContain("<CountryFactsPanel");
+    expect(destinationPageSource).toContain('citiesLabel="Villes principales"');
+    expect(destinationPageSource).toContain('alt="" aria-hidden="true"');
+    expect(destinationPageSource).toContain("official-sources");
+    expect(destinationPageSource).toContain("destination.etapesCles");
+  });
+
+  it("le panneau de repères accepte un intitulé de villes propre à la page de procédure", () => {
+    const html = renderToStaticMarkup(<CountryFactsPanel country="Japon" facts={getCountryFacts("japon")!} citiesLabel="Villes principales" />);
+    expect(html).toContain("Villes principales");
+    expect(html).not.toContain("Villes universitaires connues");
+    expect(html).toContain("Tokyo");
   });
 });

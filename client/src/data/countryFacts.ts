@@ -105,6 +105,92 @@ export const countryFacts: Record<string, CountryFacts> = {
     cities: ["Rabat", "Casablanca", "Marrakech", "Fès"],
     extraSources: [],
   },
+  // Pays des pages /procedures/<pays> (formation et travail qualifié) : leurs portails officiels sont dans
+  // destinationOfficialSources.ts, donc `extraSources` reste vide ici. `cities` = villes principales.
+  "pays-bas": {
+    capital: "Amsterdam (le gouvernement siège à La Haye)",
+    languages: "Néerlandais",
+    currency: "Euro (EUR)",
+    cities: ["Amsterdam", "Rotterdam", "La Haye", "Utrecht", "Eindhoven"],
+    extraSources: [],
+  },
+  portugal: {
+    capital: "Lisbonne",
+    languages: "Portugais",
+    currency: "Euro (EUR)",
+    cities: ["Lisbonne", "Porto", "Coimbra", "Braga"],
+    extraSources: [],
+  },
+  espagne: {
+    capital: "Madrid",
+    languages: "Espagnol (castillan) ; catalan, galicien et basque sont co-officiels dans leurs régions",
+    currency: "Euro (EUR)",
+    cities: ["Madrid", "Barcelone", "Valence", "Séville"],
+    extraSources: [],
+  },
+  italie: {
+    capital: "Rome",
+    languages: "Italien",
+    currency: "Euro (EUR)",
+    cities: ["Rome", "Milan", "Turin", "Bologne"],
+    extraSources: [],
+  },
+  malte: {
+    capital: "La Valette",
+    languages: "Maltais et anglais (langues officielles)",
+    currency: "Euro (EUR)",
+    cities: ["La Valette", "Sliema", "Saint-Julien"],
+    extraSources: [],
+  },
+  norvege: {
+    capital: "Oslo",
+    languages: "Norvégien",
+    currency: "Couronne norvégienne (NOK)",
+    cities: ["Oslo", "Bergen", "Trondheim", "Stavanger"],
+    extraSources: [],
+  },
+  "nouvelle-zelande": {
+    capital: "Wellington",
+    languages: "Anglais (de fait), maori et langue des signes néo-zélandaise (langues officielles)",
+    currency: "Dollar néo-zélandais (NZD)",
+    cities: ["Auckland", "Wellington", "Christchurch"],
+    extraSources: [],
+  },
+  emirats: {
+    capital: "Abou Dabi",
+    languages: "Arabe (langue officielle) ; l’anglais est très utilisé",
+    currency: "Dirham des Émirats (AED)",
+    cities: ["Dubaï", "Abou Dabi", "Charjah"],
+    extraSources: [],
+  },
+  qatar: {
+    capital: "Doha",
+    languages: "Arabe (langue officielle) ; l’anglais est très utilisé",
+    currency: "Riyal qatarien (QAR)",
+    cities: ["Doha", "Al Rayyan", "Al Wakrah", "Lusail"],
+    extraSources: [],
+  },
+  "arabie-saoudite": {
+    capital: "Riyad",
+    languages: "Arabe",
+    currency: "Riyal saoudien (SAR)",
+    cities: ["Riyad", "Djeddah", "Dammam"],
+    extraSources: [],
+  },
+  "coree-du-sud": {
+    capital: "Séoul",
+    languages: "Coréen",
+    currency: "Won sud-coréen (KRW)",
+    cities: ["Séoul", "Busan", "Incheon", "Daejeon"],
+    extraSources: [],
+  },
+  japon: {
+    capital: "Tokyo",
+    languages: "Japonais",
+    currency: "Yen (JPY)",
+    cities: ["Tokyo", "Osaka", "Nagoya", "Fukuoka"],
+    extraSources: [],
+  },
 };
 
 export function getCountryFacts(slug: string): CountryFacts | undefined {
