@@ -5,6 +5,8 @@ type CacheEntry<T> = {
   createdAt: number;
 };
 
+type InFlightEntry<T> = Promise<T>;
+
 export type FlightSearchCacheStatus = {
   entries: number;
   ttlSeconds: number;
@@ -20,6 +22,7 @@ export type FlightSearchCacheStatus = {
 
 export class FlightSearchCache<T> {
   private readonly entries = new Map<string, CacheEntry<T>>();
+  private readonly inFlight = new Map<string, InFlightEntry<T>>();
   private hits = 0;
   private misses = 0;
   private lastRequestAt: Date | null = null;
@@ -28,7 +31,7 @@ export class FlightSearchCache<T> {
   private lastError: string | null = null;
   private apiStatus: SearchApiStatus = "not_configured";
 
-  constructor(private readonly ttlMs: number) {}
+  constructor(private readonly ttlMs: number, private readonly maxEntries = 200) {}
 
   get(key: string) {
     this.lastRequestAt = new Date();
@@ -43,7 +46,26 @@ export class FlightSearchCache<T> {
   }
 
   set(key: string, data: T) {
+    if (this.entries.size >= this.maxEntries && !this.entries.has(key)) {
+      const oldestKey = this.entries.keys().next().value;
+      if (oldestKey) this.entries.delete(oldestKey);
+    }
     this.entries.set(key, { data, createdAt: Date.now() });
+  }
+
+  /**
+   * Partage une requête fournisseur déjà en cours pour éviter les appels
+   * redondants lorsque plusieurs visiteurs lancent la même recherche au même moment.
+   */
+  loadOnce(key: string, loader: () => Promise<T>): Promise<T> {
+    const existing = this.inFlight.get(key);
+    if (existing) return existing;
+
+    const request = loader().finally(() => {
+      this.inFlight.delete(key);
+    });
+    this.inFlight.set(key, request);
+    return request;
   }
 
   recordLiveResult() {
@@ -65,6 +87,7 @@ export class FlightSearchCache<T> {
 
   clear() {
     this.entries.clear();
+    this.inFlight.clear();
   }
 
   getStatus(): FlightSearchCacheStatus {

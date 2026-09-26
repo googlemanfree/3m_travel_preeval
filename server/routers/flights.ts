@@ -323,8 +323,11 @@ export const flightsRouter = router({
       })
     )
     .query(async ({ input }) => {
-      // La clé de cache couvre TOUS les paramètres qui changent le prix (enfants et bébés compris).
-      const cacheKey = `${input.tripType}-${input.origin}-${input.destination}-${input.departureDate}-${input.returnDate || ""}-${input.adults}-${input.children}-${input.infants}-${input.cabinClass}-${input.alliance || "ALL"}`;
+      // YAO et NSI désignent le même aéroport : une seule entrée de cache doit couvrir les deux codes.
+      const normalizedOrigin = input.origin === "YAO" ? "NSI" : input.origin;
+      const normalizedDestination = input.destination === "YAO" ? "NSI" : input.destination;
+      // La clé couvre TOUS les paramètres qui changent le prix (enfants et bébés compris).
+      const cacheKey = `${input.tripType}-${normalizedOrigin}-${normalizedDestination}-${input.departureDate}-${input.returnDate || ""}-${input.adults}-${input.children}-${input.infants}-${input.cabinClass}-${input.alliance || "ALL"}`;
       const cached = getCachedSearch(cacheKey);
       if (cached) {
         return cached;
@@ -339,10 +342,8 @@ export const flightsRouter = router({
       }
 
       try {
-        // YAO a été historiquement utilisé dans l'interface, mais NSI est le code IATA
-        // reconnu par Google Flights pour Yaoundé-Nsimalen.
-        const searchOrigin = input.origin === "YAO" ? "NSI" : input.origin;
-        const searchDestination = input.destination === "YAO" ? "NSI" : input.destination;
+        // Une seule requête fournisseur est partagée entre les visiteurs qui lancent exactement
+        // la même recherche pendant qu’un premier appel est encore en cours.
         const travelClassMap: Record<string, string> = {
           ECONOMY: "economy",
           PREMIUM_ECONOMY: "premium_economy",
@@ -350,30 +351,32 @@ export const flightsRouter = router({
           FIRST: "first_class",
         };
 
-        const params = new URLSearchParams({
-          engine: "google_flights",
-          api_key: apiKey,
-          departure_id: searchOrigin,
-          arrival_id: searchDestination,
-          outbound_date: input.departureDate,
-          flight_type: input.tripType === "ROUND_TRIP" ? "round_trip" : "one_way",
-          travel_class: travelClassMap[input.cabinClass] ?? "economy",
-          adults: String(input.adults),
-          children: String(input.children),
-          currency: "EUR",
-        });
-        if (input.tripType === "ROUND_TRIP" && input.returnDate) {
-          params.set("return_date", input.returnDate);
-        }
+        const json = (await flightSearchCache.loadOnce(cacheKey, async () => {
+          const params = new URLSearchParams({
+            engine: "google_flights",
+            api_key: apiKey,
+            departure_id: normalizedOrigin,
+            arrival_id: normalizedDestination,
+            outbound_date: input.departureDate,
+            flight_type: input.tripType === "ROUND_TRIP" ? "round_trip" : "one_way",
+            travel_class: travelClassMap[input.cabinClass] ?? "economy",
+            adults: String(input.adults),
+            children: String(input.children),
+            currency: "EUR",
+          });
+          if (input.tripType === "ROUND_TRIP" && input.returnDate) {
+            params.set("return_date", input.returnDate);
+          }
 
-        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
-        if (!res.ok) {
-          const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
-          const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
-          flightSearchCache.recordUnavailable(res.status === 429 ? "quota_limited" : "error", message);
-          throw new Error(message);
-        }
-        const json = await res.json();
+          const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+          if (!res.ok) {
+            const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
+            const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
+            flightSearchCache.recordUnavailable(res.status === 429 ? "quota_limited" : "error", message);
+            throw new Error(message);
+          }
+          return res.json();
+        })) as { best_flights?: unknown[]; other_flights?: unknown[] };
 
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
         const infantNotice = input.infants > 0 ? INFANT_PRICE_NOTICE : null;
