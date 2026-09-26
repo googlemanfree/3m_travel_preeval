@@ -20,7 +20,7 @@ import {
 } from "./services/flightOffers";
 import { flightsRouter, resetFlightOffersStore } from "./routers/flights";
 import { FlightBestOffers, formatOfferPrice } from "../client/src/components/FlightDiscoverySections";
-import { ALL_FLIGHT_ROUTES, parseLastFlightSearch } from "../client/src/data/flightDiscovery";
+import { ALL_FLIGHT_ROUTES, parseLastFlightSearch, parseRecentFlightSearches } from "../client/src/data/flightDiscovery";
 
 afterEach(cleanup);
 
@@ -364,11 +364,28 @@ describe("dernière recherche mémorisée sur l'appareil", () => {
     expect(Object.keys(result!).sort()).toEqual(["adults", "cabinClass", "children", "departureDate", "destination", "infants", "origin", "returnDate", "tripType"]);
   });
 
-  it("la page propose de reprendre la recherche, la mémorise sans donnée personnelle et tolère un stockage indisponible", () => {
+  it("relit plusieurs recherches récentes, supprime les doublons et limite la liste à cinq éléments", () => {
+    const entries = [
+      { ...valid, savedAt: 5 },
+      { ...valid, savedAt: 4 },
+      { ...valid, destination: "YUL", savedAt: 3 },
+      { ...valid, destination: "YYZ", savedAt: 2 },
+      { ...valid, destination: "BRU", savedAt: 1 },
+      { ...valid, destination: "LHR", savedAt: 0 },
+      { ...valid, destination: "LHR", savedAt: 6 },
+    ];
+    const result = parseRecentFlightSearches(JSON.stringify(entries), today);
+    expect(result).toHaveLength(5);
+    expect(result[0]).toMatchObject({ destination: "CDG", savedAt: 5 });
+    expect(result.map((item) => item.destination)).toEqual(["CDG", "YUL", "YYZ", "BRU", "LHR"]);
+  });
+
+  it("la page propose de reprendre une recherche récente, la mémorise sans donnée personnelle et tolère un stockage indisponible", () => {
     const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
-    expect(page).toContain('data-testid="resume-last-search"');
-    expect(page).toContain("parseLastFlightSearch(window.localStorage.getItem(LAST_FLIGHT_SEARCH_KEY), today())");
-    expect(page).toContain("window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(saved));");
+    expect(page).toContain('data-testid="resume-recent-search"');
+    expect(page).toContain("parseRecentFlightSearches(window.localStorage.getItem(RECENT_FLIGHT_SEARCHES_KEY), today())");
+    expect(page).toContain("window.localStorage.setItem(RECENT_FLIGHT_SEARCHES_KEY, JSON.stringify(next));");
+    expect(page).toContain("window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(search));");
     expect(page).toContain("Stockage indisponible");
   });
 });
