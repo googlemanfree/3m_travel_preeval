@@ -6,7 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
 import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
-import { validateCandidateFile } from "@/lib/candidateUpload";
+import { categoryForRequirement, validateCandidateFile } from "@/lib/candidateUpload";
+
+/** Valeur du choix « Autre document » dans la liste des pièces du pays et du visa. */
+export const OTHER_REQUIREMENT = "__other";
+export type RequirementOption = { label: string; group: string };
 
 interface DocumentFile {
   id: string;
@@ -17,6 +21,8 @@ interface DocumentFile {
   progress: number;
   error?: string;
   category?: string;
+  /** Pièce demandée choisie (intitulé), « __other » ou vide tant que le candidat n'a pas choisi. */
+  requirement?: string;
   file?: File;
 }
 
@@ -29,9 +35,15 @@ interface DocumentUploaderProps {
   clarificationDocumentLabel?: string;
   lockedCategory?: string;
   singleFile?: boolean;
+  /**
+   * Pièces attendues pour le pays et le type de visa du candidat (et demandes de son conseiller). Quand elles sont fournies,
+   * le candidat choisit la pièce qu'il envoie dans cette liste au lieu d'une catégorie générique.
+   */
+  requirementOptions?: RequirementOption[];
 }
 
 export function DocumentUploader({
+  requirementOptions,
   dossierNumber,
   onUploadSuccess,
   maxFileSize = 10,
@@ -50,6 +62,17 @@ export function DocumentUploader({
   const [lastUploaded, setLastUploaded] = useState<{ name: string; type: string; size: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const hasRequirements = !clarificationRequestId && (requirementOptions?.length ?? 0) > 0;
+  const [selectedRequirement, setSelectedRequirement] = useState("");
+  const categoryFor = (requirement: string) => (requirement && requirement !== OTHER_REQUIREMENT ? categoryForRequirement(requirement) : "other");
+  const requirementGroups = Array.from((requirementOptions ?? []).reduce((groups, option) => groups.set(option.group, [...(groups.get(option.group) ?? []), option.label]), new Map<string, string[]>()).entries());
+  const requirementLabelOf = (requirement?: string) => (requirement === OTHER_REQUIREMENT ? "Autre document" : requirement || "Pièce à choisir");
+  // Changer la pièce choisie s'applique aux fichiers pas encore envoyés qui n'ont pas de choix individuel.
+  const chooseRequirement = (requirement: string) => {
+    setSelectedRequirement(requirement);
+    setFiles((previous) => previous.map((file) => file.status === "pending" && !file.requirement ? { ...file, requirement, category: categoryFor(requirement) } : file));
+  };
+  const setFileRequirement = (id: string, requirement: string) => setFiles((previous) => previous.map((file) => file.id === id ? { ...file, requirement, category: categoryFor(requirement) } : file));
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -94,7 +117,8 @@ export function DocumentUploader({
           status: validation.valid ? ("pending" as const) : ("error" as const),
           progress: 0,
           error: validation.error,
-          category: selectedCategory,
+          category: hasRequirements ? categoryFor(selectedRequirement) : selectedCategory,
+          requirement: hasRequirements ? selectedRequirement : undefined,
           file,
         };
       });
@@ -160,6 +184,7 @@ export function DocumentUploader({
       const formData = new FormData();
       formData.append("file", fileObj);
       formData.append("fileType", file.category || "other");
+      if (file.requirement && file.requirement !== OTHER_REQUIREMENT) formData.append("requirementLabel", file.requirement.slice(0, 200));
       if (clarificationRequestId) formData.append("clarificationRequestId", String(clarificationRequestId));
       const response = await fetch("/api/candidate/upload", {
         method: "POST",
@@ -198,6 +223,7 @@ export function DocumentUploader({
 
   const selectedCategoryObj = getCategoryById(selectedCategory);
   const pendingCount = files.filter((f) => f.status === "pending").length;
+  const missingChoiceCount = hasRequirements ? files.filter((f) => f.status === "pending" && !f.requirement).length : 0;
   const successCount = files.filter((f) => f.status === "success").length;
   const errorCount = files.filter((f) => f.status === "error").length;
 
@@ -215,7 +241,22 @@ export function DocumentUploader({
       </div>
 
       {/* Category Selector */}
-      {!clarificationRequestId && <div className="mb-6">
+      {hasRequirements && (
+        <div className="mb-6" data-testid="requirement-select-block">
+          <label htmlFor="document-requirement-select" className="mb-2 block text-sm font-semibold text-gray-900">Quelle pièce envoyez-vous ?</label>
+          <select id="document-requirement-select" value={selectedRequirement} onChange={(event) => chooseRequirement(event.target.value)} className="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none">
+            <option value="">Choisissez la pièce demandée…</option>
+            {requirementGroups.map(([group, labels]) => (
+              <optgroup key={group} label={group}>
+                {labels.map((label) => <option key={`${group}-${label}`} value={label}>{label}</option>)}
+              </optgroup>
+            ))}
+            <option value={OTHER_REQUIREMENT}>Autre document (non listé)</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-600">La liste correspond à votre destination et à votre type de visa. Le document sera rattaché à la pièce choisie dans votre checklist.</p>
+        </div>
+      )}
+      {!clarificationRequestId && !hasRequirements && <div className="mb-6">
           <label id="document-category-label" className="block text-sm font-semibold text-gray-900 mb-2">
           Catégorie du document
         </label>
@@ -375,10 +416,24 @@ export function DocumentUploader({
                         {file.name}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${fileCategoryObj?.color}`}>
-                          <span>{fileCategoryObj?.icon}</span>
-                          {fileCategoryObj?.label}
-                        </span>
+                        {hasRequirements ? (
+                          file.status === "pending" ? (
+                            <select value={file.requirement ?? ""} onChange={(event) => setFileRequirement(file.id, event.target.value)} aria-label={`Pièce demandée pour ${file.name}`} className={`h-9 max-w-full rounded border px-2 text-xs ${file.requirement ? "border-gray-300 bg-white text-gray-900" : "border-amber-400 bg-amber-50 text-amber-900"}`}>
+                              <option value="">Choisir la pièce…</option>
+                              {requirementGroups.map(([group, labels]) => (
+                                <optgroup key={group} label={group}>{labels.map((label) => <option key={`${group}-${label}`} value={label}>{label}</option>)}</optgroup>
+                              ))}
+                              <option value={OTHER_REQUIREMENT}>Autre document (non listé)</option>
+                            </select>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{requirementLabelOf(file.requirement)}</span>
+                          )
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${fileCategoryObj?.color}`}>
+                            <span>{fileCategoryObj?.icon}</span>
+                            {fileCategoryObj?.label}
+                          </span>
+                        )}
                         <p className="text-xs text-gray-500">
                           {formatFileSize(file.size)}
                         </p>
@@ -419,7 +474,7 @@ export function DocumentUploader({
 
                     {file.status === "pending" && (
                       <div className="flex gap-2 flex-shrink-0">
-                        <motion.button
+                        {!hasRequirements && <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleEditCategory(file.id)}
@@ -428,7 +483,7 @@ export function DocumentUploader({
                           aria-label={`Modifier la catégorie de ${file.name}`}
                         >
                           <Edit2 className="w-4 h-4" />
-                        </motion.button>
+                        </motion.button>}
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
@@ -446,9 +501,11 @@ export function DocumentUploader({
               })}
             </div>
 
+            {pendingCount > 0 && missingChoiceCount > 0 && <p className="mt-3 text-sm font-semibold text-amber-800" role="status">Choisissez la pièce concernée pour {missingChoiceCount} fichier{missingChoiceCount > 1 ? "s" : ""} avant l’envoi.</p>}
             {pendingCount > 0 && (
               <Button
                 onClick={handleUploadAll}
+                disabled={missingChoiceCount > 0}
                 className="h-12 w-full mt-4 bg-blue-600 hover:bg-blue-700"
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -467,8 +524,7 @@ export function DocumentUploader({
         className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
       >
         <p className="text-sm text-blue-900">
-          <strong>💡 Conseil :</strong> Sélectionnez la catégorie appropriée pour chaque document
-          avant de téléverser. Cela nous aidera à traiter votre dossier plus rapidement.
+          <strong>💡 Conseil :</strong> {hasRequirements ? "Choisissez la pièce demandée pour chaque document : il sera rattaché à la bonne ligne de votre checklist et l’agence saura tout de suite ce que vous envoyez." : "Sélectionnez la catégorie appropriée pour chaque document avant de téléverser. Cela nous aidera à traiter votre dossier plus rapidement."}
         </p>
       </motion.div>
 

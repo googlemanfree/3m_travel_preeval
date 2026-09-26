@@ -54,7 +54,7 @@ export function validateCandidateFile(file: { name: string; size: number; type?:
 
 export type UploadResult = { ok: boolean; message?: string };
 
-export async function uploadCandidateDocument(input: { file: File; category: string; clarificationRequestId?: number }): Promise<UploadResult> {
+export async function uploadCandidateDocument(input: { file: File; category: string; /** Intitulé de la pièce demandée : le serveur le garde dans le nom enregistré, pour la retrouver dans la checklist. */ requirementLabel?: string; clarificationRequestId?: number }): Promise<UploadResult> {
   const check = validateCandidateFile(input.file);
   if (!check.ok) return check;
   const token = getCandidateToken();
@@ -63,6 +63,7 @@ export async function uploadCandidateDocument(input: { file: File; category: str
     const formData = new FormData();
     formData.append("file", input.file);
     formData.append("fileType", input.category || "other");
+    if (input.requirementLabel) formData.append("requirementLabel", input.requirementLabel.slice(0, 200));
     if (input.clarificationRequestId) formData.append("clarificationRequestId", String(input.clarificationRequestId));
     const response = await fetch("/api/candidate/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData, credentials: "include" });
     const payload = (await response.json().catch(() => ({}))) as { error?: string };

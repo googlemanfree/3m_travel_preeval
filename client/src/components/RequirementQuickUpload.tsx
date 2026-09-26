@@ -26,7 +26,7 @@ export default function RequirementQuickUpload({ label, replace = false, onUploa
     setLastFile(file);
     setState("uploading");
     setMessage("");
-    const result = await uploadCandidateDocument({ file, category: categoryForRequirement(label) });
+    const result = await uploadCandidateDocument({ file, category: categoryForRequirement(label), requirementLabel: label });
     if (result.ok) {
       setState("done");
       setMessage(`${file.name} envoyé. L’agence le vérifie.`);

@@ -33,7 +33,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel } from "@shared/dossierProgress";
-import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
+import DossierDocumentChecklist, { buildRequirementOptions } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
@@ -907,6 +907,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Téléverser de nouveaux documents</h3>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
+                  requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
                   onUploadSuccess={() => {
                     void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
                     void refetch();

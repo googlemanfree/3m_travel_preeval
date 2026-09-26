@@ -266,4 +266,22 @@ export default function DossierDocumentChecklist({
   );
 }
 
+/**
+ * Liste des pièces que le candidat peut choisir à l'envoi : celles de son pays et de son type de visa (les mêmes que la
+ * checklist), puis les demandes de son conseiller (hors pièces dispensées), sans doublon.
+ */
+export function buildRequirementOptions(destination?: string | null, projectType?: string | null, customRequirements: Array<Pick<CustomRequirement, "documentType" | "status">> = []): Array<{ label: string; group: string }> {
+  const seen = new Set<string>();
+  const options: Array<{ label: string; group: string }> = [];
+  const add = (label: string, group: string) => {
+    const key = normalize(label);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    options.push({ label: label.trim(), group });
+  };
+  for (const requirement of getRequirements(destination, projectType)) add(requirement.label, requirement.category);
+  for (const requirement of customRequirements) if (requirement.status !== "waived") add(requirement.documentType, "Demande de votre conseiller");
+  return options;
+}
+
 export { getRequirements };

@@ -123,6 +123,21 @@ function sanitizeFileName(fileName: string): string {
   return safeName;
 }
 
+/** Intitulé de la pièce demandée (ex. « Acte de naissance ») rendu sûr pour un nom de fichier : lettres, chiffres et « _ ». */
+export function sanitizeRequirementLabel(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+/, "").slice(0, 80).replace(/_+$/, "");
+}
+
+/**
+ * Nom enregistré : « Acte_de_naissance--scan.pdf ». Le nom garde l'intitulé de la pièce demandée : c'est ce qui rattache la
+ * pièce à la bonne ligne de la checklist du candidat et la rend lisible dans l'administration (le type enregistré est plus grossier).
+ */
+export function buildStoredDocumentName(requirementLabel: unknown, safeName: string): string {
+  const label = sanitizeRequirementLabel(requirementLabel);
+  return label ? `${label}--${safeName}` : safeName;
+}
+
 function isExpectedFileContent(file: Express.Multer.File): boolean {
   const bytes = file.buffer;
   const startsWith = (...signature: number[]) => signature.every((value, index) => bytes[index] === value);
@@ -293,13 +308,14 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
         )).limit(1))[0]
         : null;
       assertClarificationUploadEligibility(clarificationRequestId, clarification);
+      const storedName = buildStoredDocumentName(req.body.requirementLabel, safeName);
       const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
       const candidateFileType = inferCandidateFileType(documentType, safeName);
       const candidateFileResult = await db.insert(candidateFiles).values({
         candidateId,
         fileType: candidateFileType,
-        fileName: safeName,
+        fileName: storedName,
         fileUrl: url,
         fileKey: key,
         fileSizeBytes: file.size,
@@ -329,7 +345,7 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
         const insertResult = await db.insert(agencyDossierDocuments).values({
           dossierId: agencyDossier.id,
           documentType,
-          documentName: safeName,
+          documentName: storedName,
           documentUrl: url,
           fileSize: file.size,
           source: "candidate_upload",
@@ -342,7 +358,7 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
           action: "document_uploaded",
           changedBy: candidate.email,
           oldValue: null,
-          newValue: JSON.stringify({ documentId, documentType, documentName: safeName }),
+          newValue: JSON.stringify({ documentId, documentType, documentName: storedName }),
           details: "Document téléversé par le candidat depuis son espace",
         });
         dossierNumber = `DOS-${agencyDossier.id}`;
@@ -350,13 +366,13 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       await notifyDocumentSubmission({
         candidateEmail: candidate.email,
         documentType,
-        documentName: safeName,
+        documentName: storedName,
         receiptNumber: `DOC-${candidateFileId || candidateId}`,
         dossierNumber,
       }).catch((notificationError) => {
         console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
       });
-      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier), clarification: clarification ? { id: clarification.id, documentLabel: clarification.documentLabel } : null });
+      res.json({ fileUrl: url, fileKey: key, fileName: storedName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier), clarification: clarification ? { id: clarification.id, documentLabel: clarification.documentLabel } : null });
     } catch (error) {
       console.error("[CandidateUpload] Error:", error);
       uploadErrorResponse(res, error);
