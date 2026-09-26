@@ -147,6 +147,17 @@ export function deriveChecklistStates(destination: string | null | undefined, pr
   return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
 }
 
+/** Résumé de la checklist pour « Votre prochaine étape » : combien de pièces manquent ou sont à remplacer, et laquelle en premier. */
+export function summarizeChecklist(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
+  const states = [
+    ...deriveChecklistStates(destination, projectType, documents),
+    ...customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType }, state: customRequirementState(requirement, documents) })),
+  ];
+  const missing = states.filter(({ state }) => state.kind === "missing");
+  const replace = states.filter(({ state }) => state.kind === "replace");
+  return { total: states.length, missing: missing.length, replace: replace.length, firstMissingLabel: missing[0]?.requirement.label ?? null, firstReplaceLabel: replace[0]?.requirement.label ?? null };
+}
+
 export function calculateChecklistProgress(states: Array<{ state: { kind: string } }>) {
   const total = states.length;
   const completed = states.filter(({ state }) => state.kind === "received" || state.kind === "verified").length;

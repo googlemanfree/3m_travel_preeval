@@ -33,7 +33,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel } from "@shared/dossierProgress";
-import DossierDocumentChecklist, { buildRequirementOptions } from "@/components/DossierDocumentChecklist";
+import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
@@ -391,6 +391,7 @@ export default function EvaluationSpace() {
     cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
     agreementSignatureRequired: agreementAfterPaymentRequired,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
+    checklist: summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements),
   });
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();

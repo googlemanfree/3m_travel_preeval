@@ -28,6 +28,11 @@ export type NextStepInput = {
   agreementSignatureRequired: boolean;
   /** Pièces des dossiers du candidat (statuts du back-office). */
   requirements?: unknown;
+  /**
+   * État de la checklist du pays et du type de visa du candidat. Sans lui, un candidat sans demande individuelle de son conseiller
+   * lisait « aucune action attendue » alors que sa checklist était vide.
+   */
+  checklist?: { total: number; missing: number; replace: number; firstMissingLabel?: string | null; firstReplaceLabel?: string | null };
 };
 
 export const EVALUATION_ANCHOR_ID = "evaluation-status";
@@ -57,7 +62,16 @@ export function computeNextStep(input: NextStepInput): NextStep {
   if (rejected > 0) {
     return { id: "documents-rejected", tone: "action", eyebrow: "Une pièce doit être corrigée", title: `Corrigez ${rejected} ${plural(rejected, "pièce refusée", "pièces refusées")}`, description: "Le commentaire de l’équipe explique ce qui manque. Déposez une nouvelle version depuis votre checklist.", actionLabel: "Ouvrir mes documents", action: { kind: "section", section: "documents" } };
   }
+  // Pièces à corriger dans la checklist du pays et du visa (rejetées par l'agence).
+  const checklist = input.checklist;
+  if (checklist && checklist.replace > 0) {
+    return { id: "checklist-replace", tone: "action", eyebrow: "Une pièce doit être corrigée", title: `Corrigez ${checklist.replace} ${plural(checklist.replace, "pièce refusée", "pièces refusées")}`, description: `${checklist.firstReplaceLabel ? `Commencez par : ${checklist.firstReplaceLabel}. ` : ""}Envoyez une nouvelle version en un geste depuis votre checklist.`, actionLabel: "Envoyer la nouvelle version", action: { kind: "section", section: "documents" } };
+  }
   const pending = requirements.filter((item) => item.status === "pending").length;
+  if (checklist && pending === 0 && checklist.missing > 0) {
+    const received = Math.max(0, checklist.total - checklist.missing);
+    return { id: "checklist-missing", tone: "action", eyebrow: "Vos documents", title: `Envoyez ${checklist.missing} ${plural(checklist.missing, "pièce", "pièces")} de votre checklist`, description: `${received} sur ${checklist.total} déjà reçues.${checklist.firstMissingLabel ? ` Prochaine pièce : ${checklist.firstMissingLabel}.` : ""} Chaque pièce s’envoie en un geste, photo du téléphone comprise.`, actionLabel: "Envoyer mes documents", action: { kind: "section", section: "documents" } };
+  }
   if (pending > 0) {
     return { id: "documents-pending", tone: "action", eyebrow: "Documents demandés", title: `Déposez ${pending} ${plural(pending, "pièce", "pièces")}`, description: "Chaque pièce déposée est vérifiée par un conseiller ; vous êtes averti dès qu’elle est validée ou à corriger.", actionLabel: "Ouvrir mes documents", action: { kind: "section", section: "documents" } };
   }
