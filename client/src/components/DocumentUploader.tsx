@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown, Edit2, Trash2 } from "lucide-react";
+import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown, Edit2, Trash2, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
 import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
+import { validateCandidateFile } from "@/lib/candidateUpload";
 
 interface DocumentFile {
   id: string;
@@ -48,6 +49,7 @@ export function DocumentUploader({
   const [showEditModal, setShowEditModal] = useState(false);
   const [lastUploaded, setLastUploaded] = useState<{ name: string; type: string; size: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -58,6 +60,9 @@ export function DocumentUploader({
   };
 
   const validateFile = (file: File): { valid: boolean; error?: string } => {
+    // Fichier vide et photos HEIC : messages dédiés (le reste est contrôlé ci-dessous avec les formats de ce téléverseur).
+    const shared = validateCandidateFile({ name: file.name, size: file.size || 1, type: file.type }, maxFileSize);
+    if (!shared.ok && (file.size <= 0 || /\.hei[cf]$/i.test(file.name) || /hei[cf]/i.test(file.type))) return { valid: false, error: shared.message };
     if (file.size > maxFileSize * 1024 * 1024) {
       return {
         valid: false,
@@ -302,14 +307,20 @@ export function DocumentUploader({
               ou cliquez pour sélectionner des fichiers
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-2 h-11"
-          >
-            Parcourir les fichiers
-          </Button>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-11"
+            >
+              Parcourir les fichiers
+            </Button>
+            <Button type="button" variant="outline" onClick={() => cameraInputRef.current?.click()} className="h-11 gap-1.5" aria-label="Photographier un document avec l’appareil photo">
+              <Camera className="h-4 w-4" aria-hidden="true" />Photographier
+            </Button>
+          </div>
+          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" data-testid="uploader-camera" />
         </div>
 
         <p className="text-xs text-gray-500 mt-4">
