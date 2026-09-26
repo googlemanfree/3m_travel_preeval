@@ -313,3 +313,27 @@ describe("page de vols", () => {
     expect(page.indexOf("<FlightBestOffers")).toBeLessThan(page.indexOf("<FlightPopularRoutes"));
   });
 });
+
+describe("page de vols unique : reprises de l'ancienne page Billets", () => {
+  const source = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
+
+  it("aucun résultat ou moteur en panne : un conseiller peut chercher (WhatsApp prérempli avec l'itinéraire)", () => {
+    expect(source).toContain('data-testid="search-whatsapp-no_results"');
+    expect(source).toContain('data-testid="search-whatsapp-search_error"');
+    expect(source).toContain("Bonjour 3M Travel, je souhaite une recherche personnalisée de vol.");
+    expect(source).toContain("digitalWhatsAppUrl(searchWhatsAppMessage)");
+  });
+
+  it("mesure d'audience : recherche, résultat, retour choisi, offre, demande de réservation, WhatsApp", () => {
+    for (const event of ["flight_search_started", "flight_search_success", "flight_search_no_results", "return_flight_selected", "flight_offer_selected", "flight_offer_advisor_requested", "booking_request_started", "whatsapp_clicked"]) {
+      expect(source, event).toContain(`trackEvent("${event}"`);
+    }
+    // Aucune donnée personnelle dans les paramètres d'événements.
+    expect(source).not.toMatch(/trackEvent\([^)]*(email|phone|passport|fullName)/i);
+  });
+
+  it("la FAQ existante est réutilisée (pas de seconde FAQ recopiée)", () => {
+    expect(source).toContain("<FlightBookingFAQ />");
+    expect(source).not.toContain("const FAQ_ITEMS");
+  });
+});

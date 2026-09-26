@@ -20,6 +20,14 @@ import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
 import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
+import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
+import { digitalWhatsAppUrl } from "@/lib/companyContacts";
+
+/** Mesure d'audience (Google Analytics s'il est chargé) : jamais de donnée personnelle dans les paramètres. */
+function trackEvent(eventName: string, params?: Record<string, unknown>) {
+  const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof gtag === "function") gtag("event", eventName, params);
+}
 import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
 
 /** « Yaoundé (NSI) » pour les aéroports des parcours fréquents ; le code seul pour les autres. */
@@ -358,6 +366,7 @@ function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, 
   });
 
   const handleOpenCheckout = () => {
+    trackEvent("booking_request_started", { flightId: flight.id });
     try {
       sessionStorage.setItem("3m-selected-flight", JSON.stringify({
         flight,
@@ -634,6 +643,7 @@ export default function Flights() {
   );
 
   function continueToCheckout(outbound: Flight, returnFlight: Flight | null) {
+    if (returnFlight) trackEvent("return_flight_selected", { flightId: returnFlight.id });
     try {
       sessionStorage.setItem("3m-selected-flight", JSON.stringify({
         flight: outbound,
@@ -650,6 +660,13 @@ export default function Flights() {
   }
 
   const isSearchBusy = isFetching || isSearchSubmitting;
+
+  useEffect(() => {
+    if (!searchEnabled || isFetching || error || !data) return;
+    if (data.outbound.length > 0) trackEvent("flight_search_success", { count: data.outbound.length, origin, destination });
+    else trackEvent("flight_search_no_results", { origin, destination });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, isFetching]);
 
   useEffect(() => {
     if (!isSearchSubmitting || isFetching) return;
@@ -729,6 +746,15 @@ export default function Flights() {
     setReturnDate(value);
   }
 
+  // Recherche personnalisée par un conseiller (aucun vol trouvé, moteur indisponible ou simple préférence).
+  const searchWhatsAppMessage = [
+    "Bonjour 3M Travel, je souhaite une recherche personnalisée de vol.",
+    `Itinéraire : ${airportLabel(origin)} → ${airportLabel(destination)}`,
+    `Départ : ${departureDate}${tripType === "ROUND_TRIP" ? ` ; retour : ${returnDate}` : " (aller simple)"}`,
+    `Passagers : ${passengers.adults} adulte(s)${passengers.children > 0 ? `, ${passengers.children} enfant(s)` : ""}${passengers.infants > 0 ? `, ${passengers.infants} bébé(s)` : ""}`,
+    `Classe : ${CABIN_LABELS[passengers.cabinClass] || passengers.cabinClass}`,
+  ].join("\n");
+
   function handleSearch() {
     if (!isValidIsoDate(departureDate) || departureDate < today()) {
       setDepartureDate(minDate(7));
@@ -741,6 +767,7 @@ export default function Flights() {
     searchStartedAtRef.current = Date.now();
     setIsSearchSubmitting(true);
     setSearchEnabled(true);
+    trackEvent("flight_search_started", { origin, destination, tripType });
   }
 
   // Derived filtered/sorted results
@@ -791,11 +818,13 @@ export default function Flights() {
 
   // Devis ou suivi de tarif : le formulaire d'accompagnement s'ouvre déjà rempli avec le parcours, les dates et le relevé.
   function askAdvisor(offer: BestOffer, intent: QuoteIntent) {
+    trackEvent("flight_offer_advisor_requested", { route: offer.routeId, intent });
     setQuotePrefill(prefillFromOffer(offer, intent, quotePrefillNonce.current++));
   }
 
   // Une offre lance la recherche avec exactement les dates relevées : le prix affiché en résultat est celui de la recherche.
   function pickOffer(offer: BestOffer) {
+    trackEvent("flight_offer_selected", { route: offer.routeId });
     setTripType(offer.tripType);
     setOrigin(offer.from.iata);
     setDestination(offer.to.iata);
@@ -1017,7 +1046,7 @@ export default function Flights() {
         </motion.div>
       </div>
 
-      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightClientReviews reviews={reviewsQuery.data ?? []} /></div>
+      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightClientReviews reviews={reviewsQuery.data ?? []} /><FlightBookingFAQ /></div>
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
@@ -1139,7 +1168,7 @@ export default function Flights() {
               {/* Flight cards */}
               <div className="space-y-4">
                 {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={setPendingOutbound} />
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
                 ))}
                 {filtered.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -1171,7 +1200,10 @@ export default function Flights() {
             <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
             <h3 className="text-lg font-black text-rose-800 mb-2">La recherche n’a pas abouti</h3>
             <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
-            <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
+              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
+            </div>
           </motion.div>
         )}
 
@@ -1180,6 +1212,9 @@ export default function Flights() {
             <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
             <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
+            <div className="mt-5 flex justify-center">
+              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
+            </div>
           </motion.div>
         )}
       </div>

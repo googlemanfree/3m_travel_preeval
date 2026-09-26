@@ -31,7 +31,8 @@ describe("recherche du vrai vol retour (aller-retour Google Flights via SearchAP
     expect(source).toContain("function ReturnFlightModal");
     expect(source).toContain("pendingOutbound");
     // Un aller-retour passe par le choix du retour avant la réservation ; l'aller simple va directement à la réservation.
-    expect(source).toContain('roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={setPendingOutbound}');
+    expect(source).toContain('roundTrip={tripType === "ROUND_TRIP"}');
+    expect(source).toContain("setPendingOutbound(flight);");
     expect(source).toContain("onSelect={(option) => continueToCheckout(pendingOutbound, option)}");
   });
 
