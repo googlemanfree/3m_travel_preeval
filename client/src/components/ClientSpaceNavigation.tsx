@@ -111,7 +111,10 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
   });
 
   const dossierPayload = dossierQuery.data;
-  const dossierNumber = dossierPayload?.candidate?.dossierNumber
+  // Référence lue par le candidat : « COMPTE-… » avant l'activation, numéro de dossier « 3M-… » après.
+  const referenceInfo = (dossierPayload?.candidate as any)?.reference as { reference: string; activated: boolean } | undefined;
+  const dossierNumber = referenceInfo?.reference
+    ?? dossierPayload?.candidate?.dossierNumber
     ?? dossierPayload?.activeDossier?.dossierNumber
     ?? dossierPayload?.applications?.[0]?.dossierNumber
     ?? null;
@@ -151,7 +154,7 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
             <h2 id="client-space-navigation-title" className="mt-1 text-xl font-black text-slate-900">Bonjour {candidate?.fullName || "Candidat"}</h2>
             <p className="mt-1 text-sm text-slate-600">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> {referenceInfo && !referenceInfo.activated ? "Compte :" : "Dossier actif :"}</span>
               {dossierNumber ? (
                 legacyEvaluationNumber ? (
                   <Tooltip>

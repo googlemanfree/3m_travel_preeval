@@ -408,9 +408,11 @@ export async function sendDossierConfirmationEmail(
   fullName: string,
   dossierNumber: string,
   destination: string,
-  amount: number
+  amount: number,
+  /** Référence de compte remplacée par ce numéro de dossier actif (« COMPTE-00012 »), pour que le candidat fasse le lien. */
+  previousAccountReference?: string | null,
 ): Promise<boolean> {
-  const dashboardUrl = `${SITE_URL}/dashboard`;
+  const dashboardUrl = `${SITE_URL}/mon-espace`;
   const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
   
   let avatarHtml = "";
@@ -443,21 +445,22 @@ export async function sendDossierConfirmationEmail(
               <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${escapeEmailHtml(dossierNumber)}</div>
               <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">Conservez ce numéro précieusement</div>
             </div>
+            ${previousAccountReference ? `<p style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 8px; font-size: 14px; color: #1e3a8a;">Votre référence de compte <strong>${escapeEmailHtml(previousAccountReference)}</strong> est remplacée par votre numéro de dossier <strong>${escapeEmailHtml(dossierNumber)}</strong>. Utilisez désormais ce numéro dans tous vos échanges avec l’agence.</p>` : ""}
 
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
                 <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Destination</td>
                 <td style="padding: 12px; background: #f3f4f6;">${escapeEmailHtml(destination.toUpperCase())}</td>
               </tr>
-              <tr>
+              ${amount > 0 ? `<tr>
                 <td style="padding: 12px; font-weight: 600;">Montant</td>
                 <td style="padding: 12px;">${amount.toLocaleString("fr-FR")} FCFA</td>
-              </tr>
+              </tr>` : ""}
             </table>
-            
+
             <h3 style="color: #1E3A8A; margin-top: 30px;">Prochaines étapes :</h3>
             <ol style="color: #374151; line-height: 2; font-size: 14px;">
-              <li>Un conseiller vous contactera sur WhatsApp sous 24h</li>
+              <li>Un conseiller prend en charge votre dossier et vous contacte sur WhatsApp</li>
               <li>Préparez vos documents : passeport, CV, diplômes</li>
               <li>Uploadez vos documents dans votre espace candidat</li>
             </ol>

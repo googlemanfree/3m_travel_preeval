@@ -1,3 +1,4 @@
+import { accountReference, agencyDossierReference } from "../../shared/caseReference";
 import { and, isNull, sql } from "drizzle-orm";
 import { agencyDossiers, applications, candidates } from "../../drizzle/schema";
 
@@ -52,9 +53,9 @@ export async function findPotentialDuplicates(db: any, input: { email: string; f
     db.select({ id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email }).from(agencyDossiers).where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(TRIM(${agencyDossiers.email})) = ${email}`)),
   ]);
   const matches: DuplicateMatch[] = [
-    ...accounts.map((r: any) => ({ source: "account" as const, id: r.id, reference: `COMPTE-${r.id}`, fullName: r.fullName, email: r.email, reason: "email" as const, similarity: 1 })),
+    ...accounts.map((r: any) => ({ source: "account" as const, id: r.id, reference: accountReference(r.id), fullName: r.fullName, email: r.email, reason: "email" as const, similarity: 1 })),
     ...apps.map((r: any) => ({ source: "application" as const, id: r.id, reference: r.dossierNumber, fullName: r.fullName, email: r.email, reason: "email" as const, similarity: 1 })),
-    ...agencies.map((r: any) => ({ source: "agency" as const, id: r.id, reference: `3M-AGN-${String(r.id).padStart(6, "0")}`, fullName: r.fullName, email: r.email, reason: "email" as const, similarity: 1 })),
+    ...agencies.map((r: any) => ({ source: "agency" as const, id: r.id, reference: agencyDossierReference(r.id), fullName: r.fullName, email: r.email, reason: "email" as const, similarity: 1 })),
   ];
   const seen = new Set(matches.map((m) => `${m.source}:${m.id}`));
   const [allAccounts, allApps, allAgencies] = await Promise.all([
@@ -70,9 +71,9 @@ export async function findPotentialDuplicates(db: any, input: { email: string; f
       seen.add(key);
     }
   });
-  add(allAccounts, "account", (r) => `COMPTE-${r.id}`);
+  add(allAccounts, "account", (r) => accountReference(r.id));
   add(allApps, "application", (r) => r.dossierNumber);
-  add(allAgencies, "agency", (r) => `3M-AGN-${String(r.id).padStart(6, "0")}`);
+  add(allAgencies, "agency", (r) => agencyDossierReference(r.id));
   return matches;
 }
 

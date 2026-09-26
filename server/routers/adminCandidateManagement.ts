@@ -10,6 +10,8 @@ import { requireAdminSessionFromCookie, requireValidAdminSession } from "./admin
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { archiveRedundantPreAccounts, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
+import { accountReference, agencyDossierReference, referenceChangeSentence } from "../../shared/caseReference";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
@@ -196,6 +198,34 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
 }
 
 export const adminCandidateManagementRouter = router({
+  /**
+   * Pré-comptes redondants : pré-dossiers ou comptes sans dossier propre dont la personne a déjà un dossier actif.
+   * Lecture seule (aperçu) : rien n'est modifié tant que l'administrateur n'a pas confirmé la mise en corbeille.
+   */
+  listRedundantPreAccounts: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const items = await loadRedundantPreAccounts(db);
+      return { items, certain: items.filter((item) => item.confidence === "certain").length, probable: items.filter((item) => item.confidence === "probable").length };
+    }),
+
+  archiveRedundantPreAccounts: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      items: z.array(z.object({ kind: z.enum(["agency_pre_dossier", "account"]), id: z.number().int().positive() })).min(1).max(200),
+      confirmation: z.literal("CORBEILLE"),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const result = await archiveRedundantPreAccounts(db, { items: input.items, adminEmail: admin.email });
+      return { success: true, archivedCount: result.archived.length, skippedCount: result.skipped.length, archived: result.archived.map((item) => item.reference), message: "Placés dans la corbeille réversible (restauration possible depuis l'administration)." };
+    }),
+
   listPreDossierAccounts: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().max(120).optional().default("") }))
     .query(async ({ input, ctx }) => {
@@ -467,14 +497,37 @@ export const adminCandidateManagementRouter = router({
         newValue: JSON.stringify({ candidateId: candidate.id, email: candidate.email }),
         details: "Compte candidat rattaché au pré-dossier agence après validation administrative",
       });
+      // Le compte (COMPTE-…) devient un dossier actif (3M-…) : le changement est tracé, annoncé dans l'espace client et par e-mail.
+      const previousAccountReference = accountReference(candidate.id);
+      const dossierReference = agencyDossierReference(agencyDossierId);
+      await db.insert(agencyDossierHistory).values({
+        dossierId: agencyDossierId,
+        action: "reference_changed",
+        changedBy: admin.email || "unknown",
+        oldValue: previousAccountReference,
+        newValue: dossierReference,
+        details: "Référence de compte remplacée par le numéro de dossier actif après paiement des frais d’ouverture validé et activation par l’administration",
+      });
+      try {
+        await db.insert(clientNotifications).values({
+          candidateId: candidate.id,
+          type: "admin_status_update",
+          title: "Votre dossier est activé",
+          body: referenceChangeSentence(previousAccountReference, dossierReference),
+          actionUrl: "/mon-espace",
+          isRead: false,
+        });
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Notification de changement de référence non enregistrée:", err);
+      }
       let emailSent = false;
       try {
-        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, `3M-AGN-${agencyDossierId.toString().padStart(4, "0")}`, input.destination, 0);
+        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, input.destination, 0, previousAccountReference);
       } catch (err) {
         console.error("[activatePreDossierAccount] Échec de l'e-mail de confirmation d'activation:", err);
         emailSent = false;
       }
-      return { success: true, emailSent, linkedExistingDossier, agencyDossierId };
+      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

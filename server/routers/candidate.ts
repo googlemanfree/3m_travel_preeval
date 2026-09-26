@@ -31,6 +31,7 @@ import {
 } from "../../drizzle/schema";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { accountReference, resolveClientReference } from "../../shared/caseReference";
 import { getDb } from "../db";
 import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { publicProcedure, router } from "../_core/trpc";
@@ -1669,7 +1670,7 @@ export const candidateRouter = router({
 
     const candidateDossierFallback = {
       id: ctx.candidate.id,
-      dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`,
+      dossierNumber: (ctx.candidate as any).dossierNumber || accountReference(ctx.candidate.id),
       candidateId: ctx.candidate.id,
       fullName: ctx.candidate.fullName,
       email: ctx.candidate.email,
@@ -2234,8 +2235,15 @@ export const candidateRouter = router({
     const dashboardDossierNumber = activeAgencyDossierNumber
       || activeApp?.dossierNumber
       || (candidate as any).dossierNumber
-      || (candidateHasTrackedDossier ? `COMPTE-${candidate.id}` : null)
+      || (candidateHasTrackedDossier ? accountReference(candidate.id) : null)
       || "N/A";
+    // Référence lue par le client : numéro de dossier actif « 3M-… » dès l'activation, référence de compte avant.
+    // `dossierNumber` reste la clé technique (paiement, pièces) ; l'affichage passe par `reference`.
+    const clientReference = resolveClientReference({
+      candidateId: candidate.id,
+      agencyDossier: activeAgencyDossier ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
+      onlineApplication: activeApp ? { dossierNumber: activeApp.dossierNumber, paymentStatus: activeApp.paymentStatus, paymentValidatedAt: (activeApp as any).paymentValidatedAt ?? null } : null,
+    });
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
       ...document,
       documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
@@ -2272,6 +2280,7 @@ export const candidateRouter = router({
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
         dossierNumber: dashboardDossierNumber,
+        reference: clientReference,
         dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || activeAgencyDossier?.status || "evaluation",
         evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
         evaluationDeclaredAt: candidate.evaluationDeclaredAt,

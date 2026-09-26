@@ -12,7 +12,7 @@ describe("badge de dossier actif côté client", () => {
     expect(source).toContain("const dashboardDossierNumber = activeAgencyDossierNumber");
     expect(source).toContain("dossierNumber: dashboardDossierNumber");
     expect(source).toContain("const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)");
-    expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || `COMPTE-${ctx.candidate.id}`");
+    expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || accountReference(ctx.candidate.id)");
     expect(source).toContain("const PORTRAIT_DASHBOARD_PATHS = new Set([\"candidate.getClientDashboardSummary\", \"candidate.getMyDossierData\"]);");
   });
 

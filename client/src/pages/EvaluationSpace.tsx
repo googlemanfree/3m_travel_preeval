@@ -33,6 +33,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel } from "@shared/dossierProgress";
+import { accountReference } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
@@ -285,9 +286,12 @@ export default function EvaluationSpace() {
       ? rawCProfile.dossierNumber
       : activeDossier?.dossierNumber
         || ((rawCProfile.dossierStatus !== "nouveau" || rawCProfile.evaluationDeclarationStatus === "validated")
-          ? `COMPTE-${rawCProfile.id}`
+          ? accountReference(rawCProfile.id)
           : "N/A"),
   };
+  // Référence lue par le candidat : « COMPTE-… » avant l'activation, numéro de dossier « 3M-… » après (dossierNumber reste la clé technique).
+  const displayReference: string = (rawCProfile as any).reference?.reference ?? cProfile.dossierNumber;
+  const formerAccountReference: string | null = (rawCProfile as any).reference?.formerAccountReference ?? null;
   const workflow = dashboardData.workflow;
   const portraitIsMissing = !cProfile.avatarUrl;
   // Pays précis déclarés à l'inscription (jusqu'à 3). Prioritaire sur cProfile.destination, qui ne
@@ -421,7 +425,7 @@ export default function EvaluationSpace() {
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-gray-900">{cProfile.fullName}</h1>
                 <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                  N° {cProfile.dossierNumber}
+                  {formerAccountReference ? "Dossier" : "Compte"} {displayReference}
                 </span>
               </div>
               <p className="text-xs text-gray-500">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
@@ -546,7 +550,7 @@ export default function EvaluationSpace() {
                     <span className="rounded-2xl bg-white/15 p-3" aria-hidden="true"><TrendingUp className="h-7 w-7 text-amber-300" /></span>
                   </div>
                   <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-sm text-blue-100">
-                    <span><strong className="text-white">Référence :</strong> {cProfile.dossierNumber || "En attribution"}</span>
+                    <span><strong className="text-white">{formerAccountReference ? "Numéro de dossier :" : "Référence de compte :"}</strong> {displayReference || "En attribution"}{formerAccountReference ? <span className="ml-2 text-xs opacity-70">(ancienne référence de compte : {formerAccountReference})</span> : null}</span>
                     <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.length > 0 ? preferredDestinationsList.join(", ") : cProfile.destination || "À préciser"}</span>
                   </div>
                   <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
@@ -645,7 +649,7 @@ export default function EvaluationSpace() {
                   </div>
                   <div className="mt-5 grid gap-2 border-t border-current/15 pt-4 sm:grid-cols-2 xl:grid-cols-4">
                     <button type="button" onClick={() => switchToSection("dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
-                      <span className="block text-xs font-semibold opacity-70">Référence de dossier</span><span className="mt-1 block font-mono">{cProfile.dossierNumber || "En cours d’attribution"}</span>
+                      <span className="block text-xs font-semibold opacity-70">{formerAccountReference ? "Référence de dossier" : "Référence de compte"}</span><span className="mt-1 block font-mono">{displayReference || "En cours d’attribution"}</span>{!formerAccountReference && <span className="mt-1 block text-[11px] opacity-70">Votre numéro de dossier « 3M-… » vous sera attribué à l’activation de votre dossier.</span>}
                     </button>
                     <button type="button" onClick={() => switchToSection("documents")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
                       <span className="block text-xs font-semibold opacity-70">Documents synchronisés</span><span className="mt-1 block">{stats.totalDocuments} élément{stats.totalDocuments > 1 ? "s" : ""}</span>
@@ -730,7 +734,7 @@ export default function EvaluationSpace() {
           {activeTab === "dossier" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
               <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />

@@ -87,6 +87,7 @@ import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
+import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
@@ -2633,6 +2634,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="audit" className="space-y-6">
             <AdminAuditLogPanel sessionToken={sessionToken} />
+            <AdminRedundantPreAccountsPanel sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="rates" className="space-y-6">
