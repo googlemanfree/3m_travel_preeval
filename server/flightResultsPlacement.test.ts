@@ -8,7 +8,7 @@ describe("positionnement des résultats de vols", () => {
   it("place les résultats immédiatement après le formulaire avant les services secondaires", () => {
     expect(flightsPage).toContain('id="flight-results" className="order-1');
     expect(flightsPage).toContain('<div className="order-3"><FlightLowerSections');
-    expect(flightsPage).toContain('<div className="order-4"><FlightQuoteRequest /></div>');
+    expect(flightsPage).toContain('<div className="order-4"><FlightQuoteRequest ');
     expect(flightsPage).toContain('id="3m-booking" className="order-5');
   });
 

@@ -305,7 +305,7 @@ describe("page de vols", () => {
   it("l'hébergement (3M Booking) vient après les étapes et les avantages", () => {
     expect(page).toContain('id="3m-booking" className="order-5');
     expect(page).toContain('<div className="order-3"><FlightLowerSections');
-    expect(page).toContain('<div className="order-4"><FlightQuoteRequest />');
+    expect(page).toContain('<div className="order-4"><FlightQuoteRequest ');
   });
 
   it("les offres précèdent les parcours fréquents", () => {

@@ -18,7 +18,8 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightBestOffers, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
 
 /** « Yaoundé (NSI) » pour les aéroports des parcours fréquents ; le code seul pour les autres. */
@@ -638,6 +639,10 @@ export default function Flights() {
 
   // Meilleures offres : tarifs réellement relevés (aucune offre affichée sans données du fournisseur).
   const offersQuery = trpc.flights.popularOffers.useQuery(undefined, { staleTime: 30 * 60_000, retry: false, refetchOnWindowFocus: false });
+  // Avis déjà approuvés : le bloc n'apparaît que s'il en existe.
+  const reviewsQuery = trpc.customerReview.listApproved.useQuery(undefined, { staleTime: 10 * 60_000, retry: false, refetchOnWindowFocus: false });
+  const [quotePrefill, setQuotePrefill] = useState<QuotePrefill | null>(null);
+  const quotePrefillNonce = useRef(1);
 
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
 
@@ -741,6 +746,11 @@ export default function Flights() {
     setIsSearchSubmitting(true);
     setSearchEnabled(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Devis ou suivi de tarif : le formulaire d'accompagnement s'ouvre déjà rempli avec le parcours, les dates et le relevé.
+  function askAdvisor(offer: BestOffer, intent: QuoteIntent) {
+    setQuotePrefill(prefillFromOffer(offer, intent, quotePrefillNonce.current++));
   }
 
   // Une offre lance la recherche avec exactement les dates relevées : le prix affiché en résultat est celui de la recherche.
@@ -908,7 +918,7 @@ export default function Flights() {
         <ThreeMBookingExperience />
       </section>
 
-      <div className="order-4"><FlightQuoteRequest /></div>
+      <div className="order-4"><FlightQuoteRequest key={quotePrefill?.nonce ?? 0} prefill={quotePrefill} /></div>
 
       {/* Travel planner section */}
       <div className="order-4 max-w-7xl mx-auto px-4 py-6">
@@ -966,11 +976,11 @@ export default function Flights() {
         </motion.div>
       </div>
 
-      <div className="order-3"><FlightLowerSections onPick={pickRoute} /></div>
+      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightClientReviews reviews={reviewsQuery.data ?? []} /></div>
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
-        {!searchEnabled && offersQuery.data?.status === "live" && <FlightBestOffers offers={offersQuery.data.offers} retrievedAt={offersQuery.data.retrievedAt} onPick={pickOffer} />}
+        {!searchEnabled && offersQuery.data?.status === "live" && <FlightBestOffers offers={offersQuery.data.offers} retrievedAt={offersQuery.data.retrievedAt} onPick={pickOffer} onAdvisor={askAdvisor} />}
         {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 
         {isFetching && (

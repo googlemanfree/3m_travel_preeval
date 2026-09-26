@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, BadgeCheck, CreditCard, ListChecks, MessageCircle, Plane, Route as RouteIcon, Search, Send, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, CreditCard, ListChecks, MessageCircle, Plane, Route as RouteIcon, Search, Send, ShieldCheck, Star } from "lucide-react";
 import {
   FLIGHT_ADVANTAGES,
   FLIGHT_BOOKING_STEPS,
@@ -59,7 +59,7 @@ const durationLabel = (minutes: number) => (minutes > 0 ? `${Math.floor(minutes 
  * « Meilleures offres » : tarifs le plus bas réellement relevés chez le fournisseur (jamais écrits en dur), avec leur date de
  * relevé. Rien ne s'affiche sans données réelles ; un clic lance la recherche avec exactement ces dates.
  */
-export function FlightBestOffers({ offers, retrievedAt, onPick }: { offers: BestOffer[]; retrievedAt: string | null; onPick: (offer: BestOffer) => void }) {
+export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { offers: BestOffer[]; retrievedAt: string | null; onPick: (offer: BestOffer) => void; onAdvisor?: (offer: BestOffer, intent: "quote" | "watch") => void }) {
   if (offers.length === 0) return null;
   const retrieved = retrievedAt ? new Date(retrievedAt) : null;
   const retrievedLabel = retrieved && !Number.isNaN(retrieved.getTime()) ? retrieved.toLocaleString("fr-FR", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }) : null;
@@ -72,13 +72,13 @@ export function FlightBestOffers({ offers, retrievedAt, onPick }: { offers: Best
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {offers.map((offer) => (
+          <div key={offer.routeId} className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
           <button
-            key={offer.routeId}
             type="button"
             onClick={() => onPick(offer)}
             data-testid={`flight-offer-${offer.routeId}`}
             aria-label={`Voir les vols ${offer.from.city} ${offer.to.city} à partir de ${formatOfferPrice(offer.priceXaf)}`}
-            className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+            className="group flex-1 rounded-2xl p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
           >
             <span className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               <span>{offer.tripType === "ROUND_TRIP" ? "Aller-retour" : "Aller simple"}</span>
@@ -99,10 +99,63 @@ export function FlightBestOffers({ offers, retrievedAt, onPick }: { offers: Best
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800 transition group-hover:bg-blue-700 group-hover:text-white"><Search className="h-3.5 w-3.5" aria-hidden="true" /> Voir ce vol</span>
             </span>
           </button>
+          {onAdvisor && (
+            <div className="flex flex-wrap gap-2 border-t border-slate-100 px-5 py-3" data-testid={`flight-offer-actions-${offer.routeId}`}>
+              <button type="button" onClick={() => onAdvisor(offer, "quote")} data-testid={`flight-offer-advisor-${offer.routeId}`} className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1.5 text-xs font-black text-white transition hover:bg-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> Réserver via un conseiller
+              </button>
+              <button type="button" onClick={() => onAdvisor(offer, "watch")} data-testid={`flight-offer-watch-${offer.routeId}`} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+                Faire suivre ce tarif
+              </button>
+            </div>
+          )}
+          </div>
         ))}
       </div>
       <p className="mt-4 text-center text-xs leading-5 text-slate-500" data-testid="offers-provenance">
         Tarifs {retrievedLabel ? `relevés le ${retrievedLabel}` : "relevés"} sur Google Flights pour 1 adulte en classe économique ; ils évoluent sans préavis. Bagages, conditions, taxes et disponibilité sont confirmés par un conseiller 3M avant toute réservation.
+      </p>
+    </section>
+  );
+}
+
+export type ClientReview = { id?: number; displayName?: string; destinationCountry?: string; serviceType?: string; rating?: number; reviewText?: string; createdAt?: string | Date };
+
+/**
+ * Avis de clients déjà approuvés par l'équipe (avec leur consentement de publication). Les 3 plus récents, sans tri sur la note.
+ * Sans avis approuvé, rien ne s'affiche : aucun témoignage n'est jamais fabriqué.
+ */
+export function FlightClientReviews({ reviews }: { reviews: ClientReview[] }) {
+  const shown = reviews
+    .filter((review) => (review.reviewText ?? "").trim().length > 0 && Number.isFinite(review.rating))
+    .sort((left, right) => new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime())
+    .slice(0, 3);
+  if (shown.length === 0) return null;
+  return (
+    <section aria-labelledby="flight-reviews-title" className="mx-auto max-w-6xl px-4 py-10" data-testid="flight-client-reviews">
+      <div className="mx-auto mb-8 max-w-2xl text-center">
+        <p className="text-xs font-black uppercase tracking-widest text-amber-600">Avis de nos clients</p>
+        <h2 id="flight-reviews-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Ils ont voyagé avec 3M</h2>
+        <p className="mt-2 text-sm text-slate-600">Avis déposés par des clients, publiés avec leur accord après vérification par notre équipe.</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {shown.map((review, index) => (
+          <figure key={review.id ?? index} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-testid="flight-review-card">
+            <div className="flex gap-0.5" role="img" aria-label={`${review.rating} sur 5`}>
+              {Array.from({ length: 5 }).map((_, star) => (
+                <Star key={star} aria-hidden="true" className={`h-4 w-4 ${star < (review.rating ?? 0) ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}`} />
+              ))}
+            </div>
+            <blockquote className="mt-3 line-clamp-5 text-sm leading-6 text-slate-700">“{review.reviewText}”</blockquote>
+            <figcaption className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+              <span className="block text-sm font-bold text-slate-900">{review.displayName}</span>
+              {[review.destinationCountry, review.serviceType].filter(Boolean).join(" • ")}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <p className="mt-6 text-center text-sm">
+        <a href="/avis" className="font-bold text-blue-800 underline underline-offset-4 hover:text-blue-950">Voir tous les avis</a>
       </p>
     </section>
   );
