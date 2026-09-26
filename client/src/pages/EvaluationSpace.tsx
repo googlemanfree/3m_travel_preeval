@@ -32,7 +32,7 @@ import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
-import { clientStatusLabel } from "@shared/dossierProgress";
+import { clientStatusLabel, describeDossierProgress } from "@shared/dossierProgress";
 import { accountReference } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
@@ -393,6 +393,20 @@ export default function EvaluationSpace() {
   };
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
   const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
+  const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
+  // « Étape N sur M » : même calcul (et mêmes jalons) que le parcours affiché plus bas et que les e-mails de l'agence.
+  const journeyProgress = describeDossierProgress({
+    destination: primaryDestination,
+    visaType: journeyVisaType,
+    procedureLabel: journeyProcedureLabel,
+    dossierStatus: cProfile.dossierStatus,
+    evaluationStatus: cProfile.evaluationDeclarationStatus,
+    milestones: {
+      evaluationClientConfirmed: Boolean((cProfile as any).evaluationClientConfirmedAt),
+      activationRequested: Boolean((cProfile as any).activationRequestedAt),
+      paymentConfirmed: String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid",
+    },
+  });
   const nextStep = computeNextStep({
     evaluationRequired,
     evaluationStage: structuredStage,
@@ -552,6 +566,13 @@ export default function EvaluationSpace() {
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Statut actuel du dossier</p>
                       <h2 className="mt-2 text-2xl font-black">{currentDossierStatusLabel}</h2>
+                      {journeyProgress.stepNumber !== null && (
+                        <div className="mt-3" data-testid="journey-progress">
+                          <p className="text-sm font-bold text-white">Étape {journeyProgress.stepNumber} sur {journeyProgress.stepCount} : {journeyProgress.stepLabel}</p>
+                          <div className="mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Avancement de la procédure" aria-valuemin={0} aria-valuemax={100} aria-valuenow={journeyProgress.percent}><div className="h-full rounded-full bg-amber-300" style={{ width: `${journeyProgress.percent}%` }} /></div>
+                          {journeyProgress.nextStepLabel && <p className="mt-1.5 text-xs text-blue-200">Étape suivante : {journeyProgress.nextStepLabel}</p>}
+                        </div>
+                      )}
                       <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100">Votre dossier est suivi par l’agence. Les étapes sont mises à jour après validation humaine de chaque élément.</p>
                     </div>
                     <span className="rounded-2xl bg-white/15 p-3" aria-hidden="true"><TrendingUp className="h-7 w-7 text-amber-300" /></span>
@@ -604,14 +625,14 @@ export default function EvaluationSpace() {
                 <Card className="p-5 border-emerald-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Documents et pièces</p>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.totalDocuments}</h3>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pièces de votre checklist</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1" data-testid="checklist-received">{checklistReceived}/{checklistSummary.total}</h3>
                     </div>
                     <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                       <FileText className="w-6 h-6" />
                     </div>
                   </div>
-                  <p className="text-xs text-emerald-600 mt-4 font-medium">Synchronisés avec l'agence</p>
+                  <p className="text-xs text-emerald-700 mt-4 font-medium">{checklistSummary.missing + checklistSummary.replace > 0 ? `${checklistSummary.missing + checklistSummary.replace} à envoyer ou à corriger` : "Toutes les pièces demandées sont reçues"}</p>
                 </Card>
 
                 <Card className="p-5 border-amber-100 bg-white shadow-sm">
