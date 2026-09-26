@@ -70,7 +70,7 @@ describe("demande de réservation : plafond et garde d'état", () => {
 });
 
 describe("écrans de vols : aucune donnée inventée, provenance des tarifs visible", () => {
-  const pages = ["client/src/pages/Billets.tsx", "client/src/pages/Flights.tsx", "client/src/pages/FlightBookingCheckout.tsx"];
+  const pages = ["client/src/pages/Flights.tsx", "client/src/pages/FlightBookingCheckout.tsx"];
 
   it("plus de fausse rareté, de bagages ou remboursement supposés, de taxes estimées, de PNR fictif ni de simulation", () => {
     for (const page of pages) {
@@ -81,8 +81,8 @@ describe("écrans de vols : aucune donnée inventée, provenance des tarifs visi
     }
   });
 
-  it("la page 3M Booking et /flights affichent l'heure de relevé, la source, la conversion et la confirmation par un conseiller", () => {
-    for (const page of ["client/src/pages/Billets.tsx", "client/src/pages/Flights.tsx"]) {
+  it("la page /flights affiche l'heure de relevé, la source, la conversion et la confirmation par un conseiller", () => {
+    for (const page of ["client/src/pages/Flights.tsx"]) {
       const text = read(page);
       expect(text, page).toContain('data-testid="fare-provenance"');
       expect(text, page).toContain("655,957");
@@ -91,18 +91,17 @@ describe("écrans de vols : aucune donnée inventée, provenance des tarifs visi
     }
   });
 
-  it("le formulaire de demande est utilisable au doigt : clavier adapté, saisie automatique, libellés reliés, texte de 16 px, Échap", () => {
-    const text = read("client/src/pages/Billets.tsx");
-    for (const expected of ['type="tel" inputMode="tel" autoComplete="tel"', 'inputMode="email" autoComplete="email"', 'htmlFor="booking-email"', 'autoComplete="given-name"', 'event.key === "Escape"']) {
-      expect(text, expected).toContain(expected);
+  it("le formulaire de réservation est utilisable au doigt : clavier adapté, saisie automatique ; le sélecteur de retour se ferme avec Échap", () => {
+    const checkout = read("client/src/pages/FlightBookingCheckout.tsx");
+    for (const expected of ['type="tel" inputMode="tel" autoComplete="tel"', 'inputMode="email" autoComplete="email"', 'autoComplete="name"']) {
+      expect(checkout, expected).toContain(expected);
     }
-    const modal = text.slice(text.indexOf("function BookingRequestModal"), text.indexOf("function ReturnFlightModal"));
-    expect(modal).not.toMatch(/px-3 py-2\.5 text-sm/); // 14 px : iOS zoomerait à la saisie
+    expect(read("client/src/pages/Flights.tsx")).toContain('event.key === "Escape"');
   });
 
   it("chaque option de retour affiche son total aller-retour, et la demande retient celui du retour choisi", () => {
-    const text = read("client/src/pages/Billets.tsx");
+    const text = read("client/src/pages/Flights.tsx");
     expect(text).toContain("Total aller-retour : {formatXAF(option.totalPrice)}");
-    expect(text).toContain("const quotedTotalPrice = returnFlight?.totalPrice ?? flight.totalPrice;");
+    expect(text).toContain("quotedTotalPrice: returnFlight?.totalPrice ?? outbound.totalPrice,");
   });
 });

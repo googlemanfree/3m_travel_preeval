@@ -26,16 +26,19 @@ describe("recherche du vrai vol retour (aller-retour Google Flights via SearchAP
   });
 
   it("le client interroge bien la nouvelle procedure et affiche une selection de vol retour avant la demande de reservation", () => {
-    const source = read("client/src/pages/Billets.tsx");
+    const source = read("client/src/pages/Flights.tsx");
     expect(source).toContain("trpc.flights.searchReturnFlights.useQuery");
     expect(source).toContain("function ReturnFlightModal");
-    expect(source).toContain("pendingOutboundFlight");
+    expect(source).toContain("pendingOutbound");
+    // Un aller-retour passe par le choix du retour avant la réservation ; l'aller simple va directement à la réservation.
+    expect(source).toContain('roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={setPendingOutbound}');
+    expect(source).toContain("onSelect={(option) => continueToCheckout(pendingOutbound, option)}");
   });
 
   it("la demande de reservation ajoute le vol retour choisi sans casser la lecture existante des champs du vol aller (flightData.departureDate, flightData.airline, etc.)", () => {
-    const source = read("client/src/pages/Billets.tsx");
+    const source = read("client/src/pages/FlightBookingCheckout.tsx");
     // Le vol aller reste étalé au premier niveau de flightData (compatibilité admin/e-mails
     // existante) ; le vol retour est ajouté en plus, jamais en remplacement.
-    expect(source).toContain("flightData: { ...flight, returnFlight: returnFlight ?? null, quotedTotalPrice }");
+    expect(source).toContain("flightData: { ...selectedFlight, returnFlight, quotedTotalPrice }");
   });
 });

@@ -64,7 +64,6 @@ const PRIVATE_PAGES = [
   "/evaluation-result",
   "/evisas/request",
   "/procedures/comparaison",
-  "/3m-booking",
   "/assurance-inscription",
 ];
 

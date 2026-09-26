@@ -74,12 +74,19 @@ describe("pré-rendu public indexable", () => {
   });
 
   it("garde toutes les routes de l’incident en shell 200 non indexable", () => {
-    for (const path of ["/admin", "/document-upload", "/mes-vols-favoris", "/flights", "/mon-espace?section=profile"]) {
+    for (const path of ["/admin", "/document-upload", "/mes-vols-favoris", "/mon-espace?section=profile"]) {
       const privatePage = composePublicPrerender(template, path);
       expect(privatePage.status, path).toBe(200);
       expect(privatePage.html, path).toContain('name="robots" content="noindex,follow"');
       expect(privatePage.html, path).toContain('data-prerendered="true"');
     }
+  });
+
+  it("/flights est la page principale de réservation de vols : indexable, avec son titre et sa description", () => {
+    const page = composePublicPrerender(template, "/flights");
+    expect(page.status).toBe(200);
+    expect(page.html).not.toContain('content="noindex');
+    expect(page.html).toContain("<title>Billets d&#39;avion et vols");
   });
 
   it("renvoie une vraie 404 pour une page inconnue", () => {

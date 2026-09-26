@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 describe("Architecture des routes de services", () => {
   it("oriente chaque service vers une route canonique", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/components/ServicesSection.tsx"), "utf8");
-    expect(source).toContain("href: '/billets'");
+    expect(source).toContain("href: '/flights'");
     expect(source).toContain("href: '/tourisme'");
     expect(source).toContain("href: '/procedures'");
     expect(source).toContain("href: '/assurance'");

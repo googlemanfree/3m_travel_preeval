@@ -138,7 +138,7 @@ describe("référencement de la page d'accueil et des pages de service", () => {
   });
 
   it("les pages ajoutées ou reprises aujourd'hui respectent 60 caractères de titre et 160 de description", () => {
-    for (const path of ["/services", "/billets", "/cni-passeport"]) {
+    for (const path of ["/services", "/flights", "/cni-passeport"]) {
       const { title, description } = meta(composePublicPrerender(template, path).html);
       expect(title.length, `${path} : ${title}`).toBeLessThanOrEqual(60);
       expect(description.length, `${path} : ${description}`).toBeGreaterThanOrEqual(70);

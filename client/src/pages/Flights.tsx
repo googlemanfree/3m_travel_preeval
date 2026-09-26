@@ -347,7 +347,7 @@ export function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-function FlightCard({ flight, searchParams, servedFromCache }: { flight: Flight; searchParams: any; servedFromCache: boolean }) {
+function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void }) {
   const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
@@ -475,11 +475,17 @@ function FlightCard({ flight, searchParams, servedFromCache }: { flight: Flight;
               <div className="text-xs text-gray-500">pour {searchParams.adults + searchParams.children} passager{searchParams.adults + searchParams.children > 1 ? "s" : ""}</div>
             </div>
             <div className="flex flex-col gap-2">
-              <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
-                <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
-                  <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
+              {roundTrip && onChooseReturn ? (
+                <Button type="button" onClick={() => onChooseReturn(flight)} data-testid="choose-return-flight" className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
+                  <Plane className="w-4 h-4 mr-1" /> Choisir le retour
                 </Button>
-              </a>
+              ) : (
+                <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
+                  <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
+                    <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
+                  </Button>
+                </a>
+              )}
               <Button type="button" onClick={handleAddToCart} variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
                 <ShoppingBag className="w-3.5 h-3.5 mr-1" /> Ajouter au panier
               </Button>
@@ -559,6 +565,7 @@ function FlightCard({ flight, searchParams, servedFromCache }: { flight: Flight;
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Flights() {
+  const { toast } = useToast();
   const initialParams = new URLSearchParams(window.location.search);
   const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">(
     (initialParams.get("tripType") as "ONE_WAY" | "ROUND_TRIP") || "ROUND_TRIP"
@@ -607,6 +614,40 @@ export default function Flights() {
     },
     { enabled: searchEnabled }
   );
+
+  // Aller-retour : le vol aller est choisi d'abord, puis on interroge les vraies options de retour (2e requête avec le
+  // departure_token du vol aller) ; le total de l'option retenue est le tarif relevé de l'aller-retour complet.
+  const [pendingOutbound, setPendingOutbound] = useState<Flight | null>(null);
+  const returnFlightsQuery = trpc.flights.searchReturnFlights.useQuery(
+    {
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      adults: passengers.adults,
+      children: passengers.children,
+      infants: passengers.infants,
+      cabinClass: passengers.cabinClass as any,
+      departureToken: pendingOutbound?.departureToken ?? undefined,
+    },
+    { enabled: Boolean(pendingOutbound) && tripType === "ROUND_TRIP", retry: 1 },
+  );
+
+  function continueToCheckout(outbound: Flight, returnFlight: Flight | null) {
+    try {
+      sessionStorage.setItem("3m-selected-flight", JSON.stringify({
+        flight: outbound,
+        returnFlight,
+        quotedTotalPrice: returnFlight?.totalPrice ?? outbound.totalPrice,
+        searchParams: passengers,
+        selectedAt: Date.now(),
+      }));
+    } catch {
+      toast({ title: "Sélection non conservée", description: "Veuillez rester sur cet appareil pendant la réservation.", variant: "destructive" });
+      return;
+    }
+    window.location.href = `/flight-booking/${outbound.id}`;
+  }
 
   const isSearchBusy = isFetching || isSearchSubmitting;
 
@@ -1098,7 +1139,7 @@ export default function Flights() {
               {/* Flight cards */}
               <div className="space-y-4">
                 {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} />
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={setPendingOutbound} />
                 ))}
                 {filtered.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -1142,6 +1183,19 @@ export default function Flights() {
           </motion.div>
         )}
       </div>
+      {pendingOutbound && (
+        <ReturnFlightModal
+          outboundFlight={pendingOutbound}
+          options={returnFlightsQuery.data?.inbound ?? []}
+          isLoading={returnFlightsQuery.isFetching}
+          isError={Boolean(returnFlightsQuery.error)}
+          notice={returnFlightsQuery.data?.providerNotice ?? null}
+          onRetry={() => returnFlightsQuery.refetch()}
+          onClose={() => setPendingOutbound(null)}
+          onSelect={(option) => continueToCheckout(pendingOutbound, option)}
+        />
+      )}
+
       <div className="order-6"><Footer /></div>
     </div>
   );
@@ -1222,6 +1276,90 @@ function AIPlannerForm() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Aller-retour : choix du vol retour ───
+function AirlineLogo({ airline }: { airline: Flight["airline"] }) {
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+      {airline.logo ? (
+        <img src={airline.logo} alt={airline.name} className="h-full w-full object-contain p-1" loading="lazy" />
+      ) : (
+        <Plane className="h-5 w-5 text-slate-400" aria-hidden="true" />
+      )}
+    </div>
+  );
+}
+
+/** Aller-retour : choix du vrai vol retour (jamais un tableau retour inventé) avant la réservation. */
+function ReturnFlightModal({
+  outboundFlight, options, isLoading, isError, notice, onRetry, onClose, onSelect,
+}: {
+  outboundFlight: Flight;
+  options: Flight[];
+  isLoading: boolean;
+  isError: boolean;
+  notice: string | null;
+  onRetry: () => void;
+  onClose: () => void;
+  onSelect: (flight: Flight) => void;
+}) {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <h2 className="text-lg font-black text-slate-950">Choisissez votre vol retour</h2>
+          <button type="button" onClick={onClose} aria-label="Fermer" className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-3 rounded-xl bg-blue-50 p-3 text-xs text-blue-900">
+          <p className="font-black">Vol aller sélectionné</p>
+          <p className="mt-0.5">{outboundFlight.originCity} → {outboundFlight.destinationCity} · {outboundFlight.departureDate} à {outboundFlight.departureTime} · {outboundFlight.airline.name}</p>
+        </div>
+
+        {isLoading ? (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-500">Recherche des vols retour en cours…</div>
+        ) : isError ? (
+          <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-6 text-center">
+            <p className="text-sm font-semibold text-rose-800">La recherche du vol retour est temporairement indisponible.</p>
+            <button type="button" onClick={onRetry} className="mt-3 rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-black text-rose-800 hover:bg-rose-100">Réessayer</button>
+          </div>
+        ) : options.length === 0 ? (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600">{notice ?? "Aucun vol retour trouvé pour ces dates. Notre équipe peut effectuer une recherche personnalisée après votre demande."}</div>
+        ) : (
+          <>
+            {notice && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">{notice}</p>}
+            <div className="mt-3 grid gap-3">
+              {options.map((option) => (
+                <button key={option.id} type="button" onClick={() => onSelect(option)} className="rounded-xl border border-slate-200 p-4 text-left hover:border-blue-400 hover:bg-blue-50/40">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <AirlineLogo airline={option.airline} />
+                      <div>
+                        <p className="font-black text-slate-950">{option.airline.name}</p>
+                        <p className="text-xs text-slate-500">Vol {option.flightNumber}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">{option.stops === 0 ? "Direct" : `${option.stops} escale${option.stops > 1 ? "s" : ""}`}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <span className="font-black text-slate-950">{option.departureTime} → {option.arrivalTime}</span>
+                    <span className="text-xs text-slate-500">{option.duration}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-black text-blue-800">Total aller-retour : {formatXAF(option.totalPrice)}</p>
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-slate-500">Le total indiqué pour chaque option est le tarif relevé de l'aller-retour complet avec ce vol retour ; il est confirmé par un conseiller avant toute réservation.</p>
+          </>
+        )}
+      </div>
     </div>
   );
 }

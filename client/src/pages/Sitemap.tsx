@@ -40,7 +40,7 @@ const SITE_SECTIONS: SitemapSection[] = [
     key: "prepare", title: { fr: "Préparer votre projet", en: "Prepare your project" }, description: { fr: "Les services publics pour commencer une démarche de mobilité, de voyage ou de visa.", en: "Public services to begin a mobility, travel or visa process." }, icon: Landmark,
     links: [
       { key: "assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Demander une première orientation sans créer de compte.", en: "Request initial guidance without creating an account." } },
-      { key: "booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/billets", description: { fr: "Rechercher des options de billets et de séjour.", en: "Search ticket and stay options." } },
+      { key: "booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/flights", description: { fr: "Rechercher des options de billets et de séjour.", en: "Search ticket and stay options." } },
       { key: "procedures", label: { fr: "Procédures & destinations", en: "Procedures & destinations" }, href: "/procedures", description: { fr: "Comparer les démarches selon le pays et votre projet.", en: "Compare procedures by country and project." } },
       { key: "evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique.", en: "Prepare an electronic visa application." } },
       { key: "insurance", label: { fr: "Assurance voyage", en: "Travel insurance" }, href: "/assurance", description: { fr: "Initier une demande de couverture adaptée au séjour.", en: "Start a request for travel coverage suited to your stay." } },

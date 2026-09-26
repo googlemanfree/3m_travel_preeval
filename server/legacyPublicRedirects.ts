@@ -13,6 +13,8 @@ export const LEGACY_PUBLIC_REDIRECTS = {
   "/evaluation-canada": "/evaluation?source=facebook&campaign=Canada",
   "/evaluation-rapide": "/#evaluation-multi",
   "/vols": "/flights",
+  "/billets": "/flights",
+  "/3m-booking": "/flights#3m-booking",
   "/insurance": "/assurance",
   "/evisa-demande": "/evisas/request",
   "/e-design": "/evisas",

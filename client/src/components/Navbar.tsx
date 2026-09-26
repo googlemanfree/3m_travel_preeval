@@ -35,7 +35,7 @@ type NavCopy = { fr: string; en: string };
 
 const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: boolean }[] = [
   { href: "/", label: { fr: "Accueil", en: "Home" }, icon: Home },
-  { href: "/billets", label: { fr: "3M Booking", en: "3M Booking" }, icon: Plane },
+  { href: "/flights", label: { fr: "3M Booking", en: "3M Booking" }, icon: Plane },
   { href: "/procedures", label: { fr: "Procédures", en: "Procedures" }, icon: BookOpen },
   { href: "/destinations", label: { fr: "Destinations", en: "Destinations" }, icon: MapPin },
   { href: "/ressources", label: { fr: "Ressources", en: "Resources" }, icon: Globe2 },

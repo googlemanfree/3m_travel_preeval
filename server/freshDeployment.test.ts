@@ -24,8 +24,11 @@ describe("Chargement frais après déploiement", () => {
   it("rend 3M Booking visible dès le haut de la page Billets", () => {
     const source = fs.readFileSync(path.join(projectRoot, "client/src/pages/Flights.tsx"), "utf8");
 
-    expect(source).toContain('href="#3m-booking"');
-    expect(source).toContain("3M Booking — Hôtels & séjours");
+    const tabs = fs.readFileSync(path.join(projectRoot, "client/src/data/flightDiscovery.ts"), "utf8");
+
+    // Le lien « Hôtels » des onglets de services mène à la section 3M Booking de la page ; /3m-booking y redirige.
+    expect(tabs).toContain('href: "#3m-booking"');
+    expect(source).toContain("3M Booking — Hôtels et séjours");
     expect(source).toContain('id="3m-booking"');
   });
 });

@@ -47,7 +47,6 @@ const AdminUserDetails = lazyWithTimeout(() => import("./pages/AdminUserDetails"
 const VisaEtudes = lazyWithTimeout(() => import("./pages/VisaEtudes"));
 const Canada = lazyWithTimeout(() => import("./pages/Canada"));
 const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
-const Billets = lazyWithTimeout(() => import("./pages/Billets"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const CniPasseport = lazyWithTimeout(() => import("./pages/CniPasseport"));
 const Services = lazyWithTimeout(() => import("./pages/Services"));
@@ -181,8 +180,8 @@ function Router() {
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
-      <Route path={"/billets"} component={Billets} />
-      <Route path={"/3m-booking"} component={Billets} />
+      <Route path={"/billets"}>{() => <Redirect to="/flights" />}</Route>
+      <Route path={"/3m-booking"}>{() => <Redirect to="/flights#3m-booking" />}</Route>
       <Route path={"/vols"}>{() => <Redirect to="/flights" />}</Route>
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />

@@ -49,6 +49,9 @@ type CheckoutFlight = {
 
 type CheckoutSelection = {
   flight: CheckoutFlight;
+  /** Aller-retour : vol retour choisi et tarif relevé de l'aller-retour complet avec ce retour. */
+  returnFlight?: CheckoutFlight | null;
+  quotedTotalPrice?: number;
   searchParams: { adults: number; children: number; infants: number };
   selectedAt: number;
 };
@@ -70,6 +73,8 @@ export default function FlightBookingCheckout() {
     }
   });
   const selectedFlight = selection?.flight;
+  const returnFlight = selection?.returnFlight ?? null;
+  const quotedTotalPrice = typeof selection?.quotedTotalPrice === "number" ? selection.quotedTotalPrice : selectedFlight?.totalPrice;
   const hasSelectedFlight = Boolean(selectedFlight);
   const [submitted, setSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -134,7 +139,7 @@ export default function FlightBookingCheckout() {
     setBookingSubmitError(null);
     createRequestMutation.mutate({
       flightId: selectedFlight.id,
-      flightData: selectedFlight as unknown as Record<string, unknown>,
+      flightData: { ...selectedFlight, returnFlight, quotedTotalPrice } as unknown as Record<string, unknown>,
       passengerData: [{ ...(formData as unknown as Record<string, unknown>), passportScanId }],
     });
   };
@@ -263,11 +268,12 @@ export default function FlightBookingCheckout() {
         `Compagnie / vol : ${selectedFlight.airline.name} — ${selectedFlight.flightNumber}`,
         `Itinéraire : ${selectedFlight.originCity} (${selectedFlight.origin}) → ${selectedFlight.destinationCity} (${selectedFlight.destination})`,
         `Départ : ${selectedFlight.departureDate} à ${selectedFlight.departureTime}`,
+        ...(returnFlight ? [`Vol retour : ${returnFlight.airline.name} ${returnFlight.flightNumber} — ${returnFlight.departureDate} à ${returnFlight.departureTime} (${returnFlight.origin} → ${returnFlight.destination})`] : []),
         `Arrivée : ${selectedFlight.arrivalTime} · Durée : ${selectedFlight.duration}`,
         `Escales : ${selectedFlight.stops === 0 ? "Vol direct" : `${selectedFlight.stops} escale(s)`}`,
         `Classe : ${selectedFlight.cabinClass}`,
         "Bagages, conditions et taxes : confirmés par un conseiller avant réservation",
-        `Tarif relevé (à confirmer) : ${formatXaf(selectedFlight.totalPrice)}`,
+        `Tarif relevé${returnFlight ? " aller-retour" : ""} (à confirmer) : ${formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice)}`,
         "",
         "VALIDATION",
         "Le tarif, les places et l’émission doivent être revalidés par 3M Travel Agency avant tout paiement ou émission définitive.",
@@ -369,22 +375,22 @@ export default function FlightBookingCheckout() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider text-slate-600">Nom complet (selon passeport) *</Label>
-                    <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Ex : DONFACK AUREOL" required maxLength={255} className="h-12 rounded-xl" />
+                    <Input id="fullName" name="fullName" autoComplete="name" value={formData.fullName} onChange={handleChange} placeholder="Ex : DONFACK AUREOL" required maxLength={255} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-600">Adresse E-mail *</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="exemple@gmail.com" required maxLength={320} className="h-12 rounded-xl" />
+                    <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" value={formData.email} onChange={handleChange} placeholder="exemple@gmail.com" required maxLength={320} className="h-12 rounded-xl" />
                   </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-600">Téléphone / WhatsApp *</Label>
-                    <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+237 6XX XXX XXX" required maxLength={50} className="h-12 rounded-xl" />
+                    <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" value={formData.phone} onChange={handleChange} placeholder="+237 6XX XXX XXX" required maxLength={50} className="h-12 rounded-xl" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nationality" className="text-xs font-bold uppercase tracking-wider text-slate-600">Nationalité</Label>
-                    <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} placeholder="Camerounaise" maxLength={100} className="h-12 rounded-xl" />
+                    <Input id="nationality" name="nationality" autoComplete="country-name" value={formData.nationality} onChange={handleChange} placeholder="Camerounaise" maxLength={100} className="h-12 rounded-xl" />
                   </div>
                 </div>
 
@@ -439,11 +445,12 @@ export default function FlightBookingCheckout() {
                 <div className="space-y-3 text-sm text-slate-600">
                   <div className="flex justify-between gap-3"><span>Vol :</span><span className="font-mono text-right font-bold text-slate-900">{selectedFlight?.flightNumber || "Non sélectionné"}</span></div>
                   <div className="flex justify-between gap-3"><span>Itinéraire :</span><span className="text-right font-semibold text-slate-900">{selectedFlight ? `${selectedFlight.origin} → ${selectedFlight.destination}` : "À sélectionner"}</span></div>
+                  {returnFlight && <div className="flex justify-between gap-3" data-testid="checkout-return-leg"><span>Retour :</span><span className="text-right font-semibold text-slate-900">{returnFlight.origin} → {returnFlight.destination} · {returnFlight.departureDate} à {returnFlight.departureTime}</span></div>}
                   <div className="flex justify-between gap-3"><span>Classe :</span><span className="font-semibold text-blue-700">{selectedFlight?.cabinClass || "À confirmer"}</span></div>
                   <div className="flex justify-between gap-3"><span>Bagages et conditions :</span><span className="text-right font-semibold text-slate-900">Confirmés par un conseiller</span></div>
                 </div>
                 <div className="my-4 border-t border-slate-100" />
-                <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Tarif relevé (à confirmer)</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Tarif relevé{returnFlight ? " aller-retour" : ""} (à confirmer)</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice) : "À confirmer"}</span></div>
                 
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                   <div className="flex items-center gap-2 font-black text-amber-950">
@@ -637,7 +644,7 @@ export default function FlightBookingCheckout() {
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4">
                       <div className="flex justify-between text-xs text-slate-500"><span>Prestation :</span><span className="font-bold text-slate-800">Vol GDS international</span></div>
-                       <div className="mt-2 flex justify-between gap-3 text-base font-black text-blue-900"><span>Tarif relevé (à confirmer) :</span><span className="text-right">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                       <div className="mt-2 flex justify-between gap-3 text-base font-black text-blue-900"><span>Tarif relevé (à confirmer) :</span><span className="text-right">{selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice) : "À confirmer"}</span></div>
                      </div>
                      <p className="text-xs text-slate-500">En confirmant, vous préparez votre demande. L’agence doit revalider le tarif et les disponibilités avant toute émission.</p>
                   </div>

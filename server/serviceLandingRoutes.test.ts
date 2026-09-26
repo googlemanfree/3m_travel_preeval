@@ -10,11 +10,13 @@ describe("routes canoniques des pages de service", () => {
     expect(appSource).toContain('path={"/canada"} component={Canada}');
     expect(appSource).toContain('path={"/schengen"} component={Schengen}');
     expect(appSource).toContain('path={"/etudes"} component={VisaEtudes}');
-    expect(appSource).toContain('path={"/billets"} component={Billets}');
+    expect(appSource).toContain('path={"/flights"} component={Flights}');
+    expect(appSource).toContain('<Route path={"/billets"}>{() => <Redirect to="/flights" />}</Route>');
+    expect(appSource).not.toContain("pages/Billets");
     expect(appSource).toContain('path={"/formation"} component={Formation}');
     expect(appSource).toContain('path={"/3m-booking"}');
     expect(appSource).toContain('path={"/visa-etudes"}');
-    expect(appSource).toContain('path={"/3m-booking"} component={Billets}');
+    expect(appSource).toContain('<Route path={"/3m-booking"}>{() => <Redirect to="/flights#3m-booking" />}</Route>');
   });
 
   it("référence dix destinations d’études avec des sources officielles", () => {

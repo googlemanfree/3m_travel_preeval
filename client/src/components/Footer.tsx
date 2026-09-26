@@ -59,7 +59,7 @@ const USEFUL_LINKS: FooterLink[] = [
 
 const MINI_SITE_MAP: FooterLink[] = [
   { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Découvrir l’évaluation gratuite, puis créer un compte et déposer un CV avant la soumission.", en: "Explore the free assessment, then create an account and submit a CV before sending it." } },
-  { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/billets", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
+  { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/flights", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
   { key: "mini_procedures", label: { fr: "Procédures", en: "Procedures" }, href: "/procedures", description: { fr: "Comparer les démarches et destinations proposées.", en: "Compare available procedures and destinations." } },
   { key: "mini_evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique adaptée.", en: "Prepare a suitable electronic visa application." } },
   { key: "mini_pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand fees, third-party costs and terms." } },

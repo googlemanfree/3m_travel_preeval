@@ -17,7 +17,7 @@ const services = [
     subtitle: 'Recherche d’options adaptées à vos dates, itinéraire et budget.',
     icon: '✈️',
     badgeColor: 'bg-indigo-100 text-indigo-600',
-    link: '/billets',
+    link: '/flights',
     isExternal: false,
   },
   {
@@ -59,7 +59,7 @@ const services = [
 ];
 
 const intentRoutes = [
-  { label: 'Vols', description: 'Rechercher un itinéraire', href: '/billets', icon: '✈️' },
+  { label: 'Vols', description: 'Rechercher un itinéraire', href: '/flights', icon: '✈️' },
   { label: 'Tourisme', description: 'Préparer un séjour', href: '/tourisme', icon: '✦' },
   { label: 'Hôtels', description: 'Trouver un hébergement', href: '/tourisme', icon: '⌂' },
   { label: 'Visa', description: 'Explorer les procédures', href: '/procedures', icon: '◈' },
