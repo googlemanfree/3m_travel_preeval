@@ -49,7 +49,7 @@ export async function findPotentialDuplicates(db: any, input: { email: string; f
   const email = normalizeDuplicateEmail(input.email);
   const [accounts, apps, agencies] = await Promise.all([
     db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).where(sql`LOWER(TRIM(${candidates.email})) = ${email}`),
-    db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email }).from(applications).where(sql`LOWER(TRIM(${applications.email})) = ${email}`),
+    db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email }).from(applications).where(and(isNull(applications.deletedAt), sql`LOWER(TRIM(${applications.email})) = ${email}`)),
     db.select({ id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email }).from(agencyDossiers).where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(TRIM(${agencyDossiers.email})) = ${email}`)),
   ]);
   const matches: DuplicateMatch[] = [
@@ -59,8 +59,8 @@ export async function findPotentialDuplicates(db: any, input: { email: string; f
   ];
   const seen = new Set(matches.map((m) => `${m.source}:${m.id}`));
   const [allAccounts, allApps, allAgencies] = await Promise.all([
-    db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).limit(500),
-    db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email }).from(applications).limit(500),
+    db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).where(isNull(candidates.deletedAt)).limit(500),
+    db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email }).from(applications).where(isNull(applications.deletedAt)).limit(500),
     db.select({ id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email }).from(agencyDossiers).where(isNull(agencyDossiers.deletedAt)).limit(500),
   ]);
   const add = (rows: any[], source: DuplicateMatch["source"], ref: (r: any) => string) => rows.forEach((r) => {
