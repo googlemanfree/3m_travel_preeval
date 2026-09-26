@@ -80,6 +80,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation();
   const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
   const sendAgreementProtocolMutation = trpc.adminCandidateManagement.sendAgreementProtocol.useMutation();
+  const sendPackageMutation = trpc.adminCandidateManagement.sendReceiptAndProtocol.useMutation();
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -208,6 +209,22 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
     setAgreementContent(INITIAL_AGREEMENT_PROTOCOL);
   };
 
+  // Reçu et protocole N°01 dans UN SEUL e-mail. Premier envoi : refusé s'il a déjà eu lieu (aucun doublon) ; confirmation avant un renvoi.
+  const handleSendPackage = async (payment: any) => {
+    try {
+      let result = await sendPackageMutation.mutateAsync({ sessionToken, candidateId: `online_${payment.id}`, resend: false });
+      if (result.alreadySent) {
+        if (!window.confirm(`Le reçu et le protocole du dossier ${payment.dossierNumber} ont déjà été envoyés. Les renvoyer au candidat ?`)) return;
+        result = await sendPackageMutation.mutateAsync({ sessionToken, candidateId: `online_${payment.id}`, resend: true });
+      }
+      toast.success("Reçu et protocole envoyés ensemble", { description: `${result.dossierNumber} — un seul e-mail avec les deux PDF est parti vers ${result.email}.` });
+      await refetch();
+      onPaymentUpdated?.();
+    } catch (error) {
+      toast.error("Envoi impossible", { description: error instanceof Error ? error.message : "Une erreur est survenue." });
+    }
+  };
+
   const handleConfirmAgreementProtocol = async () => {
     if (!agreementPayment) return;
     try {
@@ -294,7 +311,11 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
       if (actionType === 'confirm') {
         if (paymentResult.agreementRequired) {
           toast.warning("Paiement confirmé, traitement encore bloqué", {
-            description: `Le protocole du dossier ${selectedPayment.dossierNumber} doit être signé par le client.`,
+            description: paymentResult.packageSent
+              ? `Le reçu et le protocole d’accord N°01 du dossier ${selectedPayment.dossierNumber} ont été envoyés ensemble au candidat ; le protocole doit être signé.`
+              : paymentResult.packageError
+                ? `Le reçu et le protocole n’ont pas pu partir (${paymentResult.packageError}). Utilisez « Reçu + protocole » pour relancer.`
+                : `Le protocole du dossier ${selectedPayment.dossierNumber} doit être signé par le client.`,
             duration: 7000,
           });
         } else {
@@ -666,6 +687,11 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                             </>
                           )}
                           {payment.paymentStatus === "SUCCESS" && <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800" title="Ce paiement est déjà confirmé ; aucune seconde validation n’est nécessaire."><CheckCircle2 className="h-3.5 w-3.5" /> Validé · {payment.validatedBy || "conseiller"}</span>}
+                          {payment.paymentStatus === "SUCCESS" && (
+                            <Button onClick={() => void handleSendPackage(payment)} variant="ghost" size="sm" title="Envoyer le reçu et le protocole d’accord N°01 ensemble, dans un seul e-mail" aria-label={`Envoyer reçu et protocole du dossier ${payment.dossierNumber}`} className="text-blue-700 hover:bg-blue-50" disabled={sendPackageMutation.isPending} data-testid="send-receipt-and-protocol">
+                              {sendPackageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}<span className="hidden xl:inline">Reçu + protocole</span>
+                            </Button>
+                          )}
                           {payment.paymentStatus === "SUCCESS" && !payment.agreementSigned && (
                             <Button onClick={() => handleOpenAgreementProtocol(payment)} variant="ghost" size="sm" title="Préparer et envoyer le protocole d’accord" aria-label={`Préparer le protocole du dossier ${payment.dossierNumber}`} className="text-amber-700 hover:bg-amber-50" disabled={sendAgreementProtocolMutation.isPending}>
                               <Mail className="h-4 w-4" /><span className="hidden xl:inline">Envoyer protocole</span>

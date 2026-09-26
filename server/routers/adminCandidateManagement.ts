@@ -9,6 +9,7 @@ import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
+import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
@@ -835,7 +836,33 @@ export const adminCandidateManagementRouter = router({
         details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.`,
       });
 
-      return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt };
+      // Dès que le paiement est confirmé, le reçu et le Protocole d'accord N°01 partent ENSEMBLE, dans un seul e-mail.
+      // Un échec d'envoi n'annule pas la confirmation : le bouton « Envoyer reçu + protocole » permet de relancer.
+      let packageSent = false;
+      let packageError: string | null = null;
+      try {
+        packageSent = (await sendReceiptAndProtocol(db, reference, { email: admin.email || "Administrateur" })).sent;
+      } catch (error) {
+        packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
+        console.error("[Payment] receipt + protocol package failed", { dossierNumber, error });
+      }
+
+      return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt, packageSent, packageError };
+    }),
+  /** Envoie (ou renvoie) le reçu et le Protocole d'accord N°01 ensemble, dans un seul e-mail, pour un paiement déjà confirmé. */
+  sendReceiptAndProtocol: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      resend: z.boolean().default(false),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+      return sendReceiptAndProtocol(db, reference, { email: admin.email || "Administrateur" }, { resend: input.resend });
     }),
   approvePaymentReceipt: publicProcedure
     .input(z.object({

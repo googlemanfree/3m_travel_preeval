@@ -459,7 +459,11 @@ export function CandidateDetailModal({
       setPaymentConfirmedOptimistically(true);
       toast({
         title: result.alreadyConfirmed ? "Paiement déjà confirmé" : "Paiement confirmé",
-        description: `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
+        description: result.packageSent
+          ? `${result.dossierNumber} — validation enregistrée pour ${result.fullName}. Le reçu et le protocole d’accord N°01 ont été envoyés ensemble au candidat.`
+          : result.packageError
+            ? `${result.dossierNumber} — paiement validé, mais le reçu et le protocole n’ont pas pu partir : ${result.packageError} Relancez « Envoyer reçu + protocole ».`
+            : `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
       });
       void refetch();
       onStatusUpdated();

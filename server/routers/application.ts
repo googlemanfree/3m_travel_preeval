@@ -27,6 +27,7 @@ const otpResendLimiter = createFixedWindowLimiter({ limit: 3, windowMs: 15 * 60_
 const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 60 * 60_000 });
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
+import { sendReceiptAndProtocol } from "../services/paymentPackage";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -781,11 +782,26 @@ export const applicationRouter = router({
         });
       }
 
+      // Paiement confirmé : le reçu et le Protocole d'accord N°01 partent ENSEMBLE (un seul e-mail, deux PDF).
+      // Sans doublon si la validation est répétée ; un échec n'annule pas la validation (bouton de relance côté admin).
+      let packageSent = false;
+      let packageError: string | null = null;
+      if (input.paymentStatus === "SUCCESS" && application.paymentStatus !== "SUCCESS") {
+        try {
+          packageSent = (await sendReceiptAndProtocol(db, { source: "online", id: application.id }, { email: ctx.user.email || ctx.user.name || "Administrateur" })).sent;
+        } catch (error) {
+          packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
+          console.error("[Payment] receipt + protocol package failed", { applicationId: application.id, error });
+        }
+      }
+
       return {
         success: true,
         dossierNumber: application.dossierNumber,
         paymentStatus: input.paymentStatus,
         agreementRequired: isValidated && !application.agreementSigned,
+        packageSent,
+        packageError,
       };
     }),
 
