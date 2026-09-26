@@ -16,6 +16,6 @@ describe("routes publiques historiques", () => {
   });
 
   it("place le pied de page après les résultats et le parcours 3M Booking", () => {
-    expect(flightsSource).toContain('<div className="order-5"><Footer /></div>');
+    expect(flightsSource).toContain('<div className="order-6"><Footer /></div>');
   });
 });

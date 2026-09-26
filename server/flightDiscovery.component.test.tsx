@@ -28,7 +28,13 @@ const appRoutes = () => {
 
 describe("données de la page de vols", () => {
   it("aucun tarif, aucune devise ni « à partir de » : un prix n'existe que dans une vraie recherche", () => {
-    const raw = source("client/src/data/flightDiscovery.ts") + source("client/src/components/FlightDiscoverySections.tsx");
+    // Seul le bloc « Meilleures offres » affiche des tarifs, et uniquement ceux relevés chez le fournisseur (voir flightOffers.test.tsx).
+    const sections = source("client/src/components/FlightDiscoverySections.tsx");
+    const offersStart = sections.indexOf("export type BestOffer");
+    const offersEnd = sections.indexOf("function RouteButton");
+    expect(offersStart).toBeGreaterThan(-1);
+    expect(offersEnd).toBeGreaterThan(offersStart);
+    const raw = source("client/src/data/flightDiscovery.ts") + sections.slice(0, offersStart) + sections.slice(offersEnd);
     expect(raw).not.toMatch(/\d[\d\s.,]*\s?(FCFA|XAF|EUR|€|\$)/i);
     expect(raw).not.toMatch(/à partir de/i);
     expect(raw).not.toMatch(/\b(prix imbattable|meilleur prix garanti|moins cher)\b/i);

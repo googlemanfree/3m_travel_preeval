@@ -34,6 +34,80 @@ export function FlightServiceTabs() {
   );
 }
 
+export type BestOffer = {
+  routeId: string;
+  tripType: "ROUND_TRIP" | "ONE_WAY";
+  from: { iata: string; city: string };
+  to: { iata: string; city: string };
+  departureDate: string;
+  returnDate: string | null;
+  priceXaf: number;
+  airline: string;
+  stops: number;
+  durationMinutes: number;
+};
+
+const formatOfferDate = (iso: string) => {
+  const date = new Date(`${iso}T12:00:00Z`);
+  return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+};
+export const formatOfferPrice = (amount: number) => `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+const stopsLabel = (stops: number) => (stops === 0 ? "Direct" : stops === 1 ? "1 escale" : `${stops} escales`);
+const durationLabel = (minutes: number) => (minutes > 0 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}` : "");
+
+/**
+ * « Meilleures offres » : tarifs le plus bas réellement relevés chez le fournisseur (jamais écrits en dur), avec leur date de
+ * relevé. Rien ne s'affiche sans données réelles ; un clic lance la recherche avec exactement ces dates.
+ */
+export function FlightBestOffers({ offers, retrievedAt, onPick }: { offers: BestOffer[]; retrievedAt: string | null; onPick: (offer: BestOffer) => void }) {
+  if (offers.length === 0) return null;
+  const retrieved = retrievedAt ? new Date(retrievedAt) : null;
+  const retrievedLabel = retrieved && !Number.isNaN(retrieved.getTime()) ? retrieved.toLocaleString("fr-FR", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }) : null;
+  return (
+    <section aria-labelledby="flight-offers-title" className="mx-auto max-w-6xl px-4 pt-10" data-testid="flight-best-offers">
+      <div className="mx-auto mb-8 max-w-2xl text-center">
+        <p className="text-xs font-black uppercase tracking-widest text-amber-600">Meilleures offres</p>
+        <h2 id="flight-offers-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Les tarifs les plus bas relevés pour vous</h2>
+        <p className="mt-2 text-sm text-slate-600">Comparez les meilleurs tarifs sur les parcours les plus demandés, puis lancez la recherche en un clic.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {offers.map((offer) => (
+          <button
+            key={offer.routeId}
+            type="button"
+            onClick={() => onPick(offer)}
+            data-testid={`flight-offer-${offer.routeId}`}
+            aria-label={`Voir les vols ${offer.from.city} ${offer.to.city} à partir de ${formatOfferPrice(offer.priceXaf)}`}
+            className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
+            <span className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+              <span>{offer.tripType === "ROUND_TRIP" ? "Aller-retour" : "Aller simple"}</span>
+              <span className="normal-case">{stopsLabel(offer.stops)}{durationLabel(offer.durationMinutes) ? ` · ${durationLabel(offer.durationMinutes)}` : ""}</span>
+            </span>
+            <span className="mt-2 flex items-center gap-2 text-lg font-black text-slate-900">
+              <span className="truncate">{offer.from.city}</span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+              <span className="truncate">{offer.to.city}</span>
+            </span>
+            <span className="block text-xs font-semibold text-slate-500">{offer.from.iata} – {offer.to.iata} · {offer.airline}</span>
+            <span className="mt-3 block text-sm text-slate-700">{formatOfferDate(offer.departureDate)}{offer.returnDate ? ` → ${formatOfferDate(offer.returnDate)}` : ""}</span>
+            <span className="mt-3 flex items-end justify-between gap-3">
+              <span>
+                <span className="block text-xs text-slate-500">à partir de</span>
+                <span className="block text-2xl font-black text-blue-800" data-testid="offer-price">{formatOfferPrice(offer.priceXaf)}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800 transition group-hover:bg-blue-700 group-hover:text-white"><Search className="h-3.5 w-3.5" aria-hidden="true" /> Voir ce vol</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-4 text-center text-xs leading-5 text-slate-500" data-testid="offers-provenance">
+        Tarifs {retrievedLabel ? `relevés le ${retrievedLabel}` : "relevés"} sur Google Flights pour 1 adulte en classe économique ; ils évoluent sans préavis. Bagages, conditions, taxes et disponibilité sont confirmés par un conseiller 3M avant toute réservation.
+      </p>
+    </section>
+  );
+}
+
 function RouteButton({ route, onPick }: { route: FlightRoute; onPick: PickRoute }) {
   return (
     <button

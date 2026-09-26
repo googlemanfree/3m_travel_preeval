@@ -18,8 +18,12 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightLowerSections, FlightPopularRoutes, FlightServiceTabs } from "@/components/FlightDiscoverySections";
-import { FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
+import { FlightBestOffers, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
+
+/** « Yaoundé (NSI) » pour les aéroports des parcours fréquents ; le code seul pour les autres. */
+const AIRPORT_CITY: Record<string, string> = Object.fromEntries(ALL_FLIGHT_ROUTES.flatMap((route) => [[route.from.iata, route.from.city], [route.to.iata, route.to.city]]));
+const airportLabel = (iata: string) => (AIRPORT_CITY[iata] ? `${AIRPORT_CITY[iata]} (${iata})` : iata);
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -632,6 +636,9 @@ export default function Flights() {
     };
   }, []);
 
+  // Meilleures offres : tarifs réellement relevés (aucune offre affichée sans données du fournisseur).
+  const offersQuery = trpc.flights.popularOffers.useQuery(undefined, { staleTime: 30 * 60_000, retry: false, refetchOnWindowFocus: false });
+
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
 
   useEffect(() => {
@@ -736,25 +743,37 @@ export default function Flights() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Une offre lance la recherche avec exactement les dates relevées : le prix affiché en résultat est celui de la recherche.
+  function pickOffer(offer: BestOffer) {
+    setTripType(offer.tripType);
+    setOrigin(offer.from.iata);
+    setDestination(offer.to.iata);
+    setDepartureDate(offer.departureDate);
+    setReturnDate(offer.returnDate ?? addDaysToIsoDate(offer.departureDate, 7));
+    setSelectedAirlines([]);
+    setSelectedAlliance("ALL");
+    setMaxStops(null);
+    searchStartedAtRef.current = Date.now();
+    setIsSearchSubmitting(true);
+    setSearchEnabled(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
 
       {/* Search Panel */}
-      <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] py-10 px-4">
+      <div className="bg-white px-4 pb-10 pt-10 md:pt-14" data-testid="flight-hero">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Recherche de Vols</h1>
-            <p className="text-blue-200 text-sm">Comparez les meilleurs tarifs en temps réel · Toutes destinations mondiales</p>
-            <a
-              href="#3m-booking"
-              className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/35 bg-slate-950/25 px-4 py-2 text-xs font-black text-white shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-[#1E3A8A]"
-            >
-              <BedDouble className="h-4 w-4" /> 3M Booking — Hôtels & séjours
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
+            <h1 className="mx-auto max-w-3xl text-3xl font-medium leading-tight text-[#0B1B4D] md:text-5xl">
+              Rechercher des <span className="text-amber-500">billets d’avion</span> pas chers et des bons plans voyages
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600">Comparez les tarifs de plusieurs compagnies au départ de Yaoundé, Douala et du monde entier. Un conseiller 3M confirme le tarif avant toute réservation.</p>
           </motion.div>
 
+          <div className="rounded-3xl bg-gradient-to-br from-[#0F2A6B] via-[#0B1F55] to-[#020C3B] p-4 shadow-2xl md:p-6">
           <FlightServiceTabs />
 
           {/* Trip type tabs */}
@@ -775,10 +794,10 @@ export default function Flights() {
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
             aria-busy={isSearchBusy}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_1fr] gap-4">
               {/* Origin */}
               <div className="relative">
-                <AirportInput label="Départ" value={`${origin} — ${origin}`} onChange={(iata) => setOrigin(iata)}
+                <AirportInput label="Départ" value={airportLabel(origin)} onChange={(iata) => setOrigin(iata)}
                   placeholder="Ville ou code IATA" icon={<MapPin className="w-4 h-4" />} />
               </div>
 
@@ -788,7 +807,7 @@ export default function Flights() {
                   className="absolute left-0 top-7 -translate-x-3 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                 </button>
-                <AirportInput label="Arrivée" value={`${destination} — ${destination}`} onChange={(iata) => setDestination(iata)}
+                <AirportInput label="Arrivée" value={airportLabel(destination)} onChange={(iata) => setDestination(iata)}
                   placeholder="Ville ou code IATA" icon={<Plane className="w-4 h-4" />} />
               </div>
 
@@ -881,14 +900,15 @@ export default function Flights() {
               </AnimatePresence>
             </div>
           </motion.div>
+          </div>
         </div>
       </div>
 
-      <section id="3m-booking" className="order-2 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
+      <section id="3m-booking" className="order-5 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
         <ThreeMBookingExperience />
       </section>
 
-      <div className="order-3"><FlightQuoteRequest /></div>
+      <div className="order-4"><FlightQuoteRequest /></div>
 
       {/* Travel planner section */}
       <div className="order-4 max-w-7xl mx-auto px-4 py-6">
@@ -946,10 +966,11 @@ export default function Flights() {
         </motion.div>
       </div>
 
-      <div className="order-4"><FlightLowerSections onPick={pickRoute} /></div>
+      <div className="order-3"><FlightLowerSections onPick={pickRoute} /></div>
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
+        {!searchEnabled && offersQuery.data?.status === "live" && <FlightBestOffers offers={offersQuery.data.offers} retrievedAt={offersQuery.data.retrievedAt} onPick={pickOffer} />}
         {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 
         {isFetching && (
@@ -1111,7 +1132,7 @@ export default function Flights() {
           </motion.div>
         )}
       </div>
-      <div className="order-5"><Footer /></div>
+      <div className="order-6"><Footer /></div>
     </div>
   );
 }

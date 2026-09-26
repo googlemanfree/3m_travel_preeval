@@ -9,6 +9,7 @@ import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { FlightOffersStore, OFFER_ROUTES, collectOffers, offerDates, selectCheapest, type CheapestFare, type FlightOffer, type OfferDates, type OfferRoute } from "../services/flightOffers";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
 // 200 au total par heure pour borner le pire cas même si l'en-tête `x-forwarded-for` est falsifié.
@@ -199,7 +200,53 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
   };
 }
 
+const flightOffersStore = new FlightOffersStore();
+/** Vide la mémoire des offres (tests). */
+export const resetFlightOffersStore = () => flightOffersStore.reset();
+
+/** Tarif le plus bas relevé chez le fournisseur pour un parcours ; null si le fournisseur ne répond pas ou sans résultat. */
+async function fetchCheapestLive(apiKey: string, route: OfferRoute, dates: OfferDates): Promise<CheapestFare | null> {
+  const params = new URLSearchParams({
+    engine: "google_flights",
+    api_key: apiKey,
+    departure_id: route.from.iata,
+    arrival_id: route.to.iata,
+    outbound_date: dates.departureDate,
+    flight_type: route.tripType === "ROUND_TRIP" ? "round_trip" : "one_way",
+    travel_class: "economy",
+    adults: "1",
+    children: "0",
+    currency: "EUR",
+  });
+  if (route.tripType === "ROUND_TRIP") params.set("return_date", dates.returnDate);
+  const response = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+  if (!response.ok) return null;
+  const json = await response.json();
+  const legParams: SearchApiLegParams = { origin: route.from.iata, destination: route.to.iata, departureDate: dates.departureDate, cabinClass: "ECONOMY", adults: 1, children: 0, infants: 0, idPrefix: "OF" };
+  const flights = [...(json.best_flights || []), ...(json.other_flights || [])].map((item: any, index: number) => mapSearchApiFlightItem(item, index, legParams)).filter(Boolean) as any[];
+  return selectCheapest(flights);
+}
+
 export const flightsRouter = router({
+  /**
+   * « Meilleures offres » : tarifs réellement relevés (Google Flights via SearchAPI.io) pour quelques parcours fréquents,
+   * mis en mémoire 12 h. Sans fournisseur ou en cas de panne : aucune offre (jamais un prix de remplacement).
+   * Désactivable avec FLIGHT_OFFERS_DISABLED=1 (chaque relevé consomme des appels payants : au plus 8 par période).
+   */
+  popularOffers: publicProcedure.query(async () => {
+    const apiKey = process.env.SEARCHAPI_KEY;
+    if (!apiKey) return { status: "not_configured" as const, offers: [] as FlightOffer[], retrievedAt: null as string | null, dates: null as OfferDates | null };
+    if (process.env.FLIGHT_OFFERS_DISABLED === "1") return { status: "disabled" as const, offers: [] as FlightOffer[], retrievedAt: null as string | null, dates: null as OfferDates | null };
+    const snapshot = await flightOffersStore.get(async () => {
+      const dates = offerDates(new Date());
+      const { offers } = await collectOffers((route, routeDates) => fetchCheapestLive(apiKey, route, routeDates), OFFER_ROUTES, dates);
+      return offers.length > 0 ? { offers, retrievedAt: new Date().toISOString(), dates } : null;
+    });
+    return snapshot
+      ? { status: "live" as const, offers: snapshot.offers, retrievedAt: snapshot.retrievedAt as string | null, dates: snapshot.dates as OfferDates | null }
+      : { status: "unavailable" as const, offers: [] as FlightOffer[], retrievedAt: null as string | null, dates: null as OfferDates | null };
+  }),
+
   searchAirports: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
     .query(({ input }) => {
