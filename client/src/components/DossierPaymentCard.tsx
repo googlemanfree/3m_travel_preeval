@@ -1,6 +1,7 @@
 import { CheckCircle2, CreditCard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatAmount } from "@shared/paymentMethods";
+import PaymentProofUpload from "@/components/PaymentProofUpload";
 
 type Props = {
   dossierNumber: string | null | undefined;
@@ -39,6 +40,7 @@ export default function DossierPaymentCard({ dossierNumber, amount, currency, co
         </div>
         <a href={href} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 text-sm font-black text-white hover:bg-blue-800" data-testid="pay-dossier-link">Comment payer</a>
       </div>
+      <PaymentProofUpload reference={dossierNumber} className="mt-4" />
     </Card>
   );
 }

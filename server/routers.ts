@@ -32,6 +32,7 @@ import { adminDossierRouter } from "./routers/adminDossier";
 import { cinetpayPaymentRouter } from "./routers/cinetpayPayment";
 import { paymentInstructionsRouter } from "./routers/paymentInstructions";
 import { documentFollowUpRouter } from "./routers/documentFollowUp";
+import { paymentProofsRouter } from "./routers/paymentProofs";
 import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
 import { exportRouter } from "./routers/exportRouter";
@@ -175,6 +176,7 @@ export const appRouter = router({
   cinetpayPayment: cinetpayPaymentRouter,
   paymentInstructions: paymentInstructionsRouter,
   documentFollowUp: documentFollowUpRouter,
+  paymentProofs: paymentProofsRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
   export: exportRouter,

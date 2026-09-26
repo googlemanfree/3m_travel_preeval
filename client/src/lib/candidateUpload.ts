@@ -16,6 +16,7 @@ const normalize = (value: string): string => value.normalize("NFD").replace(/[̀
 export function categoryForRequirement(label: string): string {
   const text = normalize(label);
   const has = (...terms: string[]) => terms.some((term) => text.includes(term));
+  if (has("preuve de paiement")) return "payment_proof";
   if (has("photo", "portrait")) return "photo_identite";
   if (has("passeport", "passport")) return "passport";
   if (has("carte d identite", "cni", "carte nationale")) return "id_card";

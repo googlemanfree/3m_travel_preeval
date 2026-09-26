@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MANUAL_METHOD_CODES, paymentMethodLabel } from "@shared/paymentMethods";
+import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
 
 export function AdminReservationPayments() {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "active_session" : "active_session";
@@ -162,6 +163,7 @@ export function AdminReservationPayments() {
                       <span className="font-mono font-bold text-blue-700">{p.requestRef}</span>
                       <p className="font-semibold text-slate-900 mt-0.5">{p.candidateEmail}</p>
                       <p className="text-xs text-slate-500">Montant : {amount}</p>
+                      <AdminPaymentProofBadge sessionToken={sessionToken} reference={p.requestRef} />
                     </td>
                     <td className="p-4">
                       {p.paymentMethod === "orange_money" ? (

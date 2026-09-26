@@ -9,6 +9,7 @@ import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mai
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
+import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 
 interface Payment {
@@ -610,7 +611,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                 <tbody>
                   {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}</td>
+                      <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}<AdminPaymentProofBadge sessionToken={sessionToken} reference={payment.dossierNumber} /></td>
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
                       <td className="py-3 px-4 text-xs text-gray-600">

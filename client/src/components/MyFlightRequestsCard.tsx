@@ -1,6 +1,7 @@
 import { CreditCard, Plane } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import PaymentProofUpload from "@/components/PaymentProofUpload";
 import { flightPaymentExpected, flightStatusLabel, flightStatusTone } from "@shared/flightRequestStatus";
 
 type FlightData = { originCity?: string; destinationCity?: string; origin?: string; destination?: string; departureDate?: string; airline?: { name?: string } | string };
@@ -39,6 +40,7 @@ export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boo
                 </a>
               )}
               {request.status === "issued" && request.pnrReference && <span className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-emerald-800">PNR {request.pnrReference}</span>}
+              {flightPaymentExpected(request.status) && <PaymentProofUpload reference={request.requestRef} className="w-full" />}
             </li>
           );
         })}

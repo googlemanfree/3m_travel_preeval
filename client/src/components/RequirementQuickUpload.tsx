@@ -10,6 +10,10 @@ type Props = {
   /** « À remplacer » après un rejet : le libellé du bouton change. */
   replace?: boolean;
   onUploaded?: () => void;
+  /** Libellé du bouton principal (par défaut « Envoyer ce document »). */
+  buttonLabel?: string;
+  /** Message affiché après un envoi réussi (par défaut : « <fichier> envoyé. L'agence le vérifie. »). */
+  doneMessage?: (fileName: string) => string;
 };
 
 type Phase = "idle" | "preparing" | "warn" | "uploading" | "done" | "error";
@@ -19,7 +23,7 @@ type Phase = "idle" | "preparing" | "warn" | "uploading" | "done" | "error";
  * sans choisir de catégorie ni valider une seconde fois. Avant l'envoi, la photo est allégée (ou convertie si HEIC), plusieurs
  * photos sont assemblées en un seul PDF, et une photo floue ou sombre est signalée : le candidat peut la reprendre ou l'envoyer quand même.
  */
-export default function RequirementQuickUpload({ label, replace = false, onUploaded }: Props) {
+export default function RequirementQuickUpload({ label, replace = false, onUploaded, buttonLabel, doneMessage }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -34,7 +38,7 @@ export default function RequirementQuickUpload({ label, replace = false, onUploa
     const result = await uploadCandidateDocument({ file, category: categoryForRequirement(label), requirementLabel: label });
     if (result.ok) {
       setPhase("done");
-      setMessage(`${file.name} envoyé. L’agence le vérifie.${notes.length ? ` ${notes.join(" ")}` : ""}`);
+      setMessage(`${doneMessage ? doneMessage(file.name) : `${file.name} envoyé. L’agence le vérifie.`}${notes.length ? ` ${notes.join(" ")}` : ""}`);
       onUploaded?.();
     } else {
       setPhase("error");
@@ -98,7 +102,7 @@ export default function RequirementQuickUpload({ label, replace = false, onUploa
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" size="sm" disabled={busy} onClick={() => fileRef.current?.click()} className="h-10 gap-1.5 bg-blue-700 text-xs font-bold hover:bg-blue-800" aria-label={`${replace ? "Remplacer" : "Envoyer"} : ${label}`}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
-          {phase === "preparing" ? "Préparation…" : phase === "uploading" ? "Envoi…" : replace ? "Envoyer une nouvelle version" : "Envoyer ce document"}
+          {phase === "preparing" ? "Préparation…" : phase === "uploading" ? "Envoi…" : replace ? "Envoyer une nouvelle version" : (buttonLabel ?? "Envoyer ce document")}
         </Button>
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => cameraRef.current?.click()} className="h-10 gap-1.5 text-xs font-bold" aria-label={`Photographier : ${label}`}>
           <Camera className="h-4 w-4" aria-hidden="true" />Photographier

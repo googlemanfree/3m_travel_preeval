@@ -11,6 +11,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidateFiles, candidates, documentClarificationEvents, documentClarificationRequests } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
+import { notifyAdmins } from "./adminNotifications";
 import { imageSize } from "image-size";
 import { createPortraitProof } from "../portraitVerification";
 import { assertClarificationUploadEligibility } from "../../shared/documentClarification";
@@ -73,6 +74,8 @@ const DOCUMENT_TYPE_ALIASES: Record<string, string> = {
   curriculum_vitae: "cv",
   curriculumvitae: "cv",
   other: "other",
+  payment_proof: "payment_proof",
+  preuve_paiement: "payment_proof",
   autres: "other",
   "autres/divers": "other",
   autre: "other",
@@ -84,11 +87,12 @@ function normalizeDocumentType(value: string): string {
   return DOCUMENT_TYPE_ALIASES[normalized] || "";
 }
 
-function inferCandidateFileType(documentType: string, fileName: string): "cv" | "passeport" | "diplome" | "autre" {
+function inferCandidateFileType(documentType: string, fileName: string): "cv" | "passeport" | "diplome" | "justificatif_paiement" | "autre" {
   const normalizedName = fileName.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   if (documentType === "cv" || (documentType === "professional_documents" && /(^|[^a-z])(cv|resume|curriculum)([^a-z]|$)/i.test(normalizedName))) return "cv";
   if (documentType === "passport") return "passeport";
   if (documentType === "diploma") return "diplome";
+  if (documentType === "payment_proof") return "justificatif_paiement";
   return "autre";
 }
 
@@ -362,6 +366,10 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
           details: "Document téléversé par le candidat depuis son espace",
         });
         dossierNumber = `DOS-${agencyDossier.id}`;
+      }
+      if (documentType === "payment_proof") {
+        // La preuve n'est pas un paiement : la cloche prévient le comptoir, qui vérifie la réception puis valide.
+        await notifyAdmins({ type: "payment_received", title: "Preuve de paiement reçue", message: `${candidate.email} — ${storedName}`, relatedId: storedName.split("--")[0], targetAdminType: "accompagnement" });
       }
       await notifyDocumentSubmission({
         candidateEmail: candidate.email,

@@ -1,6 +1,7 @@
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import PaymentMethodsPanel from "@/components/PaymentMethodsPanel";
 import PaymentFallbackPanel from "@/components/PaymentFallbackPanel";
+import PaymentProofUpload from "@/components/PaymentProofUpload";
 
 const GUARANTEES = [
   "Le paiement n’est pris en compte qu’après confirmation de réception par l’agence, avec reçu.",
@@ -30,6 +31,7 @@ export default function Paiement() {
 
       <ServiceSection title={reference ? `Régler la référence ${reference}` : "Un paiement n’a pas abouti ?"} introduction="Contactez l’agence : nous vous indiquons la marche à suivre et confirmons la réception de votre règlement." tone="slate">
         <PaymentFallbackPanel reference={reference} kind={kind} amount={Number.isFinite(amountParam) && amountParam > 0 ? amountParam : null} reason={reference ? "failed" : "alternatives"} />
+        {reference && <PaymentProofUpload reference={reference} className="mt-4" />}
       </ServiceSection>
 
       <ServiceSection title="Vos garanties">
