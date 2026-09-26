@@ -143,7 +143,7 @@ export const profileEvaluationRouter = router({
       
       return {
         success: true,
-        message: "Votre évaluation de profil a été soumise avec succès. Notre équipe vous contactera sous 24h.",
+        message: "Votre évaluation de profil a été soumise avec succès. Notre équipe vous contactera prochainement.",
       };
     }),
 

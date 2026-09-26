@@ -48,7 +48,7 @@ export async function sendClientDossierConfirmationEmail(
             
             <h3 style="color: #1E3A8A; margin-top: 30px;">Prochaines étapes :</h3>
             <ol style="color: #374151; line-height: 2;">
-              <li>Un conseiller vous contactera sur WhatsApp sous 24h</li>
+              <li>Un conseiller vous contactera sur WhatsApp</li>
               <li>Préparez vos documents : passeport, CV, diplômes</li>
               <li>Uploadez vos documents dans votre espace candidat</li>
             </ol>
@@ -195,7 +195,7 @@ export async function sendPaymentConfirmationEmail(
               </tr>
             </table>
             
-            <p>Votre dossier est maintenant <strong>activé</strong>. Un conseiller vous contactera sous 24h pour les prochaines étapes.</p>
+            <p>Votre dossier est maintenant <strong>activé</strong>. Un conseiller vous contactera pour les prochaines étapes.</p>
           </div>
         </div>
       `,

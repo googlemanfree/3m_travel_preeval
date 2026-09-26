@@ -1304,7 +1304,7 @@ export const candidateRouter = router({
       await db.insert(candidateMessages).values({
         candidateId: candidate.id,
         senderRole: "advisor",
-        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera prochainement.`,
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
@@ -1340,7 +1340,7 @@ export const candidateRouter = router({
       await db.insert(candidateMessages).values({
         candidateId: input.candidateId,
         senderRole: "advisor",
-        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera prochainement.`,
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
