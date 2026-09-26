@@ -1,25 +1,9 @@
 import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getCountryById, procedures107Complete, type CountryProcedureComplete } from "@/data/procedures107Complete";
-import { getEvaluationDocumentRequirements, type EvaluationProjectType } from "@/data/evaluationDocumentCatalogue";
+import { buildRequirementOptions, customRequirementKind, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
 import RequirementQuickUpload from "@/components/RequirementQuickUpload";
 
-type ChecklistDocument = {
-  documentType?: string | null;
-  documentName?: string | null;
-  verificationStatus?: string | null;
-  status?: string | null;
-};
-
-type Requirement = { category: string; label: string; detail?: string; priority?: string };
-type CustomRequirement = {
-  id: number;
-  documentType: string;
-  status: "pending" | "received" | "approved" | "rejected" | "waived";
-  dueAt?: Date | string | null;
-  adminComment?: string | null;
-};
 type DocumentClarification = {
   id?: number;
   documentLabel?: string;
@@ -31,131 +15,20 @@ type DocumentClarification = {
   hasSubmittedDocument?: boolean;
 };
 
-const FALLBACK_REQUIREMENTS: Requirement[] = [
-  { category: "Identité", label: "Passeport valide" },
-  { category: "Identité", label: "Photo d’identité" },
-  { category: "État civil", label: "Acte de naissance" },
-  { category: "Domicile", label: "Justificatif de domicile" },
-  { category: "Financier", label: "Justificatifs de ressources" },
-];
-
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-/** procedures107Complete utilise "visiteur", le catalogue d'évaluation utilise "tourisme" pour le même parcours. */
-function projectTypeToVisaType(projectType: EvaluationProjectType): CountryProcedureComplete["visaType"] {
-  return projectType === "tourisme" ? "visiteur" : projectType;
-}
-
-function resolveProcedure(destination?: string | null, projectType?: string | null) {
-  if (!destination) return undefined;
-  const key = normalize(destination);
-  if (isProjectType(projectType)) {
-    const visaType = projectTypeToVisaType(projectType);
-    const exactMatch = procedures107Complete.find((country) => normalize(country.id) === `${key}-${visaType}` || (normalize(country.name) === key && country.visaType === visaType));
-    if (exactMatch) return exactMatch;
-  }
-  return getCountryById(destination) ?? procedures107Complete.find((country) => {
-    const countryKey = normalize(country.id);
-    return countryKey.startsWith(`${key}-`) || normalize(country.name) === key;
-  });
-}
-
-function isProjectType(value?: string | null): value is EvaluationProjectType {
-  return value === "travail" || value === "etudes" || value === "tourisme";
-}
-
-/** Thème générique d'une pièce, pour éviter de répéter la même idée sous deux formulations (ex: "Passeport
- * en cours de validité" côté socle générique et "Passeport valide" côté données pays). Retourne null pour
- * les pièces sans équivalent générique connu (ex: "Certificat de parrainage") : celles-ci ne sont jamais filtrées. */
-function requirementTheme(label: string): string | null {
-  const target = normalize(label);
-  if (target.includes("passeport") || target.includes("passport")) return "passeport";
-  if (target.includes("photo")) return "photo";
-  if (/(^| )cv( |$)/.test(target) || target.includes("curriculum")) return "cv";
-  if (target.includes("diplome") || target.includes("releve")) return "diplome";
-  if (target.includes("naissance")) return "naissance";
-  if (target.includes("domicile") || target.includes("residence") || target.includes("hebergement")) return "residence";
-  if (target.includes("financ") || target.includes("ressource") || target.includes("bancaire") || target.includes("solvabilite")) return "financement";
-  return null;
-}
-
-function getRequirements(destination?: string | null, projectType?: string | null): Requirement[] {
-  const generic = destination && isProjectType(projectType) ? getEvaluationDocumentRequirements(destination, projectType) : [];
-  // procedures107Complete couvre 41+ pays avec des pieces reellement propres au couple pays+type de visa,
-  // contrairement a COUNTRY_REQUIREMENTS (evaluationDocumentCatalogue) qui ne detaille que 5 pays : on le
-  // fusionne toujours pour que la checklist ne reste jamais generique faute de couverture.
-  const procedure = resolveProcedure(destination, projectType);
-  const countrySpecific = procedure?.requiredDocuments?.length
-    ? procedure.requiredDocuments.flatMap((group) => group.documents.map((label) => ({ category: group.category, label })))
-    : [];
-
-  const genericThemes = new Set(generic.map((requirement) => requirementTheme(requirement.label)).filter((theme): theme is string => theme !== null));
-  const genericLabels = new Set(generic.map((requirement) => normalize(requirement.label)));
-  const seenCountryLabels = new Set<string>();
-  const filteredCountrySpecific = countrySpecific.filter((requirement) => {
-    const key = normalize(requirement.label);
-    if (genericLabels.has(key) || seenCountryLabels.has(key)) return false;
-    const theme = requirementTheme(requirement.label);
-    if (theme && genericThemes.has(theme)) return false;
-    seenCountryLabels.add(key);
-    return true;
-  });
-
-  const merged = [...generic, ...filteredCountrySpecific];
-  return merged.length ? merged : FALLBACK_REQUIREMENTS;
-}
-
-function documentsForRequirement(requirement: Requirement, documents: ChecklistDocument[]): ChecklistDocument[] {
-  const target = normalize(requirement.label);
-  const aliases = target.includes("passeport") ? ["passport", "passeport"]
-    : target.includes("photo") ? ["photo", "identite"]
-    : target.includes("cv") ? ["cv", "professional", "experience"]
-    : target.includes("diplome") || target.includes("releve") || target.includes("qualification") ? ["diplome", "diploma", "certificate", "releve", "transcript"]
-    : target.includes("financement") || target.includes("ressource") ? ["bank", "financ", "ressource"]
-    : target.includes("admission") || target.includes("acceptation") ? ["admission", "acceptance", "candidature"]
-    : target.includes("employeur") || target.includes("emploi") ? ["employment", "employeur", "contrat", "offre", "professional"]
-    : target.includes("residence") || target.includes("domicile") ? ["residence", "domicile", "hebergement"]
-    : target.includes("naissance") ? ["naissance", "birth"]
-    : [];
-  return documents.filter((document) => {
-    const source = normalize(`${document.documentType ?? ""} ${document.documentName ?? ""}`);
-    if (!source) return false;
-    return source.includes(target) || aliases.some((alias) => source.includes(alias));
-  });
-}
+const STATE_VIEW = {
+  missing: { label: "À fournir", tone: "border-amber-200 bg-amber-50", Icon: Circle },
+  replace: { label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle },
+  verified: { label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 },
+  received: { label: "Reçu — vérification en cours", tone: "border-blue-200 bg-blue-50", Icon: Clock3 },
+} as const;
 
 function documentState(requirement: Requirement, documents: ChecklistDocument[]) {
-  const matches = documentsForRequirement(requirement, documents);
-  if (!matches.length) return { kind: "missing" as const, label: "À fournir", tone: "border-amber-200 bg-amber-50", Icon: Circle };
-  if (matches.some((document) => document.verificationStatus === "rejected" || document.status === "rejected")) {
-    return { kind: "replace" as const, label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle };
-  }
-  if (matches.some((document) => document.verificationStatus === "verified" || document.status === "verified")) {
-    return { kind: "verified" as const, label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 };
-  }
-  return { kind: "received" as const, label: "Reçu — vérification en cours", tone: "border-blue-200 bg-blue-50", Icon: Clock3 };
+  const kind = kindFromMatches(documentsForRequirement(requirement, documents));
+  return { kind, ...STATE_VIEW[kind] };
 }
 
 export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[]) {
   return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
-}
-
-/** Résumé de la checklist pour « Votre prochaine étape » : combien de pièces manquent ou sont à remplacer, et laquelle en premier. */
-export function summarizeChecklist(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
-  const states = [
-    ...deriveChecklistStates(destination, projectType, documents),
-    ...customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType }, state: customRequirementState(requirement, documents) })),
-  ];
-  const missing = states.filter(({ state }) => state.kind === "missing");
-  const replace = states.filter(({ state }) => state.kind === "replace");
-  return { total: states.length, missing: missing.length, replace: replace.length, firstMissingLabel: missing[0]?.requirement.label ?? null, firstReplaceLabel: replace[0]?.requirement.label ?? null };
 }
 
 export function calculateChecklistProgress(states: Array<{ state: { kind: string } }>) {
@@ -178,10 +51,8 @@ export function buildDocumentClarificationMessage(documentLabel: string, details
 }
 
 function customRequirementState(requirement: CustomRequirement, documents: ChecklistDocument[]) {
-  if (requirement.status === "approved") return { kind: "verified" as const, label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 };
-  if (requirement.status === "rejected") return { kind: "replace" as const, label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle };
-  if (requirement.status === "received" || documentsForRequirement({ category: "Demande de votre conseiller", label: requirement.documentType }, documents).length) return { kind: "received" as const, label: "Reçu — vérification en cours", tone: "border-blue-200 bg-blue-50", Icon: Clock3 };
-  return { kind: "missing" as const, label: "À fournir", tone: "border-amber-200 bg-amber-50", Icon: Circle };
+  const kind = customRequirementKind(requirement, documents);
+  return { kind, ...STATE_VIEW[kind] };
 }
 
 export default function DossierDocumentChecklist({
@@ -277,22 +148,4 @@ export default function DossierDocumentChecklist({
   );
 }
 
-/**
- * Liste des pièces que le candidat peut choisir à l'envoi : celles de son pays et de son type de visa (les mêmes que la
- * checklist), puis les demandes de son conseiller (hors pièces dispensées), sans doublon.
- */
-export function buildRequirementOptions(destination?: string | null, projectType?: string | null, customRequirements: Array<Pick<CustomRequirement, "documentType" | "status">> = []): Array<{ label: string; group: string }> {
-  const seen = new Set<string>();
-  const options: Array<{ label: string; group: string }> = [];
-  const add = (label: string, group: string) => {
-    const key = normalize(label);
-    if (!key || seen.has(key)) return;
-    seen.add(key);
-    options.push({ label: label.trim(), group });
-  };
-  for (const requirement of getRequirements(destination, projectType)) add(requirement.label, requirement.category);
-  for (const requirement of customRequirements) if (requirement.status !== "waived") add(requirement.documentType, "Demande de votre conseiller");
-  return options;
-}
-
-export { getRequirements };
+export { buildRequirementOptions, getRequirements, summarizeChecklist };

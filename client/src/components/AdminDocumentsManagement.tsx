@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
+import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
 import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -719,6 +720,8 @@ export function AdminDocumentsManagement() {
             <CardContent className="space-y-3"><Input type="month" value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} aria-label="Mois du rapport documentaire" /><div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Documents reçus</p><p className="text-xl font-bold text-slate-900">{monthlyDocuments.length}</p></div><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Validés</p><p className="text-xl font-bold text-emerald-700">{monthlyCompletionRate}%</p></div></div><div className="grid grid-cols-2 gap-2"><Button type="button" size="sm" variant="outline" onClick={exportMonthlyCsv} className="gap-1"><FileSpreadsheet className="h-3.5 w-3.5" />CSV</Button><Button type="button" size="sm" variant="outline" onClick={exportMonthlyPdf} className="gap-1"><FileText className="h-3.5 w-3.5" />PDF</Button></div><div className="space-y-1.5">{monthlyDossiers.slice(0, 5).map((dossier) => { const rate = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0; return <div key={dossier.dossierNumber} className="rounded-md bg-white px-2 py-1.5"><div className="flex justify-between gap-2 text-xs"><span className="truncate font-medium">{dossier.dossierNumber}</span><span>{rate}%</span></div><div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-600" style={{ width: `${rate}%` }} /></div></div>; })}{monthlyDossiers.length === 0 && <p className="text-sm text-slate-500">Aucune pièce déposée sur cette période.</p>}</div></CardContent>
           </Card>
         </div>
+
+        <AdminCandidatesToRemind sessionToken={sessionToken} />
 
         {staleDossiers.length > 0 && <Card className="border-amber-200 bg-amber-50/60"><CardContent className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" /><div><p className="font-semibold text-amber-950">{staleDossiers.length} dossier(s) incomplet(s) depuis plus de 7 jours</p><p className="text-sm text-amber-800">Aucune pièce récente n’a été déposée et des documents restent en attente ou rejetés.</p></div></div><Button type="button" size="sm" variant={staleOnly ? "default" : "outline"} onClick={() => setStaleOnly((current) => !current)}>{staleOnly ? "Afficher tous les dossiers" : "Filtrer les dossiers concernés"}</Button></CardContent></Card>}
 

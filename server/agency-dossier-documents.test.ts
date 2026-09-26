@@ -45,7 +45,8 @@ describe("Centre documentaire par dossier", () => {
 
   it("rafraîchit la checklist après un dépôt et propose une décharge PDF", () => {
     const candidatePage = readProjectFile("client/src/pages/EvaluationSpace.tsx");
-    const checklist = readProjectFile("client/src/components/DossierDocumentChecklist.tsx");
+    // La logique des pièces attendues vit dans la bibliothèque pure partagée avec le serveur (relances) ; le composant l'affiche.
+    const checklist = readProjectFile("client/src/lib/documentChecklist.ts");
     const receipt = readProjectFile("client/src/components/DocumentReceiptButton.tsx");
     expect(candidatePage).toContain("DossierDocumentChecklist");
     expect(candidatePage).toContain("getMyAgencyDocuments.invalidate");

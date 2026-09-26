@@ -16,6 +16,7 @@ import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
+import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/documentReminderJob";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { requireCronSecret } from "./scheduledAuth";
@@ -72,6 +73,15 @@ async function startServer() {
   app.post("/api/scheduled/compliance-monthly-report", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleComplianceMonthlyReportJob(req, res);
+  });
+  // Relances des pièces manquantes (J+3, J+7, J+14, 3 au maximum). Corps {"dryRun": true} : aperçu sans envoi.
+  app.post("/api/scheduled/document-reminders", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleDocumentReminderJob(req, res);
+  });
+  // Désinscription des rappels (lien signé dans chaque e-mail de rappel).
+  app.get("/api/reminders/stop", (req, res) => {
+    void handleReminderStop(req, res);
   });
   app.post("/api/scheduled/passport-pending-weekly-alert", (req, res) => {
     if (!requireCronSecret(req, res)) return;
