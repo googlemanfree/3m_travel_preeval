@@ -34,6 +34,7 @@ import { paymentInstructionsRouter } from "./routers/paymentInstructions";
 import { documentFollowUpRouter } from "./routers/documentFollowUp";
 import { paymentProofsRouter } from "./routers/paymentProofs";
 import { reviewInvitesRouter } from "./routers/reviewInvites";
+import { delayStatsRouter } from "./routers/delayStats";
 import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
 import { exportRouter } from "./routers/exportRouter";
@@ -179,6 +180,7 @@ export const appRouter = router({
   documentFollowUp: documentFollowUpRouter,
   paymentProofs: paymentProofsRouter,
   reviewInvites: reviewInvitesRouter,
+  delayStats: delayStatsRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
   export: exportRouter,

@@ -89,6 +89,7 @@ import AdminCandidateActivationPanel from "@/components/AdminCandidateActivation
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
+import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
@@ -1903,6 +1904,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
+            <AdminDelayStats sessionToken={sessionToken} />
             <Card className="border-amber-200 bg-amber-50/70">
               <CardContent className="p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
