@@ -33,6 +33,7 @@ import { cinetpayPaymentRouter } from "./routers/cinetpayPayment";
 import { paymentInstructionsRouter } from "./routers/paymentInstructions";
 import { documentFollowUpRouter } from "./routers/documentFollowUp";
 import { paymentProofsRouter } from "./routers/paymentProofs";
+import { reviewInvitesRouter } from "./routers/reviewInvites";
 import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
 import { exportRouter } from "./routers/exportRouter";
@@ -177,6 +178,7 @@ export const appRouter = router({
   paymentInstructions: paymentInstructionsRouter,
   documentFollowUp: documentFollowUpRouter,
   paymentProofs: paymentProofsRouter,
+  reviewInvites: reviewInvitesRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
   export: exportRouter,

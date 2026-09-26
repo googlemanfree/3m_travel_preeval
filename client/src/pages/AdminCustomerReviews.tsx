@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle2, XCircle, Loader } from "lucide-react";
 import { toast } from "sonner";
 import ReviewInvitationPanel from "@/components/ReviewInvitationPanel";
+import AdminReviewsToInvite from "@/components/AdminReviewsToInvite";
 
 const STATUS_LABELS: Record<string, string> = {
   pending_review: "⏳ À valider",
@@ -51,6 +52,7 @@ export default function AdminCustomerReviews() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">⭐ Modération des avis clients</h1>
 
+        {sessionToken && <AdminReviewsToInvite sessionToken={sessionToken} />}
         {sessionToken && <ReviewInvitationPanel />}
 
         {!sessionToken ? (
