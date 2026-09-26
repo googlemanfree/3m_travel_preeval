@@ -1,6 +1,7 @@
 import { CreditCard, Plane } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import FlightRequestExtras from "@/components/FlightRequestExtras";
 import PaymentProofUpload from "@/components/PaymentProofUpload";
 import { flightPaymentExpected, flightStatusLabel, flightStatusTone } from "@shared/flightRequestStatus";
 
@@ -14,6 +15,7 @@ const routeOf = (flight: FlightData): string => `${flight.originCity || flight.o
  */
 export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boolean }) {
   const query = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled, staleTime: 30_000, retry: 1 });
+  const overview = trpc.flightFollowUp.myOverview.useQuery(undefined, { enabled, staleTime: 30_000, retry: 1 });
   const requests = (query.data ?? []).slice(0, 3);
   if (requests.length === 0) return null;
   const total = query.data?.length ?? 0;
@@ -41,6 +43,7 @@ export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boo
               )}
               {request.status === "issued" && request.pnrReference && <span className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-emerald-800">PNR {request.pnrReference}</span>}
               {flightPaymentExpected(request.status) && <PaymentProofUpload reference={request.requestRef} className="w-full" />}
+              <FlightRequestExtras requestId={request.id} status={request.status} flightData={request.flightData} paymentExpected={flightPaymentExpected(request.status)} overview={overview.data?.find((item) => item.requestId === request.id)} />
             </li>
           );
         })}

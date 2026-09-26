@@ -11,6 +11,8 @@ import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
 import { FlightDeskActions } from "@/components/FlightDeskActions";
+import FlightDeskOverview from "@/components/FlightDeskOverview";
+import FlightRequestChecks from "@/components/FlightRequestChecks";
 import { paymentMethodLabel } from "@shared/paymentMethods";
 
 const STATUS_LABELS = {
@@ -160,7 +162,14 @@ export default function FlightAgentDashboard() {
       void utils.flightBooking.getQueueSummary.invalidate();
       void utils.flightBooking.getRequest.invalidate();
     },
-    onError: (error) => toast({ title: "Mise à jour impossible", description: error.message, variant: "destructive" }),
+    onError: (error, variables) => {
+      // Tarif trop ancien (ou dernier contrôle défavorable) : le conseiller peut passer outre en motivant sa décision, journalisée.
+      if (error.message.includes("dérogation motivée")) {
+        const reason = window.prompt(`${error.message} Motif de la dérogation (8 caractères minimum) :`);
+        if (reason && reason.trim().length >= 8) { statusMutation.mutate({ ...(variables as Parameters<typeof statusMutation.mutate>[0] & object), fareWaiverReason: reason.trim() } as never); return; }
+      }
+      toast({ title: "Mise à jour impossible", description: error.message, variant: "destructive" });
+    },
   });
   const priorityMutation = trpc.flightBooking.updatePriority.useMutation({
     onSuccess: () => {
@@ -356,6 +365,8 @@ export default function FlightAgentDashboard() {
           ))}
         </section>
 
+        <FlightDeskOverview sessionToken={sessionToken} onOpen={(requestId) => { setSelectedRequestId(requestId); const request = requests.find((item) => item.id === requestId); setAgentEmail(request?.assignedAgentEmail || ""); setNote(request?.agentNotes || ""); }} />
+
         <FlightDepartureCalendar sessionToken={sessionToken} onSelectRequest={(requestId) => { setSelectedRequestId(requestId); const request = requests.find((item) => item.id === requestId); setAgentEmail(request?.assignedAgentEmail || ""); setNote(request?.agentNotes || ""); }} />
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -383,6 +394,7 @@ export default function FlightAgentDashboard() {
               <div className="space-y-5">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
+                <FlightRequestChecks request={detailQuery.data.request} history={detailQuery.data.history} sessionToken={sessionToken} />
                 <section className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div>

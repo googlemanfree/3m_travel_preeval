@@ -32,6 +32,7 @@ import { buildDeskAlertEmail, resolveDeskRecipients, resolveDeskWhatsApp } from 
 import { extractDeskAlertData } from "../../shared/flightDeskAlert";
 import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
 import { buildPaymentDeclaredAlert, buildPaymentDecisionEmail, paymentHintHtml, refusePaymentDecision, refuseStatusChange } from "../services/flightWorkflow";
+import { fareRefusal, travelerRefusal } from "../services/flightGuards";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -665,7 +666,7 @@ export const flightBookingRouter = router({
     }),
 
   updateStatus: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), status: z.enum(requestStatus), details: z.string().max(4000).optional() }))
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), status: z.enum(requestStatus), details: z.string().max(4000).optional(), fareWaiverReason: z.string().trim().max(500).optional() }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
       const db = await getDb();
@@ -675,8 +676,13 @@ export const flightBookingRouter = router({
       if (existing.status === input.status) return { success: true, unchanged: true, notificationEmailSent: false };
       const refusedChange = refuseStatusChange(existing.status, input.status);
       if (refusedChange) throw new TRPCError({ code: "BAD_REQUEST", message: refusedChange });
+      // Demander un règlement suppose un tarif relevé récemment (ou une dérogation motivée, journalisée).
+      const askingForPayment = input.status === "revalidated" || input.status === "awaiting_payment";
+      const fareProblem = askingForPayment ? await fareRefusal(db, existing, new Date(), input.fareWaiverReason) : null;
+      if (fareProblem) throw new TRPCError({ code: "BAD_REQUEST", message: fareProblem });
+      const waiverNote = askingForPayment && input.fareWaiverReason?.trim() ? `Dérogation au contrôle du tarif : ${input.fareWaiverReason.trim()}` : null;
       await db.update(flightBookingRequests).set({ status: input.status, agentNotes: input.details ?? existing.agentNotes }).where(eq(flightBookingRequests.id, input.requestId));
-      await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "status_changed", changedBy: admin.email, oldValue: existing.status, newValue: input.status, details: input.details ?? null });
+      await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "status_changed", changedBy: admin.email, oldValue: existing.status, newValue: input.status, details: [input.details, waiverNote].filter(Boolean).join("\n") || null });
       let notificationEmailSent = false;
       try {
         const flightSummary = getFlightEmailSummary((existing.flightData ?? {}) as FlightTimingData);
@@ -872,6 +878,8 @@ export const flightBookingRouter = router({
       if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
+      const travelerProblem = existing.status === "cancelled" ? null : travelerRefusal(existing, new Date());
+      if (travelerProblem) throw new TRPCError({ code: "BAD_REQUEST", message: travelerProblem });
       if (existing.status === "cancelled") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réservation est annulée : aucun billet ne peut être émis. Rouvrez d'abord la demande." });
       }
@@ -969,6 +977,8 @@ export const flightBookingRouter = router({
       if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
+      const travelerProblem = existing.status === "cancelled" ? null : travelerRefusal(existing, new Date());
+      if (travelerProblem) throw new TRPCError({ code: "BAD_REQUEST", message: travelerProblem });
 
       const buffer = Buffer.from(input.fileBase64, "base64");
       if (buffer.length > 8 * 1024 * 1024) {

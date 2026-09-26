@@ -6,13 +6,14 @@ const state = vi.hoisted(() => ({
   row: null as any,
   updates: [] as any[],
   history: [] as any[],
+  fareChecks: [] as any[],
   emails: [] as any[],
   notified: [] as any[],
 }));
 
 vi.mock("./db", () => ({
   getDb: async () => ({
-    select: () => ({ from: () => ({ where: () => ({ limit: async () => (state.row ? [state.row] : []) }) }) }),
+    select: () => ({ from: () => ({ where: () => ({ limit: async () => (state.row ? [state.row] : []), orderBy: () => ({ limit: async () => state.fareChecks }) }) }) }),
     update: () => ({ set: (values: any) => ({ where: async () => { state.updates.push(values); } }) }),
     insert: () => ({ values: async (row: any) => { state.history.push(row); } }),
   }),
@@ -38,6 +39,7 @@ const booking = (overrides: Record<string, unknown> = {}) => ({
   pnrReference: null,
   issuedPdfUrl: null,
   issuanceChecklist: null,
+  createdAt: new Date(),
   ...overrides,
 });
 
@@ -45,6 +47,7 @@ beforeEach(() => {
   state.row = booking();
   state.updates = [];
   state.history = [];
+  state.fareChecks = [];
   state.emails = [];
   state.notified = [];
 });

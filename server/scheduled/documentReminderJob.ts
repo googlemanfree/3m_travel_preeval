@@ -12,6 +12,7 @@ import { COMPANY_PROFILE } from "../../client/src/lib/companyContacts";
 import { summarizeChecklist, type ChecklistDocument } from "../../client/src/lib/documentChecklist";
 import { sendEmail } from "../_core/email";
 import { getDb } from "../db";
+import { runFlightFollowUps, type FlightFollowUpOutcome } from "./flightFollowUps";
 import { REMINDER_SUBJECT_PREFIX, buildDocumentReminderEmail, planReminder, reminderOptOutKey, signReminderStopToken, verifyReminderStopToken } from "../services/documentReminders";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -121,7 +122,14 @@ export async function handleDocumentReminderJob(req: Request, res: Response): Pr
     }
     const dryRun = Boolean((req.body as { dryRun?: unknown } | undefined)?.dryRun);
     const outcomes = await runDocumentReminders(db, { dryRun });
-    res.json({ dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
+    // Relances des réservations de vol (devis non payés, rappel avant départ) : même tâche quotidienne, un échec ici ne masque jamais les documents.
+    let flights: FlightFollowUpOutcome[] = [];
+    try {
+      flights = await runFlightFollowUps(db, { dryRun });
+    } catch (error) {
+      console.error("[FlightFollowUps] job failed", error);
+    }
+    res.json({ flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
   } catch (error) {
     console.error("[DocumentReminders] job failed", error);
     res.status(500).json({ error: "Reminder job failed" });

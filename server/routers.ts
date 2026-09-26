@@ -70,6 +70,7 @@ import { destinationMediaRouter } from "./routers/destinationMedia";
 import { embassyNewsRouter } from "./routers/embassyNews";
 import { mediaLibraryRouter } from "./routers/mediaLibrary";
 import { flightBookingRouter } from "./routers/flightBooking";
+import { flightFollowUpRouter } from "./routers/flightFollowUp";
 import { unifiedRequestsRouter } from "./routers/unifiedRequests";
 import { tourismRouter } from "./routers/tourism";
 import { exchangeRatesRouter } from "./routers/exchangeRatesRouter";
@@ -145,6 +146,7 @@ export const appRouter = router({
   aiCopilot: aiCopilotRouter,
   flights: flightsRouter,
   flightBooking: flightBookingRouter,
+  flightFollowUp: flightFollowUpRouter,
   unifiedRequests: unifiedRequestsRouter,
   tourism: tourismRouter,
   candidate: candidateRouter,

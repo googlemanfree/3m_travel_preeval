@@ -8,7 +8,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 (globalThis as any).React = React;
 
 const state = vi.hoisted(() => ({ requests: undefined as any }));
-vi.mock("@/lib/trpc", () => ({ trpc: { flightBooking: { getMyRequests: { useQuery: () => ({ data: state.requests }) } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { useUtils: () => ({ flightFollowUp: { myOverview: { invalidate: () => undefined } } }), flightBooking: { getMyRequests: { useQuery: () => ({ data: state.requests }) } }, flightFollowUp: { myOverview: { useQuery: () => ({ data: [] }) }, submitTravelers: { useMutation: () => ({ mutate: () => undefined, isPending: false }) }, requestChange: { useMutation: () => ({ mutate: () => undefined, isPending: false }) } } } }));
 
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";

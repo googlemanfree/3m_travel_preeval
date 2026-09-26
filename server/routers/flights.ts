@@ -227,6 +227,50 @@ async function fetchCheapestLive(apiKey: string, route: OfferRoute, dates: Offer
   return selectCheapest(flights);
 }
 
+export type LiveFareRecheck = { status: "checked"; found: boolean; newTotal: number | null; retrievedAt: string } | { status: "unavailable"; reason: string };
+
+/**
+ * Relève de nouveau, chez le fournisseur, le vol d'une demande de réservation (même parcours, dates, classe, voyageurs) et renvoie
+ * son tarif actuel. Ne fabrique jamais de tarif : sans clé, sans réponse ou sans le vol, le résultat le dit.
+ * Les enfants ne sont pas distingués dans la demande enregistrée : les voyageurs facturés sont relevés comme adultes (contrôle indicatif).
+ */
+export async function recheckLiveFare(flightData: Record<string, any>, options: { apiKey?: string | undefined; fetchImpl?: typeof fetch } = {}): Promise<LiveFareRecheck> {
+  const apiKey = options.apiKey ?? process.env.SEARCHAPI_KEY;
+  if (!apiKey) return { status: "unavailable", reason: "Recherche en direct non configurée." };
+  const origin = String(flightData.origin ?? "");
+  const destination = String(flightData.destination ?? "");
+  const departureDate = String(flightData.departureDate ?? "");
+  if (origin.length !== 3 || destination.length !== 3 || !/^\d{4}-\d{2}-\d{2}$/.test(departureDate)) return { status: "unavailable", reason: "Parcours ou date illisibles dans la demande." };
+  const returnDate = typeof flightData.returnFlight?.departureDate === "string" ? flightData.returnFlight.departureDate : "";
+  const cabinClass = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"].includes(String(flightData.cabinClass)) ? String(flightData.cabinClass) : "ECONOMY";
+  const travelClassMap: Record<string, string> = { ECONOMY: "economy", PREMIUM_ECONOMY: "premium_economy", BUSINESS: "business", FIRST: "first_class" };
+  const passengers = Math.min(9, Math.max(1, Number(flightData.pricedPassengers) || 1));
+  const params = new URLSearchParams({
+    engine: "google_flights",
+    api_key: apiKey,
+    departure_id: origin === "YAO" ? "NSI" : origin,
+    arrival_id: destination === "YAO" ? "NSI" : destination,
+    outbound_date: departureDate,
+    flight_type: returnDate ? "round_trip" : "one_way",
+    travel_class: travelClassMap[cabinClass] ?? "economy",
+    adults: String(passengers),
+    children: "0",
+    currency: "EUR",
+  });
+  if (returnDate) params.set("return_date", returnDate);
+  try {
+    const response = await (options.fetchImpl ?? fetch)(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+    if (!response.ok) return { status: "unavailable", reason: `Le fournisseur a répondu ${response.status}.` };
+    const json = await response.json();
+    const legParams: SearchApiLegParams = { origin, destination, departureDate, cabinClass, adults: passengers, children: 0, infants: 0, idPrefix: "RC" };
+    const flights = [...(json.best_flights || []), ...(json.other_flights || [])].map((item: any, index: number) => mapSearchApiFlightItem(item, index, legParams)).filter(Boolean) as any[];
+    const match = flights.find((flight) => flight.flightNumber === flightData.flightNumber && flight.departureDate === departureDate && flight.departureTime === flightData.departureTime);
+    return { status: "checked", found: Boolean(match), newTotal: match ? match.totalPrice : null, retrievedAt: new Date().toISOString() };
+  } catch (error) {
+    return { status: "unavailable", reason: error instanceof Error ? error.message.slice(0, 160) : "Erreur du fournisseur." };
+  }
+}
+
 export const flightsRouter = router({
   /**
    * « Meilleures offres » : tarifs réellement relevés (Google Flights via SearchAPI.io) pour quelques parcours fréquents,
