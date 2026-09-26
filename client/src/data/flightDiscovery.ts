@@ -119,6 +119,9 @@ export type LastFlightSearch = {
 };
 
 export const LAST_FLIGHT_SEARCH_KEY = "3m-last-flight-search";
+export type RecentFlightSearch = LastFlightSearch & { savedAt: number };
+export const RECENT_FLIGHT_SEARCHES_KEY = "3m-recent-flight-searches";
+export const MAX_RECENT_FLIGHT_SEARCHES = 5;
 
 const CABINS = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
@@ -147,4 +150,31 @@ export function parseLastFlightSearch(raw: string | null, today: string): LastFl
   if (adults === null || children === null || infants === null) return null;
   if (typeof cabinClass !== "string" || !CABINS.includes(cabinClass)) return null;
   return { tripType, origin, destination, departureDate, returnDate, adults, children, infants, cabinClass };
+}
+
+/** Relit jusqu'à cinq recherches récentes en réutilisant la validation stricte de la recherche unique. */
+export function parseRecentFlightSearches(raw: string | null, today: string): RecentFlightSearch[] {
+  if (!raw || raw.length > 6000) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const seen = new Set<string>();
+  const recent: RecentFlightSearch[] = [];
+  for (const item of parsed) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const candidate = item as Record<string, unknown>;
+    const search = parseLastFlightSearch(JSON.stringify(candidate), today);
+    const savedAt = typeof candidate.savedAt === "number" && Number.isFinite(candidate.savedAt) ? candidate.savedAt : 0;
+    if (!search || savedAt <= 0) continue;
+    const key = `${search.tripType}:${search.origin}:${search.destination}:${search.departureDate}:${search.returnDate}:${search.adults}:${search.children}:${search.infants}:${search.cabinClass}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    recent.push({ ...search, savedAt });
+    if (recent.length >= MAX_RECENT_FLIGHT_SEARCHES) break;
+  }
+  return recent;
 }

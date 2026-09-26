@@ -8,7 +8,7 @@ import {
   Plane, ArrowLeftRight, Calendar, Users, ChevronDown, Search,
   Filter, X, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
-  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble,
+  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2,
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
@@ -28,11 +28,17 @@ function trackEvent(eventName: string, params?: Record<string, unknown>) {
   const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
   if (typeof gtag === "function") gtag("event", eventName, params);
 }
-import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, LAST_FLIGHT_SEARCH_KEY, parseLastFlightSearch, type FlightRoute, type LastFlightSearch } from "@/data/flightDiscovery";
+import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, LAST_FLIGHT_SEARCH_KEY, MAX_RECENT_FLIGHT_SEARCHES, RECENT_FLIGHT_SEARCHES_KEY, parseLastFlightSearch, parseRecentFlightSearches, type FlightRoute, type LastFlightSearch, type RecentFlightSearch } from "@/data/flightDiscovery";
 
 /** « Yaoundé (NSI) » pour les aéroports des parcours fréquents ; le code seul pour les autres. */
 const AIRPORT_CITY: Record<string, string> = Object.fromEntries(ALL_FLIGHT_ROUTES.flatMap((route) => [[route.from.iata, route.from.city], [route.to.iata, route.to.city]]));
 const airportLabel = (iata: string) => (AIRPORT_CITY[iata] ? `${AIRPORT_CITY[iata]} (${iata})` : iata);
+const recentSearchKey = (search: LastFlightSearch) => `${search.tripType}:${search.origin}:${search.destination}:${search.departureDate}:${search.returnDate}:${search.adults}:${search.children}:${search.infants}:${search.cabinClass}`;
+
+function mergeRecentSearches(current: RecentFlightSearch[], search: LastFlightSearch): RecentFlightSearch[] {
+  const next = [{ ...search, savedAt: Date.now() }, ...current.filter((item) => recentSearchKey(item) !== recentSearchKey(search))];
+  return next.slice(0, MAX_RECENT_FLIGHT_SEARCHES);
+}
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -627,14 +633,49 @@ export default function Flights() {
   // Aller-retour : le vol aller est choisi d'abord, puis on interroge les vraies options de retour (2e requête avec le
   // departure_token du vol aller) ; le total de l'option retenue est le tarif relevé de l'aller-retour complet.
   const [pendingOutbound, setPendingOutbound] = useState<Flight | null>(null);
-  // Dernière recherche de cet appareil (validée à la lecture, jamais envoyée au serveur).
-  const [lastSearch, setLastSearch] = useState<LastFlightSearch | null>(() => {
+  // Historique local de cet appareil (validé à la lecture, jamais envoyé au serveur).
+  const [recentSearches, setRecentSearches] = useState<RecentFlightSearch[]>(() => {
     try {
-      return parseLastFlightSearch(window.localStorage.getItem(LAST_FLIGHT_SEARCH_KEY), today());
+      const parsed = parseRecentFlightSearches(window.localStorage.getItem(RECENT_FLIGHT_SEARCHES_KEY), today());
+      if (parsed.length > 0) return parsed;
+      const legacy = parseLastFlightSearch(window.localStorage.getItem(LAST_FLIGHT_SEARCH_KEY), today());
+      return legacy ? [{ ...legacy, savedAt: Date.now() }] : [];
     } catch {
-      return null;
+      return [];
     }
   });
+  const rememberSearch = useCallback((search: LastFlightSearch) => {
+    const next = mergeRecentSearches(recentSearches, search);
+    setRecentSearches(next);
+    try {
+      window.localStorage.setItem(RECENT_FLIGHT_SEARCHES_KEY, JSON.stringify(next));
+      window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(search));
+    } catch {
+      // Stockage indisponible (navigation privée) : la recherche fonctionne, seule la mémorisation est perdue.
+    }
+  }, [recentSearches]);
+
+  const removeRecentSearch = (savedAt: number) => {
+    const next = recentSearches.filter((item) => item.savedAt !== savedAt);
+    setRecentSearches(next);
+    try {
+      window.localStorage.setItem(RECENT_FLIGHT_SEARCHES_KEY, JSON.stringify(next));
+      if (next[0]) window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(next[0]));
+      else window.localStorage.removeItem(LAST_FLIGHT_SEARCH_KEY);
+    } catch {
+      // Ignore storage failures; the visible state remains usable for this session.
+    }
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      window.localStorage.removeItem(RECENT_FLIGHT_SEARCHES_KEY);
+      window.localStorage.removeItem(LAST_FLIGHT_SEARCH_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
+  };
 
   function resumeLastSearch(saved: LastFlightSearch) {
     setTripType(saved.tripType);
@@ -643,6 +684,7 @@ export default function Flights() {
     setDepartureDate(saved.departureDate);
     setReturnDate(saved.returnDate);
     setPassengers({ adults: saved.adults, children: saved.children, infants: saved.infants, cabinClass: saved.cabinClass });
+    rememberSearch(saved);
     trackEvent("flight_last_search_resumed", { origin: saved.origin, destination: saved.destination });
     searchStartedAtRef.current = Date.now();
     setIsSearchSubmitting(true);
@@ -791,12 +833,7 @@ export default function Flights() {
     trackEvent("flight_search_started", { origin, destination, tripType });
     if (tripType !== "MULTI") {
       const saved: LastFlightSearch = { tripType, origin, destination, departureDate, returnDate, adults: passengers.adults, children: passengers.children, infants: passengers.infants, cabinClass: passengers.cabinClass };
-      setLastSearch(saved);
-      try {
-        window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(saved));
-      } catch {
-        // Stockage indisponible (navigation privée) : la recherche fonctionne, seule la mémorisation est perdue.
-      }
+      rememberSearch(saved);
     }
   }
 
@@ -885,15 +922,44 @@ export default function Flights() {
 
           <div className="rounded-3xl bg-gradient-to-br from-[#0F2A6B] via-[#0B1F55] to-[#020C3B] p-4 shadow-2xl md:p-6">
           <FlightServiceTabs />
-          {lastSearch && !searchEnabled && (
-            <button
-              type="button"
-              onClick={() => resumeLastSearch(lastSearch)}
-              data-testid="resume-last-search"
-              className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Reprendre ma dernière recherche : {airportLabel(lastSearch.origin)} → {airportLabel(lastSearch.destination)}
-            </button>
+          {recentSearches.length > 0 && !searchEnabled && (
+            <section aria-label="Recherches récentes" className="mb-5 rounded-2xl border border-white/15 bg-white/10 p-3 text-white backdrop-blur-sm">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-black">
+                  <History className="h-4 w-4 text-blue-200" aria-hidden="true" /> Recherches récentes
+                </div>
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-bold text-blue-100 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Effacer
+                </button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {recentSearches.map((search) => (
+                  <div key={`${recentSearchKey(search)}-${search.savedAt}`} className="flex min-h-12 items-center gap-2 rounded-xl bg-white/10 p-2">
+                    <button
+                      type="button"
+                      onClick={() => resumeLastSearch(search)}
+                      data-testid="resume-recent-search"
+                      className="min-w-0 flex-1 rounded-lg px-2 py-1 text-left transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                    >
+                      <span className="block truncate text-xs font-black">{airportLabel(search.origin)} → {airportLabel(search.destination)}</span>
+                      <span className="block text-[11px] text-blue-100">{search.departureDate}{search.tripType === "ROUND_TRIP" ? ` → ${search.returnDate}` : " · Aller simple"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeRecentSearch(search.savedAt)}
+                      aria-label={`Supprimer la recherche ${airportLabel(search.origin)} vers ${airportLabel(search.destination)}`}
+                      className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-blue-100 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {/* Trip type tabs */}
