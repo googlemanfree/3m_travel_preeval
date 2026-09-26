@@ -226,5 +226,53 @@ export const getCountryProcedureFields = (projectType: EvaluationProjectType, co
     ];
   }
 
+  const slug = normalize(selectedCountry);
+  const isSchengenCountry = getSuggestedDestinationCategory(selectedCountry) === "schengen";
+  const isTraining = /formation|apprentissage|ausbildung/i.test(`${procedure?.procedureLabel ?? ""} ${procedure?.id ?? ""}`);
+  const offerStatus = [{ value: "signee", label: "Signée" }, { value: "en_discussion", label: "En discussion" }, { value: "aucune", label: "Aucune" }];
+  const receivedStatus = [{ value: "recue", label: "Reçue" }, { value: "en_cours", label: "Demande en cours" }, { value: "non", label: "Pas encore" }];
+
+  // Formation en alternance (Allemagne, Autriche, Suisse…) : contrat de formation et niveau de la langue de travail.
+  if (isSchengenCountry && isTraining && (projectType === "etudes" || projectType === "travail")) {
+    return [
+      ...shared,
+      field("trainingContract", "Contrat ou promesse de formation", offerStatus),
+      field("workLanguageLevel", "Niveau de la langue de formation", [{ value: "aucun", label: "Aucun" }, { value: "a1_a2", label: "A1 – A2" }, { value: "b1", label: "B1" }, { value: "b2_plus", label: "B2 ou plus" }]),
+      field("qualificationRecognition", "Reconnaissance des diplômes", [{ value: "faite", label: "Déjà faite" }, { value: "en_cours", label: "En cours" }, { value: "a_faire", label: "À faire" }, { value: "non_concerne", label: "Non concerné" }]),
+    ];
+  }
+
+  // Études dans l'espace Schengen : admission, langue du programme, financement.
+  if (isSchengenCountry && projectType === "etudes") {
+    return [
+      ...shared,
+      field("admissionLetter", "Admission ou pré-inscription dans un établissement", receivedStatus),
+      field("programLanguage", "Langue d’enseignement du programme", [{ value: "francais", label: "Français" }, { value: "anglais", label: "Anglais" }, { value: "allemand", label: "Allemand" }, { value: "autre", label: "Autre" }]),
+      field("languageProof", "Preuve de niveau de langue", [{ value: "disponible", label: "Disponible" }, { value: "a_passer", label: "À passer" }, { value: "non_concerne", label: "Non concerné" }]),
+      field("studyFunding", "Financement des études", [{ value: "personnel", label: "Ressources personnelles" }, { value: "garant", label: "Garant / sponsor" }, { value: "bourse", label: "Bourse" }, { value: "mixte", label: "Plusieurs sources" }]),
+    ];
+  }
+
+  // Travail dans l'espace Schengen : offre, reconnaissance des diplômes, langue de travail.
+  if (isSchengenCountry && projectType === "travail") {
+    return [
+      ...shared,
+      field("jobOffer", "Offre ou contrat de travail", offerStatus),
+      field("qualificationRecognition", "Reconnaissance du diplôme", [{ value: "faite", label: "Déjà faite" }, { value: "en_cours", label: "En cours" }, { value: "a_faire", label: "À faire" }, { value: "non_concerne", label: "Non concerné" }]),
+      field("workLanguageLevel", "Niveau de la langue de travail", [{ value: "aucun", label: "Aucun" }, { value: "a1_a2", label: "A1 – A2" }, { value: "b1", label: "B1" }, { value: "b2_plus", label: "B2 ou plus" }]),
+      field("occupation", "Métier ou poste visé"),
+    ];
+  }
+
+  if (slug === "royaume-uni" && projectType === "etudes") {
+    return [...shared, field("casStatus", "Confirmation d’acceptation pour études (CAS)", receivedStatus), field("studyFunding", "Financement des études", [{ value: "personnel", label: "Ressources personnelles" }, { value: "garant", label: "Garant / sponsor" }, { value: "bourse", label: "Bourse" }, { value: "mixte", label: "Plusieurs sources" }])];
+  }
+  if (slug === "royaume-uni" && projectType === "travail") {
+    return [...shared, field("sponsorshipCertificate", "Certificat de parrainage (Certificate of Sponsorship)", receivedStatus), field("occupation", "Métier ou poste visé")];
+  }
+  if ((slug === "australie" || slug === "nouvelle-zelande") && projectType === "etudes") {
+    return [...shared, field("enrolmentConfirmation", "Offre d’admission ou confirmation d’inscription", receivedStatus), field("studyFunding", "Financement des études", [{ value: "personnel", label: "Ressources personnelles" }, { value: "garant", label: "Garant / sponsor" }, { value: "bourse", label: "Bourse" }, { value: "mixte", label: "Plusieurs sources" }])];
+  }
+
   return shared;
 };
