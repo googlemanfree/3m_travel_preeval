@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, CalendarDays, CheckCircle2, LoaderCircle, MapPin, Search, ShieldCheck, Star, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -54,6 +54,8 @@ export function JinkoHotelSearchPanel({
   adults,
   selectedProviderHotelId,
   onSelect,
+  searchToken = 0,
+  onMissingDestination,
 }: {
   destination: string;
   checkIn: string;
@@ -61,6 +63,10 @@ export function JinkoHotelSearchPanel({
   adults: number;
   selectedProviderHotelId?: string;
   onSelect: (hotel: JinkoHotelSelection) => void;
+  /** Incrémenté par le bouton « Rechercher » de la page : lance la recherche en direct avec les mêmes critères. */
+  searchToken?: number;
+  /** Appelé quand la destination manque : la page affiche l'erreur à côté du champ concerné. */
+  onMissingDestination?: () => void;
 }) {
   const { toast } = useToast();
   const [countryCode, setCountryCode] = useState<(typeof countryOptions)[number]["code"]>("CM");
@@ -70,7 +76,8 @@ export function JinkoHotelSearchPanel({
 
   function runSearch() {
     if (destination.trim().length < 2) {
-      toast({ title: "Destination requise", description: "Saisissez une ville avant la recherche en temps réel.", variant: "destructive" });
+      if (onMissingDestination) onMissingDestination();
+      else toast({ title: "Destination requise", description: "Saisissez une ville avant la recherche en temps réel.", variant: "destructive" });
       return;
     }
     if (!checkIn || !checkOut || checkOut <= checkIn) {
@@ -79,6 +86,12 @@ export function JinkoHotelSearchPanel({
     }
     searchMutation.mutate({ cityName: destination.trim(), countryCode, checkin: checkIn, checkout: checkOut, adults, currency: "EUR" });
   }
+
+  useEffect(() => {
+    if (searchToken > 0) runSearch();
+    // Seul un nouveau clic sur « Rechercher » (nouveau jeton) relance la recherche.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchToken]);
 
   return (
     <section aria-labelledby="jinko-live-search-title" className="mt-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-slate-900 md:p-5">
@@ -106,6 +119,12 @@ export function JinkoHotelSearchPanel({
           {searchMutation.isPending ? <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Recherche…</> : <><Search className="mr-2 h-4 w-4" /> Vérifier</>}
         </Button>
       </div>
+      <p className="mt-2 text-[11px] text-slate-500">Choisissez le pays correspondant à la ville saisie plus haut (la recherche en direct couvre ces pays).</p>
+      {searchMutation.error && (
+        <p role="alert" data-testid="jinko-search-error" className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+          {searchMutation.error.message} Vous pouvez aussi transmettre votre demande à un conseiller 3M, qui cherchera pour vous.
+        </p>
+      )}
 
       {searchMutation.data && (
         <div className="mt-5">

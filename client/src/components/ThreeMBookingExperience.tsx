@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { BedDouble, CalendarDays, CheckCircle2, CircleDollarSign, Coffee, ExternalLink, MapPin, Search, ShieldCheck, Sparkles, Star, UsersRound, Waves, Wifi, CarFront } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,10 @@ export function ThreeMBookingExperience() {
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState<HotelAmenity[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<SelectedHotel | null>(null);
+  // Erreurs affichées à côté des champs (un message éphémère en bas d'écran passe inaperçu) et déclencheur de la recherche en direct.
+  const [formError, setFormError] = useState<{ field: "destination" | "dates"; message: string } | null>(null);
+  const [liveSearchToken, setLiveSearchToken] = useState(0);
+  const destinationRef = useRef<HTMLInputElement>(null);
 
   const discoverMutation = trpc.tourism.discover.useMutation({
     onError: (error) => toast({ title: "Recherche catalogue indisponible", description: error.message, variant: "destructive" }),
@@ -86,16 +90,24 @@ export function ThreeMBookingExperience() {
     return [selection, jinkoNote, `Chambres : ${rooms}.`, `Catégorie souhaitée : ${hotelCategory}.`, amenities.length ? `Équipements à privilégier : ${amenities.map((amenity) => amenityOptions.find((option) => option.key === amenity)?.label).join(", ")}.` : "Aucun équipement prioritaire sélectionné.", budget ? `Budget indicatif par nuit : ${budget} XAF.` : "Budget à affiner avec le conseiller.", "Recherche réalisée via 3M Booking ; disponibilité et tarif final à revalider par l’agence."].join(" ");
   }, [amenities, budget, hotelCategory, rooms, selectedPlace]);
 
-  function runCatalogSearch() {
+  function reportMissingDestination() {
+    setFormError({ field: "destination", message: "Saisissez une ville ou un pays (2 lettres minimum), par exemple Douala ou Paris." });
+    destinationRef.current?.focus();
+  }
+
+  /** Un seul bouton « Rechercher » : catalogue 3M et disponibilités en direct partent ensemble. */
+  function runSearch() {
     if (destination.trim().length < 2) {
-      toast({ title: "Destination requise", description: "Saisissez une ville ou une destination pour lancer la recherche.", variant: "destructive" });
+      reportMissingDestination();
       return;
     }
     if (!checkIn || !checkOut || checkOut <= checkIn) {
-      toast({ title: "Dates à corriger", description: "La date de départ doit être postérieure à la date d’arrivée.", variant: "destructive" });
+      setFormError({ field: "dates", message: "La date de départ doit être postérieure à la date d’arrivée." });
       return;
     }
+    setFormError(null);
     discoverMutation.mutate({ destination: destination.trim(), amenities });
+    setLiveSearchToken((token) => token + 1);
   }
 
   function selectJinkoHotel(hotel: JinkoHotelSelection) {
@@ -146,7 +158,7 @@ export function ThreeMBookingExperience() {
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-amber-100"><BedDouble className="h-3.5 w-3.5" /> 3M Booking</p>
-              <h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">Votre séjour, plus clair dès le départ.</h2>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">Votre séjour, plus clair dès le départ.</h2>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-blue-100 md:text-base">Recherchez des hébergements, comparez des options et transmettez votre projet à 3M. Un conseiller confirme toujours disponibilité, conditions et tarif final avant toute réservation.</p>
             </div>
             <div className="grid grid-cols-3 gap-2 self-end">
@@ -155,14 +167,15 @@ export function ThreeMBookingExperience() {
           </div>
 
           <div className="mt-8 grid gap-3 rounded-3xl bg-white p-4 text-slate-900 shadow-xl md:grid-cols-6 md:p-5">
-            <div className="md:col-span-2"><Label htmlFor="booking-destination" className="text-xs font-black uppercase tracking-wide text-slate-500">Destination</Label><div className="relative mt-1"><MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-700" /><Input id="booking-destination" value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="Ville ou pays" className="h-12 border-slate-200 pl-9 font-semibold" maxLength={100} /></div></div>
-            <div><Label htmlFor="booking-checkin" className="text-xs font-black uppercase tracking-wide text-slate-500">Arrivée</Label><Input id="booking-checkin" type="date" min={isoDateAfter(0)} value={checkIn} onChange={(event) => setCheckIn(event.target.value)} className="mt-1 h-12 border-slate-200 font-semibold" /></div>
-            <div><Label htmlFor="booking-checkout" className="text-xs font-black uppercase tracking-wide text-slate-500">Départ</Label><Input id="booking-checkout" type="date" min={checkIn} value={checkOut} onChange={(event) => setCheckOut(event.target.value)} className="mt-1 h-12 border-slate-200 font-semibold" /></div>
+            <div className="md:col-span-2"><Label htmlFor="booking-destination" className="text-xs font-black uppercase tracking-wide text-slate-500">Destination</Label><div className="relative mt-1"><MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-700" /><Input id="booking-destination" ref={destinationRef} value={destination} onChange={(event) => { setDestination(event.target.value); if (formError?.field === "destination") setFormError(null); }} onKeyDown={(event) => { if (event.key === "Enter") runSearch(); }} placeholder="Ville ou pays" aria-invalid={formError?.field === "destination"} aria-describedby={formError ? "booking-form-error" : undefined} className={`h-12 pl-9 font-semibold ${formError?.field === "destination" ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"}`} maxLength={100} /></div></div>
+            <div><Label htmlFor="booking-checkin" className="text-xs font-black uppercase tracking-wide text-slate-500">Arrivée</Label><Input id="booking-checkin" type="date" min={isoDateAfter(0)} value={checkIn} onChange={(event) => { setCheckIn(event.target.value); if (formError?.field === "dates") setFormError(null); }} className="mt-1 h-12 border-slate-200 font-semibold" /></div>
+            <div><Label htmlFor="booking-checkout" className="text-xs font-black uppercase tracking-wide text-slate-500">Départ</Label><Input id="booking-checkout" type="date" min={checkIn} value={checkOut} onChange={(event) => { setCheckOut(event.target.value); if (formError?.field === "dates") setFormError(null); }} className={`mt-1 h-12 font-semibold ${formError?.field === "dates" ? "border-rose-500 ring-2 ring-rose-200" : "border-slate-200"}`} /></div>
             <div><Label htmlFor="booking-guests" className="text-xs font-black uppercase tracking-wide text-slate-500">Voyageurs</Label><div className="relative mt-1"><UsersRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-700" /><Input id="booking-guests" type="number" min="1" max="8" value={travelersCount} onChange={(event) => setTravelersCount(Math.max(1, Math.min(8, Number(event.target.value) || 1)))} className="h-12 border-slate-200 pl-9 font-semibold" /></div></div>
-            <div className="flex items-end"><Button type="button" onClick={runCatalogSearch} disabled={discoverMutation.isPending} className="h-12 w-full bg-orange-500 font-black text-white hover:bg-orange-600">{discoverMutation.isPending ? "Recherche…" : <><Search className="mr-2 h-4 w-4" /> Catalogue</>}</Button></div>
+            <div className="flex items-end"><Button type="button" onClick={runSearch} disabled={discoverMutation.isPending} data-testid="booking-search" className="h-12 w-full bg-orange-500 font-black text-white hover:bg-orange-600">{discoverMutation.isPending ? "Recherche…" : <><Search className="mr-2 h-4 w-4" /> Rechercher</>}</Button></div>
+            {formError && <p id="booking-form-error" role="alert" data-testid="booking-form-error" className="md:col-span-6 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">{formError.message}</p>}
           </div>
 
-          <JinkoHotelSearchPanel destination={destination} checkIn={checkIn} checkOut={checkOut} adults={travelersCount} selectedProviderHotelId={selectedJinkoId} onSelect={selectJinkoHotel} />
+          <JinkoHotelSearchPanel destination={destination} checkIn={checkIn} checkOut={checkOut} adults={travelersCount} selectedProviderHotelId={selectedJinkoId} onSelect={selectJinkoHotel} searchToken={liveSearchToken} onMissingDestination={reportMissingDestination} />
 
           <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 md:p-5">
             <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-200">Catalogue & suggestions</p><h3 className="mt-1 text-lg font-black">Établissements repérés pour votre séjour</h3></div><CalendarDays className="h-6 w-6 text-amber-200" /></div>
