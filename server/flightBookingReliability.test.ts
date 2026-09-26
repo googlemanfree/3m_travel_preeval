@@ -18,6 +18,25 @@ describe("e-mail de confirmation d'une demande de réservation", () => {
     expect(html).not.toMatch(/garanti(?!r)|billet émis|réservation confirmée|votre place est/i);
   });
 
+  it("aller-retour : le retour choisi et le tarif relevé de l'aller-retour figurent dans l'e-mail, à titre indicatif", () => {
+    const { html } = buildBookingConfirmationEmail({ ...base, returnDeparture: "2026-12-02", quotedTotalPrice: 457020, currency: "XAF" });
+    expect(html).toContain("<strong>Retour :</strong> 2026-12-02");
+    expect(html).toMatch(/Tarif relevé aller-retour \(indicatif\) :<\/strong> 457\s020 XAF/);
+    // Aller simple : ni retour ni mention « aller-retour ».
+    const oneWay = buildBookingConfirmationEmail({ ...base, quotedTotalPrice: 60000 }).html;
+    expect(oneWay).not.toContain("Retour :");
+    expect(oneWay).not.toContain("aller-retour");
+    expect(oneWay).toMatch(/Tarif relevé \(indicatif\)/);
+    // Sans tarif exploitable, aucun montant n'est affiché.
+    expect(buildBookingConfirmationEmail({ ...base, quotedTotalPrice: 0 }).html).not.toContain("Tarif relevé");
+    expect(buildBookingConfirmationEmail({ ...base, quotedTotalPrice: Number.NaN }).html).not.toContain("Tarif relevé");
+  });
+
+  it("la demande transmet le retour et le tarif à l'e-mail, et le comptoir retombe sur le nombre de voyageurs facturés", () => {
+    expect(read("server/routers/flightBooking.ts")).toContain("returnDeparture: flightSummary.returnDeparture,");
+    expect(read("shared/flightDeskAlert.ts")).toContain("numberOrNull(flight.pricedPassengers)");
+  });
+
   it("neutralise tout HTML et toute ligne supplémentaire venus du formulaire public", () => {
     const { html, subject } = buildBookingConfirmationEmail({ ...base, fullName: '<img src=x onerror="alert(1)">Test', airline: "<script>x</script>", requestRef: "REF\r\nBcc: victime@example.com" });
     expect(html).not.toContain("<img");

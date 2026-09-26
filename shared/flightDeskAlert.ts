@@ -58,7 +58,7 @@ export function extractDeskAlertData(input: { requestRef: string; priority?: str
     passengerName: text(passenger.fullName, 120) || "Nom à confirmer",
     passengerEmail: text(input.requesterEmail, 320),
     passengerPhone: phone || null,
-    travelers: numberOrNull(passenger.travelers),
+    travelers: numberOrNull(passenger.travelers) ?? numberOrNull(flight.pricedPassengers),
     comment: text(passenger.comment, 600) || null,
     cabin: CABIN_LABELS[text(flight.cabinClass, 20)] ?? null,
     outbound: legOf(flight),

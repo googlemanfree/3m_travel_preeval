@@ -20,7 +20,7 @@ import {
 } from "./services/flightOffers";
 import { flightsRouter, resetFlightOffersStore } from "./routers/flights";
 import { FlightBestOffers, formatOfferPrice } from "../client/src/components/FlightDiscoverySections";
-import { ALL_FLIGHT_ROUTES } from "../client/src/data/flightDiscovery";
+import { ALL_FLIGHT_ROUTES, parseLastFlightSearch } from "../client/src/data/flightDiscovery";
 
 afterEach(cleanup);
 
@@ -335,5 +335,51 @@ describe("page de vols unique : reprises de l'ancienne page Billets", () => {
   it("la FAQ existante est réutilisée (pas de seconde FAQ recopiée)", () => {
     expect(source).toContain("<FlightBookingFAQ />");
     expect(source).not.toContain("const FAQ_ITEMS");
+  });
+});
+
+describe("dernière recherche mémorisée sur l'appareil", () => {
+  const today = "2026-09-26";
+  const valid = { tripType: "ROUND_TRIP", origin: "NSI", destination: "CDG", departureDate: "2026-10-19", returnDate: "2026-10-29", adults: 2, children: 1, infants: 0, cabinClass: "ECONOMY" };
+  const raw = (patch: Record<string, unknown> = {}) => JSON.stringify({ ...valid, ...patch });
+
+  it("relit une recherche valide", () => {
+    expect(parseLastFlightSearch(raw(), today)).toEqual(valid);
+    expect(parseLastFlightSearch(raw({ tripType: "ONE_WAY", returnDate: "2026-01-01" }), today)).toMatchObject({ tripType: "ONE_WAY" });
+  });
+
+  it("ignore tout ce qui est absent, altéré ou déjà passé (le stockage n'est jamais digne de confiance)", () => {
+    for (const bad of [
+      null, "", "pas du json", "[]", "null", "x".repeat(700), raw() + " ".repeat(700),
+      raw({ departureDate: "2026-09-25" }), raw({ returnDate: "2026-10-01" }), raw({ origin: "nsi" }), raw({ origin: "CDG" }),
+      raw({ destination: "<script>" }), raw({ adults: 0 }), raw({ adults: 10 }), raw({ children: -1 }), raw({ infants: 5 }), raw({ adults: "2" }),
+      raw({ cabinClass: "GRATUIT" }), raw({ tripType: "MULTI" }), raw({ departureDate: "demain" }),
+    ]) {
+      expect(parseLastFlightSearch(bad as string | null, today), String(bad).slice(0, 40)).toBeNull();
+    }
+  });
+
+  it("ne garde que des champs connus (rien d'autre du stockage ne remonte)", () => {
+    const result = parseLastFlightSearch(raw({ email: "a@b.c", nom: "X" }), today);
+    expect(Object.keys(result!).sort()).toEqual(["adults", "cabinClass", "children", "departureDate", "destination", "infants", "origin", "returnDate", "tripType"]);
+  });
+
+  it("la page propose de reprendre la recherche, la mémorise sans donnée personnelle et tolère un stockage indisponible", () => {
+    const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
+    expect(page).toContain('data-testid="resume-last-search"');
+    expect(page).toContain("parseLastFlightSearch(window.localStorage.getItem(LAST_FLIGHT_SEARCH_KEY), today())");
+    expect(page).toContain("window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(saved));");
+    expect(page).toContain("Stockage indisponible");
+  });
+});
+
+describe("date de relevé sur chaque carte d'offre", () => {
+  it("affiche « Relevé le … » quand la date est connue, rien sinon", () => {
+    const one = { routeId: "nsi-cdg", tripType: "ROUND_TRIP" as const, from: { iata: "NSI", city: "Yaoundé" }, to: { iata: "CDG", city: "Paris" }, departureDate: "2026-11-23", returnDate: "2026-12-03", priceXaf: 457020, airline: "Air France", stops: 1, durationMinutes: 680 };
+    render(<FlightBestOffers offers={[one]} retrievedAt="2026-09-26T19:30:00Z" onPick={vi.fn()} />);
+    expect(screen.getByTestId("offer-retrieved").textContent).toContain("Relevé le");
+    cleanup();
+    render(<FlightBestOffers offers={[one]} retrievedAt={null} onPick={vi.fn()} />);
+    expect(screen.queryByTestId("offer-retrieved")).toBeNull();
   });
 });

@@ -95,6 +95,7 @@ export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { o
               <span>
                 <span className="block text-xs text-slate-500">à partir de</span>
                 <span className="block text-2xl font-black text-blue-800" data-testid="offer-price">{formatOfferPrice(offer.priceXaf)}</span>
+                {retrievedLabel && <span className="block text-[11px] text-slate-400" data-testid="offer-retrieved">Relevé le {retrievedLabel}</span>}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800 transition group-hover:bg-blue-700 group-hover:text-white"><Search className="h-3.5 w-3.5" aria-hidden="true" /> Voir ce vol</span>
             </span>

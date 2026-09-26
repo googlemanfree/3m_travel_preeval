@@ -28,7 +28,7 @@ function trackEvent(eventName: string, params?: Record<string, unknown>) {
   const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
   if (typeof gtag === "function") gtag("event", eventName, params);
 }
-import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, type FlightRoute } from "@/data/flightDiscovery";
+import { ALL_FLIGHT_ROUTES, FLIGHT_STOP_OPTIONS, LAST_FLIGHT_SEARCH_KEY, parseLastFlightSearch, type FlightRoute, type LastFlightSearch } from "@/data/flightDiscovery";
 
 /** « Yaoundé (NSI) » pour les aéroports des parcours fréquents ; le code seul pour les autres. */
 const AIRPORT_CITY: Record<string, string> = Object.fromEntries(ALL_FLIGHT_ROUTES.flatMap((route) => [[route.from.iata, route.from.city], [route.to.iata, route.to.city]]));
@@ -627,6 +627,27 @@ export default function Flights() {
   // Aller-retour : le vol aller est choisi d'abord, puis on interroge les vraies options de retour (2e requête avec le
   // departure_token du vol aller) ; le total de l'option retenue est le tarif relevé de l'aller-retour complet.
   const [pendingOutbound, setPendingOutbound] = useState<Flight | null>(null);
+  // Dernière recherche de cet appareil (validée à la lecture, jamais envoyée au serveur).
+  const [lastSearch, setLastSearch] = useState<LastFlightSearch | null>(() => {
+    try {
+      return parseLastFlightSearch(window.localStorage.getItem(LAST_FLIGHT_SEARCH_KEY), today());
+    } catch {
+      return null;
+    }
+  });
+
+  function resumeLastSearch(saved: LastFlightSearch) {
+    setTripType(saved.tripType);
+    setOrigin(saved.origin);
+    setDestination(saved.destination);
+    setDepartureDate(saved.departureDate);
+    setReturnDate(saved.returnDate);
+    setPassengers({ adults: saved.adults, children: saved.children, infants: saved.infants, cabinClass: saved.cabinClass });
+    trackEvent("flight_last_search_resumed", { origin: saved.origin, destination: saved.destination });
+    searchStartedAtRef.current = Date.now();
+    setIsSearchSubmitting(true);
+    setSearchEnabled(true);
+  }
   const returnFlightsQuery = trpc.flights.searchReturnFlights.useQuery(
     {
       origin,
@@ -768,6 +789,15 @@ export default function Flights() {
     setIsSearchSubmitting(true);
     setSearchEnabled(true);
     trackEvent("flight_search_started", { origin, destination, tripType });
+    if (tripType !== "MULTI") {
+      const saved: LastFlightSearch = { tripType, origin, destination, departureDate, returnDate, adults: passengers.adults, children: passengers.children, infants: passengers.infants, cabinClass: passengers.cabinClass };
+      setLastSearch(saved);
+      try {
+        window.localStorage.setItem(LAST_FLIGHT_SEARCH_KEY, JSON.stringify(saved));
+      } catch {
+        // Stockage indisponible (navigation privée) : la recherche fonctionne, seule la mémorisation est perdue.
+      }
+    }
   }
 
   // Derived filtered/sorted results
@@ -855,6 +885,16 @@ export default function Flights() {
 
           <div className="rounded-3xl bg-gradient-to-br from-[#0F2A6B] via-[#0B1F55] to-[#020C3B] p-4 shadow-2xl md:p-6">
           <FlightServiceTabs />
+          {lastSearch && !searchEnabled && (
+            <button
+              type="button"
+              onClick={() => resumeLastSearch(lastSearch)}
+              data-testid="resume-last-search"
+              className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Reprendre ma dernière recherche : {airportLabel(lastSearch.origin)} → {airportLabel(lastSearch.destination)}
+            </button>
+          )}
 
           {/* Trip type tabs */}
           <div className="flex gap-2 mb-6 justify-center">
@@ -892,7 +932,7 @@ export default function Flights() {
               </div>
 
               {/* Dates */}
-              <div className={`grid gap-3 ${tripType === "ROUND_TRIP" ? "grid-cols-2" : "grid-cols-1"}`}>
+              <div className={`grid gap-3 ${tripType === "ROUND_TRIP" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
                 <div>
                   <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Départ</label>
                   <div className="relative">

@@ -143,7 +143,11 @@ function getFlightEmailSummary(flightData: FlightTimingData) {
   const origin = typeof flightData.originCity === "string" ? flightData.originCity : typeof flightData.origin === "string" ? flightData.origin : "Départ";
   const destination = typeof flightData.destinationCity === "string" ? flightData.destinationCity : typeof flightData.destination === "string" ? flightData.destination : "Destination";
   const departure = typeof flightData.departureDate === "string" ? flightData.departureDate : "À confirmer";
-  return { airline, origin, destination, departure };
+  const returnFlight = flightData.returnFlight && typeof flightData.returnFlight === "object" ? flightData.returnFlight as Record<string, unknown> : null;
+  const returnDeparture = returnFlight && typeof returnFlight.departureDate === "string" ? returnFlight.departureDate : null;
+  const quoted = typeof flightData.quotedTotalPrice === "number" ? flightData.quotedTotalPrice : typeof flightData.totalPrice === "number" ? flightData.totalPrice : null;
+  const currency = typeof flightData.currency === "string" ? flightData.currency : "XAF";
+  return { airline, origin, destination, departure, returnDeparture, quotedTotalPrice: quoted, currency };
 }
 
 const LOYALTY_POINTS_PER_ISSUED_BOOKING = 100;
@@ -396,6 +400,9 @@ export const flightBookingRouter = router({
           destination: flightSummary.destination,
           airline: flightSummary.airline,
           departure: flightSummary.departure,
+          returnDeparture: flightSummary.returnDeparture,
+          quotedTotalPrice: flightSummary.quotedTotalPrice,
+          currency: flightSummary.currency,
         });
         await sendEmail({ to: requester.email, subject: confirmation.subject, html: confirmation.html });
         confirmationEmailSent = true;

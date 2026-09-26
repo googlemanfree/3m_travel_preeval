@@ -103,3 +103,48 @@ export const FLIGHT_STOP_OPTIONS: Array<{ value: number | null; label: string }>
   { value: 0, label: "Vols directs uniquement" },
   { value: 1, label: "1 escale maximum" },
 ];
+
+
+/** Dernière recherche, gardée sur l'appareil du visiteur (jamais envoyée au serveur, aucune donnée personnelle). */
+export type LastFlightSearch = {
+  tripType: "ONE_WAY" | "ROUND_TRIP";
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate: string;
+  adults: number;
+  children: number;
+  infants: number;
+  cabinClass: string;
+};
+
+export const LAST_FLIGHT_SEARCH_KEY = "3m-last-flight-search";
+
+const CABINS = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
+const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+const count = (value: unknown, min: number, max: number) => (typeof value === "number" && Number.isInteger(value) && value >= min && value <= max ? value : null);
+
+/** Relit la recherche mémorisée : tout ce qui est invalide, altéré ou déjà passé est ignoré. */
+export function parseLastFlightSearch(raw: string | null, today: string): LastFlightSearch | null {
+  if (!raw || raw.length > 600) return null;
+  let value: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    value = parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+  const { tripType, origin, destination, departureDate, returnDate, cabinClass } = value;
+  const adults = count(value.adults, 1, 9);
+  const children = count(value.children, 0, 8);
+  const infants = count(value.infants, 0, 4);
+  if (tripType !== "ONE_WAY" && tripType !== "ROUND_TRIP") return null;
+  if (typeof origin !== "string" || !/^[A-Z]{3}$/.test(origin) || typeof destination !== "string" || !/^[A-Z]{3}$/.test(destination) || origin === destination) return null;
+  if (typeof departureDate !== "string" || !isoDate.test(departureDate) || departureDate < today) return null;
+  if (typeof returnDate !== "string" || !isoDate.test(returnDate)) return null;
+  if (tripType === "ROUND_TRIP" && returnDate < departureDate) return null;
+  if (adults === null || children === null || infants === null) return null;
+  if (typeof cabinClass !== "string" || !CABINS.includes(cabinClass)) return null;
+  return { tripType, origin, destination, departureDate, returnDate, adults, children, infants, cabinClass };
+}

@@ -13,6 +13,10 @@ export type BookingConfirmationInput = {
   destination: string;
   airline: string;
   departure: string;
+  /** Aller-retour : date du vol retour choisi et tarif relevé de l'aller-retour complet (indicatif). */
+  returnDeparture?: string | null;
+  quotedTotalPrice?: number | null;
+  currency?: string;
   whatsappNumber?: string;
 };
 
@@ -25,6 +29,11 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput): 
   const route = `${oneLine(input.origin, 80)} → ${oneLine(input.destination, 80)}`;
   const airline = oneLine(input.airline, 80);
   const departure = oneLine(input.departure, 40);
+  const returnDeparture = input.returnDeparture ? oneLine(input.returnDeparture, 40) : "";
+  const currency = oneLine(input.currency || "XAF", 6);
+  const quotedTotal = typeof input.quotedTotalPrice === "number" && Number.isFinite(input.quotedTotalPrice) && input.quotedTotalPrice > 0
+    ? `${new Intl.NumberFormat("fr-FR").format(Math.round(input.quotedTotalPrice))} ${currency}`
+    : "";
   const whatsapp = (input.whatsappNumber ?? "237698104832").replace(/\D/g, "");
   const whatsappHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Bonjour, je souhaite suivre ma demande de réservation ${requestRef}.`)}`;
 
@@ -36,7 +45,8 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput): 
 <p style="margin:0 0 16px;padding:14px;background:#eff6ff;border:2px dashed #2563eb;border-radius:10px;font-size:18px;font-weight:bold;text-align:center;color:#1e3a8a">${escapeHtml(requestRef)}</p>
 <p style="margin:0 0 4px"><strong>Trajet :</strong> ${escapeHtml(route)}</p>
 <p style="margin:0 0 4px"><strong>Compagnie :</strong> ${escapeHtml(airline)}</p>
-<p style="margin:0 0 16px"><strong>Départ :</strong> ${escapeHtml(departure)}</p>
+<p style="margin:0 0 ${returnDeparture || quotedTotal ? "4" : "16"}px"><strong>Départ :</strong> ${escapeHtml(departure)}</p>
+${returnDeparture ? `<p style="margin:0 0 ${quotedTotal ? "4" : "16"}px"><strong>Retour :</strong> ${escapeHtml(returnDeparture)}</p>` : ""}${quotedTotal ? `<p style="margin:0 0 16px"><strong>Tarif relevé${returnDeparture ? " aller-retour" : ""} (indicatif) :</strong> ${escapeHtml(quotedTotal)}</p>` : ""}
 <p style="margin:0 0 8px"><strong>Et maintenant ?</strong></p>
 <ol style="margin:0 0 16px;padding-left:20px;line-height:1.6">
 <li>Un conseiller vérifie la disponibilité et le tarif auprès de la compagnie.</li>
