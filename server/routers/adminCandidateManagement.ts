@@ -11,6 +11,7 @@ import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../em
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { archiveRedundantPreAccounts, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
+import { loadPilotageQueue } from "../services/pilotageQueueStore";
 import { accountReference, agencyDossierReference, referenceChangeSentence } from "../../shared/caseReference";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
@@ -198,6 +199,16 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
 }
 
 export const adminCandidateManagementRouter = router({
+  /** File de pilotage prioritaire : dossiers prêts à activer, pièces à contrôler, dossiers sans mouvement (lecture seule). */
+  getPilotageQueue: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      return loadPilotageQueue(db);
+    }),
+
   /**
    * Pré-comptes redondants : pré-dossiers ou comptes sans dossier propre dont la personne a déjà un dossier actif.
    * Lecture seule (aperçu) : rien n'est modifié tant que l'administrateur n'a pas confirmé la mise en corbeille.
