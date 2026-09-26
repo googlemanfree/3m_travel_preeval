@@ -92,17 +92,23 @@ const row = (id: number) => screen.getByTestId(`crm-row-${id}`);
 
 describe("vue CRM des pièces", () => {
   it("affiche la progression, les statuts en français et un seul intitulé par pièce", () => {
-    renderCrm();
-    expect(screen.getByTestId("crm-progress").textContent).toBe("1 sur 5 validée");
-    expect(within(row(1)).getByText("À fournir")).toBeTruthy();
-    expect(within(row(2)).getByText("À vérifier")).toBeTruthy();
-    expect(within(row(3)).getByText("À corriger")).toBeTruthy();
-    expect(within(row(4)).getByText("Validée")).toBeTruthy();
-    expect(within(row(5)).getByText("Non requise")).toBeTruthy();
-    expect(screen.queryByText("pending")).toBeNull();
-    expect(within(row(2)).getByText("passeport-scan.pdf")).toBeTruthy();
-    expect(within(row(2)).getByText(/Remis en agence/)).toBeTruthy();
-    expect(within(row(6)).getByText("En retard de 5 j")).toBeTruthy();
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    try {
+      renderCrm();
+      expect(screen.getByTestId("crm-progress").textContent).toBe("1 sur 5 validée");
+      expect(within(row(1)).getByText("À fournir")).toBeTruthy();
+      expect(within(row(2)).getByText("À vérifier")).toBeTruthy();
+      expect(within(row(3)).getByText("À corriger")).toBeTruthy();
+      expect(within(row(4)).getByText("Validée")).toBeTruthy();
+      expect(within(row(5)).getByText("Non requise")).toBeTruthy();
+      expect(screen.queryByText("pending")).toBeNull();
+      expect(within(row(2)).getByText("passeport-scan.pdf")).toBeTruthy();
+      expect(within(row(2)).getByText(/Remis en agence/)).toBeTruthy();
+      expect(within(row(6)).getByText("En retard de 5 j")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("filtre au clic sur un compteur", () => {
