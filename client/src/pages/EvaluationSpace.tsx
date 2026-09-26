@@ -32,6 +32,7 @@ import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
+import { clientStatusLabel } from "@shared/dossierProgress";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
@@ -308,20 +309,8 @@ export default function EvaluationSpace() {
   }));
   const agencyDocumentCount = (agencyDocuments ?? []).length;
   const candidateDocumentCount = (candidateFiles ?? []).length;
-  const dossierStatusLabel: Record<string, string> = {
-    nouveau: "Dossier créé",
-    evaluation: "Évaluation en cours",
-    documents: "Documents à compléter",
-    en_attente_documents: "Documents à compléter",
-    documents_recus: "Documents reçus",
-    en_cours: "Traitement en cours",
-    soumis_agences: "Dossier transmis",
-    en_cours_recrutement: "Accompagnement en cours",
-    contrat_obtenu: "Contrat obtenu",
-    visa_approuve: "Visa approuvé",
-    refuse: "Décision défavorable",
-  };
-  const currentDossierStatusLabel = dossierStatusLabel[String(cProfile.dossierStatus)] || "Suivi en cours";
+  // Même libellé que les e-mails et les notifications : source unique dans shared/dossierProgress.ts.
+  const currentDossierStatusLabel = clientStatusLabel(cProfile.dossierStatus);
   const latestEvaluation = (evaluations[0] as any) ?? (activeDossier?.evaluationDeliveryStatus === "sent" ? {
     id: `application-${activeDossier.id}`,
     referenceCode: activeDossier.dossierNumber,

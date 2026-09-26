@@ -8,6 +8,7 @@ import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from 
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
+import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
@@ -554,6 +555,7 @@ export const adminCandidateManagementRouter = router({
       let candidateNameForNotification = "";
       let dossierNumberForMessage = input.candidateId;
       let previousStatus = "";
+      let progressContext: { destination: string | null; visaType: string | null } = { destination: null, visaType: null };
       const profilePatch = {
         ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
         ...(input.email !== undefined ? { email: input.email } : {}),
@@ -572,6 +574,7 @@ export const adminCandidateManagementRouter = router({
         candidateNameForNotification = record.fullName;
         dossierNumberForMessage = input.dossierNumber || record.dossierNumber;
         previousStatus = record.dossierStatus;
+        progressContext = { destination: record.destination, visaType: record.visaType };
         if (!candidateIdForMessage) {
           const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
           candidateIdForMessage = linkedCandidate?.id ?? null;
@@ -599,6 +602,7 @@ export const adminCandidateManagementRouter = router({
         const [record] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, status: agencyDossiers.status, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
         previousStatus = record.status;
+        progressContext = { destination: record.destination, visaType: record.visaType };
         candidateEmailForNotification = record.email;
         candidateNameForNotification = record.fullName;
         const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
@@ -667,20 +671,9 @@ export const adminCandidateManagementRouter = router({
       }
 
       if (candidateIdForMessage && (previousStatus !== input.status || Object.keys(profilePatch).length > 0)) {
-        const statusLabels: Record<string, string> = {
-          nouveau: "Nouveau dossier",
-          en_evaluation: "Évaluation en cours",
-          en_cours: "Dossier en cours de traitement",
-          documents_requis: "Documents requis",
-          en_attente_documents: "Documents requis",
-          documents_recus: "Documents reçus",
-          soumis: "Dossier soumis",
-          soumis_agences: "Dossier soumis aux autorités",
-          approuve: "Dossier approuvé",
-          visa_approuve: "Visa approuvé",
-          refuse: "Dossier refusé",
-        };
-        const visibleBody = `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\nNouveau statut : ${statusLabels[input.status] ?? input.status}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`;
+        // Même vocabulaire et même « étape N sur M » que l'espace client et l'e-mail de changement d'étape.
+        const progress = describeDossierProgress({ destination: input.destination ?? progressContext.destination, visaType: input.visaType ?? progressContext.visaType, dossierStatus: input.status });
+        const visibleBody = `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\n${progressText(progress)}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`;
         const agencyResponse = ["soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "approuve", "soumis"].includes(input.status);
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateIdForMessage,

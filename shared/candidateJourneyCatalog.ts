@@ -1184,13 +1184,17 @@ export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: stri
   if (evaluationStatus !== "validated" && journey.steps[0]) return 0;
   if (is(status, "nouveau", "evaluation", "en evaluation")) return 1;
   if (is(status, "bilan")) return milestones?.evaluationClientConfirmed ? 5 : 4;
-  if (milestones?.activationRequested && !milestones.paymentConfirmed) return 5;
-  if (milestones?.paymentConfirmed || is(status, "paye", "payment")) return 6;
-  if (is(status, "attente paiement", "en attente paiement", "paiement")) return 5;
-  if (is(status, "document", "documents")) return 7;
+  // Les étapes avancées passent avant les jalons de paiement : un paiement confirmé ne doit jamais ramener un dossier déjà
+  // soumis, avec contrat ou approuvé à l'étape des pièces justificatives (l'espace client affichait alors une étape périmée).
   if (is(status, "soumis", "en cours", "recrutement", "adem")) return 9;
   if (is(status, "contrat")) return 10;
   if (is(status, "visa", "consulaire")) return 12;
   if (is(status, "approuve")) return journey.steps.length - 1;
+  if (milestones?.activationRequested && !milestones.paymentConfirmed) return 5;
+  // Pièces reçues : le conseiller contrôle et complète le profil (étape suivante) ; pièces attendues : étape des pièces.
+  if (is(status, "recu")) return 7;
+  if (milestones?.paymentConfirmed || is(status, "paye", "payment")) return 6;
+  if (is(status, "attente paiement", "en attente paiement", "paiement")) return 5;
+  if (is(status, "document", "documents")) return 6;
   return Math.min(1, journey.steps.length - 1);
 }

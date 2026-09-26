@@ -21,6 +21,8 @@ import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, cou
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
+import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
@@ -1864,6 +1866,7 @@ export const adminRouter = router({
         let candidateEmail = "";
         let candidateName = "";
         let folderCode = "";
+        let dossierContext: { destination: string | null; visaType: string | null; paymentConfirmed: boolean } = { destination: null, visaType: null, paymentConfirmed: false };
 
         if (source === "online") {
           // Mapper vers le statut interne applications
@@ -1906,6 +1909,7 @@ export const adminRouter = router({
           candidateEmail = app.email;
           candidateName = app.fullName;
           folderCode = app.dossierNumber;
+          dossierContext = { destination: app.destination, visaType: app.visaType, paymentConfirmed: app.paymentStatus === "SUCCESS" };
         } else if (source === "agency") {
           // Mapper vers le statut interne agencyDossiers
           const internalStatusMap: Record<string, string> = {
@@ -1946,39 +1950,16 @@ export const adminRouter = router({
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;
           folderCode = `3M-AGN-${id.toString().padStart(4, "0")}`;
+          dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: dossier.initialPaymentStatus === "paid" };
         }
 
-        // Envoyer une notification email au client si demandé
+        // Envoyer une notification email au client si demandé : même statut et même « étape N sur M » que son espace client.
         if (input.notifyClient && candidateEmail) {
           try {
-            const statusLabel = statusLabels[input.newStatus] || input.newStatus;
-            const htmlContent = `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center;">
-                  <h1 style="color: #fff; font-size: 22px; margin: 0;">3M Travel & Services</h1>
-                  <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Mise à jour de votre dossier</p>
-                </div>
-                <div style="padding: 32px 28px;">
-                  <p style="color: #374151;">Bonjour <strong>${esc(candidateName)}</strong>,</p>
-                  <p style="color: #374151;">Le statut de votre dossier <strong>${esc(folderCode)}</strong> vient d'être mis à jour :</p>
-                  <div style="background: #eff6ff; border-left: 4px solid #2563EB; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; font-size: 18px; font-weight: 700; color: #1E3A8A;">📋 ${esc(statusLabel)}</p>
-                  </div>
-                  <p style="color: #374151;">Vous pouvez consulter votre espace client pour plus de détails :</p>
-                  <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
-                </div>
-                <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-                  <p>3M Travel & Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
-                  <p>Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
-                </div>
-              </div>
-            `;
-
-            await sendGenericEmail({
-              to: candidateEmail,
-              subject: `📋 Mise à jour de votre dossier ${folderCode} - 3M Travel & Services`,
-              html: htmlContent
-            });
+            const internalStatus = (source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[input.newStatus];
+            const progress = describeDossierProgress({ destination: dossierContext.destination, visaType: dossierContext.visaType, dossierStatus: internalStatus, milestones: { paymentConfirmed: dossierContext.paymentConfirmed } });
+            const update = buildProcedureUpdateEmail({ fullName: candidateName, folderCode, progress, siteUrl: process.env.SITE_URL || "https://www.3mtravelagency.com" });
+            await sendGenericEmail({ to: candidateEmail, subject: update.subject, html: update.html });
           } catch (emailErr) {
             console.error("[Admin Update Status] Email notification failed:", emailErr);
             // Ne pas bloquer la mise à jour si l'email échoue
@@ -2027,6 +2008,7 @@ export const adminRouter = router({
       let candidateEmail = "";
       let candidateName = "";
       let dossierNumber = "";
+      let rollbackContext: { destination: string | null; visaType: string | null; paymentConfirmed: boolean } = { destination: null, visaType: null, paymentConfirmed: false };
 
       if (reference.source === "online") {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
@@ -2046,6 +2028,7 @@ export const adminRouter = router({
         candidateEmail = application.email;
         candidateName = application.fullName;
         dossierNumber = application.dossierNumber;
+        rollbackContext = { destination: application.destination, visaType: application.visaType, paymentConfirmed: application.paymentStatus === "SUCCESS" };
       } else {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
         if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
@@ -2064,6 +2047,7 @@ export const adminRouter = router({
         candidateEmail = dossier.email;
         candidateName = dossier.fullName;
         dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
+        rollbackContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: dossier.initialPaymentStatus === "paid" };
       }
 
       await db.insert(adminActivityLogs).values({
@@ -2079,11 +2063,11 @@ export const adminRouter = router({
       let notificationSent = false;
       if (input.notifyClient && candidateEmail) {
         try {
-          await sendGenericEmail({
-            to: candidateEmail,
-            subject: `Correction du suivi de votre dossier ${dossierNumber}`,
-            html: `<p>Bonjour ${esc(candidateName)},</p><p>Une correction administrative a été appliquée au suivi de votre dossier <strong>${esc(dossierNumber)}</strong>.</p><p>Étape active : <strong>${esc(labels[previousStatus])}</strong>.</p><p>Motif communiqué : ${esc(input.reason.trim())}</p><p>Consultez votre espace client : <a href="https://www.3mtravelagency.com/mon-espace">www.3mtravelagency.com/mon-espace</a>.</p>`,
-          });
+          // Même statut et même « étape N sur M » que l'espace client, avec le motif de la correction.
+          const internalAfter = (reference.source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[previousStatus];
+          const progress = describeDossierProgress({ destination: rollbackContext.destination, visaType: rollbackContext.visaType, dossierStatus: internalAfter, milestones: { paymentConfirmed: rollbackContext.paymentConfirmed } });
+          const correction = buildProcedureUpdateEmail({ fullName: candidateName, folderCode: dossierNumber, progress, siteUrl: process.env.SITE_URL || "https://www.3mtravelagency.com", note: `Une correction administrative a été appliquée au suivi de votre dossier.\nMotif : ${input.reason.trim()}` });
+          await sendGenericEmail({ to: candidateEmail, subject: `Correction du suivi de votre dossier ${dossierNumber}`, html: correction.html });
           notificationSent = true;
         } catch (emailError) {
           console.error("[Admin Revert Candidate Status] Email notification failed:", emailError);
