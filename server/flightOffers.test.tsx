@@ -383,3 +383,14 @@ describe("date de relevé sur chaque carte d'offre", () => {
     expect(screen.queryByTestId("offer-retrieved")).toBeNull();
   });
 });
+
+describe("formulaire de recherche sur téléphone", () => {
+  const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
+
+  it("dates empilées sous 640 px (le texte n'est plus coupé) et champs à 16 px (iOS ne zoome pas à la saisie)", () => {
+    expect(page).toContain('"grid-cols-1 sm:grid-cols-2"');
+    expect(page).not.toContain('"grid-cols-2" : "grid-cols-1"');
+    expect(page).not.toContain("focus:outline-none text-sm font-medium bg-white transition-colors");
+    expect(page.split("text-base sm:text-sm font-medium bg-white transition-colors").length - 1).toBe(3);
+  });
+});

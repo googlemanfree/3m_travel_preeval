@@ -226,7 +226,7 @@ export function AirportInput({
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
           maxLength={200}
-          className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-sm font-medium bg-white transition-colors"
+          className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors"
         />
       </div>
       <AnimatePresence>
@@ -939,7 +939,7 @@ export default function Flights() {
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
                     <input type="date" value={departureDate} min={today()}
                       onChange={(e) => handleDepartureDateChange(e.target.value)}
-                      className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-sm font-medium bg-white transition-colors" />
+                      className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                   </div>
                 </div>
                 {tripType === "ROUND_TRIP" && (
@@ -949,7 +949,7 @@ export default function Flights() {
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
                       <input type="date" value={returnDate} min={departureDate}
                         onChange={(e) => handleReturnDateChange(e.target.value)}
-                        className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-sm font-medium bg-white transition-colors" />
+                        className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                     </div>
                   </div>
                 )}
