@@ -174,3 +174,32 @@ export function buildRequirementOptions(destination?: string | null, projectType
   return options;
 }
 
+export type DueInfo = { label: string; tone: "overdue" | "soon" | "normal" };
+
+/**
+ * Échéance fixée par le conseiller pour une pièce : « En retard de N j », « Plus que N j » (3 jours ou moins) ou la date.
+ * Uniquement une date réellement saisie par le conseiller ; aucune échéance n'est jamais déduite ou inventée.
+ */
+export function dueInfo(dueAt: Date | string | null | undefined, now: Date = new Date()): DueInfo | null {
+  if (!dueAt) return null;
+  const due = new Date(dueAt);
+  if (Number.isNaN(due.getTime())) return null;
+  const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const days = Math.round((startOfDay(due) - startOfDay(now)) / 86_400_000);
+  const date = due.toLocaleDateString("fr-FR");
+  if (days < 0) return { label: `En retard de ${-days} j (à déposer avant le ${date})`, tone: "overdue" };
+  if (days === 0) return { label: `À déposer aujourd’hui (${date})`, tone: "soon" };
+  if (days <= 3) return { label: `Plus que ${days} j (à déposer avant le ${date})`, tone: "soon" };
+  return { label: `À déposer avant le ${date}`, tone: "normal" };
+}
+
+export type WelcomeStep = { id: "evaluation" | "documents" | "payment"; title: string; detail: string; done: boolean };
+
+/** Parcours d'accueil en trois étapes, cochées d'après l'état réel du dossier. */
+export function buildWelcomeSteps(input: { evaluationRequired: boolean; checklistMissing: number; checklistTotal: number; paymentConfirmed: boolean; agreementSigned: boolean }): WelcomeStep[] {
+  return [
+    { id: "evaluation", title: "Faire votre évaluation", detail: "Elle précise votre destination et votre projet.", done: !input.evaluationRequired },
+    { id: "documents", title: "Envoyer vos pièces", detail: input.checklistTotal > 0 ? `${Math.max(0, input.checklistTotal - input.checklistMissing)} sur ${input.checklistTotal} déjà reçues, chacune en un geste.` : "Chaque pièce s’envoie en un geste, photo du téléphone comprise.", done: input.checklistTotal > 0 && input.checklistMissing === 0 },
+    { id: "payment", title: "Régler puis signer le protocole", detail: "Le reçu et le protocole d’accord vous arrivent ensemble après confirmation du paiement.", done: input.paymentConfirmed && input.agreementSigned },
+  ];
+}

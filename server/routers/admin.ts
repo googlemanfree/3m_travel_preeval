@@ -2214,8 +2214,11 @@ export const adminRouter = router({
                     ${input.comment ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: #4b5563;"><strong>Note de l'agence :</strong> ${esc(input.comment)}</p>` : ""}
                   </div>
 
-                  <p style="color: #374151; font-size: 14px;">Vous pouvez consulter votre espace candidat pour suivre l'évolution complète de vos démarches :</p>
-                  <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                  ${input.status === "rejected"
+                    ? `<p style="color: #374151; font-size: 14px;">Renvoyez une nouvelle version en un geste : dans votre checklist, la pièce concernée a son bouton « Envoyer une nouvelle version » (photo du téléphone comprise).</p>
+                  <a href="https://3mtravelagency.com/mon-espace?section=documents" style="display: inline-block; background: #dc2626; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;" data-purpose="resend-document">Renvoyer ce document</a>`
+                    : `<p style="color: #374151; font-size: 14px;">Vous pouvez consulter votre espace candidat pour suivre l'évolution complète de vos démarches :</p>
+                  <a href="https://3mtravelagency.com/mon-espace?section=documents" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mes documents</a>`}
                 </div>
                 <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
                   <p>3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>

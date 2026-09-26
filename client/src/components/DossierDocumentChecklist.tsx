@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildRequirementOptions, customRequirementKind, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
+import { buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
 import RequirementQuickUpload from "@/components/RequirementQuickUpload";
 
 type DocumentClarification = {
@@ -131,7 +131,7 @@ export default function DossierDocumentChecklist({
                   <span className="block font-semibold text-gray-900">{requirement.label}</span>
                   <span className="text-xs text-gray-600">{requirement.category} · {state.label}</span>
                   {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
-                  {dueAt && <span className="mt-1 block text-xs font-medium text-slate-700">À déposer avant le {new Date(dueAt).toLocaleDateString("fr-FR")}</span>}
+                  {(() => { const due = dueInfo(dueAt); return due ? <span data-testid="checklist-due" data-tone={due.tone} className={`mt-1 block text-xs font-semibold ${due.tone === "overdue" ? "text-rose-700" : due.tone === "soon" ? "text-amber-800" : "text-slate-700"}`}>{due.label}</span> : null; })()}
                   {pendingClarification && <span className="mt-2 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">En attente de réponse</span>}
                   {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}{answeredClarification.canUpload && answeredClarification.id && answeredClarification.documentLabel && onUploadClarification && <Button type="button" size="sm" className="mt-2 h-8 bg-emerald-700 text-xs hover:bg-emerald-800" onClick={() => onUploadClarification({ id: answeredClarification.id!, documentLabel: answeredClarification.documentLabel! })}>Déposer cette pièce maintenant</Button>}{answeredClarification.hasSubmittedDocument && <span className="mt-2 block font-semibold text-emerald-800">Pièce transmise — vérification en cours.</span>}</div>}
                   {(state.kind === "missing" || state.kind === "replace") && (onUploaded

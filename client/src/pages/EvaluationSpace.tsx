@@ -46,6 +46,9 @@ import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
+import DossierPaymentCard from "@/components/DossierPaymentCard";
+import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
+import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
@@ -389,13 +392,14 @@ export default function EvaluationSpace() {
     setLocation(`/mon-espace?section=${nextSection}`);
   };
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
+  const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
   const nextStep = computeNextStep({
     evaluationRequired,
     evaluationStage: structuredStage,
     cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
     agreementSignatureRequired: agreementAfterPaymentRequired,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
-    checklist: summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements),
+    checklist: checklistSummary,
   });
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
@@ -508,6 +512,9 @@ export default function EvaluationSpace() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               <NextStepCard step={nextStep} onAct={actOnNextStep} />
+              <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={Boolean(workflow?.paymentConfirmed)} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
+              <DossierPaymentCard dossierNumber={activeDossier?.dossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={Boolean(workflow?.paymentConfirmed)} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
+              <MyFlightRequestsCard />
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               {/* Widgets statistiques et progression */}

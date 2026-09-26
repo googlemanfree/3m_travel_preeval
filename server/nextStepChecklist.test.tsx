@@ -82,6 +82,8 @@ describe("résumé de la checklist réelle (pays × visa)", () => {
 describe("branchement dans l'espace client", () => {
   it("la carte « Votre prochaine étape » reçoit le résumé de la checklist du pays et du visa", () => {
     const space = require("node:fs").readFileSync(require("node:path").resolve(import.meta.dirname, "../client/src/pages/EvaluationSpace.tsx"), "utf8") as string;
-    expect(space).toContain("checklist: summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements)");
+    // Le résumé est calculé une fois (checklistSummary) puis partagé par la carte « prochaine étape » et le parcours d'accueil.
+    expect(space).toContain("const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);");
+    expect(space).toContain("checklist: checklistSummary,");
   });
 });
