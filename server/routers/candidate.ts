@@ -32,6 +32,12 @@ import {
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
+import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { notifyAdmins } from "./adminNotifications";
+import { buildCandidateMessageAlert } from "../services/candidateMessageAlert";
+
+// Messages du candidat : 20 par heure et par compte / connexion, 300 au total (chaque message alerte l'administration).
+const candidateMessageGuard = createSubmissionGuard({ perClient: { limit: 20, windowMs: 60 * 60_000 }, perEmail: { limit: 20, windowMs: 60 * 60_000 }, global: { limit: 300, windowMs: 60 * 60_000 } });
 import { getDb } from "../db";
 import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { publicProcedure, router } from "../_core/trpc";
@@ -1210,6 +1216,8 @@ export const candidateRouter = router({
       path: ["content"],
     }))
     .mutation(async ({ ctx, input }) => {
+      // Plafond avant toute écriture : chaque message alerte l'administration ; sans limite, un compte pouvait la submerger.
+      candidateMessageGuard.assertAllowed((ctx as any)?.req, ctx.candidate.email);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -1247,6 +1255,9 @@ export const candidateRouter = router({
         attachmentSizeBytes: attachment?.sizeBytes,
         isRead: false,
       });
+
+      // La cloche de l'administration signale le message (avant : invisible tant que la messagerie du dossier n'était pas ouverte).
+      await notifyAdmins(buildCandidateMessageAlert({ candidateId: ctx.candidate.id, fullName: ctx.candidate.fullName, content: input.content, hasAttachment: Boolean(attachment) }));
 
       return { success: true, attachment };
     }),
