@@ -7,6 +7,7 @@ import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor
 import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { categoryForRequirement, validateCandidateFile } from "@/lib/candidateUpload";
+import { imagesToPdf, isHeic, isImage, prepareFileForUpload } from "@/lib/prepareUpload";
 
 /** Valeur du choix « Autre document » dans la liste des pièces du pays et du visa. */
 export const OTHER_REQUIREMENT = "__other";
@@ -23,6 +24,10 @@ interface DocumentFile {
   category?: string;
   /** Pièce demandée choisie (intitulé), « __other » ou vide tant que le candidat n'a pas choisi. */
   requirement?: string;
+  /** Contrôle de lisibilité (photo floue ou sombre) et opérations faites avant l'envoi (allègement, conversion). */
+  warnings?: string[];
+  notes?: string[];
+  preparing?: boolean;
   file?: File;
 }
 
@@ -84,9 +89,10 @@ export function DocumentUploader({
 
   const validateFile = (file: File): { valid: boolean; error?: string } => {
     // Fichier vide et photos HEIC : messages dédiés (le reste est contrôlé ci-dessous avec les formats de ce téléverseur).
-    const shared = validateCandidateFile({ name: file.name, size: file.size || 1, type: file.type }, maxFileSize);
-    if (!shared.ok && (file.size <= 0 || /\.hei[cf]$/i.test(file.name) || /hei[cf]/i.test(file.type))) return { valid: false, error: shared.message };
-    if (file.size > maxFileSize * 1024 * 1024) {
+    if (file.size <= 0) return { valid: false, error: validateCandidateFile({ name: file.name, size: 0, type: file.type }, maxFileSize).message };
+    // Les photos HEIC sont converties en JPEG avant l'envoi (message d'erreur dédié si le navigateur ne sait pas les lire).
+    if (isHeic(file)) return { valid: true };
+    if (file.size > maxFileSize * 1024 * 1024 && !isImage(file)) {
       return {
         valid: false,
         error: `Fichier trop volumineux (max ${maxFileSize}MB)`,
@@ -124,6 +130,34 @@ export function DocumentUploader({
       });
 
     setFiles((prev) => singleFile ? validatedFiles : [...prev, ...validatedFiles]);
+    // Photos : allègement, conversion HEIC et contrôle de lisibilité, fichier par fichier, avant l'envoi.
+    for (const entry of validatedFiles) if (entry.status === "pending" && entry.file && isImage(entry.file)) void prepareEntry(entry.id, entry.file);
+  };
+
+  const prepareEntry = async (id: string, original: File) => {
+    setFiles((prev) => prev.map((file) => file.id === id ? { ...file, preparing: true } : file));
+    const prepared = await prepareFileForUpload(original);
+    setFiles((prev) => prev.map((file) => {
+      if (file.id !== id) return file;
+      if (prepared.error) return { ...file, preparing: false, status: "error" as const, error: prepared.error };
+      if (prepared.file.size > maxFileSize * 1024 * 1024) return { ...file, preparing: false, status: "error" as const, error: `Fichier trop volumineux même après allègement (max ${maxFileSize} Mo).` };
+      return { ...file, preparing: false, file: prepared.file, name: prepared.file.name, size: prepared.file.size, type: prepared.file.type, warnings: prepared.warnings, notes: prepared.notes };
+    }));
+  };
+
+  // Plusieurs photos d'un même document (recto/verso, pages) : assemblées en un seul PDF.
+  const mergeImagesToPdf = async () => {
+    const images = files.filter((file) => file.status === "pending" && file.file && isImage(file.file) && !file.preparing);
+    if (images.length < 2) return;
+    const pieceLabel = hasRequirements && selectedRequirement && selectedRequirement !== OTHER_REQUIREMENT ? selectedRequirement : "document";
+    const merged = await imagesToPdf(images.map((file) => file.file!), pieceLabel);
+    if (!merged.file) {
+      setFiles((prev) => prev.map((file) => images.some((image) => image.id === file.id) ? { ...file, warnings: [merged.error ?? "L’assemblage en PDF a échoué."] } : file));
+      return;
+    }
+    const first = images[0];
+    const mergedEntry: DocumentFile = { ...first, id: Math.random().toString(36).substr(2, 9), name: merged.file.name, size: merged.file.size, type: "application/pdf", file: merged.file, warnings: [], notes: [`${images.length} photos assemblées en un seul PDF.`] };
+    setFiles((prev) => [...prev.filter((file) => !images.some((image) => image.id === file.id)), mergedEntry]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -450,6 +484,9 @@ export function DocumentUploader({
                         </div>
                       )}
 
+                      {file.preparing && <p className="mt-1 text-xs text-slate-600" role="status">Préparation de la photo…</p>}
+                      {(file.notes ?? []).map((note) => <p key={note} className="mt-1 text-xs text-emerald-800">{note}</p>)}
+                      {file.status === "pending" && (file.warnings ?? []).map((warning) => <p key={warning} className="mt-1 text-xs font-semibold text-amber-800" data-testid="file-warning">⚠ {warning} Vous pouvez l’envoyer quand même.</p>)}
                       {file.error && (
                         <p className="text-xs text-red-600 mt-1" role="alert">{file.error}</p>
                       )}
@@ -501,11 +538,16 @@ export function DocumentUploader({
               })}
             </div>
 
+            {files.filter((file) => file.status === "pending" && file.file && isImage(file.file) && !file.preparing).length >= 2 && (
+              <Button type="button" variant="outline" className="mt-3 h-11 w-full text-sm font-bold" onClick={() => void mergeImagesToPdf()} data-testid="merge-photos">
+                Assembler ces photos en un seul PDF (recto/verso, pages)
+              </Button>
+            )}
             {pendingCount > 0 && missingChoiceCount > 0 && <p className="mt-3 text-sm font-semibold text-amber-800" role="status">Choisissez la pièce concernée pour {missingChoiceCount} fichier{missingChoiceCount > 1 ? "s" : ""} avant l’envoi.</p>}
             {pendingCount > 0 && (
               <Button
                 onClick={handleUploadAll}
-                disabled={missingChoiceCount > 0}
+                disabled={missingChoiceCount > 0 || files.some((file) => file.preparing)}
                 className="h-12 w-full mt-4 bg-blue-600 hover:bg-blue-700"
               >
                 <Upload className="w-4 h-4 mr-2" />
