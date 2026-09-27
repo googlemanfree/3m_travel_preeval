@@ -170,10 +170,30 @@ type SearchApiLegParams = {
   infants: number;
   /** "SA" pour le vol aller, "SA-RET" pour le vol retour — evite toute collision d'id entre les deux legs. */
   idPrefix: string;
+  /** 1 = tarif fournisseur tel quel ; > 1 = commission agence appliquée (ex. 1.08 pour 8 %). Jamais > 1.5 (plafond 50 %). */
+  commissionMultiplier: number;
 };
 
-/** Convertit un item best_flights/other_flights de SearchAPI.io (Google Flights) en Flight interne.
- * Reutilise pour le vol aller (premiere requete) et le vol retour (seconde requete avec departure_token). */
+/** 0 ou une valeur illisible → 1 (aucune marge) ; sinon la commission bornée à 50 % maximum, jamais négative. */
+export function commissionPercentToMultiplier(percent: unknown): number {
+  const value = typeof percent === "number" ? percent : parseFloat(String(percent));
+  if (!Number.isFinite(value)) return 1;
+  return 1 + Math.min(50, Math.max(0, value)) / 100;
+}
+
+/**
+ * Commission agence réellement active (celle enregistrée par un administrateur dans l'onglet Paramètres) : 1 (aucune
+ * marge) tant qu'aucune valeur n'a été enregistrée, jamais un défaut deviné. C'est la seule fonction qui doit décider
+ * du tarif montré au client ; `getCommission` (formulaire admin) a son propre défaut d'affichage à 8 %, sans lien avec ceci.
+ */
+async function resolveActiveCommissionMultiplier(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 1;
+  const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
+  if (rows.length === 0) return 1;
+  return commissionPercentToMultiplier(rows[0].settingValue);
+}
+
 /** Résout la compagnie réelle d'un segment (code+logo connus si on le reconnaît, sinon ce que le fournisseur a donné). */
 function resolveLegAirline(leg: any) {
   const airlineCode = leg?.flight_number?.split(" ")[0] ?? "";
@@ -196,6 +216,8 @@ function mapLegToSegment(leg: any) {
   };
 }
 
+/** Convertit un item best_flights/other_flights de SearchAPI.io (Google Flights) en Flight interne.
+ * Reutilise pour le vol aller (premiere requete) et le vol retour (seconde requete avec departure_token). */
 function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegParams) {
   const firstLeg = item.flights?.[0];
   const lastLeg = item.flights?.[item.flights.length - 1];
@@ -217,7 +239,9 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
   // le multiplier encore par le nombre de voyageurs doublait le total dès deux adultes. Les bébés ne sont pas
   // demandés au fournisseur : ils ne sont donc pas inclus (voir INFANT_PRICE_NOTICE).
   const pricedPassengers = Math.max(1, params.adults + params.children);
-  const totalPriceXaf = Math.round(sourcePrice * XAF_PER_EUR);
+  // Commission agence réelle, réglée par un administrateur (jamais un pourcentage deviné) : appliquée ici une seule fois,
+  // tout ce qui affiche flight.totalPrice ou flight.pricePerPax la reflète automatiquement.
+  const totalPriceXaf = Math.round(sourcePrice * XAF_PER_EUR * params.commissionMultiplier);
 
   return {
     id: `${params.idPrefix}-${index}-${firstLeg.flight_number}`,
@@ -278,10 +302,13 @@ async function fetchCheapestLive(apiKey: string, route: OfferRoute, dates: Offer
   });
   if (route.tripType === "ROUND_TRIP") params.set("return_date", dates.returnDate);
   // Relevé automatique (offres, alertes) : jamais le secours SerpApi, pour préserver son quota gratuit aux recherches des visiteurs.
-  const response = await fetchProvider(params, { searchApiKey: apiKey, allowFallback: false });
+  const [response, commissionMultiplier] = await Promise.all([
+    fetchProvider(params, { searchApiKey: apiKey, allowFallback: false }),
+    resolveActiveCommissionMultiplier(),
+  ]);
   if (!response.ok) return null;
   const json = await response.json();
-  const legParams: SearchApiLegParams = { origin: route.from.iata, destination: route.to.iata, departureDate: dates.departureDate, cabinClass: "ECONOMY", adults: 1, children: 0, infants: 0, idPrefix: "OF" };
+  const legParams: SearchApiLegParams = { origin: route.from.iata, destination: route.to.iata, departureDate: dates.departureDate, cabinClass: "ECONOMY", adults: 1, children: 0, infants: 0, idPrefix: "OF", commissionMultiplier };
   const flights = [...(json.best_flights || []), ...(json.other_flights || [])].map((item: any, index: number) => mapSearchApiFlightItem(item, index, legParams)).filter(Boolean) as any[];
   return selectCheapest(flights);
 }
@@ -318,10 +345,13 @@ export async function recheckLiveFare(flightData: Record<string, any>, options: 
   });
   if (returnDate) params.set("return_date", returnDate);
   try {
-    const response = await fetchProvider(params, { fetchImpl: options.fetchImpl, searchApiKey: apiKey });
+    const [response, commissionMultiplier] = await Promise.all([
+      fetchProvider(params, { fetchImpl: options.fetchImpl, searchApiKey: apiKey }),
+      resolveActiveCommissionMultiplier(),
+    ]);
     if (!response.ok) return { status: "unavailable", reason: `Le fournisseur a répondu ${response.status}.` };
     const json = await response.json();
-    const legParams: SearchApiLegParams = { origin, destination, departureDate, cabinClass, adults: passengers, children: 0, infants: 0, idPrefix: "RC" };
+    const legParams: SearchApiLegParams = { origin, destination, departureDate, cabinClass, adults: passengers, children: 0, infants: 0, idPrefix: "RC", commissionMultiplier };
     const flights = [...(json.best_flights || []), ...(json.other_flights || [])].map((item: any, index: number) => mapSearchApiFlightItem(item, index, legParams)).filter(Boolean) as any[];
     const match = flights.find((flight) => flight.flightNumber === flightData.flightNumber && flight.departureDate === departureDate && flight.departureTime === flightData.departureTime);
     return { status: "checked", found: Boolean(match), newTotal: match ? match.totalPrice : null, retrievedAt: new Date().toISOString() };
@@ -528,6 +558,7 @@ export const flightsRouter = router({
           children: input.children,
           infants: input.infants,
           idPrefix: "SA",
+          commissionMultiplier: await resolveActiveCommissionMultiplier(),
         };
 
         let outbound = allResults.map((item, i) => mapSearchApiFlightItem(item, i, legParams)).filter(Boolean);
@@ -581,6 +612,7 @@ export const flightsRouter = router({
         children: input.children,
         infants: input.infants,
         idPrefix: "SA-RET",
+        commissionMultiplier: await resolveActiveCommissionMultiplier(),
       };
 
       // Jamais d'option de retour fabriquée : sans fournisseur ou sans jeton de départ, aucune option n'est affichée.
@@ -631,14 +663,17 @@ export const flightsRouter = router({
       }
     }),
 
+  /** `saved` distingue une vraie valeur enregistrée d'une simple suggestion de départ : tant que rien n'est enregistré,
+   * aucune commission n'est appliquée aux tarifs réels (voir resolveActiveCommissionMultiplier). */
   getCommission: publicProcedure.query(async () => {
     const db = await getDb();
-    if (!db) return { commissionPercent: 8 };
+    if (!db) return { commissionPercent: 8, saved: false };
     const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
     if (rows.length > 0) {
-      return { commissionPercent: parseFloat(rows[0].settingValue) || 8 };
+      const percent = parseFloat(rows[0].settingValue);
+      return { commissionPercent: Number.isFinite(percent) ? percent : 8, saved: Number.isFinite(percent) };
     }
-    return { commissionPercent: 8 };
+    return { commissionPercent: 8, saved: false };
   }),
 
   getSearchApiStatus: publicProcedure

@@ -2763,8 +2763,17 @@ function FlightCommissionSettings() {
           </Button>
         </div>
       </div>
+      {data?.saved ? (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+          Commission active : {data.commissionPercent}% ajoutés au tarif fournisseur sur les recherches, les meilleures offres et les récapitulatifs e-mail.
+        </p>
+      ) : (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+          Aucune commission enregistrée pour l'instant : les tarifs affichés sont ceux du fournisseur, sans marge ajoutée. Enregistrez un taux (0% pour confirmer sciemment aucune marge) pour l'activer.
+        </p>
+      )}
       <p className="text-xs text-gray-400">
-        Cette commission est automatiquement incluse dans les grilles tarifaires de vols présentées aux candidats et sur les récapitulatifs e-mail.
+        Une fois enregistrée, cette commission est automatiquement incluse dans les grilles tarifaires de vols présentées aux candidats et sur les récapitulatifs e-mail.
       </p>
     </form>
   );
