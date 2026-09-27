@@ -40,7 +40,7 @@ function mergeRecentSearches(current: RecentFlightSearch[], search: LastFlightSe
   return next.slice(0, MAX_RECENT_FLIGHT_SEARCHES);
 }
 
-function EmailSummaryButton({ flight }: { flight: Flight }) {
+function EmailSummaryButton({ flight, compact = false }: { flight: Flight; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -83,9 +83,11 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="ease-pill border-blue-200 text-[#1E3A8A] hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-400/15 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
+        aria-label="Recevoir par e-mail"
+        title="Recevoir par e-mail"
+        className={`ease-pill border-blue-200 text-[#1E3A8A] hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-400/15 font-semibold text-xs rounded-xl w-full ${compact ? "px-2 py-1.5" : "px-4 py-1.5"}`}
       >
-        <Mail className="w-3.5 h-3.5 mr-1" /> Recevoir par e-mail
+        <Mail className={compact ? "w-3.5 h-3.5" : "w-3.5 h-3.5 mr-1"} /> {!compact && "Recevoir par e-mail"}
       </Button>
 
       {open && (
@@ -123,6 +125,15 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type Airport = { iata: string; name: string; city: string; country: string };
+export type FlightSegment = {
+  airline: { code: string; name: string; logo: string; color: string; alliance?: string };
+  flightNumber: string;
+  origin: string; originName: string;
+  destination: string; destinationName: string;
+  departureDate: string;
+  departureTime: string; arrivalTime: string;
+};
+
 export type Flight = {
   id: string;
   airline: { code: string; name: string; logo: string; color: string; alliance?: string };
@@ -134,6 +145,8 @@ export type Flight = {
   duration: string; durationMinutes: number;
   stops: number;
   stopDetails: { airport: string; airportName: string; duration: string }[];
+  /** Un segment réel par étape effectivement volée (correspondances interlignes comprises) ; jamais devinés. */
+  segments?: FlightSegment[];
   cabinClass: string;
   /** Prix total en FCFA pour les voyageurs demandés (adultes + enfants), relevé auprès du fournisseur. */
   pricePerPax: number; totalPrice: number;
@@ -361,7 +374,7 @@ export function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void }) {
+export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void }) {
   const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
@@ -430,24 +443,23 @@ function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, 
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative"
     >
-      {flight.isLiveGoogleFlights && (
-        <div className="absolute top-0 right-0 bg-gradient-to-l from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
-          <span>✨ En direct de Google Flights</span>
-        </div>
-      )}
-      {servedFromCache && (
-        <div className="absolute top-6 right-0 bg-gradient-to-l from-slate-600 to-slate-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
-          <RefreshCw className="w-3 h-3" /> Résultat en cache
+      {/* Provenance : dans le fil normal de la carte (jamais en survol du tarif, comme quand elles flottaient par-dessus). */}
+      {(flight.isLiveGoogleFlights || servedFromCache) && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-slate-50/70 px-4 py-1.5 md:px-5">
+          {flight.isLiveGoogleFlights && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white">✨ En direct de Google Flights</span>
+          )}
+          {servedFromCache && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700"><RefreshCw className="w-3 h-3" /> Résultat en cache</span>
+          )}
         </div>
       )}
       <div className="p-4 md:p-5">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           {/* Airline */}
           <div className="flex items-center gap-3 min-w-[140px]">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gray-50 border border-gray-100">
-              <img src={flight.airline.logo} alt={flight.airline.name}
-                className="w-8 h-8 object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <div data-testid="flight-card-airline-logo">
+              <AirlineLogo airline={flight.airline} className="h-10 w-10 rounded-xl" />
             </div>
             <div>
               <div className="text-sm font-bold text-gray-800">{flight.airline.name}</div>
@@ -483,13 +495,14 @@ function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, 
             </div>
           </div>
 
-          {/* Price & Actions */}
-          <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-3 md:min-w-[160px]">
-            <div className="text-right">
-              <div className="text-2xl font-black text-[#1E3A8A]">{formatXAF(flight.totalPrice)}</div>
-              <div className="text-xs text-gray-500">pour {searchParams.adults + searchParams.children} passager{searchParams.adults + searchParams.children > 1 ? "s" : ""}</div>
+          {/* Price & Actions : le tarif d'abord, bien visible et seul sur sa ligne, puis une seule action principale,
+              puis les actions secondaires groupées pour ne pas noyer le prix sous une pile de boutons. */}
+          <div className="flex flex-col items-stretch gap-3 md:min-w-[180px] md:items-end">
+            <div className="text-center md:text-right">
+              <div className="text-3xl font-black leading-none text-[#1E3A8A]" data-testid="flight-card-price">{formatXAF(flight.totalPrice)}</div>
+              <div className="mt-1 text-xs text-gray-500">pour {searchParams.adults + searchParams.children} passager{searchParams.adults + searchParams.children > 1 ? "s" : ""}</div>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 md:w-full">
               {roundTrip && onChooseReturn ? (
                 <Button type="button" onClick={() => onChooseReturn(flight)} data-testid="choose-return-flight" className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
                   <Plane className="w-4 h-4 mr-1" /> Choisir le retour
@@ -501,25 +514,27 @@ function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, 
                   </Button>
                 </a>
               )}
-              <Button type="button" onClick={handleAddToCart} variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
-                <ShoppingBag className="w-3.5 h-3.5 mr-1" /> Ajouter au panier
-              </Button>
-              <EmailSummaryButton flight={flight} />
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
                 </Button>
               </a>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSaveFavorite}
-                disabled={saveFavoriteMutation.isPending}
-                className="border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
-              >
-                <Heart className={`w-3.5 h-3.5 mr-1 ${saveFavoriteMutation.isPending ? "animate-pulse" : ""}`} />
-                {saveFavoriteMutation.isPending ? "Enregistrement..." : "Sauvegarder"}
-              </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button type="button" onClick={handleAddToCart} variant="outline" aria-label="Ajouter au panier" title="Ajouter au panier" className="border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold text-xs px-2 py-1.5 rounded-xl w-full">
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                </Button>
+                <EmailSummaryButton flight={flight} compact />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveFavorite}
+                  disabled={saveFavoriteMutation.isPending}
+                  title={saveFavoriteMutation.isPending ? "Enregistrement..." : "Sauvegarder"}
+                  className="border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold text-xs px-2 py-1.5 rounded-xl w-full"
+                >
+                  <Heart className={`w-3.5 h-3.5 ${saveFavoriteMutation.isPending ? "animate-pulse" : ""}`} />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -558,14 +573,30 @@ function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, 
                   <div className="font-semibold text-gray-800">Confirmés par un conseiller avant réservation : ils dépendent du tarif exact de la compagnie.</div>
                 </div>
               </div>
-              {flight.stopDetails.length > 0 && (
+              {flight.segments && flight.segments.length > 1 && (
                 <div className="col-span-2 md:col-span-4">
-                  <div className="text-xs text-gray-500 mb-1">Escales :</div>
-                  <div className="flex flex-wrap gap-2">
-                    {flight.stopDetails.map((s, i) => (
-                      <span key={i} className="text-xs bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full">
-                        {s.airportName} ({s.airport}) · {s.duration} d'attente
-                      </span>
+                  <div className="mb-2 text-xs text-gray-500">
+                    Itinéraire complet {flight.segments.some((s) => s.airline.code !== flight.segments![0].airline.code) && "(correspondance avec une autre compagnie)"}
+                  </div>
+                  <div className="space-y-2" data-testid="flight-segments">
+                    {flight.segments.map((segment, i) => (
+                      <div key={`${segment.flightNumber}-${i}`}>
+                        <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-2.5" data-testid="flight-segment">
+                          <AirlineLogo airline={segment.airline} className="h-8 w-8 rounded-lg" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-xs font-bold text-gray-800">{segment.airline.name} · {segment.flightNumber}</div>
+                            <div className="text-xs text-gray-500">
+                              {segment.origin} {segment.departureTime} <ArrowRight className="inline h-3 w-3" aria-hidden="true" /> {segment.destination} {segment.arrivalTime}
+                            </div>
+                          </div>
+                        </div>
+                        {i < flight.segments!.length - 1 && flight.stopDetails[i] && (
+                          <div className="my-1.5 flex items-center gap-2 pl-3 text-xs font-semibold text-orange-700">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-400" aria-hidden="true" />
+                            Escale à {flight.stopDetails[i].airportName} ({flight.stopDetails[i].airport}) · {flight.stopDetails[i].duration} d'attente
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -980,48 +1011,47 @@ export default function Flights() {
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
             aria-busy={isSearchBusy}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_1fr] gap-4">
-              {/* Origin */}
+            {/* Départ / arrivée : sur leur propre ligne, chacun avec toute la largeur disponible. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <AirportInput label="Départ" value={airportLabel(origin)} onChange={(iata) => setOrigin(iata)}
                   placeholder="Ville ou code IATA" icon={<MapPin className="w-4 h-4" />} />
               </div>
 
-              {/* Swap button */}
+              {/* Swap button : centré sur la jointure des deux champs, sans couvrir leurs icônes. */}
               <div className="relative">
                 <button type="button" onClick={swapAirports} aria-label="Inverser les aéroports de départ et d’arrivée"
-                  className="absolute left-0 top-7 -translate-x-3 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
+                  className="absolute -left-[22px] top-7 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                 </button>
                 <AirportInput label="Arrivée" value={airportLabel(destination)} onChange={(iata) => setDestination(iata)}
                   placeholder="Ville ou code IATA" icon={<Plane className="w-4 h-4" />} />
               </div>
+            </div>
 
-              {/* Dates */}
-              <div className={`grid gap-3 ${tripType === "ROUND_TRIP" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
+            {/* Dates et voyageurs : une ligne à part, pour que chaque date reste lisible en entier (elle se coupait quand elle
+                partageait sa colonne avec l'arrivée et les voyageurs). */}
+            <div className={`mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 ${tripType === "ROUND_TRIP" ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+              <div>
+                <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Départ</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
+                  <input type="date" value={departureDate} min={today()}
+                    onChange={(e) => handleDepartureDateChange(e.target.value)}
+                    className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
+                </div>
+              </div>
+              {tripType === "ROUND_TRIP" && (
                 <div>
-                  <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Départ</label>
+                  <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Retour</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                    <input type="date" value={departureDate} min={today()}
-                      onChange={(e) => handleDepartureDateChange(e.target.value)}
+                    <input type="date" value={returnDate} min={departureDate}
+                      onChange={(e) => handleReturnDateChange(e.target.value)}
                       className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                   </div>
                 </div>
-                {tripType === "ROUND_TRIP" && (
-                  <div>
-                    <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Retour</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                      <input type="date" value={returnDate} min={departureDate}
-                        onChange={(e) => handleReturnDateChange(e.target.value)}
-                        className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Passengers */}
+              )}
               <PassengerSelector {...passengers} onChange={setPassengers} />
             </div>
 
@@ -1422,11 +1452,12 @@ function AIPlannerForm() {
 }
 
 // ─── Aller-retour : choix du vol retour ───
-function AirlineLogo({ airline }: { airline: Flight["airline"] }) {
+function AirlineLogo({ airline, className = "h-10 w-10" }: { airline: Flight["airline"]; className?: string }) {
+  const [failed, setFailed] = useState(false);
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-      {airline.logo ? (
-        <img src={airline.logo} alt={airline.name} className="h-full w-full object-contain p-1" loading="lazy" />
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white ${className}`}>
+      {airline.logo && !failed ? (
+        <img src={airline.logo} alt={airline.name} className="h-full w-full object-contain p-1" loading="lazy" onError={() => setFailed(true)} />
       ) : (
         <Plane className="h-5 w-5 text-slate-400" aria-hidden="true" />
       )}

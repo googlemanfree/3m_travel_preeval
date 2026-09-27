@@ -158,3 +158,32 @@ describe("vol retour", () => {
     expect(result.providerStatus).toBe("live");
   });
 });
+
+describe("correspondances : un segment réel par étape effectivement volée, jamais devinées", () => {
+  it("une escale avec deux compagnies différentes donne deux segments distincts, chacun avec sa vraie compagnie", async () => {
+    fetchMock.mockImplementation(async () => providerResponse([{
+      price: 565,
+      total_duration: 545,
+      departure_token: "token-correspondance",
+      flights: [
+        { flight_number: "SN 383", airline: "Brussels Airlines", departure_airport: { id: "NSI", name: "Yaoundé Nsimalen", date: departureDate, time: "21:25" }, arrival_airport: { id: "BRU", name: "Bruxelles", time: "05:10" } },
+        { flight_number: "AF 1780", airline: "Air France", departure_airport: { id: "BRU", name: "Bruxelles", date: departureDate, time: "06:30" }, arrival_airport: { id: "CDG", name: "Paris Charles de Gaulle", time: "07:30" } },
+      ],
+      layovers: [{ id: "BRU", name: "Bruxelles", duration: 80 }],
+    }]));
+    const flight = ((await search({ origin: "NSI", destination: "CDG" })).outbound as any[])[0];
+    expect(flight.segments).toHaveLength(2);
+    expect(flight.segments[0]).toMatchObject({ flightNumber: "SN 383", origin: "NSI", destination: "BRU" });
+    expect(flight.segments[0].airline.name).toBe("Brussels Airlines");
+    expect(flight.segments[1]).toMatchObject({ flightNumber: "AF 1780", origin: "BRU", destination: "CDG" });
+    expect(flight.segments[1].airline.name).toBe("Air France");
+    // Le vol aller reste identifié par sa première compagnie (compatibilité existante), pas par la correspondance.
+    expect(flight.airline.name).toBe("Brussels Airlines");
+  });
+
+  it("un vol direct n'a qu'un seul segment", async () => {
+    const flight = ((await search()).outbound as any[])[0];
+    expect(flight.segments).toHaveLength(1);
+    expect(flight.segments[0].flightNumber).toBe("AT 280");
+  });
+});

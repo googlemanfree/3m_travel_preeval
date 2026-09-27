@@ -174,6 +174,28 @@ type SearchApiLegParams = {
 
 /** Convertit un item best_flights/other_flights de SearchAPI.io (Google Flights) en Flight interne.
  * Reutilise pour le vol aller (premiere requete) et le vol retour (seconde requete avec departure_token). */
+/** Résout la compagnie réelle d'un segment (code+logo connus si on le reconnaît, sinon ce que le fournisseur a donné). */
+function resolveLegAirline(leg: any) {
+  const airlineCode = leg?.flight_number?.split(" ")[0] ?? "";
+  const knownAirline = AIRLINES[airlineCode];
+  return knownAirline || { code: airlineCode || "??", name: leg?.airline || "Compagnie aérienne", logo: leg?.airline_logo || "", color: "#1E3A8A", alliance: "Autre" as const };
+}
+
+/** Un segment réel du parcours (aucune correspondance interlignes n'est devinée : seulement ce que chaque étape du fournisseur donne). */
+function mapLegToSegment(leg: any) {
+  return {
+    airline: resolveLegAirline(leg),
+    flightNumber: leg?.flight_number ?? "",
+    origin: leg?.departure_airport?.id ?? "",
+    originName: leg?.departure_airport?.name ?? "",
+    destination: leg?.arrival_airport?.id ?? "",
+    destinationName: leg?.arrival_airport?.name ?? "",
+    departureDate: leg?.departure_airport?.date ?? "",
+    departureTime: leg?.departure_airport?.time ?? "--:--",
+    arrivalTime: leg?.arrival_airport?.time ?? "--:--",
+  };
+}
+
 function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegParams) {
   const firstLeg = item.flights?.[0];
   const lastLeg = item.flights?.[item.flights.length - 1];
@@ -187,9 +209,9 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
     duration: formatDuration(l.duration),
   }));
 
-  const airlineCode = firstLeg.flight_number?.split(" ")[0] ?? "AF";
-  const knownAirline = AIRLINES[airlineCode];
-  const airline = knownAirline || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A", alliance: "Autre" };
+  const airline = resolveLegAirline(firstLeg);
+  // Correspondances réelles : un segment par étape effectivement volée par le fournisseur, jamais devinées.
+  const segments = (item.flights || []).map(mapLegToSegment);
 
   // Le fournisseur renvoie le prix TOTAL pour les voyageurs demandés (adultes + enfants), pas un prix par personne :
   // le multiplier encore par le nombre de voyageurs doublait le total dès deux adultes. Les bébés ne sont pas
@@ -214,6 +236,7 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
     durationMinutes: item.total_duration,
     stops,
     stopDetails,
+    segments,
     cabinClass: params.cabinClass,
     pricePerPax: Math.round(totalPriceXaf / pricedPassengers),
     totalPrice: totalPriceXaf,

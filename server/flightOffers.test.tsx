@@ -433,9 +433,16 @@ describe("formulaire de recherche sur téléphone", () => {
   const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
 
   it("dates empilées sous 640 px (le texte n'est plus coupé) et champs à 16 px (iOS ne zoome pas à la saisie)", () => {
-    expect(page).toContain('"grid-cols-1 sm:grid-cols-2"');
-    expect(page).not.toContain('"grid-cols-2" : "grid-cols-1"');
+    // Départ/arrivée sur leur propre ligne, puis dates + voyageurs sur une ligne à part : chaque date garde une colonne
+    // pleine (elle se coupait quand elle partageait sa colonne avec l'arrivée et les voyageurs sur une même ligne).
+    expect(page).toContain('<div className="grid grid-cols-1 md:grid-cols-2 gap-4">');
+    expect(page).toContain('`mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 ${tripType === "ROUND_TRIP" ? "lg:grid-cols-3" : "lg:grid-cols-2"}`');
     expect(page).not.toContain("focus:outline-none text-sm font-medium bg-white transition-colors");
     expect(page.split("text-base sm:text-sm font-medium bg-white transition-colors").length - 1).toBe(3);
+  });
+
+  it("le bouton d'inversion des aéroports reste dans l'espace entre les deux champs, sans couvrir leur icône", () => {
+    expect(page).toContain('className="absolute -left-[22px] top-7 z-10 w-7 h-7 rounded-full');
+    expect(page).not.toContain("-translate-x-3 z-10 w-7 h-7");
   });
 });
