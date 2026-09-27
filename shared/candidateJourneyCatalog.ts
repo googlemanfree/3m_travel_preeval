@@ -57,6 +57,16 @@ const coreStages = (sourceUrl: string): JourneyStep[] => [
 
 const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: sourceUrl ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M Travel & Services." : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M Travel & Services ne présente pas ces étapes comme une règle consulaire établie.", steps: [...coreStages(sourceUrl), ...steps], officialSources: sourceUrl ? [sourceUrl] : [] });
 
+const GERMANY_FORMATION_JOURNEY = common("Allemagne", "Formation professionnelle / Ausbildung", GERMANY, [
+  step("training_path", "Choisir la formation et le métier", "Vérifier le métier visé, le niveau de langue et les conditions publiées pour la formation professionnelle choisie.", ["Métier visé", "Niveau de langue", "Parcours"], GERMANY),
+  step("training_place", "Obtenir une place de formation", "Obtenir une confirmation écrite de l’entreprise ou de l’établissement de formation avant toute demande de visa.", ["Contrat ou confirmation de formation", "Entreprise", "Dates"], GERMANY),
+  step("qualification", "Vérifier les qualifications et traductions", "Rassembler les diplômes et traductions requis et vérifier si une reconnaissance est demandée pour le métier concerné.", ["Diplômes", "Traductions", "Reconnaissance si requise"], GERMANY),
+  step("funds_and_insurance", "Justifier les ressources et l’assurance", "Préparer les justificatifs financiers, l’hébergement et la couverture d’assurance exigés pour le séjour.", ["Ressources", "Hébergement", "Assurance"], GERMANY),
+  step("national_visa", "Demander le visa national", "Déposer la demande auprès de la représentation allemande compétente avec le contrat et les pièces indiquées par le portail officiel.", ["Formulaire", "Passeport", "Contrat", "Rendez-vous"], GERMANY),
+  step("decision", "Suivre la décision officielle", "Suivre uniquement les notifications de la représentation compétente et répondre aux demandes complémentaires éventuelles.", ["Référence", "Notifications", "Pièces complémentaires si demandées"], GERMANY),
+  step("arrival_registration", "Formalités après l’arrivée", "Après l’entrée, respecter les formalités locales de séjour et d’enregistrement applicables à la formation.", ["Adresse", "Titre de séjour", "Enregistrement"], GERMANY),
+]);
+
 export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
   common("Canada", "Visiteur", CANADA, [
     step("evaluation", "Évaluation du projet", "Confirmer l’objet, les dates, les attaches et la cohérence du séjour.", ["Objet du voyage", "Dates prévues", "Historique des voyages"], CANADA),
@@ -1093,6 +1103,7 @@ const is = (value: string, ...terms: string[]) => terms.some((term) => value.inc
 export function getCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
   const country = normalize(destination);
   const visa = normalize([visaType, procedureLabel].filter(Boolean).join(" "));
+  if (is(country, "allemagne", "germany") && is(visa, "formation", "ausbildung", "apprentissage", "cours de langue")) return GERMANY_FORMATION_JOURNEY;
   if (is(country, "canada")) {
     if (is(visa, "arrima", "quebec", "selection provinciale", "peq")) return CANDIDATE_JOURNEYS[4];
     if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[1];
@@ -1139,7 +1150,7 @@ export function getEnrichedCandidateJourney(destination?: string | null, visaTyp
   const destinationKey = destinationCatalogKey(destination);
   const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
   const visaKey = destinationCatalogKey(`${visaType || ""} ${procedureLabel || ""}`);
-  const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") ? "etudes" : "visiteur";
+  const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") || visaKey.includes("formation") || visaKey.includes("ausbildung") || visaKey.includes("apprentissage") ? "etudes" : "visiteur";
   const catalogueProcedure = officialRecord?.verificationStatus === "verified"
     ? procedures107Complete.find((item) => destinationCatalogKey(item.name) === destinationKey && item.visaType === procedureKind)
     : undefined;
