@@ -8,8 +8,16 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 (globalThis as any).React = React;
 
 const mutate = vi.fn();
+const alertMutate = vi.fn();
+const alertState = { automatic: false };
 vi.mock("@/lib/trpc", () => ({
-  trpc: { contact: { sendContactEmail: { useMutation: () => ({ mutate, isPending: false }) } } },
+  trpc: {
+    contact: { sendContactEmail: { useMutation: () => ({ mutate, isPending: false }) } },
+    flights: {
+      priceAlertStatus: { useQuery: () => ({ data: { automatic: alertState.automatic } }) },
+      createPriceAlert: { useMutation: () => ({ mutate: alertMutate, isPending: false }) },
+    },
+  },
 }));
 
 import { FlightBestOffers, FlightClientReviews, type ClientReview } from "../client/src/components/FlightDiscoverySections";
@@ -17,7 +25,11 @@ import { FlightQuoteRequest } from "../client/src/components/FlightQuoteRequest"
 import { buildQuoteMessage, prefillFromOffer, quoteSubject } from "../client/src/data/flightQuote";
 
 afterEach(cleanup);
-beforeEach(() => mutate.mockClear());
+beforeEach(() => {
+  mutate.mockClear();
+  alertMutate.mockClear();
+  alertState.automatic = false;
+});
 
 const offer = {
   routeId: "nsi-cdg",
@@ -163,5 +175,59 @@ describe("page de vols", () => {
     expect(page).toContain("<FlightQuoteRequest key={quotePrefill?.nonce ?? 0} prefill={quotePrefill} />");
     expect(page).toContain("trpc.customerReview.listApproved.useQuery");
     expect(page).toContain("<FlightClientReviews reviews={reviewsQuery.data ?? []} />");
+  });
+});
+
+describe("alerte automatique de baisse de tarif", () => {
+  const fillContact = () => {
+    for (const [name, value] of [["quoteName", "Awa Test"], ["quotePhone", "699000000"], ["quoteEmail", "awa@example.com"]]) {
+      fireEvent.change(document.querySelector(`[name=${name}]`)!, { target: { value } });
+    }
+  };
+
+  it("préremplissage : codes IATA, dates et tarif affiché pour l'alerte", () => {
+    expect(prefillFromOffer(offer, "watch", 1).alert).toEqual({ origin: "NSI", destination: "CDG", tripType: "ROUND_TRIP", departureDate: "2026-10-19", returnDate: "2026-10-29", baselinePriceXaf: 457020 });
+    expect(prefillFromOffer({ ...offer, tripType: "ONE_WAY", returnDate: null }, "watch", 1).alert.returnDate).toBe("");
+  });
+
+  it("tâche quotidienne inactive : aucune case, aucune alerte, suivi manuel par un conseiller", () => {
+    alertState.automatic = false;
+    render(<FlightQuoteRequest prefill={prefillFromOffer(offer, "watch", 2)} />);
+    expect(screen.queryByTestId("alert-consent")).toBeNull();
+    fillContact();
+    fireEvent.submit(document.querySelector("form")!);
+    expect(alertMutate).not.toHaveBeenCalled();
+    expect(mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("tâche active : la case est proposée ; sans consentement rien n'est créé", () => {
+    alertState.automatic = true;
+    render(<FlightQuoteRequest prefill={prefillFromOffer(offer, "watch", 3)} />);
+    expect(screen.getByTestId("alert-consent").textContent).toContain("e-mail de confirmation");
+    fillContact();
+    fireEvent.submit(document.querySelector("form")!);
+    expect(alertMutate).not.toHaveBeenCalled();
+    expect(mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("consentement donné : l'alerte est créée avec l'itinéraire, le tarif de référence et la cible, et la demande reste transmise", () => {
+    alertState.automatic = true;
+    render(<FlightQuoteRequest prefill={prefillFromOffer(offer, "watch", 4)} />);
+    fireEvent.click(screen.getByTestId("alert-consent").querySelector("input")!);
+    fillContact();
+    fireEvent.change(document.querySelector("[name=quoteBudget]")!, { target: { value: "400000" } });
+    fireEvent.submit(document.querySelector("form")!);
+    expect(alertMutate).toHaveBeenCalledTimes(1);
+    expect(alertMutate.mock.calls[0][0]).toEqual({
+      email: "awa@example.com", name: "Awa Test", origin: "NSI", destination: "CDG", tripType: "ROUND_TRIP", departureDate: "2026-10-19", returnDate: "2026-10-29",
+      baselinePriceXaf: 457020, targetPriceXaf: 400000, consent: true,
+    });
+    expect(mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("un devis classique ne propose jamais d'alerte", () => {
+    alertState.automatic = true;
+    render(<FlightQuoteRequest prefill={prefillFromOffer(offer, "quote", 5)} />);
+    expect(screen.queryByTestId("alert-consent")).toBeNull();
   });
 });

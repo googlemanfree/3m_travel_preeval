@@ -17,6 +17,7 @@ import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthly
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
 import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/documentReminderJob";
+import { handleAlertConfirm, handleAlertStop } from "../scheduled/flightPriceAlerts";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { requireCronSecret } from "./scheduledAuth";
@@ -82,6 +83,13 @@ async function startServer() {
   // Désinscription des rappels (lien signé dans chaque e-mail de rappel).
   app.get("/api/reminders/stop", (req, res) => {
     void handleReminderStop(req, res);
+  });
+  // Alertes de tarif de vol : confirmation (double consentement) et suppression par lien à jeton secret.
+  app.get("/api/flight-alerts/confirm", (req, res) => {
+    void handleAlertConfirm(req, res);
+  });
+  app.get("/api/flight-alerts/stop", (req, res) => {
+    void handleAlertStop(req, res);
   });
   app.post("/api/scheduled/passport-pending-weekly-alert", (req, res) => {
     if (!requireCronSecret(req, res)) return;

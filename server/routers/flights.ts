@@ -9,6 +9,11 @@ import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
 import { validateFlightDates } from "../services/flightDateValidation";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
+import { TRPCError } from "@trpc/server";
+import { randomBytes } from "node:crypto";
+import { MAX_ACTIVE_ALERTS, MAX_ALERTS_PER_EMAIL, alertKeyOf, routeGroupKey, isAlertExpired, type FlightPriceAlert } from "../../shared/flightPriceAlert";
+import { alertConfirmUrl, alertStopUrl, alertsAreRunning, loadAlertEntries } from "../scheduled/flightPriceAlerts";
+import { buildAlertConfirmationEmail } from "../services/flightPriceAlertEmail";
 import { FlightOffersStore, OFFER_ROUTES, collectOffers, offerDates, selectCheapest, type CheapestFare, type FlightOffer, type OfferDates, type OfferRoute } from "../services/flightOffers";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
@@ -17,6 +22,26 @@ const flightSummaryGuard = createSubmissionGuard({
   perClient: { limit: 10, windowMs: 60 * 60_000 },
   perEmail: { limit: 3, windowMs: 60 * 60_000 },
   global: { limit: 200, windowMs: 60 * 60_000 },
+});
+
+// Alertes de tarif : 3 demandes par adresse e-mail et par heure (chacune envoie un e-mail de confirmation).
+const priceAlertGuard = createSubmissionGuard({
+  perClient: { limit: 6, windowMs: 60 * 60_000 },
+  perEmail: { limit: 3, windowMs: 60 * 60_000 },
+  global: { limit: 100, windowMs: 60 * 60_000 },
+});
+
+const alertInput = z.object({
+  email: z.string().email().max(320),
+  name: z.string().max(120).optional(),
+  origin: z.string().regex(/^[A-Z]{3}$/),
+  destination: z.string().regex(/^[A-Z]{3}$/),
+  tripType: z.enum(["ONE_WAY", "ROUND_TRIP"]),
+  departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  baselinePriceXaf: z.number().int().positive().max(100_000_000),
+  targetPriceXaf: z.number().int().positive().max(100_000_000).optional(),
+  consent: z.literal(true),
 });
 
 function esc(v: string | number | undefined | null): string {
@@ -201,6 +226,15 @@ function mapSearchApiFlightItem(item: any, index: number, params: SearchApiLegPa
 }
 
 const flightOffersStore = new FlightOffersStore();
+
+/** Tarif le plus bas relevé pour une alerte (FCFA, 1 adulte, économie) ; null si le fournisseur ne répond pas. Un appel payant. */
+export async function fetchCheapestForAlert(alert: Pick<FlightPriceAlert, "origin" | "destination" | "tripType" | "departureDate" | "returnDate">): Promise<number | null> {
+  const apiKey = process.env.SEARCHAPI_KEY;
+  if (!apiKey) return null;
+  const route: OfferRoute = { id: `${alert.origin}-${alert.destination}`.toLowerCase(), from: { iata: alert.origin, city: alert.origin }, to: { iata: alert.destination, city: alert.destination }, tripType: alert.tripType };
+  const fare = await fetchCheapestLive(apiKey, route, { departureDate: alert.departureDate, returnDate: alert.returnDate });
+  return fare ? fare.totalPrice : null;
+}
 /** Vide la mémoire des offres (tests). */
 export const resetFlightOffersStore = () => flightOffersStore.reset();
 
@@ -289,6 +323,68 @@ export const flightsRouter = router({
     return snapshot
       ? { status: "live" as const, offers: snapshot.offers, retrievedAt: snapshot.retrievedAt as string | null, dates: snapshot.dates as OfferDates | null }
       : { status: "unavailable" as const, offers: [] as FlightOffer[], retrievedAt: null as string | null, dates: null as OfferDates | null };
+  }),
+
+  /** Vrai seulement si la tâche quotidienne des alertes tourne réellement : l'option automatique n'est jamais promise à vide. */
+  priceAlertStatus: publicProcedure.query(async () => {
+    const db = await getDb();
+    return { automatic: db ? await alertsAreRunning(db) : false };
+  }),
+
+  /**
+   * Alerte de baisse de tarif : enregistrée en attente, activée seulement après le clic de confirmation envoyé par e-mail
+   * (jamais d'écriture à une adresse saisie par un tiers). 3 alertes par adresse, 200 au total, valables 60 jours.
+   */
+  createPriceAlert: publicProcedure.input(alertInput).mutation(async ({ input, ctx }) => {
+    const email = input.email.trim().toLowerCase();
+    priceAlertGuard.assertAllowed(ctx?.req, email);
+    const db = await getDb();
+    if (!db || !(await alertsAreRunning(db))) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Les alertes automatiques ne sont pas disponibles pour le moment. Un conseiller peut suivre ce tarif pour vous." });
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    if (input.departureDate <= today) throw new TRPCError({ code: "BAD_REQUEST", message: "La date de départ doit être à venir." });
+    if (input.tripType === "ROUND_TRIP" && (!input.returnDate || input.returnDate < input.departureDate)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "La date de retour doit suivre la date de départ." });
+    }
+    const now = new Date();
+    const alert: FlightPriceAlert = {
+      email,
+      name: (input.name ?? "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 120),
+      origin: input.origin,
+      destination: input.destination,
+      tripType: input.tripType,
+      departureDate: input.departureDate,
+      returnDate: input.tripType === "ROUND_TRIP" ? input.returnDate! : "",
+      baselinePriceXaf: input.baselinePriceXaf,
+      targetPriceXaf: input.targetPriceXaf ?? null,
+      createdAt: now.toISOString(),
+      confirmed: false,
+      lastCheckedAt: null,
+      lastNotifiedPriceXaf: null,
+      notifications: 0,
+    };
+    const entries = (await loadAlertEntries(db)).filter((entry) => !isAlertExpired(entry.alert, now));
+    const existing = entries.find((entry) => entry.alert.email === email && routeGroupKey(entry.alert) === routeGroupKey(alert));
+    if (existing?.alert.confirmed) return { status: "already_active" as const };
+    if (!existing) {
+      if (entries.length >= MAX_ACTIVE_ALERTS) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop d'alertes sont en cours pour le moment. Un conseiller peut suivre ce tarif pour vous." });
+      if (entries.filter((entry) => entry.alert.email === email).length >= MAX_ALERTS_PER_EMAIL) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Vous avez déjà ${MAX_ALERTS_PER_EMAIL} alertes en cours avec cette adresse.` });
+      }
+    }
+    const token = existing?.token ?? randomBytes(16).toString("hex");
+    const stored = existing?.alert ?? alert;
+    const mail = buildAlertConfirmationEmail({ ...stored, confirmUrl: alertConfirmUrl(token), stopUrl: alertStopUrl(token), targetPriceXaf: stored.targetPriceXaf });
+    if (!existing) await db.insert(agencySettings).values({ settingKey: alertKeyOf(token), settingValue: JSON.stringify(stored) });
+    try {
+      await sendEmail({ to: email, subject: mail.subject, html: mail.html });
+    } catch (error) {
+      console.error("[FlightPriceAlerts] confirmation mail failed", error);
+      if (!existing) await db.delete(agencySettings).where(eq(agencySettings.settingKey, alertKeyOf(token)));
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "L'e-mail de confirmation n'a pas pu être envoyé. Réessayez ou contactez un conseiller." });
+    }
+    return { status: "confirmation_sent" as const };
   }),
 
   searchAirports: publicProcedure

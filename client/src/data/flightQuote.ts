@@ -23,6 +23,8 @@ export type QuotePrefill = {
   departureDate: string;
   returnDate: string;
   note: string;
+  /** Données de l'alerte automatique (codes IATA, dates, tarif affiché sur la carte). */
+  alert: { origin: string; destination: string; tripType: "ROUND_TRIP" | "ONE_WAY"; departureDate: string; returnDate: string; baselinePriceXaf: number };
   /** Change à chaque demande : le formulaire est réinitialisé avec les nouvelles valeurs. */
   nonce: number;
 };
@@ -52,6 +54,14 @@ export function prefillFromOffer(offer: QuoteOffer, intent: QuoteIntent, nonce: 
     departureDate: offer.departureDate,
     returnDate: offer.tripType === "ROUND_TRIP" && offer.returnDate ? offer.returnDate : "",
     note: `Tarif relevé sur Google Flights : ${formatXaf(offer.priceXaf)} pour 1 adulte en classe économique (${offer.airline}, ${stopsText(offer.stops)}). Relevé indicatif, à confirmer par un conseiller.`,
+    alert: {
+      origin: offer.from.iata,
+      destination: offer.to.iata,
+      tripType: offer.tripType,
+      departureDate: offer.departureDate,
+      returnDate: offer.tripType === "ROUND_TRIP" && offer.returnDate ? offer.returnDate : "",
+      baselinePriceXaf: Math.round(offer.priceXaf),
+    },
     nonce,
   };
 }

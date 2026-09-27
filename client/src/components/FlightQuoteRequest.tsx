@@ -10,6 +10,17 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
   const sectionRef = useRef<HTMLElement>(null);
   const intent = prefill?.intent ?? "quote";
   const watching = intent === "watch";
+  const [alertConsent, setAlertConsent] = useState(false);
+  // L'alerte automatique n'est proposée que si la tâche quotidienne tourne réellement (sinon le suivi reste manuel).
+  const alertStatus = trpc.flights.priceAlertStatus.useQuery(undefined, { enabled: watching, retry: false, refetchOnWindowFocus: false });
+  const automatic = watching && Boolean(prefill?.alert) && alertStatus.data?.automatic === true;
+  const createAlert = trpc.flights.createPriceAlert.useMutation({
+    onSuccess: result => toast({
+      title: result.status === "already_active" ? "Alerte déjà active" : "Confirmez votre alerte",
+      description: result.status === "already_active" ? "Cette alerte est déjà active avec cette adresse." : "Un e-mail vient de vous être envoyé : cliquez sur le lien pour activer l'alerte.",
+    }),
+    onError: error => toast({ title: "Alerte non créée", description: `${error.message} Votre demande reste transmise à un conseiller.`, variant: "destructive" }),
+  });
 
   // Une demande venue d'une offre amène le visiteur directement sur le formulaire, déjà rempli.
   useEffect(() => {
@@ -33,6 +44,17 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
     const values = new FormData(event.currentTarget);
     const field = (name: string) => String(values.get(name) || "");
     const name = field("quoteName");
+    if (automatic && alertConsent && prefill?.alert) {
+      const target = Number(field("quoteBudget"));
+      createAlert.mutate({
+        email: field("quoteEmail"),
+        name,
+        ...prefill.alert,
+        returnDate: prefill.alert.returnDate || undefined,
+        targetPriceXaf: Number.isInteger(target) && target > 0 ? target : undefined,
+        consent: true,
+      });
+    }
     requestQuote.mutate({
       name,
       email: field("quoteEmail"),
@@ -59,7 +81,9 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
           <h2 className="mt-1 text-2xl font-black text-[#1E3A8A]">{watching ? "Faire suivre ce tarif par un conseiller" : "Vous préférez être accompagné ?"}</h2>
           <p className="mt-2 text-sm text-gray-600">
             {watching
-              ? "Un conseiller 3M surveille ce parcours et vous prévient par WhatsApp ou e-mail si un meilleur tarif apparaît. Le suivi est assuré par notre équipe, il n'est pas automatique."
+              ? automatic
+                ? "Cochez l'alerte automatique : nous relevons ce tarif chaque jour et vous écrivons seulement si un tarif plus bas est réellement relevé. Un conseiller garde aussi votre demande."
+                : "Un conseiller 3M surveille ce parcours et vous prévient par WhatsApp ou e-mail si un meilleur tarif apparaît. Le suivi est assuré par notre équipe, il n'est pas automatique."
               : "Nous recherchons pour vous les meilleures options tarifaires selon votre destination, vos dates et votre budget."}
           </p>
           {prefill?.note && <p className="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-900" data-testid="quote-prefill-note">{prefill.note}</p>}
@@ -80,6 +104,12 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
             </select>
           </div>
           <QuoteField label={watching ? "Tarif cible (FCFA)" : "Budget approximatif (FCFA)"} name="quoteBudget" type="number" min="0" />
+          {automatic && (
+            <label className="md:col-span-2 flex items-start gap-2 rounded-xl bg-blue-50 p-3 text-xs text-blue-900" data-testid="alert-consent">
+              <input type="checkbox" checked={alertConsent} onChange={event => setAlertConsent(event.target.checked)} className="mt-0.5 h-4 w-4" />
+              <span>Je souhaite recevoir un e-mail si un tarif plus bas est relevé (3 e-mails au plus, alerte valable 60 jours). Un e-mail de confirmation me sera envoyé pour activer l'alerte ; je peux l'arrêter à tout moment.</span>
+            </label>
+          )}
           <QuoteField label="Nom complet" name="quoteName" required maxLength={200} />
           <QuoteField label="Téléphone WhatsApp" name="quotePhone" type="tel" required maxLength={30} />
           <QuoteField label="E-mail" name="quoteEmail" type="email" required />
