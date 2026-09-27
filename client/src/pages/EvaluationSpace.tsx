@@ -49,6 +49,7 @@ import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
+import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
@@ -533,6 +534,7 @@ export default function EvaluationSpace() {
               <MyFlightRequestsCard />
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
+              <PrivacyDataCard />
               {/* Widgets statistiques et progression */}
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-gradient-to-r from-violet-50 via-white to-amber-50 p-6 shadow-md" role="region" aria-labelledby="quick-evaluation-title">

@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Clock3, RotateCcw, Settings2, ShieldOff } from "lucide-react";
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
 import AdminSecurityJournal from "@/components/AdminSecurityJournal";
+import AdminPrivacyRequests from "@/components/AdminPrivacyRequests";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 
@@ -63,6 +64,7 @@ export default function AdminEmailSettings() {
           <p className="mt-3 flex items-center gap-2 text-xs text-slate-500"><RotateCcw className="h-3.5 w-3.5" /> La révocation ferme toutes vos sessions, y compris celle en cours.</p>
         </section>
         <AdminSecurityJournal sessionToken={sessionToken ?? ""} />
+        <AdminPrivacyRequests sessionToken={sessionToken ?? ""} />
         <AdminEmailDeliveryManagement />
       </div>
     </main>
