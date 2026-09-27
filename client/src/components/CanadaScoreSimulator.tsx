@@ -7,16 +7,19 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
-import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE } from "@/data/crsHistoricalRounds";
+import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "@/data/crsHistoricalRounds";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
+  const { isAuthenticated } = useCandidateAuth();
+  const [, setLocation] = useLocation();
   const [age, setAge] = useState<string>("26-35");
   const [education, setEducation] = useState<string>("master");
   const [experience, setExperience] = useState<string>("3-plus");
@@ -38,70 +41,17 @@ export default function CanadaScoreSimulator() {
     }
   });
 
-  // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec descriptions détaillées
-  const allRounds = [
-    {
-      roundNum: "Ronde #435",
-      category: "cec",
-      type: "Canadian Experience Class (CEC)",
-      date: "7 août 2026",
-      minScore: 470,
-      invitations: 300,
-      description: "Réservée aux candidats justifiant d'une première expérience de travail qualifiée acquise au Canada."
-    },
-    {
-      roundNum: "Ronde #434",
-      category: "sante",
-      type: "Catégoriel (Professions en santé)",
-      date: "24 juillet 2026",
-      minScore: 485,
-      invitations: 1500,
-      description: "Ciblage prioritaire des professionnels de la santé qualifiés pour combler les pénuries de main-d'œuvre."
-    },
-    {
-      roundNum: "Ronde #433",
-      category: "general",
-      type: "Général / Toutes catégories",
-      date: "10 juillet 2026",
-      minScore: 512,
-      invitations: 3200,
-      description: "Tirage toutes catégories confondues ouvert à l'ensemble du bassin Entrée Express sans restriction de secteur."
-    },
-    {
-      roundNum: "Ronde #432",
-      category: "provincial",
-      type: "Candidats des Provinces (PNP)",
-      date: "28 juin 2026",
-      minScore: 720,
-      invitations: 950,
-      description: "Inclut automatiquement un bonus de 600 points accordé suite à une nomination par une province canadienne."
-    },
-    {
-      roundNum: "Ronde #431",
-      category: "cec",
-      type: "Canadian Experience Class (CEC)",
-      date: "15 juin 2026",
-      minScore: 478,
-      invitations: 1200,
-      description: "Second tirage ciblé sur l'expérience canadienne avec un volume d'invitations soutenu."
-    },
-    {
-      roundNum: "Ronde #430",
-      category: "general",
-      type: "Général / Toutes catégories",
-      date: "2 juin 2026",
-      minScore: 518,
-      invitations: 3000,
-      description: "Tirage général de référence pour les candidats FSW, CEC et FST."
-    }
-  ];
+  // Rondes d'invitation IRCC Express Entry réellement vérifiées sur la page officielle IRCC
+  // (voir CRS_HISTORY_SOURCE / LATEST_ROUNDS_VERIFIED_AT dans data/crsHistoricalRounds.ts).
+  // IRCC ne tient plus de rondes "Général / toutes catégories" depuis fin 2023 : seules les
+  // catégories CEC, PNP et Santé ont des rondes récentes, d'où l'absence du filtre "Général".
+  const allRounds = LATEST_INVITATION_ROUNDS;
 
   const categoryExplanations: Record<string, string> = {
-    all: "Affichage par défaut des 3 dernières rondes de tous programmes confondus pour avoir une vue d'ensemble du marché.",
+    all: "Affichage par défaut des 3 dernières rondes toutes catégories confondues (CEC, PNP, Santé) pour avoir une vue d'ensemble du marché.",
     cec: "Classe de l'expérience canadienne (CEC) : Destiné aux candidats ayant déjà travaillé au Canada (seuils compétitifs).",
     provincial: "Programme des candidats des provinces (PNP) : Inclut 600 points bonus de nomination provinciale.",
-    sante: "Tirage ciblé Professions en santé : Destiné aux profils médicaux et paramédicaux recherchés en priorité.",
-    general: "Tirages tous programmes (Général) : Concerne l'ensemble des bassins FSW, CEC et Métiers spécialisés."
+    sante: "Tirage catégoriel Professions de la santé et des services sociaux : Destiné aux profils médicaux et paramédicaux recherchés en priorité."
   };
 
   const filteredRounds = selectedCategory === "all"
@@ -271,7 +221,18 @@ export default function CanadaScoreSimulator() {
         columnStyles: { 1: { cellWidth: 65 } },
       });
 
-      const afterRoundsTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 200;
+      const afterRoundsTableSourceY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 195;
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        `Source : ${CRS_HISTORY_SOURCE.organization} — rondes relevées le ${new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}.`,
+        15,
+        afterRoundsTableSourceY + 6,
+        { maxWidth: 180 }
+      );
+      doc.setTextColor(31, 41, 55);
+
+      const afterRoundsTable = afterRoundsTableSourceY + 6;
       if (!isThresholdMet) {
         doc.setFontSize(13);
         doc.text("Pistes d'amélioration personnalisées", 15, afterRoundsTable + 14);
@@ -301,7 +262,18 @@ export default function CanadaScoreSimulator() {
     }
   };
 
+  // Le téléchargement du PDF est réservé aux candidats inscrits : la prévisualisation reste
+  // libre, mais récupérer le fichier suppose un compte 3M Travel (gratuit) pour assurer le suivi
+  // du dossier. Un visiteur non connecté est redirigé vers la création de compte.
   const handleExportPDF = async () => {
+    if (!isAuthenticated) {
+      setIsPreviewOpen(false);
+      toast.info("Créez votre compte gratuit pour télécharger votre score en PDF.", {
+        description: "La prévisualisation reste libre ; le téléchargement est réservé aux candidats inscrits.",
+      });
+      setLocation(`/register?from=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`);
+      return;
+    }
     setIsExporting(true);
     try {
       (await createPdfDocument()).save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -324,6 +296,7 @@ export default function CanadaScoreSimulator() {
       `Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} points`,
       "Rondes comparées :",
       ...filteredRounds.map((round) => `${round.roundNum} — ${round.type} — ${round.minScore} pts (${round.date})`),
+      `Source : ${CRS_HISTORY_SOURCE.organization} — rondes relevées le ${new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}.`,
       "Résultat indicatif : à confirmer avec un conseiller 3M Travel.",
     ].join("\n");
 
@@ -389,6 +362,7 @@ export default function CanadaScoreSimulator() {
             <DialogTitle>Prévisualisation du rapport de simulation CRS</DialogTitle>
             <DialogDescription>
               Vérifiez les sous-scores, le seuil, l’écart et les rondes comparées avant de télécharger votre document.
+              {!isAuthenticated && " Le téléchargement du PDF est réservé aux candidats inscrits (compte gratuit)."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 bg-slate-100 p-3 min-h-0">
@@ -403,8 +377,14 @@ export default function CanadaScoreSimulator() {
           <DialogFooter className="p-4 border-t bg-white flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Fermer</Button>
             <Button onClick={handleExportPDF} disabled={isExporting} className="gap-2">
-              {exportSuccess ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-              {exportSuccess ? "Téléchargement lancé" : isExporting ? "Préparation…" : "Télécharger le PDF"}
+              {exportSuccess ? <Check className="w-4 h-4" /> : !isAuthenticated ? <Lock className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              {exportSuccess
+                ? "Téléchargement lancé"
+                : isExporting
+                  ? "Préparation…"
+                  : !isAuthenticated
+                    ? "Créer un compte pour télécharger"
+                    : "Télécharger le PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -628,7 +608,6 @@ export default function CanadaScoreSimulator() {
                   <SelectItem value="cec">Canadian Exp. (CEC)</SelectItem>
                   <SelectItem value="provincial">Provincial (PNP)</SelectItem>
                   <SelectItem value="sante">Santé (Catégoriel)</SelectItem>
-                  <SelectItem value="general">Général (Toutes cat.)</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -645,7 +624,6 @@ export default function CanadaScoreSimulator() {
                     <p>• <b>CEC</b> : Expérience canadienne requise.</p>
                     <p>• <b>PNP</b> : Nomination provinciale (+600 pts).</p>
                     <p>• <b>Santé</b> : Professions ciblées par le gouvernement.</p>
-                    <p>• <b>Général</b> : Bassin global Entrée Express.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -724,6 +702,10 @@ export default function CanadaScoreSimulator() {
               })}
             </div>
           )}
+
+          <p className="text-[11px] text-slate-500">
+            Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — rondes relevées le {new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}. Les seuils évoluent à chaque ronde ; consultez la page officielle pour la valeur la plus récente.
+          </p>
 
           <div className="pt-3 mt-2 border-t border-blue-100 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">

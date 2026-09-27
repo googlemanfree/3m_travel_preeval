@@ -1,5 +1,8 @@
+// Copie exécutable de client/src/data/crsHistoricalRounds.test.ts : vitest.config.ts ne collecte
+// que server/**/*.test.ts(x) (client/src/data/crsHistoricalRounds.test.ts n'est donc jamais lancé
+// par `npm test`). On duplique ici pour que ces vérifications tournent réellement en CI.
 import { describe, expect, it } from "vitest";
-import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "./crsHistoricalRounds";
+import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "@/data/crsHistoricalRounds";
 
 describe("CEC_SIX_MONTH_CRS_HISTORY", () => {
   it("conserve six seuils CEC mensuels, chronologiques et sourcés par IRCC", () => {
