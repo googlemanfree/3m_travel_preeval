@@ -14,6 +14,7 @@ import { randomBytes } from "node:crypto";
 import { MAX_ACTIVE_ALERTS, MAX_ALERTS_PER_EMAIL, alertKeyOf, routeGroupKey, isAlertExpired, type FlightPriceAlert } from "../../shared/flightPriceAlert";
 import { alertConfirmUrl, alertStopUrl, alertsAreRunning, loadAlertEntries } from "../scheduled/flightPriceAlerts";
 import { buildAlertConfirmationEmail } from "../services/flightPriceAlertEmail";
+import { fetchProvider, isProviderConfigured } from "../services/flightProvider";
 import { FlightOffersStore, OFFER_ROUTES, collectOffers, offerDates, selectCheapest, type CheapestFare, type FlightOffer, type OfferDates, type OfferRoute } from "../services/flightOffers";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
@@ -253,7 +254,8 @@ async function fetchCheapestLive(apiKey: string, route: OfferRoute, dates: Offer
     currency: "EUR",
   });
   if (route.tripType === "ROUND_TRIP") params.set("return_date", dates.returnDate);
-  const response = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+  // Relevé automatique (offres, alertes) : jamais le secours SerpApi, pour préserver son quota gratuit aux recherches des visiteurs.
+  const response = await fetchProvider(params, { searchApiKey: apiKey, allowFallback: false });
   if (!response.ok) return null;
   const json = await response.json();
   const legParams: SearchApiLegParams = { origin: route.from.iata, destination: route.to.iata, departureDate: dates.departureDate, cabinClass: "ECONOMY", adults: 1, children: 0, infants: 0, idPrefix: "OF" };
@@ -270,7 +272,7 @@ export type LiveFareRecheck = { status: "checked"; found: boolean; newTotal: num
  */
 export async function recheckLiveFare(flightData: Record<string, any>, options: { apiKey?: string | undefined; fetchImpl?: typeof fetch } = {}): Promise<LiveFareRecheck> {
   const apiKey = options.apiKey ?? process.env.SEARCHAPI_KEY;
-  if (!apiKey) return { status: "unavailable", reason: "Recherche en direct non configurée." };
+  if (!apiKey && !isProviderConfigured()) return { status: "unavailable", reason: "Recherche en direct non configurée." };
   const origin = String(flightData.origin ?? "");
   const destination = String(flightData.destination ?? "");
   const departureDate = String(flightData.departureDate ?? "");
@@ -293,7 +295,7 @@ export async function recheckLiveFare(flightData: Record<string, any>, options: 
   });
   if (returnDate) params.set("return_date", returnDate);
   try {
-    const response = await (options.fetchImpl ?? fetch)(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+    const response = await fetchProvider(params, { fetchImpl: options.fetchImpl, searchApiKey: apiKey });
     if (!response.ok) return { status: "unavailable", reason: `Le fournisseur a répondu ${response.status}.` };
     const json = await response.json();
     const legParams: SearchApiLegParams = { origin, destination, departureDate, cabinClass, adults: passengers, children: 0, infants: 0, idPrefix: "RC" };
@@ -431,8 +433,8 @@ export const flightsRouter = router({
 
       const apiKey = process.env.SEARCHAPI_KEY;
 
-      // Jamais de tarif fabriqué : sans fournisseur, on n'affiche aucun tarif (et on ne met rien en cache).
-      if (!apiKey) {
+      // Jamais de tarif fabriqué : sans aucun fournisseur, on n'affiche aucun tarif (et on ne met rien en cache).
+      if (!apiKey && !isProviderConfigured()) {
         flightSearchCache.markNotConfigured();
         return searchResult(input, { outbound: [], providerStatus: "not_configured", providerNotice: NO_LIVE_FARES_NOTICE });
       }
@@ -464,10 +466,11 @@ export const flightsRouter = router({
             params.set("return_date", input.returnDate);
           }
 
-          const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+          // Recherche lancée par un visiteur : le secours SerpApi (petit quota gratuit) prend le relais si SearchAPI.io échoue.
+          const res = await fetchProvider(params, { searchApiKey: apiKey });
           if (!res.ok) {
             const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
-            const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
+            const message = `${res.provider === "serpapi" ? "SerpApi" : "SearchAPI.io"} a répondu ${res.status}${details ? ` — ${details}` : ""}`;
             flightSearchCache.recordUnavailable(res.status === 429 ? "quota_limited" : "error", message);
             throw new Error(message);
           }
@@ -548,7 +551,7 @@ export const flightsRouter = router({
       };
 
       // Jamais d'option de retour fabriquée : sans fournisseur ou sans jeton de départ, aucune option n'est affichée.
-      if (!apiKey || !input.departureToken) {
+      if ((!apiKey && !isProviderConfigured()) || !input.departureToken) {
         return returnResult([], apiKey ? "no_departure_token" : "not_configured", NO_LIVE_FARES_NOTICE);
       }
 
@@ -576,9 +579,10 @@ export const flightsRouter = router({
           departure_token: input.departureToken,
         });
 
-        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
+        // Le jeton de vol retour vient de la 1re requête : on retente d'abord chez le même fournisseur, secours possible ensuite.
+        const res = await fetchProvider(params, { searchApiKey: apiKey });
         if (!res.ok) {
-          throw new Error(`SearchAPI.io (retour) a répondu ${res.status}`);
+          throw new Error(`${res.provider === "serpapi" ? "SerpApi" : "SearchAPI.io"} (retour) a répondu ${res.status}`);
         }
         const json = await res.json();
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];

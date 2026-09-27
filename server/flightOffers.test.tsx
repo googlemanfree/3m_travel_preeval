@@ -250,6 +250,18 @@ describe("procédure popularOffers", () => {
     const result = await call();
     expect(result).toMatchObject({ status: "unavailable", offers: [] });
   });
+
+  it("même avec une clé de secours SerpApi configurée, les offres ne l'appellent jamais (quota réservé aux vraies recherches)", async () => {
+    process.env.SERPAPI_KEY = "serp-key";
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes("serpapi.com")) throw new Error("le secours ne doit jamais être appelé pour les offres");
+      return { ok: false, status: 429, json: async () => ({}), text: async () => "quota" };
+    });
+    const result = await call();
+    expect(result).toMatchObject({ status: "unavailable", offers: [] });
+    for (const call_ of fetchMock.mock.calls) expect(String(call_[0])).not.toContain("serpapi.com");
+    delete process.env.SERPAPI_KEY;
+  });
 });
 
 describe("cartes « Meilleures offres »", () => {

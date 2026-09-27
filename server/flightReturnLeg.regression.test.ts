@@ -20,7 +20,7 @@ describe("recherche du vrai vol retour (aller-retour Google Flights via SearchAP
 
   it("n'affiche aucune option de retour fabriquée quand l'API ou le jeton sont indisponibles : liste vide et message honnête", () => {
     const source = read("server/routers/flights.ts");
-    expect(source).toContain("!apiKey || !input.departureToken");
+    expect(source).toContain("(!apiKey && !isProviderConfigured()) || !input.departureToken");
     expect(source).toContain('returnResult([], apiKey ? "no_departure_token" : "not_configured", NO_LIVE_FARES_NOTICE)');
     expect(source).not.toContain("generateFlights");
   });
