@@ -1,9 +1,11 @@
-import { Activity, ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, FileCheck2, MailWarning, Plane, RefreshCw, Users } from "lucide-react";
+import { Activity, ArrowRight, BriefcaseBusiness, CheckCircle2, Clock3, FileCheck2, MailWarning, Plane, RefreshCw, ShieldQuestion, Star, UserRoundCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc";
 
 interface AdminOperationsControlCenterProps {
+  sessionToken: string;
   totalCandidates: number;
   pendingEvaluations: number;
   pendingPayments: number;
@@ -14,6 +16,15 @@ interface AdminOperationsControlCenterProps {
   isRefreshing: boolean;
   onRefresh: () => void;
   onNavigate: (tab: string) => void;
+}
+
+/** Un signal « à faire aujourd'hui », alimenté par une file déjà construite ailleurs (jamais un nouveau calcul) : un onglet du
+ * tableau de bord (`onClick`), ou une page séparée de l'administration (`href`). */
+function TodaySignal({ label, count, icon: Icon, onClick, href }: { label: string; count: number | undefined; icon: typeof Users; onClick?: () => void; href?: string }) {
+  const content = <><span className="flex min-w-0 items-center gap-2"><Icon className="h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" /><span className="truncate text-xs font-bold text-blue-100">{label}</span></span><span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-black ${count ? "bg-amber-300 text-[#071b3d]" : "bg-white/15 text-white"}`}>{count ?? "…"}</span></>;
+  const className = "flex min-w-0 items-center justify-between gap-2 rounded-xl border border-white/15 bg-white/10 p-3 text-left text-white transition hover:bg-white/20 disabled:cursor-default disabled:opacity-60";
+  if (href) return <a href={href} className={className}>{content}</a>;
+  return <button type="button" onClick={onClick} disabled={count === undefined} className={className}>{content}</button>;
 }
 
 function Metric({ label, value, icon: Icon, tone }: { label: string; value: number | string; icon: typeof Users; tone: string }) {
@@ -28,8 +39,17 @@ function Metric({ label, value, icon: Icon, tone }: { label: string; value: numb
   );
 }
 
-export function AdminOperationsControlCenter({ totalCandidates, pendingEvaluations, pendingPayments, pendingFlights, openDeadlines, smtpFailures, lastSyncedAt, isRefreshing, onRefresh, onNavigate }: AdminOperationsControlCenterProps) {
+export function AdminOperationsControlCenter({ sessionToken, totalCandidates, pendingEvaluations, pendingPayments, pendingFlights, openDeadlines, smtpFailures, lastSyncedAt, isRefreshing, onRefresh, onNavigate }: AdminOperationsControlCenterProps) {
   const syncLabel = lastSyncedAt ? `Dernière synchronisation : ${lastSyncedAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "Synchronisation en attente";
+
+  // Signaux « à faire aujourd'hui » tous domaines confondus : chacun relit une file déjà construite pour son propre écran,
+  // jamais un nouveau calcul ici. Rafraîchi toutes les 2 min ; un domaine en échec n'empêche pas d'afficher les autres.
+  const enabled = Boolean(sessionToken);
+  const flightsDesk = trpc.flightFollowUp.deskOverview.useQuery({ sessionToken, days: 30 }, { enabled, retry: false, refetchInterval: 120_000 });
+  const documentsToRemind = trpc.documentFollowUp.listCandidatesToRemind.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
+  const reviewsToInvite = trpc.reviewInvites.listToInvite.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
+  const deletionRequests = trpc.candidatePrivacy.listDeletionRequests.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
+  const flightsCount = flightsDesk.data ? flightsDesk.data.stale.length + flightsDesk.data.openChanges.length : undefined;
 
   return (
     <section aria-labelledby="admin-operations-control-title" className="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#123c86] p-4 text-white shadow-[0_18px_50px_-28px_rgba(7,27,61,0.85)] sm:p-5">
@@ -51,6 +71,13 @@ export function AdminOperationsControlCenter({ totalCandidates, pendingEvaluatio
         <Metric label="Vols à revoir" value={pendingFlights} icon={Plane} tone="text-sky-300" />
         <Metric label="Échéances ouvertes" value={openDeadlines} icon={Clock3} tone="text-violet-300" />
         <Metric label="Alertes e-mail" value={smtpFailures} icon={MailWarning} tone="text-rose-300" />
+      </div>
+
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4" aria-label="À faire aujourd'hui, tous domaines confondus" data-testid="today-signals">
+        <TodaySignal label="Vols à traiter (options, modifications)" count={flightsCount} icon={Plane} onClick={() => onNavigate("flights")} />
+        <TodaySignal label="Candidats à relancer (documents)" count={documentsToRemind.data?.count} icon={UserRoundCheck} onClick={() => onNavigate("documents")} />
+        <TodaySignal label="Avis clients à inviter" count={reviewsToInvite.data?.count} icon={Star} href="/admin/customer-reviews" />
+        <TodaySignal label="Suppressions de compte demandées" count={deletionRequests.data?.length} icon={ShieldQuestion} href="/admin/email-settings" />
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
