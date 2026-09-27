@@ -1,4 +1,5 @@
 import { procedures107Complete } from "../client/src/data/procedures107Complete";
+import { PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "./officialSourceCatalog";
 
 export type JourneyDocument = {
@@ -1148,12 +1149,15 @@ const destinationCatalogKey = (value: string | null | undefined): string =>
 export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
   const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
   const destinationKey = destinationCatalogKey(destination);
-  const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
   const visaKey = destinationCatalogKey(`${visaType || ""} ${procedureLabel || ""}`);
   const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") || visaKey.includes("formation") || visaKey.includes("ausbildung") || visaKey.includes("apprentissage") ? "etudes" : "visiteur";
-  const catalogueProcedure = officialRecord?.verificationStatus === "verified"
-    ? procedures107Complete.find((item) => destinationCatalogKey(item.name) === destinationKey && item.visaType === procedureKind)
-    : undefined;
+  // Le catalogue canonique contient les 91 procédures documentées et les 16
+  // fiches e‑Visa (107 fiches publiques). Le parcours doit utiliser la fiche
+  // exacte, même lorsque la vérification consulaire d’un pays est encore
+  // partielle ; l’avertissement de source reste porté par le parcours.
+  const catalogueProcedure = PUBLIC_DESTINATION_DETAILS.find(
+    (detail) => destinationCatalogKey(detail.procedure.name) === destinationKey && detail.procedure.visaType === procedureKind,
+  )?.procedure;
   if (!catalogueProcedure) return baseJourney;
   const documentPool = catalogueProcedure.requiredDocuments.flatMap((group) => group.documents);
   const sourceUrl = baseJourney.officialSources[0] ?? "";
