@@ -2777,6 +2777,8 @@ function SearchApiMonitoring() {
     { sessionToken: sessionToken || "missing" },
     { enabled: Boolean(sessionToken), refetchOnWindowFocus: false }
   );
+  // Diagnostic gratuit et sans secret exposé : dit si chaque fournisseur est configuré côté serveur (aucun appel payant).
+  const { data: providerDiagnostics, refetch: refetchDiagnostics } = trpc.flights.providerDiagnostics.useQuery(undefined, { enabled: Boolean(sessionToken), refetchOnWindowFocus: false });
   const clearCacheMutation = trpc.flights.clearSearchApiCache.useMutation({
     onSuccess: () => {
       toast({ title: "Cache vidé", description: "La prochaine recherche sollicitera SearchAPI si le quota le permet." });
@@ -2795,12 +2797,12 @@ function SearchApiMonitoring() {
   } as const;
   const state = status ? statusPresentation[status.apiStatus] ?? statusPresentation.error : null;
 
-  const copySecretName = async () => {
+  const copySecretName = async (name: string) => {
     try {
-      await navigator.clipboard.writeText("SEARCHAPI_KEY");
-      toast({ title: "Nom de variable copié", description: "Ouvrez Paramètres > Secrets dans l’interface de gestion et remplacez la valeur de SEARCHAPI_KEY." });
+      await navigator.clipboard.writeText(name);
+      toast({ title: "Nom de variable copié", description: `Ouvrez Paramètres > Secrets dans l’interface de gestion et remplacez la valeur de ${name}.` });
     } catch {
-      toast({ title: "Mise à jour sécurisée", description: "Ouvrez Paramètres > Secrets dans l’interface de gestion puis remplacez SEARCHAPI_KEY." });
+      toast({ title: "Mise à jour sécurisée", description: `Ouvrez Paramètres > Secrets dans l’interface de gestion puis remplacez ${name}.` });
     }
   };
 
@@ -2814,7 +2816,7 @@ function SearchApiMonitoring() {
           <p className="mt-1 text-sm text-slate-600">Suivez la disponibilité de la source tarifaire sans exposer la clé secrète.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading || !sessionToken} className="gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => { refetch(); refetchDiagnostics(); }} disabled={isLoading || !sessionToken} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} /> Actualiser
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => clearCacheMutation.mutate({ sessionToken: sessionToken || "missing" })} disabled={clearCacheMutation.isPending || !sessionToken} className="gap-2">
@@ -2854,11 +2856,38 @@ function SearchApiMonitoring() {
         </div>
       ) : null}
 
+      {providerDiagnostics && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3" data-testid="provider-diagnostics">
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">SearchAPI.io (principal)</p>
+            <Badge className={`mt-2 border ${providerDiagnostics.searchApiConfigured ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
+              {providerDiagnostics.searchApiConfigured ? "Clé vue par le serveur" : "Clé absente côté serveur"}
+            </Badge>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">SerpApi (secours)</p>
+            <Badge className={`mt-2 border ${providerDiagnostics.serpApiConfigured ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
+              {providerDiagnostics.serpApiConfigured ? "Clé vue par le serveur" : "Clé absente côté serveur"}
+            </Badge>
+            <p className="mt-2 text-xs text-slate-500">Utilisé seulement pour les recherches des visiteurs, jamais pour les offres ni les alertes.</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Secours utilisé aujourd’hui</p>
+            <p className="mt-1 text-2xl font-black text-[#1E3A8A]">{providerDiagnostics.fallbackCallsToday} / 8</p>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-900 md:flex-row md:items-center md:justify-between">
-        <p><strong>Mettre à jour la clé :</strong> utilisez les <strong>Paramètres &gt; Secrets</strong> du projet. La valeur n’est jamais affichée ni enregistrée dans le navigateur.</p>
-        <Button type="button" size="sm" variant="outline" onClick={copySecretName} className="shrink-0 border-blue-200 text-[#1E3A8A]">
-          Copier SEARCHAPI_KEY
-        </Button>
+        <p><strong>Mettre à jour une clé :</strong> utilisez les <strong>Paramètres &gt; Secrets</strong> du projet, puis republiez le site. La valeur n’est jamais affichée ni enregistrée dans le navigateur.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" size="sm" variant="outline" onClick={() => copySecretName("SEARCHAPI_KEY")} className="shrink-0 border-blue-200 text-[#1E3A8A]">
+            Copier SEARCHAPI_KEY
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => copySecretName("SERPAPI_KEY")} className="shrink-0 border-blue-200 text-[#1E3A8A]">
+            Copier SERPAPI_KEY
+          </Button>
+        </div>
       </div>
     </Card>
   );

@@ -155,3 +155,18 @@ describe("diagnostic public de configuration (aucun secret exposé, aucun coût)
     delete process.env.SERPAPI_KEY;
   });
 });
+
+describe("panneau admin : voir l'état des deux fournisseurs sans secret", () => {
+  it("interroge le diagnostic, affiche l'état de chaque clé et propose de copier chaque nom de variable", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const source = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/AdminDashboard.tsx"), "utf8");
+    expect(source).toContain("trpc.flights.providerDiagnostics.useQuery");
+    expect(source).toContain('data-testid="provider-diagnostics"');
+    expect(source).toContain("providerDiagnostics.searchApiConfigured");
+    expect(source).toContain("providerDiagnostics.serpApiConfigured");
+    expect(source).toContain("providerDiagnostics.fallbackCallsToday");
+    expect(source).toContain('copySecretName("SEARCHAPI_KEY")');
+    expect(source).toContain('copySecretName("SERPAPI_KEY")');
+  });
+});
