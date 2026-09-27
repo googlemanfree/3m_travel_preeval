@@ -105,6 +105,16 @@ describe("composants", () => {
     expect(screen.getByRole("button", { name: "Rechercher un vol Yaoundé vers Douala" }).textContent).toMatch(/NSI – DLA · Aller simple/);
   });
 
+  it("sur mobile, le bouton passe sous le trajet au lieu de partager la ligne (« Yaoundé » se réduisait à « Ya… » à 375 px)", () => {
+    render(<FlightPopularRoutes onPick={vi.fn()} />);
+    const card = screen.getByRole("button", { name: "Rechercher un vol Yaoundé vers Paris" });
+    expect(card.className).toContain("flex-col");
+    expect(card.className).toContain("sm:flex-row");
+    const cityBlock = card.querySelector("span.min-w-0");
+    expect(cityBlock, "bloc des villes").toBeTruthy();
+    expect(cityBlock!.className).not.toContain("truncate");
+  });
+
   it("les sections du bas affichent étapes, avantages, services liés et liens par ville, sans tarif", () => {
     const onPick = vi.fn();
     const { container } = render(<FlightLowerSections onPick={onPick} />);

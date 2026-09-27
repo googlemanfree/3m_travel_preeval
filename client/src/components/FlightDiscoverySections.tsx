@@ -181,9 +181,10 @@ function RouteButton({ route, onPick }: { route: FlightRoute; onPick: PickRoute 
       onClick={() => onPick(route)}
       data-testid={`flight-route-${route.id}`}
       aria-label={`Rechercher un vol ${route.from.city} vers ${route.to.city}`}
-      className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+      className="group flex w-full flex-col items-stretch gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:flex-row sm:items-center sm:justify-between"
     >
-      <span className="min-w-0">
+      {/* min-w-0 seul permettrait au flex de tout écraser sur mobile (« Yaoundé » réduit à « Ya… ») : les villes gardent une ligne entière au-dessus du bouton en dessous de sm. */}
+      <span className="min-w-0 sm:flex-1">
         <span className="flex items-center gap-2 text-base font-black text-slate-900">
           <span className="truncate">{route.from.city}</span>
           <ArrowRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
@@ -193,7 +194,7 @@ function RouteButton({ route, onPick }: { route: FlightRoute; onPick: PickRoute 
           {route.from.iata} – {route.to.iata} · {tripLabel(route)}
         </span>
       </span>
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800 transition group-hover:bg-blue-700 group-hover:text-white">
+      <span className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800 transition group-hover:bg-blue-700 group-hover:text-white">
         <Search className="h-3.5 w-3.5" aria-hidden="true" /> Voir les vols
       </span>
     </button>
