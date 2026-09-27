@@ -140,7 +140,8 @@ export default function FlightBookingCheckout() {
     createRequestMutation.mutate({
       flightId: selectedFlight.id,
       flightData: { ...selectedFlight, returnFlight, quotedTotalPrice } as unknown as Record<string, unknown>,
-      passengerData: [{ ...(formData as unknown as Record<string, unknown>), passportScanId }],
+      // Adultes + enfants (facturés par le fournisseur) et bébés (non facturés : le conseiller chiffre leur billet) : le serveur en déduit les passeports à recueillir.
+      passengerData: [{ ...(formData as unknown as Record<string, unknown>), passportScanId, travelers: Math.max(1, (selection?.searchParams.adults ?? 1) + (selection?.searchParams.children ?? 0)), infants: selection?.searchParams.infants ?? 0 }],
     });
   };
 
@@ -477,6 +478,9 @@ export default function FlightBookingCheckout() {
 
               <a href={`/paiement?ref=${encodeURIComponent(dossierRef)}&type=vol`} data-testid="how-to-pay" className="mb-6 flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white p-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50">
                 Comment payer ? Virement, dépôt Mobile Money ou agence
+              </a>
+              <a href={`/suivi-vol?ref=${encodeURIComponent(dossierRef)}`} data-testid="track-flight-link" className="mb-6 flex items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-900 transition hover:bg-blue-100">
+                Suivre ma demande et renseigner les passeports
               </a>
 
               <div className="grid gap-3 sm:grid-cols-3">

@@ -42,6 +42,7 @@ export function buildDeskAlertEmail(data: DeskAlertData, options: { adminUrl: st
 ${row("Référence", escapeHtml(data.requestRef))}
 ${row("Client", `${escapeHtml(data.passengerName)}${data.passengerPhone ? `<br/><span style="font-weight:normal">${escapeHtml(data.passengerPhone)}</span>` : ""}<br/><span style="font-weight:normal">${escapeHtml(data.passengerEmail)}</span>`)}
 ${row("Voyageurs / cabine", `${data.travelers ?? "à confirmer"}${data.cabin ? ` · ${escapeHtml(data.cabin)}` : ""}`)}
+${data.infants > 0 ? row("Bébé(s)", `${data.infants} — <span style="color:#b91c1c">tarif bébé non inclus : à chiffrer auprès de la compagnie</span>`) : ""}
 ${leg("Aller", data.outbound)}
 ${data.inbound ? leg("Retour", data.inbound) : ""}
 ${row("Tarif relevé", `${price}<br/><span style="font-weight:normal;font-size:12px;color:#b45309">Relevé sur Google Flights : à revalider auprès de la compagnie avant tout paiement.</span>`)}

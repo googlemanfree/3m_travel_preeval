@@ -4,7 +4,7 @@ import FlightTravelersForm from "@/components/FlightTravelersForm";
 import { useToast } from "@/components/ui/use-toast";
 import { trpc } from "@/lib/trpc";
 import { FARE_CHECK_MAX_AGE_HOURS, fareAgeHours } from "@shared/flightFareCheck";
-import { HISTORY } from "@shared/flightFollowUps";
+import { DESK_THRESHOLDS, HISTORY, currentOptionDeadline } from "@shared/flightFollowUps";
 import { assessTravelers, extractTravelers, lastTravelDateOf } from "@shared/flightTravelerCheck";
 
 type HistoryEntry = { action: string; newValue?: string | null; details?: string | null; createdAt: string | Date };
@@ -21,6 +21,7 @@ export default function FlightRequestChecks({ request, history, sessionToken }: 
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const [showForm, setShowForm] = useState(false);
+  const [deadlineInput, setDeadlineInput] = useState("");
   const readiness = assessTravelers({ flightData: request.flightData, passengerData: request.passengerData, today: new Date() });
   const travelers = extractTravelers(request.passengerData);
   const closed = request.status === "issued" || request.status === "cancelled";
@@ -30,7 +31,13 @@ export default function FlightRequestChecks({ request, history, sessionToken }: 
   const ageHours = fareAgeHours(referenceAt, new Date());
   const stale = ageHours === null || ageHours > FARE_CHECK_MAX_AGE_HOURS;
 
-  const refresh = () => { void utils.flightBooking.getRequest.invalidate(); };
+  const refresh = () => { void utils.flightBooking.getRequest.invalidate(); void utils.flightFollowUp.deskOverview.invalidate(); };
+  const optionDeadline = currentOptionDeadline(history.map((entry: HistoryEntry) => ({ requestId: request.id, action: entry.action, newValue: entry.newValue ?? null, createdAt: new Date(entry.createdAt) })));
+  const optionHoursLeft = optionDeadline ? (optionDeadline.getTime() - Date.now()) / 3_600_000 : null;
+  const setOption = trpc.flightFollowUp.setOptionDeadline.useMutation({
+    onSuccess: (result) => { setDeadlineInput(""); refresh(); toast({ title: result.deadline ? "Échéance enregistrée" : "Échéance effacée", description: result.deadline ? "Le suivi du comptoir signalera cette option avant son expiration." : "Plus d’option suivie sur cette demande." }); },
+    onError: (error) => toast({ title: "Échéance refusée", description: error.message, variant: "destructive" }),
+  });
   const recheck = trpc.flightFollowUp.recheckFare.useMutation({
     onSuccess: (result) => { refresh(); toast({ title: "Tarif revérifié", description: result.description }); },
     onError: (error) => toast({ title: "Contrôle impossible", description: error.message, variant: "destructive" }),
@@ -53,6 +60,19 @@ export default function FlightRequestChecks({ request, history, sessionToken }: 
         {recheck.data && <p className={`mt-2 rounded-lg border p-2 text-xs font-bold ${KIND_TONE[recheck.data.comparison.kind] ?? ""}`} data-testid="fare-result">{recheck.data.description}</p>}
         <p className="mt-2 text-[11px] text-slate-500">Contrôle indicatif : relevé chez le fournisseur avec les voyageurs facturés comme adultes. Le conseiller confirme le tarif définitif.</p>
       </div>
+
+      {!closed && (
+        <div className={`rounded-2xl border p-4 ${optionHoursLeft !== null && optionHoursLeft <= DESK_THRESHOLDS.optionWarningHours ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`} data-testid="option-deadline">
+          <h3 className="text-sm font-black text-slate-900">Option de réservation (compagnie)</h3>
+          <p className="mt-1 text-xs text-slate-700" data-testid="option-status">{optionDeadline ? (optionHoursLeft !== null && optionHoursLeft <= 0 ? `Option expirée depuis ${Math.round(-optionHoursLeft)} h (${optionDeadline.toLocaleString("fr-FR")}).` : `Option valable jusqu’au ${optionDeadline.toLocaleString("fr-FR")} (dans ${Math.max(1, Math.round(optionHoursLeft ?? 0))} h).`) : "Aucune échéance saisie. Si vous avez posé une option auprès de la compagnie, notez sa date limite : le suivi vous alerte avant l’expiration."}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="sr-only" htmlFor={`option-deadline-${request.id}`}>Date et heure limite de l’option</label>
+            <input id={`option-deadline-${request.id}`} type="datetime-local" value={deadlineInput} onChange={(event) => setDeadlineInput(event.target.value)} className="h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm" />
+            <button type="button" disabled={!deadlineInput || setOption.isPending} onClick={() => setOption.mutate({ sessionToken, requestId: request.id, deadline: new Date(deadlineInput).toISOString() })} className="min-h-10 rounded-lg bg-slate-900 px-3 text-xs font-black text-white disabled:opacity-50" data-testid="save-option">Enregistrer l’échéance</button>
+            {optionDeadline && <button type="button" disabled={setOption.isPending} onClick={() => setOption.mutate({ sessionToken, requestId: request.id, deadline: null })} className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-800" data-testid="clear-option">Effacer</button>}
+          </div>
+        </div>
+      )}
 
       <div className={`rounded-2xl border p-4 ${readiness.complete ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`} data-testid="traveler-check">
         <div className="flex flex-wrap items-center justify-between gap-2">

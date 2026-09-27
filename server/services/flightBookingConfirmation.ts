@@ -35,6 +35,7 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput): 
     ? `${new Intl.NumberFormat("fr-FR").format(Math.round(input.quotedTotalPrice))} ${currency}`
     : "";
   const whatsapp = (input.whatsappNumber ?? "237698104832").replace(/\D/g, "");
+  const trackHref = `${(process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "")}/suivi-vol?ref=${encodeURIComponent(requestRef)}`;
   const whatsappHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Bonjour, je souhaite suivre ma demande de réservation ${requestRef}.`)}`;
 
   const subject = `Votre demande de réservation ${requestRef} — 3M Travel & Services`;
@@ -54,6 +55,7 @@ ${returnDeparture ? `<p style="margin:0 0 ${quotedTotal ? "4" : "16"}px"><strong
 <li>Aucun paiement n’est demandé avant cette confirmation.</li>
 </ol>
 <p style="margin:0 0 16px;font-size:13px;color:#475569">Le tarif affiché sur le site est indicatif : il peut évoluer jusqu’à la confirmation. Cette demande n’est pas un billet.</p>
+<p style="margin:0 0 12px"><a href="${trackHref}" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Suivre ma réservation et renseigner les passeports</a></p>
 <p style="margin:0 0 20px"><a href="${whatsappHref}" style="display:inline-block;background:#16a34a;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Suivre ma demande sur WhatsApp</a></p>
 <p style="margin:0;font-size:12px;color:#94a3b8">3M Travel &amp; Services · Yaoundé · hello@3mtravelagency.com. Vous recevez ce message parce qu’une demande a été envoyée avec cette adresse ; si ce n’est pas vous, ignorez-le.</p>
 </div>`;

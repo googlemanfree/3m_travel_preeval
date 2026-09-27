@@ -74,12 +74,17 @@ export function extractTravelers(passengerData: unknown): TravelerDetails[] {
   return source.map((entry) => ({ fullName: clean(entry.fullName), passportNumber: normalizePassportNumber(clean(entry.passportNumber)), passportExpiry: clean(entry.passportExpiry), dateOfBirth: clean(entry.dateOfBirth), nationality: clean(entry.nationality) || undefined }));
 }
 
-/** Nombre de voyageurs attendus : celui saisi à la demande, sinon les voyageurs facturés par le fournisseur, sinon 1. */
+/**
+ * Nombre de voyageurs attendus : celui saisi à la demande (adultes + enfants), sinon les voyageurs facturés par le fournisseur, sinon 1 ;
+ * les bébés (non facturés par le fournisseur) s'y ajoutent : ils voyagent aussi avec leur propre passeport.
+ */
 export function expectedTravelerCount(flightData: unknown, passengerData: unknown): number {
-  const fromRequest = Number(asRecord(Array.isArray(passengerData) ? passengerData[0] : null).travelers);
-  if (Number.isInteger(fromRequest) && fromRequest >= 1 && fromRequest <= 9) return fromRequest;
+  const main = asRecord(Array.isArray(passengerData) ? passengerData[0] : null);
+  const fromRequest = Number(main.travelers);
   const priced = Number(asRecord(flightData).pricedPassengers);
-  return Number.isInteger(priced) && priced >= 1 && priced <= 9 ? priced : 1;
+  const base = Number.isInteger(fromRequest) && fromRequest >= 1 && fromRequest <= 9 ? fromRequest : Number.isInteger(priced) && priced >= 1 && priced <= 9 ? priced : 1;
+  const infants = Number(main.infants);
+  return Math.min(9, base + (Number.isInteger(infants) && infants >= 1 && infants <= 4 ? infants : 0));
 }
 
 /** Dernier jour de voyage : le retour choisi s'il existe, sinon le départ. */

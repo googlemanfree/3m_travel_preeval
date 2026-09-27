@@ -26,6 +26,7 @@ vi.mock("@/lib/trpc", () => ({
       submitTravelers: state.mutation("submitTravelers"),
       requestChange: state.mutation("requestChange"),
       adminSaveTravelers: state.mutation("adminSaveTravelers"),
+      setOptionDeadline: state.mutation("setOptionDeadline"),
       recheckFare: { useMutation: () => ({ mutate: (input: any) => state.calls.push({ name: "recheckFare", input }), isPending: false, data: state.recheckData }) },
       resolveChange: state.mutation("resolveChange"),
       deskOverview: { useQuery: () => state.desk },
@@ -217,6 +218,9 @@ describe("admin : suivi du comptoir", () => {
     stats: { requests: 12, firstResponseMedianHours: 3.5, firstResponseCount: 9, paymentApprovalMedianHours: 30, paymentApprovalCount: 3, issuanceMedianHours: null, issuanceCount: 0 },
     stale: [{ requestId: 5, requestRef: "3M-FL-AAA", reason: "no_response", label: "Aucune réponse du comptoir", hours: 30, priority: "normal", assignedAgentEmail: null }],
     openChanges: [{ historyId: 4, requestId: 6, requestRef: "3M-FL-BBB", kind: "cancel", message: "Je dois annuler.", createdAt: hoursAgo(3) }],
+    options: [] as any[],
+    optionAlertHours: 6,
+    funnel: { total: { created: 12, quoted: 9, paid: 6, issued: 4, cancelled: 1 }, months: [] as any[], openByStatus: {} as Record<string, number> },
     ...overrides,
   });
 

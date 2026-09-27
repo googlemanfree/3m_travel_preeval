@@ -14,6 +14,12 @@ import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 
+/** Fiche de voyage PDF jointe à l'e-mail d'émission ; sans elle (échec de génération), l'e-mail part quand même. */
+function sheetAttachments(booking: { requestRef: string; flightData: unknown; passengerData: unknown }, pnrReference: string) {
+  const attachment = travelSheetAttachment({ requestRef: booking.requestRef, pnrReference, flightData: booking.flightData, passengerData: booking.passengerData, issuedAt: new Date() });
+  return attachment ? [attachment] : undefined;
+}
+
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 // Demande de réservation publique : chaque envoi écrit en base et déclenche un e-mail à l'agence puis au client.
@@ -33,6 +39,7 @@ import { extractDeskAlertData } from "../../shared/flightDeskAlert";
 import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
 import { buildPaymentDeclaredAlert, buildPaymentDecisionEmail, paymentHintHtml, refusePaymentDecision, refuseStatusChange } from "../services/flightWorkflow";
 import { fareRefusal, travelerRefusal } from "../services/flightGuards";
+import { travelSheetAttachment } from "../services/flightTravelSheet";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -913,6 +920,7 @@ export const flightBookingRouter = router({
           await sendEmail({
             to: clientEmail,
             subject: `[3M Travel] Confirmation de votre billet et reçu PNR - ${existing.requestRef}`,
+            attachments: sheetAttachments(existing, input.pnrReference),
             html: `
               <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 8px;">
                 <div style="background: #1E3A8A; color: #ffffff; padding: 16px 20px; border-radius: 6px 6px 0 0; text-align: center;">
@@ -1024,6 +1032,7 @@ export const flightBookingRouter = router({
         await sendEmail({
           to: existing.candidateEmail,
           subject: `[3M Travel] Votre document PNR final est disponible - Dossier ${existing.requestRef}`,
+          attachments: sheetAttachments(existing, input.pnrReference),
           html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
               <h2 style="color: #1e3a8a; margin-top: 0;">Votre réservation de voyage est confirmée !</h2>

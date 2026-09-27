@@ -19,6 +19,8 @@ export type DeskAlertData = {
   passengerEmail: string;
   passengerPhone: string | null;
   travelers: number | null;
+  /** Bébés : le fournisseur ne les inclut pas dans le tarif, le conseiller chiffre leur billet. */
+  infants: number;
   comment: string | null;
   cabin: string | null;
   outbound: DeskLeg;
@@ -59,6 +61,7 @@ export function extractDeskAlertData(input: { requestRef: string; priority?: str
     passengerEmail: text(input.requesterEmail, 320),
     passengerPhone: phone || null,
     travelers: numberOrNull(passenger.travelers) ?? numberOrNull(flight.pricedPassengers),
+    infants: Math.min(4, Math.max(0, Math.trunc(numberOrNull(passenger.infants) ?? 0))),
     comment: text(passenger.comment, 600) || null,
     cabin: CABIN_LABELS[text(flight.cabinClass, 20)] ?? null,
     outbound: legOf(flight),
@@ -79,6 +82,7 @@ export function buildDeskAlertText(data: DeskAlertData): string {
     `Priorité : ${data.priority}`,
     `Client : ${data.passengerName}${data.passengerPhone ? ` · ${data.passengerPhone}` : ""} · ${data.passengerEmail}`,
     `Voyageurs : ${data.travelers ?? "à confirmer"}${data.cabin ? ` · Cabine : ${data.cabin}` : ""}`,
+    ...(data.infants > 0 ? [`BÉBÉ(S) : ${data.infants} — tarif bébé NON inclus dans le tarif relevé : à chiffrer auprès de la compagnie.`] : []),
     `ALLER : ${legLine(data.outbound)}`,
     ...(data.inbound ? [`RETOUR : ${legLine(data.inbound)}`] : []),
     `Tarif relevé : ${priceLine(data)} (à revalider avant tout paiement)`,

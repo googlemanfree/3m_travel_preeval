@@ -3,16 +3,19 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { flightBookingRequestHistory, flightBookingRequests, type FlightBookingRequest } from "../../drizzle/schema";
 import { compareFares, describeFareComparison } from "../../shared/flightFareCheck";
-import { CHANGE_KINDS, HISTORY, STALE_LABELS, collectChangeRequests, computeDeskStats, findStaleRequests, type ChangeKind, type DeskRequest, type HistoryRow } from "../../shared/flightFollowUps";
+import { CHANGE_KINDS, DESK_THRESHOLDS, HISTORY, STALE_LABELS, collectChangeRequests, computeDeskStats, computeFunnel, currentOptionDeadline, findStaleRequests, type ChangeKind, type DeskRequest, type HistoryRow } from "../../shared/flightFollowUps";
+import { flightNextStep, flightStatusLabel } from "../../shared/flightRequestStatus";
 import { assessTravelers, checkTraveler, expectedTravelerCount, extractTravelers, lastTravelDateOf, normalizePassportNumber } from "../../shared/flightTravelerCheck";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
+import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { notifyAdmins } from "./adminNotifications";
 import { candidateProcedure } from "./candidate";
 import { recheckLiveFare } from "./flights";
 import { resolveDeskRecipients } from "../services/flightDeskAlert";
+import { payLink } from "../services/flightWorkflow";
 import { buildChangeHandledEmail, buildChangeRequestAckEmail, buildChangeRequestDeskAlert } from "../services/flightFollowUpEmails";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -27,6 +30,22 @@ const travelerSchema = z.object({
   dateOfBirth: z.string().trim().max(10),
   nationality: z.string().trim().max(60).optional(),
 });
+
+// Suivi public par référence + e-mail : plafonds par connexion, par adresse et au total, pour ne pas servir à deviner des références.
+const trackGuard = createSubmissionGuard({
+  perClient: { limit: 30, windowMs: 60 * 60_000 },
+  perEmail: { limit: 10, windowMs: 60 * 60_000 },
+  global: { limit: 600, windowMs: 60 * 60_000 },
+});
+const trackInput = z.object({ requestRef: z.string().trim().min(6).max(40), email: z.string().trim().toLowerCase().email().max(320) });
+const TRACK_NOT_FOUND = "Aucune réservation ne correspond à cette référence et à cette adresse e-mail.";
+
+async function findTracked(db: Db, requestRef: string, email: string): Promise<FlightBookingRequest> {
+  const [row] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.requestRef, requestRef)).limit(1);
+  // Même réponse pour « référence inconnue » et « e-mail différent » : rien ne confirme l'existence d'une référence.
+  if (!row || row.candidateEmail.trim().toLowerCase() !== email) throw new TRPCError({ code: "NOT_FOUND", message: TRACK_NOT_FOUND });
+  return row;
+}
 
 async function requireDb(): Promise<Db> {
   const db = await getDb();
@@ -119,7 +138,65 @@ export const flightFollowUpRouter = router({
       return { success: true, deskNotified };
     }),
 
+  // ─── Suivi sans compte (référence + e-mail) ───────────────────────────────────────────────────────────────────
+  // POST et non GET : l'adresse e-mail ne doit jamais apparaître dans une URL.
+
+  track: publicProcedure.input(trackInput).mutation(async ({ ctx, input }) => {
+    trackGuard.assertAllowed(ctx?.req as any, input.email);
+    const db = await requireDb();
+    const request = await findTracked(db, input.requestRef, input.email);
+    const readiness = assessTravelers({ flightData: request.flightData, passengerData: request.passengerData, today: new Date() });
+    const flight = (request.flightData && typeof request.flightData === "object" ? request.flightData : {}) as Record<string, any>;
+    const text = (value: unknown, fallback: string) => (typeof value === "string" && value.trim() ? value.trim().slice(0, 80) : fallback);
+    const payable = (request.status === "revalidated" || request.status === "awaiting_payment") && !request.clientValidated;
+    return {
+      requestRef: request.requestRef,
+      status: request.status,
+      statusLabel: flightStatusLabel(request.status),
+      route: `${text(flight.originCity, text(flight.origin, "Départ"))} → ${text(flight.destinationCity, text(flight.destination, "Destination"))}`,
+      departureDate: text(flight.departureDate, ""),
+      returnDate: text(flight.returnFlight?.departureDate, ""),
+      lastTravelDate: lastTravelDateOf(request.flightData),
+      nextStep: flightNextStep({ status: request.status, clientValidated: request.clientValidated, travelersComplete: readiness.complete }),
+      payUrl: payable ? payLink(siteUrl(), request.requestRef) : null,
+      travelers: { expected: readiness.expected, provided: readiness.provided, complete: readiness.complete, editable: request.status !== "issued" && request.status !== "cancelled" },
+      ticketSent: request.status === "issued" && Boolean(request.issuedPdfUrl),
+    };
+  }),
+
+  /** Un invité (sans compte) renseigne les passeports depuis le suivi : mêmes contrôles, réservation retrouvée par référence + e-mail. */
+  trackSubmitTravelers: publicProcedure
+    .input(trackInput.extend({ travelers: z.array(travelerSchema).min(1).max(9) }))
+    .mutation(async ({ ctx, input }) => {
+      trackGuard.assertAllowed(ctx?.req as any, input.email);
+      const db = await requireDb();
+      const request = await findTracked(db, input.requestRef, input.email);
+      const result = await saveTravelers(db, request, input.travelers, request.candidateEmail, new Date());
+      await notifyAdmins({ type: "new_contact_message", title: "Passeports reçus pour une réservation de vol", message: `${request.requestRef} — ${input.travelers.length} voyageur(s) : données à contrôler avant l’émission`, relatedId: request.requestRef, targetAdminType: "accompagnement" });
+      return { success: true, warnings: result.warnings };
+    }),
+
   // ─── Côté administration ──────────────────────────────────────────────────────────────────────────────────────
+
+  /** Échéance de l'option de réservation posée auprès de la compagnie (saisie par le conseiller) ; `null` l'efface. */
+  setOptionDeadline: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), deadline: z.string().max(40).nullable(), note: z.string().trim().max(300).optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await requireDb();
+      const [request] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
+      if (request.status === "issued" || request.status === "cancelled") throw new TRPCError({ code: "BAD_REQUEST", message: "Le billet est déjà émis ou la demande annulée : plus d’option à suivre." });
+      let value: string | null = null;
+      if (input.deadline) {
+        const parsed = new Date(input.deadline);
+        if (Number.isNaN(parsed.getTime())) throw new TRPCError({ code: "BAD_REQUEST", message: "Date d’échéance invalide." });
+        if (parsed.getTime() < Date.now() - 60_000) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette échéance est déjà passée." });
+        value = parsed.toISOString();
+      }
+      await db.insert(flightBookingRequestHistory).values({ requestId: request.id, action: HISTORY.optionDeadline, changedBy: admin.email, oldValue: null, newValue: value, details: (value ? `Option de réservation valable jusqu’au ${value}.` : "Échéance d’option effacée.") + (input.note ? ` ${input.note}` : "") });
+      return { success: true, deadline: value };
+    }),
 
   /** Relève de nouveau le tarif chez le fournisseur et le compare à celui présenté au client ; le résultat est journalisé. */
   recheckFare: publicProcedure
@@ -168,6 +245,9 @@ export const flightFollowUpRouter = router({
       return {
         days: input.days,
         stats: computeDeskStats(desk, history),
+        funnel: computeFunnel(desk, history),
+        optionAlertHours: DESK_THRESHOLDS.optionWarningHours,
+        options: desk.filter((request) => request.status !== "issued" && request.status !== "cancelled").flatMap((request) => { const deadline = currentOptionDeadline(history.filter((row) => row.requestId === request.id)); return deadline ? [{ requestId: request.id, requestRef: request.requestRef, deadline: deadline.toISOString() }] : []; }).sort((a, b) => a.deadline.localeCompare(b.deadline)),
         stale: findStaleRequests(desk, history, now).slice(0, 30).map((item) => ({ ...item, label: STALE_LABELS[item.reason] })),
         openChanges: collectChangeRequests(history).filter((change) => !change.handledAt).slice(0, 30).map((change) => ({ historyId: change.id, requestId: change.requestId, requestRef: refById.get(change.requestId) ?? "", kind: change.kind, message: change.message, createdAt: change.createdAt.toISOString() })),
       };

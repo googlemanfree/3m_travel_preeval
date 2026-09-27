@@ -45,3 +45,21 @@ export function buildChangeHandledEmail(input: { requestRef: string; kind: Chang
   const html = frame("Votre demande a été traitée", "#047857", `<p>Bonjour,</p><p>Votre demande « <strong>${escapeHtml(CHANGE_KIND_LABELS[input.kind])}</strong> » pour la réservation <strong>${escapeHtml(ref)}</strong> a été traitée par notre équipe.</p>${input.note.trim() ? `<p style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px"><strong>Réponse de l’agence :</strong><br/>${escapeHtml(input.note).replace(/\n/g, "<br/>")}</p>` : ""}`);
   return { subject: `[3M Travel] Demande traitée — ${ref}`, html };
 }
+
+/** Relance d'une demande « informations requises » : le message du conseiller est dans l'e-mail précédent, jamais recopié ici (notes internes). */
+export function buildNeedsInfoReminderEmail(input: { requestRef: string; route: string; stage: number; siteUrl: string; whatsappDisplay: string; stopUrl: string }): { subject: string; html: string } {
+  const ref = oneLine(input.requestRef, 60);
+  const site = input.siteUrl.replace(/\/+$/, "");
+  const intro = input.stage >= 2
+    ? `<p>Sans les informations demandées, nous ne pouvons pas avancer sur votre réservation <strong>${escapeHtml(ref)}</strong> (${escapeHtml(oneLine(input.route))}). Les tarifs évoluent : plus l’attente se prolonge, plus le conseiller devra revérifier le tarif.</p>`
+    : `<p>Le conseiller attend une information de votre part pour poursuivre votre réservation <strong>${escapeHtml(ref)}</strong> (${escapeHtml(oneLine(input.route))}). Sa demande figure dans le message que nous vous avons envoyé lors du changement de statut.</p>`;
+  const html = frame("Une information manque pour votre réservation", "#b45309", `<p>Bonjour,</p>${intro}<p style="margin:16px 0">${button(`${site}/mon-espace`, "Ouvrir mon espace client")}</p><p style="font-size:14px">Vous pouvez aussi répondre à cet e-mail ou nous écrire sur WhatsApp au ${escapeHtml(input.whatsappDisplay)}.</p>${stopLine(input.stopUrl)}`);
+  return { subject: `[3M Travel] Il nous manque une information — ${ref}`, html };
+}
+
+/** Alerte groupée du comptoir : options de réservation qui expirent dans les 24 h. */
+export function buildOptionAlertEmail(input: { items: Array<{ requestRef: string; route: string; deadline: string }>; adminUrl: string }): { subject: string; html: string } {
+  const rows = input.items.map((item) => `<tr><td style="padding:6px 10px;font-family:monospace;font-weight:bold">${escapeHtml(oneLine(item.requestRef, 60))}</td><td style="padding:6px 10px">${escapeHtml(oneLine(item.route))}</td><td style="padding:6px 10px;font-weight:bold;color:#b91c1c">${escapeHtml(oneLine(item.deadline, 40))}</td></tr>`).join("");
+  const html = frame("Options de réservation qui expirent", "#b45309", `<p style="font-size:13px">Ces options, posées auprès de la compagnie, expirent dans moins de 24 h : faites payer, émettez ou prolongez-les, sinon le tarif et les places peuvent être perdus. Échéances en heure universelle (UTC).</p><table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;margin:0 0 14px"><tr style="color:#64748b;font-size:12px;text-align:left"><th style="padding:6px 10px">Réservation</th><th style="padding:6px 10px">Trajet</th><th style="padding:6px 10px">Expire</th></tr>${rows}</table>${button(input.adminUrl, "Ouvrir l’administration")}`);
+  return { subject: `[3M Travel] ${input.items.length} option${input.items.length > 1 ? "s" : ""} de réservation expire${input.items.length > 1 ? "nt" : ""} bientôt`, html };
+}
