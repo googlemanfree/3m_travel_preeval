@@ -143,3 +143,15 @@ describe("configuration", () => {
     expect(isProviderConfigured()).toBe(true);
   });
 });
+
+describe("diagnostic public de configuration (aucun secret exposé, aucun coût)", () => {
+  it("la procédure ne renvoie que des booléens et le compteur du jour", async () => {
+    const { flightsRouter } = await import("./routers/flights");
+    delete process.env.SEARCHAPI_KEY;
+    process.env.SERPAPI_KEY = "test-serpapi-key-fixture";
+    const result = await flightsRouter.createCaller({} as never).providerDiagnostics();
+    expect(result).toEqual({ searchApiConfigured: false, serpApiConfigured: true, fallbackCallsToday: expect.any(Number) });
+    for (const value of Object.values(result)) expect(JSON.stringify(value)).not.toContain("test-serpapi-key-fixture");
+    delete process.env.SERPAPI_KEY;
+  });
+});

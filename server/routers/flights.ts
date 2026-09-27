@@ -14,7 +14,7 @@ import { randomBytes } from "node:crypto";
 import { MAX_ACTIVE_ALERTS, MAX_ALERTS_PER_EMAIL, alertKeyOf, routeGroupKey, isAlertExpired, type FlightPriceAlert } from "../../shared/flightPriceAlert";
 import { alertConfirmUrl, alertStopUrl, alertsAreRunning, loadAlertEntries } from "../scheduled/flightPriceAlerts";
 import { buildAlertConfirmationEmail } from "../services/flightPriceAlertEmail";
-import { fetchProvider, isProviderConfigured } from "../services/flightProvider";
+import { fallbackCallsToday, fetchProvider, isProviderConfigured } from "../services/flightProvider";
 import { FlightOffersStore, OFFER_ROUTES, collectOffers, offerDates, selectCheapest, type CheapestFare, type FlightOffer, type OfferDates, type OfferRoute } from "../services/flightOffers";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
@@ -326,6 +326,16 @@ export const flightsRouter = router({
       ? { status: "live" as const, offers: snapshot.offers, retrievedAt: snapshot.retrievedAt as string | null, dates: snapshot.dates as OfferDates | null }
       : { status: "unavailable" as const, offers: [] as FlightOffer[], retrievedAt: null as string | null, dates: null as OfferDates | null };
   }),
+
+  /**
+   * Diagnostic sans coût ni secret exposé : dit seulement si chaque fournisseur est configuré côté serveur, et combien
+   * d'appels de secours ont déjà servi aujourd'hui. Aide à distinguer « clé absente » de « fournisseur en panne ».
+   */
+  providerDiagnostics: publicProcedure.query(() => ({
+    searchApiConfigured: Boolean(process.env.SEARCHAPI_KEY),
+    serpApiConfigured: Boolean(process.env.SERPAPI_KEY),
+    fallbackCallsToday: fallbackCallsToday(),
+  })),
 
   /** Vrai seulement si la tâche quotidienne des alertes tourne réellement : l'option automatique n'est jamais promise à vide. */
   priceAlertStatus: publicProcedure.query(async () => {
