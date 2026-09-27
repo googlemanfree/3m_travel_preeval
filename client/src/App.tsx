@@ -533,6 +533,40 @@ function AppShell() {
   const showPublicFooter = !isAdminRoute;
 
   React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    const scrollToTarget = () => {
+      const rawHash = window.location.hash.slice(1);
+      const targetId = rawHash ? decodeURIComponent(rawHash) : "";
+
+      // Les routes et certains composants sont lazy-loadés : attendre deux
+      // frames laisse le DOM et la transition de page se stabiliser avant de
+      // calculer la position finale.
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const target = targetId ? document.getElementById(targetId) : null;
+          if (target) {
+            target.scrollIntoView({ behavior: "auto", block: "start" });
+          } else {
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          }
+        });
+      });
+    };
+
+    scrollToTarget();
+    window.addEventListener("hashchange", scrollToTarget);
+
+    return () => {
+      window.removeEventListener("hashchange", scrollToTarget);
+      window.history.scrollRestoration = previousRestoration;
+    };
+  }, [location]);
+
+  React.useEffect(() => {
     captureReferralCodeFromUrl();
   }, []);
 
