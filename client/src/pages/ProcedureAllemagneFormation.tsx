@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ArrowRight, AlertTriangle, CheckCircle2, ExternalLink, FileText, GraduationCap, HardHat, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
+import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 
 const EVAL_LINK = "/evaluation?project=etudes&destination=Allemagne";
 
@@ -66,7 +67,7 @@ const WHY_3M = [
 const SOURCES = [
   { label: "Ambassades et consulats d'Allemagne (portail diplo.de)", url: "https://rabat.diplo.de/ma-fr/service/visa-einreise/2732332-2732332" },
   { label: "Make it in Germany — portail officiel du gouvernement fédéral", url: "https://www.make-it-in-germany.com/fr/" },
-  { label: "Services des étrangers (Ausländerbehörde) — Munich, Stuttgart", url: "https://www.muenchen.de/en/aliens-registration-office" },
+  { label: "Service des étrangers (Ausländerbehörde) — Ville de Munich", url: "https://stadt.muenchen.de/infos/immigration-online-services.html" },
 ];
 
 export default function ProcedureAllemagneFormation() {
@@ -250,6 +251,7 @@ export default function ProcedureAllemagneFormation() {
               </a>
             ))}
           </div>
+          <ProcedureTrustFooter />
           <p className="mt-4 text-xs leading-5 text-slate-500">
             Informations basées sur les sources officielles listées ci-dessus. Les règles d'admission, de visa, de séjour et de rémunération peuvent évoluer : ce guide est informatif et ne remplace pas les instructions de l'ambassade ou de l'autorité compétente.
           </p>

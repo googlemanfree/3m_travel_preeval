@@ -5,6 +5,7 @@ import { getDestination20 } from "@/data/destinations20";
 import { DESTINATION_OFFICIAL_SOURCES } from "@/data/destinationOfficialSources";
 import { CountryPhotoGallery } from "@/components/CountryPhotoGallery";
 import { CountryFactsPanel } from "@/components/CountryFactsPanel";
+import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 import { getCountryPhotos } from "@/data/countryPhotos";
 import { getCountryFacts } from "@/data/countryFacts";
 
@@ -153,6 +154,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
               ))}
             </ul>
             <p className="mt-2 text-xs leading-5 text-slate-500">Cette fiche est un repère : vérifiez toujours les conditions en vigueur sur le site de l'autorité avant de déposer un dossier.</p>
+            <ProcedureTrustFooter />
           </section>
         )}
 

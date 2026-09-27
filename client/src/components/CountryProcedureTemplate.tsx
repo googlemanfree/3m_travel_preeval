@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion } from "framer-motion";
+import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 import { AlertTriangle, CheckCircle2, Phone, Mail, Globe, MapPin, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -62,6 +63,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
                   </li>
                 ))}
               </ul>
+              <ProcedureTrustFooter hasCountrySpecificFraudAlert />
             </Card>
           </section>
         ) : null}

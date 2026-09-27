@@ -2,7 +2,8 @@
  * Portails officiels (immigration / visas) par destination des pages `/procedures/<pays>`.
  * Uniquement des pages d'accueil d'autorités publiques : elles ne changent pas d'adresse, contrairement aux pages profondes.
  * Ce sont des sources à consulter, jamais une déclaration de contenu vérifié : les règles évoluent, la page le rappelle.
- * Liens contrôlés le 2026-09-25 (réponse HTTP ou blocage anti-robot ; le portail italien n'a pas répondu depuis notre réseau).
+ * Liens recontrôlés le 2026-09-27 : réponse HTTP directe pour tous, sauf le portail italien (domaine esteri.it entier injoignable
+ * depuis notre réseau, confirmé par une source tierce comme toujours en service).
  */
 export type OfficialSource = { label: string; url: string };
 

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useRoute, Link } from "wouter";
+import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 import { ArrowRight, AlertTriangle, CheckCircle2, ExternalLink, FileText, ShieldCheck } from "lucide-react";
 
 const EVAL_LINK = "/evaluation?project=etudes&destination=Autriche%20%2F%20Suisse";
@@ -250,6 +251,7 @@ export default function ProcedureAutricheSuisseFormation() {
               </a>
             ))}
           </div>
+          <ProcedureTrustFooter />
           <p className="mt-4 text-xs leading-5 text-slate-500">
             Informations basées sur les sources officielles listées ci-dessus. Les règles d'admission, de visa, de séjour et de rémunération peuvent évoluer : ce guide est informatif et ne remplace pas les instructions de l'ambassade ou de l'autorité compétente.
           </p>
