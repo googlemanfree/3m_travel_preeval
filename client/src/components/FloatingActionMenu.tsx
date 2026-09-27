@@ -37,9 +37,9 @@ export function FloatingActionMenu() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Contacter 3M Travel sur WhatsApp"
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-green-900/25 ring-4 ring-white/80 transition-shadow hover:shadow-2xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-green-900/25 ring-4 ring-white/80 transition-shadow hover:shadow-2xl md:h-14 md:w-14:shadow-2xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2"
       >
-        <MessageCircle className="relative z-10 h-6 w-6" />
+        <MessageCircle className="relative z-10 h-5 w-5 md:h-6 md:w-6" />
         <motion.span
           aria-hidden="true"
           className="absolute inset-0 rounded-full border-2 border-emerald-200/70"

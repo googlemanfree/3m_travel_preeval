@@ -158,9 +158,9 @@ export default function AiCopilotWidgetEnhanced() {
               exit={{ scale: 0 }}
               onClick={() => setIsOpen(true)}
               aria-label="Ouvrir Aureol, le guide 3M Travel"
-              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
+              className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
             >
-              <MessageSquare className="w-6 h-6" />
+              <MessageSquare className="w-5 h-5 md:w-6 md:h-6" />
             </motion.button>
           )}
         </AnimatePresence>

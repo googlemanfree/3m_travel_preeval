@@ -169,10 +169,10 @@ export const SmartFlightAssistant = () => {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => setIsOpen(true)}
-            className="relative bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] text-white p-4 rounded-full shadow-2xl flex items-center justify-center border-2 border-white/25 cursor-pointer group"
+            className="relative bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] text-white p-3 md:p-4 rounded-full shadow-2xl flex items-center justify-center border-2 border-white/25 cursor-pointer group"
             aria-label="Assistant virtuel de vol"
           >
-            <Plane className="w-6 h-6 animate-pulse" />
+            <Plane className="w-5 h-5 md:w-6 md:h-6 animate-pulse" />
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white animate-ping" />
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white" />
             <span className="absolute right-full mr-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-lg border border-slate-200 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">

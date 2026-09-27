@@ -541,16 +541,16 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
  * chevauchement, y compris avec la zone sûre des appareils iOS.
  */
 .safe-bottom-floating-whatsapp {
-  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-flight {
-  bottom: calc(11rem + env(safe-area-inset-bottom));
+  bottom: calc(8.5rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-chat,
 .safe-bottom-floating-panel {
-  bottom: calc(16.25rem + env(safe-area-inset-bottom));
+  bottom: calc(12.5rem + env(safe-area-inset-bottom));
 }
 
 /* Tablette : garder un header compact sans réduire les zones tactiles. */
