@@ -18,8 +18,9 @@ export function renderRobotsTxt() {
     "Disallow: /mon-espace",
     "Disallow: /mon-dossier",
     "Disallow: /document-upload",
+    // /flights est volontairement indexable (voir PUBLIC_PAGES) : la demande de réservation, elle, reste sous /flight-booking/.
     "Disallow: /mes-vols-favoris",
-    "Disallow: /flights",
+    "Disallow: /flight-booking/",
     "Disallow: /api/",
     `Sitemap: ${OFFICIAL_SITE_ORIGIN}/sitemap.xml`,
     "",

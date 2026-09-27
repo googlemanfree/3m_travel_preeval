@@ -26,6 +26,15 @@ describe("SEO dynamique", () => {
     expect(renderRobotsTxt()).toContain("Disallow: /admin");
   });
 
+  it("ne bloque aucune page déclarée indexable (piège déjà arrivé : /flights restait interdit après être devenu indexable)", () => {
+    const disallowed = Array.from(renderRobotsTxt().matchAll(/^Disallow: (\/\S*)/gm)).map((match) => match[1]);
+    for (const path of getIndexablePublicPaths()) {
+      const blocked = disallowed.find((prefix) => path === prefix || path.startsWith(prefix));
+      expect(blocked, `${path} est indexable mais bloqué par "Disallow: ${blocked}"`).toBeUndefined();
+    }
+    expect(renderRobotsTxt()).not.toContain("Disallow: /flights\n");
+  });
+
   it("génère un BlogPosting pour la page éditoriale Blog", () => {
     const html = composePublicPrerender(template, "/blog").html;
     expect(html).toContain('"@type":"BlogPosting"');

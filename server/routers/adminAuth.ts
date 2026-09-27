@@ -11,7 +11,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getDb } from "../db";
 import { adminAccounts, adminSessionEvents, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
@@ -144,23 +144,28 @@ export const adminAuthRouter = router({
 
       if (admin.status !== "active") {
         recordFailedAttempt(input.email);
+        await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
         recordFailedAttempt(input.email);
+        await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
         recordFailedAttempt(input.email);
+        await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
         recordFailedAttempt(input.email);
+        // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
+        if (input.twoFactorCode) await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "twofactor_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
@@ -270,6 +275,29 @@ export const adminAuthRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       return db.select().from(adminSessionEvents).where(eq(adminSessionEvents.adminId, admin.id)).orderBy(desc(adminSessionEvents.createdAt)).limit(50);
+    }),
+
+  /**
+   * Journal de sécurité de l'équipe : connexions, échecs et révocations pour tous les comptes admin (même modèle de
+   * confiance que le reste de l'administration — voir requireSuperAdminSession). Limité aux événements réellement
+   * utiles pour repérer un abus (jamais les changements de mot de passe eux-mêmes, déjà notifiés par e-mail ailleurs).
+   */
+  listSecurityEvents: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), days: z.number().int().min(1).max(365).default(30) }))
+    .query(async ({ input }) => {
+      await requireSuperAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const since = new Date(Date.now() - input.days * 86_400_000);
+      const kinds = ["login", "login_failed", "login_blocked", "twofactor_failed", "revoked_all"] as const;
+      const rows = await db
+        .select({ id: adminSessionEvents.id, eventType: adminSessionEvents.eventType, createdAt: adminSessionEvents.createdAt, adminEmail: adminAccounts.email, adminFullName: adminAccounts.fullName })
+        .from(adminSessionEvents)
+        .innerJoin(adminAccounts, eq(adminSessionEvents.adminId, adminAccounts.id))
+        .where(and(gte(adminSessionEvents.createdAt, since), inArray(adminSessionEvents.eventType, kinds as unknown as string[])))
+        .orderBy(desc(adminSessionEvents.createdAt))
+        .limit(300);
+      return rows;
     }),
 
   revokeAllSessions: publicProcedure

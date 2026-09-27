@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, Clock3, RotateCcw, Settings2, ShieldOff } from "lucide-react";
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
+import AdminSecurityJournal from "@/components/AdminSecurityJournal";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 
@@ -18,7 +19,7 @@ export default function AdminEmailSettings() {
     },
   });
 
-  const eventLabel: Record<string, string> = { login: "Connexion", renewed: "Session renouvelée", revoked_all: "Sessions révoquées" };
+  const eventLabel: Record<string, string> = { login: "Connexion", renewed: "Session renouvelée", revoked_all: "Sessions révoquées", login_failed: "Échec de connexion", login_blocked: "Connexion refusée (compte désactivé)", twofactor_failed: "Code à deux étapes incorrect" };
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
@@ -61,6 +62,7 @@ export default function AdminEmailSettings() {
           </div>
           <p className="mt-3 flex items-center gap-2 text-xs text-slate-500"><RotateCcw className="h-3.5 w-3.5" /> La révocation ferme toutes vos sessions, y compris celle en cours.</p>
         </section>
+        <AdminSecurityJournal sessionToken={sessionToken ?? ""} />
         <AdminEmailDeliveryManagement />
       </div>
     </main>
