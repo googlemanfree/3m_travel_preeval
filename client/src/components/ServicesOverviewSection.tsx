@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Briefcase, Car, Cpu, GraduationCap, Hotel, IdCard, Plane, ShieldCheck, Sparkles, Users2, Globe2 } from "lucide-react";
+import { Briefcase, Car, GraduationCap, Hotel, IdCard, Plane, ShieldCheck, Sparkles, Stamp, Users2, Globe2 } from "lucide-react";
+import { procedures107Complete } from "@/data/procedures107Complete";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -9,6 +10,9 @@ const fadeUp = {
     transition: { duration: 0.4, delay: i * 0.08, ease: "easeOut" as const },
   }),
 };
+
+// Nombre réel de destinations couvertes : compté depuis le catalogue de procédures publié, jamais tapé à la main.
+const DESTINATION_COUNT = new Set(procedures107Complete.map((country) => country.id.replace(/-(travail|etudes|visiteur)$/, ""))).size;
 
 type ServiceItem = { label: string; href?: string };
 
@@ -26,14 +30,22 @@ const CATEGORIES: ServiceCategory[] = [
     icon: Globe2,
     color: "text-[#1e3a8a] bg-[#dbeafe]",
     title: "Mobilité internationale",
-    description: "Notre cœur de métier historique : construire et déposer un dossier solide, du premier renseignement jusqu'à l'installation.",
-    items: [{ label: "Études" }, { label: "Travail" }, { label: "Immigration" }, { label: "Visas" }, { label: "Regroupement familial" }],
+    description: "Études, travail, immigration ou regroupement familial : nous construisons et déposons un dossier solide, du premier renseignement jusqu'à l'installation.",
+    items: [{ label: "Études" }, { label: "Travail" }, { label: "Immigration" }, { label: "Regroupement familial" }],
     cta: { label: "Voir les procédures par destination", href: "/procedures" },
+  },
+  {
+    icon: Stamp,
+    color: "text-[#7c3aed] bg-[#ede9fe]",
+    title: "Visas",
+    description: "Quel que soit le motif du séjour, nous préparons votre demande de visa et vous accompagnons jusqu'au dépôt.",
+    items: [{ label: "Visa étudiant" }, { label: "Visa de travail" }, { label: "Visa de visiteur" }, { label: "e-Visa", href: "/evisas" }],
+    cta: { label: "Voir les types de visa", href: "/procedures" },
   },
   {
     icon: Plane,
     color: "text-[#2563eb] bg-[#eff6ff]",
-    title: "Travel",
+    title: "Travel & Booking",
     description: "Tout ce qu'il faut pour préparer et sécuriser un déplacement, ici comme à l'étranger.",
     items: [
       { label: "Billets d'avion", href: "/flights" },
@@ -44,18 +56,16 @@ const CATEGORIES: ServiceCategory[] = [
     cta: { label: "Réserver un vol", href: "/flights" },
   },
   {
-    icon: ShieldCheck,
+    icon: IdCard,
     color: "text-[#0369a1] bg-[#e0f2fe]",
-    title: "Services",
-    description: "Des démarches administratives et numériques que 3M gère aussi, au-delà du voyage.",
+    title: "Démarches administratives",
+    description: "Pré-enrôlement CNI et passeport, e-Visa Cameroun : nous préparons votre dossier et suivons son avancement.",
     items: [
-      { label: "CNI & passeport", href: "/cni-passeport" },
+      { label: "Pré-enrôlement CNI", href: "/cni-passeport" },
+      { label: "Passeport", href: "/cni-passeport" },
       { label: "e-Visa Cameroun", href: "/evisas" },
-      { label: "Technologies", href: "/3m-digital" },
-      { label: "Formations", href: "/formation" },
-      { label: "Solutions de sécurité", href: "/3m-digital" },
     ],
-    cta: { label: "Découvrir 3M Digital", href: "/3m-digital" },
+    cta: { label: "Préparer ma CNI ou mon passeport", href: "/cni-passeport" },
   },
 ];
 
@@ -64,22 +74,25 @@ const ITEM_ICONS: Record<string, typeof Plane> = {
   Hôtels: Hotel,
   "Location de véhicules": Car,
   "Assurance voyage": ShieldCheck,
-  "CNI & passeport": IdCard,
+  "Pré-enrôlement CNI": IdCard,
+  Passeport: IdCard,
   "e-Visa Cameroun": Globe2,
-  Technologies: Cpu,
-  Formations: GraduationCap,
-  "Solutions de sécurité": ShieldCheck,
+  "e-Visa": Globe2,
   Études: GraduationCap,
   Travail: Briefcase,
   Immigration: Globe2,
-  Visas: IdCard,
+  "Visa étudiant": GraduationCap,
+  "Visa de travail": Briefcase,
+  "Visa de visiteur": Stamp,
   "Regroupement familial": Users2,
 };
 
 /**
- * Vue d'ensemble des trois pôles d'activité de 3M Travel & Services : la mobilité internationale
- * n'est qu'une partie de l'offre, à côté du travel (vols, hôtels, location, assurance) et des
- * services administratifs/numériques (CNI, e-Visa, technologies, formations, sécurité).
+ * Vue d'ensemble des quatre pôles d'activité de 3M Travel Agency : mobilité internationale, visas,
+ * travel & booking, et démarches administratives (CNI, passeport, e-Visa). Les services technologiques
+ * (informatique, formations, réseaux, sécurité) ne figurent pas ici : ils vivent sur leur propre page
+ * (lien « 3M Digital » dans le paragraphe ci-dessous et dans le pied de page), pour ne pas surcharger
+ * l'accueil avec une activité annexe au métier de mobilité internationale.
  */
 export default function ServicesOverviewSection() {
   return (
@@ -89,13 +102,13 @@ export default function ServicesOverviewSection() {
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
             <Sparkles className="h-4 w-4" aria-hidden="true" /> Nos services
           </p>
-          <h2 id="services-overview-title" className="mt-4 text-3xl md:text-4xl font-black text-slate-950">Bien plus qu'une agence d'immigration</h2>
+          <h2 id="services-overview-title" className="mt-4 text-3xl md:text-4xl font-black text-slate-950">Bien plus qu'une agence de voyage. Un accompagnement international.</h2>
           <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600 md:text-base">
-            3M Travel &amp; Services accompagne la mobilité internationale, organise vos déplacements et gère des services administratifs et numériques au quotidien.
+            De la préparation de votre projet à l'organisation de votre départ, 3M Travel Agency réunit les solutions essentielles à votre mobilité.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {CATEGORIES.map((category, index) => (
             <motion.div
               key={category.title}
@@ -139,7 +152,20 @@ export default function ServicesOverviewSection() {
             </motion.div>
           ))}
         </div>
-        <p className="mt-8 text-center">
+
+        {/* Paragraphe descriptif : chaque service cité renvoie vers sa page. */}
+        <div className="mt-12 max-w-4xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <h3 className="text-xl font-black text-slate-950">Nos services</h3>
+          <p className="mt-3 text-sm leading-7 text-slate-700 md:text-base">
+            3M Travel Agency vous accompagne dans vos projets d'<a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">études</a>, de <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">travail</a>, d'<a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">immigration</a> et de <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">regroupement familial</a>, ainsi que dans vos <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">demandes de visa</a> pour {DESTINATION_COUNT} destinations. Nous organisons aussi votre voyage : <a href="/flights" className="font-semibold text-blue-700 underline-offset-2 hover:underline">billets d'avion</a>, <a href="/tourisme?service=hotel" className="font-semibold text-blue-700 underline-offset-2 hover:underline">réservation d'hôtels</a>, <a href="/tourisme?service=vehicle" className="font-semibold text-blue-700 underline-offset-2 hover:underline">location de véhicules</a> et <a href="/assurance" className="font-semibold text-blue-700 underline-offset-2 hover:underline">assurance voyage</a>. Pour vos démarches administratives, nous assurons le <a href="/cni-passeport" className="font-semibold text-blue-700 underline-offset-2 hover:underline">pré-enrôlement CNI et passeport</a> ainsi que l'<a href="/evisas" className="font-semibold text-blue-700 underline-offset-2 hover:underline">e-Visa Cameroun</a>. Enfin, à travers <a href="/3m-digital" className="font-semibold text-blue-700 underline-offset-2 hover:underline">3M Digital</a>, nous proposons des services en informatique, logiciels, formation, réseaux et sécurité.
+          </p>
+        </div>
+
+        <p className="mt-8 text-center text-base font-bold italic text-slate-800">
+          Une seule ambition : transformer votre projet international en une démarche claire, préparée et concrète.
+        </p>
+
+        <p className="mt-6 text-center">
           <a href="/services" className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-bold text-blue-800 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
             Voir tous nos services
           </a>

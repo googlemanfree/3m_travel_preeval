@@ -104,7 +104,7 @@ describe("accueil : « Que voulez-vous faire ? »", () => {
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     for (const pole of SERVICE_POLES) expect(hero).toContain(`href="/services#${pole.id}"`);
-    expect(hero).toContain("Visas, voyages et démarches administratives");
+    expect(hero).toContain("Études, travail, voyage, visa ou immigration");
     expect(hero).not.toContain("expertise reconnue");
   });
 

@@ -21,7 +21,7 @@ describe("hero : lisibilité et hiérarchie", () => {
 
   it("le badge n'a qu'une étoile et la description est un slogan court suivi de repères à icônes", () => {
     expect(hero).not.toContain("⭐");
-    expect(hero).toContain("Nous préparons votre dossier, de la demande jusqu'au suivi.");
+    expect(hero).toContain("Études, travail, voyage, visa ou immigration");
     expect(hero).not.toContain("Immigration et visas</strong> (Canada, Europe Schengen, États-Unis)");
     expect(hero).toContain('data-testid="hero-offers"');
   });
@@ -35,8 +35,9 @@ describe("hero : lisibilité et hiérarchie", () => {
 
   it("le bouton principal d'évaluation gratuite reste le premier appel à l'action, en orange contrasté", () => {
     const cta = hero.indexOf("<PublicEvaluationCTA");
-    expect(cta).toBeGreaterThan(hero.indexOf("Nous préparons votre dossier"));
-    expect(cta).toBeLessThan(hero.indexOf("Discuter avec un Expert"));
+    expect(cta).toBeGreaterThan(hero.indexOf("Études, travail, voyage, visa ou immigration"));
+    expect(cta).toBeLessThan(hero.indexOf("PARLER À UN CONSEILLER"));
     expect(hero.slice(cta, cta + 600)).toContain("from-orange-400");
+    expect(hero).toContain("ÉVALUER MON PROJET — GRATUIT");
   });
 });

@@ -6,14 +6,17 @@ const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("page d'accueil : « Nos services » et preuves de visas Schengen", () => {
-  it("présente les trois pôles avec toutes leurs activités", () => {
+  it("présente les quatre pôles avec toutes leurs activités ; la technologie n'y figure plus (page à part)", () => {
     const source = read("client/src/components/ServicesOverviewSection.tsx");
-    for (const pole of ["Mobilité internationale", "Travel", "Services"]) expect(source, pole).toContain(`title: "${pole}"`);
+    for (const pole of ["Mobilité internationale", "Visas", "Travel & Booking", "Démarches administratives"]) expect(source, pole).toContain(`title: "${pole}"`);
     for (const activite of [
-      "Études", "Travail", "Immigration", "Visas", "Regroupement familial",
+      "Études", "Travail", "Immigration", "Regroupement familial",
+      "Visa étudiant", "Visa de travail", "Visa de visiteur",
       "Billets d'avion", "Hôtels", "Location de véhicules", "Assurance voyage",
-      "CNI & passeport", "e-Visa Cameroun", "Technologies", "Formations", "Solutions de sécurité",
+      "Pré-enrôlement CNI", "Passeport", "e-Visa Cameroun",
     ]) expect(source, activite).toContain(`label: "${activite}"`);
+    // Retirés du haut de page à la demande de l'utilisateur : la technologie vit sur sa propre page (3M Digital).
+    for (const retire of ["Technologies", "Formations", "Solutions de sécurité"]) expect(source, retire).not.toContain(`label: "${retire}"`);
   });
 
   it("ne renvoie que vers des routes réellement déclarées (aucun lien mort)", () => {
@@ -22,13 +25,21 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     // Le chemin seul (sans ?service=…) doit correspondre à une route déclarée.
     const liens = Array.from(new Set(Array.from(section.matchAll(/href: "(\/[^"?#]*)/g)).map((match) => match[1])));
     expect(liens.length).toBeGreaterThan(4);
-    // Hôtels, location de véhicules et CNI & passeport ont désormais leur propre destination (plus de repli générique).
+    // Hôtels, location de véhicules et CNI & passeport ont chacun leur propre destination (plus de repli générique).
     expect(section).toContain('href: "/tourisme?service=hotel"');
     expect(section).toContain('href: "/tourisme?service=vehicle"');
     expect(section).toContain('href: "/cni-passeport"');
-    expect(section).toContain('{ label: "Formations", href: "/formation" }');
+    expect(section).toContain('href="/3m-digital"');
     // Les deux syntaxes JSX existent dans App.tsx : path="/x" et path={"/x"}
     for (const lien of liens) expect(app.includes(`path="${lien}"`) || app.includes(`path={"${lien}"}`), lien).toBe(true);
+  });
+
+  it("le paragraphe « Nos services » cite chaque activité avec un lien réel, et le nombre de destinations est compté depuis le catalogue réel", () => {
+    const section = read("client/src/components/ServicesOverviewSection.tsx");
+    expect(section).toContain("DESTINATION_COUNT");
+    expect(section).toContain("procedures107Complete.map((country) => country.id.replace(");
+    expect(section).toContain("{DESTINATION_COUNT} destinations");
+    expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et concrète.");
   });
 
   it("est affichée sur l'accueil, avant les procédures les plus demandées", () => {

@@ -20,7 +20,6 @@ const HERO_OFFERS = [
   { icon: "🇪🇺", label: "Europe Schengen", href: "/schengen" },
   { icon: "🇺🇸", label: "États-Unis", href: "/procedures" },
   { icon: "✈️", label: "Billets, hôtels & assurance", href: "/services#travel" },
-  { icon: "🛂", label: "CNI, passeport & e-Visa", href: "/services#services" },
 ];
 
 export default function HeroSectionVIP({ 
@@ -182,7 +181,7 @@ export default function HeroSectionVIP({
           custom={3}
           className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-4 sm:mb-7"
         >
-          Visas, voyages et démarches administratives — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">un seul interlocuteur à Yaoundé</span>
+          L'Afrique vers le monde. <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Votre projet international commence ici.</span>
         </motion.h2>
 
         {/* Slogan court + repères de prestations */}
@@ -193,7 +192,7 @@ export default function HeroSectionVIP({
           custom={4}
           className="text-white text-xl md:text-2xl max-w-3xl mx-auto mb-4 sm:mb-5 leading-relaxed font-medium"
         >
-          Nous préparons votre dossier, de la demande jusqu'au suivi.
+          Études, travail, voyage, visa ou immigration : 3M Travel Agency vous accompagne dans la préparation et la réalisation de vos projets internationaux, avec une approche structurée, personnalisée et transparente.
         </motion.p>
         <motion.ul
           initial="hidden"
@@ -223,13 +222,13 @@ export default function HeroSectionVIP({
         >
           <PublicEvaluationCTA
             project="travail"
-            aria-label="Commencer mon évaluation gratuite pour un projet professionnel"
+            aria-label="Évaluer mon projet gratuitement"
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
               <span className="relative z-10 inline-flex items-center gap-2">
                 <span className="text-lg transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" aria-hidden="true">🚀</span>
-                <span>Évaluation gratuite — Commencer</span>
+                <span>ÉVALUER MON PROJET — GRATUIT</span>
               </span>
           </PublicEvaluationCTA>
           <Button
@@ -238,11 +237,11 @@ export default function HeroSectionVIP({
             className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-white/10 hover:border-white/50 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
             <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel.")}`}
+              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              💬 Discuter avec un Expert (WhatsApp)
+              💬 PARLER À UN CONSEILLER
             </a>
           </Button>
           <Button
