@@ -43,9 +43,18 @@ export type BestOffer = {
   returnDate: string | null;
   priceXaf: number;
   airline: string;
+  /** Logo réellement fourni par le fournisseur pour cette compagnie ; absent si inconnu (jamais un logo générique inventé). */
+  airlineLogo: string | null;
   stops: number;
   durationMinutes: number;
 };
+
+/** Petit logo de compagnie à côté des codes IATA ; sans logo connu ou en cas d'échec de chargement, une icône neutre le remplace. */
+function OfferAirlineLogo({ name, logo }: { name: string; logo: string | null }) {
+  const [failed, setFailed] = React.useState(false);
+  if (!logo || failed) return <Plane data-testid="offer-airline-logo-fallback" className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />;
+  return <img src={logo} alt="" aria-hidden="true" loading="lazy" data-testid="offer-airline-logo" onError={() => setFailed(true)} className="h-3.5 w-3.5 shrink-0 rounded-sm object-contain" />;
+}
 
 const formatOfferDate = (iso: string) => {
   const date = new Date(`${iso}T12:00:00Z`);
@@ -89,7 +98,10 @@ export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { o
               <ArrowRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
               <span className="truncate">{offer.to.city}</span>
             </span>
-            <span className="block text-xs font-semibold text-slate-500">{offer.from.iata} – {offer.to.iata} · {offer.airline}</span>
+            <span className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <OfferAirlineLogo name={offer.airline} logo={offer.airlineLogo} />
+              {offer.from.iata} – {offer.to.iata} · {offer.airline}
+            </span>
             <span className="mt-3 block text-sm text-slate-700">{formatOfferDate(offer.departureDate)}{offer.returnDate ? ` → ${formatOfferDate(offer.returnDate)}` : ""}</span>
             <span className="mt-3 flex items-end justify-between gap-3">
               <span>

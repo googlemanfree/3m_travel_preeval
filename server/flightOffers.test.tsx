@@ -50,10 +50,13 @@ describe("choix du tarif le plus bas", () => {
       { totalPrice: 500_000, airline: { name: "A" }, stops: 1, durationMinutes: 700 },
       { totalPrice: 0 },
       { totalPrice: "abc" },
-      { totalPrice: 457_020.4, airline: { name: "B" }, stops: 0, durationMinutes: 600 },
+      { totalPrice: 457_020.4, airline: { name: "B", logo: "https://logo.clearbit.com/b.com" }, stops: 0, durationMinutes: 600 },
       {},
     ]);
-    expect(best).toEqual({ totalPrice: 457_020, airlineName: "B", stops: 0, durationMinutes: 600 });
+    expect(best).toEqual({ totalPrice: 457_020, airlineName: "B", airlineLogo: "https://logo.clearbit.com/b.com", stops: 0, durationMinutes: 600 });
+    // Un logo absent ou vide chez le fournisseur ne devient jamais un logo inventé.
+    expect(selectCheapest([{ totalPrice: 100, airline: { name: "C" } }])?.airlineLogo).toBeNull();
+    expect(selectCheapest([{ totalPrice: 100, airline: { name: "C", logo: "" } }])?.airlineLogo).toBeNull();
     expect(selectCheapest([])).toBeNull();
     expect(selectCheapest([{ totalPrice: -5 }])).toBeNull();
   });
@@ -70,13 +73,15 @@ describe("relevé des parcours", () => {
         if (route.id === routes[2].id) throw new Error("timeout");
         // Le premier répond plus tard que le dernier : l'ordre final ne suit pas l'ordre des réponses.
         if (route.id === routes[0].id) await new Promise((resolve) => setTimeout(resolve, 20));
-        return { totalPrice: 400_000, airlineName: "Air X", stops: 1, durationMinutes: 700 };
+        return { totalPrice: 400_000, airlineName: "Air X", airlineLogo: "https://logo.clearbit.com/airx.com", stops: 1, durationMinutes: 700 };
       },
       routes,
       dates,
     );
     expect(offers.map((offer) => offer.routeId)).toEqual([routes[0].id, routes[3].id]);
     expect(failed).toBe(2);
+    // Le logo réellement fourni par le fournisseur suit l'offre jusqu'au bout de la chaîne.
+    expect(offers.every((offer) => offer.airlineLogo === "https://logo.clearbit.com/airx.com")).toBe(true);
   });
 
   it("au plus 2 appels simultanés", async () => {
@@ -88,7 +93,7 @@ describe("relevé des parcours", () => {
         peak = Math.max(peak, running);
         await new Promise((resolve) => setTimeout(resolve, 5));
         running -= 1;
-        return { totalPrice: 1, airlineName: "x", stops: 0, durationMinutes: 1 };
+        return { totalPrice: 1, airlineName: "x", airlineLogo: null, stops: 0, durationMinutes: 1 };
       },
       OFFER_ROUTES,
       dates,
@@ -99,7 +104,7 @@ describe("relevé des parcours", () => {
 
   it("un aller simple n'a pas de date de retour", async () => {
     const oneWay: OfferRoute = { id: "nsi-dla", from: { iata: "NSI", city: "Yaoundé" }, to: { iata: "DLA", city: "Douala" }, tripType: "ONE_WAY" };
-    const { offers } = await collectOffers(async () => ({ totalPrice: 60_000, airlineName: "Camair-Co", stops: 0, durationMinutes: 55 }), [oneWay], dates);
+    const { offers } = await collectOffers(async () => ({ totalPrice: 60_000, airlineName: "Camair-Co", airlineLogo: null, stops: 0, durationMinutes: 55 }), [oneWay], dates);
     expect(offers[0].returnDate).toBeNull();
   });
 
@@ -274,6 +279,7 @@ describe("cartes « Meilleures offres »", () => {
     returnDate: "2026-12-03",
     priceXaf: 457020,
     airline: "Air France",
+    airlineLogo: "https://logo.clearbit.com/airfrance.com",
     stops: 1,
     durationMinutes: 680,
   };
@@ -290,6 +296,16 @@ describe("cartes « Meilleures offres »", () => {
     expect(screen.getByTestId("offer-price").textContent).toMatch(/457\s?020 FCFA/);
     expect(screen.getByTestId("offers-provenance").textContent).toContain("Google Flights");
     expect(screen.getByTestId("offers-provenance").textContent).toContain("confirmés par un conseiller");
+  });
+
+  it("logo de la compagnie : celui réellement fourni par le relevé, une icône neutre sinon (jamais un logo générique)", () => {
+    render(<FlightBestOffers offers={[offer]} retrievedAt={null} onPick={vi.fn()} />);
+    expect(screen.getByTestId("offer-airline-logo").getAttribute("src")).toBe("https://logo.clearbit.com/airfrance.com");
+    expect(screen.queryByTestId("offer-airline-logo-fallback")).toBeNull();
+    cleanup();
+    render(<FlightBestOffers offers={[{ ...offer, airlineLogo: null }]} retrievedAt={null} onPick={vi.fn()} />);
+    expect(screen.queryByTestId("offer-airline-logo")).toBeNull();
+    expect(screen.getByTestId("offer-airline-logo-fallback")).toBeTruthy();
   });
 
   it("un clic transmet l'offre (mêmes dates que le relevé) ; sans offre, rien n'est affiché", () => {
@@ -404,7 +420,7 @@ describe("dernière recherche mémorisée sur l'appareil", () => {
 
 describe("date de relevé sur chaque carte d'offre", () => {
   it("affiche « Relevé le … » quand la date est connue, rien sinon", () => {
-    const one = { routeId: "nsi-cdg", tripType: "ROUND_TRIP" as const, from: { iata: "NSI", city: "Yaoundé" }, to: { iata: "CDG", city: "Paris" }, departureDate: "2026-11-23", returnDate: "2026-12-03", priceXaf: 457020, airline: "Air France", stops: 1, durationMinutes: 680 };
+    const one = { routeId: "nsi-cdg", tripType: "ROUND_TRIP" as const, from: { iata: "NSI", city: "Yaoundé" }, to: { iata: "CDG", city: "Paris" }, departureDate: "2026-11-23", returnDate: "2026-12-03", priceXaf: 457020, airline: "Air France", airlineLogo: "https://logo.clearbit.com/airfrance.com", stops: 1, durationMinutes: 680 };
     render(<FlightBestOffers offers={[one]} retrievedAt="2026-09-26T19:30:00Z" onPick={vi.fn()} />);
     expect(screen.getByTestId("offer-retrieved").textContent).toContain("Relevé le");
     cleanup();

@@ -40,6 +40,7 @@ const offer = {
   returnDate: "2026-10-29",
   priceXaf: 457020,
   airline: "Air France",
+  airlineLogo: "https://logo.clearbit.com/airfrance.com",
   stops: 1,
   durationMinutes: 680,
 };

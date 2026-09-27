@@ -41,6 +41,8 @@ export type FlightOffer = {
   /** Tarif total aller-retour (ou aller simple) pour 1 adulte en classe économique, en FCFA. */
   priceXaf: number;
   airline: string;
+  /** Logo réellement fourni par le fournisseur pour cette compagnie ; absent si inconnu (jamais un logo générique inventé). */
+  airlineLogo: string | null;
   stops: number;
   durationMinutes: number;
 };
@@ -67,16 +69,22 @@ export function offerDates(now: Date): OfferDates {
   return { departureDate: isoDate(departure), returnDate: isoDate(new Date(departure.getTime() + OFFER_STAY_DAYS * DAY_MS)) };
 }
 
-export type CheapestFare = { totalPrice: number; airlineName: string; stops: number; durationMinutes: number };
+export type CheapestFare = { totalPrice: number; airlineName: string; airlineLogo: string | null; stops: number; durationMinutes: number };
 
 /** Le vol le moins cher parmi des résultats du fournisseur ; ignore tout résultat sans prix valide. */
-export function selectCheapest(flights: Array<{ totalPrice?: unknown; airline?: { name?: string } | null; stops?: unknown; durationMinutes?: unknown }>): CheapestFare | null {
+export function selectCheapest(flights: Array<{ totalPrice?: unknown; airline?: { name?: string; logo?: string } | null; stops?: unknown; durationMinutes?: unknown }>): CheapestFare | null {
   let best: CheapestFare | null = null;
   for (const flight of flights) {
     const price = typeof flight.totalPrice === "number" && Number.isFinite(flight.totalPrice) && flight.totalPrice > 0 ? Math.round(flight.totalPrice) : null;
     if (price === null) continue;
     if (best === null || price < best.totalPrice) {
-      best = { totalPrice: price, airlineName: flight.airline?.name || "Compagnie aérienne", stops: Number(flight.stops) || 0, durationMinutes: Number(flight.durationMinutes) || 0 };
+      best = {
+        totalPrice: price,
+        airlineName: flight.airline?.name || "Compagnie aérienne",
+        airlineLogo: typeof flight.airline?.logo === "string" && flight.airline.logo ? flight.airline.logo : null,
+        stops: Number(flight.stops) || 0,
+        durationMinutes: Number(flight.durationMinutes) || 0,
+      };
     }
   }
   return best;
@@ -107,6 +115,7 @@ export async function collectOffers(fetchCheapest: FetchCheapest, routes: OfferR
           returnDate: current.tripType === "ROUND_TRIP" ? dates.returnDate : null,
           priceXaf: fare.totalPrice,
           airline: fare.airlineName,
+          airlineLogo: fare.airlineLogo,
           stops: fare.stops,
           durationMinutes: fare.durationMinutes,
         });
