@@ -145,26 +145,31 @@ export function VisasCarousel() {
               onClick={prevSlide}
               variant="outline"
               size="icon"
+              aria-label="Visa précédent"
               className="rounded-full border-2 border-blue-300 hover:bg-blue-50"
             >
-              <ChevronLeft className="w-5 h-5 text-blue-600" />
+              <ChevronLeft className="w-5 h-5 text-blue-600" aria-hidden="true" />
             </Button>
             <Button
               onClick={nextSlide}
               variant="outline"
               size="icon"
+              aria-label="Visa suivant"
               className="rounded-full border-2 border-blue-300 hover:bg-blue-50"
             >
-              <ChevronRight className="w-5 h-5 text-blue-600" />
+              <ChevronRight className="w-5 h-5 text-blue-600" aria-hidden="true" />
             </Button>
           </div>
 
           {/* Indicators */}
-          <div className="flex justify-center gap-2 mt-6">
-            {visasData.map((_, index) => (
+          <div className="flex justify-center gap-2 mt-6" role="tablist" aria-label="Aller à un visa">
+            {visasData.map((visa, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
+                role="tab"
+                aria-selected={index === currentIndex}
+                aria-label={`${visa.destination} — ${visa.visaType} (${index + 1} sur ${visasData.length})`}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex ? "bg-blue-600 w-8" : "bg-blue-200 w-2"
                 }`}

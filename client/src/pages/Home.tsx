@@ -1695,7 +1695,7 @@ function PricingSection() {
                     plan.highlight
                       ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
                       : plan.id === "differe"
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      ? "bg-emerald-700 hover:bg-emerald-800 text-white"
                       : "bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
                   }`}
                 >

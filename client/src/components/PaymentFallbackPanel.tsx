@@ -52,7 +52,7 @@ export default function PaymentFallbackPanel({ reference = "", kind = "dossier",
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-black text-white hover:bg-emerald-700">
+        <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white hover:bg-emerald-800">
           <MessageCircle className="h-4 w-4" aria-hidden="true" /> Contacter l’agence sur WhatsApp
         </a>
         {agency.phoneDisplay && (

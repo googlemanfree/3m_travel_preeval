@@ -65,7 +65,7 @@ export default function ProofGallerySection() {
                 filter === entry.filter ? "border-blue-700 bg-blue-700 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50"
               }`}
             >
-              {entry.label} <span className={filter === entry.filter ? "text-blue-100" : "text-slate-400"}>({entry.count})</span>
+              {entry.label} <span className={filter === entry.filter ? "text-blue-100" : "text-slate-500"}>({entry.count})</span>
             </button>
           ))}
         </div>
