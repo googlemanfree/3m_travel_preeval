@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, MapPinned, ListChecks, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, FileDown, MapPinned, ListChecks, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
@@ -22,6 +22,7 @@ type Props = {
 
 export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, evaluationClientConfirmed, activationRequested, paymentConfirmed, documents = [] }: Props) {
   const [previewDocument, setPreviewDocument] = useState<{ title: string; url: string; fileType: string } | null>(null);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
   const { toast } = useToast();
   const checklistQuery = trpc.candidate.getProcedureChecklist.useQuery(undefined, { retry: false });
   const trpcUtils = trpc.useUtils();
@@ -52,6 +53,94 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
   const completedStepCount = Math.min(journey.steps.length, Math.max(officialCompletedCount, checklistCompletedCount));
   const progress = journey.steps.length ? Math.round((completedStepCount / journey.steps.length) * 100) : 0;
 
+  const downloadChecklistPdf = async () => {
+    setIsPdfExporting(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      const margin = 16;
+      const contentWidth = 210 - margin * 2;
+      let cursorY = 18;
+      const safeText = (value: string | null | undefined, fallback = "Non renseigné") => value?.trim() || fallback;
+      const addWrapped = (text: string, x: number, y: number, size = 10, color: [number, number, number] = [35, 45, 60]) => {
+        pdf.setFontSize(size);
+        pdf.setTextColor(...color);
+        const lines = pdf.splitTextToSize(text, contentWidth - (x - margin));
+        pdf.text(lines, x, y);
+        return lines.length * (size * 0.45 + 1.5);
+      };
+      const ensureSpace = (height: number) => {
+        if (cursorY + height > 278) {
+          pdf.addPage();
+          cursorY = 18;
+        }
+      };
+
+      pdf.setFillColor(9, 42, 83);
+      pdf.rect(0, 0, 210, 38, "F");
+      pdf.setFontSize(18);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("3M TRAVEL AGENCY", margin, 17);
+      pdf.setFontSize(10);
+      pdf.text("Checklist et avancement de votre procédure", margin, 26);
+      cursorY = 50;
+      pdf.setFontSize(15);
+      pdf.setTextColor(9, 42, 83);
+      pdf.text(safeText(journey.title, "Parcours synchronisé"), margin, cursorY);
+      cursorY += 9;
+      cursorY += addWrapped(`Destination : ${safeText(destination)} · Procédure : ${safeText(visaType || procedureLabel)}`, margin, cursorY, 10);
+      cursorY += 3;
+      pdf.setFillColor(226, 232, 240);
+      pdf.roundedRect(margin, cursorY, contentWidth, 8, 2, 2, "F");
+      pdf.setFillColor(29, 78, 216);
+      pdf.roundedRect(margin, cursorY, contentWidth * (progress / 100), 8, 2, 2, "F");
+      cursorY += 15;
+      pdf.setFontSize(11);
+      pdf.setTextColor(9, 42, 83);
+      pdf.text(`Avancement global : ${progress}% (${completedStepCount}/${journey.steps.length} étapes)`, margin, cursorY);
+      cursorY += 10;
+
+      journey.steps.forEach((item, index) => {
+        const isComplete = index < completedIndex || persistedStepIds.has(`checklist-${index}`);
+        const isCurrent = index === currentIndex;
+        const status = isComplete ? "Validée" : isCurrent ? "En cours" : "À venir";
+        const statusColor: [number, number, number] = isComplete ? [22, 101, 52] : isCurrent ? [146, 64, 14] : [71, 85, 105];
+        const descriptionLines = pdf.splitTextToSize(`${index + 1}. ${item.label} — ${item.description}`, contentWidth - 8);
+        const required = item.requiredInputs.length ? `À prévoir : ${item.requiredInputs.join(", ")}` : "Aucun élément complémentaire indiqué";
+        const requiredLines = pdf.splitTextToSize(required, contentWidth - 8);
+        const blockHeight = 12 + (descriptionLines.length + requiredLines.length) * 5;
+        ensureSpace(blockHeight);
+        pdf.setDrawColor(203, 213, 225);
+        pdf.setFillColor(isComplete ? 240 : isCurrent ? 255 : 248, isComplete ? 253 : isCurrent ? 247 : 250, isComplete ? 244 : isCurrent ? 237 : 252);
+        pdf.roundedRect(margin, cursorY, contentWidth, blockHeight - 2, 2, 2, "FD");
+        pdf.setFontSize(10);
+        pdf.setTextColor(...statusColor);
+        pdf.text(status, 210 - margin - pdf.getTextWidth(status), cursorY + 7);
+        pdf.setFontSize(10);
+        pdf.setTextColor(25, 35, 50);
+        pdf.text(descriptionLines, margin + 4, cursorY + 7);
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(71, 85, 105);
+        pdf.text(requiredLines, margin + 4, cursorY + 7 + descriptionLines.length * 5);
+        cursorY += blockHeight + 4;
+      });
+
+      ensureSpace(20);
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(margin, cursorY, 210 - margin, cursorY);
+      cursorY += 7;
+      addWrapped("Ce document est un récapitulatif de suivi. Les exigences et décisions officielles doivent toujours être vérifiées auprès des autorités compétentes.", margin, cursorY, 8, [71, 85, 105]);
+      const filename = `checklist-${safeText(destination, "procedure").toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.pdf`;
+      pdf.save(filename);
+      toast({ title: "Checklist téléchargée", description: "Votre checklist et son avancement ont été exportés au format PDF." });
+    } catch (error) {
+      console.error("Erreur lors de l’export PDF de la checklist", error);
+      toast({ title: "Export PDF indisponible", description: "La checklist n’a pas pu être téléchargée. Réessayez dans quelques instants.", variant: "destructive" });
+    } finally {
+      setIsPdfExporting(false);
+    }
+  };
+
   return (
     <Card className="border-blue-100 bg-white shadow-sm" aria-labelledby="candidate-country-journey-title">
       <DocumentPreviewModal
@@ -80,7 +169,11 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
             <p className="mt-2 text-xs leading-5 text-slate-600">Le pourcentage combine l’avancement officiel du dossier et les étapes que vous avez cochées dans votre checklist.</p>
           </div>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex items-start gap-2"><ListChecks className="mt-0.5 h-5 w-5 text-blue-800" aria-hidden="true" /><div><h3 id="procedure-checklist-title" className="font-bold text-blue-950">Ma checklist de procédure</h3><p className="mt-1 text-sm leading-5 text-blue-900">Cochez uniquement les actions que vous avez personnellement vérifiées. Les étapes à venir restent verrouillées jusqu’à la validation du dossier.</p></div></div>
+            <div className="flex min-w-0 items-start gap-2"><ListChecks className="mt-0.5 h-5 w-5 shrink-0 text-blue-800" aria-hidden="true" /><div><h3 id="procedure-checklist-title" className="font-bold text-blue-950">Ma checklist de procédure</h3><p className="mt-1 text-sm leading-5 text-blue-900">Cochez uniquement les actions que vous avez personnellement vérifiées. Les étapes à venir restent verrouillées jusqu’à la validation du dossier.</p></div></div>
+            <button type="button" onClick={downloadChecklistPdf} disabled={isPdfExporting || !journey.steps.length} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-800 shadow-sm transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto" aria-label="Télécharger ma checklist et l’avancement au format PDF">
+              {isPdfExporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileDown className="h-4 w-4" aria-hidden="true" />}
+              {isPdfExporting ? "Préparation du PDF…" : "Télécharger en PDF"}
+            </button>
             {checklistQuery.isFetching && <Loader2 className="h-4 w-4 animate-spin text-blue-700" aria-label="Mise à jour de la checklist" />}
           </div>
           {checklistQuery.isError && <p className="mt-3 text-xs font-semibold text-amber-800">Le suivi personnel n’est pas disponible pour le moment ; la progression officielle du dossier reste affichée.</p>}
