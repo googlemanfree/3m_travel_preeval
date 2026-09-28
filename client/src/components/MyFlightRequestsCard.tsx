@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import FlightRequestExtras from "@/components/FlightRequestExtras";
 import PaymentProofUpload from "@/components/PaymentProofUpload";
 import { flightPaymentExpected, flightStatusLabel, flightStatusTone } from "@shared/flightRequestStatus";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 
 type FlightData = { originCity?: string; destinationCity?: string; origin?: string; destination?: string; departureDate?: string; airline?: { name?: string } | string };
 
@@ -14,6 +15,7 @@ const routeOf = (flight: FlightData): string => `${flight.originCity || flight.o
  * attend un règlement. Rien n'est affiché sans réservation.
  */
 export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boolean }) {
+  const { candidate } = useCandidateAuth();
   const query = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled, staleTime: 30_000, retry: 1 });
   const overview = trpc.flightFollowUp.myOverview.useQuery(undefined, { enabled, staleTime: 30_000, retry: 1 });
   const requests = (query.data ?? []).slice(0, 3);
@@ -36,9 +38,14 @@ export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boo
                 <p className="truncate text-xs text-slate-500"><span className="font-mono">{request.requestRef}</span>{flight.departureDate ? ` · départ ${flight.departureDate}` : ""}</p>
               </div>
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${flightStatusTone(request.status)}`}>{flightStatusLabel(request.status)}</span>
+              {flightPaymentExpected(request.status) && candidate?.email && (
+                <a href={`/payment/flight/${request.id}?email=${encodeURIComponent(candidate.email)}`} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-700 px-3 text-xs font-black text-white hover:bg-blue-800" data-testid="pay-flight-online-link">
+                  <CreditCard className="h-4 w-4" aria-hidden="true" />Payer en ligne
+                </a>
+              )}
               {flightPaymentExpected(request.status) && (
-                <a href={`/paiement?ref=${encodeURIComponent(request.requestRef)}&type=vol`} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-700 px-3 text-xs font-black text-white hover:bg-blue-800" data-testid="pay-flight-link">
-                  <CreditCard className="h-4 w-4" aria-hidden="true" />Comment payer
+                <a href={`/paiement?ref=${encodeURIComponent(request.requestRef)}&type=vol`} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-blue-200 px-3 text-xs font-black text-blue-700 hover:bg-blue-50" data-testid="pay-flight-link">
+                  Autres moyens
                 </a>
               )}
               {request.status === "issued" && request.pnrReference && <span className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-emerald-800">PNR {request.pnrReference}</span>}

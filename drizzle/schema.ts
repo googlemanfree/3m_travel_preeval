@@ -1950,6 +1950,14 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   paymentTransactionId: varchar("paymentTransactionId", { length: 120 }),
   clientValidated: boolean("clientValidated").default(false).notNull(),
+  // Paiement en ligne CinetPay (chemin distinct de paymentMethod/paymentTransactionId ci-dessus, qui restent la
+  // déclaration manuelle validée par un admin). NULL tant qu'aucun paiement en ligne n'a été tenté.
+  onlinePaymentStatus: mysqlEnum("onlinePaymentStatus", ["PENDING", "SUCCESS", "FAILED"]),
+  onlinePaymentTransactionId: varchar("onlinePaymentTransactionId", { length: 120 }),
+  onlinePaymentAmount: int("onlinePaymentAmount"),
+  onlinePaymentCurrency: varchar("onlinePaymentCurrency", { length: 6 }),
+  onlinePaymentMethod: varchar("onlinePaymentMethod", { length: 50 }),
+  onlinePaymentDate: timestamp("onlinePaymentDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [
   index("idx_flight_requests_status").on(table.status),

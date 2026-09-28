@@ -112,6 +112,7 @@ const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSetti
 const FlightAgentDashboard = lazyWithTimeout(() => import("./pages/FlightAgentDashboard"));
 const AmbassadorProgram = lazyWithTimeout(() => import("./pages/AmbassadorProgram"));
 const CinetPayPayment = lazyWithTimeout(() => import("./pages/CinetPayPayment"));
+const CinetPayFlightPayment = lazyWithTimeout(() => import("./pages/CinetPayFlightPayment"));
 const PaymentMethodSelection = lazyWithTimeout(() => import("./pages/PaymentMethodSelection"));
 const PaymentAgencyConfirmation = lazyWithTimeout(() => import("./pages/PaymentAgencyConfirmation"));
 const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomerReviews"));
@@ -177,6 +178,7 @@ function Router() {
       <Route path={"/payment/agency-confirmation"} component={PaymentAgencyConfirmation} />
       <Route path={"/payment/success"} component={PaymentSuccessPage} />
       <Route path={"/payment/error"} component={PaymentErrorPage} />
+      <Route path={"/payment/flight/:requestId"} component={CinetPayFlightPayment} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
       <Route path={"/consultation"} component={ConsultationBooking} />
 
