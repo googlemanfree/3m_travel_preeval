@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { commissionPercentToMultiplier, flightsRouter } from "./routers/flights";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dirname, "..", path), "utf8");
@@ -55,9 +55,26 @@ describe("commission agence : câblage réel jusqu'au tarif affiché", () => {
     expect(source).toContain("resolveActiveCommissionMultiplier(),\n    ]);\n    if (!response.ok) return { status: \"unavailable\"");
   });
 
-  it("resolveActiveCommissionMultiplier n'invente jamais un pourcentage : 1 sans base de données ou sans ligne enregistrée", () => {
-    expect(source).toContain("async function resolveActiveCommissionMultiplier(): Promise<number> {\n  const db = await getDb();\n  if (!db) return 1;");
+  it("resolveActiveCommissionMultiplier n'invente jamais un pourcentage : 1 sans base de données, sans ligne enregistrée, ou si la lecture échoue", () => {
+    expect(source).toContain("async function resolveActiveCommissionMultiplier(): Promise<number> {\n  try {\n    const db = await getDb();\n    if (!db) return 1;");
     expect(source).toContain("if (rows.length === 0) return 1;");
+    // Un incident de connexion (DB en panne, latence) ne doit jamais faire disparaître le tarif fournisseur :
+    // repli sur 1 (aucune marge), jamais un pourcentage deviné.
+    const body = source.slice(source.indexOf("async function resolveActiveCommissionMultiplier"), source.indexOf("resolveLegAirline"));
+    expect(body).toContain("} catch (error) {");
+    expect(body.match(/return 1;/g)?.length).toBe(3);
+  });
+});
+
+describe("commission agence : résiste à une panne de connexion réelle (pas seulement à l'absence de base)", () => {
+  it("getCommission répond quand même, jamais un pourcentage inventé, si la requête échoue en cours de route", async () => {
+    vi.resetModules();
+    vi.doMock("./db", () => ({ getDb: async () => ({ select: () => ({ from: () => ({ where: async () => { throw new Error("connect ECONNREFUSED 127.0.0.1:3306"); } }) }) }) }));
+    const { flightsRouter: freshRouter } = await import("./routers/flights");
+    const result = await freshRouter.createCaller({} as never).getCommission();
+    expect(result).toEqual({ commissionPercent: 8, saved: false });
+    vi.doUnmock("./db");
+    vi.resetModules();
   });
 });
 

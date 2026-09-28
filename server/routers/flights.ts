@@ -188,11 +188,18 @@ export function commissionPercentToMultiplier(percent: unknown): number {
  * du tarif montré au client ; `getCommission` (formulaire admin) a son propre défaut d'affichage à 8 %, sans lien avec ceci.
  */
 async function resolveActiveCommissionMultiplier(): Promise<number> {
-  const db = await getDb();
-  if (!db) return 1;
-  const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
-  if (rows.length === 0) return 1;
-  return commissionPercentToMultiplier(rows[0].settingValue);
+  try {
+    const db = await getDb();
+    if (!db) return 1;
+    const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
+    if (rows.length === 0) return 1;
+    return commissionPercentToMultiplier(rows[0].settingValue);
+  } catch (error) {
+    // Un incident de base de données ne doit jamais faire disparaître les tarifs réels du fournisseur :
+    // sans commission lisible, on affiche le tarif fournisseur tel quel, jamais une marge devinée.
+    console.error("[Flights] commission lookup failed, showing supplier price as-is", error);
+    return 1;
+  }
 }
 
 /** Résout la compagnie réelle d'un segment (code+logo connus si on le reconnaît, sinon ce que le fournisseur a donné). */
@@ -670,14 +677,19 @@ export const flightsRouter = router({
   /** `saved` distingue une vraie valeur enregistrée d'une simple suggestion de départ : tant que rien n'est enregistré,
    * aucune commission n'est appliquée aux tarifs réels (voir resolveActiveCommissionMultiplier). */
   getCommission: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return { commissionPercent: 8, saved: false };
-    const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
-    if (rows.length > 0) {
-      const percent = parseFloat(rows[0].settingValue);
-      return { commissionPercent: Number.isFinite(percent) ? percent : 8, saved: Number.isFinite(percent) };
+    try {
+      const db = await getDb();
+      if (!db) return { commissionPercent: 8, saved: false };
+      const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
+      if (rows.length > 0) {
+        const percent = parseFloat(rows[0].settingValue);
+        return { commissionPercent: Number.isFinite(percent) ? percent : 8, saved: Number.isFinite(percent) };
+      }
+      return { commissionPercent: 8, saved: false };
+    } catch (error) {
+      console.error("[Flights] commission read failed", error);
+      return { commissionPercent: 8, saved: false };
     }
-    return { commissionPercent: 8, saved: false };
   }),
 
   getSearchApiStatus: publicProcedure
