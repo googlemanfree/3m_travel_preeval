@@ -15,6 +15,7 @@ import { MAX_ACTIVE_ALERTS, MAX_ALERTS_PER_EMAIL, alertKeyOf, routeGroupKey, isA
 import { alertConfirmUrl, alertStopUrl, alertsAreRunning, loadAlertEntries } from "../scheduled/flightPriceAlerts";
 import { buildAlertConfirmationEmail } from "../services/flightPriceAlertEmail";
 import { fallbackCallsToday, fetchProvider, isProviderConfigured } from "../services/flightProvider";
+import { maybeAlertQuotaExhausted } from "../services/flightQuotaAlert";
 import { FlightOffersStore, OFFER_ROUTES, collectOffers, offerDates, selectCheapest, type CheapestFare, type FlightOffer, type OfferDates, type OfferRoute } from "../services/flightOffers";
 
 // Récapitulatif de vol par e-mail : 3 envois par adresse destinataire et 10 par adresse cliente et par heure,
@@ -533,8 +534,11 @@ export const flightsRouter = router({
           const res = await fetchProvider(params, { searchApiKey: apiKey });
           if (!res.ok) {
             const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
-            const message = `${res.provider === "serpapi" ? "SerpApi" : "SearchAPI.io"} a répondu ${res.status}${details ? ` — ${details}` : ""}`;
+            const providerName = res.provider === "serpapi" ? "SerpApi" : "SearchAPI.io";
+            const message = `${providerName} a répondu ${res.status}${details ? ` — ${details}` : ""}`;
             flightSearchCache.recordUnavailable(res.status === 429 ? "quota_limited" : "error", message);
+            // Alerte au comptoir : la panne du 27/09/2026 (quota épuisé, personne prévenu) ne doit plus se reproduire en silence.
+            if (res.status === 429) maybeAlertQuotaExhausted(providerName, message);
             throw new Error(message);
           }
           return res.json();
