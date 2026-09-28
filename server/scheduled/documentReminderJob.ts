@@ -14,6 +14,7 @@ import { sendEmail } from "../_core/email";
 import { getDb } from "../db";
 import { runFlightFollowUps, type FlightFollowUpOutcome } from "./flightFollowUps";
 import { runFlightPriceAlerts, type AlertRunSummary } from "./flightPriceAlerts";
+import { runReviewInviteEmails, type ReviewInviteOutcome } from "./reviewInviteEmails";
 import { fetchCheapestForAlert } from "../routers/flights";
 import { REMINDER_SUBJECT_PREFIX, buildDocumentReminderEmail, planReminder, reminderOptOutKey, signReminderStopToken, verifyReminderStopToken } from "../services/documentReminders";
 
@@ -138,7 +139,14 @@ export async function handleDocumentReminderJob(req: Request, res: Response): Pr
     } catch (error) {
       console.error("[FlightPriceAlerts] job failed", error);
     }
-    res.json({ alerts, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
+    // Invitations à donner un avis (visa accordé, jamais invité) : même tâche quotidienne, 15 e-mails au plus par passage.
+    let reviewInvites: ReviewInviteOutcome[] = [];
+    try {
+      reviewInvites = await runReviewInviteEmails(db, { dryRun });
+    } catch (error) {
+      console.error("[ReviewInviteEmails] job failed", error);
+    }
+    res.json({ alerts, reviewInvites: { sent: reviewInvites.filter((outcome) => outcome.sent).length, planned: dryRun ? reviewInvites.length : undefined, outcomes: reviewInvites.map((outcome) => ({ reason: outcome.reason, sent: outcome.sent })) }, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
   } catch (error) {
     console.error("[DocumentReminders] job failed", error);
     res.status(500).json({ error: "Reminder job failed" });
