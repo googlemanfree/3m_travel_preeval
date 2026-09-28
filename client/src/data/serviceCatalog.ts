@@ -50,9 +50,9 @@ export const SERVICE_POLES: ServicePole[] = [
     services: [
       { id: "cni", title: "CNI & passeport", description: "Première demande, renouvellement, perte ou vol : préparation du dossier et suivi à Yaoundé.", href: "/cni-passeport", icon: IdCard },
       { id: "evisa", title: "e-Visa Cameroun", description: "Préparation et suivi de vos demandes d’e-Visa, avec un circuit documentaire sécurisé.", href: "/evisas", icon: Stamp },
-      { id: "technologies", title: "Technologies", description: "Services numériques et accompagnement documentaire avec 3M Digital.", href: "/3m-digital", icon: Cpu },
+      { id: "technologies", title: "Technologies", description: "Services numériques et accompagnement documentaire avec 3M Solutions.", href: "/3m-solutions", icon: Cpu },
       { id: "formations", title: "Formations", description: "Programmes de formation et d’orientation présentés à titre d’information.", href: "/formation", icon: GraduationCap },
-      { id: "securite", title: "Solutions de sécurité", description: "Solutions de sécurité présentées par 3M Digital ; demande détaillée à l’équipe.", href: "/3m-digital", icon: ShieldCheck },
+      { id: "securite", title: "Solutions de sécurité", description: "Solutions de sécurité présentées par 3M Solutions ; demande détaillée à l’équipe.", href: "/3m-solutions", icon: ShieldCheck },
     ],
   },
 ];

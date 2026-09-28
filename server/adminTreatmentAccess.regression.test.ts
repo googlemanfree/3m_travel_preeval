@@ -41,6 +41,6 @@ describe("accès aux actions de traitement administrateur", () => {
     expect(dashboard).toContain("activatePreDossierAccount.useMutation");
     expect(digital).toContain("Traitement direct");
     expect(digital).toContain("Enregistrer le traitement");
-    expect(digital).toContain('aria-label="Statut de la demande 3M Digital"');
+    expect(digital).toContain('aria-label="Statut de la demande 3M Solutions"');
   });
 });

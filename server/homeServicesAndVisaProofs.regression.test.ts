@@ -15,7 +15,7 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
       "Billets d'avion", "Hôtels", "Location de véhicules", "Assurance voyage",
       "Pré-enrôlement CNI", "Passeport", "e-Visa Cameroun",
     ]) expect(source, activite).toContain(`label: "${activite}"`);
-    // Retirés du haut de page à la demande de l'utilisateur : la technologie vit sur sa propre page (3M Digital).
+    // Retirés du haut de page à la demande de l'utilisateur : la technologie vit sur sa propre page (3M Solutions).
     for (const retire of ["Technologies", "Formations", "Solutions de sécurité"]) expect(source, retire).not.toContain(`label: "${retire}"`);
   });
 
@@ -29,7 +29,7 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     expect(section).toContain('href: "/tourisme?service=hotel"');
     expect(section).toContain('href: "/tourisme?service=vehicle"');
     expect(section).toContain('href: "/cni-passeport"');
-    expect(section).toContain('href="/3m-digital"');
+    expect(section).toContain('href="/3m-solutions"');
     // Les deux syntaxes JSX existent dans App.tsx : path="/x" et path={"/x"}
     for (const lien of liens) expect(app.includes(`path="${lien}"`) || app.includes(`path={"${lien}"}`), lien).toBe(true);
   });

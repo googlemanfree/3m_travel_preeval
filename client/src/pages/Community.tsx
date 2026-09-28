@@ -186,7 +186,7 @@ export default function Community() {
   }, [content?.pricingJson]);
   const submitRequest = trpc.digitalServices.createRequest.useMutation({
     onSuccess: ({ reference }) => {
-      toast.success(`Votre demande ${reference} a été transmise à l’équipe 3M Digital.`);
+      toast.success(`Votre demande ${reference} a été transmise à l’équipe 3M Solutions.`);
       setForm({ service: "web_platform", fullName: "", email: "", phone: "", organization: "", message: "" });
     },
     onError: (error) => toast.error(error.message || "La demande n’a pas pu être transmise."),
@@ -207,13 +207,13 @@ export default function Community() {
           <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/30 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.16em] text-blue-100">
-                <UsersRound className="h-4 w-4" /> Service 3M Digital
+                <UsersRound className="h-4 w-4" /> Service 3M Solutions
               </div>
               <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
                 {content?.heroTitle || "Le digital qui fait avancer vos projets."}
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-blue-100 sm:text-lg">
-                {content?.heroDescription || "3M Digital est le pôle de services numériques de 3M Travel & Services : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises."}
+                {content?.heroDescription || "3M Solutions est le pôle de services numériques de 3M Travel Agency : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises."}
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a href="#demande">
@@ -265,7 +265,7 @@ export default function Community() {
           <div className="max-w-2xl">
             <p className="text-sm font-black uppercase tracking-[.14em] text-blue-700">Nos expertises</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Un même écosystème pour vos projets.</h2>
-            <p className="mt-4 leading-7 text-slate-600">{content?.serviceIntro || "Le pôle 3M Digital met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer."}</p>
+            <p className="mt-4 leading-7 text-slate-600">{content?.serviceIntro || "Le pôle 3M Solutions met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer."}</p>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {publishedExpertise.map((item, index) => {
@@ -309,7 +309,7 @@ export default function Community() {
 
         {pricingPlans.length > 0 && <section id="tarifs" className="border-y border-slate-200 bg-white px-4 py-18 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl"><p className="text-sm font-black uppercase tracking-[.14em] text-blue-700">Repères de cadrage</p><h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Comprendre l’ampleur d’un projet digital.</h2><p className="mt-4 leading-7 text-slate-600">Les fourchettes ci-dessous servent à cadrer un projet selon son niveau d’ambition. Elles doivent être confirmées par une analyse de besoin et un devis 3M Digital ; elles ne constituent ni une offre ferme ni un paiement automatique.</p></div>
+            <div className="max-w-3xl"><p className="text-sm font-black uppercase tracking-[.14em] text-blue-700">Repères de cadrage</p><h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Comprendre l’ampleur d’un projet digital.</h2><p className="mt-4 leading-7 text-slate-600">Les fourchettes ci-dessous servent à cadrer un projet selon son niveau d’ambition. Elles doivent être confirmées par une analyse de besoin et un devis 3M Solutions ; elles ne constituent ni une offre ferme ni un paiement automatique.</p></div>
             <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>À distinguer :</strong> les frais de lancement couvrent le cadrage, le design, les contenus, le développement et les tests. Les charges annuelles couvrent ensuite l’hébergement, la maintenance, la sécurité, les outils et le support. Les API, commissions, taxes et fournisseurs externes sont évalués séparément lorsque nécessaires.</div>
             <div className="mt-8 grid gap-5 lg:grid-cols-2">{pricingPlans.map((plan) => <article key={plan.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm"><p className="text-sm font-black uppercase tracking-[.12em] text-blue-700">Niveau de service</p><h3 className="mt-3 text-2xl font-black text-slate-950">{plan.title}</h3><p className="mt-3 min-h-14 leading-7 text-slate-600">{plan.subtitle}</p><div className="mt-6 grid gap-3 border-y border-slate-200 py-5 sm:grid-cols-3"><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Lancement</p><p className="mt-1 font-black text-slate-950">{plan.launchRange}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Charges annuelles</p><p className="mt-1 font-bold text-slate-800">{plan.annualRange}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Délai indicatif</p><p className="mt-1 font-bold text-slate-800">{plan.delivery}</p></div></div><ul className="mt-5 space-y-2.5 text-sm leading-6 text-slate-700">{plan.points.map((point) => <li key={point} className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{point}</li>)}</ul><a href="#demande" className="mt-6 inline-flex items-center font-bold text-blue-700 hover:text-blue-900">Demander un cadrage personnalisé <ArrowRight className="ml-2 h-4 w-4" /></a></article>)}</div>
           </div>
@@ -317,8 +317,8 @@ export default function Community() {
 
         <section id="demande" className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
           <div className="grid overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-blue-800 to-sky-700 text-white lg:grid-cols-[.9fr_1.1fr]">
-            <div className="p-8 sm:p-12"><p className="text-sm font-black uppercase tracking-[.14em] text-sky-200">Demande 3M Digital</p><h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Décrivez votre besoin, l’équipe vous répond.</h2><p className="mt-4 leading-7 text-blue-100">{content?.requestIntro || "Chaque demande reçoit une référence, entre dans la file de traitement du back-office et peut être suivie par nos conseillers avant toute proposition."}</p><div className="mt-9 space-y-4 border-t border-white/15 pt-6 text-sm text-blue-100"><p><strong className="text-white">Bureau principal :</strong><br />{COMPANY_CONTACTS.yaounde.address}</p><p><strong className="text-white">Contacts :</strong><br />{COMPANY_CONTACTS.yaounde.whatsappNumber} · {COMPANY_CONTACTS.yaounde.email}</p><a href={digitalWhatsAppUrl("Bonjour 3M Travel & Services, je souhaite échanger sur un projet digital, une formation ou un besoin de mobilité.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-bold text-white hover:text-sky-200"><MessageCircle className="mr-2 h-4 w-4" /> Discuter sur WhatsApp Yaoundé</a></div></div>
-            <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 text-slate-900 sm:p-10" aria-label="Demande de service 3M Digital">
+            <div className="p-8 sm:p-12"><p className="text-sm font-black uppercase tracking-[.14em] text-sky-200">Demande 3M Solutions</p><h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Décrivez votre besoin, l’équipe vous répond.</h2><p className="mt-4 leading-7 text-blue-100">{content?.requestIntro || "Chaque demande reçoit une référence, entre dans la file de traitement du back-office et peut être suivie par nos conseillers avant toute proposition."}</p><div className="mt-9 space-y-4 border-t border-white/15 pt-6 text-sm text-blue-100"><p><strong className="text-white">Bureau principal :</strong><br />{COMPANY_CONTACTS.yaounde.address}</p><p><strong className="text-white">Contacts :</strong><br />{COMPANY_CONTACTS.yaounde.whatsappNumber} · {COMPANY_CONTACTS.yaounde.email}</p><a href={digitalWhatsAppUrl("Bonjour 3M Travel & Services, je souhaite échanger sur un projet digital, une formation ou un besoin de mobilité.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center font-bold text-white hover:text-sky-200"><MessageCircle className="mr-2 h-4 w-4" /> Discuter sur WhatsApp Yaoundé</a></div></div>
+            <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 text-slate-900 sm:p-10" aria-label="Demande de service 3M Solutions">
               <div><p className="text-xl font-black">Envoyer une demande</p><p className="mt-1 text-sm text-slate-600">Les champs marqués sont nécessaires au traitement.</p></div>
               <div><label className="mb-1.5 block text-sm font-bold" htmlFor="digital-service">Service souhaité</label><Select value={form.service} onValueChange={(value) => setForm(current => ({ ...current, service: value as keyof typeof serviceLabels }))}><SelectTrigger id="digital-service"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(serviceLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid gap-4 sm:grid-cols-2"><div><label className="mb-1.5 block text-sm font-bold" htmlFor="digital-name">Nom complet</label><Input id="digital-name" value={form.fullName} onChange={(event) => setForm(current => ({ ...current, fullName: event.target.value }))} required maxLength={255} /></div><div><label className="mb-1.5 block text-sm font-bold" htmlFor="digital-phone">Téléphone</label><Input id="digital-phone" value={form.phone} onChange={(event) => setForm(current => ({ ...current, phone: event.target.value }))} required maxLength={50} /></div></div>
@@ -326,7 +326,7 @@ export default function Community() {
               <div><label className="mb-1.5 block text-sm font-bold" htmlFor="digital-organization">Organisation <span className="font-normal text-slate-500">(facultatif)</span></label><Input id="digital-organization" value={form.organization} onChange={(event) => setForm(current => ({ ...current, organization: event.target.value }))} maxLength={255} /></div>
               <div><label className="mb-1.5 block text-sm font-bold" htmlFor="digital-message">Votre besoin</label><Textarea id="digital-message" value={form.message} onChange={(event) => setForm(current => ({ ...current, message: event.target.value }))} rows={5} placeholder="Expliquez brièvement votre projet, vos priorités et l’échéance souhaitée." required maxLength={2000} /></div>
               <Button type="submit" disabled={submitRequest.isPending} className="h-12 w-full rounded-xl bg-blue-700 font-black hover:bg-blue-800">{submitRequest.isPending ? "Transmission…" : "Transmettre ma demande"}<ArrowRight className="ml-2 h-4 w-4" /></Button>
-              <p className="text-center text-xs leading-5 text-slate-500">Votre demande est traitée par l’équipe 3M Digital. Aucun engagement commercial automatique n’est créé.</p>
+              <p className="text-center text-xs leading-5 text-slate-500">Votre demande est traitée par l’équipe 3M Solutions. Aucun engagement commercial automatique n’est créé.</p>
             </form>
           </div>
         </section>

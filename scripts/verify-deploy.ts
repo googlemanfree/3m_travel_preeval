@@ -24,7 +24,7 @@ export const DEFAULT_BASE_URL = "https://www.3mtravelagency.com";
 export const DEFAULT_WITNESSES: Witness[] = [
   { path: "/", status: 200 },
   { path: "/forgot-password", status: 200 },
-  { path: "/communaute", status: 301, location: "/3m-digital" },
+  { path: "/communaute", status: 301, location: "/3m-solutions" },
   { path: "/evaluation-canada?fbclid=x", status: 301, location: "/evaluation?source=facebook&campaign=Canada&fbclid=x" },
   { path: "/evisa/kenya", status: 200 },
   { path: "/evisa/inconnu-xyz", status: 404 },

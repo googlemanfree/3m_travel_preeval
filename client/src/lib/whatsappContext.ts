@@ -29,7 +29,7 @@ const STATIC_TOPICS: Array<{ test: RegExp; message: string }> = [
   { test: /^\/schengen(\/|$)/, message: "Bonjour, j’ai une question sur un visa Schengen." },
   { test: /^\/(etudes|visa-etudes)(\/|$)/, message: "Bonjour, j’ai une question sur mon projet d’études à l’étranger." },
   { test: /^\/formation(\/|$)/, message: "Bonjour, je souhaite des informations sur vos formations." },
-  { test: /^\/3m-digital(\/|$)/, message: "Bonjour, je souhaite des informations sur les services 3M Digital." },
+  { test: /^\/3m-solutions(\/|$)/, message: "Bonjour, je souhaite des informations sur les services 3M Solutions." },
   { test: /^\/evisas(\/|$)/, message: "Bonjour, j’ai une question sur un e-Visa." },
 ];
 
