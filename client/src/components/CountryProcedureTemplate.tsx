@@ -229,7 +229,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
         {/* Contacts officiels */}
         <section>
           <Card className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white text-center">
-            <h3 className="font-bold text-lg mb-1">3M TRAVEL & SERVICES SARL</h3>
+            <h3 className="font-bold text-lg mb-1">3M Travel Agency SARL</h3>
             <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
               <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {data.contact.phones.join(" / ")}</span>
               <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {data.contact.email}</span>

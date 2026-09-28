@@ -158,7 +158,7 @@ export const luxembourgProcedure: CountryProcedure = {
     address: "Biyem-Assi, Montée Chapelle Obili — à 10m du Collège EHS, Yaoundé",
     consulate: "Consulat du Luxembourg — Représentation : Ambassade de Belgique, Rue Mvolyé, Yaoundé",
   },
-  documentNote: "Consultation personnalisée gratuite disponible sur rendez-vous. Document établi par 3M Travel & Services SARL à titre informatif — les conditions sont susceptibles d'évoluer.",
+  documentNote: "Consultation personnalisée gratuite disponible sur rendez-vous. Document établi par 3M Travel Agency SARL à titre informatif — les conditions sont susceptibles d'évoluer.",
   officialSources: [
     { label: "ADEM — Recrutement de ressortissants de pays tiers", url: "https://adem.public.lu/fr/marche-emploi-luxembourg/international-dynamique/etranger.html", description: "Repères officiels sur le marché de l’emploi luxembourgeois et les démarches liées au recrutement international." },
     { label: "Guichet.lu — Salarié ressortissant d’un pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-pays-tiers/salarie.html", description: "Portail administratif officiel pour vérifier les conditions et formalités applicables." },
