@@ -58,8 +58,8 @@ const SITE = "3M Travel & Services";
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 const SOCIAL_IMAGE_ALT = "Aperçu 3M Travel & Services";
 /** Titre et description de l'accueil, fixés par l'agence ; le titre dépasse volontairement les 60 caractères usuels. */
-const HOME_TITLE = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
-const HOME_DESCRIPTION = "3M Travel & Services à Yaoundé accompagne vos projets de voyage, études à l'étranger, visas, immigration, travail, billets d'avion et services administratifs.";
+const HOME_TITLE = "3M Travel Agency | Voyages, Visas, Études & Mobilité Internationale";
+const HOME_DESCRIPTION = "3M Travel Agency accompagne vos projets de voyage, études, visas, immigration, travail, billets d'avion et démarches administratives, à Yaoundé et à Ottawa.";
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
 const socialImageFor = (title: string | undefined, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title?.trim() || SITE)}&path=${encodeURIComponent(path)}`;
@@ -179,7 +179,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
     heading: "Your international mobility project, prepared with method",
     lead: "3M Travel & Services supports candidates in preparing their applications. Decisions by authorities, employers and external partners remain independent of the agency.",
   },
-  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "billets d'avion", "3M Travel & Services", "3M Travel Agency"], heading: "3M Travel & Services : voyages, visas, études et mobilité internationale depuis Yaoundé", lead: "Évaluation gratuite, accompagnement personnalisé par une équipe basée à Yaoundé et joignable par WhatsApp, agence enregistrée depuis 2019." },
+  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "billets d'avion", "3M Travel Agency", "3M Travel & Services"], heading: "3M Travel Agency : voyages, visas, études et mobilité internationale depuis Yaoundé et Ottawa", lead: "Évaluation gratuite, accompagnement personnalisé par une équipe basée à Yaoundé et à Ottawa, joignable par WhatsApp, agence enregistrée depuis 2019." },
   "/canada": { title: `Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M Travel"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
   "/etudes": { title: `Études à l’international | ${SITE}`, description: "Accompagnement documenté pour les projets d’études à l’international et les dossiers associés.", heading: "Projet d’études à l’international", lead: "L’admission et les décisions consulaires relèvent exclusivement des établissements et autorités compétents." },
