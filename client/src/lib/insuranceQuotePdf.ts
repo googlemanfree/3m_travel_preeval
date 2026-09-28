@@ -15,7 +15,7 @@ export async function downloadInsuranceQuotePdf(data: InsuranceQuotePdfData) {
   pdf.rect(0, 0, 210, 42, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(20);
-  pdf.text("3M Travel & Services SARL", 18, 20);
+  pdf.text("3M Travel Agency SARL", 18, 20);
   pdf.setFontSize(12);
   pdf.text("Devis indicatif d'assurance voyage", 18, 30);
   pdf.setTextColor(30, 41, 59);

@@ -9,7 +9,7 @@ describe("page communautaire 3M", () => {
   it("publie les expertises, les informations vérifiées et le contact Yaoundé", () => {
     const page = source("client/src/pages/Community.tsx");
     const contacts = source("client/src/lib/companyContacts.ts");
-    expect(page).toContain("Service 3M Digital");
+    expect(page).toContain("Service 3M Solutions");
     expect(page).toContain("Sites web & plateformes");
     expect(page).toContain("Croissance digitale");
     expect(page).toContain("Infrastructure & support IT");
@@ -24,10 +24,10 @@ describe("page communautaire 3M", () => {
     const app = source("client/src/App.tsx");
     const navbar = source("client/src/components/Navbar.tsx");
     const footer = source("client/src/components/Footer.tsx");
-    expect(app).toContain('path={"/3m-digital"} component={Community}');
-    expect(app).toContain('Redirect to="/3m-digital"');
+    expect(app).toContain('path={"/3m-solutions"} component={Community}');
+    expect(app).toContain('Redirect to="/3m-solutions"');
     expect(app).toContain('path={"/admin/digital-services"}');
-    expect(navbar).toContain('{ href: "/3m-digital", label: { fr: "3M Digital", en: "3M Digital" }');
-    expect(footer).toContain("Service 3M Digital");
+    expect(navbar).toContain('{ href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }');
+    expect(footer).toContain("Service 3M Solutions");
   });
 });

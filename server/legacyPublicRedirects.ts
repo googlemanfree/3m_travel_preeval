@@ -9,7 +9,8 @@ import type { Express } from "express";
 // /submit-review, /evaluation-primaire et /evaluation-rapide-enhanced ont déjà leur
 // 301 (server/_core/vite.ts et server/_core/index.ts) : ne pas les répéter ici.
 export const LEGACY_PUBLIC_REDIRECTS = {
-  "/communaute": "/3m-digital",
+  "/communaute": "/3m-solutions",
+  "/3m-digital": "/3m-solutions",
   "/evaluation-canada": "/evaluation?source=facebook&campaign=Canada",
   "/evaluation-rapide": "/#evaluation-multi",
   "/vols": "/flights",

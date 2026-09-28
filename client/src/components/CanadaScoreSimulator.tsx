@@ -9,22 +9,66 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { toast } from "sonner";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "@/data/crsHistoricalRounds";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
+import { computeCrsScore, CRS_SOURCE, type CanadianEducationLevel, type CrsProfile, type EducationLevel, type ExperienceYears, type MaritalStatus } from "@shared/crsScore";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { useLocation } from "wouter";
+
+const EDUCATION_OPTIONS: Array<{ value: EducationLevel; label: string }> = [
+  { value: "less_than_secondary", label: "Aucun diplôme / inférieur au secondaire" },
+  { value: "secondary", label: "Diplôme d'études secondaires (Bac)" },
+  { value: "one_year_postsecondary", label: "Programme postsecondaire d'un an (BTS, DUT 1re année…)" },
+  { value: "two_year_postsecondary", label: "Programme postsecondaire de deux ans" },
+  { value: "bachelor_or_three_year", label: "Licence / programme de trois ans ou plus" },
+  { value: "two_or_more_credentials", label: "Deux diplômes ou plus (dont un de trois ans ou plus)" },
+  { value: "master_or_professional", label: "Master / diplôme professionnel" },
+  { value: "doctoral", label: "Doctorat (Ph. D.)" },
+];
+
+/** Paliers exacts de la grille officielle (0 = aucun test / sous CLB 4). */
+const CLB_OPTIONS = [
+  { value: 0, label: "Aucun test / sous le CLB 4" },
+  { value: 4, label: "CLB 4-5" },
+  { value: 6, label: "CLB 6" },
+  { value: 7, label: "CLB 7" },
+  { value: 8, label: "CLB 8" },
+  { value: 9, label: "CLB 9" },
+  { value: 10, label: "CLB 10 et plus" },
+];
+
+const EXPERIENCE_OPTIONS: Array<{ value: ExperienceYears; label: string }> = [
+  { value: 0, label: "Aucune, ou moins d'un an" },
+  { value: 1, label: "1 an" },
+  { value: 2, label: "2 ans" },
+  { value: 3, label: "3 ans" },
+  { value: 4, label: "4 ans" },
+  { value: 5, label: "5 ans ou plus" },
+];
 
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
   const { isAuthenticated } = useCandidateAuth();
   const [, setLocation] = useLocation();
-  const [age, setAge] = useState<string>("26-35");
-  const [education, setEducation] = useState<string>("master");
-  const [experience, setExperience] = useState<string>("3-plus");
-  const [french, setFrench] = useState<string>("advanced");
-  const [english, setEnglish] = useState<string>("intermediate");
+  // Score CRS réel (grille IRCC recoupée le 2026-09-27, voir shared/crsScore.ts) : chaque champ ci-dessous correspond
+  // à une question précise de l'outil officiel, jamais à une simplification qui invente ou arrondit un barème.
+  const [age, setAge] = useState<number>(30);
+  const [education, setEducation] = useState<EducationLevel>("master_or_professional");
+  const [canadianExperienceYears, setCanadianExperienceYears] = useState<ExperienceYears>(3);
+  const [foreignExperienceYears, setForeignExperienceYears] = useState<ExperienceYears>(0);
+  const [frenchClb, setFrenchClb] = useState<number>(4);
+  const [englishClb, setEnglishClb] = useState<number>(9);
+  const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>("without_spouse");
+  const [spouseEducation, setSpouseEducation] = useState<EducationLevel>("bachelor_or_three_year");
+  const [spouseClb, setSpouseClb] = useState<number>(0);
+  const [spouseExperienceYears, setSpouseExperienceYears] = useState<ExperienceYears>(0);
+  const [hasTradeCertificate, setHasTradeCertificate] = useState(false);
+  const [canadianEducation, setCanadianEducation] = useState<CanadianEducationLevel>("none");
+  const [hasSiblingInCanada, setHasSiblingInCanada] = useState(false);
+  const [hasProvincialNomination, setHasProvincialNomination] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
@@ -60,80 +104,38 @@ export default function CanadaScoreSimulator() {
 
   const latestThreshold = filteredRounds.length > 0 ? filteredRounds[0].minScore : 500;
 
-  // Calcul indicatif CRS
-  const getSubScores = () => {
-    let agePts = 110;
-    if (age === "20-29") agePts = 110;
-    else if (age === "30" || age === "18-19" || age === "31-35") agePts = 95;
-    else if (age === "36-40") agePts = 70;
-    else agePts = 30;
-
-    let eduPts = 120;
-    if (education === "phd") eduPts = 140;
-    else if (education === "master") eduPts = 135;
-    else if (education === "bachelor") eduPts = 120;
-    else eduPts = 90;
-
-    let expPts = 70;
-    if (experience === "3-plus") expPts = 70;
-    else if (experience === "2") expPts = 53;
-    else expPts = 35;
-
-    let langPts = 0;
-    if (french === "advanced") langPts += 60;
-    else if (french === "intermediate") langPts += 30;
-    if (english === "advanced") langPts += 50;
-    else if (english === "intermediate") langPts += 30;
-
-    const bonusPts = 45;
-    const total = Math.min(600, agePts + eduPts + expPts + langPts + bonusPts);
-
-    return {
-      agePts, maxAge: 110,
-      eduPts, maxEdu: 140,
-      expPts, maxExp: 70,
-      langPts, maxLang: 110,
-      total
-    };
+  // Calcul CRS réel (shared/crsScore.ts) : rien n'est arrondi ni estimé, chaque sous-score vient de la grille officielle IRCC.
+  const crsProfile: CrsProfile = {
+    age, maritalStatus, education, frenchClb, englishClb,
+    canadianExperienceYears, foreignExperienceYears, hasTradeCertificate, canadianEducation,
+    hasSiblingInCanada, hasProvincialNomination,
+    spouse: maritalStatus === "with_spouse" ? { education: spouseEducation, firstLanguageClb: spouseClb, canadianExperienceYears: spouseExperienceYears } : null,
   };
-
-  const scores = getSubScores();
+  const scores = computeCrsScore(crsProfile);
   const scoreDiff = scores.total - latestThreshold;
   const isThresholdMet = scoreDiff >= 0;
-  const isEligible = scores.total >= 420;
 
-  // Recommandations personnalisées si l'écart est négatif
+  // Recommandations personnalisées : uniquement des leviers réels, absents ou incomplets dans le profil saisi.
   const getRecommendations = () => {
-    const recs = [];
-    if (french !== "advanced") {
-      recs.push({
-        title: "Améliorer votre score en Français (TEF/TCF)",
-        desc: "Passer à un niveau avancé (NCLC 7+) peut vous apporter jusqu'à 60 points bonus décisifs."
-      });
+    const recs: Array<{ title: string; desc: string }> = [];
+    const bestClb = Math.max(frenchClb, englishClb);
+    if (frenchClb < 7) {
+      recs.push({ title: "Faire reconnaître un niveau de français NCLC 7+", desc: "Un français d'au moins NCLC 7 (TEF/TCF) déclenche un bonus de 25 à 50 points, en plus des points de langue habituels." });
     }
-    if (english !== "advanced") {
-      recs.push({
-        title: "Optimiser votre test d'Anglais (IELTS Général)",
-        desc: "Atteindre le niveau CLB 9 (IELTS 8.0 en écoute, 7.0 ailleurs) consolidera votre dossier."
-      });
+    if (englishClb < 9) {
+      recs.push({ title: "Viser le CLB 9 en anglais (IELTS/CELPIP)", desc: "Chaque palier de CLB gagné en langue rapporte des points, à la fois sur le volet langue et sur la transférabilité des compétences." });
     }
-    if (education === "bachelor" || education === "diploma") {
-      recs.push({
-        title: "Poursuivre ou évaluer un Master",
-        desc: "Un diplôme supérieur ou une évaluation comparative des diplômes (ECA) additionnelle peut accroître vos points."
-      });
+    if (scores.skillTransferability < 100) {
+      recs.push({ title: "Combiner diplôme, expérience et langue", desc: "La transférabilité des compétences (jusqu'à 100 points) récompense un diplôme ou une expérience combinés à un bon niveau de langue : il reste de la marge sur ce volet." });
     }
-    if (experience !== "3-plus") {
-      recs.push({
-        title: "Valoriser l'expérience professionnelle qualifiée",
-        desc: "Cumuler 3 années pleines d'expérience à temps plein (NOC TEER 0, 1, 2 ou 3) maximisera votre volet professionnel."
-      });
+    if (canadianExperienceYears < 1) {
+      recs.push({ title: "Acquérir une expérience de travail au Canada", desc: "Même une première année d'expérience qualifiée au Canada rapporte des points sur deux volets à la fois (expérience et transférabilité)." });
     }
-    if (recs.length === 0) {
-      recs.push({
-        title: "Obtenir une nomination provinciale (PNP)",
-        desc: "Votre profil est très solide. Explorez les volets provinciaux pour décrocher 600 points bonus."
-      });
+    if (canadianEducation === "none") {
+      recs.push({ title: "Envisager un diplôme obtenu au Canada", desc: "Un diplôme canadien d'un an ou plus ajoute 15 à 30 points supplémentaires, en plus de faciliter l'expérience de travail locale." });
+    }
+    if (!hasProvincialNomination) {
+      recs.push({ title: "Explorer une nomination provinciale (PNP)", desc: "Une nomination provinciale ajoute 600 points, largement de quoi dépasser n'importe quel seuil récent." });
     }
     return recs;
   };
@@ -190,13 +192,18 @@ export default function CanadaScoreSimulator() {
       doc.text("Répartition détaillée du score CRS", 15, 93);
       autoTable(doc, {
         startY: 98,
-        head: [["Composante", "Points obtenus", "Maximum indicatif"]],
+        head: [["Composante", "Points obtenus", "Maximum officiel"]],
         body: [
-          ["Âge", `${scores.agePts} pts`, `${scores.maxAge} pts`],
-          ["Études", `${scores.eduPts} pts`, `${scores.maxEdu} pts`],
-          ["Expérience professionnelle", `${scores.expPts} pts`, `${scores.maxExp} pts`],
-          ["Compétences linguistiques", `${scores.langPts} pts`, `${scores.maxLang} pts`],
-          ["Total simulé", `${scores.total} pts`, "600 pts"],
+          ["Âge", `${scores.age} pts`, "100-110 pts"],
+          ["Études", `${scores.education} pts`, "140-150 pts"],
+          ["Langue — première", `${scores.firstLanguage} pts`, "128-136 pts"],
+          ["Langue — seconde", `${scores.secondLanguage} pts`, "22-24 pts"],
+          ["Expérience canadienne", `${scores.canadianExperience} pts`, "70-80 pts"],
+          ["Capital humain (sous-total)", `${scores.coreHumanCapital} pts`, `${scores.coreHumanCapitalMax} pts`],
+          ...(maritalStatus === "with_spouse" ? [["Facteurs du conjoint", `${scores.spouseFactors} pts`, "40 pts"]] : []),
+          ["Transférabilité des compétences", `${scores.skillTransferability} pts`, "100 pts"],
+          ["Points additionnels (études canadiennes, français, fratrie, PNP)", `${scores.additionalPoints} pts`, "600 pts et plus"],
+          ["Total simulé", `${scores.total} pts`, "1200 pts"],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [30, 64, 175] },
@@ -206,8 +213,10 @@ export default function CanadaScoreSimulator() {
       const afterScoreTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 145;
       doc.setFontSize(13);
       doc.text("Rondes IRCC comparées", 15, afterScoreTable + 14);
+      doc.setFontSize(9);
+      doc.text(`rondes relevées le ${new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")} — source : ${CRS_HISTORY_SOURCE.organization}`, 15, afterScoreTable + 19);
       autoTable(doc, {
-        startY: afterScoreTable + 19,
+        startY: afterScoreTable + 24,
         head: [["Ronde", "Catégorie", "Date", "Seuil CRS", "Invitations"]],
         body: filteredRounds.map((round) => [
           round.roundNum,
@@ -221,18 +230,7 @@ export default function CanadaScoreSimulator() {
         columnStyles: { 1: { cellWidth: 65 } },
       });
 
-      const afterRoundsTableSourceY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 195;
-      doc.setFontSize(8);
-      doc.setTextColor(100, 116, 139);
-      doc.text(
-        `Source : ${CRS_HISTORY_SOURCE.organization} — rondes relevées le ${new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}.`,
-        15,
-        afterRoundsTableSourceY + 6,
-        { maxWidth: 180 }
-      );
-      doc.setTextColor(31, 41, 55);
-
-      const afterRoundsTable = afterRoundsTableSourceY + 6;
+      const afterRoundsTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 200;
       if (!isThresholdMet) {
         doc.setFontSize(13);
         doc.text("Pistes d'amélioration personnalisées", 15, afterRoundsTable + 14);
@@ -262,9 +260,6 @@ export default function CanadaScoreSimulator() {
     }
   };
 
-  // Le téléchargement du PDF est réservé aux candidats inscrits : la prévisualisation reste
-  // libre, mais récupérer le fichier suppose un compte 3M Travel (gratuit) pour assurer le suivi
-  // du dossier. Un visiteur non connecté est redirigé vers la création de compte.
   const handleExportPDF = async () => {
     if (!isAuthenticated) {
       setIsPreviewOpen(false);
@@ -290,13 +285,12 @@ export default function CanadaScoreSimulator() {
     setIsCopying(true);
     const summary = [
       "Simulation CRS Canada — 3M Travel & Services",
-      `Score estimé : ${scores.total} / 600 points`,
+      `Score estimé : ${scores.total} / 1200 points`,
       `Catégorie comparée : ${selectedCategory === "all" ? "3 dernières rondes (global)" : categoryExplanations[selectedCategory]}`,
       `Dernier seuil : ${latestThreshold} points`,
       `Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} points`,
       "Rondes comparées :",
       ...filteredRounds.map((round) => `${round.roundNum} — ${round.type} — ${round.minScore} pts (${round.date})`),
-      `Source : ${CRS_HISTORY_SOURCE.organization} — rondes relevées le ${new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}.`,
       "Résultat indicatif : à confirmer avec un conseiller 3M Travel.",
     ].join("\n");
 
@@ -394,92 +388,166 @@ export default function CanadaScoreSimulator() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Âge */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">
-              {language === 'fr' ? 'Tranche d’âge' : 'Age Group'}
-            </Label>
-            <Select value={age} onValueChange={setAge}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sélectionner l'âge" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="18-19">18 - 19 ans</SelectItem>
-                <SelectItem value="20-29">20 - 29 ans (Optimal)</SelectItem>
-                <SelectItem value="30">30 ans</SelectItem>
-                <SelectItem value="31-35">31 - 35 ans</SelectItem>
-                <SelectItem value="36-40">36 - 40 ans</SelectItem>
-                <SelectItem value="41-plus">41 ans et plus</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="font-semibold text-gray-800" htmlFor="crs-age">Âge</Label>
+            <input
+              id="crs-age"
+              type="number"
+              min={17}
+              max={99}
+              value={age}
+              onChange={(event) => setAge(Math.max(0, Math.min(99, Number(event.target.value) || 0)))}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
           </div>
 
           {/* Niveau d'études */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">
-              {language === 'fr' ? 'Niveau d’études' : 'Education Level'}
-            </Label>
-            <Select value={education} onValueChange={setEducation}>
+            <Label className="font-semibold text-gray-800">Niveau d’études (le plus élevé obtenu, évalué comme équivalent canadien si acquis à l’étranger)</Label>
+            <Select value={education} onValueChange={(value) => setEducation(value as EducationLevel)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sélectionner le diplôme" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="phd">Doctorat / PhD</SelectItem>
-                <SelectItem value="master">Master / Bac+5</SelectItem>
-                <SelectItem value="bachelor">Licence / Bac+3</SelectItem>
-                <SelectItem value="diploma">BTS / DUT / Diplôme collégial</SelectItem>
+                {EDUCATION_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Expérience */}
+          {/* Situation familiale */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">
-              {language === 'fr' ? 'Expérience professionnelle' : 'Work Experience'}
-            </Label>
-            <Select value={experience} onValueChange={setExperience}>
+            <Label className="font-semibold text-gray-800">Situation familiale</Label>
+            <Select value={maritalStatus} onValueChange={(value) => setMaritalStatus(value as MaritalStatus)}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Années d'expérience" />
+                <SelectValue placeholder="Situation familiale" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="3-plus">3 ans ou plus</SelectItem>
-                <SelectItem value="2">2 ans</SelectItem>
-                <SelectItem value="1">1 an</SelectItem>
+                <SelectItem value="without_spouse">Sans conjoint(e), ou conjoint(e) qui ne vous accompagne pas</SelectItem>
+                <SelectItem value="with_spouse">Avec conjoint(e) ou partenaire de fait qui vous accompagne</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Français */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">
-              {language === 'fr' ? 'Maîtrise du Français (TEF/TCF)' : 'French Proficiency'}
-            </Label>
-            <Select value={french} onValueChange={setFrench}>
+            <Label className="font-semibold text-gray-800">Français (TEF/TCF) — niveau CLB/NCLC le plus proche</Label>
+            <Select value={String(frenchClb)} onValueChange={(value) => setFrenchClb(Number(value))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Niveau de français" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="advanced">Avancé (NCLC 7+)</SelectItem>
-                <SelectItem value="intermediate">Intermédiaire (NCLC 5-6)</SelectItem>
-                <SelectItem value="beginner">Débutant ou Aucun</SelectItem>
+                {CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
           {/* Anglais */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">
-              {language === 'fr' ? 'Maîtrise de l’Anglais (IELTS/CELPIP)' : 'English Proficiency'}
-            </Label>
-            <Select value={english} onValueChange={setEnglish}>
+            <Label className="font-semibold text-gray-800">Anglais (IELTS/CELPIP) — niveau CLB le plus proche</Label>
+            <Select value={String(englishClb)} onValueChange={(value) => setEnglishClb(Number(value))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Niveau d'anglais" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="advanced">Avancé (CLB 9+)</SelectItem>
-                <SelectItem value="intermediate">Intermédiaire (CLB 7-8)</SelectItem>
-                <SelectItem value="beginner">Débutant ou Aucun</SelectItem>
+                {CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Expérience canadienne */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">Expérience de travail qualifiée AU CANADA</Label>
+            <Select value={String(canadianExperienceYears)} onValueChange={(value) => setCanadianExperienceYears(Number(value) as ExperienceYears)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Années au Canada" />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPERIENCE_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Expérience étrangère */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">Expérience de travail qualifiée HORS DU CANADA</Label>
+            <Select value={String(foreignExperienceYears)} onValueChange={(value) => setForeignExperienceYears(Number(value) as ExperienceYears)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Années à l'étranger" />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPERIENCE_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Diplôme obtenu au Canada */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">Diplôme obtenu au Canada</Label>
+            <Select value={canadianEducation} onValueChange={(value) => setCanadianEducation(value as CanadianEducationLevel)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Diplôme canadien" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucun diplôme obtenu au Canada</SelectItem>
+                <SelectItem value="one_or_two_years">Programme d'un à deux ans</SelectItem>
+                <SelectItem value="three_years_or_more">Programme de trois ans ou plus</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Cases à cocher : facteurs additionnels */}
+          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 md:col-span-2 lg:col-span-3">
+            <p className="text-sm font-semibold text-gray-800">Autres facteurs à cocher s'ils s'appliquent</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                <Checkbox checked={hasTradeCertificate} onCheckedChange={(checked) => setHasTradeCertificate(checked === true)} className="mt-0.5" />
+                Certificat de qualification dans un métier réglementé
+              </label>
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                <Checkbox checked={hasSiblingInCanada} onCheckedChange={(checked) => setHasSiblingInCanada(checked === true)} className="mt-0.5" />
+                Frère ou sœur citoyen(ne) ou résident(e) permanent(e) au Canada
+              </label>
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                <Checkbox checked={hasProvincialNomination} onCheckedChange={(checked) => setHasProvincialNomination(checked === true)} className="mt-0.5" />
+                Nomination provinciale déjà obtenue (+600 pts)
+              </label>
+            </div>
+          </div>
+
+          {/* Facteurs du conjoint, uniquement si applicable */}
+          {maritalStatus === "with_spouse" && (
+            <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 md:col-span-2 lg:col-span-3">
+              <p className="text-sm font-semibold text-indigo-900">Profil du conjoint ou de la conjointe qui vous accompagne</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-indigo-900">Niveau d'études du conjoint</Label>
+                  <Select value={spouseEducation} onValueChange={(value) => setSpouseEducation(value as EducationLevel)}>
+                    <SelectTrigger className="w-full bg-white"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {EDUCATION_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-indigo-900">Première langue officielle du conjoint (CLB)</Label>
+                  <Select value={String(spouseClb)} onValueChange={(value) => setSpouseClb(Number(value))}>
+                    <SelectTrigger className="w-full bg-white"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-indigo-900">Expérience du conjoint au Canada</Label>
+                  <Select value={String(spouseExperienceYears)} onValueChange={(value) => setSpouseExperienceYears(Number(value) as ExperienceYears)}>
+                    <SelectTrigger className="w-full bg-white"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {EXPERIENCE_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Résultat et Score */}
@@ -489,17 +557,20 @@ export default function CanadaScoreSimulator() {
               <Award className="w-4 h-4" /> Score CRS Indicatif
             </span>
             <div className="text-4xl md:text-5xl font-extrabold text-blue-900">
-              {scores.total} <span className="text-lg font-normal text-gray-600">/ 600 pts</span>
+              {scores.total} <span className="text-lg font-normal text-gray-600">/ 1200 pts</span>
             </div>
             <p className="text-sm text-gray-600 max-w-md">
-              {isEligible
-                ? 'Félicitations ! Votre profil atteint le seuil compétitif estimé pour l’accès prioritaire aux programmes.'
+              {isThresholdMet
+                ? 'Félicitations ! Votre profil atteint le dernier seuil comparé ci-dessous pour cette catégorie.'
                 : 'Votre score est perfectible. Suivez nos recommandations ci-dessous pour booster votre dossier.'}
+            </p>
+            <p className="text-[11px] text-gray-500">
+              Barème : <a className="underline hover:text-blue-700" href={CRS_SOURCE.url} target="_blank" rel="noreferrer">{CRS_SOURCE.organization}</a> — recoupé le {new Date(CRS_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. {CRS_SOURCE.note}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            {isEligible ? (
+            {isThresholdMet ? (
               <a
                   href="#voies-canada"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all"
@@ -703,10 +774,6 @@ export default function CanadaScoreSimulator() {
             </div>
           )}
 
-          <p className="text-[11px] text-slate-500">
-            Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — rondes relevées le {new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}. Les seuils évoluent à chaque ronde ; consultez la page officielle pour la valeur la plus récente.
-          </p>
-
           <div className="pt-3 mt-2 border-t border-blue-100 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
               <div>
@@ -732,7 +799,7 @@ export default function CanadaScoreSimulator() {
               </ResponsiveContainer>
             </SafeResponsiveChart>
             <p className="text-[11px] text-slate-500">
-              Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — données vérifiées le {new Date(CRS_HISTORY_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. Les seuils peuvent varier à chaque ronde.
+              Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — rondes relevées le {new Date(LATEST_ROUNDS_VERIFIED_AT).toLocaleDateString("fr-FR")}. Les seuils peuvent varier à chaque ronde.
             </p>
           </div>
         </div>
@@ -742,89 +809,39 @@ export default function CanadaScoreSimulator() {
           <h4 className="font-bold text-gray-900 text-lg">Analyse détaillée par sous-critères</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Âge */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-              <div className="flex justify-between text-sm font-medium">
-                <span className="text-gray-700">Âge</span>
-                <span className="text-blue-700 font-bold">{scores.agePts} / {scores.maxAge} pts</span>
-              </div>
-              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.agePts / scores.maxAge) * 100}%` }} />
-              </div>
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    <p>Le capital points d’âge est maximal entre 20 et 29 ans. Pensez à déposer rapidement votre dossier.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {/* Diplômes */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-              <div className="flex justify-between text-sm font-medium">
-                <span className="text-gray-700">Diplômes / Études</span>
-                <span className="text-blue-700 font-bold">{scores.eduPts} / {scores.maxEdu} pts</span>
-              </div>
-              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.eduPts / scores.maxEdu) * 100}%` }} />
-              </div>
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    <p>Un Master ou un Doctorat ou une double diplomation augmente significativement votre score académique.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {/* Expérience */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-              <div className="flex justify-between text-sm font-medium">
-                <span className="text-gray-700">Expérience Pro</span>
-                <span className="text-blue-700 font-bold">{scores.expPts} / {scores.maxExp} pts</span>
-              </div>
-              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.expPts / scores.maxExp) * 100}%` }} />
-              </div>
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    <p>Justifier de 3 ans ou plus d’expérience qualifiée (NOC TEER 0, 1, 2 ou 3) maximise ce volet.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {/* Langues */}
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-              <div className="flex justify-between text-sm font-medium">
-                <span className="text-gray-700">Compétences Linguistiques</span>
-                <span className="text-blue-700 font-bold">{scores.langPts} / {scores.maxLang} pts</span>
-              </div>
-              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.langPts / scores.maxLang) * 100}%` }} />
-              </div>
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    <p>Le bilinguisme (Français NCLC 7 + Anglais CLB 9) est le moyen le plus rapide de gagner jusqu'à 60 points bonus.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            {(() => {
+              const bars: Array<{ key: string; label: string; value: number; max: number; tip: string }> = [
+                { key: "age", label: "Âge", value: scores.age, max: scores.coreHumanCapitalMax === 460 ? 100 : 110, tip: "Le capital points d’âge est maximal entre 20 et 29 ans. Pensez à déposer rapidement votre dossier." },
+                { key: "edu", label: "Diplômes / Études", value: scores.education, max: scores.coreHumanCapitalMax === 460 ? 140 : 150, tip: "Un Master ou un Doctorat, ou deux diplômes dont un de trois ans ou plus, augmente significativement ce volet." },
+                { key: "lang1", label: "Langue — première langue officielle", value: scores.firstLanguage, max: scores.coreHumanCapitalMax === 460 ? 128 : 136, tip: "La langue avec le CLB le plus élevé est comptée comme première langue officielle : c'est ce qui rapporte le plus de points." },
+                { key: "lang2", label: "Langue — seconde langue officielle", value: scores.secondLanguage, max: scores.coreHumanCapitalMax === 460 ? 22 : 24, tip: "Même un niveau modeste dans la seconde langue officielle rapporte quelques points supplémentaires." },
+                { key: "exp", label: "Expérience canadienne", value: scores.canadianExperience, max: scores.coreHumanCapitalMax === 460 ? 70 : 80, tip: "Cumuler des années d'expérience qualifiée au Canada maximise ce volet et la transférabilité des compétences." },
+                { key: "transfer", label: "Transférabilité des compétences", value: scores.skillTransferability, max: 100, tip: "Ce volet combine diplôme, expérience (canadienne ou étrangère) et niveau de langue : améliorer l'un des deux fait souvent gagner ici aussi." },
+                { key: "additional", label: "Points additionnels (études canadiennes, français, fratrie, PNP)", value: scores.additionalPoints, max: Math.max(600, scores.additionalPoints), tip: "Dominé par la nomination provinciale (600 pts) : les autres bonus (français, études ou fratrie au Canada) restent modestes en comparaison." },
+                ...(maritalStatus === "with_spouse" ? [{ key: "spouse", label: "Facteurs du conjoint", value: scores.spouseFactors, max: 40, tip: "Les études, la langue et l'expérience canadienne du conjoint comptent à part, jusqu'à 40 points au total." }] : []),
+              ];
+              return bars.map((bar) => (
+                <div key={bar.key} className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-gray-700">{bar.label}</span>
+                    <span className="text-blue-700 font-bold">{bar.value} / {bar.max} pts</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${Math.min(100, (bar.value / bar.max) * 100)}%` }} />
+                  </div>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-xs">
+                        <p>{bar.tip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              ));
+            })()}
           </div>
 
           <div className="pt-2 flex items-center justify-between">

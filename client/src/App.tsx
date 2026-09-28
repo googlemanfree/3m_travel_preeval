@@ -151,8 +151,9 @@ function Router() {
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
       <Route path={"/parcours"} component={PrimeJourney} />
-      <Route path={"/3m-digital"} component={Community} />
-      <Route path={"/communaute"}>{() => <Redirect to="/3m-digital" />}</Route>
+      <Route path={"/3m-solutions"} component={Community} />
+      <Route path={"/3m-digital"}>{() => <Redirect to="/3m-solutions" />}</Route>
+      <Route path={"/communaute"}>{() => <Redirect to="/3m-solutions" />}</Route>
       <Route path={"/evaluation-canada"}>{() => <Redirect to="/evaluation?source=facebook&campaign=Canada" />}</Route>
       <Route path={"/evaluation"}>
         <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">

@@ -42,7 +42,7 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/guide-procedures", label: { fr: "Guide PDF", en: "PDF guide" }, icon: FileText },
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
-  { href: "/3m-digital", label: { fr: "3M Digital", en: "3M Digital" }, icon: UsersRound },
+  { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
 ];
 
 const NAV_COPY = {

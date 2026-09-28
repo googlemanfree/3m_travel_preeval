@@ -24,8 +24,8 @@ const makeReference = () => `DGT-${new Date().getFullYear()}-${randomInt(100000,
 
 const defaultContent = {
   heroTitle: "Le digital qui fait avancer vos projets.",
-  heroDescription: "3M Digital est le pôle de services numériques de 3M Travel & Services : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
-  serviceIntro: "Le pôle 3M Digital met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer.",
+  heroDescription: "3M Solutions est le pôle de services numériques de 3M Travel Agency : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
+  serviceIntro: "Le pôle 3M Solutions met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer.",
   requestIntro: "Chaque demande reçoit une référence, entre dans la file de traitement du back-office et peut être suivie par nos conseillers avant toute proposition.",
   serviceDefinitionsJson: JSON.stringify([
     { title: "Sites web & plateformes", description: "Des expériences digitales fiables pour informer, rassurer et accompagner vos visiteurs.", points: ["Site vitrine responsive", "Portail client & espace de suivi", "Plateforme de réservation sur mesure", "Nom de domaine, e-mails et maintenance"] },
@@ -110,7 +110,7 @@ export const digitalServicesRouter = router({
     await db.insert(digitalServiceRequests).values({ ...input, organization: input.organization || null, reference });
     await db.insert(adminNotifications).values({
       type: "new_contact_message",
-      title: "Nouvelle demande 3M Digital",
+      title: "Nouvelle demande 3M Solutions",
       message: `${input.fullName} — ${input.service} — ${reference}`,
       relatedId: reference,
       targetAdminType: "accompagnement",
@@ -121,11 +121,11 @@ export const digitalServicesRouter = router({
     const serviceLabel = serviceMap[input.service] ?? input.service;
 
     try {
-      await sendEmail({ to: "hello@3mtravelagency.com", subject: `📩 Nouvelle demande 3M Digital — ${input.fullName} (${serviceLabel})`, html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone)}) a soumis une demande <strong>${esc(serviceLabel)}</strong>.</p><p>Référence : <code>${esc(reference)}</code>${input.organization ? `<br>Organisation : ${esc(input.organization)}` : ""}</p><p>${esc(input.message)}</p>` });
+      await sendEmail({ to: "hello@3mtravelagency.com", subject: `📩 Nouvelle demande 3M Solutions — ${input.fullName} (${serviceLabel})`, html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone)}) a soumis une demande <strong>${esc(serviceLabel)}</strong>.</p><p>Référence : <code>${esc(reference)}</code>${input.organization ? `<br>Organisation : ${esc(input.organization)}` : ""}</p><p>${esc(input.message)}</p>` });
     } catch (err) { logger.error("digital_services.team_notification_failed", { reference }, err); }
 
     try {
-      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Digital — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Digital vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Digital — 3M Travel & Services</p>` });
+      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Solutions — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Solutions vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Solutions — 3M Travel Agency</p>` });
     } catch (err) { logger.error("digital_services.candidate_confirmation_failed", { reference }, err); }
 
     return { reference };
@@ -156,7 +156,7 @@ export const digitalServicesRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const existing = await db.select({ id: digitalServiceRequests.id }).from(digitalServiceRequests).where(eq(digitalServiceRequests.id, input.requestId)).limit(1);
-    if (!existing[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Demande 3M Digital introuvable." });
+    if (!existing[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Demande 3M Solutions introuvable." });
     await db.update(digitalServiceRequests).set({
       status: input.status,
       adminNotes: input.adminNotes || null,

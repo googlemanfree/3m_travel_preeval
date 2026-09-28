@@ -65,7 +65,7 @@ describe("AdminDigitalServices — enregistrement groupé", () => {
     const user = userEvent.setup();
     render(<AdminDigitalServices />);
 
-    await user.click(screen.getByRole("combobox", { name: "Statut de la demande 3M Digital" }));
+    await user.click(screen.getByRole("combobox", { name: "Statut de la demande 3M Solutions" }));
     await user.click(await screen.findByRole("option", { name: "Contacté" }));
     await user.type(screen.getByLabelText("Notes internes"), "Test interne validé");
     await user.click(screen.getByRole("button", { name: /Enregistrer le traitement/i }));

@@ -485,7 +485,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
       pdf.line(15, 275, 195, 275);
       pdf.setTextColor(100, 116, 139);
       pdf.setFontSize(8);
-      pdf.text("3M Travel & Services SARL — Contact : hello@3mtravelagency.com / +237 698 104 832", 15, 282);
+      pdf.text("3M Travel Agency SARL — Contact : hello@3mtravelagency.com / +237 698 104 832", 15, 282);
       pdf.text(`Généré le ${new Date().toLocaleString()}`, 135, 282);
 
       pdf.save(`Brouillon_Officiel_${form.fullName ? form.fullName.replace(/\s+/g, "_") : "Client"}.pdf`);

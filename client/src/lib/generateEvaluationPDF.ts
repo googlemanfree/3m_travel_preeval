@@ -29,7 +29,7 @@ export function generateEvaluationPDF(result: EvaluationResult): void {
   doc.setFontSize(24);
   doc.text('🇱🇺 Rapport d\'Évaluation Luxembourg', pageWidth / 2, 15, { align: 'center' });
   doc.setFontSize(10);
-  doc.text('3M Travel & Services SARL', pageWidth / 2, 25, { align: 'center' });
+  doc.text('3M Travel Agency SARL', pageWidth / 2, 25, { align: 'center' });
 
   yPosition = 50;
 
@@ -195,7 +195,7 @@ export function generateEvaluationPDF(result: EvaluationResult): void {
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
   doc.text(
-    `3M Travel & Services SARL | +237 698 104 832 | www.3mtravelagency.com`,
+    `3M Travel Agency SARL | +237 698 104 832 | www.3mtravelagency.com`,
     pageWidth / 2,
     pageHeight - 10,
     { align: 'center' }

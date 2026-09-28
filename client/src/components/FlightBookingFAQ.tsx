@@ -213,7 +213,7 @@ export function FlightBookingFAQ() {
         <div className="flex items-center gap-3 relative z-10 flex-wrap justify-center">
           <Button
             onClick={() => window.open("https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20j%27ai%20une%20question%20concernant%20vos%20services.", "_blank", "noopener,noreferrer")}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-semibold shadow-md"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white gap-2 font-semibold shadow-md"
           >
             <MessageSquare className="w-4 h-4" />
             WhatsApp direct

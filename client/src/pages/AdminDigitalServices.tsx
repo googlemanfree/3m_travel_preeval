@@ -133,7 +133,7 @@ export default function AdminDigitalServices() {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
         <Card className="mx-auto max-w-xl p-6 text-slate-700">
-          Session administrateur introuvable. Connectez-vous de nouveau pour ouvrir les demandes 3M Digital.
+          Session administrateur introuvable. Connectez-vous de nouveau pour ouvrir les demandes 3M Solutions.
         </Card>
       </div>
     );
@@ -149,7 +149,7 @@ export default function AdminDigitalServices() {
         <header className="mt-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-800">
-              <BriefcaseBusiness className="h-4 w-4" /> Service 3M Digital
+              <BriefcaseBusiness className="h-4 w-4" /> Service 3M Solutions
             </div>
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Contenu et demandes à traiter</h1>
             <p className="mt-2 text-slate-600">Modifiez la sous-page publiée et qualifiez chaque demande avant toute proposition.</p>
@@ -264,7 +264,7 @@ export default function AdminDigitalServices() {
                     <ClipboardList className="mx-auto mb-3 h-8 w-8 text-slate-300" />
                     {(requests?.length ?? 0) > 0
                       ? "Aucune demande ne correspond aux filtres."
-                      : "Aucune demande 3M Digital pour le moment."}
+                      : "Aucune demande 3M Solutions pour le moment."}
                   </div>
                 )}
               </div>
@@ -293,7 +293,7 @@ export default function AdminDigitalServices() {
                     <div>
                       <label className="text-sm font-black text-slate-950" htmlFor="digital-request-status">Statut</label>
                       <Select value={draftStatus} onValueChange={(value) => setDraftStatus(value as RequestStatus)}>
-                        <SelectTrigger id="digital-request-status" className="mt-2 bg-white" aria-label="Statut de la demande 3M Digital"><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="digital-request-status" className="mt-2 bg-white" aria-label="Statut de la demande 3M Solutions"><SelectValue /></SelectTrigger>
                         <SelectContent>{Object.entries(statusLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
@@ -306,7 +306,7 @@ export default function AdminDigitalServices() {
                     <Button onClick={saveRequest} disabled={updateRequest.isPending} className="bg-blue-700 hover:bg-blue-800">
                       <Save className="mr-2 h-4 w-4" /> {updateRequest.isPending ? "Enregistrement…" : "Enregistrer le traitement"}
                     </Button>
-                    <a href={digitalWhatsAppUrl(`Bonjour ${selected.fullName}, nous faisons suite à votre demande ${selected.reference} auprès de 3M Digital.`)} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp client</a>
+                    <a href={digitalWhatsAppUrl(`Bonjour ${selected.fullName}, nous faisons suite à votre demande ${selected.reference} auprès de 3M Solutions.`)} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp client</a>
                   </div>
                 </section>
 

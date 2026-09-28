@@ -1880,9 +1880,9 @@ export default function AdminDashboard() {
         </Card>
 
         <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
-          <div><p className="font-black text-blue-950">Pôle 3M Digital</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
+          <div><p className="font-black text-blue-950">Pôle 3M Solutions</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
           <a href="/admin/digital-services" className="relative inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Ouvrir les demandes 3M Digital
+            Ouvrir les demandes 3M Solutions
             {digitalNewCount > 0 && (
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-black text-amber-950">
                 {digitalNewCount}

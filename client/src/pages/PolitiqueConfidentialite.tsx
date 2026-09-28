@@ -20,7 +20,7 @@ export default function PolitiqueConfidentialite() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Objet</h2>
             <p className="text-gray-700 leading-relaxed">
-              3M Travel & Services SARL (RC/YAO/2019/A/2567, NIU M112417203369H), sise à Yaoundé, Biyem-Assi, Montée Chapelle Obili, accorde une importance particulière à la protection des données personnelles de ses clients et visiteurs.
+              3M Travel Agency SARL (RC/YAO/2019/A/2567, NIU M112417203369H), sise à Yaoundé, Biyem-Assi, Montée Chapelle Obili, accorde une importance particulière à la protection des données personnelles de ses clients et visiteurs.
             </p>
           </div>
 
@@ -124,7 +124,7 @@ export default function PolitiqueConfidentialite() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Contact</h2>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-gray-700 space-y-2">
-              <p><strong>3M Travel & Services SARL</strong></p>
+              <p><strong>3M Travel Agency SARL</strong></p>
               <p>Yaoundé, Biyem-Assi, Montée Chapelle Obili</p>
               <p>
                 <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">

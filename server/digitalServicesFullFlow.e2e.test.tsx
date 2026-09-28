@@ -72,7 +72,7 @@ vi.mock("@/lib/trpc", () => ({
 }));
 
 vi.mock("@/components/Footer", () => ({ default: () => <footer>Footer 3M</footer> }));
-vi.mock("@/components/AdminDigitalContentEditor", () => ({ default: () => <div>Éditeur 3M Digital</div> }));
+vi.mock("@/components/AdminDigitalContentEditor", () => ({ default: () => <div>Éditeur 3M Solutions</div> }));
 vi.mock("wouter", () => ({ Link: ({ children, href }: any) => <a href={href}>{children}</a> }));
 
 import Community from "@/pages/Community";
@@ -86,7 +86,7 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
-describe("3M Digital — flux UI complet", () => {
+describe("3M Solutions — flux UI complet", () => {
   it("crée une demande publique, la retrouve dans la file et enregistre statut et note", { timeout: 20_000 }, async () => {
     const user = userEvent.setup();
     render(<Community />);
@@ -105,7 +105,7 @@ describe("3M Digital — flux UI complet", () => {
     render(<AdminDigitalServices />);
 
     expect(screen.getAllByText("DGT-TEST-701")).toHaveLength(2);
-    await user.click(screen.getByRole("combobox", { name: "Statut de la demande 3M Digital" }));
+    await user.click(screen.getByRole("combobox", { name: "Statut de la demande 3M Solutions" }));
     await user.click(await screen.findByRole("option", { name: "Contacté" }));
     await user.type(screen.getByLabelText("Notes internes"), "Qualification 3M Digital validée.");
     await user.click(screen.getByRole("button", { name: /Enregistrer le traitement/i }));

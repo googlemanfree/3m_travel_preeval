@@ -329,7 +329,7 @@ describe("fusion de la requête entrante avec la cible", () => {
   });
 
   it("conserve la valeur décodée du code de parrainage et n’émet jamais d’URL absolue", () => {
-    const location = legacyRedirectLocation("/3m-digital", "/communaute?ref=A%20B&next=https://evil.example");
+    const location = legacyRedirectLocation("/3m-solutions", "/communaute?ref=A%20B&next=https://evil.example");
     expect(location.startsWith("/")).toBe(true);
     const parsed = new URL(location, "https://www.3mtravelagency.com");
     expect(parsed.origin).toBe("https://www.3mtravelagency.com");
@@ -368,7 +368,7 @@ describe("301 servis par Express", () => {
     expect(facebook.headers.get("location")).toBe("/evaluation?source=facebook&campaign=Canada&fbclid=abc&utm_campaign=canada-2026");
 
     const referral = await fetch(`${base}/communaute?ref=ABC123`, { redirect: "manual" });
-    expect(referral.headers.get("location")).toBe("/3m-digital?ref=ABC123");
+    expect(referral.headers.get("location")).toBe("/3m-solutions?ref=ABC123");
 
     const fragment = await fetch(`${base}/evaluation-rapide?utm_source=fb`, { redirect: "manual" });
     expect(fragment.headers.get("location")).toBe("/?utm_source=fb#evaluation-multi");
@@ -377,7 +377,7 @@ describe("301 servis par Express", () => {
   it("redirige aussi avec un slash final et pour les requêtes HEAD", async () => {
     const trailingSlash = await fetch(`${base}/communaute/`, { redirect: "manual" });
     expect(trailingSlash.status).toBe(301);
-    expect(trailingSlash.headers.get("location")).toBe("/3m-digital");
+    expect(trailingSlash.headers.get("location")).toBe("/3m-solutions");
 
     const head = await fetch(`${base}/vols`, { method: "HEAD", redirect: "manual" });
     expect(head.status).toBe(301);
