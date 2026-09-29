@@ -330,7 +330,10 @@ export type LiveFareRecheck = { status: "checked"; found: boolean; newTotal: num
  */
 export async function recheckLiveFare(flightData: Record<string, any>, options: { apiKey?: string | undefined; fetchImpl?: typeof fetch } = {}): Promise<LiveFareRecheck> {
   const apiKey = options.apiKey ?? process.env.SEARCHAPI_KEY;
-  if (!apiKey && !isProviderConfigured()) return { status: "unavailable", reason: "Recherche en direct non configurée." };
+  // La revérification doit utiliser la même clé SearchAPI que le relevé initial.
+  // SerpApi est un secours réservé aux recherches publiques et ne doit pas rendre
+  // une clé SearchAPI absente « configurée » ici.
+  if (!apiKey) return { status: "unavailable", reason: "Recherche en direct non configurée." };
   const origin = String(flightData.origin ?? "");
   const destination = String(flightData.destination ?? "");
   const departureDate = String(flightData.departureDate ?? "");
