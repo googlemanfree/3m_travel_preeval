@@ -29,6 +29,27 @@ describe("simulateur CRS complet", () => {
     expect(source).toContain("Envoyer le PDF par e-mail");
   });
 
+  it("sauvegarde localement le brouillon et restaure le parcours", () => {
+    expect(source).toContain("3m-crs-simulator-draft-v2");
+    expect(source).toContain("isDraftLoaded");
+    expect(source).toContain("Votre dernière simulation a été restaurée.");
+    expect(source).toContain("languageScores");
+  });
+
+  it("affiche un récapitulatif éditable avant le partage", () => {
+    expect(source).toContain("Vérifiez vos réponses avant le rapport");
+    expect(source).toContain("Modifier le profil");
+    expect(source).toContain("Modifier les critères");
+    expect(source).toContain('key="review-step"');
+  });
+
+  it("insère les recommandations personnalisées dans le PDF", () => {
+    expect(source).toContain("pdfRecommendations");
+    expect(source).toContain("Recommandations personnalisées");
+    expect(source).toContain("Point à travailler");
+    expect(source).toContain("ne remplacent pas les règles officielles IRCC");
+  });
+
   it("compose un PDF avec marque et coordonnées de l’agence", () => {
     expect(source).toContain("3M TRAVEL AGENCY");
     expect(source).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");

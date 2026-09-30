@@ -126,6 +126,8 @@ export default function CanadaScoreSimulator() {
   const [languageScores, setLanguageScores] = useState({ frenchReading: "", frenchWriting: "", frenchListening: "", frenchSpeaking: "", englishReading: "", englishWriting: "", englishListening: "", englishSpeaking: "" });
   const [shareLink, setShareLink] = useState("");
   const [isEmailingPdf, setIsEmailingPdf] = useState(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const draftStorageKey = "3m-crs-simulator-draft-v2";
   const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("3m-crs-recommendation-checklist") ?? "{}");
@@ -190,10 +192,68 @@ export default function CanadaScoreSimulator() {
   };
 
   const recommendations = getRecommendations();
+  const pdfRecommendations = recommendations.length > 0
+    ? recommendations
+    : [{ title: "Maintenir votre profil et vérifier les documents", desc: "Votre simulation ne fait pas ressortir de faiblesse prioritaire. Vérifiez vos résultats officiels, votre admissibilité au programme visé et la validité de vos pièces avant toute démarche." }];
 
   useEffect(() => {
     localStorage.setItem("3m-crs-recommendation-checklist", JSON.stringify(completedRecommendations));
   }, [completedRecommendations]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(draftStorageKey) ?? "null") as Partial<{
+        age: number; education: EducationLevel; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears;
+        frenchClb: number; englishClb: number; maritalStatus: MaritalStatus; spouseEducation: EducationLevel; spouseClb: number;
+        spouseExperienceYears: ExperienceYears; hasTradeCertificate: boolean; canadianEducation: CanadianEducationLevel;
+        hasSiblingInCanada: boolean; hasProvincialNomination: boolean; selectedCategory: string; wizardStep: number;
+        fullName: string; email: string; phone: string; residenceCountry: string; targetProvince: string; occupation: string;
+        hasJobOffer: boolean; languageTestDate: string; languageScores: typeof languageScores;
+      }> | null;
+      if (saved) {
+        if (typeof saved.age === "number") setAge(saved.age);
+        if (saved.education) setEducation(saved.education);
+        if (typeof saved.canadianExperienceYears === "number") setCanadianExperienceYears(saved.canadianExperienceYears);
+        if (typeof saved.foreignExperienceYears === "number") setForeignExperienceYears(saved.foreignExperienceYears);
+        if (typeof saved.frenchClb === "number") setFrenchClb(saved.frenchClb);
+        if (typeof saved.englishClb === "number") setEnglishClb(saved.englishClb);
+        if (saved.maritalStatus) setMaritalStatus(saved.maritalStatus);
+        if (saved.spouseEducation) setSpouseEducation(saved.spouseEducation);
+        if (typeof saved.spouseClb === "number") setSpouseClb(saved.spouseClb);
+        if (typeof saved.spouseExperienceYears === "number") setSpouseExperienceYears(saved.spouseExperienceYears);
+        if (typeof saved.hasTradeCertificate === "boolean") setHasTradeCertificate(saved.hasTradeCertificate);
+        if (saved.canadianEducation) setCanadianEducation(saved.canadianEducation);
+        if (typeof saved.hasSiblingInCanada === "boolean") setHasSiblingInCanada(saved.hasSiblingInCanada);
+        if (typeof saved.hasProvincialNomination === "boolean") setHasProvincialNomination(saved.hasProvincialNomination);
+        if (typeof saved.selectedCategory === "string") setSelectedCategory(saved.selectedCategory);
+        if (typeof saved.wizardStep === "number" && saved.wizardStep >= 1 && saved.wizardStep <= 4) setWizardStep(saved.wizardStep);
+        if (typeof saved.fullName === "string") setFullName(saved.fullName);
+        if (typeof saved.email === "string") setEmail(saved.email);
+        if (typeof saved.phone === "string") setPhone(saved.phone);
+        if (typeof saved.residenceCountry === "string") setResidenceCountry(saved.residenceCountry);
+        if (typeof saved.targetProvince === "string") setTargetProvince(saved.targetProvince);
+        if (typeof saved.occupation === "string") setOccupation(saved.occupation);
+        if (typeof saved.hasJobOffer === "boolean") setHasJobOffer(saved.hasJobOffer);
+        if (typeof saved.languageTestDate === "string") setLanguageTestDate(saved.languageTestDate);
+        if (saved.languageScores) setLanguageScores(saved.languageScores);
+        toast.success("Votre dernière simulation a été restaurée.");
+      }
+    } catch {
+      // Ignore a malformed local draft and start with the default form.
+    } finally {
+      setIsDraftLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+    localStorage.setItem(draftStorageKey, JSON.stringify({
+      age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus,
+      spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada,
+      hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince,
+      occupation, hasJobOffer, languageTestDate, languageScores,
+    }));
+  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, languageScores]);
 
   const toggleRecommendation = (title: string) => {
     setCompletedRecommendations((current) => ({ ...current, [title]: !current[title] }));
@@ -351,18 +411,20 @@ export default function CanadaScoreSimulator() {
       });
 
       const afterRoundsTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 200;
-      if (!isThresholdMet) {
-        doc.setFontSize(13);
-        doc.text("Pistes d'amélioration personnalisées", 15, afterRoundsTable + 14);
-        autoTable(doc, {
-          startY: afterRoundsTable + 19,
-          head: [["Action recommandée", "Détail"]],
-          body: recommendations.map((recommendation) => [recommendation.title, recommendation.desc]),
-          styles: { fontSize: 8, cellPadding: 2.5 },
-          headStyles: { fillColor: [180, 83, 9] },
-          columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 122 } },
-        });
-      }
+      doc.addPage();
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(13);
+      doc.text("Recommandations personnalisées", 15, 22);
+      doc.setFontSize(9);
+      doc.text("Ces pistes ciblent les composantes les plus faibles de la simulation et ne remplacent pas les règles officielles IRCC.", 15, 29, { maxWidth: 180 });
+      autoTable(doc, {
+        startY: 36,
+        head: [["Point à travailler", "Recommandation personnalisée"]],
+        body: pdfRecommendations.map((recommendation) => [recommendation.title, recommendation.desc]),
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [180, 83, 9] },
+        columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 122 } },
+      });
 
       return doc;
   };
@@ -755,6 +817,17 @@ export default function CanadaScoreSimulator() {
             </div>
           )}
         </motion.div>
+
+        {wizardStep === 3 && (
+          <motion.div key="review-step" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 md:p-6 space-y-4">
+            <div className="flex items-start gap-3"><div className="rounded-xl bg-amber-100 p-2 text-amber-700"><ListChecks className="h-5 w-5" /></div><div><h3 className="font-bold text-amber-950">Vérifiez vos réponses avant le rapport</h3><p className="text-sm text-amber-900/80">Modifiez un bloc si nécessaire, puis passez à l’étape suivante pour partager ou générer le PDF.</p></div></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Profil</p><p className="text-slate-600">{fullName || "Nom non renseigné"} · {age} ans · {residenceCountry || "Pays non renseigné"}</p><p className="text-slate-600">{occupation || "Profession non renseignée"} · cible : {targetProvince || "non renseignée"}</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(1)}>Modifier le profil</Button></div>
+              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Critères CRS</p><p className="text-slate-600">Études : {EDUCATION_OPTIONS.find((option) => option.value === education)?.label ?? education}</p><p className="text-slate-600">Français NCLC {frenchClb} · Anglais CLB {englishClb} · Canada {canadianExperienceYears} an(s)</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(2)}>Modifier les critères</Button></div>
+            </div>
+            <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><span className="font-semibold">Résultat calculé :</span> {scores.total} points · écart de {scoreDiff >= 0 ? "+" : ""}{scoreDiff} points par rapport au dernier seuil comparé.</div>
+          </motion.div>
+        )}
 
         {/* Résultat et Score */}
         <div className={wizardStep === 3 ? "mt-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6" : "hidden"}>
