@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound } from "lucide-react";
+import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -309,6 +309,11 @@ export default function CanadaScoreSimulator() {
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
+  const appointmentPath = "/consultation?source=crs-simulator";
+  const appointmentUrl = typeof window !== "undefined"
+    ? new URL(appointmentPath, window.location.origin).toString()
+    : appointmentPath;
+
   // Les bibliothèques PDF (~120 Ko compressés) ne sont chargées qu'au moment d'un aperçu ou d'un téléchargement,
   // pas avec la page d'accueil qui embarque ce simulateur.
   const loadImageAsDataUrl = async (url: string) => {
@@ -425,6 +430,16 @@ export default function CanadaScoreSimulator() {
         headStyles: { fillColor: [180, 83, 9] },
         columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 122 } },
       });
+
+      const afterRecommendations = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 92;
+      doc.setFillColor(239, 246, 255);
+      doc.setDrawColor(147, 197, 253);
+      doc.roundedRect(15, afterRecommendations + 12, 180, 28, 3, 3, "FD");
+      doc.setTextColor(15, 45, 91);
+      doc.setFontSize(11);
+      doc.text("Besoin d’un accompagnement personnalisé ?", 21, afterRecommendations + 22);
+      doc.setFontSize(10);
+      doc.textWithLink("Prendre rendez-vous en ligne avec 3M Travel", 21, afterRecommendations + 32, { url: appointmentUrl });
 
       return doc;
   };
@@ -1124,21 +1139,22 @@ export default function CanadaScoreSimulator() {
           </div>
 
           <div className="pt-2 flex items-center justify-between">
-            <a
-              href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1.5"
-            >
-              <span>Réserver une consultation conseiller &gt;</span>
-            </a>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <a href={appointmentPath} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
+                <CalendarDays className="h-4 w-4" />
+                Prendre rendez-vous en ligne
+              </a>
+              <a href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1.5">
+                <span>Ou écrire à un conseiller sur WhatsApp &gt;</span>
+              </a>
+            </div>
           </div>
         </div>
 
         {wizardStep === 4 && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 md:p-6 space-y-5">
             <div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-100 p-2 text-emerald-700"><Share2 className="h-5 w-5" /></div><div><h3 className="font-bold text-emerald-950">4. Partager votre évaluation</h3><p className="text-sm text-emerald-900/80">Créez un lien de reprise contenant uniquement les réponses du simulateur, puis envoyez-le à votre conseiller sur WhatsApp.</p></div></div>
-            <div className="flex flex-col sm:flex-row gap-3"><Button type="button" onClick={handleShareWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700"><Share2 className="h-4 w-4" /> Partager via WhatsApp</Button><Button type="button" variant="outline" onClick={() => { const link = shareLink || shareProfile(); navigator.clipboard?.writeText(link); toast.success("Lien de partage copié"); }} className="gap-2"><Link2 className="h-4 w-4" /> Copier le lien</Button><Button type="button" onClick={handleEmailPdf} disabled={isEmailingPdf} variant="outline" className="gap-2"><Mail className="h-4 w-4" /> {isEmailingPdf ? "Préparation du PDF…" : "Envoyer le PDF par e-mail"}</Button><Button type="button" onClick={handlePreviewPDF} variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Prévisualiser le PDF</Button></div>
+            <div className="flex flex-col sm:flex-row gap-3"><Button type="button" onClick={handleShareWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700"><Share2 className="h-4 w-4" /> Partager via WhatsApp</Button><Button type="button" variant="outline" onClick={() => { const link = shareLink || shareProfile(); navigator.clipboard?.writeText(link); toast.success("Lien de partage copié"); }} className="gap-2"><Link2 className="h-4 w-4" /> Copier le lien</Button><Button type="button" onClick={handleEmailPdf} disabled={isEmailingPdf} variant="outline" className="gap-2"><Mail className="h-4 w-4" /> {isEmailingPdf ? "Préparation du PDF…" : "Envoyer le PDF par e-mail"}</Button><Button asChild type="button" className="gap-2 bg-blue-700 hover:bg-blue-800"><a href={appointmentPath}><CalendarDays className="h-4 w-4" /> Prendre rendez-vous</a></Button><Button type="button" onClick={handlePreviewPDF} variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Prévisualiser le PDF</Button></div>
             {shareLink && <div className="rounded-xl bg-white border border-emerald-200 p-3 text-xs text-slate-700 break-all"><span className="font-semibold block mb-1">Lien généré</span>{shareLink}</div>}
             <p className="text-xs text-emerald-900/70">Le PDF comporte l’en-tête 3M TRAVEL AGENCY, les coordonnées Yaoundé–Ottawa, le score, les sous-scores, les rondes comparées et les réserves officielles.</p>
           </div>

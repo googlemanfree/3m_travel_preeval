@@ -50,10 +50,17 @@ describe("simulateur CRS complet", () => {
     expect(source).toContain("ne remplacent pas les règles officielles IRCC");
   });
 
-  it("compose un PDF avec marque et coordonnées de l’agence", () => {
-    expect(source).toContain("3M TRAVEL AGENCY");
-    expect(source).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
-    expect(source).toContain("Yaoundé · Ottawa");
-    expect(source).toContain("Résultats indicatifs, sans garantie d'invitation");
-  });
+	it("compose un PDF avec marque et coordonnées de l’agence", () => {
+		expect(source).toContain("3M TRAVEL AGENCY");
+		expect(source).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
+		expect(source).toContain("Yaoundé · Ottawa");
+		expect(source).toContain("Résultats indicatifs, sans garantie d'invitation");
+	});
+
+	it("propose un rendez-vous en ligne depuis les résultats et le PDF", () => {
+		expect(source).toContain('appointmentPath = "/consultation?source=crs-simulator"');
+		expect(source).toContain("Prendre rendez-vous en ligne");
+		expect(source).toContain("textWithLink");
+		expect(source).toContain("appointmentUrl");
+	});
 });
