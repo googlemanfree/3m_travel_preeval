@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock } from "lucide-react";
+import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -114,6 +114,17 @@ export default function CanadaScoreSimulator() {
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfPreviewError, setPdfPreviewError] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [residenceCountry, setResidenceCountry] = useState("");
+  const [targetProvince, setTargetProvince] = useState("");
+  const [occupation, setOccupation] = useState("");
+  const [hasJobOffer, setHasJobOffer] = useState(false);
+  const [languageTestDate, setLanguageTestDate] = useState("");
+  const [languageScores, setLanguageScores] = useState({ frenchReading: "", frenchWriting: "", frenchListening: "", frenchSpeaking: "", englishReading: "", englishWriting: "", englishListening: "", englishSpeaking: "" });
+  const [shareLink, setShareLink] = useState("");
   const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("3m-crs-recommendation-checklist") ?? "{}");
@@ -189,8 +200,68 @@ export default function CanadaScoreSimulator() {
 
   const completedRecommendationCount = recommendations.filter((recommendation) => completedRecommendations[recommendation.title]).length;
 
+  const loadSharedProfile = (encoded: string) => {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))))) as Partial<{
+        fullName: string; age: number; education: EducationLevel; frenchClb: number; englishClb: number;
+        maritalStatus: MaritalStatus; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears;
+        canadianEducation: CanadianEducationLevel; hasTradeCertificate: boolean; hasSiblingInCanada: boolean; hasProvincialNomination: boolean;
+      }>;
+      if (typeof parsed.fullName === "string") setFullName(parsed.fullName);
+      if (typeof parsed.age === "number") setAge(parsed.age);
+      if (parsed.education) setEducation(parsed.education);
+      if (typeof parsed.frenchClb === "number") setFrenchClb(parsed.frenchClb);
+      if (typeof parsed.englishClb === "number") setEnglishClb(parsed.englishClb);
+      if (parsed.maritalStatus) setMaritalStatus(parsed.maritalStatus);
+      if (typeof parsed.canadianExperienceYears === "number") setCanadianExperienceYears(parsed.canadianExperienceYears);
+      if (typeof parsed.foreignExperienceYears === "number") setForeignExperienceYears(parsed.foreignExperienceYears);
+      if (parsed.canadianEducation) setCanadianEducation(parsed.canadianEducation);
+      if (typeof parsed.hasTradeCertificate === "boolean") setHasTradeCertificate(parsed.hasTradeCertificate);
+      if (typeof parsed.hasSiblingInCanada === "boolean") setHasSiblingInCanada(parsed.hasSiblingInCanada);
+      if (typeof parsed.hasProvincialNomination === "boolean") setHasProvincialNomination(parsed.hasProvincialNomination);
+      setWizardStep(3);
+    } catch {
+      // Ignore malformed or expired shared links and keep the default form.
+    }
+  };
+
+  useEffect(() => {
+    const encoded = new URLSearchParams(window.location.search).get("crs");
+    if (encoded) loadSharedProfile(encoded);
+  }, []);
+
+  const shareProfile = () => {
+    const payload = {
+      fullName: fullName.trim(), age, education, frenchClb, englishClb, maritalStatus,
+      canadianExperienceYears, foreignExperienceYears, canadianEducation, hasTradeCertificate,
+      hasSiblingInCanada, hasProvincialNomination,
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const link = `${window.location.origin}${window.location.pathname}?crs=${encoded}`;
+    setShareLink(link);
+    return link;
+  };
+
+  const handleShareWhatsApp = () => {
+    const link = shareLink || shareProfile();
+    const message = `Bonjour, voici mon simulateur CRS Canada 3M Travel Agency à compléter ou vérifier : ${link}`;
+    window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
+
   // Les bibliothèques PDF (~120 Ko compressés) ne sont chargées qu'au moment d'un aperçu ou d'un téléchargement,
   // pas avec la page d'accueil qui embarque ce simulateur.
+  const loadImageAsDataUrl = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Logo unavailable");
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const createPdfDocument = async () => {
       const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
       const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -201,34 +272,45 @@ export default function CanadaScoreSimulator() {
       });
 
       doc.setFillColor(15, 45, 91);
-      doc.rect(0, 0, 210, 32, "F");
+      doc.rect(0, 0, 210, 38, "F");
+      doc.setFillColor(212, 160, 23);
+      doc.rect(0, 35, 210, 3, "F");
+      try {
+        const logo = await loadImageAsDataUrl("/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
+        doc.addImage(logo, "JPEG", 15, 5, 22, 22);
+      } catch {
+        // The report remains usable if the remote logo is temporarily unavailable.
+      }
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
-      doc.text("3M Travel & Services", 15, 14);
+      doc.text("3M TRAVEL AGENCY", 43, 14);
       doc.setFontSize(11);
-      doc.text("Synthèse de simulation CRS — Canada", 15, 22);
+      doc.text("Synthèse de simulation CRS — Canada", 43, 22);
+      doc.setFontSize(8);
+      doc.text("Yaoundé · Ottawa  |  +237 698 104 832  |  3mtravelagency.com", 43, 29);
 
       doc.setTextColor(31, 41, 55);
       doc.setFontSize(10);
-      doc.text(`Document généré le ${generatedAt}. Les résultats sont indicatifs et ne constituent pas une garantie d'invitation.`, 15, 42, { maxWidth: 180 });
+      doc.text(`Candidat : ${fullName || "Non renseigné"}`, 15, 48);
+      doc.text(`Document généré le ${generatedAt}. Résultats indicatifs, sans garantie d'invitation.`, 15, 55, { maxWidth: 180 });
 
       doc.setFillColor(isThresholdMet ? 236 : 254, isThresholdMet ? 253 : 242, isThresholdMet ? 245 : 242);
-      doc.roundedRect(15, 51, 180, 29, 3, 3, "F");
+      doc.roundedRect(15, 63, 180, 29, 3, 3, "F");
       doc.setTextColor(isThresholdMet ? 6 : 153, isThresholdMet ? 95 : 27, isThresholdMet ? 70 : 27);
       doc.setFontSize(11);
-      doc.text("Score CRS simulé", 21, 62);
+      doc.text("Score CRS simulé", 21, 74);
       doc.setFontSize(20);
-      doc.text(`${scores.total} pts`, 21, 73);
+      doc.text(`${scores.total} pts`, 21, 85);
       doc.setFontSize(11);
-      doc.text(`Dernier seuil comparé : ${latestThreshold} pts`, 105, 62);
+      doc.text(`Dernier seuil comparé : ${latestThreshold} pts`, 105, 74);
       doc.setFontSize(16);
-      doc.text(`Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, 105, 73);
+      doc.text(`Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, 105, 85);
 
       doc.setTextColor(31, 41, 55);
       doc.setFontSize(13);
-      doc.text("Répartition détaillée du score CRS", 15, 93);
+      doc.text("Répartition détaillée du score CRS", 15, 105);
       autoTable(doc, {
-        startY: 98,
+        startY: 110,
         head: [["Composante", "Points obtenus", "Maximum officiel"]],
         body: [
           ["Âge", `${scores.age} pts`, "100-110 pts"],
@@ -422,7 +504,53 @@ export default function CanadaScoreSimulator() {
       </Dialog>
 
       <CardContent className="p-6 md:p-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-slate-50 to-blue-50 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Évaluation guidée 3M Travel</p>
+              <p className="text-sm text-slate-600 mt-1">Répondez à chaque bloc pour obtenir une synthèse plus utile à votre conseiller.</p>
+            </div>
+            <span className="text-sm font-extrabold text-blue-900">Étape {wizardStep}/4</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2" aria-label="Progression du simulateur">
+            {["Profil", "Critères CRS", "Résultat", "Partager"].map((label, index) => {
+              const step = index + 1;
+              return (
+                <button key={label} type="button" onClick={() => step <= wizardStep && setWizardStep(step)} className="text-left group" aria-label={`Aller à l'étape ${step} : ${label}`}>
+                  <div className={`h-2 rounded-full transition-colors ${step <= wizardStep ? "bg-blue-600" : "bg-slate-200"}`} />
+                  <span className={`mt-2 block text-[11px] font-semibold ${step === wizardStep ? "text-blue-800" : "text-slate-500"}`}>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {wizardStep === 1 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-blue-100 p-2 text-blue-700"><UserRound className="h-5 w-5" /></div>
+              <div><h3 className="font-bold text-slate-900">1. Votre profil et votre projet</h3><p className="text-sm text-slate-600">Ces informations permettent de personnaliser le rapport et le suivi, sans modifier le barème officiel.</p></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2"><Label htmlFor="crs-full-name">Nom complet</Label><input id="crs-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ex. Marie Ngo" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+              <div className="space-y-2"><Label htmlFor="crs-email">E-mail</Label><div className="relative"><Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input id="crs-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.com" className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm" /></div></div>
+              <div className="space-y-2"><Label htmlFor="crs-phone">WhatsApp / téléphone</Label><div className="relative"><Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input id="crs-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+237 ..." className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm" /></div></div>
+              <div className="space-y-2"><Label htmlFor="crs-residence">Pays de résidence</Label><input id="crs-residence" value={residenceCountry} onChange={(e) => setResidenceCountry(e.target.value)} placeholder="Cameroun" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+              <div className="space-y-2"><Label htmlFor="crs-province">Province ou ville ciblée au Canada</Label><input id="crs-province" value={targetProvince} onChange={(e) => setTargetProvince(e.target.value)} placeholder="Ontario, Québec…" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+              <div className="space-y-2"><Label htmlFor="crs-occupation">Profession / domaine</Label><input id="crs-occupation" value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="Informatique, santé…" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+              <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2"><Checkbox checked={hasJobOffer} onCheckedChange={(checked) => setHasJobOffer(checked === true)} /> J’ai déjà une offre d’emploi canadienne vérifiable</label>
+              <div className="space-y-2"><Label htmlFor="crs-test-date">Date du dernier test de langue</Label><input id="crs-test-date" type="date" value={languageTestDate} onChange={(e) => setLanguageTestDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+            </div>
+          </div>
+        )}
+
+        <div className={wizardStep === 2 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
+          <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
+            <div><p className="font-bold text-indigo-950">Notes détaillées du test de langue</p><p className="text-xs text-indigo-900/75">Saisissez les résultats inscrits sur votre TEF/TCF Canada, IELTS ou CELPIP. Le niveau CLB/NCLC sélectionné ci-dessous reste la base du calcul indicatif.</p></div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {([['frenchReading','Français · compréhension écrite'],['frenchWriting','Français · expression écrite'],['frenchListening','Français · compréhension orale'],['frenchSpeaking','Français · expression orale'],['englishReading','Anglais · reading'],['englishWriting','Anglais · writing'],['englishListening','Anglais · listening'],['englishSpeaking','Anglais · speaking']] as const).map(([key, label]) => <div key={key} className="space-y-1"><Label className="text-[11px] leading-tight">{label}</Label><input inputMode="decimal" value={languageScores[key]} onChange={(e) => setLanguageScores((current) => ({ ...current, [key]: e.target.value }))} placeholder="—" className="flex h-9 w-full rounded-md border border-input bg-white px-2 text-sm" /></div>)}
+            </div>
+          </div>
           {/* Âge */}
           <div className="space-y-2">
             <Label className="font-semibold text-gray-800" htmlFor="crs-age">Âge</Label>
@@ -594,7 +722,7 @@ export default function CanadaScoreSimulator() {
         </div>
 
         {/* Résultat et Score */}
-        <div className="mt-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className={wizardStep === 3 ? "mt-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6" : "hidden"}>
           <div className="space-y-2 text-center md:text-left">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
               <Award className="w-4 h-4" /> Score CRS Indicatif
@@ -643,7 +771,7 @@ export default function CanadaScoreSimulator() {
             borderColor: isThresholdMet ? "rgb(110, 231, 183)" : "rgb(252, 165, 165)",
           }}
           transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
-          className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'text-emerald-950' : 'text-red-950'}`}
+          className={wizardStep === 3 ? `p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'text-emerald-950' : 'text-red-950'}` : "hidden"}
           aria-live="polite"
         >
           <div className="flex items-center gap-3">
@@ -668,7 +796,7 @@ export default function CanadaScoreSimulator() {
 
         {/* Section de recommandations personnalisées (affichée si l'écart est négatif) */}
         {!isThresholdMet && (
-          <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
+          <div className={wizardStep === 3 ? "p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4" : "hidden"}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-amber-900 font-bold text-base">
               <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-amber-600" />
@@ -704,7 +832,7 @@ export default function CanadaScoreSimulator() {
         )}
 
         {/* Graphique comparatif avec filtre par catégorie et infobulles explicatives */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
+        <div className={wizardStep === 3 ? "space-y-4 pt-4 border-t border-gray-100" : "hidden"}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
@@ -848,7 +976,7 @@ export default function CanadaScoreSimulator() {
         </div>
 
         {/* Barres de progression par critère et infobulles */}
-        <div className="space-y-4 pt-6 border-t border-gray-100">
+        <div className={wizardStep === 3 ? "space-y-4 pt-6 border-t border-gray-100" : "hidden"}>
           <h4 className="font-bold text-gray-900 text-lg">Analyse détaillée par sous-critères</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -897,6 +1025,20 @@ export default function CanadaScoreSimulator() {
               <span>Réserver une consultation conseiller &gt;</span>
             </a>
           </div>
+        </div>
+
+        {wizardStep === 4 && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 md:p-6 space-y-5">
+            <div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-100 p-2 text-emerald-700"><Share2 className="h-5 w-5" /></div><div><h3 className="font-bold text-emerald-950">4. Partager votre évaluation</h3><p className="text-sm text-emerald-900/80">Créez un lien de reprise contenant uniquement les réponses du simulateur, puis envoyez-le à votre conseiller sur WhatsApp.</p></div></div>
+            <div className="flex flex-col sm:flex-row gap-3"><Button type="button" onClick={handleShareWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700"><Share2 className="h-4 w-4" /> Partager via WhatsApp</Button><Button type="button" variant="outline" onClick={() => { const link = shareLink || shareProfile(); navigator.clipboard?.writeText(link); toast.success("Lien de partage copié"); }} className="gap-2"><Link2 className="h-4 w-4" /> Copier le lien</Button><Button type="button" onClick={handlePreviewPDF} variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Prévisualiser le PDF</Button></div>
+            {shareLink && <div className="rounded-xl bg-white border border-emerald-200 p-3 text-xs text-slate-700 break-all"><span className="font-semibold block mb-1">Lien généré</span>{shareLink}</div>}
+            <p className="text-xs text-emerald-900/70">Le PDF comporte l’en-tête 3M TRAVEL AGENCY, les coordonnées Yaoundé–Ottawa, le score, les sous-scores, les rondes comparées et les réserves officielles.</p>
+          </div>
+        )}
+
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100 pt-5">
+          <Button type="button" variant="outline" onClick={() => setWizardStep((step) => Math.max(1, step - 1))} disabled={wizardStep === 1} className="gap-2"><ArrowLeft className="h-4 w-4" /> Précédent</Button>
+          {wizardStep < 4 ? <Button type="button" onClick={() => setWizardStep((step) => Math.min(4, step + 1))} disabled={wizardStep === 1 && !fullName.trim()} className="gap-2 bg-blue-700 hover:bg-blue-800">{wizardStep === 1 ? "Continuer vers les critères" : wizardStep === 2 ? "Voir mon résultat" : "Partager et télécharger"}<ChevronRight className="h-4 w-4" /></Button> : <Button type="button" onClick={() => setWizardStep(3)} variant="outline">Modifier mes réponses</Button>}
         </div>
       </CardContent>
     </Card>
