@@ -20,6 +20,15 @@ describe("simulateur CRS complet", () => {
     expect(source).toContain("wa.me/237698104832");
   });
 
+  it("anime les étapes et prépare l’envoi du PDF par e-mail", () => {
+    expect(source).toContain('key="profile-step"');
+    expect(source).toContain('key="criteria-step"');
+    expect(source).toContain("handleEmailPdf");
+    expect(source).toContain("navigator.share");
+    expect(source).toContain("mailto:");
+    expect(source).toContain("Envoyer le PDF par e-mail");
+  });
+
   it("compose un PDF avec marque et coordonnées de l’agence", () => {
     expect(source).toContain("3M TRAVEL AGENCY");
     expect(source).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");

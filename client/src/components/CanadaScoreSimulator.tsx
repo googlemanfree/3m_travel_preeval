@@ -125,6 +125,7 @@ export default function CanadaScoreSimulator() {
   const [languageTestDate, setLanguageTestDate] = useState("");
   const [languageScores, setLanguageScores] = useState({ frenchReading: "", frenchWriting: "", frenchListening: "", frenchSpeaking: "", englishReading: "", englishWriting: "", englishListening: "", englishSpeaking: "" });
   const [shareLink, setShareLink] = useState("");
+  const [isEmailingPdf, setIsEmailingPdf] = useState(false);
   const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("3m-crs-recommendation-checklist") ?? "{}");
@@ -400,6 +401,40 @@ export default function CanadaScoreSimulator() {
     }
   };
 
+  const handleEmailPdf = async () => {
+    const recipient = email.trim();
+    if (!recipient || !/^\S+@\S+\.\S+$/.test(recipient)) {
+      toast.error("Ajoutez une adresse e-mail valide à l’étape Profil avant l’envoi.");
+      setWizardStep(1);
+      return;
+    }
+    setIsEmailingPdf(true);
+    try {
+      const blob = (await createPdfDocument()).output("blob");
+      const filename = `simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({ title: "Simulation CRS Canada — 3M Travel Agency", text: `Bonjour ${fullName || ""}, voici votre simulation CRS Canada.`, files: [file] });
+        toast.success("Le PDF est prêt à être envoyé par e-mail depuis le menu de partage.");
+      } else {
+        const downloadUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = downloadUrl;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(downloadUrl);
+        const subject = encodeURIComponent("Votre simulation CRS Canada — 3M Travel Agency");
+        const body = encodeURIComponent(`Bonjour ${fullName || ""},\n\nVotre PDF de simulation CRS vient d’être téléchargé. Joignez-le à ce courriel avant l’envoi.\n\nScore indicatif : ${scores.total}/1200 points.`);
+        window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
+        toast.success("Le PDF a été téléchargé et votre messagerie a été ouverte pour l’envoyer.");
+      }
+    } catch (error) {
+      if ((error as DOMException)?.name !== "AbortError") toast.error("L’envoi du PDF a été interrompu. Vous pouvez utiliser WhatsApp ou le téléchargement.");
+    } finally {
+      setIsEmailingPdf(false);
+    }
+  };
+
   const handleCopyResults = async () => {
     setIsCopying(true);
     const summary = [
@@ -517,7 +552,7 @@ export default function CanadaScoreSimulator() {
               const step = index + 1;
               return (
                 <button key={label} type="button" onClick={() => step <= wizardStep && setWizardStep(step)} className="text-left group" aria-label={`Aller à l'étape ${step} : ${label}`}>
-                  <div className={`h-2 rounded-full transition-colors ${step <= wizardStep ? "bg-blue-600" : "bg-slate-200"}`} />
+                <div className="h-2 rounded-full bg-slate-200 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: step <= wizardStep ? "100%" : "0%" }} transition={{ duration: 0.45, ease: "easeOut" }} className="h-full rounded-full bg-blue-600" /></div>
                   <span className={`mt-2 block text-[11px] font-semibold ${step === wizardStep ? "text-blue-800" : "text-slate-500"}`}>{label}</span>
                 </button>
               );
@@ -526,7 +561,7 @@ export default function CanadaScoreSimulator() {
         </div>
 
         {wizardStep === 1 && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 space-y-5">
+          <motion.div key="profile-step" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }} className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 space-y-5">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-blue-100 p-2 text-blue-700"><UserRound className="h-5 w-5" /></div>
               <div><h3 className="font-bold text-slate-900">1. Votre profil et votre projet</h3><p className="text-sm text-slate-600">Ces informations permettent de personnaliser le rapport et le suivi, sans modifier le barème officiel.</p></div>
@@ -541,10 +576,10 @@ export default function CanadaScoreSimulator() {
               <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2"><Checkbox checked={hasJobOffer} onCheckedChange={(checked) => setHasJobOffer(checked === true)} /> J’ai déjà une offre d’emploi canadienne vérifiable</label>
               <div className="space-y-2"><Label htmlFor="crs-test-date">Date du dernier test de langue</Label><input id="crs-test-date" type="date" value={languageTestDate} onChange={(e) => setLanguageTestDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        <div className={wizardStep === 2 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
+        <motion.div key="criteria-step" initial={{ opacity: 0, x: 18 }} animate={{ opacity: wizardStep === 2 ? 1 : 0, x: wizardStep === 2 ? 0 : 18 }} transition={{ duration: 0.25 }} className={wizardStep === 2 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
           <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
             <div><p className="font-bold text-indigo-950">Notes détaillées du test de langue</p><p className="text-xs text-indigo-900/75">Saisissez les résultats inscrits sur votre TEF/TCF Canada, IELTS ou CELPIP. Le niveau CLB/NCLC sélectionné ci-dessous reste la base du calcul indicatif.</p></div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -719,7 +754,7 @@ export default function CanadaScoreSimulator() {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Résultat et Score */}
         <div className={wizardStep === 3 ? "mt-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6" : "hidden"}>
@@ -1030,7 +1065,7 @@ export default function CanadaScoreSimulator() {
         {wizardStep === 4 && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 md:p-6 space-y-5">
             <div className="flex items-start gap-3"><div className="rounded-xl bg-emerald-100 p-2 text-emerald-700"><Share2 className="h-5 w-5" /></div><div><h3 className="font-bold text-emerald-950">4. Partager votre évaluation</h3><p className="text-sm text-emerald-900/80">Créez un lien de reprise contenant uniquement les réponses du simulateur, puis envoyez-le à votre conseiller sur WhatsApp.</p></div></div>
-            <div className="flex flex-col sm:flex-row gap-3"><Button type="button" onClick={handleShareWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700"><Share2 className="h-4 w-4" /> Partager via WhatsApp</Button><Button type="button" variant="outline" onClick={() => { const link = shareLink || shareProfile(); navigator.clipboard?.writeText(link); toast.success("Lien de partage copié"); }} className="gap-2"><Link2 className="h-4 w-4" /> Copier le lien</Button><Button type="button" onClick={handlePreviewPDF} variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Prévisualiser le PDF</Button></div>
+            <div className="flex flex-col sm:flex-row gap-3"><Button type="button" onClick={handleShareWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700"><Share2 className="h-4 w-4" /> Partager via WhatsApp</Button><Button type="button" variant="outline" onClick={() => { const link = shareLink || shareProfile(); navigator.clipboard?.writeText(link); toast.success("Lien de partage copié"); }} className="gap-2"><Link2 className="h-4 w-4" /> Copier le lien</Button><Button type="button" onClick={handleEmailPdf} disabled={isEmailingPdf} variant="outline" className="gap-2"><Mail className="h-4 w-4" /> {isEmailingPdf ? "Préparation du PDF…" : "Envoyer le PDF par e-mail"}</Button><Button type="button" onClick={handlePreviewPDF} variant="outline" className="gap-2"><Eye className="h-4 w-4" /> Prévisualiser le PDF</Button></div>
             {shareLink && <div className="rounded-xl bg-white border border-emerald-200 p-3 text-xs text-slate-700 break-all"><span className="font-semibold block mb-1">Lien généré</span>{shareLink}</div>}
             <p className="text-xs text-emerald-900/70">Le PDF comporte l’en-tête 3M TRAVEL AGENCY, les coordonnées Yaoundé–Ottawa, le score, les sous-scores, les rondes comparées et les réserves officielles.</p>
           </div>
