@@ -49,6 +49,43 @@ const EXPERIENCE_OPTIONS: Array<{ value: ExperienceYears; label: string }> = [
   { value: 5, label: "5 ans ou plus" },
 ];
 
+function LanguageCriterionHint({ language, kind }: { language: "fr" | "en"; kind: "french" | "english" }) {
+  const isFrench = language === "fr";
+  const title = kind === "french"
+    ? (isFrench ? "Français : TEF Canada ou TCF Canada" : "French: TEF Canada or TCF Canada")
+    : (isFrench ? "Anglais : IELTS General Training ou CELPIP-General" : "English: IELTS General Training or CELPIP-General");
+  const description = kind === "french"
+    ? (isFrench
+      ? "Sélectionnez le niveau NCLC correspondant à vos quatre compétences (compréhension orale, expression orale, compréhension écrite et expression écrite). Le résultat exact dépend de la conversion officielle IRCC de vos notes TEF/TCF."
+      : "Select the NCLC level corresponding to your four abilities (listening, speaking, reading and writing). The exact result depends on IRCC’s official conversion of your TEF/TCF scores.")
+    : (isFrench
+      ? "Sélectionnez le niveau CLB correspondant à vos quatre compétences. Le résultat exact dépend de la conversion officielle IRCC de vos notes IELTS General Training ou CELPIP-General."
+      : "Select the CLB level corresponding to your four abilities. The exact result depends on IRCC’s official conversion of your IELTS General Training or CELPIP-General scores.");
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={isFrench ? `Expliquer le critère ${title}` : `Explain the ${title} criterion`}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <HelpCircle className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+          <p className="font-semibold">{title}</p>
+          <p>{description}</p>
+          <p className="mt-1 text-muted-foreground">
+            {isFrench ? "Le simulateur utilise une estimation par palier; vérifiez toujours vos notes sur le résultat officiel." : "This simulator uses a band estimate; always verify your scores against the official result."}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
   const { isAuthenticated } = useCandidateAuth();
@@ -429,7 +466,10 @@ export default function CanadaScoreSimulator() {
 
           {/* Français */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">Français (TEF/TCF) — niveau CLB/NCLC le plus proche</Label>
+            <div className="flex items-center gap-1">
+              <Label className="font-semibold text-gray-800">Français (TEF/TCF) — niveau CLB/NCLC le plus proche</Label>
+              <LanguageCriterionHint language={language} kind="french" />
+            </div>
             <Select value={String(frenchClb)} onValueChange={(value) => setFrenchClb(Number(value))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Niveau de français" />
@@ -442,7 +482,10 @@ export default function CanadaScoreSimulator() {
 
           {/* Anglais */}
           <div className="space-y-2">
-            <Label className="font-semibold text-gray-800">Anglais (IELTS/CELPIP) — niveau CLB le plus proche</Label>
+            <div className="flex items-center gap-1">
+              <Label className="font-semibold text-gray-800">Anglais (IELTS/CELPIP) — niveau CLB le plus proche</Label>
+              <LanguageCriterionHint language={language} kind="english" />
+            </div>
             <Select value={String(englishClb)} onValueChange={(value) => setEnglishClb(Number(value))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Niveau d'anglais" />

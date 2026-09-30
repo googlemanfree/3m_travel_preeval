@@ -79,6 +79,18 @@ describe("simulateur CRS Canada : le composant utilise bien le calcul officiel",
     expect(screen.getByText(new RegExp(CRS_SOURCE.note.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))).toBeTruthy();
   });
 
+  it("expose des infobulles accessibles pour les critères TEF/TCF et IELTS/CELPIP", () => {
+    render(<CanadaScoreSimulator />);
+
+    expect(screen.getByRole("button", { name: /Expliquer le critère Français/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Expliquer le critère Anglais/i })).toBeTruthy();
+    const source = read("client/src/components/CanadaScoreSimulator.tsx");
+    expect(source).toContain("quatre compétences");
+    expect(source).toContain("conversion officielle IRCC");
+    expect(source).toContain("IELTS General Training ou CELPIP-General");
+    expect(source).toContain("estimation par palier");
+  });
+
   it("jamais de points d'emploi réservé : IRCC les a retirés, le formulaire ne doit pas les redemander comme facteur de score", () => {
     render(<CanadaScoreSimulator />);
     // Le composant explique dans sa source que ces points ont été retirés (voir le test de citation ci-dessus) ;
