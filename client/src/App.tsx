@@ -46,6 +46,7 @@ const AdminMediaLibrary = lazyWithTimeout(() => import("./pages/AdminMediaLibrar
 const AdminUserDetails = lazyWithTimeout(() => import("./pages/AdminUserDetails"));
 const VisaEtudes = lazyWithTimeout(() => import("./pages/VisaEtudes"));
 const Canada = lazyWithTimeout(() => import("./pages/Canada"));
+const CanadaCrsPage = lazyWithTimeout(() => import("./pages/CanadaCrsPage"));
 const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const CniPasseport = lazyWithTimeout(() => import("./pages/CniPasseport"));
@@ -246,6 +247,7 @@ function Router() {
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/canada"} component={Canada} />
+      <Route path={"/canada/crs"} component={CanadaCrsPage} />
       <Route path={"/schengen"} component={Schengen} />
       <Route path={"/etudes"} component={VisaEtudes} />
       <Route path={"/visa-etudes"}>{() => <Redirect to="/etudes" />}</Route>

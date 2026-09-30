@@ -200,6 +200,10 @@ export default function Canada() {
         </figure>
 
         <div className="my-2 rounded-2xl border-2 border-blue-300 bg-white p-6 shadow-md">
+          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="font-black text-indigo-950">Le calcul CRS est maintenant disponible sur une page Canada dédiée</p><p className="mt-1 text-xs leading-5 text-indigo-900/80">Accédez directement au parcours Entrée express, séparé des autres destinations et programmes.</p></div>
+            <Link href="/canada/crs" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-indigo-700 px-4 py-2 text-sm font-black text-white transition hover:bg-indigo-800">Ouvrir Canada CRS <ArrowRight className="ml-2 h-4 w-4" /></Link>
+          </div>
           <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 p-4 text-blue-900">
             <AlertCircle className="h-5 w-5 shrink-0 text-blue-700" />
             <p className="text-sm font-semibold">
