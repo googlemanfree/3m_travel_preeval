@@ -4,7 +4,7 @@
  * donnent des chiffres identiques) :
  *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/grid.htm
  *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html
- * Les points d'emploi réservé (« arranged employment ») ont été retirés par IRCC le 25 mars 2026 : ils n'existent plus
+ * Les points d'emploi réservé (« arranged employment ») ont été retirés par IRCC le 25 mars 2025 : ils n'existent plus
  * dans ce calcul, volontairement. Rien ici n'est un chiffre estimé ou arrondi « à vue d'œil » : une valeur absente de la
  * grille officielle n'est jamais complétée par une supposition.
  */
@@ -21,6 +21,13 @@ export type SpouseProfile = {
   canadianExperienceYears: ExperienceYears;
 };
 
+export type LanguageAbilities = {
+  reading: number;
+  writing: number;
+  listening: number;
+  speaking: number;
+};
+
 export type CrsProfile = {
   age: number;
   maritalStatus: MaritalStatus;
@@ -29,6 +36,11 @@ export type CrsProfile = {
   frenchClb: number;
   /** CLB en anglais, même simplification. */
   englishClb: number;
+  /** Niveaux CLB/NCLC distincts pour la première langue officielle. */
+  firstLanguageAbilities?: LanguageAbilities;
+  /** Niveaux CLB/NCLC distincts pour la deuxième langue officielle. */
+  secondLanguageAbilities?: LanguageAbilities;
+  firstOfficialLanguage?: "english" | "french";
   canadianExperienceYears: ExperienceYears;
   /** Expérience professionnelle ACQUISE HORS DU CANADA, pour la transférabilité des compétences (jamais comptée comme expérience canadienne). */
   foreignExperienceYears: ExperienceYears;
@@ -141,6 +153,10 @@ export function firstLanguagePoints(clb: number, withSpouse: boolean): number {
   return cap(firstLanguageAbilityPoints(clb, withSpouse) * 4, withSpouse ? 128 : 136);
 }
 
+export function firstLanguagePointsByAbility(abilities: LanguageAbilities, withSpouse: boolean): number {
+  return cap(Object.values(abilities).reduce((total, clb) => total + firstLanguageAbilityPoints(clb, withSpouse), 0), withSpouse ? 128 : 136);
+}
+
 const SECOND_LANGUAGE_PER_ABILITY: Array<{ minClb: number; points: number }> = [
   { minClb: 9, points: 6 },
   { minClb: 7, points: 3 },
@@ -155,6 +171,10 @@ export function secondLanguageAbilityPoints(clb: number): number {
 
 export function secondLanguagePoints(clb: number, withSpouse: boolean): number {
   return cap(secondLanguageAbilityPoints(clb) * 4, withSpouse ? 22 : 24);
+}
+
+export function secondLanguagePointsByAbility(abilities: LanguageAbilities, withSpouse: boolean): number {
+  return cap(Object.values(abilities).reduce((total, clb) => total + secondLanguageAbilityPoints(clb), 0), withSpouse ? 22 : 24);
 }
 
 const CANADIAN_EXPERIENCE_TABLE: Record<ExperienceYears, { withSpouse: number; withoutSpouse: number }> = {
@@ -249,8 +269,10 @@ export function transferabilityCertificate(hasTradeCertificate: boolean, bestClb
 
 export type SkillTransferability = { educationLanguage: number; educationExperience: number; foreignExperienceLanguage: number; foreignExperienceCanadianExperience: number; certificate: number; total: number };
 
-export function skillTransferabilityPoints(profile: Pick<CrsProfile, "education" | "frenchClb" | "englishClb" | "canadianExperienceYears" | "foreignExperienceYears" | "hasTradeCertificate">): SkillTransferability {
-  const bestClb = Math.max(profile.frenchClb, profile.englishClb);
+export function skillTransferabilityPoints(profile: Pick<CrsProfile, "education" | "frenchClb" | "englishClb" | "canadianExperienceYears" | "foreignExperienceYears" | "hasTradeCertificate"> & Pick<CrsProfile, "firstLanguageAbilities">): SkillTransferability {
+  const bestClb = profile.firstLanguageAbilities
+    ? Math.min(...Object.values(profile.firstLanguageAbilities))
+    : Math.max(profile.frenchClb, profile.englishClb);
   const educationLanguage = cap(transferabilityEducationLanguage(profile.education, bestClb), 50);
   const educationExperience = cap(transferabilityEducationExperience(profile.education, profile.canadianExperienceYears), 50);
   const foreignExperienceLanguage = cap(transferabilityForeignExperienceLanguage(profile.foreignExperienceYears, bestClb), 50);
@@ -270,12 +292,21 @@ export function frenchBonusPoints(frenchClb: number, englishClb: number): number
   return englishClb >= 5 ? 50 : 25;
 }
 
+export function frenchBonusPointsByAbility(french: LanguageAbilities, english: LanguageAbilities): number {
+  if (!Object.values(french).every((clb) => clb >= 7)) return 0;
+  return Object.values(english).every((clb) => clb >= 5) ? 50 : 25;
+}
+
 export function computeCrsScore(profile: CrsProfile): CrsBreakdown {
   const withSpouse = profile.maritalStatus === "with_spouse" && Boolean(profile.spouse);
   const age = agePoints(profile.age, withSpouse);
   const education = educationPoints(profile.education, withSpouse);
-  const firstLanguage = firstLanguagePoints(Math.max(profile.frenchClb, profile.englishClb), withSpouse);
-  const secondLanguage = secondLanguagePoints(Math.min(profile.frenchClb, profile.englishClb), withSpouse);
+  const firstLanguage = profile.firstLanguageAbilities
+    ? firstLanguagePointsByAbility(profile.firstLanguageAbilities, withSpouse)
+    : firstLanguagePoints(Math.max(profile.frenchClb, profile.englishClb), withSpouse);
+  const secondLanguage = profile.secondLanguageAbilities
+    ? secondLanguagePointsByAbility(profile.secondLanguageAbilities, withSpouse)
+    : secondLanguagePoints(Math.min(profile.frenchClb, profile.englishClb), withSpouse);
   const canadianExperience = canadianExperiencePoints(profile.canadianExperienceYears, withSpouse);
   const coreHumanCapitalMax = withSpouse ? 460 : 500;
   const coreHumanCapital = cap(age + education + firstLanguage + secondLanguage + canadianExperience, coreHumanCapitalMax);
@@ -283,7 +314,11 @@ export function computeCrsScore(profile: CrsProfile): CrsBreakdown {
   const spouse = spouseFactorPoints(withSpouse ? profile.spouse : null);
   const transferability = skillTransferabilityPoints(profile);
   const canadianEducationBonus = CANADIAN_EDUCATION_BONUS[profile.canadianEducation];
-  const frenchBonus = frenchBonusPoints(profile.frenchClb, profile.englishClb);
+  const frenchBonus = profile.firstLanguageAbilities && profile.secondLanguageAbilities && profile.firstOfficialLanguage
+    ? profile.firstOfficialLanguage === "french"
+      ? frenchBonusPointsByAbility(profile.firstLanguageAbilities, profile.secondLanguageAbilities)
+      : frenchBonusPointsByAbility(profile.secondLanguageAbilities, profile.firstLanguageAbilities)
+    : frenchBonusPoints(profile.frenchClb, profile.englishClb);
   const siblingBonus = profile.hasSiblingInCanada ? 15 : 0;
   const provincialNomination = profile.hasProvincialNomination ? 600 : 0;
   const additionalPoints = canadianEducationBonus + frenchBonus + siblingBonus + provincialNomination;
@@ -308,5 +343,5 @@ export const CRS_SOURCE = {
   organization: "Immigration, Réfugiés et Citoyenneté Canada (IRCC)",
   url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/grid.htm",
   verifiedAt: "2026-09-27",
-  note: "Les points d'emploi réservé ont été retirés par IRCC le 25 mars 2026 ; ce calcul ne les inclut plus.",
+  note: "Les points d'emploi réservé ont été retirés par IRCC le 25 mars 2025 ; ce calcul ne les inclut plus.",
 } as const;

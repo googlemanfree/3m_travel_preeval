@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "@/data/crsHistoricalRounds";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
-import { computeCrsScore, CRS_SOURCE, type CanadianEducationLevel, type CrsProfile, type EducationLevel, type ExperienceYears, type MaritalStatus } from "@shared/crsScore";
+import { computeCrsScore, CRS_SOURCE, type CanadianEducationLevel, type CrsProfile, type EducationLevel, type ExperienceYears, type LanguageAbilities, type MaritalStatus } from "@shared/crsScore";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useLocation } from "wouter";
 
@@ -38,6 +38,13 @@ const CLB_OPTIONS = [
   { value: 8, label: "CLB 8" },
   { value: 9, label: "CLB 9" },
   { value: 10, label: "CLB 10 et plus" },
+];
+
+const LANGUAGE_ABILITIES: Array<{ key: keyof LanguageAbilities; label: string }> = [
+  { key: "reading", label: "Lecture" },
+  { key: "writing", label: "Écriture" },
+  { key: "listening", label: "Écoute" },
+  { key: "speaking", label: "Expression orale" },
 ];
 
 const EXPERIENCE_OPTIONS: Array<{ value: ExperienceYears; label: string }> = [
@@ -137,6 +144,9 @@ export default function CanadaScoreSimulator() {
   const [occupation, setOccupation] = useState("");
   const [hasJobOffer, setHasJobOffer] = useState(false);
   const [languageTestDate, setLanguageTestDate] = useState("");
+  const [firstOfficialLanguage, setFirstOfficialLanguage] = useState<"english" | "french">("english");
+  const [firstLanguageAbilities, setFirstLanguageAbilities] = useState<LanguageAbilities>({ reading: 9, writing: 9, listening: 9, speaking: 9 });
+  const [secondLanguageAbilities, setSecondLanguageAbilities] = useState<LanguageAbilities>({ reading: 0, writing: 0, listening: 0, speaking: 0 });
   const [selectedProgram, setSelectedProgram] = useState<CanadaProgram>("express_entry");
   const [programStream, setProgramStream] = useState("cec");
   const [programDetails, setProgramDetails] = useState("");
@@ -174,9 +184,15 @@ export default function CanadaScoreSimulator() {
 
   const latestThreshold = filteredRounds.length > 0 ? filteredRounds[0].minScore : 500;
 
+  const firstLanguageClb = Math.min(...Object.values(firstLanguageAbilities));
+  const secondLanguageClb = Math.min(...Object.values(secondLanguageAbilities));
+  const frenchClbForScore = firstOfficialLanguage === "french" ? firstLanguageClb : secondLanguageClb;
+  const englishClbForScore = firstOfficialLanguage === "english" ? firstLanguageClb : secondLanguageClb;
+
   // Calcul CRS réel (shared/crsScore.ts) : rien n'est arrondi ni estimé, chaque sous-score vient de la grille officielle IRCC.
   const crsProfile: CrsProfile = {
-    age, maritalStatus, education, frenchClb, englishClb,
+    age, maritalStatus, education, frenchClb: frenchClbForScore, englishClb: englishClbForScore,
+    firstOfficialLanguage, firstLanguageAbilities, secondLanguageAbilities,
     canadianExperienceYears, foreignExperienceYears, hasTradeCertificate, canadianEducation,
     hasSiblingInCanada, hasProvincialNomination,
     spouse: maritalStatus === "with_spouse" ? { education: spouseEducation, firstLanguageClb: spouseClb, canadianExperienceYears: spouseExperienceYears } : null,
@@ -188,11 +204,11 @@ export default function CanadaScoreSimulator() {
   // Recommandations personnalisées : uniquement des leviers réels, absents ou incomplets dans le profil saisi.
   const getRecommendations = () => {
     const recs: Array<{ title: string; desc: string }> = [];
-    const bestClb = Math.max(frenchClb, englishClb);
-    if (frenchClb < 7) {
+    const bestClb = Math.max(frenchClbForScore, englishClbForScore);
+    if (frenchClbForScore < 7) {
       recs.push({ title: "Faire reconnaître un niveau de français NCLC 7+", desc: "Un français d'au moins NCLC 7 (TEF/TCF) déclenche un bonus de 25 à 50 points, en plus des points de langue habituels." });
     }
-    if (englishClb < 9) {
+    if (englishClbForScore < 9) {
       recs.push({ title: "Viser le CLB 9 en anglais (IELTS/CELPIP)", desc: "Chaque palier de CLB gagné en langue rapporte des points, à la fois sur le volet langue et sur la transférabilité des compétences." });
     }
     if (scores.skillTransferability < 100) {
@@ -227,7 +243,7 @@ export default function CanadaScoreSimulator() {
         spouseExperienceYears: ExperienceYears; hasTradeCertificate: boolean; canadianEducation: CanadianEducationLevel;
         hasSiblingInCanada: boolean; hasProvincialNomination: boolean; selectedCategory: string; wizardStep: number;
         fullName: string; email: string; phone: string; residenceCountry: string; targetProvince: string; occupation: string;
-        hasJobOffer: boolean; languageTestDate: string; selectedProgram: CanadaProgram; programStream: string; programDetails: string; languageScores: typeof languageScores;
+        hasJobOffer: boolean; languageTestDate: string; firstOfficialLanguage: "english" | "french"; firstLanguageAbilities: LanguageAbilities; secondLanguageAbilities: LanguageAbilities; selectedProgram: CanadaProgram; programStream: string; programDetails: string; languageScores: typeof languageScores;
       }> | null;
       if (saved) {
         if (typeof saved.age === "number") setAge(saved.age);
@@ -254,6 +270,9 @@ export default function CanadaScoreSimulator() {
         if (typeof saved.occupation === "string") setOccupation(saved.occupation);
         if (typeof saved.hasJobOffer === "boolean") setHasJobOffer(saved.hasJobOffer);
         if (typeof saved.languageTestDate === "string") setLanguageTestDate(saved.languageTestDate);
+        if (saved.firstOfficialLanguage) setFirstOfficialLanguage(saved.firstOfficialLanguage);
+        if (saved.firstLanguageAbilities) setFirstLanguageAbilities(saved.firstLanguageAbilities);
+        if (saved.secondLanguageAbilities) setSecondLanguageAbilities(saved.secondLanguageAbilities);
         if (saved.selectedProgram) setSelectedProgram(saved.selectedProgram);
         if (typeof saved.programStream === "string") setProgramStream(saved.programStream);
         if (typeof saved.programDetails === "string") setProgramDetails(saved.programDetails);
@@ -273,9 +292,9 @@ export default function CanadaScoreSimulator() {
       age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus,
       spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada,
       hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince,
-      occupation, hasJobOffer, languageTestDate, selectedProgram, programStream, programDetails, languageScores,
+      occupation, hasJobOffer, languageTestDate, firstOfficialLanguage, firstLanguageAbilities, secondLanguageAbilities, selectedProgram, programStream, programDetails, languageScores,
     }));
-  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, selectedProgram, programStream, programDetails, languageScores]);
+  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, firstOfficialLanguage, firstLanguageAbilities, secondLanguageAbilities, selectedProgram, programStream, programDetails, languageScores]);
 
   const toggleRecommendation = (title: string) => {
     setCompletedRecommendations((current) => ({ ...current, [title]: !current[title] }));
@@ -286,7 +305,7 @@ export default function CanadaScoreSimulator() {
   const loadSharedProfile = (encoded: string) => {
     try {
       const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))))) as Partial<{
-        fullName: string; age: number; education: EducationLevel; frenchClb: number; englishClb: number;
+        fullName: string; age: number; education: EducationLevel; frenchClb: number; englishClb: number; firstOfficialLanguage: "english" | "french"; firstLanguageAbilities: LanguageAbilities; secondLanguageAbilities: LanguageAbilities;
         maritalStatus: MaritalStatus; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears; selectedProgram: CanadaProgram; programStream: string;
         canadianEducation: CanadianEducationLevel; hasTradeCertificate: boolean; hasSiblingInCanada: boolean; hasProvincialNomination: boolean;
       }>;
@@ -295,6 +314,9 @@ export default function CanadaScoreSimulator() {
       if (parsed.education) setEducation(parsed.education);
       if (typeof parsed.frenchClb === "number") setFrenchClb(parsed.frenchClb);
       if (typeof parsed.englishClb === "number") setEnglishClb(parsed.englishClb);
+      if (parsed.firstOfficialLanguage) setFirstOfficialLanguage(parsed.firstOfficialLanguage);
+      if (parsed.firstLanguageAbilities) setFirstLanguageAbilities(parsed.firstLanguageAbilities);
+      if (parsed.secondLanguageAbilities) setSecondLanguageAbilities(parsed.secondLanguageAbilities);
       if (parsed.maritalStatus) setMaritalStatus(parsed.maritalStatus);
       if (typeof parsed.canadianExperienceYears === "number") setCanadianExperienceYears(parsed.canadianExperienceYears);
       if (typeof parsed.foreignExperienceYears === "number") setForeignExperienceYears(parsed.foreignExperienceYears);
@@ -317,7 +339,7 @@ export default function CanadaScoreSimulator() {
 
   const shareProfile = () => {
     const payload = {
-      fullName: fullName.trim(), age, education, frenchClb, englishClb, maritalStatus, selectedProgram, programStream,
+      fullName: fullName.trim(), age, education, frenchClb: frenchClbForScore, englishClb: englishClbForScore, firstOfficialLanguage, firstLanguageAbilities, secondLanguageAbilities, maritalStatus, selectedProgram, programStream,
       canadianExperienceYears, foreignExperienceYears, canadianEducation, hasTradeCertificate,
       hasSiblingInCanada, hasProvincialNomination,
     };
@@ -407,8 +429,10 @@ export default function CanadaScoreSimulator() {
         body: [
           ["Âge", `${scores.age} pts`, "100-110 pts"],
           ["Études", `${scores.education} pts`, "140-150 pts"],
-          ["Langue — première", `${scores.firstLanguage} pts`, "128-136 pts"],
-          ["Langue — seconde", `${scores.secondLanguage} pts`, "22-24 pts"],
+          [`Langue — première (${firstOfficialLanguage === "english" ? "anglais" : "français"})`, `${scores.firstLanguage} pts`, "128-136 pts"],
+          ...LANGUAGE_ABILITIES.map(({ key, label }) => [`  · ${label}`, `${firstLanguageAbilities[key]} CLB/NCLC`, "par compétence"]),
+          [`Langue — seconde (${firstOfficialLanguage === "english" ? "français" : "anglais"})`, `${scores.secondLanguage} pts`, "22-24 pts"],
+          ...LANGUAGE_ABILITIES.map(({ key, label }) => [`  · ${label}`, `${secondLanguageAbilities[key]} CLB/NCLC`, "par compétence"]),
           ["Expérience canadienne", `${scores.canadianExperience} pts`, "70-80 pts"],
           ["Capital humain (sous-total)", `${scores.coreHumanCapital} pts`, `${scores.coreHumanCapitalMax} pts`],
           ...(maritalStatus === "with_spouse" ? [["Facteurs du conjoint", `${scores.spouseFactors} pts`, "40 pts"]] : []),
@@ -694,11 +718,13 @@ export default function CanadaScoreSimulator() {
         )}
 
         <motion.div key="criteria-step" initial={{ opacity: 0, x: 18 }} animate={{ opacity: wizardStep === 2 ? 1 : 0, x: wizardStep === 2 ? 0 : 18 }} transition={{ duration: 0.25 }} className={wizardStep === 2 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
-          <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
-            <div><p className="font-bold text-indigo-950">Notes détaillées du test de langue</p><p className="text-xs text-indigo-900/75">Saisissez les résultats inscrits sur votre TEF/TCF Canada, IELTS ou CELPIP. Le niveau CLB/NCLC sélectionné ci-dessous reste la base du calcul indicatif.</p></div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {([['frenchReading','Français · compréhension écrite'],['frenchWriting','Français · expression écrite'],['frenchListening','Français · compréhension orale'],['frenchSpeaking','Français · expression orale'],['englishReading','Anglais · reading'],['englishWriting','Anglais · writing'],['englishListening','Anglais · listening'],['englishSpeaking','Anglais · speaking']] as const).map(([key, label]) => <div key={key} className="space-y-1"><Label className="text-[11px] leading-tight">{label}</Label><input inputMode="decimal" value={languageScores[key]} onChange={(e) => setLanguageScores((current) => ({ ...current, [key]: e.target.value }))} placeholder="—" className="flex h-9 w-full rounded-md border border-input bg-white px-2 text-sm" /></div>)}
+          <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-5">
+            <div><p className="font-bold text-indigo-950">Langues officielles — comme dans la calculatrice IRCC</p><p className="text-xs leading-5 text-indigo-900/75">Sélectionnez la première langue officielle, puis le niveau CLB/NCLC de chacune des quatre compétences. Le score est calculé compétence par compétence, et non avec une moyenne.</p></div>
+            <div className="max-w-md space-y-2"><Label htmlFor="crs-first-language">Quelle est votre première langue officielle ?</Label><Select value={firstOfficialLanguage} onValueChange={(value) => setFirstOfficialLanguage(value as "english" | "french")}><SelectTrigger id="crs-first-language" className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="english">Anglais</SelectItem><SelectItem value="french">Français</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {[{ title: `Première langue officielle : ${firstOfficialLanguage === "english" ? "anglais" : "français"}`, value: firstLanguageAbilities, setValue: setFirstLanguageAbilities, hintKind: firstOfficialLanguage === "english" ? "english" : "french" }, { title: `Deuxième langue officielle : ${firstOfficialLanguage === "english" ? "français" : "anglais"}`, value: secondLanguageAbilities, setValue: setSecondLanguageAbilities, hintKind: firstOfficialLanguage === "english" ? "french" : "english" }] .map((languageBlock) => <div key={languageBlock.title} className="rounded-xl border border-indigo-100 bg-white p-4"><div className="mb-3 flex items-center gap-1"><p className="text-sm font-bold text-indigo-950">{languageBlock.title}</p><LanguageCriterionHint language={language} kind={languageBlock.hintKind as "french" | "english"} /></div><div className="grid grid-cols-2 gap-3">{LANGUAGE_ABILITIES.map(({ key, label }) => <div key={key} className="space-y-1"><Label className="text-[11px]">{label}</Label><Select value={String(languageBlock.value[key])} onValueChange={(value) => languageBlock.setValue((current) => ({ ...current, [key]: Number(value) }))}><SelectTrigger className="h-9 bg-white text-xs"><SelectValue /></SelectTrigger><SelectContent>{CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}</SelectContent></Select></div>)}</div></div>)}
             </div>
+            <p className="text-[11px] leading-5 text-slate-500">Référence : <a href="https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice" target="_blank" rel="noreferrer" className="font-semibold underline hover:text-blue-700">Calculatrice officielle du SCG — IRCC</a>. Utilisez les résultats de votre test reconnu et vérifiez la date de validité.</p>
           </div>
           {/* Âge */}
           <div className="space-y-2">
@@ -737,38 +763,6 @@ export default function CanadaScoreSimulator() {
               <SelectContent>
                 <SelectItem value="without_spouse">Sans conjoint(e), ou conjoint(e) qui ne vous accompagne pas</SelectItem>
                 <SelectItem value="with_spouse">Avec conjoint(e) ou partenaire de fait qui vous accompagne</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Français */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <Label className="font-semibold text-gray-800">Français (TEF/TCF) — niveau CLB/NCLC le plus proche</Label>
-              <LanguageCriterionHint language={language} kind="french" />
-            </div>
-            <Select value={String(frenchClb)} onValueChange={(value) => setFrenchClb(Number(value))}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Niveau de français" />
-              </SelectTrigger>
-              <SelectContent>
-                {CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Anglais */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <Label className="font-semibold text-gray-800">Anglais (IELTS/CELPIP) — niveau CLB le plus proche</Label>
-              <LanguageCriterionHint language={language} kind="english" />
-            </div>
-            <Select value={String(englishClb)} onValueChange={(value) => setEnglishClb(Number(value))}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Niveau d'anglais" />
-              </SelectTrigger>
-              <SelectContent>
-                {CLB_OPTIONS.map((option) => <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -875,9 +869,10 @@ export default function CanadaScoreSimulator() {
             <div className="flex items-start gap-3"><div className="rounded-xl bg-amber-100 p-2 text-amber-700"><ListChecks className="h-5 w-5" /></div><div><h3 className="font-bold text-amber-950">Vérifiez vos réponses avant le rapport</h3><p className="text-sm text-amber-900/80">Modifiez un bloc si nécessaire, puis passez à l’étape suivante pour partager ou générer le PDF.</p></div></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Profil et programme</p><p className="text-slate-600">{selectedProgramData.label}</p><p className="text-slate-600">Volet : {selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}</p><p className="text-slate-600">{fullName || "Nom non renseigné"} · {age} ans · {residenceCountry || "Pays non renseigné"}</p><p className="text-slate-600">{occupation || "Profession non renseignée"} · cible : {targetProvince || "non renseignée"}</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(1)}>Modifier le profil</Button></div>
-              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Critères CRS</p><p className="text-slate-600">Études : {EDUCATION_OPTIONS.find((option) => option.value === education)?.label ?? education}</p><p className="text-slate-600">Français NCLC {frenchClb} · Anglais CLB {englishClb} · Canada {canadianExperienceYears} an(s)</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(2)}>Modifier les critères</Button></div>
+              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Critères CRS</p><p className="text-slate-600">Études : {EDUCATION_OPTIONS.find((option) => option.value === education)?.label ?? education}</p><p className="text-slate-600">1re langue : {firstLanguageClb} · 2e langue : {secondLanguageClb} · Canada : {canadianExperienceYears} an(s)</p><p className="text-xs text-slate-500">Lecture, écriture, écoute et expression orale calculées séparément.</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(2)}>Modifier les critères</Button></div>
             </div>
             <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><span className="font-semibold">Résultat calculé :</span> {scores.total} points · écart de {scoreDiff >= 0 ? "+" : ""}{scoreDiff} points par rapport au dernier seuil comparé. {!isCrsProgram && <span className="text-slate-600"> Pour cette voie, le CRS est un repère complémentaire et ne remplace pas les critères du programme.</span>}</div>
+            <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><p className="font-semibold text-slate-900">Détail des langues</p><div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600 sm:grid-cols-4">{LANGUAGE_ABILITIES.map(({ key, label }) => <span key={`first-${key}`}>1re {label.toLowerCase()} : <strong className="text-slate-900">{firstLanguageAbilities[key]}</strong></span>)}{LANGUAGE_ABILITIES.map(({ key, label }) => <span key={`second-${key}`}>2e {label.toLowerCase()} : <strong className="text-slate-900">{secondLanguageAbilities[key]}</strong></span>)}</div></div>
           </motion.div>
         )}
 

@@ -72,4 +72,16 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("Informations propres à ce programme");
 		expect(source).toContain("Programme de visa pour démarrage d’entreprise");
 	});
+
+	it("calcule les langues comme la calculatrice IRCC, compétence par compétence", () => {
+		expect(source).toContain("firstOfficialLanguage");
+		expect(source).toContain("firstLanguageAbilities");
+		expect(source).toContain("secondLanguageAbilities");
+		expect(source).toContain("Lecture");
+		expect(source).toContain("Expression orale");
+		expect(source).toContain("calculées séparément");
+		expect(source).toContain("Calculatrice officielle du SCG");
+		expect(source).toContain("Détail des langues");
+		expect(source).toContain("par compétence");
+	});
 });

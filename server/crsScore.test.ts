@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  agePoints, canadianExperiencePoints, computeCrsScore, educationPoints, firstLanguagePoints,
+  agePoints, canadianExperiencePoints, computeCrsScore, educationPoints, firstLanguagePoints, firstLanguagePointsByAbility,
   frenchBonusPoints, secondLanguagePoints, skillTransferabilityPoints, spouseFactorPoints,
-  type CrsProfile, type EducationLevel,
+  type CrsProfile, type EducationLevel, type LanguageAbilities,
 } from "../shared/crsScore";
 
 // Chiffres recoupés le 2026-09-27 sur deux pages officielles distinctes de canada.ca (voir shared/crsScore.ts) :
@@ -77,6 +77,27 @@ describe("seconde langue officielle", () => {
     expect(secondLanguagePoints(8, false)).toBe(12);
     expect(secondLanguagePoints(9, true)).toBe(22); // 6×4=24, plafonné à 22 avec conjoint
     expect(secondLanguagePoints(9, false)).toBe(24);
+  });
+});
+
+describe("compétences linguistiques distinctes selon la calculatrice IRCC", () => {
+  it("additionne les points par habileté au lieu d'appliquer un niveau uniforme", () => {
+    const abilities: LanguageAbilities = { reading: 10, writing: 9, listening: 8, speaking: 7 };
+    expect(firstLanguagePointsByAbility(abilities, false)).toBe(34 + 31 + 23 + 17);
+    expect(firstLanguagePointsByAbility(abilities, true)).toBe(32 + 29 + 22 + 16);
+  });
+
+  it("plafonne la deuxième langue à 24 sans conjoint et 22 avec conjoint", () => {
+    const abilities: LanguageAbilities = { reading: 10, writing: 10, listening: 10, speaking: 10 };
+    const profile = {
+      age: 30, maritalStatus: "without_spouse" as const, education: "bachelor_or_three_year" as const,
+      frenchClb: 0, englishClb: 10, firstLanguageAbilities: abilities,
+      secondLanguageAbilities: abilities, firstOfficialLanguage: "english" as const,
+      canadianExperienceYears: 0 as const, foreignExperienceYears: 0 as const,
+      hasTradeCertificate: false, canadianEducation: "none" as const, hasSiblingInCanada: false,
+      hasProvincialNomination: false, spouse: null,
+    } satisfies CrsProfile;
+    expect(computeCrsScore(profile).secondLanguage).toBe(24);
   });
 });
 
