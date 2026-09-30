@@ -63,4 +63,13 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("textWithLink");
 		expect(source).toContain("appointmentUrl");
 	});
+
+	it("adapte le formulaire au programme canadien choisi", () => {
+		expect(source).toContain("CANADA_PROGRAMS");
+		expect(source).toContain('selectedProgram: CanadaProgram');
+		expect(source).toContain("Programme ou voie envisagée");
+		expect(source).toContain("Volet ou type de demande");
+		expect(source).toContain("Informations propres à ce programme");
+		expect(source).toContain("Programme de visa pour démarrage d’entreprise");
+	});
 });

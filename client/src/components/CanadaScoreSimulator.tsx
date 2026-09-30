@@ -49,6 +49,20 @@ const EXPERIENCE_OPTIONS: Array<{ value: ExperienceYears; label: string }> = [
   { value: 5, label: "5 ans ou plus" },
 ];
 
+type CanadaProgram = "express_entry" | "pnp" | "atlantic" | "rural_francophone" | "family" | "study" | "work" | "visitor" | "business";
+
+const CANADA_PROGRAMS: Array<{ value: CanadaProgram; label: string; description: string; streams: Array<{ value: string; label: string }> }> = [
+  { value: "express_entry", label: "Entrée express — résidence permanente", description: "CEC, travailleurs qualifiés fédéraux et métiers spécialisés. Le calcul CRS ci-dessous est pertinent pour cette voie.", streams: [{ value: "cec", label: "Catégorie de l’expérience canadienne (CEC)" }, { value: "fswp", label: "Programme des travailleurs qualifiés (fédéral)" }, { value: "fstp", label: "Programme des travailleurs de métiers spécialisés" }] },
+  { value: "pnp", label: "Programme des candidats des provinces (PNP)", description: "Une province ou un territoire sélectionne les candidats selon ses propres volets et critères.", streams: [{ value: "express_linked", label: "Volet lié à Entrée express" }, { value: "base", label: "Volet de base hors Entrée express" }] },
+  { value: "atlantic", label: "Programme d’immigration au Canada atlantique", description: "Parcours avec employeur désigné dans une province atlantique et exigences propres au programme.", streams: [{ value: "skilled", label: "Travailleur qualifié" }, { value: "intermediate", label: "Travailleur intermédiaire" }, { value: "international_graduate", label: "Diplômé international" }] },
+  { value: "rural_francophone", label: "Pilotes communautaires et francophones", description: "Voies dépendant d’une communauté participante, d’un emploi admissible et d’une recommandation lorsqu’elle est requise.", streams: [{ value: "rural", label: "Pilote d’immigration dans les communautés rurales" }, { value: "francophone", label: "Pilote d’immigration dans les communautés francophones" }] },
+  { value: "family", label: "Regroupement familial", description: "Parrainage d’un membre de la famille admissible par un citoyen ou résident permanent.", streams: [{ value: "spouse", label: "Époux, conjoint ou partenaire" }, { value: "child", label: "Enfant à charge" }, { value: "parents_grandparents", label: "Parents ou grands-parents" }, { value: "other_family", label: "Autre membre admissible de la famille" }] },
+  { value: "study", label: "Permis d’études", description: "Projet d’études temporaire : établissement, lettre d’acceptation, ressources et conditions du permis à confirmer.", streams: [{ value: "college", label: "Collège / formation technique" }, { value: "university", label: "Université" }, { value: "secondary", label: "Études secondaires" }, { value: "language", label: "Programme de langue" }] },
+  { value: "work", label: "Permis de travail", description: "Travail temporaire selon l’employeur, l’offre, l’EIMT ou une exemption applicable.", streams: [{ value: "employer_specific", label: "Permis lié à un employeur" }, { value: "open", label: "Permis de travail ouvert" }, { value: "post_graduation", label: "Permis postdiplôme" }, { value: "intra_company", label: "Transfert intra-entreprise" }] },
+  { value: "visitor", label: "Visa de visiteur ou AVE/eTA", description: "Séjour temporaire pour tourisme, affaires ou visite familiale ; aucune installation ou autorisation de travail n’est présumée.", streams: [{ value: "tourism", label: "Tourisme" }, { value: "family_visit", label: "Visite familiale" }, { value: "business_visit", label: "Affaires" }] },
+  { value: "business", label: "Entrepreneuriat et affaires", description: "Voie à confirmer selon le programme fédéral, provincial ou territorial et les critères en vigueur.", streams: [{ value: "startup", label: "Programme de visa pour démarrage d’entreprise" }, { value: "self_employed", label: "Travailleur autonome" }, { value: "provincial_business", label: "Programme provincial d’affaires" }] },
+];
+
 function LanguageCriterionHint({ language, kind }: { language: "fr" | "en"; kind: "french" | "english" }) {
   const isFrench = language === "fr";
   const title = kind === "french"
@@ -123,6 +137,9 @@ export default function CanadaScoreSimulator() {
   const [occupation, setOccupation] = useState("");
   const [hasJobOffer, setHasJobOffer] = useState(false);
   const [languageTestDate, setLanguageTestDate] = useState("");
+  const [selectedProgram, setSelectedProgram] = useState<CanadaProgram>("express_entry");
+  const [programStream, setProgramStream] = useState("cec");
+  const [programDetails, setProgramDetails] = useState("");
   const [languageScores, setLanguageScores] = useState({ frenchReading: "", frenchWriting: "", frenchListening: "", frenchSpeaking: "", englishReading: "", englishWriting: "", englishListening: "", englishSpeaking: "" });
   const [shareLink, setShareLink] = useState("");
   const [isEmailingPdf, setIsEmailingPdf] = useState(false);
@@ -141,6 +158,8 @@ export default function CanadaScoreSimulator() {
   // IRCC ne tient plus de rondes "Général / toutes catégories" depuis fin 2023 : seules les
   // catégories CEC, PNP et Santé ont des rondes récentes, d'où l'absence du filtre "Général".
   const allRounds = LATEST_INVITATION_ROUNDS;
+  const selectedProgramData = CANADA_PROGRAMS.find((program) => program.value === selectedProgram) ?? CANADA_PROGRAMS[0];
+  const isCrsProgram = selectedProgram === "express_entry" || selectedProgram === "pnp";
 
   const categoryExplanations: Record<string, string> = {
     all: "Affichage par défaut des 3 dernières rondes toutes catégories confondues (CEC, PNP, Santé) pour avoir une vue d'ensemble du marché.",
@@ -208,7 +227,7 @@ export default function CanadaScoreSimulator() {
         spouseExperienceYears: ExperienceYears; hasTradeCertificate: boolean; canadianEducation: CanadianEducationLevel;
         hasSiblingInCanada: boolean; hasProvincialNomination: boolean; selectedCategory: string; wizardStep: number;
         fullName: string; email: string; phone: string; residenceCountry: string; targetProvince: string; occupation: string;
-        hasJobOffer: boolean; languageTestDate: string; languageScores: typeof languageScores;
+        hasJobOffer: boolean; languageTestDate: string; selectedProgram: CanadaProgram; programStream: string; programDetails: string; languageScores: typeof languageScores;
       }> | null;
       if (saved) {
         if (typeof saved.age === "number") setAge(saved.age);
@@ -235,6 +254,9 @@ export default function CanadaScoreSimulator() {
         if (typeof saved.occupation === "string") setOccupation(saved.occupation);
         if (typeof saved.hasJobOffer === "boolean") setHasJobOffer(saved.hasJobOffer);
         if (typeof saved.languageTestDate === "string") setLanguageTestDate(saved.languageTestDate);
+        if (saved.selectedProgram) setSelectedProgram(saved.selectedProgram);
+        if (typeof saved.programStream === "string") setProgramStream(saved.programStream);
+        if (typeof saved.programDetails === "string") setProgramDetails(saved.programDetails);
         if (saved.languageScores) setLanguageScores(saved.languageScores);
         toast.success("Votre dernière simulation a été restaurée.");
       }
@@ -251,9 +273,9 @@ export default function CanadaScoreSimulator() {
       age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus,
       spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada,
       hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince,
-      occupation, hasJobOffer, languageTestDate, languageScores,
+      occupation, hasJobOffer, languageTestDate, selectedProgram, programStream, programDetails, languageScores,
     }));
-  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, languageScores]);
+  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, selectedProgram, programStream, programDetails, languageScores]);
 
   const toggleRecommendation = (title: string) => {
     setCompletedRecommendations((current) => ({ ...current, [title]: !current[title] }));
@@ -265,7 +287,7 @@ export default function CanadaScoreSimulator() {
     try {
       const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))))) as Partial<{
         fullName: string; age: number; education: EducationLevel; frenchClb: number; englishClb: number;
-        maritalStatus: MaritalStatus; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears;
+        maritalStatus: MaritalStatus; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears; selectedProgram: CanadaProgram; programStream: string;
         canadianEducation: CanadianEducationLevel; hasTradeCertificate: boolean; hasSiblingInCanada: boolean; hasProvincialNomination: boolean;
       }>;
       if (typeof parsed.fullName === "string") setFullName(parsed.fullName);
@@ -280,6 +302,8 @@ export default function CanadaScoreSimulator() {
       if (typeof parsed.hasTradeCertificate === "boolean") setHasTradeCertificate(parsed.hasTradeCertificate);
       if (typeof parsed.hasSiblingInCanada === "boolean") setHasSiblingInCanada(parsed.hasSiblingInCanada);
       if (typeof parsed.hasProvincialNomination === "boolean") setHasProvincialNomination(parsed.hasProvincialNomination);
+      if (parsed.selectedProgram) setSelectedProgram(parsed.selectedProgram);
+      if (typeof parsed.programStream === "string") setProgramStream(parsed.programStream);
       setWizardStep(3);
     } catch {
       // Ignore malformed or expired shared links and keep the default form.
@@ -293,7 +317,7 @@ export default function CanadaScoreSimulator() {
 
   const shareProfile = () => {
     const payload = {
-      fullName: fullName.trim(), age, education, frenchClb, englishClb, maritalStatus,
+      fullName: fullName.trim(), age, education, frenchClb, englishClb, maritalStatus, selectedProgram, programStream,
       canadianExperienceYears, foreignExperienceYears, canadianEducation, hasTradeCertificate,
       hasSiblingInCanada, hasProvincialNomination,
     };
@@ -358,25 +382,27 @@ export default function CanadaScoreSimulator() {
       doc.setTextColor(31, 41, 55);
       doc.setFontSize(10);
       doc.text(`Candidat : ${fullName || "Non renseigné"}`, 15, 48);
-      doc.text(`Document généré le ${generatedAt}. Résultats indicatifs, sans garantie d'invitation.`, 15, 55, { maxWidth: 180 });
+      doc.text(`Programme visé : ${selectedProgramData.label}`, 15, 53);
+      doc.text(`Volet : ${selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}`, 15, 58, { maxWidth: 180 });
+      doc.text(`Document généré le ${generatedAt}. Résultats indicatifs, sans garantie d'invitation.`, 15, 63, { maxWidth: 180 });
 
       doc.setFillColor(isThresholdMet ? 236 : 254, isThresholdMet ? 253 : 242, isThresholdMet ? 245 : 242);
-      doc.roundedRect(15, 63, 180, 29, 3, 3, "F");
+      doc.roundedRect(15, 71, 180, 29, 3, 3, "F");
       doc.setTextColor(isThresholdMet ? 6 : 153, isThresholdMet ? 95 : 27, isThresholdMet ? 70 : 27);
       doc.setFontSize(11);
-      doc.text("Score CRS simulé", 21, 74);
+      doc.text(isCrsProgram ? "Score CRS simulé" : "Score CRS de référence", 21, 82);
       doc.setFontSize(20);
-      doc.text(`${scores.total} pts`, 21, 85);
+      doc.text(`${scores.total} pts`, 21, 93);
       doc.setFontSize(11);
-      doc.text(`Dernier seuil comparé : ${latestThreshold} pts`, 105, 74);
+      doc.text(`Dernier seuil comparé : ${latestThreshold} pts`, 105, 82);
       doc.setFontSize(16);
-      doc.text(`Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, 105, 85);
+      doc.text(`Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, 105, 93);
 
       doc.setTextColor(31, 41, 55);
       doc.setFontSize(13);
-      doc.text("Répartition détaillée du score CRS", 15, 105);
+      doc.text("Répartition détaillée du score CRS", 15, 113);
       autoTable(doc, {
-        startY: 110,
+        startY: 118,
         head: [["Composante", "Points obtenus", "Maximum officiel"]],
         body: [
           ["Âge", `${scores.age} pts`, "100-110 pts"],
@@ -514,8 +540,10 @@ export default function CanadaScoreSimulator() {
 
   const handleCopyResults = async () => {
     setIsCopying(true);
-    const summary = [
+      const summary = [
       "Simulation CRS Canada — 3M Travel & Services",
+      `Programme visé : ${selectedProgramData.label}`,
+      `Volet : ${selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}`,
       `Score estimé : ${scores.total} / 1200 points`,
       `Catégorie comparée : ${selectedCategory === "all" ? "3 dernières rondes (global)" : categoryExplanations[selectedCategory]}`,
       `Dernier seuil : ${latestThreshold} points`,
@@ -642,6 +670,15 @@ export default function CanadaScoreSimulator() {
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-blue-100 p-2 text-blue-700"><UserRound className="h-5 w-5" /></div>
               <div><h3 className="font-bold text-slate-900">1. Votre profil et votre projet</h3><p className="text-sm text-slate-600">Ces informations permettent de personnaliser le rapport et le suivi, sans modifier le barème officiel.</p></div>
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4 md:p-5 space-y-4">
+              <div><p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">Parcours canadien</p><p className="mt-1 text-sm text-slate-600">Choisissez d’abord le programme visé : les questions suivantes s’adapteront à votre projet. Les critères définitifs doivent être confirmés sur les sources officielles.</p></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label htmlFor="crs-program">Programme ou voie envisagée</Label><Select value={selectedProgram} onValueChange={(value) => { const next = value as CanadaProgram; setSelectedProgram(next); const nextProgram = CANADA_PROGRAMS.find((program) => program.value === next); setProgramStream(nextProgram?.streams[0]?.value ?? ""); }}><SelectTrigger id="crs-program" className="bg-white"><SelectValue /></SelectTrigger><SelectContent>{CANADA_PROGRAMS.map((program) => <SelectItem key={program.value} value={program.value}>{program.label}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-2"><Label htmlFor="crs-program-stream">Volet ou type de demande</Label><Select value={programStream} onValueChange={setProgramStream}><SelectTrigger id="crs-program-stream" className="bg-white"><SelectValue /></SelectTrigger><SelectContent>{selectedProgramData.streams.map((stream) => <SelectItem key={stream.value} value={stream.value}>{stream.label}</SelectItem>)}</SelectContent></Select></div>
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-white/80 p-3 text-xs leading-5 text-slate-700"><span className="font-bold text-amber-900">À savoir :</span> {selectedProgramData.description} <span className="font-semibold">Le simulateur CRS est surtout conçu pour Entrée express et les volets PNP liés à Entrée express.</span></div>
+              <div className="space-y-2"><Label htmlFor="crs-program-details">Informations propres à ce programme</Label><textarea id="crs-program-details" value={programDetails} onChange={(event) => setProgramDetails(event.target.value)} rows={3} placeholder={selectedProgram === "family" ? "Ex. époux/conjointe, statut du répondant, enfant à charge…" : selectedProgram === "study" ? "Ex. établissement, programme, niveau, lettre d’acceptation…" : selectedProgram === "work" ? "Ex. employeur, poste, CNP/FEER, EIMT ou exemption…" : selectedProgram === "visitor" ? "Ex. motif, durée prévue, hébergement, liens au pays de résidence…" : selectedProgram === "business" ? "Ex. projet, expérience de gestion, investissement, province ciblée…" : "Ex. employeur, communauté, volet, CNP/FEER et province ciblée…"} className="flex min-h-20 w-full rounded-md border border-input bg-white px-3 py-2 text-sm" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2"><Label htmlFor="crs-full-name">Nom complet</Label><input id="crs-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ex. Marie Ngo" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
@@ -837,10 +874,10 @@ export default function CanadaScoreSimulator() {
           <motion.div key="review-step" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 md:p-6 space-y-4">
             <div className="flex items-start gap-3"><div className="rounded-xl bg-amber-100 p-2 text-amber-700"><ListChecks className="h-5 w-5" /></div><div><h3 className="font-bold text-amber-950">Vérifiez vos réponses avant le rapport</h3><p className="text-sm text-amber-900/80">Modifiez un bloc si nécessaire, puis passez à l’étape suivante pour partager ou générer le PDF.</p></div></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Profil</p><p className="text-slate-600">{fullName || "Nom non renseigné"} · {age} ans · {residenceCountry || "Pays non renseigné"}</p><p className="text-slate-600">{occupation || "Profession non renseignée"} · cible : {targetProvince || "non renseignée"}</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(1)}>Modifier le profil</Button></div>
+              <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Profil et programme</p><p className="text-slate-600">{selectedProgramData.label}</p><p className="text-slate-600">Volet : {selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}</p><p className="text-slate-600">{fullName || "Nom non renseigné"} · {age} ans · {residenceCountry || "Pays non renseigné"}</p><p className="text-slate-600">{occupation || "Profession non renseignée"} · cible : {targetProvince || "non renseignée"}</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(1)}>Modifier le profil</Button></div>
               <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Critères CRS</p><p className="text-slate-600">Études : {EDUCATION_OPTIONS.find((option) => option.value === education)?.label ?? education}</p><p className="text-slate-600">Français NCLC {frenchClb} · Anglais CLB {englishClb} · Canada {canadianExperienceYears} an(s)</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(2)}>Modifier les critères</Button></div>
             </div>
-            <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><span className="font-semibold">Résultat calculé :</span> {scores.total} points · écart de {scoreDiff >= 0 ? "+" : ""}{scoreDiff} points par rapport au dernier seuil comparé.</div>
+            <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><span className="font-semibold">Résultat calculé :</span> {scores.total} points · écart de {scoreDiff >= 0 ? "+" : ""}{scoreDiff} points par rapport au dernier seuil comparé. {!isCrsProgram && <span className="text-slate-600"> Pour cette voie, le CRS est un repère complémentaire et ne remplace pas les critères du programme.</span>}</div>
           </motion.div>
         )}
 

@@ -132,6 +132,21 @@ export default function Canada() {
         </div>
       </section>
 
+      <section className="relative isolate overflow-hidden rounded-[2rem] border border-blue-900/20 bg-slate-950 shadow-xl">
+        <img src="/manus-storage/canada-study-original_87390e3b.jpg" alt="Étudiants internationaux dans un environnement canadien" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#071c36]/95 via-[#0b3158]/80 to-[#0b3158]/35" aria-hidden="true" />
+        <div className="grid gap-8 p-7 text-white sm:p-10 lg:grid-cols-[1.1fr_.9fr] lg:items-end lg:p-12">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">Un projet, plusieurs portes d’entrée</p>
+            <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">Choisissez votre voie avant de remplir votre dossier.</h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-blue-50 sm:text-base">Résidence permanente, études, travail, visite, famille ou affaires : le nouveau parcours commence par le programme visé et pose ensuite les questions adaptées à votre situation.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm font-bold sm:grid-cols-4 lg:grid-cols-2">
+            {["Résidence permanente", "Études", "Travail", "Visite & famille"].map((label) => <div key={label} className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm"><span className="mb-2 block h-1.5 w-8 rounded-full bg-amber-300" />{label}</div>)}
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-5 md:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <img src="/manus-storage/canada-study-original_87390e3b.jpg" alt="Étudiants internationaux sur un campus canadien" className="h-52 w-full object-cover" />
