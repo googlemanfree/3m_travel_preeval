@@ -80,7 +80,7 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("Lecture");
 		expect(source).toContain("Expression orale");
 		expect(source).toContain("calculées séparément");
-		expect(source).toContain("Calculatrice officielle du SCG");
+		expect(source).toContain("Tableaux officiels IRCC des tests de langue");
 		expect(source).toContain("Détail des langues");
 		expect(source).toContain("par compétence");
 	});
