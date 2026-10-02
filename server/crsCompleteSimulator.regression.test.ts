@@ -78,6 +78,22 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("<MessageCircle className");
 	});
 
+	it("copie le score avec son lien et permet de recommencer", () => {
+		expect(source).toContain("handleCopyScoreLink");
+		expect(source).toContain("crs_copy_score_link");
+		expect(source).toContain("Score et lien copiés");
+		expect(source).toContain("handleRestartSimulation");
+		expect(source).toContain("crs_restart_simulation");
+		expect(source).toContain("Recommencer");
+	});
+
+	it("trace les actions CRS dans l’analytics existant", () => {
+		expect(source).toContain("trackEvent");
+		expect(source).toContain("crs_share_facebook");
+		expect(source).toContain("crs_share_whatsapp");
+		expect(source).toContain("analyticsWindow.gtag");
+	});
+
 	it("adapte le formulaire au programme canadien choisi", () => {
 		expect(source).toContain("CANADA_PROGRAMS");
 		expect(source).toContain('selectedProgram: CanadaProgram');

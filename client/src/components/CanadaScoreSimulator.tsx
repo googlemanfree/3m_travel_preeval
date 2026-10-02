@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Printer, Facebook, MessageCircle, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
+import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Printer, Facebook, MessageCircle, RotateCcw, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -137,6 +137,7 @@ export default function CanadaScoreSimulator() {
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
   const [isCopying, setIsCopying] = useState<boolean>(false);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [copyScoreSuccess, setCopyScoreSuccess] = useState<boolean>(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfPreviewError, setPdfPreviewError] = useState<string | null>(null);
@@ -374,14 +375,29 @@ export default function CanadaScoreSimulator() {
     return link;
   };
 
+  const trackEvent = (name: string) => {
+    const analyticsWindow = window as Window & {
+      dataLayer?: unknown[];
+      gtag?: (...args: unknown[]) => void;
+    };
+    if (analyticsWindow.gtag) {
+      analyticsWindow.gtag("event", name, { event_category: "crs_simulator", transport_type: "beacon" });
+    } else {
+      analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
+      analyticsWindow.dataLayer.push(["event", name, { event_category: "crs_simulator" }]);
+    }
+  };
+
   const handleShareWhatsApp = () => {
     const link = shareLink || shareProfile();
+    trackEvent("crs_share_whatsapp");
     const message = `Bonjour, voici ma simulation CRS Canada 3M Travel Agency : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
   const handleShareFacebook = () => {
     const link = shareLink || shareProfile();
+    trackEvent("crs_share_facebook");
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
   };
 
@@ -595,12 +611,41 @@ export default function CanadaScoreSimulator() {
   };
 
   const handlePrintResults = () => {
+    trackEvent("crs_print_results");
     if (wizardStep !== 3) setWizardStep(3);
     window.setTimeout(() => window.print(), 120);
   };
 
+  const handleCopyScoreLink = async () => {
+    const link = shareLink || shareProfile();
+    const text = `Score CRS Canada : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif : ${link}`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
+    trackEvent("crs_copy_score_link");
+    setCopyScoreSuccess(true);
+    window.setTimeout(() => setCopyScoreSuccess(false), 3500);
+  };
+
+  const handleRestartSimulation = () => {
+    trackEvent("crs_restart_simulation");
+    localStorage.removeItem(draftStorageKey);
+    window.location.assign(window.location.pathname);
+  };
+
   const handleCopyResults = async () => {
     setIsCopying(true);
+    trackEvent("crs_copy_detailed_results");
       const summary = [
       "Simulation CRS Canada — 3M Travel & Services",
       `Programme visé : ${selectedProgramData.label}`,
@@ -1089,6 +1134,23 @@ export default function CanadaScoreSimulator() {
                 className="gap-2 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
               >
                 <MessageCircle className="w-4 h-4" /> WhatsApp
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyScoreLink}
+                className="gap-2 border-indigo-200 text-indigo-800 hover:bg-indigo-50"
+              >
+                {copyScoreSuccess ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copyScoreSuccess ? "Score et lien copiés" : "Copier score + lien"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRestartSimulation}
+                className="gap-2 border-amber-200 text-amber-800 hover:bg-amber-50"
+              >
+                <RotateCcw className="w-4 h-4" /> Recommencer
               </Button>
               <Button
                 variant="outline"
