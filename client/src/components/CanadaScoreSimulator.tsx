@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -163,6 +164,7 @@ export default function CanadaScoreSimulator() {
   const [languageScores, setLanguageScores] = useState({ frenchReading: "", frenchWriting: "", frenchListening: "", frenchSpeaking: "", englishReading: "", englishWriting: "", englishListening: "", englishSpeaking: "" });
   const [shareLink, setShareLink] = useState("");
   const [isEmailingPdf, setIsEmailingPdf] = useState(false);
+  const [emailSendSuccess, setEmailSendSuccess] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   const draftStorageKey = "3m-crs-simulator-draft-v2";
   const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
@@ -583,6 +585,7 @@ export default function CanadaScoreSimulator() {
       setWizardStep(1);
       return;
     }
+    trackEvent("crs_email_recap_request");
     setIsEmailingPdf(true);
     try {
       const blob = (await createPdfDocument()).output("blob");
@@ -590,6 +593,8 @@ export default function CanadaScoreSimulator() {
       const file = new File([blob], filename, { type: "application/pdf" });
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
         await navigator.share({ title: "Simulation CRS Canada — 3M Travel Agency", text: `Bonjour ${fullName || ""}, voici votre simulation CRS Canada.`, files: [file] });
+        setEmailSendSuccess(true);
+        window.setTimeout(() => setEmailSendSuccess(false), 5000);
         toast.success("Le PDF est prêt à être envoyé par e-mail depuis le menu de partage.");
       } else {
         const downloadUrl = URL.createObjectURL(blob);
@@ -601,6 +606,8 @@ export default function CanadaScoreSimulator() {
         const subject = encodeURIComponent("Votre simulation CRS Canada — 3M Travel Agency");
         const body = encodeURIComponent(`Bonjour ${fullName || ""},\n\nVotre PDF de simulation CRS vient d’être téléchargé. Joignez-le à ce courriel avant l’envoi.\n\nScore indicatif : ${scores.total}/1200 points.`);
         window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
+        setEmailSendSuccess(true);
+        window.setTimeout(() => setEmailSendSuccess(false), 5000);
         toast.success("Le PDF a été téléchargé et votre messagerie a été ouverte pour l’envoyer.");
       }
     } catch (error) {
@@ -1164,6 +1171,31 @@ export default function CanadaScoreSimulator() {
               </Button>
             </div>
           </div>
+
+          <form onSubmit={(event) => { event.preventDefault(); void handleEmailPdf(); }} className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+              <div className="min-w-0 flex-1">
+                <label htmlFor="crs-result-email" className="mb-1 block text-sm font-semibold text-blue-950">Recevoir le récapitulatif détaillé par e-mail</label>
+                <p className="mb-2 text-xs text-blue-800">Saisissez votre adresse pour préparer l’envoi de votre score et de votre rapport PDF.</p>
+                <Input
+                  id="crs-result-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="vous@exemple.com"
+                  autoComplete="email"
+                  className="h-11 bg-white"
+                  aria-describedby="crs-result-email-help"
+                />
+                <p id="crs-result-email-help" className="mt-1 text-[11px] text-blue-700">Votre adresse reste utilisée uniquement pour cette demande d’envoi.</p>
+              </div>
+              <Button type="submit" disabled={isEmailingPdf} className="h-11 shrink-0 gap-2 bg-blue-700 px-5 hover:bg-blue-800">
+                {emailSendSuccess ? <Check className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                {isEmailingPdf ? "Préparation…" : emailSendSuccess ? "E-mail préparé" : "Recevoir mon récapitulatif"}
+              </Button>
+            </div>
+          </form>
 
           {/* Encart explicatif de la catégorie active */}
           <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">

@@ -29,6 +29,14 @@ describe("simulateur CRS complet", () => {
     expect(source).toContain("Envoyer le PDF par e-mail");
   });
 
+  it("propose un formulaire email simple depuis les résultats", () => {
+    expect(source).toContain('id="crs-result-email"');
+    expect(source).toContain("Recevoir le récapitulatif détaillé par e-mail");
+    expect(source).toContain("required");
+    expect(source).toContain("crs_email_recap_request");
+    expect(source).toContain("Recevoir mon récapitulatif");
+  });
+
   it("sauvegarde localement le brouillon et restaure le parcours", () => {
     expect(source).toContain("3m-crs-simulator-draft-v2");
     expect(source).toContain("isDraftLoaded");
