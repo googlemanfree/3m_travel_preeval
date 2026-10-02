@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
+import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Printer, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -589,6 +589,11 @@ export default function CanadaScoreSimulator() {
     }
   };
 
+  const handlePrintResults = () => {
+    if (wizardStep !== 3) setWizardStep(3);
+    window.setTimeout(() => window.print(), 120);
+  };
+
   const handleCopyResults = async () => {
     setIsCopying(true);
       const summary = [
@@ -1055,16 +1060,26 @@ export default function CanadaScoreSimulator() {
           </div>
 
           <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyResults}
-              disabled={isCopying}
-              className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
-            >
-              {copySuccess ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-              {copySuccess ? "Résultats copiés" : isCopying ? "Copie..." : "Copier les résultats"}
-            </Button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrintResults}
+                className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
+              >
+                <Printer className="w-4 h-4" /> Imprimer / enregistrer
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyResults}
+                disabled={isCopying}
+                className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
+              >
+                {copySuccess ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copySuccess ? "Résultats copiés" : isCopying ? "Copie..." : "Copier les résultats"}
+              </Button>
+            </div>
           </div>
 
           {/* Encart explicatif de la catégorie active */}

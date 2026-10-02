@@ -64,6 +64,12 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("appointmentUrl");
 	});
 
+	it("permet d’imprimer ou d’enregistrer les résultats détaillés", () => {
+		expect(source).toContain("handlePrintResults");
+		expect(source).toContain("window.print()");
+		expect(source).toContain("Imprimer / enregistrer");
+	});
+
 	it("adapte le formulaire au programme canadien choisi", () => {
 		expect(source).toContain("CANADA_PROGRAMS");
 		expect(source).toContain('selectedProgram: CanadaProgram');

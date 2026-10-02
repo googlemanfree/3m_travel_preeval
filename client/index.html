@@ -69,13 +69,27 @@
     <!-- Police chargée sans bloquer l'affichage (connexions mobiles lentes) : texte visible tout de suite avec la police système, puis Inter. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" /></noscript>
-    <!-- Google Analytics 4 — propriété 3M Travel & Services -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4HBHHH37VL"></script>
+    <!-- Analytics différé : aucune requête tierce ne concurrence le premier affichage. -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-4HBHHH37VL');
+      window.addEventListener('load', function () {
+        var loadAnalytics = function () {
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+          window.gtag('js', new Date());
+          window.gtag('config', 'G-4HBHHH37VL');
+          var ga = document.createElement('script');
+          ga.async = true;
+          ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-4HBHHH37VL';
+          document.head.appendChild(ga);
+          var umami = document.createElement('script');
+          umami.defer = true;
+          umami.src = '%VITE_ANALYTICS_ENDPOINT%/umami';
+          umami.dataset.websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
+          document.body.appendChild(umami);
+        };
+        if ('requestIdleCallback' in window) window.requestIdleCallback(loadAnalytics, { timeout: 2500 });
+        else window.setTimeout(loadAnalytics, 2500);
+      }, { once: true });
     </script>
   </head>
 
@@ -90,10 +104,6 @@
     </script>
     <div id="root"><!--prerender-app--></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
   </body>
 
 </html>

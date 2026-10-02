@@ -317,8 +317,11 @@ const routeSpecificPrerender = (path: string) => {
     return `<section aria-label="Navigation complète"><h2>Accéder rapidement aux services 3M Travel</h2><ul>${links.map(([label, href]) => `<li><a href="${href}">${label}</a></li>`).join("")}</ul></section>`;
   }
   if (path === "/procedures") {
-    const procedures = PUBLIC_DESTINATION_DETAILS.map(({ procedure }) => `<li><a href="/procedures/${encodeURIComponent(procedure.id)}">${esc(procedure.name)} — ${esc(procedure.visaType)}</a></li>`).join("");
-    return `<section aria-label="Catalogue des procédures"><h2>107 procédures par destination</h2><p>Recherchez une destination puis vérifiez les informations applicables auprès du portail institutionnel associé.</p><ul>${procedures}</ul></section>`;
+    const featured = PUBLIC_DESTINATION_DETAILS.slice(0, 18);
+    const germanyVisitor = PUBLIC_DESTINATION_DETAILS.find(({ procedure }) => procedure.id === "allemagne-visiteur");
+    const featuredWithGermany = germanyVisitor && !featured.some(({ procedure }) => procedure.id === germanyVisitor.procedure.id) ? [...featured, germanyVisitor] : featured;
+    const procedures = featuredWithGermany.map(({ procedure }) => `<li><a href="/procedures/${encodeURIComponent(procedure.id)}">${esc(procedure.name)} — ${esc(procedure.visaType)}</a></li>`).join("");
+    return `<section aria-label="Catalogue des procédures"><h2>107 procédures par destination</h2><p>Les 107 fiches restent disponibles dans l’annuaire interactif. Pour accélérer le premier affichage, voici une sélection de destinations prioritaires ; utilisez la recherche pour accéder à toute la liste.</p><ul>${procedures}</ul><p><a href="/procedures#catalogue">Ouvrir l’annuaire interactif complet</a> · <a href="/sources-officielles">Consulter les sources officielles</a></p></section>`;
   }
   if (path === "/evisas") {
     const catalogue = evisasDatabaseComplete.map((entry) => `<li><a href="/evisa/${encodeURIComponent(entry.id)}">${esc(entry.country)}</a> — ${esc(entry.type)} · ${esc(entry.region)}</li>`).join("");

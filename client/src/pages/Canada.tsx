@@ -114,7 +114,7 @@ export default function Canada() {
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-xl">
         <div className="grid items-stretch lg:grid-cols-[1.05fr_.95fr]">
           <div className="relative min-h-[330px] overflow-hidden">
-            <img src="/manus-storage/canada-hero-original_5fe49ae0.jpg" alt="Skyline de Toronto au bord de l’eau" className="h-full min-h-[330px] w-full object-cover" />
+            <img src="/manus-storage/canada-hero-original_5fe49ae0.jpg" alt="Skyline de Toronto au bord de l’eau" width={1600} height={900} loading="eager" fetchPriority="high" decoding="async" className="h-full min-h-[330px] w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/45 to-transparent" aria-hidden="true" />
             <div className="absolute left-6 top-6 rounded-full border border-amber-300/60 bg-slate-950/60 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-amber-200">Cap sur le Canada</div>
             <div className="absolute bottom-7 left-6 max-w-md pr-6 sm:left-8">

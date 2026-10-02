@@ -89,6 +89,8 @@ describe("SEO dynamique", () => {
     expect(sources).toContain("Ouvrir la source officielle");
     expect(procedures).toContain("107 procédures par destination");
     expect(procedures).toContain("/procedures/allemagne-visiteur");
+    expect((procedures.match(/href="\/procedures\//g) ?? []).length).toBeLessThan(30);
+    expect(procedures).toContain("Ouvrir l’annuaire interactif complet");
     expect(evisas).toContain("Annuaire des procédures e-Visa");
     expect(evisas).toContain("Kenya");
     expect(pricing).toContain("Comprendre les tarifs avant de vous engager");
