@@ -61,6 +61,16 @@ describe("pré-rendu public indexable", () => {
     expect(rendered.html).toContain("Consulter les programmes IRCC");
   });
 
+  it("sert la page Canada CRS en 200 avec un contenu pré-rendu utile", () => {
+    const rendered = composePublicPrerender(template, "/canada/crs");
+    expect(rendered.status).toBe(200);
+    expect(rendered.noindex).toBe(false);
+    expect(rendered.html).toContain("<title>Calculatrice CRS Canada");
+    expect(rendered.html).toContain("Simulateur du Système de classement global");
+    expect(rendered.html).toContain("/evaluation?destination=canada");
+    expect(rendered.html).toContain("verifier-note.html#calculatrice");
+  });
+
   it("pré-rend une fiche utile pour chaque destination du catalogue public", () => {
     expect(PUBLIC_DESTINATION_DETAILS.length).toBeGreaterThanOrEqual(107);
     for (const destination of PUBLIC_DESTINATION_DETAILS) {

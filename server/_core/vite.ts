@@ -176,9 +176,10 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
       res.status(200).set({
         "Content-Type": "text/html",
-        "Cache-Control": "no-cache",
+        "Cache-Control": cacheControl,
         "X-3M-Build": getPublicBuildMarker(),
         "X-3M-Route-Source": "express-prerender",
       }).end(rendered.html);
@@ -204,7 +205,8 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": "no-cache", "X-3M-Build": getPublicBuildMarker(), "X-3M-Route-Source": "express-prerender" }).end(rendered.html);
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
+      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": cacheControl, "X-3M-Build": getPublicBuildMarker(), "X-3M-Route-Source": "express-prerender" }).end(rendered.html);
     } catch (error) {
       console.error("[SEO prerender] Unable to render public shell", error);
       res.status(500).end("Erreur de rendu");

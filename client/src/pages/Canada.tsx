@@ -401,6 +401,27 @@ export default function Canada() {
 
       <ServiceSection
         tone="slate"
+        title="Actualités et retours de la communauté"
+        introduction="Retrouvez une publication récente de 3M Travel & Services sur Facebook. Le contenu est hébergé par Facebook et peut nécessiter l’activation des contenus externes dans votre navigateur."
+      >
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+          <div className="aspect-[500/718] w-full overflow-hidden rounded-xl bg-slate-100">
+            <iframe
+              title="Publication Facebook de 3M Travel & Services"
+              src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fweb.facebook.com%2F3mtravelcm%2Fposts%2Fpfbid0xwH3rbiH6FbsAiuF7nTkvCwgmzd2sYvrCYVj29K3v12HEcR99UHAGSHYCxKwq3RWl&show_text=true&width=500"
+              className="h-full w-full border-0"
+              loading="lazy"
+              scrolling="no"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">Publication intégrée depuis la page Facebook officielle de 3M Travel & Services.</p>
+        </div>
+      </ServiceSection>
+
+      <ServiceSection
+        tone="slate"
         title="Questions fréquentes sur les procédures canadiennes"
         introduction="Cette FAQ donne des repères généraux. Les exigences applicables doivent toujours être confirmées dans les sources officielles, car elles peuvent changer."
       >
