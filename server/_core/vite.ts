@@ -200,7 +200,17 @@ export function serveStatic(app: Express) {
   app.get("/document-upload", renderExplicitShell);
   app.get("/mes-vols-favoris", renderExplicitShell);
   app.get("/flights", renderExplicitShell);
-  app.use(express.static(distPath, { index: false, redirect: false }));
+  app.use(express.static(distPath, {
+    index: false,
+    redirect: false,
+    setHeaders: (res, filePath) => {
+      // Les bundles Vite portent un hash de contenu et peuvent être conservés
+      // longtemps par le navigateur et le CDN sans risque de version périmée.
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }));
   app.use("*", async (req, res) => {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
