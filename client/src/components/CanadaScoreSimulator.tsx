@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Printer, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
+import { Calculator, Award, ArrowRight, ArrowLeft, ChevronRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Printer, Facebook, MessageCircle, Lightbulb, Check, Copy, Eye, ListChecks, Lock, Link2, Mail, Phone, Share2, UserRound, CalendarDays } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -376,8 +376,13 @@ export default function CanadaScoreSimulator() {
 
   const handleShareWhatsApp = () => {
     const link = shareLink || shareProfile();
-    const message = `Bonjour, voici mon simulateur CRS Canada 3M Travel Agency à compléter ou vérifier : ${link}`;
+    const message = `Bonjour, voici ma simulation CRS Canada 3M Travel Agency : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareFacebook = () => {
+    const link = shareLink || shareProfile();
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, "_blank", "noopener,noreferrer");
   };
 
   const appointmentPath = "/consultation?source=crs-simulator";
@@ -1068,6 +1073,22 @@ export default function CanadaScoreSimulator() {
                 className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
               >
                 <Printer className="w-4 h-4" /> Imprimer / enregistrer
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShareFacebook}
+                className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
+              >
+                <Facebook className="w-4 h-4" /> Facebook
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShareWhatsApp}
+                className="gap-2 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+              >
+                <MessageCircle className="w-4 h-4" /> WhatsApp
               </Button>
               <Button
                 variant="outline"

@@ -70,6 +70,14 @@ describe("simulateur CRS complet", () => {
 		expect(source).toContain("Imprimer / enregistrer");
 	});
 
+	it("partage le score courant sur Facebook et WhatsApp", () => {
+		expect(source).toContain("handleShareFacebook");
+		expect(source).toContain("facebook.com/sharer/sharer.php");
+		expect(source).toContain("Programme : ${selectedProgramData.label}");
+		expect(source).toContain("Facebook className");
+		expect(source).toContain("<MessageCircle className");
+	});
+
 	it("adapte le formulaire au programme canadien choisi", () => {
 		expect(source).toContain("CANADA_PROGRAMS");
 		expect(source).toContain('selectedProgram: CanadaProgram');
