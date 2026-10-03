@@ -82,7 +82,8 @@ export async function evaluateAlerts(input: {
     if (!dryRun) {
       try {
         price = await input.fetchCheapest(check.sample);
-      } catch {
+      } catch (error) {
+        console.error("[FlightPriceAlerts] relevé du parcours en échec", { routeKey: check.key, error });
         price = null;
       }
       if (price === null) failedRoutes += 1;

@@ -446,3 +446,24 @@ describe("formulaire de recherche sur téléphone", () => {
     expect(page).not.toContain("-translate-x-3 z-10 w-7 h-7");
   });
 });
+
+describe("audit du 2026-09-29 : échecs journalisés un par un (bug 2)", () => {
+  const read = (file: string) => fs.readFileSync(path.resolve(process.cwd(), file), "utf8").split(String.fromCharCode(13)).join("");
+
+  it("un parcours d'offre en échec est journalisé avec son identifiant, pas juste compté", () => {
+    const source = read("server/services/flightOffers.ts");
+    const i = source.indexOf("} catch (error) {");
+    expect(i).toBeGreaterThan(-1);
+    expect(source.slice(i, i + 160)).toContain('console.error("[FlightOffers] relevé du parcours en échec", { routeId: current.id, error });');
+  });
+
+  it("un relevé d'alerte de tarif en échec est journalisé avec le parcours concerné", () => {
+    const source = read("server/scheduled/flightPriceAlerts.ts");
+    expect(source).toContain('console.error("[FlightPriceAlerts] relevé du parcours en échec", { routeKey: check.key, error });');
+  });
+
+  it("un vol favori au flightData illisible est journalisé avec son identifiant, pas juste masqué", () => {
+    const source = read("server/routers/flights.ts");
+    expect(source).toContain('console.error("[FavoriteFlights] flightData illisible", { favoriteId: row.id, error });');
+  });
+});

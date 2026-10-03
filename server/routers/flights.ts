@@ -791,7 +791,8 @@ export const flightsRouter = router({
     return rows.map((row) => {
       try {
         return { ...row, flight: JSON.parse(row.flightData) as Record<string, unknown> };
-      } catch {
+      } catch (error) {
+        console.error("[FavoriteFlights] flightData illisible", { favoriteId: row.id, error });
         return { ...row, flight: {} };
       }
     });

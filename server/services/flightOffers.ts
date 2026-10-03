@@ -119,7 +119,8 @@ export async function collectOffers(fetchCheapest: FetchCheapest, routes: OfferR
           stops: fare.stops,
           durationMinutes: fare.durationMinutes,
         });
-      } catch {
+      } catch (error) {
+        console.error("[FlightOffers] relevé du parcours en échec", { routeId: current.id, error });
         failed += 1;
       }
     }
