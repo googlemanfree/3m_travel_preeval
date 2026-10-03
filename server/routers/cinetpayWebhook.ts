@@ -11,6 +11,7 @@ import { applications } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
+import { confirmFlightOnlinePaymentByTransactionId } from "./cinetpayFlightPayment";
 
 interface CinetPayWebhookBody {
   cpm_trans_id?: string;
@@ -109,6 +110,24 @@ export function registerCinetPayWebhook(app: Express): void {
         .limit(1);
 
       if (!application) {
+        // Les transactions de vol vivent dans une autre table (flight_booking_requests, préfixe "3M-FL-") : avant de
+        // conclure à une transaction inconnue, on tente ce second chemin — c'est la seule confirmation fiable de ces
+        // paiements si le navigateur du client ne termine jamais son propre sondage (onglet fermé, réseau coupé).
+        const flightResult = await confirmFlightOnlinePaymentByTransactionId(transactionId);
+        if (flightResult.outcome === "success") {
+          console.log(`[CinetPay Webhook] Transaction ${transactionId} (vol) → SUCCESS`);
+          res.status(200).json({ message: "OK (flight)" });
+          return;
+        }
+        if (flightResult.outcome === "pending") {
+          res.status(202).json({ message: "Transaction pending verification" });
+          return;
+        }
+        if (flightResult.outcome === "unavailable") {
+          console.error("[CinetPay Webhook] Clés de vérification absentes ou base indisponible : transaction (vol) laissée en attente.");
+          res.status(202).json({ message: "Verification unavailable; transaction remains pending" });
+          return;
+        }
         console.warn(`[CinetPay Webhook] Transaction ${transactionId} not found in DB`);
         res.status(200).json({ message: "Transaction not found, ignored" });
         return;

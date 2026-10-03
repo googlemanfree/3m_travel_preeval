@@ -52,11 +52,11 @@ describe("paiement en ligne des vols : câblage réel (déclaratif ↔ en ligne,
 
   it("un montant CinetPay qui ne correspond pas à celui relevé n'est jamais accepté silencieusement", () => {
     expect(source).toContain("const amountMatches = verification.amount === undefined || verification.amount === existing.onlinePaymentAmount;");
-    expect(source).toContain("if (!verification.accepted || !amountMatches) return { success: true, status: \"PENDING\" as const };");
+    expect(source).toContain("if (!verification.accepted || !amountMatches) return { outcome: \"pending\" };");
   });
 
   it("une transaction déjà réglée n'appelle jamais une seconde fois le fournisseur", () => {
-    expect(source).toContain('if (existing.onlinePaymentStatus === "SUCCESS") return { success: true, status: "SUCCESS" as const };');
+    expect(source).toContain('if (existing.onlinePaymentStatus === "SUCCESS") return { outcome: "success" };');
   });
 
   it("le router est bien enregistré", () => {
