@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flightsRouter } from "./routers/flights";
 import { flightSearchCache } from "./services/flightSearchCache";
 
+// Ces tests vérifient les tarifs fournisseur bruts : aucune commission persistante ne doit les modifier.
+vi.mock("./db", () => ({ getDb: async () => undefined }));
+
 const XAF_PER_EUR = 655.957;
 const departureDate = new Date(Date.now() + 45 * 86_400_000).toISOString().slice(0, 10);
 
@@ -25,11 +28,13 @@ const search = (overrides: Record<string, unknown> = {}) =>
   flightsRouter.createCaller({} as never).searchFlights({ tripType: "ONE_WAY", origin: "DLA", destination: "CDG", departureDate, adults: 1, children: 0, infants: 0, cabinClass: "ECONOMY", ...overrides } as never);
 
 const originalKey = process.env.SEARCHAPI_KEY;
+const originalSerpApiKey = process.env.SERPAPI_KEY;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   flightSearchCache.clear();
   process.env.SEARCHAPI_KEY = "cle-de-test";
+  delete process.env.SERPAPI_KEY;
   fetchMock = vi.fn(async () => providerResponse([providerFlight(425)]));
   vi.stubGlobal("fetch", fetchMock);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -39,6 +44,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   if (originalKey === undefined) delete process.env.SEARCHAPI_KEY;
   else process.env.SEARCHAPI_KEY = originalKey;
+  if (originalSerpApiKey === undefined) delete process.env.SERPAPI_KEY;
+  else process.env.SERPAPI_KEY = originalSerpApiKey;
 });
 
 describe("les tarifs affichés sont ceux du fournisseur, sans aucune donnée inventée", () => {

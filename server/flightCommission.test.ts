@@ -32,9 +32,14 @@ describe("commission agence : sans réglage enregistré, le tarif reste exacteme
   // Cet environnement de test n'a pas de base de données : resolveActiveCommissionMultiplier() doit alors
   // renvoyer 1 (aucune marge), pas la suggestion à 8 % affichée dans le formulaire admin avant tout enregistrement.
   it("getCommission indique que rien n'est enregistré (« saved: false ») sans imposer 8 % pour autant", async () => {
-    const result = await flightsRouter.createCaller({} as never).getCommission();
+    vi.resetModules();
+    vi.doMock("./db", () => ({ getDb: async () => undefined }));
+    const { flightsRouter: isolatedRouter } = await import("./routers/flights");
+    const result = await isolatedRouter.createCaller({} as never).getCommission();
     expect(result.saved).toBe(false);
     expect(result.commissionPercent).toBe(8);
+    vi.doUnmock("./db");
+    vi.resetModules();
   });
 });
 

@@ -22,6 +22,9 @@ import { flightsRouter, resetFlightOffersStore } from "./routers/flights";
 import { FlightBestOffers, formatOfferPrice } from "../client/src/components/FlightDiscoverySections";
 import { ALL_FLIGHT_ROUTES, parseLastFlightSearch, parseRecentFlightSearches } from "../client/src/data/flightDiscovery";
 
+// Les meilleures offres doivent refléter le fournisseur, sans commission persistante de l’environnement.
+vi.mock("./db", () => ({ getDb: async () => undefined }));
+
 afterEach(cleanup);
 
 const DAY = 86_400_000;
@@ -183,6 +186,7 @@ describe("mémoire des offres : bornes de coût", () => {
 
 describe("procédure popularOffers", () => {
   const originalKey = process.env.SEARCHAPI_KEY;
+  const originalSerpApiKey = process.env.SERPAPI_KEY;
   const originalSwitch = process.env.FLIGHT_OFFERS_DISABLED;
   const XAF_PER_EUR = 655.957;
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -208,6 +212,7 @@ describe("procédure popularOffers", () => {
   beforeEach(() => {
     resetFlightOffersStore();
     process.env.SEARCHAPI_KEY = "cle-de-test";
+    delete process.env.SERPAPI_KEY;
     delete process.env.FLIGHT_OFFERS_DISABLED;
     fetchMock = vi.fn(async () => provider([700, 650, 900]));
     vi.stubGlobal("fetch", fetchMock);
@@ -216,6 +221,8 @@ describe("procédure popularOffers", () => {
     vi.unstubAllGlobals();
     if (originalKey === undefined) delete process.env.SEARCHAPI_KEY;
     else process.env.SEARCHAPI_KEY = originalKey;
+    if (originalSerpApiKey === undefined) delete process.env.SERPAPI_KEY;
+    else process.env.SERPAPI_KEY = originalSerpApiKey;
     if (originalSwitch === undefined) delete process.env.FLIGHT_OFFERS_DISABLED;
     else process.env.FLIGHT_OFFERS_DISABLED = originalSwitch;
     resetFlightOffersStore();
