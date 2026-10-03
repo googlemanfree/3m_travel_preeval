@@ -495,7 +495,7 @@ export default function FlightAgentDashboard() {
                   <Input id="advisor-initials" value={advisorInitialsInput} onChange={(e) => setAdvisorInitialsInput(e.target.value.toUpperCase())} placeholder="Ex. JDM" maxLength={10} className="mt-1 font-mono uppercase font-bold" />
                 </div>
                 <div>
-                  <Label htmlFor="issuance-pnr">Référence PNR / GDS</Label>
+                  <Label htmlFor="issuance-pnr">Référence PNR / GDS *</Label>
                   <Input id="issuance-pnr" value={issuancePnrInput} onChange={(e) => setIssuancePnrInput(e.target.value)} placeholder="Ex. PNR98765" maxLength={50} className="mt-1" />
                 </div>
                 <div>
@@ -519,11 +519,16 @@ export default function FlightAgentDashboard() {
                     toast({ title: "Initiales requises", description: "Veuillez saisir vos initiales de conseiller.", variant: "destructive" });
                     return;
                   }
+                  const pnrToIssue = issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "";
+                  if (!pnrToIssue) {
+                    toast({ title: "Référence PNR requise", description: "Saisissez la vraie référence PNR / GDS du billet avant d'émettre.", variant: "destructive" });
+                    return;
+                  }
                   if (issuancePdfFile) {
                     adminUploadPnrMutation.mutate({
                       sessionToken,
                       requestId: selectedRequestId,
-                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
+                      pnrReference: pnrToIssue,
                       fileBase64: issuancePdfFile.base64,
                       fileName: issuancePdfFile.name,
                       advisorInitials: advisorInitialsInput.trim().toUpperCase(),
@@ -532,7 +537,7 @@ export default function FlightAgentDashboard() {
                     updatePnrMutation.mutate({
                       sessionToken,
                       requestId: selectedRequestId,
-                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
+                      pnrReference: pnrToIssue,
                       advisorInitials: advisorInitialsInput.trim().toUpperCase(),
                     });
                   }

@@ -24,6 +24,17 @@ export async function fareRefusal(db: Db, request: Pick<FlightBookingRequest, "i
   return refuseWithoutFreshFare({ referenceAt, now, waiverReason, lastCheck: last?.kind ?? null });
 }
 
+const PLACEHOLDER_PNR = /^(PNR-?DEF|PNR|N\/?A|TBD|TODO|TEST|X{3,}|0+)$/i;
+
+/** Un PNR de remplissage (« PNR-DEF », « N/A »…) ne doit jamais partir chez le client comme référence officielle. Renvoie le motif du refus, ou null. */
+export function pnrReferenceRefusal(pnrReference: string): string | null {
+  const value = pnrReference.trim();
+  if (!value || PLACEHOLDER_PNR.test(value)) {
+    return "Émission impossible : saisissez la vraie référence PNR / GDS du billet (une valeur de remplissage comme « PNR-DEF » n’est pas acceptée).";
+  }
+  return null;
+}
+
 /** L'émission d'un billet exige les données passeport de tous les voyageurs, valides pour le voyage. Renvoie le motif du refus, ou null. */
 export function travelerRefusal(request: Pick<FlightBookingRequest, "flightData" | "passengerData">, now: Date): string | null {
   const readiness = assessTravelers({ flightData: request.flightData, passengerData: request.passengerData, today: now });

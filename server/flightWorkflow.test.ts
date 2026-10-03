@@ -25,6 +25,7 @@ vi.mock("./routers/adminNotifications", () => ({ notifyAdmins: async (input: any
 import { flightBookingRouter } from "./routers/flightBooking";
 import { buildPaymentDecisionEmail, buildPaymentDeclaredAlert, paymentHintHtml, refusePaymentDecision, refuseStatusChange } from "./services/flightWorkflow";
 import { paymentMethodLabel } from "../shared/paymentMethods";
+import { pnrReferenceRefusal } from "./services/flightGuards";
 
 const read = (path: string) => readFileSync(resolve(import.meta.dirname, "..", path), "utf8").replace(/\r\n/g, "\n");
 const admin = () => flightBookingRouter.createCaller({ req: { headers: {} } } as any);
@@ -132,6 +133,31 @@ describe("routeur : parcours de la réservation côté agence", () => {
     state.row = booking({ status: "awaiting_payment", issuanceChecklist: { identity_verified: true, passport_valid: true, fare_revalidated: true, payment_verified: false, pnr_document_ready: true } });
     await expect(admin().updatePnrAndIssuedPdf({ sessionToken: "t", requestId: 5, pnrReference: "ABC123", advisorInitials: "AD" })).rejects.toThrow(/checklist/);
     expect(state.updates).toHaveLength(0);
+  });
+});
+
+describe("la référence PNR envoyée au client est toujours réelle", () => {
+  it("refuse les valeurs de remplissage, accepte une vraie référence", () => {
+    for (const fake of ["PNR-DEF", "pnr-def", "PNRDEF", "N/A", "NA", "TBD", "TEST", "XXXXXX", "000000", "", "   "]) {
+      expect(pnrReferenceRefusal(fake), JSON.stringify(fake)).toMatch(/référence PNR/);
+    }
+    for (const real of ["ABC123", "x7k2pq", "PNR98765", " QWE4RT "]) {
+      expect(pnrReferenceRefusal(real), real).toBeNull();
+    }
+  });
+
+  it("les deux voies d'émission refusent un PNR bidon : rien n'est écrit, le client n'est pas prévenu", async () => {
+    state.row = booking({ status: "cancelled", issuanceChecklist: { identity_verified: true, passport_valid: true, fare_revalidated: true, payment_verified: true, pnr_document_ready: true } });
+    await expect(admin().updatePnrAndIssuedPdf({ sessionToken: "t", requestId: 5, pnrReference: "PNR-DEF", advisorInitials: "AD" })).rejects.toThrow(/référence PNR/);
+    await expect(admin().adminUploadPnrDocument({ sessionToken: "t", requestId: 5, pnrReference: "PNR-DEF", fileBase64: "JVBERi0=", fileName: "billet.pdf", advisorInitials: "AD" })).rejects.toThrow(/référence PNR/);
+    expect(state.updates).toHaveLength(0);
+    expect(state.emails).toHaveLength(0);
+  });
+
+  it("l'écran d'émission n'invente plus de PNR de remplacement", () => {
+    const screen = readFileSync(resolve(process.cwd(), "client/src/pages/FlightAgentDashboard.tsx"), "utf8");
+    expect(screen).not.toContain("PNR-DEF");
+    expect(screen).toContain("Référence PNR requise");
   });
 });
 

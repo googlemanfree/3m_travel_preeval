@@ -38,7 +38,7 @@ import { buildDeskAlertEmail, resolveDeskRecipients, resolveDeskWhatsApp } from 
 import { extractDeskAlertData } from "../../shared/flightDeskAlert";
 import { buildBookingConfirmationEmail } from "../services/flightBookingConfirmation";
 import { buildPaymentDeclaredAlert, buildPaymentDecisionEmail, paymentHintHtml, refusePaymentDecision, refuseStatusChange } from "../services/flightWorkflow";
-import { fareRefusal, travelerRefusal } from "../services/flightGuards";
+import { fareRefusal, pnrReferenceRefusal, travelerRefusal } from "../services/flightGuards";
 import { travelSheetAttachment } from "../services/flightTravelSheet";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
@@ -894,6 +894,8 @@ export const flightBookingRouter = router({
       }
       const travelerProblem = existing.status === "cancelled" ? null : travelerRefusal(existing, new Date());
       if (travelerProblem) throw new TRPCError({ code: "BAD_REQUEST", message: travelerProblem });
+      const pnrProblem = pnrReferenceRefusal(input.pnrReference);
+      if (pnrProblem) throw new TRPCError({ code: "BAD_REQUEST", message: pnrProblem });
       if (existing.status === "cancelled") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réservation est annulée : aucun billet ne peut être émis. Rouvrez d'abord la demande." });
       }
@@ -994,6 +996,8 @@ export const flightBookingRouter = router({
       }
       const travelerProblem = existing.status === "cancelled" ? null : travelerRefusal(existing, new Date());
       if (travelerProblem) throw new TRPCError({ code: "BAD_REQUEST", message: travelerProblem });
+      const pnrProblem = pnrReferenceRefusal(input.pnrReference);
+      if (pnrProblem) throw new TRPCError({ code: "BAD_REQUEST", message: pnrProblem });
 
       const buffer = Buffer.from(input.fileBase64, "base64");
       if (buffer.length > 8 * 1024 * 1024) {
