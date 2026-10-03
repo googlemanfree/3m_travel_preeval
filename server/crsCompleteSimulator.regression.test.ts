@@ -37,6 +37,14 @@ describe("simulateur CRS complet", () => {
     expect(source).toContain("Recevoir mon récapitulatif");
   });
 
+  it("présente un aperçu synthétique avant la saisie de l’email", () => {
+    expect(source).toContain('aria-labelledby="crs-report-preview-title"');
+    expect(source).toContain("Aperçu de votre rapport");
+    expect(source).toContain("Score CRS indicatif");
+    expect(source).toContain("reportHighlights");
+    expect(source).toContain("Dans le rapport complet");
+  });
+
   it("sauvegarde localement le brouillon et restaure le parcours", () => {
     expect(source).toContain("3m-crs-simulator-draft-v2");
     expect(source).toContain("isDraftLoaded");
