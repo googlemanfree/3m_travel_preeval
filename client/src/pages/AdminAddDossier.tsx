@@ -69,7 +69,7 @@ export default function AdminAddDossier() {
   };
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">📋 Ajouter un Dossier Manuellement</h1>
         <p className="text-gray-600 mt-2">Créez un dossier pour les candidats qui viennent directement en agence</p>
@@ -270,6 +270,6 @@ export default function AdminAddDossier() {
           </motion.div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

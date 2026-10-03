@@ -15,7 +15,7 @@ export default function PaymentMethodSelection() {
   // Rediriger si non authentifié
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
+      <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function PaymentMethodSelection() {
             Se connecter
           </Button>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
@@ -71,7 +71,7 @@ export default function PaymentMethodSelection() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* En-tête */}
         <motion.div
@@ -339,6 +339,6 @@ export default function PaymentMethodSelection() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

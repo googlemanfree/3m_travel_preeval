@@ -186,7 +186,7 @@ export default function Navbar() {
               className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/80 text-blue-700 transition hover:bg-blue-100"
             >
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-              {totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{totalItems > 9 ? "9+" : totalItems}</span>}
+              {totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-700 px-1 text-[10px] font-black text-white">{totalItems > 9 ? "9+" : totalItems}</span>}
             </a>
             <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
               <button
@@ -372,7 +372,7 @@ export default function Navbar() {
               aria-label={`${copy(NAV_COPY.cart)}${totalItems ? `, ${totalItems} ${copy(totalItems > 1 ? NAV_COPY.items : NAV_COPY.item)}` : ` ${copy(NAV_COPY.empty)}`}`}
             >
               <span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.cart)}</span>
-              <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-black text-white">{totalItems}</span>
+              <span className="rounded-full bg-orange-700 px-2 py-0.5 text-[10px] font-black text-white">{totalItems}</span>
             </a>
 
             <nav aria-label={copy(NAV_COPY.mobileNav)} className="space-y-1 mb-4">

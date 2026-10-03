@@ -293,7 +293,7 @@ export default function ApprovedReviewsSection() {
           <p className="mt-3 text-sm leading-6 text-slate-600">{labels.noReviewsYetBody}</p>
           <a
             href="/avis#deposer-un-avis"
-            className="mt-6 inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
+            className="mt-6 inline-block bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
           >
             {labels.noReviewsYetCta}
           </a>
@@ -524,7 +524,7 @@ export default function ApprovedReviewsSection() {
           <p className="text-slate-600 mb-4">{labels.share}</p>
           <a
             href="/avis#deposer-un-avis"
-            className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
+            className="inline-block bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
           >
             {labels.leave}
           </a>

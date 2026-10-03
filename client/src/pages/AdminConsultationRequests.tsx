@@ -56,7 +56,7 @@ export default function AdminConsultationRequests() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">📋 Demandes de consultation</h1>
@@ -165,7 +165,7 @@ export default function AdminConsultationRequests() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

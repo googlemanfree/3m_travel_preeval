@@ -473,7 +473,7 @@ export default function Evaluation() {
 
   if (submitMutation.data?.success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-blue-50 to-white">
+      <main className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-blue-50 to-white">
         <motion.div
           initial={{ opacity: 0, y: 18, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -516,12 +516,12 @@ export default function Evaluation() {
             )}
           </Card>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
@@ -884,6 +884,6 @@ export default function Evaluation() {
           </form>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

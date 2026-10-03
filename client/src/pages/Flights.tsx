@@ -938,7 +938,7 @@ export default function Flights() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <main className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
 
       {/* Search Panel */}
@@ -1338,7 +1338,7 @@ export default function Flights() {
             <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
+              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
             </div>
           </motion.div>
         )}
@@ -1349,7 +1349,7 @@ export default function Flights() {
             <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
             <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
             <div className="mt-5 flex justify-center">
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-700"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
+              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
             </div>
           </motion.div>
         )}
@@ -1368,7 +1368,7 @@ export default function Flights() {
       )}
 
       <div className="order-6"><Footer /></div>
-    </div>
+    </main>
   );
 }
 
@@ -1437,7 +1437,7 @@ function AIPlannerForm() {
             <button
               onClick={() => savePlanMutation.mutate({ origin, destination, planContent: result })}
               disabled={savePlanMutation.isPending}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
+              className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
             >
               <Heart className="w-4 h-4" /> {savePlanMutation.isPending ? "Sauvegarde..." : "Sauvegarder dans mon espace"}
             </button>

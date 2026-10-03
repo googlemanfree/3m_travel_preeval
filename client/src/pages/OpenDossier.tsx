@@ -10,7 +10,7 @@ export default function OpenDossier() {
   const destination = params.get("destination") ?? "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto">
           {/* En-tête de la page */}
@@ -51,6 +51,6 @@ export default function OpenDossier() {
         </div>
       </div>
       <Footer />
-    </div>
+    </main>
   );
 }

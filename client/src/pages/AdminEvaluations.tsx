@@ -64,12 +64,12 @@ export default function AdminEvaluations() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Chargement des évaluations...</p>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -148,7 +148,7 @@ export default function AdminEvaluations() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
 
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">
@@ -345,6 +345,6 @@ export default function AdminEvaluations() {
       </div>
 
       <Footer />
-    </div>
+    </main>
   );
 }

@@ -64,7 +64,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -186,6 +186,6 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

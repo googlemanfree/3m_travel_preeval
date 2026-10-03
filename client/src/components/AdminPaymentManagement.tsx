@@ -883,7 +883,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
             <Button
               onClick={handleConfirmAction}
               disabled={isProcessing || (actionType === 'cancel' && adminNote.trim().length < 3)}
-              className={actionType === 'confirm' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold' : 'bg-red-600 hover:bg-red-700 text-white font-semibold'}
+              className={actionType === 'confirm' ? 'bg-emerald-700 hover:bg-emerald-800 text-white font-semibold' : 'bg-red-600 hover:bg-red-700 text-white font-semibold'}
             >
               {isProcessing ? (
                 <>

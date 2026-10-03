@@ -541,7 +541,7 @@ export default function FlightAgentDashboard() {
                       advisorInitials: advisorInitialsInput.trim().toUpperCase(),
                     });
                   }
-                }} className="bg-emerald-600 font-bold text-white hover:bg-emerald-700">
+                }} className="bg-emerald-700 font-bold text-white hover:bg-emerald-800">
                   Confirmer l'émission définitive
                 </Button>
               </div>

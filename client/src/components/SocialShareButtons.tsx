@@ -39,7 +39,7 @@ export function SocialShareButtons({ title, className = "" }: SocialShareButtons
   };
 
   const buttons = [
-    { key: "facebook" as const, label: "Partager sur Facebook", icon: Facebook, tone: "bg-[#1877F2] hover:bg-[#0f65d1]" },
+    { key: "facebook" as const, label: "Partager sur Facebook", icon: Facebook, tone: "bg-[#0f65d1] hover:bg-[#0d54ac]" },
     { key: "twitter" as const, label: "Partager sur Twitter", icon: Twitter, tone: "bg-slate-900 hover:bg-slate-700" },
     { key: "linkedin" as const, label: "Partager sur LinkedIn", icon: Linkedin, tone: "bg-[#0A66C2] hover:bg-[#084f96]" },
   ];

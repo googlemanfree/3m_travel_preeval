@@ -71,7 +71,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -181,6 +181,6 @@ export default function AdminLogin() {
           <a href="/" className="text-blue-600 hover:underline">← Retour à l'accueil</a>
         </p>
       </motion.div>
-    </div>
+    </main>
   );
 }

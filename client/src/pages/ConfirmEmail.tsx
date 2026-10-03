@@ -102,7 +102,7 @@ export default function ConfirmEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <div className="p-8">
           {/* En-tête */}
@@ -245,6 +245,6 @@ export default function ConfirmEmail() {
           </div>
         </div>
       </Card>
-    </div>
+    </main>
   );
 }

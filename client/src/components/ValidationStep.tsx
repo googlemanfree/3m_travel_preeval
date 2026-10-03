@@ -274,7 +274,7 @@ export function ValidationStep({
           <RotateCcw className="mr-2 h-4 w-4" />
           Annuler mes corrections
         </Button>
-        <Button type="submit" disabled={isLoading} className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700">
+        <Button type="submit" disabled={isLoading} className="flex-1 bg-emerald-700 text-white hover:bg-emerald-800">
           <Save className="mr-2 h-4 w-4" />
           {isLoading ? 'Validation en cours…' : 'Enregistrer et continuer'}
         </Button>

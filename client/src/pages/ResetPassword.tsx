@@ -82,7 +82,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4"
+      <main className="min-h-screen flex items-center justify-center px-4"
         style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 100%)" }}>
         <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -94,12 +94,12 @@ export default function ResetPassword() {
             Faire une nouvelle demande
           </Button>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
+    <main className="min-h-screen flex items-center justify-center px-4"
       style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -204,6 +204,6 @@ export default function ResetPassword() {
           )}
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 }

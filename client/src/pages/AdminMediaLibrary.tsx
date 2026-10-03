@@ -97,7 +97,7 @@ export default function AdminMediaLibrary() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
+    <main className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
@@ -296,6 +296,6 @@ export default function AdminMediaLibrary() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

@@ -234,7 +234,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
+    <main className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       {/* Panneau gauche — Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -758,6 +758,6 @@ export default function Register() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

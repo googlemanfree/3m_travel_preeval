@@ -121,7 +121,7 @@ export default function CountryDetailPage() {
 
   if (!country) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+      <main className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-2">{L.notFoundTitle}</h2>
         <p className="text-slate-600 mb-6">{L.notFoundBody}</p>
         <a href={locale === 'en' ? '/en' : '/procedures'}>
@@ -129,7 +129,7 @@ export default function CountryDetailPage() {
             <ArrowLeft className="w-4 h-4 mr-2" /> {L.notFoundCta}
           </Button>
         </a>
-      </div>
+      </main>
     );
   }
 
@@ -160,7 +160,7 @@ export default function CountryDetailPage() {
   const [regionBadge, regionLabel] = getProcedureRegionBadges(country);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Fil d'Ariane + partage */}
@@ -445,7 +445,7 @@ export default function CountryDetailPage() {
               <h4 className="font-bold text-lg">{L.needHelp} {country.name}?</h4>
               <p className="text-blue-200 text-sm">{L.needHelpBody}</p>
               <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="block">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow">
+                <Button className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow">
                   {L.chatWhatsapp}
                 </Button>
               </a>
@@ -549,6 +549,6 @@ export default function CountryDetailPage() {
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

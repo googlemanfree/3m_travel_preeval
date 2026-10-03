@@ -31,7 +31,7 @@ export default function EvisasAdvanced() {
   }, [searchQuery, selectedRegion, selectedDelay]);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* En-tête de la page */}
@@ -194,6 +194,6 @@ export default function EvisasAdvanced() {
         )}
 
       </div>
-    </div>
+    </main>
   );
 }

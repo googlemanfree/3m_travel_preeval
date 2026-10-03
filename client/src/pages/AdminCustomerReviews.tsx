@@ -47,7 +47,7 @@ export default function AdminCustomerReviews() {
   const items = pendingReviews ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">⭐ Modération des avis clients</h1>
@@ -124,6 +124,6 @@ export default function AdminCustomerReviews() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

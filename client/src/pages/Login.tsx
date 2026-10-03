@@ -197,7 +197,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
+    <main className="min-h-screen flex items-center justify-center p-6" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <p className="sr-only" aria-live="polite" aria-atomic="true">{modalAnnouncement}</p>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
@@ -646,6 +646,6 @@ export default function Login() {
           </motion.div>
         </motion.div>
       )}
-    </div>
+    </main>
   );
 }

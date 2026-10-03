@@ -113,19 +113,19 @@ export default function VerifyEmail() {
 
   if (!candidateId) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 100%)" }}>
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 100%)" }}>
         <div className="text-white text-center">
           <p className="text-xl mb-4">Lien invalide.</p>
           <Button onClick={() => navigate("/register")} variant="outline" className="text-white border-white">
             Inscription
           </Button>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
+    <main className="min-h-screen flex items-center justify-center px-4"
       style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -230,6 +230,6 @@ export default function VerifyEmail() {
           🔒 Ce code expire dans 15 minutes. Ne le partagez avec personne.
         </p>
       </motion.div>
-    </div>
+    </main>
   );
 }

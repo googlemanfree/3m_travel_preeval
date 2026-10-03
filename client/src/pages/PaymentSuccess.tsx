@@ -26,7 +26,7 @@ export default function PaymentSuccess() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 text-white">
 
       <div className="pt-24 pb-16 px-4 flex flex-col items-center justify-center min-h-[80vh]">
         {isLoading ? (
@@ -134,6 +134,6 @@ export default function PaymentSuccess() {
       </div>
 
       <Footer />
-    </div>
+    </main>
   );
 }

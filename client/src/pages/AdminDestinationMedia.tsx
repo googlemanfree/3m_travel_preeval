@@ -191,7 +191,7 @@ export default function AdminDestinationMedia() {
   const chooseCountry = (id: string) => setSelectedId(id);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 dark:bg-[#071426] dark:text-slate-100 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 dark:bg-[#071426] dark:text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 rounded-3xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 p-6 text-white shadow-xl sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
@@ -384,7 +384,7 @@ export default function AdminDestinationMedia() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

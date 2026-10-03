@@ -76,7 +76,7 @@ export default function ConsultationBooking() {
 
   if (submitMutation.data) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center px-4 py-16">
+      <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center px-4 py-16">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md" role="status" aria-live="polite">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
             <CheckCircle2 className="h-10 w-10 text-emerald-600" />
@@ -87,12 +87,12 @@ export default function ConsultationBooking() {
             Retour à l'accueil
           </a>
         </motion.div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="mx-auto max-w-xl">
         <div className="text-center mb-6">
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Prise de rendez-vous gratuite</span>
@@ -221,6 +221,6 @@ export default function ConsultationBooking() {
           Service gratuit · Aucun engagement · Réponse sous 24-48 h ouvrées
         </p>
       </div>
-    </div>
+    </main>
   );
 }

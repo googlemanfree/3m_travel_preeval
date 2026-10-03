@@ -108,7 +108,7 @@ export default function VerifyEmailLink() {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <AnimatePresence mode="wait">
         {status === "loading" && (
           <motion.div
@@ -427,6 +427,6 @@ export default function VerifyEmailLink() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </main>
   );
 }

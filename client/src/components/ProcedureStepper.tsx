@@ -21,7 +21,7 @@ function StepRow({ step, currentStepIndex, busy, onUnlock, onUndo }: { step: Pro
   const current = step.state === "current";
   return (
     <li className="flex items-center gap-3 px-3 py-2" data-testid={`stepper-row-${step.index}`} data-state={step.state} title={step.description ?? undefined}>
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${done ? "bg-emerald-600 text-white" : current ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-500"}`} aria-hidden="true">
+      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${done ? "bg-emerald-700 text-white" : current ? "bg-blue-700 text-white" : "bg-slate-200 text-slate-500"}`} aria-hidden="true">
         {done ? <Check className="h-3.5 w-3.5" /> : current ? <Play className="h-3 w-3" /> : <LockKeyhole className="h-3 w-3" />}
       </span>
       <span className={`min-w-0 flex-1 truncate text-sm ${current ? "font-semibold text-slate-900" : done ? "text-slate-700" : "text-slate-500"}`}>{step.index + 1}. {step.label}</span>

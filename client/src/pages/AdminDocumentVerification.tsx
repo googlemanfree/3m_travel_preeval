@@ -39,23 +39,23 @@ export function AdminDocumentVerification() {
 
   if (applicationsQuery.isLoading) {
     return (
-      <div className="p-6">
+      <main className="p-6">
         <Card className="p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement des dossiers...</p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (applicationsQuery.error) {
     return (
-      <div className="p-6">
+      <main className="p-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{applicationsQuery.error.message}</AlertDescription>
         </Alert>
-      </div>
+      </main>
     );
   }
 
@@ -64,7 +64,7 @@ export function AdminDocumentVerification() {
   );
 
   return (
-    <div className="p-6">
+    <main className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Verification des documents</h1>
 
       {applications.length === 0 ? (
@@ -138,6 +138,6 @@ export function AdminDocumentVerification() {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }

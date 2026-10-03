@@ -109,7 +109,7 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
                   aria-label={`Motif de revue pour ${candidate.fullName}`}
                 />
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => review(candidate, "approve")} disabled={!candidate.avatarUrl || reviewMutation.isPending} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                  <Button size="sm" onClick={() => review(candidate, "approve")} disabled={!candidate.avatarUrl || reviewMutation.isPending} className="bg-emerald-700 text-white hover:bg-emerald-800">
                     {reviewMutation.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-4 w-4" />} Valider
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => review(candidate, "request_new")} disabled={reviewMutation.isPending} className="border-amber-300 text-amber-800 hover:bg-amber-50">

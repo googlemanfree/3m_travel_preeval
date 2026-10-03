@@ -36,7 +36,7 @@ export function FlightDeskActions({ request }: { request: DeskRequest }) {
           {copied ? "Résumé copié" : "Copier le résumé"}
         </Button>
         {clientLink && (
-          <a href={clientLink} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
+          <a href={clientLink} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">
             <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Écrire au client (WhatsApp)
           </a>
         )}

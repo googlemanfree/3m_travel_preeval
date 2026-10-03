@@ -89,27 +89,27 @@ export default function SubmitDocuments() {
 
   if (!dossierNumber) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto pt-20">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>Numero de dossier manquant. Veuillez revenir a votre espace client.</AlertDescription>
           </Alert>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (statusQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto pt-20">
           <Card className="p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Chargement de votre dossier...</p>
           </Card>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -117,7 +117,7 @@ export default function SubmitDocuments() {
 
   if (status && status !== "en_attente_documents" && status !== "en_attente_paiement") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto pt-20">
           <Card className="p-8">
             <div className="flex items-center gap-3 mb-4">
@@ -132,12 +132,12 @@ export default function SubmitDocuments() {
             </Button>
           </Card>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-2xl mx-auto pt-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Depot de vos documents</h1>
@@ -255,6 +255,6 @@ export default function SubmitDocuments() {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

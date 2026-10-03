@@ -312,7 +312,7 @@ export function AdminReservationPayments() {
                             };
                             input.click();
                           }}
-                          className="inline-flex items-center gap-1 rounded bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                          className="inline-flex items-center gap-1 rounded bg-emerald-700 hover:bg-emerald-800 px-2.5 py-1 text-xs font-bold text-white shadow-sm"
                         >
                           📄 PNR & Prévisualisation
                         </button>

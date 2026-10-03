@@ -203,7 +203,7 @@ export default function Evisa() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Hero + Search */}
       <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -457,6 +457,6 @@ export default function Evisa() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

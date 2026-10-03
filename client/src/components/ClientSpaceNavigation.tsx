@@ -428,7 +428,7 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
           </div>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => hotelRequestsQuery.refetch()} disabled={hotelRequestsQuery.isFetching} className="h-11 rounded-xl border-orange-200 bg-white font-bold text-orange-900 hover:bg-orange-50"><RefreshCw className={`mr-2 h-4 w-4 ${hotelRequestsQuery.isFetching ? "animate-spin" : ""}`} /> Actualiser</Button>
-            <a href="/flights#3m-booking" className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-bold text-white hover:bg-orange-600"><Plus className="mr-2 h-4 w-4" /> Nouvelle demande</a>
+            <a href="/flights#3m-booking" className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-700 px-4 text-sm font-bold text-white hover:bg-orange-800"><Plus className="mr-2 h-4 w-4" /> Nouvelle demande</a>
           </div>
         </div>
 

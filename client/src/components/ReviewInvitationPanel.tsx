@@ -48,7 +48,7 @@ export default function ReviewInvitationPanel() {
         <textarea readOnly value={message} rows={9} className="mt-1 w-full rounded-md border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" />
       </label>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-700">
+        <Button asChild className="bg-emerald-700 text-white hover:bg-emerald-800">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" /> Ouvrir WhatsApp</a>
         </Button>
         <Button type="button" variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" aria-hidden="true" /> Copier le message</Button>

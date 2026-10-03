@@ -59,7 +59,7 @@ export default function VisaEtudes() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Hero */}
       <section className="relative pt-20 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
@@ -227,6 +227,6 @@ export default function VisaEtudes() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

@@ -662,7 +662,7 @@ export function CandidateDetailModal({
                   <div className="flex items-center gap-2 text-sm text-slate-700"><Globe className="h-4 w-4 text-blue-700" /><span>{candidate.destinationCountry || "Destination à préciser"}</span></div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {candidate.whatsapp && <a href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"><MessageSquare className="h-4 w-4" />WhatsApp</a>}
+                  {candidate.whatsapp && <a href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800"><MessageSquare className="h-4 w-4" />WhatsApp</a>}
                   <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
                 </div>
               </section>
@@ -1504,7 +1504,7 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.2),_transparent_34rem),linear-gradient(180deg,_#f8fbff_0%,_#f1f6ff_100%)] text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.2),_transparent_34rem),linear-gradient(180deg,_#f8fbff_0%,_#f1f6ff_100%)] text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
       <div className="glass-admin-header bg-gradient-to-r from-[#071b3d]/95 via-[#0b2f6f]/95 to-[#123c86]/95 text-white sticky top-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
         <div className="mx-auto w-full max-w-[1920px] px-4 py-4 sm:px-6 xl:px-8 2xl:px-10 space-y-3">
@@ -2706,7 +2706,7 @@ export default function AdminDashboard() {
           onImported={handleRefresh}
         />
       )}
-    </div>
+    </main>
   );
 }
 

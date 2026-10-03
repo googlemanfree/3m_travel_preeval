@@ -109,16 +109,16 @@ export default function CinetPayPayment() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
         <Loader className="w-8 h-8 animate-spin text-blue-600" />
         <p className="text-gray-500 text-sm">Chargement de votre dossier...</p>
-      </div>
+      </main>
     );
   }
 
   if (loadError || !application) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <main className="min-h-screen flex items-center justify-center p-4">
         <Card className="p-8 max-w-md text-center">
           <XCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
           <h1 className="text-lg font-bold text-gray-900 mb-2">Dossier introuvable</h1>
@@ -126,12 +126,12 @@ export default function CinetPayPayment() {
             Le numéro de dossier « {dossierNumber} » n'a pas pu être trouvé. Vérifiez le lien reçu ou contactez notre équipe.
           </p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-md mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -240,6 +240,6 @@ export default function CinetPayPayment() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

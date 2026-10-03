@@ -43,7 +43,7 @@ export default function AdminReviewsToInvite({ sessionToken }: { sessionToken: s
                   <p className="truncate text-sm font-bold text-slate-950">{item.fullName}</p>
                   <p className="truncate text-xs text-slate-500">{[item.service, item.destination].filter(Boolean).join(" · ") || "Visa accordé"}{item.approvedAt ? ` · visa le ${new Date(item.approvedAt).toLocaleDateString("fr-FR")}` : ""}</p>
                 </div>
-                <a href={whatsapp} target="_blank" rel="noopener noreferrer" onClick={() => markInvited.mutate({ sessionToken, key: item.key })} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700" data-testid="invite-whatsapp">
+                <a href={whatsapp} target="_blank" rel="noopener noreferrer" onClick={() => markInvited.mutate({ sessionToken, key: item.key })} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-emerald-700 px-3 text-xs font-black text-white hover:bg-emerald-800" data-testid="invite-whatsapp">
                   <MessageCircle className="h-4 w-4" aria-hidden="true" />Inviter sur WhatsApp
                 </a>
               </li>

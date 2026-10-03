@@ -135,7 +135,7 @@ export default function AdminUsersManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <motion.div
@@ -338,6 +338,6 @@ export default function AdminUsersManagement() {
           </motion.div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

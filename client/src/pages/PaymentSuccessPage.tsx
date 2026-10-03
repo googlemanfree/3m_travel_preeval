@@ -7,7 +7,7 @@ export default function PaymentSuccessPage() {
   const [, navigate] = useLocation();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+    <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -111,6 +111,6 @@ export default function PaymentSuccessPage() {
           Un reçu a été envoyé à votre adresse email
         </motion.p>
       </motion.div>
-    </div>
+    </main>
   );
 }

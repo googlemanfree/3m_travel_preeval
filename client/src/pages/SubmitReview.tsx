@@ -323,7 +323,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors"
+                className="w-full bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 rounded-lg transition-colors"
               >
                 {isLoading ? "Envoi en cours..." : "Soumettre mon Avis"}
               </Button>

@@ -37,7 +37,7 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full border border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600 font-bold py-3 rounded-xl shadow-sm">
+        <Button className="w-full border border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800 font-bold py-3 rounded-xl shadow-sm">
           <PhoneCall className="w-4 h-4 mr-2" /> Demander un rappel
         </Button>
       </DialogTrigger>
@@ -70,7 +70,7 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
               </select>
             </div>
           </div>
-          <Button onClick={requestCallback} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+          <Button onClick={requestCallback} className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
             <PhoneCall className="w-4 h-4 mr-2" /> Envoyer ma demande
           </Button>
         </div>

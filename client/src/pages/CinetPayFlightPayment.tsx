@@ -134,51 +134,51 @@ export default function CinetPayFlightPayment() {
 
   if (!validParams) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <main className="min-h-screen flex items-center justify-center p-4">
         <Card className="p-8 max-w-md text-center">
           <XCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
           <h1 className="mb-2 text-lg font-bold text-gray-900">Lien de paiement incomplet</h1>
           <p className="text-sm text-gray-600">Ce lien ne contient pas les informations nécessaires. Utilisez celui reçu par e-mail, ou contactez-nous.</p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
         <Loader className="h-8 w-8 animate-spin text-blue-600" />
         <p className="text-sm text-gray-500">Chargement de votre réservation...</p>
-      </div>
+      </main>
     );
   }
 
   if (loadError || !info) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <main className="flex min-h-screen items-center justify-center p-4">
         <Card className="p-8 max-w-md text-center">
           <XCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
           <h1 className="mb-2 text-lg font-bold text-gray-900">Réservation introuvable</h1>
           <p className="text-sm text-gray-600">Vérifiez le lien reçu ou contactez notre équipe.</p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (info.status === "SUCCESS") {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <main className="flex min-h-screen items-center justify-center p-4">
         <Card className="max-w-md p-8 text-center">
           <CheckCircle className="mx-auto mb-4 h-10 w-10 text-green-600" />
           <h1 className="mb-2 text-lg font-bold text-gray-900">Paiement déjà confirmé</h1>
           <p className="text-sm text-gray-600">Votre réservation {info.requestRef} est réglée. Notre équipe prépare l'émission du billet.</p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
       <div className="mx-auto max-w-md">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Card className="p-8 shadow-lg">
@@ -251,6 +251,6 @@ export default function CinetPayFlightPayment() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

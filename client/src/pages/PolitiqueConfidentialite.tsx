@@ -2,7 +2,7 @@ import Footer from "@/components/Footer";
 
 export default function PolitiqueConfidentialite() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
 
       {/* En-tête */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
@@ -149,6 +149,6 @@ export default function PolitiqueConfidentialite() {
       </section>
 
       <Footer />
-    </div>
+    </main>
   );
 }

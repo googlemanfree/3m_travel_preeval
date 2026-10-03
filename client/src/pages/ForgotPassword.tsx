@@ -38,7 +38,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
+    <main className="min-h-screen flex items-center justify-center px-4"
       style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -135,6 +135,6 @@ export default function ForgotPassword() {
           🔒 Le lien de réinitialisation expire après 1 heure.
         </p>
       </motion.div>
-    </div>
+    </main>
   );
 }

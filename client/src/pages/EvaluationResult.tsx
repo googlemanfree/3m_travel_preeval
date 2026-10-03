@@ -233,7 +233,7 @@ export default function EvaluationResult() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -446,6 +446,6 @@ export default function EvaluationResult() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

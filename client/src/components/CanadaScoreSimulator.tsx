@@ -1004,7 +1004,7 @@ export default function CanadaScoreSimulator() {
                 href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-xl shadow-lg transition-all"
               >
                 <span>Consulter un conseiller (WhatsApp)</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1025,7 +1025,7 @@ export default function CanadaScoreSimulator() {
           aria-live="polite"
         >
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl text-white ${isThresholdMet ? 'bg-emerald-600' : 'bg-red-600'}`}>
+            <div className={`p-2.5 rounded-xl text-white ${isThresholdMet ? 'bg-emerald-700' : 'bg-red-600'}`}>
               {isThresholdMet ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
             </div>
             <div>

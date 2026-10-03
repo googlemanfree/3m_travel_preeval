@@ -48,7 +48,7 @@ export function AdminCandidatesToRemind({ sessionToken }: { sessionToken: string
                     {item.optedOut && <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-700">Désinscrit des rappels</span>}
                   </div>
                   {item.hasWhatsApp ? (
-                    <a href={`https://wa.me/${item.whatsappNumber}?text=${encodeURIComponent(item.whatsappMessage)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700" data-testid="remind-whatsapp">
+                    <a href={`https://wa.me/${item.whatsappNumber}?text=${encodeURIComponent(item.whatsappMessage)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-emerald-700 px-3 text-xs font-black text-white hover:bg-emerald-800" data-testid="remind-whatsapp">
                       <MessageCircle className="h-4 w-4" aria-hidden="true" />Relancer sur WhatsApp
                     </a>
                   ) : (

@@ -296,7 +296,7 @@ export default function Fiches() {
   }, [dedupedData]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
 
       {/* Hero */}
       <section className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-14">
@@ -443,6 +443,6 @@ export default function Fiches() {
       </section>
 
       <Footer />
-    </div>
+    </main>
   );
 }

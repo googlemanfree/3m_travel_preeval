@@ -171,7 +171,7 @@ export default function TranslationOrder() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <main className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Demande de Traduction Certifiée</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -312,6 +312,6 @@ export default function TranslationOrder() {
           {createTranslationRequest.isPending ? 'Soumission en cours...' : 'Soumettre la Demande'}
         </Button>
       </form>
-    </div>
+    </main>
   );
 }

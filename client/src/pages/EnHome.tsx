@@ -22,7 +22,7 @@ export default function EnHome() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-50">
       <section className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-800 px-4 py-16 text-white sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-amber-200">
@@ -96,7 +96,7 @@ export default function EnHome() {
         <p className="mt-3 text-slate-600">{COMPANY_PROFILE.offices.cameroon.addressLines.join(", ")}, Yaoundé, Cameroon</p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
-            <Button className="h-11 rounded-xl bg-emerald-500 px-6 font-bold text-white hover:bg-emerald-600">
+            <Button className="h-11 rounded-xl bg-emerald-700 px-6 font-bold text-white hover:bg-emerald-800">
               <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp: {COMPANY_PROFILE.offices.cameroon.whatsappDisplay}
             </Button>
           </a>
@@ -108,6 +108,6 @@ export default function EnHome() {
         </div>
         <p className="mt-6 text-xs text-slate-400">{COMPANY_PROFILE.legalName} — {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
       </section>
-    </div>
+    </main>
   );
 }

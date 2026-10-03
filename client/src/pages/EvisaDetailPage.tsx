@@ -48,7 +48,7 @@ export default function EvisaDetailPage() {
 
   if (!destination) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+      <main className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-2">Destination e-Visa non trouvée</h2>
         <p className="text-slate-600 mb-6">Le pays demandé n'est pas répertorié dans notre portail e-Visa officiel.</p>
         <a href="/evisas">
@@ -56,12 +56,12 @@ export default function EvisaDetailPage() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour aux e-Visas
           </Button>
         </a>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Navigation retour */}
@@ -284,6 +284,6 @@ export default function EvisaDetailPage() {
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

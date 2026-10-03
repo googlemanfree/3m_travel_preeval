@@ -35,7 +35,7 @@ export default function AdminEvaluation() {
   const reports = reportsData?.reports || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -233,6 +233,6 @@ export default function AdminEvaluation() {
           </Card>
         )}
       </div>
-    </div>
+    </main>
   );
 }

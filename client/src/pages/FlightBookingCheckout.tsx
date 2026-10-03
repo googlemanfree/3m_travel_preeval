@@ -517,7 +517,7 @@ export default function FlightBookingCheckout() {
                     <Share2 className="h-3.5 w-3.5 text-blue-600" /> Partager mon récapitulatif
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow hover:bg-emerald-700">
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-emerald-700 py-2.5 text-xs font-bold text-white shadow hover:bg-emerald-800">
                       WhatsApp
                     </a>
                     <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-sky-500 py-2.5 text-xs font-bold text-white shadow hover:bg-sky-600">

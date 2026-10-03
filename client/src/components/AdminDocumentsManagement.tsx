@@ -834,7 +834,7 @@ export function AdminDocumentsManagement() {
                 <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} className={`rounded-md px-3 py-1.5 ${viewMode === mode ? "bg-white text-blue-800 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
               ))}
             </div>
-            {viewMode === "list" && selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
+            {viewMode === "list" && selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-700 hover:bg-emerald-800"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
 
             {/* Tableau */}
             {isLoadingDocs ? (
@@ -1037,7 +1037,7 @@ export function AdminDocumentsManagement() {
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-blue-950 text-sm">Rapport d'analyse automatique de lisibilité</span>
-                    <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-full text-xs font-black">
+                    <span className="px-2.5 py-1 bg-emerald-700 text-white rounded-full text-xs font-black">
                       Score : {previewingDoc.readabilityScore}%
                     </span>
                   </div>

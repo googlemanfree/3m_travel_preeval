@@ -386,7 +386,7 @@ export default function EvisaRequestForm() {
 
   if (submitted) {
     return (
-      <>
+      <main>
         <SuccessConfirmation
           fullName={formData.fullName}
           countryName={formData.countryName}
@@ -398,12 +398,12 @@ export default function EvisaRequestForm() {
           onReturnHome={() => navigate('/evisas')}
         />
         <Footer />
-      </>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* En-tête */}
         <div className="mb-8">
@@ -474,7 +474,7 @@ export default function EvisaRequestForm() {
                 href={proformaUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold shadow text-xs flex items-center gap-1.5"
+                className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl font-bold shadow text-xs flex items-center gap-1.5"
               >
                 📥 Télécharger le PDF Proforma
               </a>
@@ -824,6 +824,6 @@ export default function EvisaRequestForm() {
         </Card>
       </div>
       <Footer />
-    </div>
+    </main>
   );
 }

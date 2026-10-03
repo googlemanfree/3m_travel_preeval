@@ -97,7 +97,7 @@ export default function VerifyApplicationEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-md mx-auto">
         {/* En-tête */}
         <div className="text-center mb-8">
@@ -213,6 +213,6 @@ export default function VerifyApplicationEmail() {
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

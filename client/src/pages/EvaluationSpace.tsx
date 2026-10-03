@@ -224,7 +224,7 @@ export default function EvaluationSpace() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center shadow-xl">
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
             🔒
@@ -249,26 +249,26 @@ export default function EvaluationSpace() {
             </Button>
           </div>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (isLoading && !loadingTimeoutReached) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center">
           <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
           <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
           <p className="text-gray-500 text-sm">Vérification de votre espace en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
         </Card>
-      </div>
+      </main>
     );
   }
 
   if (isError || !dashboardData) {
     const errorMessage = error instanceof Error ? error.message : "La synchronisation de votre dossier n’a pas abouti.";
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center shadow-xl">
           <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" aria-hidden="true" />
           <h2 className="text-xl font-bold text-gray-900 mb-2">Votre espace ne répond pas encore</h2>
@@ -280,7 +280,7 @@ export default function EvaluationSpace() {
           </div>
           <Button variant="link" className="mt-3 text-sm" onClick={() => setLocation(`/mon-espace?section=messages`)}><MessageSquare className="mr-1 h-4 w-4" />Contacter l’agence</Button>
         </Card>
-      </div>
+      </main>
     );
   }
 
@@ -432,7 +432,7 @@ export default function EvaluationSpace() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
       {/* En-tête du tableau de bord unifié */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -591,7 +591,7 @@ export default function EvaluationSpace() {
                 <Card className="border-emerald-200 bg-emerald-50/70 p-6 shadow-sm" role="region" aria-labelledby="agency-sync-title">
                   <div className="flex items-start justify-between gap-3">
                     <div><p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Synchronisation agence</p><h2 id="agency-sync-title" className="mt-2 text-xl font-black text-slate-950">Documents reçus et visibles</h2></div>
-                    <span className="rounded-2xl bg-emerald-600 p-3 text-white" aria-hidden="true"><FileText className="h-6 w-6" /></span>
+                    <span className="rounded-2xl bg-emerald-700 p-3 text-white" aria-hidden="true"><FileText className="h-6 w-6" /></span>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces déposées en agence apparaissent ici avec leur statut de vérification, sans attendre une nouvelle transmission.</p>
                   <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Par l’agence</p><p className="mt-1 text-2xl font-black text-emerald-800">{agencyDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Depuis votre espace</p><p className="mt-1 text-2xl font-black text-slate-900">{candidateDocumentCount}</p></div></div>
@@ -862,7 +862,7 @@ export default function EvaluationSpace() {
                                 {ev.issuedPdfUrl && (
                                   <Button
                                     onClick={() => window.open(ev.issuedPdfUrl, '_blank')}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 h-auto flex items-center gap-1.5 shadow-sm"
+                                    className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-3 py-1.5 h-auto flex items-center gap-1.5 shadow-sm"
                                   >
                                     <Download className="w-3.5 h-3.5" />
                                     Télécharger mon e-Visa
@@ -1012,6 +1012,6 @@ export default function EvaluationSpace() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }

@@ -180,7 +180,7 @@ export default function CompleteProfile() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
+    <main className="min-h-screen flex items-center justify-center p-4" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -433,6 +433,6 @@ export default function CompleteProfile() {
           onCropComplete={handleCropComplete}
         />
       )}
-    </div>
+    </main>
   );
 }

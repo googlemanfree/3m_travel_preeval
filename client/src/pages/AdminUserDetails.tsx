@@ -34,28 +34,28 @@ export default function AdminUserDetails() {
 
   if (!userId) {
     return (
-      <div className="p-6 text-center">
+      <main className="p-6 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <p className="text-red-600">ID utilisateur invalide</p>
-      </div>
+      </main>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="p-12 text-center">
+      <main className="p-12 text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <p className="mt-4 text-gray-600">Chargement des détails utilisateur...</p>
-      </div>
+      </main>
     );
   }
 
   if (!userDetails?.user) {
     return (
-      <div className="p-6 text-center">
+      <main className="p-6 text-center">
         <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
         <p className="text-orange-600">Utilisateur non trouvé</p>
-      </div>
+      </main>
     );
   }
 
@@ -82,7 +82,7 @@ export default function AdminUserDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-6xl mx-auto">
         {/* En-tête */}
         <motion.div
@@ -344,6 +344,6 @@ export default function AdminUserDetails() {
           </motion.div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

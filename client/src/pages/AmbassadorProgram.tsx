@@ -114,7 +114,7 @@ export default function AmbassadorProgram() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -343,6 +343,6 @@ export default function AmbassadorProgram() {
           )
         )}
       </div>
-    </div>
+    </main>
   );
 }

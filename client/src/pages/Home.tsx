@@ -592,7 +592,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <main className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
 
@@ -1453,7 +1453,7 @@ export default function Home() {
           <ChevronUp className="h-5 w-5" aria-hidden="true" />
         </button>
       )}
-    </div>
+    </main>
   );
 }
 

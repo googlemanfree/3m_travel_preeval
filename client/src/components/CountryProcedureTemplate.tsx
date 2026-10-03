@@ -21,7 +21,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
   )}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
       {/* Bandeau */}
       <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -245,6 +245,6 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </Card>
         </section>
       </div>
-    </div>
+    </main>
   );
 }

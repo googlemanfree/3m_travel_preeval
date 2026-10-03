@@ -400,7 +400,7 @@ export default function AdminAgencyDossiers() {
   // ─── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
@@ -951,7 +951,7 @@ export default function AdminAgencyDossiers() {
                     </p>
                     <p className="mt-1 text-sm text-slate-200">N° 3M-AGN-{String(selectedDossier.id).padStart(4, "0")}</p>
                   </div>
-                  {selectedDossier.linkedCandidateId && <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700"><a href={`/mon-espace?section=dossier&candidateId=${selectedDossier.linkedCandidateId}`} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />Ouvrir l’espace client</a></Button>}
+                  {selectedDossier.linkedCandidateId && <Button asChild size="sm" className="bg-emerald-700 text-white hover:bg-emerald-800"><a href={`/mon-espace?section=dossier&candidateId=${selectedDossier.linkedCandidateId}`} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />Ouvrir l’espace client</a></Button>}
                 </div>
                 <p className="mt-2 text-xs text-slate-300">{selectedDossier.linkedCandidateId ? `Compte associé : ${selectedDossier.linkedCandidateName || selectedDossier.linkedCandidateEmail || "candidat"}.` : "Le rattachement sera proposé lors de l’inscription avec cet e-mail."}</p>
               </div>
@@ -999,7 +999,7 @@ export default function AdminAgencyDossiers() {
                     <p className="font-semibold">Validation de l’évaluation</p>
                     <p className="mt-1 text-xs">{selectedDossier.evaluationValidatedAt ? `Validée le ${new Date(selectedDossier.evaluationValidatedAt).toLocaleString("fr-FR")} par ${selectedDossier.evaluationValidatedBy || "administration"}.` : "Aucune validation admin explicite enregistrée."}</p>
                   </div>
-                  {!selectedDossier.evaluationValidatedAt && <Button type="button" size="sm" onClick={() => validateEvaluationMutation.mutate({ dossierId: selectedDossier.id })} disabled={validateEvaluationMutation.isPending} className="bg-emerald-600 text-white hover:bg-emerald-700">{validateEvaluationMutation.isPending ? "Validation…" : "Valider cette évaluation"}</Button>}
+                  {!selectedDossier.evaluationValidatedAt && <Button type="button" size="sm" onClick={() => validateEvaluationMutation.mutate({ dossierId: selectedDossier.id })} disabled={validateEvaluationMutation.isPending} className="bg-emerald-700 text-white hover:bg-emerald-800">{validateEvaluationMutation.isPending ? "Validation…" : "Valider cette évaluation"}</Button>}
                 </div>
               </div>
               <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-100">
@@ -1229,7 +1229,7 @@ export default function AdminAgencyDossiers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }
 

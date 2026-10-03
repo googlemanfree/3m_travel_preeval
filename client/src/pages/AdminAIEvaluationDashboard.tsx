@@ -626,7 +626,7 @@ export default function AdminAIEvaluationDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <main className="min-h-screen bg-gray-50 print:bg-white">
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
@@ -714,6 +714,6 @@ export default function AdminAIEvaluationDashboard() {
 
       {previewUrl && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-label="Prévisualisation de l’export PDF"><div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b px-4 py-3"><div><h2 className="font-semibold text-slate-900">Prévisualisation PDF</h2><p className="text-xs text-slate-500">Vérifiez le document avant le téléchargement.</p></div><div className="flex items-center gap-2"><Button size="sm" onClick={downloadPdf} className="gap-2 bg-blue-700 hover:bg-blue-800"><Download className="h-4 w-4" /> Télécharger</Button><Button size="icon" variant="outline" onClick={closePreview} aria-label="Fermer la prévisualisation"><X className="h-4 w-4" /></Button></div></div><iframe title="Prévisualisation de l’export PDF" src={previewUrl} className="min-h-0 flex-1 bg-slate-100" /></div></div>}
       {emailPreview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="evaluation-email-preview-title"><div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"><div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4"><div><h2 id="evaluation-email-preview-title" className="flex items-center gap-2 text-lg font-bold text-slate-950"><Mail className="h-5 w-5 text-indigo-700" />Aperçu de l’e-mail d’évaluation</h2><p className="mt-1 text-xs text-slate-500">Aucun e-mail n’est envoyé depuis cet aperçu. Relisez le contenu puis fermez cette fenêtre pour valider.</p></div><Button type="button" size="icon" variant="outline" onClick={() => setEmailPreview(null)} aria-label="Fermer l’aperçu de l’e-mail"><X className="h-4 w-4" /></Button></div><div className="overflow-y-auto p-5"><div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm"><p><span className="font-semibold text-slate-600">À :</span> <span className="text-slate-950">{emailPreview.fullName} &lt;{emailPreview.email}&gt;</span></p><p><span className="font-semibold text-slate-600">Objet :</span> <span className="text-slate-950">{emailPreview.subject}</span></p></div><pre className="mt-4 whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-5 font-sans text-sm leading-6 text-slate-800">{emailPreview.body}</pre></div><div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4"><Button type="button" variant="outline" onClick={() => setEmailPreview(null)}>Retour à la rédaction</Button><Button type="button" onClick={() => setEmailPreview(null)} className="bg-emerald-700 text-white hover:bg-emerald-800"><CheckCircle2 className="mr-2 h-4 w-4" />Aperçu validé — fermer</Button></div></div></div>}
-    </div>
+    </main>
   );
 }

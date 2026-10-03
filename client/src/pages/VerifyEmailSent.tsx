@@ -35,7 +35,7 @@ export default function VerifyEmailSent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -144,6 +144,6 @@ export default function VerifyEmailSent() {
           </p>
         </Card>
       </motion.div>
-    </div>
+    </main>
   );
 }

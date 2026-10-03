@@ -63,14 +63,14 @@ Conservez ce numéro précieusement pour suivre votre dossier.
 
   if (!dossierData) {
     return (
-      <div className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
             <p className="text-gray-600">Chargement...</p>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -88,7 +88,7 @@ Conservez ce numéro précieusement pour suivre votre dossier.
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
 
       <motion.div
         className="max-w-2xl mx-auto px-4 py-12"
@@ -246,6 +246,6 @@ Conservez ce numéro précieusement pour suivre votre dossier.
           </Button>
         </motion.div>
       </motion.div>
-    </div>
+    </main>
   );
 }
