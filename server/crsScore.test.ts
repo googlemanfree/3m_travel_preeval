@@ -219,7 +219,7 @@ describe("score total (computeCrsScore) : cohérence de bout en bout", () => {
     expect(weak.total).toBe(0);
   });
 
-  it("aucun point d'emploi réservé (« arranged employment ») : IRCC les a retirés le 25 mars 2026, ce calcul ne doit jamais en inventer", () => {
+  it("aucun point d'emploi réservé (« arranged employment ») : IRCC les a retirés le 25 mars 2025, ce calcul ne doit jamais en inventer", () => {
     const result = computeCrsScore(profile({ hasProvincialNomination: false }));
     expect(Object.keys(result)).not.toContain("arrangedEmployment");
     expect(Object.keys(result)).not.toContain("jobOffer");
