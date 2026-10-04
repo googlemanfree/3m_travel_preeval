@@ -157,6 +157,18 @@ describe("contraste du texte et des boutons (axe : « color-contrast »)", () =>
   });
 });
 
+describe("contraste non textuel : icônes et badges (axe : « color-contrast », WCAG 1.4.11, seuil 3:1)", () => {
+  it("les coches de méthode de paiement sélectionnée ne sont plus en emerald-500 (ratio icône blanche 2,28:1, sous 3:1)", () => {
+    const source = read("client/src/pages/PaymentMethodSelection.tsx");
+    expect(source).not.toMatch(/rounded-full bg-green-500 flex items-center justify-center/);
+  });
+
+  it("le badge « Nouveau » n'est plus en indigo-500 (ratio texte blanc 4,47:1, sous le seuil texte de 4,5:1)", () => {
+    const source = read("client/src/pages/AdminEvaluations.tsx");
+    expect(source).not.toContain("bg-indigo-500 px-1.5 py-0.5 text-[10px] text-white");
+  });
+});
+
 describe("repère de région (axe : « landmark-one-main », « region »)", () => {
   it("la page d'accueil est enveloppée dans un unique repère <main>", () => {
     const source = read("client/src/pages/Home.tsx");

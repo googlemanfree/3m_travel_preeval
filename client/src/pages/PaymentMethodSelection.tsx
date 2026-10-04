@@ -137,7 +137,7 @@ export default function PaymentMethodSelection() {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                  className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center"
                 >
                   <CheckCircle className="w-6 h-6 text-white" />
                 </motion.div>
@@ -232,7 +232,7 @@ export default function PaymentMethodSelection() {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                  className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center"
                 >
                   <CheckCircle className="w-6 h-6 text-white" />
                 </motion.div>
