@@ -305,6 +305,23 @@ describe("panneau administrateur : le CV conditionne la publication", () => {
     expect(screen.queryByText(/CV manquant/)).toBeNull();
   });
 
+  it("ouvre le CV tel qu'il est réellement enregistré (« /manus-storage/… »), sinon l'administrateur ne voit que le nom du fichier", async () => {
+    state.view = (await draftView(undefined, { ...CANDIDATE_CONTEXT, cvFileUrl: "/manus-storage/cv-uploads/1_cv-aicha-nkolo_a1b2c3d4.pdf" })).view;
+    panel();
+    const link = within(screen.getByTestId("cv-status")).getByRole("link", { name: "cv-aicha-nkolo.pdf" }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/manus-storage/cv-uploads/1_cv-aicha-nkolo_a1b2c3d4.pdf");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("refuse un faux chemin du stockage (remontée de dossier) ou un autre chemin du site", async () => {
+    for (const cvFileUrl of ["/manus-storage/../admin", "/admin", "/api/trpc/x"]) {
+      cleanup();
+      state.view = (await draftView(undefined, { ...CANDIDATE_CONTEXT, cvFileUrl })).view;
+      panel();
+      expect(within(screen.getByTestId("cv-status")).queryByRole("link"), cvFileUrl).toBeNull();
+    }
+  });
+
   it("n'ouvre jamais un lien qui n'est pas en http(s)", async () => {
     state.view = (await draftView(undefined, { ...CANDIDATE_CONTEXT, cvFileUrl: "javascript:alert(1)" })).view;
     panel();

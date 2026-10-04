@@ -1,3 +1,5 @@
+import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
+import { storageGetSignedUrl } from "../storage";
 import { prepareCvExcerpt, type CvExcerpt } from "./cvExcerpt";
 
 /**
@@ -23,6 +25,8 @@ export function cvAnalysisConsented(row: { projectDetailsJson?: string | null })
 }
 
 export type CvTextDeps = {
+  /** Transforme l'adresse enregistrée (« /manus-storage/… ») en lien https signé ; une adresse déjà absolue reste telle quelle. */
+  resolveStoredUrl?: (url: string) => Promise<string | null>;
   fetchFile?: (url: string) => Promise<Buffer | null>;
   pdfText?: (buffer: Buffer, pages: number[]) => Promise<string>;
   pdfPageCount?: (buffer: Buffer) => Promise<number>;
@@ -43,6 +47,15 @@ export function isSafeCvUrl(url: string): boolean {
   return true;
 }
 
+/**
+ * Les CV sont enregistrés sous « /manus-storage/<clé> » (adresse relative au site). Sans cette étape, `isSafeCvUrl` les refusait
+ * tous et l'analyse tournait toujours sans le CV, même avec le consentement du candidat. On demande donc un lien signé direct.
+ */
+async function defaultResolveStoredUrl(url: string): Promise<string | null> {
+  const key = storageKeyFromStoredUrl(url);
+  return key ? storageGetSignedUrl(key) : url;
+}
+
 async function defaultFetchFile(url: string): Promise<Buffer | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CV_FETCH_TIMEOUT_MS);
@@ -61,9 +74,11 @@ async function defaultFetchFile(url: string): Promise<Buffer | null> {
 const isPdf = (buffer: Buffer) => buffer.length > 5 && buffer.subarray(0, 5).toString("latin1") === "%PDF-";
 
 export async function loadCvExcerpt(cvFileUrl: string | null | undefined, deps: CvTextDeps = {}): Promise<CvExcerpt | null> {
-  if (!cvFileUrl || !isSafeCvUrl(cvFileUrl)) return null;
+  if (!cvFileUrl) return null;
   try {
-    const buffer = await (deps.fetchFile ?? defaultFetchFile)(cvFileUrl);
+    const target = await (deps.resolveStoredUrl ?? defaultResolveStoredUrl)(cvFileUrl);
+    if (!target || !isSafeCvUrl(target)) return null;
+    const buffer = await (deps.fetchFile ?? defaultFetchFile)(target);
     // Seuls les PDF avec du texte sont lus : pas de reconnaissance d'image (aucune donnée envoyée à un service de vision).
     if (!buffer || !isPdf(buffer)) return null;
     const service = deps.pdfText && deps.pdfPageCount ? null : await import("../aiEvaluationService");

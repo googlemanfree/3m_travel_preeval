@@ -13,6 +13,7 @@ import EvaluationReportView from "@/components/EvaluationReportView";
 import EvaluationVersionForm from "@/components/EvaluationVersionForm";
 import { availabilityFor, describeValue, linesToList, sameVersion } from "@/lib/evaluationValidationForm";
 import { CV_MISSING_FOR_PUBLICATION } from "@shared/evaluationCv";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, ROUTE_LABELS, SCORE_CRITERIA, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
 import type { AppRouter } from "../../../server/routers";
 
@@ -230,7 +231,8 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
     if (view.previewError) blockers.push(view.previewError);
     if (!view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
   }
-  const cvLink = view.evaluation.cvFileUrl && /^https?:\/\//i.test(view.evaluation.cvFileUrl) ? view.evaluation.cvFileUrl : null;
+  // Le CV est enregistré sous « /manus-storage/… » (relatif au site) : sans cette exception l'administrateur voyait le nom du fichier sans pouvoir l'ouvrir.
+  const cvLink = isOpenableStoredUrl(view.evaluation.cvFileUrl) ? view.evaluation.cvFileUrl : null;
   const canPublishNow = availability.canPublish && blockers.length === 0 && !save.isPending;
   const sendEmail = publishMode === "notify";
   const missing = publishMode ? missingChecklistItems(checked, { sendEmail }) : [];
