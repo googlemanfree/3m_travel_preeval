@@ -17,6 +17,8 @@ import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { requireValidAdminSession } from "./adminAuth";
+import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
+import { storageGetSignedUrl } from "../storage";
 import { candidateProcedure } from "./candidate";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -33,7 +35,9 @@ export const consultationRequestRouter = router({
       phone: z.string().max(30).optional(),
       targetCountry: z.string().max(100).optional(),
       message: z.string().max(2000).optional(),
-      cvFileUrl: z.string().url().max(1000).optional(),
+      // Le formulaire envoie l'adresse renvoyée par /api/candidate/upload-public, soit « /manus-storage/<clé> » (relative au site) : l'ancien
+      // contrôle `.url()` refusait toute demande avec CV. Seuls les fichiers de notre propre stockage sont acceptés (jamais une adresse libre).
+      cvFileUrl: z.string().max(1000).refine((value) => storageKeyFromStoredUrl(value) !== null, "Fichier de CV invalide : renvoyez-le depuis le formulaire.").optional(),
       cvFileName: z.string().max(255).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -81,13 +85,10 @@ export const consultationRequestRouter = router({
       if (requestId && input.cvFileUrl) {
         (async () => {
           try {
-            const _cvUrl = new URL(input.cvFileUrl!);
-            if (_cvUrl.protocol !== "https:") throw new Error("cvFileUrl must use https");
-            const _host = _cvUrl.hostname.toLowerCase();
-            if (_host === "localhost" || /^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\.|^169\.254\./.test(_host)) {
-              throw new Error("cvFileUrl points to a private address");
-            }
-            const pdfResponse = await fetch(input.cvFileUrl!);
+            // Lien signé direct vers NOTRE stockage (clé validée par le schéma) : aucune adresse fournie par le visiteur n'est téléchargée.
+            const signedUrl = await storageGetSignedUrl(storageKeyFromStoredUrl(input.cvFileUrl!)!);
+            const pdfResponse = await fetch(signedUrl);
+            if (!pdfResponse.ok) throw new Error(`CV illisible (${pdfResponse.status})`);
             const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
             const cvText = await extractTextFromPDF(pdfBuffer);
             const openaiKey = process.env.OPENAI_API_KEY;
