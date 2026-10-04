@@ -124,7 +124,9 @@ describe("repère de région (axe : « landmark-one-main », « region »)", () 
   it("chaque page routée dans App.tsx expose un repère <main> (ou passe par ServicePageShell / un composant qui en a un)", () => {
     const appSource = read("client/src/App.tsx");
     const importedPages = new Set<string>();
-    Array.from(appSource.matchAll(/from "\.\/pages\/([A-Za-z0-9_/]+)"/g)).forEach((m) => {
+    // Deux styles d'import coexistent dans App.tsx : `import X from "./pages/Y"` (statique, rare) et
+    // `import("./pages/Y")` (dynamique, via lazyWithTimeout — la grande majorité des pages).
+    Array.from(appSource.matchAll(/(?:from|import)\(?\s*"\.\/pages\/([A-Za-z0-9_/]+)"/g)).forEach((m) => {
       importedPages.add(`client/src/pages/${m[1]}.tsx`);
     });
 

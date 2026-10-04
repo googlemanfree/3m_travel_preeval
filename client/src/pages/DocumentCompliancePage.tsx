@@ -65,7 +65,7 @@ export default function DocumentCompliancePage() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link href={`/procedures/${country.id}`}><Button variant="outline" className="w-full">Voir la procédure complète</Button></Link>
-              <Link href={`/evaluation?destination=${encodeURIComponent(country.id)}`}><Button className="w-full bg-orange-500 hover:bg-orange-600">Lancer la procédure</Button></Link>
+              <Link href={`/evaluation?destination=${encodeURIComponent(country.id)}`}><Button className="w-full bg-orange-700 hover:bg-orange-800">Lancer la procédure</Button></Link>
             </div>
           </div>
         </div>
