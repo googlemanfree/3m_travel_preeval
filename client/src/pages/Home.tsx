@@ -740,7 +740,7 @@ export default function Home() {
                 <p className="text-green-700 mb-6 max-w-md mx-auto">
                   Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
                 </p>
-                <Button onClick={() => setIsSubmitted(false)} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
+                <Button onClick={() => setIsSubmitted(false)} className="bg-green-700 hover:bg-green-800 text-white active:scale-[0.97] transition-transform">
                   Faire une nouvelle demande
                 </Button>
               </Card>

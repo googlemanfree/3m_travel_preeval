@@ -318,7 +318,7 @@ export default function AdminEvaluations() {
                           {bilan.status === 'validated' && (
                             <Button
                               size="sm"
-                              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                              className="gap-2 bg-green-700 hover:bg-green-800 text-white"
                               onClick={() => handlePublishBilan(bilan.id)}
                               disabled={publishBilanMutation.isPending}
                             >

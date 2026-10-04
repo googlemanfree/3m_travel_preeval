@@ -542,7 +542,7 @@ export function CandidateDetailModal({
                         href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-green-600 text-white text-xs px-2.5 py-1 rounded-md hover:bg-green-700 transition"
+                        className="inline-flex items-center gap-1 bg-green-700 text-white text-xs px-2.5 py-1 rounded-md hover:bg-green-800 transition"
                       >
                         💬 WhatsApp
                       </a>
@@ -687,7 +687,7 @@ export function CandidateDetailModal({
                         type="button"
                         onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
                         disabled={confirmPaymentForCandidateMutation.isPending}
-                        className="mt-2 w-full bg-amber-600 text-white hover:bg-amber-700"
+                        className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
                       >
                         {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
                       </Button>
@@ -728,7 +728,7 @@ export function CandidateDetailModal({
                 <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
                 <div className="mt-4 grid gap-2">
                   <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
-                  <Button className="justify-start bg-amber-600 text-white hover:bg-amber-700" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
+                  <Button className="justify-start bg-amber-700 text-white hover:bg-amber-800" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
                 </div>
               </section>}
@@ -1896,7 +1896,7 @@ export default function AdminDashboard() {
           <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
             <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar" onClick={() => setActiveAdminTab("calendar")}>Calendrier</TabsTrigger><TabsTrigger value="payments" onClick={() => setActiveAdminTab("payments")}>Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" onClick={() => setActiveAdminTab("flights")} className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" onClick={() => setActiveAdminTab("rates")} className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar" onClick={() => setActiveAdminTab("calendar")}>Calendrier</TabsTrigger><TabsTrigger value="payments" onClick={() => setActiveAdminTab("payments")}>Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" onClick={() => setActiveAdminTab("flights")} className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" onClick={() => setActiveAdminTab("rates")} className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails" onClick={() => setActiveAdminTab("emails")}>E-mails</TabsTrigger><TabsTrigger value="faq" onClick={() => setActiveAdminTab("faq")}>Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag" onClick={() => setActiveAdminTab("rag")}>Guides & RAG</TabsTrigger><TabsTrigger value="passport-history" onClick={() => setActiveAdminTab("passport-history")}>Passeports</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" onClick={() => setActiveAdminTab("route-health")} className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" onClick={() => setActiveAdminTab("simulator-health")} className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" onClick={() => setActiveAdminTab("footer-engagement")} className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" onClick={() => setActiveAdminTab("system-status")} className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="audit" onClick={() => setActiveAdminTab("audit")}>Journal d’audit</TabsTrigger></AdminNavGroup>
           </div>
@@ -1909,7 +1909,7 @@ export default function AdminDashboard() {
               <CardContent className="p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div><h2 className="text-base font-black text-slate-950">Déclarations préalables à contrôler</h2><p className="text-sm text-slate-600">Candidats ayant déclaré une évaluation déjà réalisée ou un paiement effectué en agence.</p></div>
-                  <Badge className="w-fit bg-amber-600 text-white">{externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length} à contrôler</Badge>
+                  <Badge className="w-fit bg-amber-700 text-white">{externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length} à contrôler</Badge>
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   {[...externalEvaluationCandidates, ...candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL")].slice(0, 8).map((candidate) => (

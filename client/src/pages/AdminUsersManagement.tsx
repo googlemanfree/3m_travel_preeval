@@ -155,7 +155,7 @@ export default function AdminUsersManagement() {
             </div>
             <Button
               onClick={handleExport}
-              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+              className="bg-green-700 hover:bg-green-800 text-white flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Exporter CSV

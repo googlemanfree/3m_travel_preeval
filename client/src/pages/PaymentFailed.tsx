@@ -71,7 +71,7 @@ export default function PaymentFailed() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold">
+              <Button className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white font-semibold">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Aide sur WhatsApp
               </Button>

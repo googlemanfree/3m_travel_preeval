@@ -151,7 +151,7 @@ function CvUploadCard({ evaluationId, onChanged }: { evaluationId: number; onCha
   return (
     <Card className="border-2 border-amber-300 bg-amber-50 p-6" role="region" aria-labelledby="evaluation-cv-title" data-testid="cv-upload-card">
       <div className="flex items-start gap-4">
-        <span className="rounded-2xl bg-amber-600 p-3 text-white" aria-hidden="true">
+        <span className="rounded-2xl bg-amber-700 p-3 text-white" aria-hidden="true">
           <FileUp className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1">
@@ -197,7 +197,7 @@ function InfoRequestForm({ evaluationId, request, onChanged }: { evaluationId: n
   return (
     <Card className="border-2 border-amber-300 bg-amber-50 p-6" role="region" aria-labelledby="evaluation-info-title">
       <div className="flex items-start gap-4">
-        <span className="rounded-2xl bg-amber-600 p-3 text-white" aria-hidden="true">
+        <span className="rounded-2xl bg-amber-700 p-3 text-white" aria-hidden="true">
           <MailQuestion className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1">

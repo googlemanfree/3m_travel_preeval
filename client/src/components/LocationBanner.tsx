@@ -49,7 +49,7 @@ export default function LocationBanner() {
                   href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20prendre%20un%20rendez-vous%20%C3%A0%20l%27agence."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all"
+                  className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all"
                 >
                   WhatsApp
                 </a>

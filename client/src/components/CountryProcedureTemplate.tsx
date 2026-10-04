@@ -238,7 +238,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
             </div>
             <p className="flex items-center justify-center gap-1 text-sm mt-3 text-blue-200"><MapPin className="w-4 h-4" /> {data.contact.address}</p>
             <p className="text-sm mt-2 text-blue-200">{data.contact.consulate}</p>
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-block mt-5 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-full transition-colors">
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-block mt-5 bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-full transition-colors">
               💬 Nous contacter directement sur WhatsApp
             </a>
             <p className="text-xs text-blue-300 mt-4 italic">{data.documentNote}</p>

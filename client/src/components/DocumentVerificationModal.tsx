@@ -124,7 +124,7 @@ export function DocumentVerificationModal({
                   <div className="grid grid-cols-2 gap-4">
                     <Button
                       onClick={() => setAction("approve")}
-                      className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 py-6"
+                      className="bg-green-700 hover:bg-green-800 text-white flex items-center justify-center gap-2 py-6"
                     >
                       <CheckCircle className="w-5 h-5" />
                       Approuver
@@ -204,7 +204,7 @@ export function DocumentVerificationModal({
                       }
                       className={
                         action === "approve"
-                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          ? "bg-green-700 hover:bg-green-800 text-white"
                           : "bg-red-600 hover:bg-red-700 text-white"
                       }
                     >

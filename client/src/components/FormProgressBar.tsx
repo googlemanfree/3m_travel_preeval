@@ -23,7 +23,7 @@ export function FormProgressBar({ steps, currentStep }: FormProgressBarProps) {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
                   index < currentStep
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-green-700 text-white'
                     : index === currentStep
                     ? 'bg-blue-600 text-white ring-4 ring-blue-200'
                     : 'bg-gray-200 text-gray-600'

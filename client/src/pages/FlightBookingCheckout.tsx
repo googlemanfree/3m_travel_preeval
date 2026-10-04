@@ -520,7 +520,7 @@ export default function FlightBookingCheckout() {
                     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-emerald-700 py-2.5 text-xs font-bold text-white shadow hover:bg-emerald-800">
                       WhatsApp
                     </a>
-                    <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-sky-500 py-2.5 text-xs font-bold text-white shadow hover:bg-sky-600">
+                    <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-sky-700 py-2.5 text-xs font-bold text-white shadow hover:bg-sky-800">
                       Telegram
                     </a>
                     <a href={smsUrl} className="flex items-center justify-center rounded-xl bg-slate-700 py-2.5 text-xs font-bold text-white shadow hover:bg-slate-800">

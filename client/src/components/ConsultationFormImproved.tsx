@@ -109,7 +109,7 @@ export function ConsultationFormImproved() {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 transition-all ${
                   index < currentStep
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-green-700 text-white'
                     : index === currentStep
                     ? 'bg-blue-500 text-white ring-2 ring-blue-300'
                     : 'bg-gray-200 text-gray-600'
@@ -352,7 +352,7 @@ export function ConsultationFormImproved() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1 bg-green-700 hover:bg-green-800 text-white"
           >
             {isSubmitting ? (
               <>

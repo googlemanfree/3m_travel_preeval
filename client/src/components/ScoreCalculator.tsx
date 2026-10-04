@@ -241,7 +241,7 @@ export default function ScoreCalculator() {
                   </Button>
                   <Button
                     onClick={handleValidate}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-green-700 hover:bg-green-800 text-white"
                   >
                     Valider mon bilan complet (65 000 FCFA) →
                   </Button>

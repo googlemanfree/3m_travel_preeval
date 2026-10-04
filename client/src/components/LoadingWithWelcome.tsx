@@ -116,7 +116,7 @@ export default function LoadingWithWelcome({
             onClick={onComplete}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
           >
             Commencer mon Évaluation Rapide →
           </motion.button>

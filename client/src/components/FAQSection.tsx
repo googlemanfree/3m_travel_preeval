@@ -82,7 +82,7 @@ export default function FAQSection() {
             href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20j%27ai%20une%20question%20concernant%20vos%20services."
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg transition-all"
+            className="inline-block bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-8 rounded-lg transition-all"
           >
             💬 Contactez-nous sur WhatsApp
           </a>

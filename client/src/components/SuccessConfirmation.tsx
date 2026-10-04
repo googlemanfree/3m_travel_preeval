@@ -231,7 +231,7 @@ Merci d'avoir choisi nos services !
           </Button>
           <Button
             onClick={onReturnHome}
-            className="flex items-center justify-center gap-2 h-12 bg-green-600 hover:bg-green-700 text-white"
+            className="flex items-center justify-center gap-2 h-12 bg-green-700 hover:bg-green-800 text-white"
           >
             Retour à l'accueil
             <ArrowRight className="w-4 h-4" />

@@ -1029,13 +1029,13 @@ export default function AdminAgencyDossiers() {
               <>
                 <Button
                   onClick={() => { setShowDetailModal(false); openStatusModal(selectedDossier); }}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  className="bg-yellow-700 hover:bg-yellow-800 text-white"
                 >
                   <Edit className="w-4 h-4 mr-2" /> Changer Statut
                 </Button>
                 <Button
                   onClick={() => { setShowDetailModal(false); openNotesModal(selectedDossier); }}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-700 hover:bg-green-800 text-white"
                 >
                   <StickyNote className="w-4 h-4 mr-2" /> Notes
                 </Button>
@@ -1113,7 +1113,7 @@ export default function AdminAgencyDossiers() {
                   notes: statusNote || undefined,
                 });
               }}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              className="bg-yellow-700 hover:bg-yellow-800 text-white"
             >
               {updateStatusMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mise à jour...</>
@@ -1168,7 +1168,7 @@ export default function AdminAgencyDossiers() {
                 if (!selectedDossier || !noteText.trim()) return;
                 addNotesMutation.mutate({ dossierId: selectedDossier.id, notes: noteText });
               }}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-700 hover:bg-green-800 text-white"
             >
               {addNotesMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>

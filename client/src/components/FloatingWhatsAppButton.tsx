@@ -55,7 +55,7 @@ export function FloatingWhatsAppButton() {
 
       {/* Label optionnel (visible sur mobile) */}
       <motion.div
-        className="absolute bottom-16 right-0 bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap md:hidden"
+        className="absolute bottom-16 right-0 bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap md:hidden"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 0.3 }}

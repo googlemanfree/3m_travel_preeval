@@ -837,7 +837,7 @@ export default function PremiumEvaluationFormSteps47({
               onFormDataChange("uploadedFiles", uploadedFiles);
               onNext();
             }}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+            className="bg-green-700 hover:bg-green-800 text-white font-semibold"
           >
             ✓ Soumettre l'évaluation
           </Button>

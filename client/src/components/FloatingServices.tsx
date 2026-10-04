@@ -121,7 +121,7 @@ export default function FloatingServices() {
               href="https://wa.me/237698104832"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
             >
               💬 WhatsApp
             </a>

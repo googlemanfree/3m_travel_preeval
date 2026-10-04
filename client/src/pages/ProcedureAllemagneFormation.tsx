@@ -168,7 +168,7 @@ export default function ProcedureAllemagneFormation() {
           <ol className="mt-4 grid gap-4">
             {AUSBILDUNG_STEPS.map((step, index) => (
               <li key={step.title} className="flex gap-4 rounded-xl border border-slate-200 p-5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-600 text-sm font-black text-white">{index + 1}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-700 text-sm font-black text-white">{index + 1}</span>
                 <div>
                   <p className="font-bold text-slate-900">{step.title}</p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">{step.desc}</p>

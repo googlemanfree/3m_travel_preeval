@@ -114,7 +114,7 @@ export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { o
           </button>
           {onAdvisor && (
             <div className="flex flex-wrap gap-2 border-t border-slate-100 px-5 py-3" data-testid={`flight-offer-actions-${offer.routeId}`}>
-              <button type="button" onClick={() => onAdvisor(offer, "quote")} data-testid={`flight-offer-advisor-${offer.routeId}`} className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1.5 text-xs font-black text-white transition hover:bg-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
+              <button type="button" onClick={() => onAdvisor(offer, "quote")} data-testid={`flight-offer-advisor-${offer.routeId}`} className="inline-flex items-center gap-1 rounded-full bg-amber-700 px-3 py-1.5 text-xs font-black text-white transition hover:bg-amber-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
                 <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> Réserver via un conseiller
               </button>
               <button type="button" onClick={() => onAdvisor(offer, "watch")} data-testid={`flight-offer-watch-${offer.routeId}`} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">

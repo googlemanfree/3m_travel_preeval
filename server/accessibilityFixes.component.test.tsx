@@ -103,6 +103,58 @@ describe("contraste du texte et des boutons (axe : « color-contrast »)", () =>
     const source = read("client/src/components/SocialShareButtons.tsx");
     expect(source).not.toContain("#1877F2");
   });
+
+  it("aucun fond green/yellow/amber/cyan/sky/teal/lime en 400-600 (ratios 2,3-4,1:1, tous sous 4,5:1) n'est combiné à du texte blanc", () => {
+    const sourcesByGlob = [
+      "client/src/components/AdvisorEvaluationReviewQueue.tsx",
+      "client/src/components/CandidateCountryJourney.tsx",
+      "client/src/components/CandidateEvaluationStatus.tsx",
+      "client/src/components/ConsultationFormImproved.tsx",
+      "client/src/components/CountryProcedureTemplate.tsx",
+      "client/src/components/DocumentVerificationModal.tsx",
+      "client/src/components/FAQSection.tsx",
+      "client/src/components/FlightDiscoverySections.tsx",
+      "client/src/components/FloatingServices.tsx",
+      "client/src/components/FloatingWhatsAppButton.tsx",
+      "client/src/components/FormProgressBar.tsx",
+      "client/src/components/FullDossierForm.tsx",
+      "client/src/components/LoadingWithWelcome.tsx",
+      "client/src/components/LocationBanner.tsx",
+      "client/src/components/PremiumEvaluationForm.tsx",
+      "client/src/components/PremiumEvaluationFormSteps47.tsx",
+      "client/src/components/ScoreCalculator.tsx",
+      "client/src/components/SuccessConfirmation.tsx",
+      "client/src/components/ui/toast.tsx",
+      "client/src/components/WhatsAppWidget.tsx",
+      "client/src/pages/AdminAgencyDossiers.tsx",
+      "client/src/pages/AdminAIEvaluationDashboard.tsx",
+      "client/src/pages/AdminDashboard.tsx",
+      "client/src/pages/AdminEvaluations.tsx",
+      "client/src/pages/AdminUsersManagement.tsx",
+      "client/src/pages/EvaluationSpace.tsx",
+      "client/src/pages/Evisa.tsx",
+      "client/src/pages/EvisaDemande.tsx",
+      "client/src/pages/EvisaRequestForm.tsx",
+      "client/src/pages/Fiches.tsx",
+      "client/src/pages/FlightBookingCheckout.tsx",
+      "client/src/pages/Home.tsx",
+      "client/src/pages/PaymentAgencyConfirmation.tsx",
+      "client/src/pages/PaymentFailed.tsx",
+      "client/src/pages/PaymentMethodSelection.tsx",
+      "client/src/pages/PaymentSuccess.tsx",
+      "client/src/pages/PaymentSuccessPage.tsx",
+      "client/src/pages/ProcedureAllemagneFormation.tsx",
+      "client/src/pages/ProceduresAdvanced.tsx",
+    ];
+    const failingShades = /bg-(green|yellow|amber|cyan|sky|teal|lime)-(400|500|600)\b/;
+    for (const path of sourcesByGlob) {
+      const source = read(path);
+      const pairedWithWhite = new RegExp(
+        `${failingShades.source}[^"'\`]*text-white|text-white[^"'\`]*${failingShades.source}`
+      );
+      expect(source, path).not.toMatch(pairedWithWhite);
+    }
+  });
 });
 
 describe("repère de région (axe : « landmark-one-main », « region »)", () => {

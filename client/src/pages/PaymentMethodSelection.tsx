@@ -286,7 +286,7 @@ export default function PaymentMethodSelection() {
               onClick={(event) => { event.stopPropagation(); void handlePaymentMethodSelection('agency'); }}
               className={`w-full py-3 font-semibold rounded-lg transition-all ${
                 selectedMethod === 'agency'
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  ? 'bg-green-700 hover:bg-green-800 text-white'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
               }`}
             >

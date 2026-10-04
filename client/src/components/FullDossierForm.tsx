@@ -740,7 +740,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
           <Button
             onClick={handleSubmit}
             disabled={createApplication.isPending}
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold flex items-center gap-2"
+            className="bg-amber-700 hover:bg-amber-800 text-white font-bold flex items-center gap-2"
           >
             {createApplication.isPending ? (
               <><Loader2 className="w-4 h-4 animate-spin" />Envoi...</>

@@ -634,7 +634,7 @@ export default function ProceduresAdvanced() {
                               aria-label={`${isSelected ? 'Retirer' : 'Ajouter'} ${country.name} de la comparaison`}
                               className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
                                 isSelected
-                                  ? 'bg-green-500 text-white'
+                                  ? 'bg-green-700 text-white'
                                   : 'bg-white/20 text-white hover:bg-white/30'
                               }`}
                             >

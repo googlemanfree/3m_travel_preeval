@@ -47,7 +47,7 @@ export function WhatsAppWidget() {
       {/* Menu Options */}
       {isOpen && (
         <div className="absolute bottom-20 right-0 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden mb-2 w-64 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="bg-green-500 text-white p-3 font-semibold text-sm">
+          <div className="bg-green-700 text-white p-3 font-semibold text-sm">
             Comment pouvons-nous vous aider ?
           </div>
           <div className="divide-y">
@@ -68,7 +68,7 @@ export function WhatsAppWidget() {
       {/* Main Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        className="w-14 h-14 rounded-full bg-green-700 hover:bg-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
       >
         {isOpen ? (
           <X className="w-6 h-6" />

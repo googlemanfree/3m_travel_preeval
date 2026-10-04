@@ -226,7 +226,7 @@ export default function PaymentAgencyConfirmation() {
 
           <Button
             onClick={() => navigate('/client-space')}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold"
+            className="bg-yellow-700 hover:bg-yellow-800 text-white font-semibold"
           >
             Aller à mon Espace Client
           </Button>

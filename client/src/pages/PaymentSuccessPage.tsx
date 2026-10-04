@@ -87,7 +87,7 @@ export default function PaymentSuccessPage() {
         >
           <Button
             onClick={() => navigate('/document-upload')}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 flex items-center justify-center gap-2"
+            className="bg-green-700 hover:bg-green-800 text-white font-bold py-3 flex items-center justify-center gap-2"
           >
             Soumettre mes documents
             <ArrowRight className="w-4 h-4" />

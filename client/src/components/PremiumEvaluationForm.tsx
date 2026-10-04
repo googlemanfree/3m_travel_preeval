@@ -818,7 +818,7 @@ export default function PremiumEvaluationForm() {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-700 hover:bg-green-800 text-white"
             >
               {isSubmitting ? "Envoi en cours..." : "Soumettre"}
             </Button>

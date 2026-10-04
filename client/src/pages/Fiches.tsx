@@ -428,7 +428,7 @@ export default function Fiches() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a href="/open-dossier">
-              <Button className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 text-base">
+              <Button className="bg-amber-700 hover:bg-amber-800 text-white font-bold px-8 py-3 text-base">
                 Ouvrir mon dossier
               </Button>
             </a>
