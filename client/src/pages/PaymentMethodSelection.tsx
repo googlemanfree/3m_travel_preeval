@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CreditCard, Building2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { CreditCard, Building2, CheckCircle, Clock, AlertCircle, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -38,15 +38,16 @@ export default function PaymentMethodSelection() {
   }
 
   const handlePaymentMethodSelection = async (method: 'online' | 'agency') => {
+    if (loading) return;
     setSelectedMethod(method);
     setLoading(true);
 
     // Paiement en ligne : la page de paiement du dossier ; sinon, la page des moyens de paiement (virement, dépôt, agence).
     const dossier = new URLSearchParams(window.location.search).get('dossier');
     if (method === 'online' && dossier) {
-      navigate(`/payment/${encodeURIComponent(dossier)}`);
+      navigate(`/payment/${encodeURIComponent(dossier)}?payment=online`);
     } else {
-      navigate(dossier ? `/paiement?ref=${encodeURIComponent(dossier)}` : '/paiement');
+      navigate(dossier ? `/paiement?ref=${encodeURIComponent(dossier)}&payment=online` : '/paiement?payment=online');
     }
   };
 
@@ -185,8 +186,9 @@ export default function PaymentMethodSelection() {
             </div>
 
             <Button
-              disabled={loading && selectedMethod !== 'online'}
-              onClick={() => !loading && handlePaymentMethodSelection('online')}
+              disabled={loading}
+              aria-busy={loading && selectedMethod === 'online'}
+              onClick={(event) => { event.stopPropagation(); void handlePaymentMethodSelection('online'); }}
               className={`w-full py-3 font-semibold rounded-lg transition-all ${
                 selectedMethod === 'online'
                   ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -194,9 +196,9 @@ export default function PaymentMethodSelection() {
               }`}
             >
               {loading && selectedMethod === 'online' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Traitement...
+                <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+                  <LoaderCircle className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Préparation du paiement sécurisé…
                 </span>
               ) : (
                 'Payer en Ligne'
@@ -279,8 +281,9 @@ export default function PaymentMethodSelection() {
             </div>
 
             <Button
-              disabled={loading && selectedMethod !== 'agency'}
-              onClick={() => !loading && handlePaymentMethodSelection('agency')}
+              disabled={loading}
+              aria-busy={loading && selectedMethod === 'agency'}
+              onClick={(event) => { event.stopPropagation(); void handlePaymentMethodSelection('agency'); }}
               className={`w-full py-3 font-semibold rounded-lg transition-all ${
                 selectedMethod === 'agency'
                   ? 'bg-green-600 hover:bg-green-700 text-white'

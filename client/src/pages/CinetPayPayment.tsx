@@ -13,6 +13,7 @@ const PAYMENT_CURRENCY = 'XAF';
 
 export default function CinetPayPayment() {
   const { dossierNumber } = useParams<{ dossierNumber: string }>();
+  const onlineSelectionConfirmed = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment') === 'online';
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const transactionIdRef = useRef<string>('');
@@ -179,6 +180,19 @@ export default function CinetPayPayment() {
             </div>
 
             <AnimatePresence mode="wait">
+              {onlineSelectionConfirmed && status === 'idle' && (
+                <motion.div
+                  key="online-selection-confirmed"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  role="status"
+                  aria-live="polite"
+                  className="mb-6 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
+                >
+                  <CheckCircle className="h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
+                  <p className="text-sm font-medium text-blue-800">Paiement en ligne sélectionné. Votre paiement sécurisé est prêt.</p>
+                </motion.div>
+              )}
               {status === 'success' && (
                 <motion.div
                   key="success"

@@ -211,6 +211,12 @@ describe("intégration côté site", () => {
     const text = read("client/src/pages/PaymentMethodSelection.tsx");
     expect(text).not.toMatch(/Paystack|setTimeout|Simuler/);
     expect(text).toContain("/paiement");
+    expect(text).toContain("Préparation du paiement sécurisé");
+    expect(text).toContain('role="status" aria-live="polite"');
+    expect(text).toContain("animate-spin");
+    expect(text).toContain("payment=online");
+    expect(read("client/src/pages/Paiement.tsx")).toContain("Paiement en ligne sélectionné");
+    expect(read("client/src/pages/CinetPayPayment.tsx")).toContain("Votre paiement sécurisé est prêt");
   });
 
   it("l'administration propose la saisie des coordonnées dans l'onglet paiements", () => {

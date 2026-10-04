@@ -15,6 +15,7 @@ export default function Paiement() {
   const reference = (params.get("ref") ?? "").slice(0, 60);
   const amountParam = Number(params.get("montant"));
   const kind = params.get("type") === "vol" ? "flight" : "dossier";
+  const onlineSelectionConfirmed = params.get("payment") === "online";
 
   return (
     <ServicePageShell
@@ -25,6 +26,7 @@ export default function Paiement() {
       primaryLabel="Parler à un conseiller"
       notice="Les coordonnées de paiement ne sont jamais envoyées par des tiers : vérifiez-les ici ou auprès de l’agence avant tout règlement."
     >
+      {onlineSelectionConfirmed && <div role="status" aria-live="polite" className="mb-6 flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800"><span className="inline-flex h-6 w-6 animate-pulse items-center justify-center rounded-full bg-blue-600 text-white">✓</span><span>Paiement en ligne sélectionné. Consultez les options sécurisées ci-dessous.</span></div>}
       <ServiceSection title="Tous les moyens de paiement" introduction="L’état de chaque moyen est réel : un moyen n’est indiqué « disponible » que lorsqu’il est configuré.">
         <PaymentMethodsPanel />
       </ServiceSection>
