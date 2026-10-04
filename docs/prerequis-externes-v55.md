@@ -22,17 +22,20 @@ Le stockage privé s’appuie sur les identifiants S3 déjà injectés par la pl
 
 Le rapport mensuel de conformité est activé sous l’identifiant de tâche `Z4qm8uHwqSCzUY2vngb6te`. Il s’exécute le premier jour de chaque mois à 08:00 UTC et appelle `/api/scheduled/compliance-monthly-report`.
 
-### Tâches planifiées manquantes (aucun identifiant de tâche enregistré)
+### Planificateur interne (`server/cron/scheduledJobsCron.ts`)
 
-Sans tâche planifiée externe qui les appelle, **ces routes ne s'exécutent jamais** : ni erreur ni alerte visible, les relances, évaluations automatiques et vérifications correspondantes ne partent simplement jamais. Chacune exige l'en-tête `Authorization: Bearer <CRON_SECRET>` (même secret que ci-dessus), en `POST`, corps vide.
+Mise à jour du 2026-10-04 : plutôt que de créer une tâche planifiée externe par route, le serveur peut désormais déclencher
+lui-même les 5 tâches ci-dessous (document-reminders, evaluation-job, evaluation-bilan-job, passport-pending-weekly-alert,
+compliance-monthly-report — celle-ci fait doublon, sans risque, avec la tâche Manus déjà active `Z4qm8uHwqSCzUY2vngb6te`),
+sur la cadence documentée dans le code. Contrôlé par la variable d'environnement serveur `SCHEDULED_JOBS_MODE` :
 
-| Route | Fréquence conseillée (indiquée dans le code) | Effet si jamais déclenchée |
-| --- | --- | --- |
-| `/api/scheduled/document-reminders` | Tous les jours, `0 0 10 * * *` (10:00 UTC) | **La plus critique** : relances des pièces manquantes (J+3/J+7/J+14), suivi des demandes de vol impayées ou avant départ, et alertes de baisse de tarif — tout est regroupé dans ce seul appel. |
-| `/api/scheduled/evaluation-job` | Tous les jours, `0 0 8 * * *` (08:00 UTC) | Évaluation automatique des nouveaux dossiers. |
-| `/api/scheduled/passport-pending-weekly-alert` | Chaque lundi, `0 0 9 * * 1` (09:00 UTC) | Alerte hebdomadaire des passeports en attente de vérification humaine. |
-| `/api/scheduled/evaluation-bilan-job` | Fréquence non documentée dans le code — à confirmer avant d'en choisir une | Génération et envoi des bilans d'évaluation finalisés. |
+- absente ou `off` (défaut) : rien ne se déclenche, comme aujourd'hui.
+- `dry-run` : aperçu sans effet de bord (n'envoie aucun e-mail), à utiliser en premier.
+- `live` : exécute réellement les 5 tâches. **Avant de l'activer**, lire l'avertissement dans le fichier : `evaluation-job`
+  et `evaluation-bilan-job` traitent jusqu'à 100 dossiers par passage et envoient un e-mail réel à chacun — si des dossiers
+  se sont accumulés sans jamais être traités, le premier déclenchement peut envoyer bien plus d'e-mails qu'un jour normal.
 
-Pour chacune, créer une tâche planifiée (même mécanisme que celle déjà active pour le rapport mensuel) ciblant l'URL complète (`https://www.3mtravelagency.com` + la route), avec le `CRON_SECRET` déjà enregistré.
-
-**Cas à part — `/api/scheduled/external-link-check` et `/api/scheduled/evaluation-review-deadline-alerts`** : ces deux routes ne vérifient pas `CRON_SECRET` mais l'identité interne de tâche planifiée de la plateforme (`sdk.authenticateRequest` → `user.isCron`/`user.taskUid`), un mécanisme distinct des « Heartbeat callbacks » déjà utilisé ailleurs sur ce projet. Impossible de confirmer depuis le code seul si une tâche de ce type existe déjà : à vérifier directement avec Manus plutôt qu'à planifier comme les routes ci-dessus.
+**Restent hors de ce module** : `/api/scheduled/external-link-check` et `/api/scheduled/evaluation-review-deadline-alerts`.
+Elles exigent, en plus de `CRON_SECRET`, un vrai jeton de session Manus (`sdk.authenticateRequest`, openId `cron_…`) —
+seule une tâche planifiée créée côté Manus peut les déclencher ; `CRON_SECRET` seul y échoue toujours. À confirmer
+directement avec Manus plutôt qu'à planifier comme les 5 autres.

@@ -48,9 +48,16 @@ export const SCHEDULED_JOBS: ScheduledJobSpec[] = [
   { path: "/api/scheduled/passport-pending-weekly-alert", cronTime: "0 0 9 * * 1", label: "Alerte hebdomadaire passeports en attente (admin)", candidateFacing: false, supportsDryRun: false },
   // Cadence choisie faute de recommandation dans le handler d'origine — à ajuster si besoin.
   { path: "/api/scheduled/evaluation-bilan-job", cronTime: "0 30 8 * * *", label: "Bilans d'évaluation (livraison planifiée + relance 72 h)", candidateFacing: true, supportsDryRun: false },
-  { path: "/api/scheduled/evaluation-review-deadline-alerts", cronTime: "0 0 */2 * * *", label: "Alerte échéance de bilan proche (admin, fenêtre de 4 h)", candidateFacing: false, supportsDryRun: false },
-  { path: "/api/scheduled/external-link-check", cronTime: "0 0 7 * * 0", label: "Vérification hebdomadaire des liens officiels", candidateFacing: false, supportsDryRun: false },
 ];
+
+/**
+ * Exclues de SCHEDULED_JOBS : ces deux endpoints ne vérifient pas CRON_SECRET comme les autres, mais appellent en plus
+ * sdk.authenticateRequest(req), qui exige un vrai jeton de session Manus dont l'openId commence par "cron_" (voir
+ * server/_core/sdk.ts). Un simple "Authorization: Bearer $CRON_SECRET" échoue cette vérification : les planifier ici
+ * produirait un échec silencieux à chaque déclenchement, jamais un vrai essai. Seule une tâche planifiée créée côté
+ * Manus (qui fournit ce jeton de session) peut les déclencher — voir docs/prerequis-externes-v55.md.
+ */
+export const PLATFORM_CRON_ONLY_PATHS = ["/api/scheduled/external-link-check", "/api/scheduled/evaluation-review-deadline-alerts"] as const;
 
 export function resolveScheduledJobsMode(rawValue: string | undefined): ScheduledJobsMode {
   const normalized = (rawValue ?? "").trim().toLowerCase();
@@ -101,7 +108,7 @@ export function initScheduledJobsCron(port: number): CronJob[] {
     return [];
   }
   const baseUrl = `http://127.0.0.1:${port}`;
-  console.log(`[Planificateur interne] Mode "${mode}" : ${SCHEDULED_JOBS.length} tâche(s) programmée(s).`);
+  console.log(`[Planificateur interne] Mode "${mode}" : ${SCHEDULED_JOBS.length} tâche(s) programmée(s). ${PLATFORM_CRON_ONLY_PATHS.length} autre(s) (ex. vérification des liens) restent hors de ce module : elles exigent une tâche planifiée Manus, pas CRON_SECRET.`);
   return SCHEDULED_JOBS.map((job) => new CronJob(
     job.cronTime,
     () => { void dispatchJob(baseUrl, job, mode); },

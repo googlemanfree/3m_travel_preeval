@@ -4,6 +4,7 @@ import {
   resolveScheduledJobsMode,
   shouldDispatchJob,
   SCHEDULED_JOBS,
+  PLATFORM_CRON_ONLY_PATHS,
   initScheduledJobsCron,
   type ScheduledJobSpec,
 } from "./cron/scheduledJobsCron";
@@ -50,7 +51,7 @@ describe("shouldDispatchJob", () => {
 });
 
 describe("SCHEDULED_JOBS", () => {
-  it("couvre les 7 endpoints planifiés existants, chacun avec une expression cron valide", () => {
+  it("couvre les 5 endpoints planifiables via CRON_SECRET, chacun avec une expression cron valide", () => {
     const paths = SCHEDULED_JOBS.map((job) => job.path);
     expect(new Set(paths).size).toBe(paths.length);
     expect(paths.sort()).toEqual([
@@ -58,13 +59,18 @@ describe("SCHEDULED_JOBS", () => {
       "/api/scheduled/document-reminders",
       "/api/scheduled/evaluation-bilan-job",
       "/api/scheduled/evaluation-job",
-      "/api/scheduled/evaluation-review-deadline-alerts",
-      "/api/scheduled/external-link-check",
       "/api/scheduled/passport-pending-weekly-alert",
     ]);
     for (const job of SCHEDULED_JOBS) {
       // Construire une CronJob valide la syntaxe sans jamais la démarrer (4e argument = false).
       expect(() => new CronJob(job.cronTime, () => {}, null, false)).not.toThrow();
+    }
+  });
+
+  it("exclut explicitement les 2 endpoints qui exigent un jeton de session Manus (CRON_SECRET seul y échouerait toujours)", () => {
+    expect(PLATFORM_CRON_ONLY_PATHS).toEqual(["/api/scheduled/external-link-check", "/api/scheduled/evaluation-review-deadline-alerts"]);
+    for (const path of PLATFORM_CRON_ONLY_PATHS) {
+      expect(SCHEDULED_JOBS.some((job) => job.path === path)).toBe(false);
     }
   });
 
