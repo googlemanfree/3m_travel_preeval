@@ -20,6 +20,7 @@ import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/docu
 import { handleAlertConfirm, handleAlertStop } from "../scheduled/flightPriceAlerts";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
+import { initScheduledJobsCron } from "../cron/scheduledJobsCron";
 import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -170,6 +171,7 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    initScheduledJobsCron(port);
   });
 }
 
