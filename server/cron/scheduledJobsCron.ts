@@ -1,4 +1,5 @@
 import { CronJob } from "cron";
+import { recordSchedulerExecution } from "./schedulerHistory";
 
 /**
  * Déclenche en interne les tâches planifiées de server/scheduled/*.ts.
@@ -83,6 +84,7 @@ async function dispatchJob(baseUrl: string, job: ScheduledJobSpec, mode: Schedul
     return;
   }
   const body = mode === "dry-run" ? JSON.stringify({ dryRun: true }) : undefined;
+  const startedAt = new Date();
   try {
     const response = await fetch(`${baseUrl}${job.path}`, {
       method: "POST",
@@ -91,8 +93,13 @@ async function dispatchJob(baseUrl: string, job: ScheduledJobSpec, mode: Schedul
     });
     const payload = await response.json().catch(() => null);
     console.log(`[Planificateur interne] "${job.label}" → HTTP ${response.status}`, payload ?? "");
+    const planned = typeof payload?.planned === "number" ? payload.planned : 0;
+    const sent = typeof payload?.sent === "number" ? payload.sent : 0;
+    const failed = typeof payload?.failed === "number" ? payload.failed : response.ok ? 0 : 1;
+    recordSchedulerExecution({ job: job.label, path: job.path, mode, startedAt, finishedAt: new Date(), status: response.ok && failed === 0 ? "success" : "failed", planned, sent, failed, source: "schedule", ...(response.ok ? {} : { error: `HTTP ${response.status}` }) });
   } catch (error) {
     console.error(`[Planificateur interne] Échec de l'appel pour "${job.label}"`, error);
+    recordSchedulerExecution({ job: job.label, path: job.path, mode, startedAt, finishedAt: new Date(), status: "failed", planned: 0, sent: 0, failed: 1, source: "schedule", error: "appel impossible" });
   }
 }
 
