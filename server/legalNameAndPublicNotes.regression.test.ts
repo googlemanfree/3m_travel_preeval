@@ -9,7 +9,7 @@ describe("raison sociale officielle", () => {
   it("n'emploie plus « 3M Travel & Services SARL » : le nom légal est « 3M Travel Agency SARL » (le nom commercial sans SARL reste libre)", () => {
     let output = "";
     try {
-      output = execFileSync("git", ["grep", "-l", "-i", "-E", "Services,? SARL", "--", "client", "server", "shared", "docs/protocole-accord-01-luxembourg.md", "docs/protocole-accord-02-luxembourg.md"], { encoding: "utf8" });
+      output = execFileSync("git", ["grep", "-l", "-i", "-E", "Services,? SARL", "--", "client", "server", ":(exclude)server/legalNameAndPublicNotes.regression.test.ts", "shared", "docs/protocole-accord-01-luxembourg.md", "docs/protocole-accord-02-luxembourg.md"], { encoding: "utf8" });
     } catch (error) {
       if ((error as { status?: number }).status !== 1) throw error;
     }
