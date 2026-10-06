@@ -39,6 +39,8 @@ export const consultationRequestRouter = router({
       // contrôle `.url()` refusait toute demande avec CV. Seuls les fichiers de notre propre stockage sont acceptés (jamais une adresse libre).
       cvFileUrl: z.string().max(1000).refine((value) => storageKeyFromStoredUrl(value) !== null, "Fichier de CV invalide : renvoyez-le depuis le formulaire.").optional(),
       cvFileName: z.string().max(255).optional(),
+      /** Accord DISTINCT (décoché par défaut) pour que le CV soit lu par l'outil d'analyse IA ; sans lui, seul un conseiller lit le CV. */
+      cvAnalysisConsent: z.boolean().default(false),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -52,7 +54,7 @@ export const consultationRequestRouter = router({
         message: input.message,
         cvFileUrl: input.cvFileUrl,
         cvFileName: input.cvFileName,
-        status: input.cvFileUrl ? "pending_ai" : "pending_review",
+        status: input.cvFileUrl && input.cvAnalysisConsent ? "pending_ai" : "pending_review",
       }).$returningId();
 
       const requestId = inserted[0]?.id;
@@ -63,7 +65,7 @@ export const consultationRequestRouter = router({
           to: "hello@3mtravelagency.com",
           subject: `📋 Nouvelle demande de consultation — ${input.fullName}`,
           html: `<p><strong>${esc(input.fullName)}</strong> (${esc(input.email)}, ${esc(input.phone || "N/A")}) — Destination : ${esc(input.targetCountry || "non précisée")}.</p>
-                 <p>${input.cvFileUrl ? "CV joint — analyse du dossier en cours, à valider dans le tableau de bord admin." : "Pas de CV joint — à examiner manuellement."}</p>`,
+                 <p>${input.cvFileUrl ? (input.cvAnalysisConsent ? "CV joint — analyse du dossier en cours, à valider dans le tableau de bord admin." : "CV joint — à lire par un conseiller (le visiteur n'a pas autorisé l'analyse automatique).") : "Pas de CV joint — à examiner manuellement."}</p>`,
         });
       } catch (err) {
         logger.error("consultation_request.team_notification_failed", { requestId }, err);
@@ -82,7 +84,8 @@ export const consultationRequestRouter = router({
       }
 
       // Analyse automatique par IA en arrière-plan, si un CV a été fourni
-      if (requestId && input.cvFileUrl) {
+      // Analyse IA du CV seulement avec l'accord explicite du visiteur (jamais déduit de l'envoi du CV).
+      if (requestId && input.cvFileUrl && input.cvAnalysisConsent) {
         (async () => {
           try {
             // Lien signé direct vers NOTRE stockage (clé validée par le schéma) : aucune adresse fournie par le visiteur n'est téléchargée.

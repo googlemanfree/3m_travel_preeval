@@ -40,16 +40,31 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("demande de consultation avec CV", () => {
   it("accepte l'adresse réellement renvoyée par le dépôt (avant : « .url() » refusait toute demande avec CV)", async () => {
-    const result = await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL, cvFileName: "cv-aicha.pdf" });
+    const result = await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL, cvFileName: "cv-aicha.pdf", cvAnalysisConsent: true });
     expect(result.success).toBe(true);
     expect(state.inserts[0]).toMatchObject({ cvFileUrl: REAL_UPLOAD_URL, cvFileName: "cv-aicha.pdf", status: "pending_ai" });
   });
 
   it("lit le CV via un lien signé de NOTRE stockage, jamais l'adresse brute", async () => {
-    await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL });
+    await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL, cvAnalysisConsent: true });
     await vi.waitFor(() => expect(state.fetched.length).toBe(1));
     expect(state.signedKeys).toEqual(["applications/intake/cv/1760000000000-abcdef0123456789abcdef01-cv-aicha.pdf"]);
     expect(state.fetched[0]).toBe("https://cdn.example.com/signed/applications/intake/cv/1760000000000-abcdef0123456789abcdef01-cv-aicha.pdf?sig=1");
+  });
+
+  it("sans accord distinct : le CV est enregistré pour un conseiller mais RIEN n'est envoyé à l'outil d'analyse", async () => {
+    const result = await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL, cvFileName: "cv-aicha.pdf" });
+    expect(result.success).toBe(true);
+    expect(state.inserts[0]).toMatchObject({ cvFileUrl: REAL_UPLOAD_URL, status: "pending_review" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(state.signedKeys).toHaveLength(0);
+    expect(state.fetched).toHaveLength(0);
+    expect(state.emails[0]?.html ?? "").toContain("n'a pas autorisé l'analyse automatique");
+  });
+
+  it("avec l'accord : la demande attend l'analyse (« pending_ai ») et le CV est lu", async () => {
+    await caller().submit({ ...base, cvFileUrl: REAL_UPLOAD_URL, cvAnalysisConsent: true });
+    expect(state.inserts[0].status).toBe("pending_ai");
   });
 
   it("refuse toute adresse libre : externe, interne, ou remontée de dossier (le serveur n'ira jamais la télécharger)", async () => {

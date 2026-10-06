@@ -18,6 +18,7 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvAnalysisConsent, setCvAnalysisConsent] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [formError, setFormError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +80,7 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
       message: message.trim() || undefined,
       cvFileUrl,
       cvFileName,
+      cvAnalysisConsent: Boolean(cvFileUrl && cvAnalysisConsent),
     });
   };
 
@@ -88,7 +90,7 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
         <CheckCircle2 className="w-14 h-14 text-green-600 mx-auto mb-4" />
         <h3 className="text-xl font-bold text-gray-900 mb-2">Demande envoyée !</h3>
         <p className="text-gray-600 text-sm">
-          {cvFile
+          {cvFile && cvAnalysisConsent
             ? "Votre CV est en cours d'analyse. Notre équipe examinera le résultat et vous recontactera par email très prochainement."
             : "Notre équipe examinera votre demande et vous recontactera par email très prochainement."}
         </p>
@@ -158,6 +160,12 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
             </div>
           )}
           <input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />
+          {cvFile && (
+            <label className="mt-2 flex items-start gap-2 text-xs text-gray-700" data-testid="cv-analysis-consent">
+              <input type="checkbox" checked={cvAnalysisConsent} onChange={(e) => setCvAnalysisConsent(e.target.checked)} disabled={isPending} className="mt-0.5 h-4 w-4" />
+              <span>J'autorise l'analyse automatique du texte de mon CV par un outil d'intelligence artificielle, pour préparer l'étude de mon dossier. Sans cette case, seul un conseiller de l'agence lit mon CV.</span>
+            </label>
+          )}
         </div>
 
         <AnimatePresence>

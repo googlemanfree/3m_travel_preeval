@@ -150,9 +150,18 @@ describe("tâche planifiée", () => {
 
   it("la relance suivante attend 3 jours puis part à J+7, la troisième à J+14, puis plus rien", async () => {
     const sent: number[] = [];
-    for (const dayOffset of [0, 1, 4, 8, 12, 30]) {
-      const outcomes = await runDocumentReminders(fake.db, { now: new Date(NOW.getTime() + dayOffset * DAY) });
-      for (const outcome of outcomes) if (outcome.sent) sent.push(outcome.stage);
+    // Les lignes de journal créées par la fausse base prennent « new Date() » : l'horloge doit suivre la date simulée, sinon le test
+    // dépendait de la date réelle du jour (il a cessé de passer dès que la date réelle a dépassé de ~10 jours le 26/09/2026).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      for (const dayOffset of [0, 1, 4, 8, 12, 30]) {
+        const simulated = new Date(NOW.getTime() + dayOffset * DAY);
+        vi.setSystemTime(simulated);
+        const outcomes = await runDocumentReminders(fake.db, { now: simulated });
+        for (const outcome of outcomes) if (outcome.sent) sent.push(outcome.stage);
+      }
+    } finally {
+      vi.useRealTimers();
     }
     expect(sent).toEqual([1, 2, 3]);
     expect(state.emails).toHaveLength(3);
