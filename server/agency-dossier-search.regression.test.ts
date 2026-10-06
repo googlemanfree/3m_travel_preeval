@@ -21,4 +21,15 @@ describe("agency dossier admin search", () => {
     expect(source).toContain("search: undefined");
     expect(source).toContain("String(d.id).includes(search.trim())");
   });
+
+  it("filters by the canonical 3M reference and exposes quick dossier actions", () => {
+    const currentDir = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(currentDir, "../client/src/pages/AdminAgencyDossiers.tsx"), "utf8");
+
+    expect(source).toContain("dossierReference = (dossier: Dossier) => `3M-AGN-");
+    expect(source).toContain("Dossiers 3M- actifs");
+    expect(source).toContain("Exporter le dossier");
+    expect(source).toContain("Générer le résumé");
+    expect(source).toContain("Actions rapides pour ${dossierReference(d)}");
+  });
 });

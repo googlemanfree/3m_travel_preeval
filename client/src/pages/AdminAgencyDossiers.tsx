@@ -31,6 +31,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import AgencyDossierDocumentCenter from "@/components/AgencyDossierDocumentCenter";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, type AgencyDossierStatus } from "@shared/agencyDossierStatus";
 import {
@@ -59,6 +67,9 @@ import {
   History,
   Bell,
   RotateCcw,
+  Download,
+  ClipboardList,
+  MoreHorizontal,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -183,6 +194,7 @@ export default function AdminAgencyDossiers() {
   });
 
   const dossiers: Dossier[] = (data?.dossiers ?? []) as Dossier[];
+  const dossierReference = (dossier: Dossier) => `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
 
   // Filtrage côté client
   const filtered = dossiers.filter((d) => {
@@ -192,7 +204,7 @@ export default function AdminAgencyDossiers() {
       d.email.toLowerCase().includes(search.toLowerCase()) ||
       d.phone.includes(search) ||
       String(d.id).includes(search.trim()) ||
-      `3m-agn-${String(d.id).padStart(4, "0")}`.includes(search.toLowerCase().trim());
+      dossierReference(d).toLowerCase().includes(search.toLowerCase().trim());
     const matchStatus = filterStatus === "all" || d.status === filterStatus;
     const matchDest =
       filterDestination === "all" ||
@@ -207,6 +219,39 @@ export default function AdminAgencyDossiers() {
     en_cours: dossiers.filter((d) => d.status === "en_cours").length,
     approuve: dossiers.filter((d) => d.status === "approuve").length,
     refuse: dossiers.filter((d) => d.status === "refuse").length,
+  };
+  const active3mReferences = showTrash ? 0 : dossiers.length;
+  const downloadFile = (content: string, filename: string, type: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+  const exportDossier = (dossier: Dossier) => {
+    const reference = dossierReference(dossier);
+    downloadFile(JSON.stringify({ reference, ...dossier }, null, 2), `${reference.toLowerCase()}.json`, "application/json;charset=utf-8");
+    toast.success(`Dossier ${reference} exporté.`);
+  };
+  const generateDossierSummary = (dossier: Dossier) => {
+    const reference = dossierReference(dossier);
+    const summary = [
+      `Résumé du dossier ${reference}`,
+      `Nom : ${dossier.fullName}`,
+      `E-mail : ${dossier.email}`,
+      `Téléphone : ${dossier.phone}`,
+      `Destination : ${dossier.destination}`,
+      `Procédure : ${dossier.visaType}`,
+      `Statut : ${STATUS_CONFIG[dossier.status].label}`,
+      `Créé le : ${formatDate(dossier.createdAt)}`,
+      dossier.nationality ? `Nationalité : ${dossier.nationality}` : "",
+      dossier.adminNotes ? `Notes internes : ${dossier.adminNotes}` : "",
+    ].filter(Boolean).join("\n");
+    downloadFile(summary, `${reference.toLowerCase()}-resume.txt`, "text/plain;charset=utf-8");
+    toast.success(`Résumé ${reference} généré.`);
   };
   const exportMissingDocumentsCsv = () => {
     const rows = filtered.filter((dossier) => dossier.status === "documents_requis");
@@ -446,9 +491,10 @@ export default function AdminAgencyDossiers() {
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
 
         {/* ── Cartes statistiques ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           {[
             { label: "Total", value: stats.total, color: "text-white", icon: <Users className="w-8 h-8 text-blue-400 opacity-50" /> },
+            { label: "Dossiers 3M- actifs", value: active3mReferences, color: "text-emerald-300", icon: <ClipboardList className="w-8 h-8 text-emerald-400 opacity-70" /> },
             { label: "Nouveaux", value: stats.nouveau, color: "text-blue-300", icon: <FileText className="w-8 h-8 text-blue-400 opacity-50" /> },
             { label: "En cours", value: stats.en_cours, color: "text-yellow-300", icon: <Clock className="w-8 h-8 text-yellow-400 opacity-50" /> },
             { label: "Approuvés", value: stats.approuve, color: "text-green-300", icon: <CheckCircle2 className="w-8 h-8 text-green-400 opacity-50" /> },
@@ -578,7 +624,31 @@ export default function AdminAgencyDossiers() {
                             <TableCell>
                               <div>
                                 <p className="text-white font-medium">{d.fullName}</p>
-                                <p className="text-slate-400 text-xs font-mono">3M-AGN-{String(d.id).padStart(4, "0")}</p>
+                                <div className="mt-0.5 flex items-center gap-1">
+                                  <p className="text-slate-400 text-xs font-mono" data-testid={`dossier-reference-${d.id}`}>{dossierReference(d)}</p>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-6 w-6 text-slate-500 hover:bg-slate-700 hover:text-white"
+                                        aria-label={`Actions rapides pour ${dossierReference(d)}`}
+                                      >
+                                        <MoreHorizontal className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-56 bg-slate-800 text-slate-100 border-slate-600">
+                                      <DropdownMenuLabel className="font-mono text-xs text-slate-400">{dossierReference(d)}</DropdownMenuLabel>
+                                      <DropdownMenuSeparator className="bg-slate-700" />
+                                      <DropdownMenuItem onSelect={() => exportDossier(d)} className="cursor-pointer focus:bg-slate-700 focus:text-white">
+                                        <Download className="h-4 w-4" /> Exporter le dossier
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => generateDossierSummary(d)} className="cursor-pointer focus:bg-slate-700 focus:text-white">
+                                        <ClipboardList className="h-4 w-4" /> Générer le résumé
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
                                 {d.nationality && (
                                   <p className="text-slate-400 text-xs">{d.nationality}</p>
                                 )}
