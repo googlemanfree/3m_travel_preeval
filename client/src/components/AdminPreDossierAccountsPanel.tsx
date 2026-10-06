@@ -57,6 +57,9 @@ type PreDossierAccount = {
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
   paymentValidated?: boolean;
+  paymentProofUrl?: string | null;
+  paymentReference?: string | null;
+  paymentValidatedAt?: string | null;
 };
 
 function formatDate(value: string | Date | null) {
@@ -77,7 +80,9 @@ export default function AdminPreDossierAccountsPanel({
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "pending">("all");
   const [selected, setSelected] = useState<PreDossierAccount | null>(null);
+  const [paymentPreview, setPaymentPreview] = useState<PreDossierAccount | null>(null);
   useEffect(() => {
     const timeoutId = window.setTimeout(
       () => setDebouncedSearch(search.trim()),
@@ -98,6 +103,7 @@ export default function AdminPreDossierAccountsPanel({
   const [proofUploadProgress, setProofUploadProgress] = useState(0);
   const [proofUploadConfirmed, setProofUploadConfirmed] = useState(false);
   const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
+  const [isProofDragActive, setIsProofDragActive] = useState(false);
   const proofInputRef = useRef<HTMLInputElement | null>(null);
   const [activationSuccess, setActivationSuccess] = useState<{
     previousAccountReference: string;
@@ -357,6 +363,16 @@ export default function AdminPreDossierAccountsPanel({
     confirmOpeningPaymentMutation.reset();
   };
 
+  const selectProofFile = (file: File | null) => {
+    if (!file) return;
+    setProofFile(file);
+    setProofUploadProgress(0);
+    setProofUploadConfirmed(false);
+  };
+
+  const paymentPreviewIsVideo = Boolean(paymentPreview?.paymentProofUrl && /\.(mp4|mov|webm)(?:$|[?#])/i.test(paymentPreview.paymentProofUrl));
+  const visibleAccounts = (query.data?.accounts ?? []).filter(account => paymentFilter === "all" || !account.paymentValidated);
+
   const evaluationOk = readiness.data
     ? readiness.data.evaluationValidated
     : Boolean(selected?.evaluationValidated);
@@ -455,6 +471,15 @@ export default function AdminPreDossierAccountsPanel({
             className="pl-9"
             maxLength={200}
           />
+          <Button
+            type="button"
+            variant={paymentFilter === "pending" ? "default" : "outline"}
+            onClick={() => setPaymentFilter(current => current === "pending" ? "all" : "pending")}
+            className="mt-2 w-full gap-2 sm:w-auto"
+            aria-pressed={paymentFilter === "pending"}
+          >
+            <FileText className="h-4 w-4" /> Paiements en attente
+          </Button>
         </div>
         {query.isLoading ? (
           <p className="py-10 text-center text-sm text-slate-500">
@@ -464,7 +489,7 @@ export default function AdminPreDossierAccountsPanel({
           <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             Impossible de charger les comptes : {query.error.message}
           </p>
-        ) : !query.data?.accounts.length ? (
+        ) : !visibleAccounts.length ? (
           <div className="rounded-xl border border-dashed p-8 text-center text-sm text-slate-500">
             Aucun compte pré-dossier ne correspond à la recherche.
           </div>
@@ -481,7 +506,7 @@ export default function AdminPreDossierAccountsPanel({
                 </tr>
               </thead>
               <tbody className="divide-y bg-white">
-                {query.data.accounts.map(account => {
+                {visibleAccounts.map(account => {
                   const validationRequired = Boolean(
                     account.pendingEvaluationReference &&
                     !account.evaluationValidated
@@ -524,14 +549,15 @@ export default function AdminPreDossierAccountsPanel({
                             </Badge>
                         )}
                         {account.paymentValidated && (
-                          <Badge
+                          <button
+                            type="button"
+                            onClick={() => setPaymentPreview(account as PreDossierAccount)}
                             data-testid={`opening-payment-validated-${account.id}`}
-                            variant="outline"
                             title="Paiement des frais d’ouverture validé"
-                            className="ml-1 mt-1 border-emerald-200 bg-emerald-50 text-emerald-700"
+                            className="ml-1 mt-1 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                           >
                             <FileCheck2 className="mr-1 h-3 w-3" /> Paiement validé
-                          </Badge>
+                          </button>
                         )}
                       </td>
                       <td className="px-4 py-3 capitalize text-slate-700">
@@ -577,6 +603,45 @@ export default function AdminPreDossierAccountsPanel({
           </div>
         )}
       </CardContent>
+      <Dialog open={Boolean(paymentPreview)} onOpenChange={open => !open && setPaymentPreview(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Aperçu de la preuve de paiement</DialogTitle>
+            <DialogDescription>
+              {paymentPreview?.fullName} · paiement validé le {formatDate(paymentPreview?.paymentValidatedAt)}
+            </DialogDescription>
+          </DialogHeader>
+          {paymentPreview?.paymentProofUrl ? (
+            paymentPreviewIsVideo ? (
+              <video
+                src={paymentPreview.paymentProofUrl}
+                controls
+                preload="metadata"
+                className="max-h-[60vh] w-full rounded-xl bg-slate-950 object-contain"
+                aria-label={`Preuve de paiement vidéo de ${paymentPreview.fullName}`}
+              />
+            ) : (
+              <img
+                src={paymentPreview.paymentProofUrl}
+                alt={`Preuve de paiement de ${paymentPreview.fullName}`}
+                className="max-h-[60vh] w-full rounded-xl border object-contain"
+              />
+            )
+          ) : (
+            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-8 text-center text-sm text-amber-900">
+              Ce paiement a été validé avec une référence de transaction, sans fichier joint.
+            </div>
+          )}
+          {paymentPreview?.paymentReference && (
+            <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+              Référence : <strong className="font-mono">{paymentPreview.paymentReference}</strong>
+            </p>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPaymentPreview(null)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={Boolean(selected)}
         onOpenChange={open =>
@@ -720,17 +785,20 @@ export default function AdminPreDossierAccountsPanel({
                       aria-label="Référence ou ID de transaction du paiement"
                       className="sm:flex-1"
                     />
-                    <div className="flex items-center gap-2">
+                    <div
+                      data-testid="opening-payment-proof-dropzone"
+                      onDragEnter={event => { event.preventDefault(); setIsProofDragActive(true); }}
+                      onDragOver={event => { event.preventDefault(); setIsProofDragActive(true); }}
+                      onDragLeave={event => { event.preventDefault(); setIsProofDragActive(false); }}
+                      onDrop={event => { event.preventDefault(); setIsProofDragActive(false); selectProofFile(event.dataTransfer.files?.[0] ?? null); }}
+                      className={`flex min-h-11 items-center gap-2 rounded-lg border border-dashed px-2 transition-colors ${isProofDragActive ? "border-amber-500 bg-amber-100 ring-2 ring-amber-300" : "border-transparent"}`}
+                    >
                       <input
                         ref={proofInputRef}
                         type="file"
                         accept="image/*,video/*"
                         capture="environment"
-                        onChange={event => {
-                          setProofFile(event.target.files?.[0] ?? null);
-                          setProofUploadProgress(0);
-                          setProofUploadConfirmed(false);
-                        }}
+                        onChange={event => selectProofFile(event.target.files?.[0] ?? null)}
                         className="hidden"
                         id="opening-payment-proof-input"
                         aria-label="Photo ou vidéo de la facture"
@@ -746,6 +814,7 @@ export default function AdminPreDossierAccountsPanel({
                         <Camera className="h-4 w-4" />
                         {proofFile ? proofFile.name : "Filmer / photographier"}
                       </Button>
+                      {isProofDragActive && <span className="text-xs font-semibold text-amber-900">Déposer ici</span>}
                     </div>
                   </div>
                   {proofFile && proofPreviewUrl && (

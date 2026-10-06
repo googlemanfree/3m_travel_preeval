@@ -129,6 +129,38 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.getByTestId("opening-payment-validated-42").textContent).toContain("Paiement validé");
   });
 
+  it("ouvre instantanément l’aperçu de la preuve depuis le badge validé", () => {
+    h.account = account({ paymentValidated: true, paymentProofUrl: "https://storage.example/facture.jpg", paymentReference: "OM-123" });
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    fireEvent.click(screen.getByTestId("opening-payment-validated-42"));
+    expect(screen.getByRole("dialog").textContent).toContain("Aperçu de la preuve de paiement");
+    expect(screen.getByAltText("Preuve de paiement de DJAMBONG TESSA").getAttribute("src")).toBe("https://storage.example/facture.jpg");
+    expect(screen.getByRole("dialog").textContent).toContain("OM-123");
+  });
+
+  it("filtre les comptes dont le paiement d’ouverture est encore en attente", () => {
+    h.account = account({ paymentValidated: false });
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    fireEvent.click(screen.getByRole("button", { name: "Paiements en attente" }));
+    expect(screen.getByText("DJAMBONG TESSA")).toBeTruthy();
+    h.account = account({ paymentValidated: true });
+    cleanup();
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    fireEvent.click(screen.getByRole("button", { name: "Paiements en attente" }));
+    expect(screen.getByText("Aucun compte pré-dossier ne correspond à la recherche.")).toBeTruthy();
+  });
+
+  it("accepte une preuve déposée par glisser-déposer avec un état de zone actif", async () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
+    open();
+    const zone = screen.getByTestId("opening-payment-proof-dropzone");
+    const file = new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], "preuve.jpg", { type: "image/jpeg" });
+    fireEvent.dragEnter(zone, { dataTransfer: { files: [file] } });
+    expect(zone.className).toContain("bg-amber-100");
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } });
+    expect(await screen.findByTestId("opening-payment-proof-preview")).toBeTruthy();
+  });
+
   it("confirme le paiement avec seulement une référence saisie (pas de fichier)", () => {
     h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
     open();
