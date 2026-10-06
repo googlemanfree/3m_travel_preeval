@@ -10,7 +10,7 @@ import { requireAdminSessionFromCookie, requireValidAdminSession } from "./admin
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
-import { archiveRedundantPreAccounts, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
+import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
 import { accountReference, agencyDossierReference, referenceChangeSentence } from "../../shared/caseReference";
 import { sendEmail as sendGenericEmail } from "../_core/email";
@@ -272,16 +272,22 @@ export const adminCandidateManagementRouter = router({
       await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const [accounts, files] = await Promise.all([
-        db.select().from(candidates).where(eq(candidates.dossierStatus, "nouveau")).orderBy(desc(candidates.createdAt)).limit(500),
+      // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
+      // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
+      const [allAccounts, files, activeEmails] = await Promise.all([
+        db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
         db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).limit(5000),
+        loadEmailsWithActiveDossier(db),
       ]);
+      const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
+      const coveredByActiveDossier = allAccounts.length - accounts.length;
       const documentsByCandidate = new Map<number, number>();
       files.forEach((file) => documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1));
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
       return {
         total: filtered.length,
+        coveredByActiveDossier,
         accounts: filtered.map((account) => ({
           id: account.id,
           fullName: account.fullName,

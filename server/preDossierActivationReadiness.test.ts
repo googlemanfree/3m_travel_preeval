@@ -148,3 +148,37 @@ describe("évaluation remise hors ligne pour un compte sans dossier (« account_
     await expect(caller().validateOfflineEvaluation({ ...base, candidateId: "autre_5", channel: "appel" } as any)).rejects.toThrow();
   });
 });
+
+describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà un dossier actif", () => {
+  const account = (id: number, email: string) => candidate({ id, email, fullName: `Compte ${id}`, createdAt: new Date("2026-09-20"), lastLoginAt: null, emailVerified: true, destination: "luxembourg" });
+
+  it("masque le compte dont l'e-mail a un dossier agence ouvert ou un dossier en ligne payé, sans rien modifier, et l'annonce", async () => {
+    // lectures : comptes « nouveau » non supprimés, pièces, dossiers agence actifs, dossiers en ligne actifs
+    state.reads = [
+      [account(1, "a@example.com"), account(2, "B@Example.com"), account(3, "c@example.com"), account(4, "d@example.com")],
+      [{ candidateId: 4 }, { candidateId: 4 }],
+      [{ email: "A@example.com" }],
+      [{ email: "b@example.com" }],
+    ];
+    const result = await caller().listPreDossierAccounts({ ...base });
+    expect(result.accounts.map((item) => item.id)).toEqual([3, 4]);
+    expect(result.total).toBe(2);
+    expect(result.coveredByActiveDossier).toBe(2);
+    expect(result.accounts.find((item) => item.id === 4)?.documentsCount).toBe(2);
+    expect(state.updates).toHaveLength(0);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("aucune personne couverte : rien n'est masqué", async () => {
+    state.reads = [[account(1, "a@example.com")], [], [], []];
+    const result = await caller().listPreDossierAccounts({ ...base });
+    expect(result).toMatchObject({ total: 1, coveredByActiveDossier: 0 });
+  });
+
+  it("les comptes mis en corbeille sont exclus dès la requête (deletedAt)", () => {
+    const source = require("node:fs").readFileSync(require("node:path").resolve(__dirname, "routers/adminCandidateManagement.ts"), "utf8");
+    const list = source.slice(source.indexOf("listPreDossierAccounts:"), source.indexOf("validateOfflineEvaluation:"));
+    expect(list).toContain("isNull(candidates.deletedAt)");
+    expect(list).toContain("loadEmailsWithActiveDossier(db)");
+  });
+});

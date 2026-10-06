@@ -31,6 +31,18 @@ export async function loadRedundantPreAccounts(db: Db): Promise<RedundantPreAcco
   });
 }
 
+/**
+ * Adresses e-mail (minuscules) des personnes qui ont DÉJÀ un dossier actif : dossier agence ouvert (pas « nouveau », hors corbeille)
+ * ou dossier en ligne payé et en cours. Même définition de « dossier actif » que la détection des pré-comptes redondants.
+ */
+export async function loadEmailsWithActiveDossier(db: Db): Promise<Set<string>> {
+  const [activeAgency, activeOnline] = await Promise.all([
+    db.select({ email: agencyDossiers.email }).from(agencyDossiers).where(and(isNull(agencyDossiers.deletedAt), ne(agencyDossiers.status, "nouveau"))).limit(ROW_LIMIT),
+    db.select({ email: applications.email }).from(applications).where(and(isNull(applications.deletedAt), eq(applications.paymentStatus, "SUCCESS"), inArray(applications.dossierStatus, [...ACTIVE_ONLINE_STATUSES]))).limit(ROW_LIMIT),
+  ]);
+  return new Set([...activeAgency, ...activeOnline].map((row) => (row.email ?? "").trim().toLowerCase()).filter(Boolean));
+}
+
 export type ArchiveRequestItem = { kind: "agency_pre_dossier" | "account"; id: number };
 
 /**
