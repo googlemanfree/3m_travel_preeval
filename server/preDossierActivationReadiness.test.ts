@@ -51,31 +51,39 @@ beforeEach(() => {
 
 describe("conditions d'ouverture du dossier : dites ce qui manque AVANT le clic", () => {
   it("compte sans évaluation ni paiement : deux blocages nommés, activation impossible, référence de compte annoncée", async () => {
-    // lectures : compte, dernier dossier en ligne, dossier agence payé
-    state.reads = [[candidate()], [], []];
+    // lectures : compte, preuve de paiement saisie sur le compte (aucune), dernier dossier en ligne, dossier agence payé
+    state.reads = [[candidate()], [], [], []];
     const result = await caller().preDossierActivationReadiness({ ...base, candidateId: 42 });
-    expect(result).toMatchObject({ canActivate: false, evaluationValidated: false, paymentValidated: false, alreadyActive: false, accountReference: "COMPTE-00042" });
+    expect(result).toMatchObject({ canActivate: false, evaluationValidated: false, paymentValidated: false, alreadyActive: false, accountReference: "COMPTE-00042", openingPayment: null });
     expect(result.blockers.map((blocker) => blocker.code)).toEqual(["evaluation", "payment"]);
   });
 
   it("évaluation validée mais paiement non validé : seul le paiement bloque", async () => {
-    state.reads = [[candidate(validatedEvaluation)], [{ paymentStatus: "SUCCESS", paymentValidatedAt: null, paymentValidatedBy: null }], []];
+    state.reads = [[candidate(validatedEvaluation)], [], [{ paymentStatus: "SUCCESS", paymentValidatedAt: null, paymentValidatedBy: null }], []];
     const result = await caller().preDossierActivationReadiness({ ...base, candidateId: 42 });
     expect(result.blockers.map((blocker) => blocker.code)).toEqual(["payment"]);
     expect(result.evaluationValidated).toBe(true);
   });
 
   it("évaluation + paiement en ligne validé par un administrateur : activation possible", async () => {
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated]];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated]];
     const result = await caller().preDossierActivationReadiness({ ...base, candidateId: 42 });
     expect(result).toMatchObject({ canActivate: true, paymentValidated: true, blockers: [] });
   });
 
   it("paiement agence : exige la confirmation du journal d'audit, pas seulement le statut « payé »", async () => {
-    state.reads = [[candidate(validatedEvaluation)], [], [{ id: 9, email: "candidat@example.com" }], []];
+    state.reads = [[candidate(validatedEvaluation)], [], [], [{ id: 9, email: "candidat@example.com" }], []];
     expect((await caller().preDossierActivationReadiness({ ...base, candidateId: 42 })).paymentValidated).toBe(false);
-    state.reads = [[candidate(validatedEvaluation)], [], [{ id: 9, email: "candidat@example.com" }], [{ id: 1 }]];
+    state.reads = [[candidate(validatedEvaluation)], [], [], [{ id: 9, email: "candidat@example.com" }], [{ id: 1 }]];
     expect((await caller().preDossierActivationReadiness({ ...base, candidateId: 42 })).paymentValidated).toBe(true);
+  });
+
+  it("paiement d'ouverture confirmé directement sur le compte (sans dossier) : suffit à débloquer l'activation", async () => {
+    const record = { candidateId: 42, validatedAt: "2026-10-06T10:00:00.000Z", validatedBy: "agent@3mtravelagency.com", reference: "OM-998877", proofFileUrl: null, confirmedAmount: 65000 };
+    state.reads = [[candidate(validatedEvaluation)], [{ settingValue: JSON.stringify(record) }]];
+    const result = await caller().preDossierActivationReadiness({ ...base, candidateId: 42 });
+    expect(result).toMatchObject({ canActivate: true, paymentValidated: true, blockers: [] });
+    expect(result.openingPayment).toMatchObject({ reference: "OM-998877", validatedBy: "agent@3mtravelagency.com" });
   });
 
   it("dossier déjà actif : un seul blocage, « déjà actif »", async () => {
@@ -93,9 +101,8 @@ describe("conditions d'ouverture du dossier : dites ce qui manque AVANT le clic"
 
 describe("activation : mêmes conditions, mêmes messages, et la référence change toute seule", () => {
   it("refuse sans paiement validé avec EXACTEMENT le message que l'écran affiche avant le clic", async () => {
-    state.reads = [[candidate(validatedEvaluation)], [], []];
-    const expected = (await (async () => { state.reads = [[candidate(validatedEvaluation)], [], []]; return caller().preDossierActivationReadiness({ ...base, candidateId: 42 }); })()).blockers[0].message;
-    state.reads = [[candidate(validatedEvaluation)], [], []];
+    const expected = (await (async () => { state.reads = [[candidate(validatedEvaluation)], [], [], []]; return caller().preDossierActivationReadiness({ ...base, candidateId: 42 }); })()).blockers[0].message;
+    state.reads = [[candidate(validatedEvaluation)], [], [], []];
     await expect(caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" })).rejects.toThrow(expected);
     expect(state.inserts).toHaveLength(0);
     expect(state.updates).toHaveLength(0);
@@ -107,9 +114,17 @@ describe("activation : mêmes conditions, mêmes messages, et la référence cha
     expect(state.inserts).toHaveLength(0);
   });
 
+  it("une preuve de paiement confirmée directement sur le compte suffit aussi à l'activation réelle", async () => {
+    const record = { candidateId: 42, validatedAt: "2026-10-06T10:00:00.000Z", validatedBy: "agent@3mtravelagency.com", reference: "OM-998877", proofFileUrl: null, confirmedAmount: 65000 };
+    // lectures : compte, preuve de paiement du compte (trouvée → isOpeningPaymentValidated jamais appelée), pré-dossier existant (aucun) → création
+    state.reads = [[candidate(validatedEvaluation)], [{ settingValue: JSON.stringify(record) }], []];
+    const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
+    expect(result).toMatchObject({ success: true, dossierReference: "3M-AGN-0034" });
+  });
+
   it("conditions réunies : COMPTE-00042 devient 3M-AGN-0034 (réponse, journal, notification client, e-mail)", async () => {
-    // lectures : compte, dossier en ligne validé, pré-dossier agence existant (aucun) → création
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], []];
+    // lectures : compte, preuve de paiement du compte (aucune), dossier en ligne validé, pré-dossier agence existant (aucun) → création
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], []];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ success: true, previousAccountReference: "COMPTE-00042", dossierReference: "3M-AGN-0034", emailSent: true });
     const journal = state.inserts.find((row) => row.action === "reference_changed");
@@ -120,6 +135,56 @@ describe("activation : mêmes conditions, mêmes messages, et la référence cha
     expect(state.emails[0][2]).toBe("3M-AGN-0034");
     expect(state.emails[0][5]).toBe("COMPTE-00042");
     expect(state.updates.some((values) => values.dossierStatus === "documents")).toBe(true);
+  });
+});
+
+describe("confirmOpeningPaymentForAccount : valider le paiement directement sur un compte sans dossier", () => {
+  it("confirme avec une référence de transaction seule", async () => {
+    // lectures : compte, preuve déjà confirmée sur ce compte (aucune), ligne agency_settings existante pour cette clé (aucune → insertion)
+    state.reads = [[candidate()], [], []];
+    const result = await caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-998877" });
+    expect(result.success).toBe(true);
+    expect(result.record).toMatchObject({ candidateId: 42, reference: "OM-998877", proofFileUrl: null, validatedBy: "agent@3mtravelagency.com" });
+    const settingInsert = state.inserts.find((row) => row.settingKey === "opening_payment:42");
+    expect(settingInsert).toBeDefined();
+    expect(JSON.parse(settingInsert.settingValue)).toMatchObject({ reference: "OM-998877" });
+    const auditInsert = state.inserts.find((row) => row.action === "confirmed" && row.candidateEmail === "candidat@example.com");
+    expect(auditInsert).toBeDefined();
+    expect(auditInsert.details).toContain("COMPTE-00042");
+  });
+
+  it("confirme avec une preuve (photo ou vidéo) seule, sans référence", async () => {
+    state.reads = [[candidate()], [], []];
+    const result = await caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, proofFileUrl: "/manus-storage/candidates/opening-payment-proof/42/facture.jpg" });
+    expect(result.record).toMatchObject({ reference: null, proofFileUrl: "/manus-storage/candidates/opening-payment-proof/42/facture.jpg" });
+  });
+
+  it("refuse si ni référence ni preuve ne sont fournies, avant toute lecture", async () => {
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42 })).rejects.toThrow();
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("refuse une adresse de preuve qui ne vient pas de notre stockage", async () => {
+    state.reads = [[candidate()], []];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, proofFileUrl: "https://evil.example/facture.jpg" })).rejects.toThrow(/invalide/);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("refuse si le compte a déjà un dossier actif", async () => {
+    state.reads = [[candidate({ dossierStatus: "documents" })]];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-1" })).rejects.toThrow(/déjà un dossier actif/);
+  });
+
+  it("refuse une seconde confirmation : le paiement est déjà confirmé", async () => {
+    const record = { candidateId: 42, validatedAt: "2026-10-06T10:00:00.000Z", validatedBy: "agent@3mtravelagency.com", reference: "OM-1", proofFileUrl: null, confirmedAmount: 65000 };
+    state.reads = [[candidate()], [{ settingValue: JSON.stringify(record) }]];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-2" })).rejects.toThrow(/déjà été confirmé/);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("compte introuvable : erreur claire", async () => {
+    state.reads = [[]];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 999, paymentReference: "OM-1" })).rejects.toThrow(/introuvable/);
   });
 });
 
@@ -197,8 +262,8 @@ describe("activation : les doublons certains du même dossier partent à la corb
   ];
 
   it("rattache le dossier 34 puis met le pré-dossier doublon 7 en corbeille (réversible, journalisé)", async () => {
-    // lectures : compte, paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l'archivage
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    // lectures : compte, preuve de paiement du compte (aucune), paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l'archivage
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ dossierReference: "3M-AGN-0034", archivedDuplicates: ["3M-AGN-0007"] });
     const trashed = state.updates.find((values) => values.deletedAt);
@@ -215,7 +280,7 @@ describe("activation : les doublons certains du même dossier partent à la corb
       [{ id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: "+237698104832", status: "en_cours" }],
       [], [], [],
     ];
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...probableWorld(), ...probableWorld()];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...probableWorld(), ...probableWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result.archivedDuplicates).toEqual([]);
     expect(state.updates.some((values) => values.deletedAt)).toBe(false);
@@ -229,7 +294,7 @@ describe("activation : les doublons certains du même dossier partent à la corb
       [{ id: 40, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }, { id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }],
       [], [{ email: "candidat@example.com" }], [],
     ];
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...otherActiveWorld(), ...otherActiveWorld()];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...otherActiveWorld(), ...otherActiveWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result.archivedDuplicates).toEqual([]);
     expect(state.updates.some((values) => values.deletedAt)).toBe(false);
@@ -237,7 +302,7 @@ describe("activation : les doublons certains du même dossier partent à la corb
 
   it("un échec du nettoyage ne défait pas l'activation", async () => {
     state.failTrash = true;
-    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ success: true, dossierReference: "3M-AGN-0034", archivedDuplicates: [] });

@@ -11,9 +11,11 @@ const h = vi.hoisted(() => ({
   activate: vi.fn(),
   offline: vi.fn(),
   review: vi.fn(),
+  confirmPayment: vi.fn(),
   toast: vi.fn(),
   activateError: null as null | { message: string },
   activateOptions: {} as any,
+  confirmPaymentOptions: {} as any,
 }));
 
 vi.mock("@/lib/trpc", () => ({
@@ -25,6 +27,7 @@ vi.mock("@/lib/trpc", () => ({
       reviewEvaluationDeclaration: { useMutation: () => ({ mutate: h.review, isPending: false }) },
       validateOfflineEvaluation: { useMutation: () => ({ mutate: h.offline, isPending: false }) },
       activatePreDossierAccount: { useMutation: (options: any) => { h.activateOptions = options; return { mutate: h.activate, isPending: false, error: h.activateError, reset: vi.fn() }; } },
+      confirmOpeningPaymentForAccount: { useMutation: (options: any) => { h.confirmPaymentOptions = options; return { mutate: h.confirmPayment, isPending: false, reset: vi.fn() }; } },
     },
   },
 }));
@@ -94,6 +97,47 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.queryByTestId("offline-evaluation-block")).toBeNull();
     expect(confirmButton().disabled).toBe(true);
     expect(screen.getByTestId("activation-disabled-reason").textContent).toContain("paiement doit être validé");
+  });
+
+  it("paiement manquant : le bloc de confirmation inline apparaît, avec champ référence et bouton caméra", () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel." }] }), isLoading: false };
+    open();
+    const block = screen.getByTestId("opening-payment-block");
+    expect(block.textContent).toContain("Valider le paiement des frais d’ouverture");
+    expect(screen.getByLabelText("Référence ou ID de transaction du paiement")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Filmer \/ photographier/ })).toBeTruthy();
+  });
+
+  it("paiement validé : le bloc de confirmation inline n'apparaît plus", () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
+    open();
+    expect(screen.queryByTestId("opening-payment-block")).toBeNull();
+  });
+
+  it("confirme le paiement avec seulement une référence saisie (pas de fichier)", () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
+    open();
+    fireEvent.change(
+      screen.getByLabelText("Référence ou ID de transaction du paiement"),
+      { target: { value: "OM-998877" } }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmer le paiement" }));
+    expect(h.confirmPayment).toHaveBeenCalledWith({
+      sessionToken: "jeton",
+      candidateId: 42,
+      paymentReference: "OM-998877",
+      proofFileUrl: undefined,
+    });
+  });
+
+  it("sans référence ni fichier joint : avertit au lieu d'appeler le serveur à l'aveugle", () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Confirmer le paiement" }));
+    expect(h.confirmPayment).not.toHaveBeenCalled();
+    expect(h.toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Preuve manquante" })
+    );
   });
 
   it("tout est réuni : bouton actif, aucune raison affichée, l'activation part avec les bons paramètres", () => {

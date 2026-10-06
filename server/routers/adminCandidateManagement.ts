@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { and, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
@@ -19,6 +19,7 @@ import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/p
 import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
 import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
+import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -99,8 +100,51 @@ const ACTIVATION_MESSAGES = {
 } as const;
 
 /**
+ * Confirmation du paiement des frais d'ouverture pour un compte qui n'a encore AUCUN dossier (ni en ligne, ni agence) :
+ * stockée dans agency_settings (clé OPENING_PAYMENT_KEY_PREFIX + candidateId), sans migration, sur le même modèle que
+ * les autres états ponctuels du projet (ex. payment_instructions, review_invited:<clé>). Un dossier agence ou en ligne
+ * existant garde son propre mécanisme de validation (onglet Paiements) ; celui-ci ne sert qu'à l'étape "pas encore de
+ * dossier" où cet onglet n'a justement rien à montrer.
+ */
+const OPENING_PAYMENT_KEY_PREFIX = "opening_payment:";
+
+type OpeningPaymentRecord = {
+  candidateId: number;
+  validatedAt: string;
+  validatedBy: string;
+  reference: string | null;
+  proofFileUrl: string | null;
+  confirmedAmount: number | null;
+};
+
+async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<OpeningPaymentRecord | null> {
+  const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings)
+    .where(eq(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}${candidateId}`))
+    .limit(1);
+  if (!row) return null;
+  try {
+    return JSON.parse(row.settingValue) as OpeningPaymentRecord;
+  } catch {
+    return null;
+  }
+}
+
+async function setOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, record: OpeningPaymentRecord): Promise<void> {
+  const key = `${OPENING_PAYMENT_KEY_PREFIX}${record.candidateId}`;
+  const settingValue = JSON.stringify(record);
+  const [existing] = await db.select({ id: agencySettings.id }).from(agencySettings).where(eq(agencySettings.settingKey, key)).limit(1);
+  if (existing) {
+    await db.update(agencySettings).set({ settingValue, updatedAt: new Date() }).where(eq(agencySettings.id, existing.id));
+  } else {
+    await db.insert(agencySettings).values({ settingKey: key, settingValue });
+  }
+}
+
+/**
  * Le paiement des frais d'ouverture est validé quand un administrateur l'a confirmé : paiement en ligne « SUCCESS » validé par un
- * nom d'administrateur, ou paiement du pré-dossier agence confirmé dans le journal d'audit des paiements.
+ * nom d'administrateur, ou paiement du pré-dossier agence confirmé dans le journal d'audit des paiements. Ne regarde PAS
+ * OpeningPaymentRecord (compte sans dossier) : les appelants le vérifient eux-mêmes avant d'appeler cette fonction, pour ne
+ * jamais imposer son ordre de lecture aux tests qui ciblent uniquement les dossiers en ligne/agence.
  */
 async function isOpeningPaymentValidated(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidate: { id: number; email: string }): Promise<boolean> {
   const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, paymentValidatedBy: applications.paymentValidatedBy }).from(applications)
@@ -494,14 +538,68 @@ export const adminCandidateManagementRouter = router({
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       const alreadyActive = candidate.dossierStatus !== "nouveau";
       const evaluationValidated = candidate.evaluationDeclarationStatus === "validated" && Boolean(candidate.evaluationReviewedAt);
-      const paymentValidated = alreadyActive ? true : await isOpeningPaymentValidated(db, candidate);
+      // Preuve saisie directement sur ce compte (sans dossier) ; consultée en premier pour éviter d'interroger
+      // dossiers en ligne/agence quand elle suffit déjà, et exposée telle quelle à l'écran d'activation.
+      const openingPayment = alreadyActive ? null : await getOpeningPaymentRecord(db, candidate.id);
+      const paymentValidated = alreadyActive ? true : Boolean(openingPayment) || (await isOpeningPaymentValidated(db, candidate));
       const blockers: Array<{ code: "already_active" | "evaluation" | "payment"; message: string }> = [];
       if (alreadyActive) blockers.push({ code: "already_active", message: ACTIVATION_MESSAGES.alreadyActive });
       else {
         if (!evaluationValidated) blockers.push({ code: "evaluation", message: ACTIVATION_MESSAGES.evaluation });
         if (!paymentValidated) blockers.push({ code: "payment", message: ACTIVATION_MESSAGES.payment });
       }
-      return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, canActivate: blockers.length === 0, blockers };
+      return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, openingPayment, canActivate: blockers.length === 0, blockers };
+    }),
+
+  /**
+   * Confirme le paiement des frais d'ouverture directement sur un compte sans dossier : l'admin saisit soit une
+   * référence/ID de transaction, soit joint une preuve (photo ou vidéo de la facture, déposée via
+   * /api/admin/opening-payment-proof puis fournie ici comme adresse de stockage), soit les deux. Refusé si aucune
+   * des deux n'est fournie : on ne valide jamais un paiement "à l'aveugle".
+   */
+  confirmOpeningPaymentForAccount: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      paymentReference: z.string().trim().max(255).optional(),
+      proofFileUrl: z.string().max(1000).optional(),
+      confirmedAmount: z.number().int().positive().max(100000000).optional(),
+    }).refine((value) => Boolean(value.paymentReference?.trim()) || Boolean(value.proofFileUrl?.trim()), {
+      message: "Indiquez une référence de transaction ou joignez une preuve (photo ou vidéo de la facture).",
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
+      const existing = await getOpeningPaymentRecord(db, candidate.id);
+      if (existing) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n’est nécessaire.` });
+      }
+      if (input.proofFileUrl && storageKeyFromStoredUrl(input.proofFileUrl) === null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Preuve de paiement invalide : redéposez la photo ou la vidéo." });
+      }
+      const record: OpeningPaymentRecord = {
+        candidateId: candidate.id,
+        validatedAt: new Date().toISOString(),
+        validatedBy: admin.email || "Administrateur",
+        reference: input.paymentReference?.trim() || null,
+        proofFileUrl: input.proofFileUrl?.trim() || null,
+        confirmedAmount: input.confirmedAmount ?? null,
+      };
+      await setOpeningPaymentRecord(db, record);
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "confirmed",
+        paymentId: candidate.id,
+        candidateEmail: candidate.email,
+        amount: `${input.confirmedAmount ?? 65000} XAF`,
+        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}.`,
+      });
+      return { success: true, record };
     }),
 
   activatePreDossierAccount: publicProcedure
@@ -516,7 +614,7 @@ export const adminCandidateManagementRouter = router({
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }
-      if (!(await isOpeningPaymentValidated(db, candidate))) {
+      if (!(await getOpeningPaymentRecord(db, candidate.id)) && !(await isOpeningPaymentValidated(db, candidate))) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.payment });
       }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
