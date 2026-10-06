@@ -9,8 +9,10 @@ describe("official dossier evaluation and payment gate", () => {
   it("requires a validated evaluation and confirmed payment when activating a pre-dossier account", () => {
     const source = read("server/routers/adminCandidateManagement.ts");
     expect(source).toContain('candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt');
-    expect(source).toContain("const onlinePaymentValidated =");
-    expect(source).toContain("let agencyPaymentValidated = false");
+    expect(source).toContain("async function isOpeningPaymentValidated");
+    expect(source).toContain("if (!(await isOpeningPaymentValidated(db, candidate)))");
+    expect(source).toContain('latestApplication?.paymentStatus === "SUCCESS"');
+    expect(source).toContain('eq(agencyDossiers.initialPaymentStatus, "paid")');
     expect(source).toContain("L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel.");
     expect(source).toContain("Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.");
   });

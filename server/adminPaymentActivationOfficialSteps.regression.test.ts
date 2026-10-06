@@ -24,8 +24,12 @@ describe("pilotage paiement, activation et étapes officielles", () => {
     const source = readFileSync(resolve(process.cwd(), "server/routers/adminCandidateManagement.ts"), "utf8");
     expect(source).toContain("activatePreDossierAccount");
     expect(source).toContain("candidate.evaluationDeclarationStatus !== \"validated\"");
-    expect(source).toContain("onlinePaymentValidated");
-    expect(source).toContain("agencyPaymentValidated");
+    // Une seule fonction décide « paiement validé » (en ligne : validé par un admin ; agence : « paid » + confirmation au journal d'audit),
+    // utilisée par l'activation ET par l'écran qui explique les blocages.
+    expect(source).toContain("async function isOpeningPaymentValidated");
+    expect(source).toContain("await isOpeningPaymentValidated(db, candidate)");
+    expect(source).toContain("paymentValidatedBy?.trim()");
+    expect(source).toContain('eq(paymentAuditLogs.action, "confirmed")');
     expect(source).toContain("Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.");
   });
 

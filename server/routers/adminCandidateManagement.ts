@@ -91,6 +91,35 @@ export function paginateCandidates<T>(records: T[], requestedPage: number, pageS
   return { records: records.slice(start, start + pageSize), total, page, pageSize, totalPages };
 }
 
+/** Texte des conditions d'ouverture du dossier officiel : les mêmes messages servent à refuser l'activation et à expliquer à l'administrateur ce qui manque. */
+const ACTIVATION_MESSAGES = {
+  alreadyActive: "Ce compte possède déjà un dossier actif.",
+  evaluation: "L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel.",
+  payment: "Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.",
+} as const;
+
+/**
+ * Le paiement des frais d'ouverture est validé quand un administrateur l'a confirmé : paiement en ligne « SUCCESS » validé par un
+ * nom d'administrateur, ou paiement du pré-dossier agence confirmé dans le journal d'audit des paiements.
+ */
+async function isOpeningPaymentValidated(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidate: { id: number; email: string }): Promise<boolean> {
+  const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, paymentValidatedBy: applications.paymentValidatedBy }).from(applications)
+    .where(eq(applications.candidateId, candidate.id))
+    .orderBy(desc(applications.createdAt))
+    .limit(1);
+  if (latestApplication?.paymentStatus === "SUCCESS" && Boolean(latestApplication.paymentValidatedAt) && Boolean(latestApplication.paymentValidatedBy?.trim())) return true;
+  const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers)
+    .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})`, eq(agencyDossiers.initialPaymentStatus, "paid")))
+    .orderBy(desc(agencyDossiers.createdAt))
+    .limit(1);
+  if (!paidAgencyDossier) return false;
+  const [confirmedAudit] = await db.select({ id: paymentAuditLogs.id }).from(paymentAuditLogs)
+    .where(and(eq(paymentAuditLogs.paymentId, paidAgencyDossier.id), eq(paymentAuditLogs.candidateEmail, paidAgencyDossier.email), eq(paymentAuditLogs.action, "confirmed")))
+    .orderBy(desc(paymentAuditLogs.createdAt))
+    .limit(1);
+  return Boolean(confirmedAudit);
+}
+
 async function resolveCandidateIdForAdmin(candidateId: string) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -277,7 +306,8 @@ export const adminCandidateManagementRouter = router({
   validateOfflineEvaluation: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
-      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      // « account_N » = compte sans dossier (pré-dossier) : son évaluation doit pouvoir être confirmée comme les autres.
+      candidateId: z.string().regex(/^(online|agency|account)_\d+$/),
       channel: z.enum(["appel", "agence", "email"]),
       note: z.string().trim().max(1000).optional(),
     }))
@@ -285,8 +315,9 @@ export const adminCandidateManagementRouter = router({
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const reference = parseAdminCandidateReference(input.candidateId);
-      const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
+      const accountMatch = /^account_(\d+)$/.exec(input.candidateId);
+      const reference = accountMatch ? null : parseAdminCandidateReference(input.candidateId);
+      const candidateId = accountMatch ? Number(accountMatch[1]) : await resolveCandidateIdForAdmin(input.candidateId);
       const [candidate] = candidateId
         ? await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1)
         : [null];
@@ -446,6 +477,27 @@ export const adminCandidateManagementRouter = router({
       return { success: true, deliveredToClientSpace: true, emailSent, deliveredBy: admin.email, evaluationValidatedManually: true, reviewNote: manualReviewNote };
     }),
 
+  /** Conditions d'ouverture du dossier officiel pour un compte : l'écran d'activation les affiche AVANT le clic au lieu d'un refus muet. */
+  preDossierActivationReadiness: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      const alreadyActive = candidate.dossierStatus !== "nouveau";
+      const evaluationValidated = candidate.evaluationDeclarationStatus === "validated" && Boolean(candidate.evaluationReviewedAt);
+      const paymentValidated = alreadyActive ? true : await isOpeningPaymentValidated(db, candidate);
+      const blockers: Array<{ code: "already_active" | "evaluation" | "payment"; message: string }> = [];
+      if (alreadyActive) blockers.push({ code: "already_active", message: ACTIVATION_MESSAGES.alreadyActive });
+      else {
+        if (!evaluationValidated) blockers.push({ code: "evaluation", message: ACTIVATION_MESSAGES.evaluation });
+        if (!paymentValidated) blockers.push({ code: "payment", message: ACTIVATION_MESSAGES.payment });
+      }
+      return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, canActivate: blockers.length === 0, blockers };
+    }),
+
   activatePreDossierAccount: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive(), destination: z.string().trim().min(2).max(100), visaType: z.string().trim().min(2).max(100), adminNotes: z.string().trim().max(5000).optional() }))
     .mutation(async ({ input, ctx }) => {
@@ -454,29 +506,12 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: "Ce compte possède déjà un dossier actif." });
+      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel." });
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }
-      const [latestApplication] = await db.select({ paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, paymentValidatedBy: applications.paymentValidatedBy }).from(applications)
-        .where(eq(applications.candidateId, candidate.id))
-        .orderBy(desc(applications.createdAt))
-        .limit(1);
-      const [paidAgencyDossier] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers)
-        .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${candidate.email})`, eq(agencyDossiers.initialPaymentStatus, "paid")))
-        .orderBy(desc(agencyDossiers.createdAt))
-        .limit(1);
-      let agencyPaymentValidated = false;
-      if (paidAgencyDossier) {
-        const [confirmedAudit] = await db.select({ id: paymentAuditLogs.id }).from(paymentAuditLogs)
-          .where(and(eq(paymentAuditLogs.paymentId, paidAgencyDossier.id), eq(paymentAuditLogs.candidateEmail, paidAgencyDossier.email), eq(paymentAuditLogs.action, "confirmed")))
-          .orderBy(desc(paymentAuditLogs.createdAt))
-          .limit(1);
-        agencyPaymentValidated = Boolean(confirmedAudit);
-      }
-      const onlinePaymentValidated = latestApplication?.paymentStatus === "SUCCESS" && Boolean(latestApplication.paymentValidatedAt) && Boolean(latestApplication.paymentValidatedBy?.trim());
-      if (!onlinePaymentValidated && !agencyPaymentValidated) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel." });
+      if (!(await isOpeningPaymentValidated(db, candidate))) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.payment });
       }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
