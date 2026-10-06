@@ -26,6 +26,24 @@ export function SchedulerModeBadge({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** Bannière persistante dans l’en-tête admin : le dry-run est explicite et aucun e-mail n’est envoyé. */
+export function SchedulerDryRunBanner() {
+  const statusQuery = trpc.schedulerAdmin.getStatus.useQuery(undefined, { refetchOnWindowFocus: true });
+  if (statusQuery.isLoading || statusQuery.data?.mode !== "dry-run") return null;
+  return (
+    <div role="status" aria-live="polite" className="mb-5 flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-3">
+        <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+        <div>
+          <p className="font-black">Planificateur en mode dry-run</p>
+          <p className="text-sm text-amber-800">Les relances peuvent être simulées pour contrôle, mais aucun e-mail ne sera envoyé.</p>
+        </div>
+      </div>
+      <Badge variant="outline" className="w-fit border-amber-400 bg-white text-amber-900">Aucun envoi automatique</Badge>
+    </div>
+  );
+}
+
 export function AdminSchedulerPanel() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const statusQuery = trpc.schedulerAdmin.getStatus.useQuery(undefined, { refetchOnWindowFocus: true });
@@ -40,6 +58,8 @@ export function AdminSchedulerPanel() {
     setIsRefreshing(true);
     try { await statusQuery.refetch(); } finally { setIsRefreshing(false); }
   };
+
+  const report = runMutation.data?.execution;
 
   return (
     <section aria-labelledby="scheduler-panel-title" className="space-y-4">
@@ -58,9 +78,23 @@ export function AdminSchedulerPanel() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-slate-200"><CardHeader className="pb-2"><CardTitle className="text-sm">Mode actif</CardTitle></CardHeader><CardContent><SchedulerModeBadge /><p className="mt-2 text-xs text-slate-500">{statusQuery.data?.scheduledJobsCount ?? "—"} tâche(s) configurée(s).</p></CardContent></Card>
-        <Card className="border-amber-200 bg-amber-50/50"><CardHeader className="pb-2"><CardTitle className="text-sm">Test immédiat</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-xs text-amber-900">Relances documents uniquement, sans e-mail en mode dry-run.</p><Button type="button" className="w-full gap-2 bg-amber-700 text-white hover:bg-amber-800" disabled={mode !== "dry-run" || runMutation.isPending} onClick={() => runMutation.mutate()} title={mode === "dry-run" ? "Simuler les relances sans envoyer d’e-mail" : "Le test manuel est disponible uniquement en dry-run"}><Play className="h-4 w-4" />{runMutation.isPending ? "Simulation…" : "Tester les relances"}</Button>{mode !== "dry-run" && <p className="text-xs font-semibold text-amber-800">Passez le serveur en dry-run pour activer ce test.</p>}{runMutation.data && <p role="status" className="text-xs font-semibold text-emerald-800">{runMutation.data.message}</p>}{runMutation.error && <p role="alert" className="text-xs font-semibold text-rose-800">{runMutation.error.message}</p>}</CardContent></Card>
+        <Card className="border-amber-200 bg-amber-50/50"><CardHeader className="pb-2"><CardTitle className="text-sm">Simulation manuelle</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-xs text-amber-900">Lance une simulation des relances documents et affiche le rapport sans envoyer d’e-mail.</p><Button type="button" className="w-full gap-2 bg-amber-700 text-white hover:bg-amber-800" disabled={mode !== "dry-run" || runMutation.isPending} onClick={() => runMutation.mutate()} title={mode === "dry-run" ? "Simuler les relances sans envoyer d’e-mail" : "Le test manuel est disponible uniquement en dry-run"}><Play className="h-4 w-4" />{runMutation.isPending ? "Simulation en cours…" : "Simuler les relances"}</Button>{mode !== "dry-run" && <p className="text-xs font-semibold text-amber-800">Passez le serveur en dry-run pour activer ce test.</p>}{runMutation.error && <p role="alert" className="text-xs font-semibold text-rose-800">{runMutation.error.message}</p>}</CardContent></Card>
         <Card className="border-blue-200 bg-blue-50/50"><CardHeader className="pb-2"><CardTitle className="text-sm">Dernière exécution</CardTitle></CardHeader><CardContent>{history[0] ? <><p className="text-lg font-black text-blue-950">{history[0].planned} simulée(s) · {history[0].sent} envoyée(s)</p><p className="mt-1 text-xs text-blue-800">{new Date(history[0].finishedAt).toLocaleString("fr-FR")}</p></> : <p className="text-sm text-blue-800">Aucune exécution enregistrée depuis le démarrage.</p>}</CardContent></Card>
       </div>
+
+      {report && (
+        <Card role="region" aria-labelledby="scheduler-report-title" className="border-emerald-300 bg-emerald-50/70">
+          <CardHeader className="pb-2"><CardTitle id="scheduler-report-title" className="flex items-center gap-2 text-base text-emerald-950"><CheckCircle2 className="h-5 w-5 text-emerald-700" /> Rapport d’exécution</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2"><p className="text-xs text-emerald-700">Relances prévues</p><p className="text-xl font-black text-emerald-950">{report.planned}</p></div>
+              <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2"><p className="text-xs text-emerald-700">E-mails envoyés</p><p className="text-xl font-black text-emerald-950">{report.sent}</p></div>
+              <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2"><p className="text-xs text-emerald-700">Échecs</p><p className="text-xl font-black text-emerald-950">{report.failed}</p></div>
+            </div>
+            <p className="text-sm font-semibold text-emerald-900">Simulation terminée : aucun e-mail n’a été envoyé. Exécutée le {new Date(report.finishedAt).toLocaleString("fr-FR")}.</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Clock3 className="h-4 w-4 text-blue-700" /> Historique des dernières exécutions</CardTitle></CardHeader>

@@ -99,7 +99,7 @@ import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrec
 import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueManager";
 import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
 import { AdminSystemStatus } from "@/components/AdminSystemStatus";
-import { AdminSchedulerPanel, SchedulerModeBadge } from "@/components/AdminSchedulerPanel";
+import { AdminSchedulerPanel, SchedulerDryRunBanner, SchedulerModeBadge } from "@/components/AdminSchedulerPanel";
 import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
@@ -1892,6 +1892,7 @@ export default function AdminDashboard() {
             )}
           </a>
         </div>
+        <SchedulerDryRunBanner />
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p><h2 className="text-xl font-black tracking-tight text-slate-950">Espaces de travail</h2></div><p className="text-xs font-medium text-slate-500">Sélectionnez une section pour traiter les demandes manuellement.</p></div>

@@ -23,15 +23,19 @@ describe("pilotage admin du planificateur", () => {
     expect(trpc).toContain("schedulerAdmin");
   });
 
-  it("affiche le badge, le bouton de test et l’onglet historique dans le dashboard", () => {
+  it("affiche le badge, la bannière dry-run, le bouton de simulation et le rapport dans le dashboard", () => {
     const panel = read("client/src/components/AdminSchedulerPanel.tsx");
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
     expect(panel).toContain("Planificateur :");
-    expect(panel).toContain("Tester les relances");
+    expect(panel).toContain("Simuler les relances");
+    expect(panel).toContain("Rapport d’exécution");
+    expect(panel).toContain("SchedulerDryRunBanner");
+    expect(panel).toContain("mode dry-run");
     expect(panel).toContain("Historique des dernières exécutions");
     expect(panel).toContain("runDocumentRemindersDryRun");
     expect(dashboard).toContain('value="scheduler"');
     expect(dashboard).toContain("<AdminSchedulerPanel />");
+    expect(dashboard).toContain("<SchedulerDryRunBanner />");
     expect(dashboard).toContain("<SchedulerModeBadge compact />");
   });
 });
