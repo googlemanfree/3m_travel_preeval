@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   updates: [] as any[],
   inserts: [] as any[],
   emails: [] as any[],
+  failTrash: false,
 }));
 
 vi.mock("./db", () => ({
@@ -14,7 +15,7 @@ vi.mock("./db", () => ({
       const chain: any = { from: () => chain, where: () => chain, orderBy: () => chain, limit: async () => state.reads.shift() ?? [] };
       return chain;
     },
-    update: () => ({ set: (values: any) => ({ where: async () => { state.updates.push(values); } }) }),
+    update: () => ({ set: (values: any) => ({ where: async () => { if (state.failTrash && values.deletedAt) throw new Error("corbeille indisponible"); state.updates.push(values); } }) }),
     insert: () => ({ values: async (row: any) => { state.inserts.push(row); return [{ insertId: 34 }]; } }),
   }),
 }));
@@ -45,6 +46,7 @@ beforeEach(() => {
   state.updates = [];
   state.inserts = [];
   state.emails = [];
+  state.failTrash = false;
 });
 
 describe("conditions d'ouverture du dossier : dites ce qui manque AVANT le clic", () => {
@@ -180,5 +182,66 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
     const list = source.slice(source.indexOf("listPreDossierAccounts:"), source.indexOf("validateOfflineEvaluation:"));
     expect(list).toContain("isNull(candidates.deletedAt)");
     expect(list).toContain("loadEmailsWithActiveDossier(db)");
+  });
+});
+
+describe("activation : les doublons certains du même dossier partent à la corbeille tout seuls", () => {
+  // Six lectures de loadRedundantPreAccounts : comptes, pré-dossiers agence, dossiers agence actifs, dossiers en ligne actifs, e-mails agence, e-mails en ligne.
+  const duplicateWorld = () => [
+    [],
+    [{ id: 7, fullName: "Candidat Test", email: "candidat@example.com", phone: null, createdAt: new Date("2026-09-01") }],
+    [{ id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: "+237698104832", status: "en_cours" }],
+    [],
+    [{ email: "candidat@example.com" }],
+    [],
+  ];
+
+  it("rattache le dossier 34 puis met le pré-dossier doublon 7 en corbeille (réversible, journalisé)", async () => {
+    // lectures : compte, paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l'archivage
+    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
+    expect(result).toMatchObject({ dossierReference: "3M-AGN-0034", archivedDuplicates: ["3M-AGN-0007"] });
+    const trashed = state.updates.find((values) => values.deletedAt);
+    expect(trashed).toMatchObject({ deletedBy: "agent@3mtravelagency.com" });
+    expect(trashed.deletionReason).toContain("3M-AGN-0034");
+    expect(state.inserts.some((row) => String(row.evaluationType ?? "").startsWith("redundant_pre_account_archived"))).toBe(true);
+  });
+
+  it("jamais le dossier qu'on vient d'activer, jamais un compte de connexion, jamais un cas « probable »", async () => {
+    // « probable » : autre e-mail, même téléphone, même nom que le dossier actif → à vérifier par un humain, jamais archivé tout seul
+    const probableWorld = () => [
+      [{ id: 99, fullName: "Candidat Test", email: "autre@example.com", phone: "698104832", createdAt: new Date() }],
+      [],
+      [{ id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: "+237698104832", status: "en_cours" }],
+      [], [], [],
+    ];
+    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...probableWorld(), ...probableWorld()];
+    const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
+    expect(result.archivedDuplicates).toEqual([]);
+    expect(state.updates.some((values) => values.deletedAt)).toBe(false);
+  });
+
+  it("un doublon lié à UN AUTRE dossier actif de la même personne n'est pas touché (on ne devine pas lequel garder)", async () => {
+    const otherActiveWorld = () => [
+      [],
+      [{ id: 7, fullName: "Candidat Test", email: "candidat@example.com", phone: null, createdAt: new Date("2026-09-01") }],
+      // le dossier 40 passe avant le 34 : c'est lui que la détection associe à l'adresse e-mail
+      [{ id: 40, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }, { id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }],
+      [], [{ email: "candidat@example.com" }], [],
+    ];
+    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...otherActiveWorld(), ...otherActiveWorld()];
+    const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
+    expect(result.archivedDuplicates).toEqual([]);
+    expect(state.updates.some((values) => values.deletedAt)).toBe(false);
+  });
+
+  it("un échec du nettoyage ne défait pas l'activation", async () => {
+    state.failTrash = true;
+    state.reads = [[candidate(validatedEvaluation)], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
+    expect(result).toMatchObject({ success: true, dossierReference: "3M-AGN-0034", archivedDuplicates: [] });
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

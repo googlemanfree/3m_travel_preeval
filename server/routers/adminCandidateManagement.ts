@@ -579,7 +579,20 @@ export const adminCandidateManagementRouter = router({
         console.error("[activatePreDossierAccount] Échec de l'e-mail de confirmation d'activation:", err);
         emailSent = false;
       }
-      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference };
+      // Les pré-dossiers agence « nouveau » qui portent la même adresse e-mail que ce dossier désormais actif sont des doublons
+      // certains : mise en corbeille réversible et journalisée (même règle que le panneau des pré-comptes redondants).
+      // Jamais bloquant : l'activation est déjà faite, un échec ici est seulement consigné.
+      let archivedDuplicates: string[] = [];
+      try {
+        const duplicates = (await loadRedundantPreAccounts(db)).filter((item) => item.kind === "agency_pre_dossier" && item.confidence === "certain" && item.activeDossierReference === dossierReference && item.id !== agencyDossierId);
+        if (duplicates.length > 0) {
+          const archivedResult = await archiveRedundantPreAccounts(db, { items: duplicates.map((item) => ({ kind: item.kind, id: item.id })), adminEmail: admin.email || "unknown" });
+          archivedDuplicates = archivedResult.archived.map((item) => item.reference);
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Nettoyage des doublons non effectué:", err);
+      }
+      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference, archivedDuplicates };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

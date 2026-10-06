@@ -172,7 +172,7 @@ export default function AdminPreDossierAccountsPanel({
           title: result.linkedExistingDossier
             ? "Dossier rattaché et activé"
             : "Dossier activé",
-          description: `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}`,
+          description: `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
         });
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
