@@ -133,4 +133,22 @@ describe("dialogue « Activer le dossier client »", () => {
       expect(successIcon?.className).toContain("animate-bounce");
     });
   });
+
+  it("copie la nouvelle référence et confirme visuellement l’action", async () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    open();
+    h.activateOptions.onSuccess({ linkedExistingDossier: false, emailSent: true, previousAccountReference: "COMPTE-00042", dossierReference: "3M-AGN-0034" });
+
+    const copyButton = await screen.findByTestId("copy-dossier-reference");
+    expect(copyButton.getAttribute("aria-label")).toBe("Copier la référence 3M-AGN-0034");
+    fireEvent.click(copyButton);
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith("3M-AGN-0034");
+      expect(screen.getByTestId("copy-dossier-reference").getAttribute("aria-label")).toBe("Référence 3M-AGN-0034 copiée");
+      expect(screen.getByTestId("copy-dossier-reference-status").textContent).toContain("a été copiée dans le presse-papiers");
+    });
+  });
 });
