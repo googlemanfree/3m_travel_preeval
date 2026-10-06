@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 (globalThis as any).React = React;
 
@@ -61,6 +61,8 @@ describe("dialogue « Activer le dossier client »", () => {
     open();
     expect(confirmButton().disabled).toBe(true);
     expect(screen.getByTestId("activation-disabled-reason").textContent).toContain("évaluation doit être validée");
+    expect(confirmButton().getAttribute("aria-describedby")).toBe("activation-disabled-reason");
+    expect(confirmButton().parentElement?.getAttribute("title")).toContain("évaluation doit être validée");
     const checklist = screen.getByTestId("activation-checklist").textContent ?? "";
     expect(checklist).toContain("Évaluation à valider");
     expect(checklist).toContain("Paiement à valider");
@@ -117,12 +119,18 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.getByRole("alert").textContent).toContain("Ce compte possède déjà un dossier actif.");
   });
 
-  it("succès : le message annonce l'ancienne et la nouvelle référence", () => {
+  it("succès : le message annonce l'ancienne et la nouvelle référence", async () => {
     h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
     open();
     h.activateOptions.onSuccess({ linkedExistingDossier: false, emailSent: true, previousAccountReference: "COMPTE-00042", dossierReference: "3M-AGN-0034" });
     const call = h.toast.mock.calls.at(-1)![0];
     expect(call.title).toBe("Dossier activé");
     expect(call.description).toContain("COMPTE-00042 devient 3M-AGN-0034");
+    await waitFor(() => {
+      expect(screen.getByTestId("activation-success").textContent).toContain("COMPTE-00042");
+      expect(screen.getByTestId("activation-success").textContent).toContain("3M-AGN-0034");
+      const successIcon = screen.getByTestId("activation-success").querySelector("svg")?.parentElement;
+      expect(successIcon?.className).toContain("animate-bounce");
+    });
   });
 });
