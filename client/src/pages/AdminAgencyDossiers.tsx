@@ -138,6 +138,9 @@ const EMPLOYMENT_STATUSES = [
   "Salarié", "Fonctionnaire", "Entrepreneur", "Étudiant", "Sans emploi", "Retraité", "Autre",
 ];
 
+const normalizeSearch = (value: string) =>
+  value.trim().toLocaleLowerCase("fr-FR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 // ─── Composant principal ───────────────────────────────────────────────────────
 
 export default function AdminAgencyDossiers() {
@@ -198,13 +201,22 @@ export default function AdminAgencyDossiers() {
 
   // Filtrage côté client
   const filtered = dossiers.filter((d) => {
+    const normalizedSearch = normalizeSearch(search);
+    const activationDate = new Date(d.createdAt);
+    const activationDateValues = [
+      d.createdAt,
+      activationDate.toISOString().slice(0, 10),
+      activationDate.toLocaleDateString("fr-FR"),
+      activationDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }),
+    ].map(normalizeSearch);
     const matchSearch =
-      !search ||
-      d.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      d.email.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search) ||
+      !normalizedSearch ||
+      normalizeSearch(d.fullName).includes(normalizedSearch) ||
+      normalizeSearch(d.email).includes(normalizedSearch) ||
+      d.phone.includes(search.trim()) ||
       String(d.id).includes(search.trim()) ||
-      dossierReference(d).toLowerCase().includes(search.toLowerCase().trim());
+      normalizeSearch(dossierReference(d)).includes(normalizedSearch) ||
+      activationDateValues.some((value) => value.includes(normalizedSearch));
     const matchStatus = filterStatus === "all" || d.status === filterStatus;
     const matchDest =
       filterDestination === "all" ||
@@ -521,7 +533,7 @@ export default function AdminAgencyDossiers() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Rechercher par n° dossier, nom, email ou téléphone..."
+                  placeholder="Rechercher par n° dossier, nom, email, téléphone ou date d’activation..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   maxLength={200}

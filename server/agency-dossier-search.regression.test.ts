@@ -32,4 +32,15 @@ describe("agency dossier admin search", () => {
     expect(source).toContain("Générer le résumé");
     expect(source).toContain("Actions rapides pour ${dossierReference(d)}");
   });
+
+  it("supports accent-insensitive names and multiple activation-date formats", () => {
+    const currentDir = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(currentDir, "../client/src/pages/AdminAgencyDossiers.tsx"), "utf8");
+
+    expect(source).toContain("normalizeSearch = (value: string)");
+    expect(source).toContain("normalizeSearch(d.fullName).includes(normalizedSearch)");
+    expect(source).toContain("activationDate.toISOString().slice(0, 10)");
+    expect(source).toContain("activationDate.toLocaleDateString(\"fr-FR\")");
+    expect(source).toContain("date d’activation");
+  });
 });
