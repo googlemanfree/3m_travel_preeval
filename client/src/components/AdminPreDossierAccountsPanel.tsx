@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Camera,
   Check,
   CheckCircle2,
   Copy,
@@ -87,6 +88,10 @@ export default function AdminPreDossierAccountsPanel({
     "agence" | "appel" | "email"
   >("agence");
   const [offlineNote, setOfflineNote] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const proofInputRef = useRef<HTMLInputElement | null>(null);
   const [activationSuccess, setActivationSuccess] = useState<{
     previousAccountReference: string;
     dossierReference: string;
@@ -143,6 +148,73 @@ export default function AdminPreDossierAccountsPanel({
           variant: "destructive",
         }),
     });
+  const confirmOpeningPaymentMutation =
+    trpc.adminCandidateManagement.confirmOpeningPaymentForAccount.useMutation({
+      onSuccess: () => {
+        setPaymentReference("");
+        setProofFile(null);
+        if (proofInputRef.current) proofInputRef.current.value = "";
+        refreshReadiness();
+        toast({
+          title: "Paiement confirmé",
+          description: "Vous pouvez maintenant activer le dossier.",
+        });
+      },
+      onError: error =>
+        toast({
+          title: "Confirmation impossible",
+          description: error.message,
+          variant: "destructive",
+        }),
+    });
+  // Dépose d'abord la preuve (photo/vidéo) si fournie, puis confirme le paiement : la référence seule suffit aussi.
+  const handleConfirmOpeningPayment = async () => {
+    if (!selected) return;
+    if (!paymentReference.trim() && !proofFile) {
+      toast({
+        title: "Preuve manquante",
+        description:
+          "Indiquez une référence de transaction ou joignez une photo ou vidéo de la facture.",
+        variant: "destructive",
+      });
+      return;
+    }
+    let proofFileUrl: string | undefined;
+    if (proofFile) {
+      setIsUploadingProof(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", proofFile);
+        formData.append("sessionToken", sessionToken);
+        const response = await fetch(
+          `/api/admin/opening-payment-proof/${selected.id}`,
+          { method: "POST", body: formData, credentials: "include" }
+        );
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok)
+          throw new Error(payload.error || "Le dépôt de la preuve a échoué.");
+        proofFileUrl = payload.fileUrl;
+      } catch (error) {
+        toast({
+          title: "Dépôt de la preuve impossible",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Le dépôt de la preuve a échoué.",
+          variant: "destructive",
+        });
+        setIsUploadingProof(false);
+        return;
+      }
+      setIsUploadingProof(false);
+    }
+    confirmOpeningPaymentMutation.mutate({
+      sessionToken,
+      candidateId: selected.id,
+      paymentReference: paymentReference.trim() || undefined,
+      proofFileUrl,
+    });
+  };
   const reviewMutation =
     trpc.adminCandidateManagement.reviewEvaluationDeclaration.useMutation({
       onSuccess: () => {
@@ -229,7 +301,11 @@ export default function AdminPreDossierAccountsPanel({
     setAdminNotes("");
     setOfflineNote("");
     setOfflineChannel("agence");
+    setPaymentReference("");
+    setProofFile(null);
+    if (proofInputRef.current) proofInputRef.current.value = "";
     activateMutation.reset();
+    confirmOpeningPaymentMutation.reset();
   };
 
   const evaluationOk = readiness.data
@@ -237,10 +313,15 @@ export default function AdminPreDossierAccountsPanel({
     : Boolean(selected?.evaluationValidated);
   const evaluationDeclared = Boolean(selected?.pendingEvaluationReference);
   const blockers = readiness.data?.blockers ?? [];
+  const paymentBlocked = Boolean(
+    readiness.data && !readiness.data.paymentValidated
+  );
   const busy =
     activateMutation.isPending ||
     reviewMutation.isPending ||
-    offlineEvaluationMutation.isPending;
+    offlineEvaluationMutation.isPending ||
+    confirmOpeningPaymentMutation.isPending ||
+    isUploadingProof;
   const disabledReason = !visaType.trim()
     ? "Indiquez la procédure (études, travail, tourisme…)."
     : readiness.isLoading
@@ -552,10 +633,75 @@ export default function AdminPreDossierAccountsPanel({
                   {readiness.data
                     ? readiness.data.paymentValidated
                       ? "✓ Paiement validé"
-                      : "✗ Paiement à valider par un administrateur (onglet Paiements)"
+                      : "✗ Paiement à valider ci-dessous"
                     : "… Paiement : vérification en cours"}
                 </p>
               </div>
+              {paymentBlocked && (
+                <div
+                  data-testid="opening-payment-block"
+                  className="rounded-xl border border-amber-200 bg-amber-50 p-3"
+                >
+                  <p className="text-sm font-semibold text-amber-950">
+                    Valider le paiement des frais d’ouverture
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-amber-900">
+                    Indiquez l’ID de transaction remis par le candidat, ou
+                    photographiez/filmez la facture reçue en agence. Un seul
+                    des deux suffit.
+                  </p>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={paymentReference}
+                      onChange={event =>
+                        setPaymentReference(event.target.value)
+                      }
+                      placeholder="ID de transaction / référence"
+                      maxLength={255}
+                      aria-label="Référence ou ID de transaction du paiement"
+                      className="sm:flex-1"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={proofInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        capture="environment"
+                        onChange={event =>
+                          setProofFile(event.target.files?.[0] ?? null)
+                        }
+                        className="hidden"
+                        id="opening-payment-proof-input"
+                        aria-label="Photo ou vidéo de la facture"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => proofInputRef.current?.click()}
+                        className="gap-2 border-amber-300 text-amber-900 hover:bg-amber-100"
+                      >
+                        <Camera className="h-4 w-4" />
+                        {proofFile ? proofFile.name : "Filmer / photographier"}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy || !selected}
+                    onClick={() => void handleConfirmOpeningPayment()}
+                    className="mt-3 bg-amber-700 text-white hover:bg-amber-800"
+                  >
+                    {isUploadingProof
+                      ? "Dépôt de la preuve…"
+                      : confirmOpeningPaymentMutation.isPending
+                        ? "Confirmation…"
+                        : "Confirmer le paiement"}
+                  </Button>
+                </div>
+              )}
               {!evaluationOk && !evaluationDeclared && (
                 <div
                   data-testid="offline-evaluation-block"

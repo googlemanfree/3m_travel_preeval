@@ -9,6 +9,7 @@ import { registerGoogleCandidateOAuthRoutes } from "../googleCandidateOAuth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../routers/candidateUpload";
 import { registerAgencyDossierUploadRoute } from "../routers/agencyDossierUpload";
+import { registerOpeningPaymentProofUploadRoute } from "../routers/openingPaymentProofUpload";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
@@ -61,6 +62,7 @@ async function startServer() {
   registerCandidateUploadRoute(app);
   registerPublicUploadRoute(app);
   registerAgencyDossierUploadRoute(app);
+  registerOpeningPaymentProofUploadRoute(app);
   registerCinetPayWebhook(app);
   setupDocumentsRoutes(app);
   // Scheduled jobs

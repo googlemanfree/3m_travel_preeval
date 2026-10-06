@@ -10,9 +10,14 @@ describe("official dossier evaluation and payment gate", () => {
     const source = read("server/routers/adminCandidateManagement.ts");
     expect(source).toContain('candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt');
     expect(source).toContain("async function isOpeningPaymentValidated");
-    expect(source).toContain("if (!(await isOpeningPaymentValidated(db, candidate)))");
+    // Depuis l'ajout de la confirmation directe sur un compte sans dossier (OpeningPaymentRecord), le blocage
+    // vérifie d'abord cette preuve de compte, puis retombe sur isOpeningPaymentValidated (dossier en ligne/agence) :
+    // aucune des deux voies n'est jamais contournée.
+    expect(source).toContain("if (!(await getOpeningPaymentRecord(db, candidate.id)) && !(await isOpeningPaymentValidated(db, candidate))) {");
     expect(source).toContain('latestApplication?.paymentStatus === "SUCCESS"');
     expect(source).toContain('eq(agencyDossiers.initialPaymentStatus, "paid")');
+    expect(source).toContain("async function getOpeningPaymentRecord");
+    expect(source).toContain("async function setOpeningPaymentRecord");
     expect(source).toContain("L’évaluation doit être validée par un conseiller avant l’ouverture du dossier officiel.");
     expect(source).toContain("Le paiement doit être validé par un administrateur avant l’ouverture du dossier officiel.");
   });
