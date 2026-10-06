@@ -114,6 +114,21 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.queryByTestId("opening-payment-block")).toBeNull();
   });
 
+  it("prévisualise une photo de facture avant le dépôt", async () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
+    open();
+    const file = new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], "facture.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText("Photo ou vidéo de la facture"), { target: { files: [file] } });
+    expect(await screen.findByTestId("opening-payment-proof-preview")).toBeTruthy();
+    expect(screen.getByAltText("Aperçu de la facture")).toBeTruthy();
+  });
+
+  it("affiche l’indicateur de paiement validé dans la liste des comptes", () => {
+    h.account = account({ paymentValidated: true });
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    expect(screen.getByTestId("opening-payment-validated-42").textContent).toContain("Paiement validé");
+  });
+
   it("confirme le paiement avec seulement une référence saisie (pas de fichier)", () => {
     h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
     open();

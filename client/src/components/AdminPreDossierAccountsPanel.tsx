@@ -4,12 +4,15 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Eye,
   FileText,
+  FileCheck2,
   FolderPlus,
   Mail,
   RefreshCw,
   Search,
   UserRound,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +56,7 @@ type PreDossierAccount = {
   documentsCount: number;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
+  paymentValidated?: boolean;
 };
 
 function formatDate(value: string | Date | null) {
@@ -91,6 +95,9 @@ export default function AdminPreDossierAccountsPanel({
   const [paymentReference, setPaymentReference] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const [proofUploadProgress, setProofUploadProgress] = useState(0);
+  const [proofUploadConfirmed, setProofUploadConfirmed] = useState(false);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement | null>(null);
   const [activationSuccess, setActivationSuccess] = useState<{
     previousAccountReference: string;
@@ -107,8 +114,32 @@ export default function AdminPreDossierAccountsPanel({
       if (copiedReferenceTimer.current !== null)
         window.clearTimeout(copiedReferenceTimer.current);
     },
-    []
+    [],
   );
+  useEffect(() => {
+    if (!proofFile) {
+      setProofPreviewUrl(null);
+      return;
+    }
+    let active = true;
+    if (typeof URL.createObjectURL === "function") {
+      const url = URL.createObjectURL(proofFile);
+      setProofPreviewUrl(url);
+      return () => {
+        active = false;
+        URL.revokeObjectURL(url);
+      };
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (active && typeof reader.result === "string") setProofPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(proofFile);
+    return () => {
+      active = false;
+      reader.abort();
+    };
+  }, [proofFile]);
   const queryInput = useMemo(
     () => ({ sessionToken, search: debouncedSearch }),
     [sessionToken, debouncedSearch]
@@ -182,18 +213,34 @@ export default function AdminPreDossierAccountsPanel({
     let proofFileUrl: string | undefined;
     if (proofFile) {
       setIsUploadingProof(true);
+      setProofUploadProgress(0);
+      setProofUploadConfirmed(false);
       try {
         const formData = new FormData();
         formData.append("file", proofFile);
         formData.append("sessionToken", sessionToken);
-        const response = await fetch(
-          `/api/admin/opening-payment-proof/${selected.id}`,
-          { method: "POST", body: formData, credentials: "include" }
-        );
-        const payload = await response.json().catch(() => ({}));
+        const { response, payload } = await new Promise<{ response: Response; payload: any }>((resolve, reject) => {
+          const request = new XMLHttpRequest();
+          request.open("POST", `/api/admin/opening-payment-proof/${selected.id}`);
+          request.withCredentials = true;
+          request.upload.addEventListener("progress", event => {
+            if (event.lengthComputable) setProofUploadProgress(Math.round((event.loaded / event.total) * 100));
+          });
+          request.addEventListener("load", async () => {
+            const response = new Response(request.responseText, { status: request.status, statusText: request.statusText });
+            const payload = JSON.parse(request.responseText || "{}");
+            resolve({ response, payload });
+          });
+          request.addEventListener("error", () => reject(new Error("La connexion a été interrompue pendant le dépôt.")));
+          request.addEventListener("abort", () => reject(new Error("Le dépôt de la preuve a été annulé.")));
+          request.send(formData);
+        });
         if (!response.ok)
           throw new Error(payload.error || "Le dépôt de la preuve a échoué.");
         proofFileUrl = payload.fileUrl;
+        setProofUploadProgress(100);
+        setProofUploadConfirmed(true);
+        toast({ title: "Preuve déposée", description: "La photo ou vidéo de la facture a bien été enregistrée." });
       } catch (error) {
         toast({
           title: "Dépôt de la preuve impossible",
@@ -303,6 +350,8 @@ export default function AdminPreDossierAccountsPanel({
     setOfflineChannel("agence");
     setPaymentReference("");
     setProofFile(null);
+    setProofUploadProgress(0);
+    setProofUploadConfirmed(false);
     if (proofInputRef.current) proofInputRef.current.value = "";
     activateMutation.reset();
     confirmOpeningPaymentMutation.reset();
@@ -472,6 +521,16 @@ export default function AdminPreDossierAccountsPanel({
                               ? "Évaluation validée"
                               : "Évaluation à valider"}{" "}
                             · {account.pendingEvaluationReference}
+                            </Badge>
+                        )}
+                        {account.paymentValidated && (
+                          <Badge
+                            data-testid={`opening-payment-validated-${account.id}`}
+                            variant="outline"
+                            title="Paiement des frais d’ouverture validé"
+                            className="ml-1 mt-1 border-emerald-200 bg-emerald-50 text-emerald-700"
+                          >
+                            <FileCheck2 className="mr-1 h-3 w-3" /> Paiement validé
                           </Badge>
                         )}
                       </td>
@@ -667,9 +726,11 @@ export default function AdminPreDossierAccountsPanel({
                         type="file"
                         accept="image/*,video/*"
                         capture="environment"
-                        onChange={event =>
-                          setProofFile(event.target.files?.[0] ?? null)
-                        }
+                        onChange={event => {
+                          setProofFile(event.target.files?.[0] ?? null);
+                          setProofUploadProgress(0);
+                          setProofUploadConfirmed(false);
+                        }}
                         className="hidden"
                         id="opening-payment-proof-input"
                         aria-label="Photo ou vidéo de la facture"
@@ -687,6 +748,49 @@ export default function AdminPreDossierAccountsPanel({
                       </Button>
                     </div>
                   </div>
+                  {proofFile && proofPreviewUrl && (
+                    <div data-testid="opening-payment-proof-preview" className="mt-3 rounded-xl border border-amber-200 bg-white p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-xs font-semibold text-amber-950">
+                          <Eye className="h-4 w-4" /> Aperçu avant validation
+                        </p>
+                        <button
+                          type="button"
+                          aria-label="Retirer la preuve sélectionnée"
+                          onClick={() => {
+                            setProofFile(null);
+                            setProofUploadProgress(0);
+                            setProofUploadConfirmed(false);
+                            if (proofInputRef.current) proofInputRef.current.value = "";
+                          }}
+                          className="rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {proofFile.type.startsWith("image/") ? (
+                        <img src={proofPreviewUrl} alt="Aperçu de la facture" className="max-h-48 w-full rounded-lg object-contain" />
+                      ) : (
+                        <video src={proofPreviewUrl} controls preload="metadata" className="max-h-48 w-full rounded-lg bg-slate-950" aria-label="Aperçu vidéo de la facture" />
+                      )}
+                      <p className="mt-2 truncate text-xs text-slate-500">{proofFile.name}</p>
+                    </div>
+                  )}
+                  {isUploadingProof && (
+                    <div data-testid="opening-payment-proof-progress" className="mt-3 space-y-1.5" aria-live="polite">
+                      <div className="flex justify-between text-xs font-medium text-amber-900">
+                        <span>Envoi de la preuve…</span><span>{proofUploadProgress}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-amber-100" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={proofUploadProgress}>
+                        <div className="h-full rounded-full bg-amber-600 transition-[width] duration-150" style={{ width: `${proofUploadProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                  {proofUploadConfirmed && !isUploadingProof && (
+                    <p data-testid="opening-payment-proof-confirmed" role="status" className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 p-2 text-xs font-medium text-emerald-800">
+                      <FileCheck2 className="h-4 w-4" /> Preuve déposée et prête à être associée au paiement.
+                    </p>
+                  )}
                   <Button
                     type="button"
                     size="sm"

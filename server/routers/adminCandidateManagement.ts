@@ -329,6 +329,10 @@ export const adminCandidateManagementRouter = router({
       files.forEach((file) => documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1));
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
+      const openingPaymentByCandidate = new Map<number, boolean>();
+      await Promise.all(filtered.map(async (account) => {
+        openingPaymentByCandidate.set(account.id, Boolean(await getOpeningPaymentRecord(db, account.id)));
+      }));
       return {
         total: filtered.length,
         coveredByActiveDossier,
@@ -349,6 +353,7 @@ export const adminCandidateManagementRouter = router({
           evaluationReviewedBy: account.evaluationReviewedBy,
           evaluationReviewNote: account.evaluationReviewNote,
           evaluationValidated: account.evaluationDeclarationStatus === "validated",
+          paymentValidated: openingPaymentByCandidate.get(account.id) ?? false,
         })),
       };
     }),
