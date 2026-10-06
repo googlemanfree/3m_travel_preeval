@@ -18,7 +18,7 @@ describe("client communication and report previews", () => {
     expect(service).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
     expect(service).toContain("brand-logo");
     expect(service).toContain("#0B1F4B");
-    expect(service).toContain("3M Travel &amp; Services SARL");
+    expect(service).toContain("3M Travel Agency SARL");
   });
 
   it("keeps email and PDF previews available before final send", () => {

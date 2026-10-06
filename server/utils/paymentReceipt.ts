@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 
 const AGENCY = {
-  name: "3M Travel & Services SARL",
+  name: "3M Travel Agency SARL",
   address: "Yaoundé, Cameroun",
   phone: "+237 698 104 832",
   email: "hello@3mtravelagency.com",

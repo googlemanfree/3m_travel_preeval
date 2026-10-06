@@ -158,7 +158,7 @@ function Router() {
       <Route path={"/communaute"}>{() => <Redirect to="/3m-solutions" />}</Route>
       <Route path={"/evaluation-canada"}>{() => <Redirect to="/evaluation?source=facebook&campaign=Canada" />}</Route>
       <Route path={"/evaluation"}>
-        <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
+        <AuthGuard message="Vous devez créer un compte pour faire votre évaluation." publicAlternative={{ label: "Pas encore de compte ? Faire l’évaluation gratuite rapide", href: "/?project=travail#evaluation-multi" }}>
           <Evaluation />
         </AuthGuard>
       </Route>

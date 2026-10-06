@@ -69,7 +69,7 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
         <div class="container">
           <!-- Header -->
           <div class="header">
-            <h2>3M Travel & Services SARL</h2>
+            <h2>3M Travel Agency SARL</h2>
             <p>Rapport Officiel d'Ingénierie Consulaire</p>
           </div>
 
@@ -160,12 +160,12 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
 
           <!-- Footer -->
           <div class="footer">
-            <p><strong>3M Travel & Services SARL</strong></p>
+            <p><strong>3M Travel Agency SARL</strong></p>
             <p>📍 Agence physique : Biyem-Assi (Montée Chapelle Obili) - Yaoundé, Cameroun</p>
             <p>📞 Assistance WhatsApp : +237 698 104 832 / +237 620 996 045</p>
             <p>📧 Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
-              © 2026 3M Travel & Services SARL. Tous droits réservés.
+              © 2026 3M Travel Agency SARL. Tous droits réservés.
             </p>
           </div>
         </div>

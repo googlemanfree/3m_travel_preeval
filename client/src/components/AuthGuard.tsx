@@ -17,6 +17,8 @@ interface AuthGuardProps {
   message?: string;
   /** Redirection automatique (true) ou affichage d'un écran d'accès refusé (false) */
   autoRedirect?: boolean;
+  /** Alternative publique sans compte, proposée sur l'écran d'accès refusé */
+  publicAlternative?: { label: string; href: string };
 }
 
 function getRequestedInternalPath(location: string): string {
@@ -28,6 +30,7 @@ export default function AuthGuard({
   children,
   message = "Vous devez disposer d’un compte ou vous connecter pour accéder aux outils de 3M Travel.",
   autoRedirect = false,
+  publicAlternative,
 }: AuthGuardProps) {
   const { isAuthenticated } = useCandidateAuth();
   const [location, navigate] = useLocation();
@@ -149,6 +152,16 @@ export default function AuthGuard({
                 {pendingAction === "register" ? "Ouverture…" : "Inscription"}
               </Button>
             </div>
+
+            {publicAlternative && (
+              <a
+                href={publicAlternative.href}
+                data-testid="auth-guard-public-alternative"
+                className="mb-4 flex min-h-11 w-full items-center justify-center rounded-md border-2 border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50"
+              >
+                {publicAlternative.label}
+              </a>
+            )}
 
             <Button
               type="button"

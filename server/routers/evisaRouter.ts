@@ -847,7 +847,7 @@ export const evisaRouter = router({
             </div>
 
             <div class="footer">
-              <p>3M Travel & Services SARL — Document généré automatiquement avant validation finale.</p>
+              <p>3M Travel Agency SARL — Document généré automatiquement avant validation finale.</p>
               <p>Ce document atteste de la préparation de votre dossier e-Visa. Il ne constitue pas un visa officiel.</p>
             </div>
           </body>

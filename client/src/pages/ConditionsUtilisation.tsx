@@ -103,13 +103,6 @@ export default function ConditionsUtilisation() {
             </div>
           </div>
 
-          {/* Note */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700 italic">
-              <strong>Note :</strong> Ce texte est un modèle de base à faire valider par un juriste avant publication définitive.
-            </p>
-          </div>
-
         </div>
       </section>
 

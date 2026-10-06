@@ -33,12 +33,12 @@ Aéroport in`,
     procedureSteps: ``,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Arménie • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -176,13 +176,13 @@ Passeport valide + phot`,
     requiredDocuments: `— Entrées multiples — délai 3–5 jours ouvrables Documents requis Passeport valide + photo numérique + justificatif de séjour prévu + carte bancaire Activités autorisées Tourisme, affaires, visites, transit, conférences Durée maximale 30 jours (standard) ou 90 jours (multi-entrées) Prolongation Sécurité Possible via les autorités d'immigration azerbaïdjanaises sur place Très bon niveau à Bakou — éviter les zones frontalières avec l'Arménie Étapes e-Visa ASAN Délai Détail 1. Aller sur visa.azerbai`,
     procedureSteps: `u — éviter les zones frontalières avec l'Arménie Étapes e-Visa ASAN Délai Détail 1. Aller sur visa.azerbaijian.az Immédiat Site officiel en anglais — interface claire et simple 2. Remplir le formulaire en ligne 15–30 minutes Informations personnelles, dates de séjour, type de visa 3. Télécharger une photo numérique Immédiat Format JPEG, fond blanc, moins de 6 mois 4. Payer en ligne par carte bancaire Immédiat Visa, Mastercard — 25 ou 100 USD selon durée choisie 5. Recevoir le visa par email 3–5 `,
     eligibilityConditions: ``,
-    practicalTips: `0–700 000 F — Variable selon le style de voyage CONSEIL : Pour maximiser votre séjour à Bakou, réservez un hôtel dans la vieille ville (Icheri Sheher) — vous pouvez tout visiter à pied, sans taxi. Le métro de Bakou coûte 0,20 USD par trajet. Incroyable rapport qualité/prix pour une capitale aussi moderne. 3M TRAVEL & SERVICES SARL • +237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `0–700 000 F — Variable selon le style de voyage CONSEIL : Pour maximiser votre séjour à Bakou, réservez un hôtel dans la vieille ville (Icheri Sheher) — vous pouvez tout visiter à pied, sans taxi. Le métro de Bakou coûte 0,20 USD par trajet. Incroyable rapport qualité/prix pour une capitale aussi moderne. 3M TRAVEL AGENCY SARL • +237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • `,
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Azerbaïdjan • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -349,12 +349,12 @@ Durée du permis
     procedureSteps: `oute la durée Tamponné banque 03 — PROCÉDURE 8 ÉTAPES + BUDGET Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Secteur, diplôme, budget, objectif. Rapport sous 48h. Lancement NARIC NARIC Bulgarie / 3M Travel Reconnaissance diplôme — 6–12 semaines — EN PARALLÈLE de tout le reste. Recherche emploi 3M Travel + réseau Mise en relation avec employeurs vérifiés en Bulgarie selon secteur. Autorisation An (employeur)Employeur bulgare Déposée par l'employeur `,
     eligibilityConditions: `ode du Travail bulgare Déposée par l'employeur — prérequis Légalisé + apostillé Attestation NARIC Selon poste 6–12 semaines Casier judiciaire + apostille Preuve de logement en Bulgarie Assurance santé Relevé bancaire 3 mois n n n n Légalisé Bail ou hébergement employeur Valable en Bulgarie pour toute la durée Tamponné banque 03 — PROCÉDURE 8 ÉTAPES + BUDGET Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Secteur, diplôme, budget, objectif. Rapport so`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Bulgarie • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -480,12 +480,12 @@ anticipez avant que la com`,
     procedureSteps: `académiques et professionnels 03 — PROCÉDURE 8 ÉTAPES Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Choix université + filière 3M Travel (gratuit) Notes, budget, objectif carrière, reconnaissance diplôme cible. Rapport sous 48h. Candidature universitaire3M Travel + Université Dossier académique complet. Délai de réponse : 2 à 8 semaines selon l'université. Lettre d'admission officielleUniversité chypriote Document clé pour le visa. Doit être officielle, signée, tamponnée. Parfois paiem`,
     eligibilityConditions: `— VISA ÉTUDES — CHYPRE Paramètre Type de visa Prérequis Détail Visa type D étudiant — délivré pour la durée des études Lettre d'admission officielle signée d'une université chypriote reconnue par le gouvernement Frais de scolarité Universités publiques : 4 000–6 000 EUR/an — Universités privées : 6 000–12 000 EUR/an Médecine à Chypre 6 000–12 000 EUR/an — filière 6 ans — en anglais — reconnaissance UE complète Droit de travail 20h/semaine autorisées sur visa étudiant — temps plein pendant les va`,
     practicalTips: `yprus en médecine permet l'inscription directe au Conseil de l'Ordre des Médecins dans les 27 pays de l'UE. Document Visa Études Obligatoire Détail Formulaire de visa type D étudiant Passeport valide Lettre d'admission officielle Relevés de notes + diplôme du bac Preuve de ressources financières Assurance santé étudiante Attestation de logement à Chypre Casier judiciaire + apostille Lettre de moti`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Chypre • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -620,12 +620,12 @@ Recomm`,
     procedureSteps: `rations géorgienne — simple 05 — PROCÉDURE EN 8 ÉTAPES — GÉORGIE Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Identification de l'objectif : travail, tourisme ou études médicales. Rapport sous 48h. Candidature université (si études) 3M Travel + Université Dossier académique + lettre motivation. Réponse en 2–4 semaines. Recherche d'emploi (si travail) 3M Travel + réseau Mise en relation avec employeurs vérifiés à Tbilissi selon secteur. Réservation`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Géorgie • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -750,12 +750,12 @@ n ONG et organisations inte`,
     procedureSteps: `n anglais ou en grec 05 — PROCÉDURE COMMUNE — 8 ÉTAPES Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Diplôme, secteur, objectif, budget. Rapport d'orientation sous 48h. Identification voie optimale. Lancement DOATAP Organisme DOATAP PRIORITAIRE — à initier immédiatement. Délai 3–6 mois. 3M Travel coordonne la soumission. Recherche emploi / Candidature université 3M Travel + réseau Mise en relation avec employeurs ou universités selon le type de vis`,
     eligibilityConditions: `mis de séjour et travail, lié à l'employeur grec Conditions employeur 1 travailleur extra-UE pour 10 salariés grecs — capital minimum requis Contrat de travail Obligatoire, conforme au Code du Travail grec (E kn Dnk o) Salaire minimum légal 830 EUR/mois — 939 EUR pour les diplômés (Bac+3 et plus) Test du marché du travail Obligatoire sauf pénurie reconnue : agriculture, BTP, tourisme saisonnier, santé Reconnaissance du diplôme DOATAP — délai 3 à 6 mois — À INITIER IMMÉDIATEMENT dès le début du p`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Grèce • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -900,7 +900,7 @@ Formulaire de demande vis`,
     procedureSteps: `ISA SCHENGEN ★ Stratégie Arménie → Europe ★ 04 — PROCÉDURE VISA SCHENGEN COURT SÉJOUR (VISA C) — ÉTAPE PAR ÉTAPE 01 Vérifier l'ambassade compétente Selon votre destination principale ou premier pays d'entrée ▸ Déposez votre demande auprès de l'ambassade du pays où vous passerez le plus de temps, ou du premier pays d'entrée si vous visitez plusieurs pays Schengen en même temps. ▸ Ambassades actives à Yaoundé : France (Plateau Atémengue), Allemagne (VFS Global — Bastos), Belgique (Rue Mvolyé — aus`,
     eligibilityConditions: `: avez-vous déjà voyagé ? Avez-vous respecté les conditions de votre précédent visa ? ▸ Le visa arménien crée ce précédent positif : entrée légale, séjour conforme, sortie avant expiration, retour au pays. C'est exactement ce profil que recherchent les ambassades Schengen. En plus du visa lui-même, votre passeport portera les tampons d'entrée et de sortie d'Arménie — preuve concrète que ▸ vous respectez les règles d'immigration et que vous revenez chez vous. Le diplôme arménien (Système de Bolog`,
     practicalTips: `plus tôt possible — les créneaux partent vite. ℹ Conseil : si vous avez le choix, l'ambassade de France à Yaoundé est généralement plus accessible et ses délais de traitement sont parmi les plus rapides. 02 Constituer votre dossier complet La qualité du dossier détermine à 80% la décision de l'agent consulaire ▸ Un dossier complet, cohérent et bien présenté est la première clé du succès. 3M Travel`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Schengen • Stratégie Internationale
 
 VISA SCHENGEN ★
@@ -908,7 +908,7 @@ Stratégie Arménie → Europe
 
 VISA SCHENGEN — GUIDE COMPLET
 + Stratégie Arménie → Porte d'entrée vers l'Europe ★
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 ★ 01 — QU'EST-CE QUE L'ESPACE SCHENGEN ?
 
@@ -1116,7 +1116,7 @@ Représenté par Belgique pour Cameroun
 
 —
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Schengen • Stratégie Internationale
 
 VISA SCHENGEN ★
@@ -1201,9 +1201,9 @@ Résident longue durée
     sectors: `r la directive européenne sur les qualifications professionnelles. ▸ Tremplin Schengen : un étudiant ayant légalement étudié en Arménie présente un profil beaucoup plus solide pour un visa Schengen long séjour. 02 — ARMÉNIE VS EUROPE — COMPARAISON OBJECTIVE Critère Arménie France Belgique Luxembourg`,
     requiredDocuments: `Rentrée : Septembre Rentrée : Septembre Dépôt dossier : Juin – Août Dépôt dossier : Mai – Août Dépôt dossier : Juin – Août Conditions : Bac + relevés de notes + lettre motivation Conditions : Licence validée + lettres de recommandation Conditions : Bac scientifique + IELTS 5.5 min. Débouchés : Emploi en Arménie, UE (Bologne) ou poursuite Master Débouchés : Cadre, consultant, doctorat en Europe Débouchés : Médecin reconnu dans toute l'UE (directive européenne) 04B — CALENDRIER DES RENTRÉES 2026 &`,
     procedureSteps: `· Visa facile 05 — LA PROCÉDURE D'ADMISSION — 5 ÉTAPES DÉTAILLÉES La procédure arménienne est simple, rapide et sans complexité administrative. Pas de Campus France, pas de conditions de ressources drastiques, pas d'entretien consulaire obligatoire. Durée totale de la procédure : 6 à 10 semaines. ⚡ 01 Choix de l'université et de la filière 3M Travel & Services — Orientation gratuite & personnalisée Analyse de votre dossier académique, de vos résultats scolaires, de vos objectifs professionnels e`,
-    eligibilityConditions: `es. Contactez-nous maintenant pour vérifier votre éligibilité. ✅ 3M TRAVEL & SERVICES SARL Immigration • Orientation Académique Internationale VISA ÉTUDES — ARMÉNIE Diplôme Bologne · Coût abordable · Visa facile 05 — LA PROCÉDURE D'ADMISSION — 5 ÉTAPES DÉTAILLÉES La procédure arménienne est simple, rapide et sans complexité administrative. Pas de Campus France, pas de conditions de ressources drastiques, pas d'entretien consulaire obligatoire. Durée totale de la procédure : 6 à 10 semaines. ⚡ 01`,
+    eligibilityConditions: `es. Contactez-nous maintenant pour vérifier votre éligibilité. ✅ 3M TRAVEL AGENCY SARL Immigration • Orientation Académique Internationale VISA ÉTUDES — ARMÉNIE Diplôme Bologne · Coût abordable · Visa facile 05 — LA PROCÉDURE D'ADMISSION — 5 ÉTAPES DÉTAILLÉES La procédure arménienne est simple, rapide et sans complexité administrative. Pas de Campus France, pas de conditions de ressources drastiques, pas d'entretien consulaire obligatoire. Durée totale de la procédure : 6 à 10 semaines. ⚡ 01`,
     practicalTips: `ricte que pour les pays Schengen — 3M Travel vous conseille sur le montant à justifier selon votre situation. ⚠ 06B — BUDGET TOTAL ESTIMÉ PAR TYPE DE FORMATION Formation Scolarité/an Budget total estimé Avantages clés Licence — UFAR (français) 2 500–4 500 €/an ≈ 1,5 – 2,5 M FCFA Licence — Université publique 2 000–3 000 €/an ≈ 1,3 – 2 M FCFA Master 2 500–5 000 €/an ≈ 1,5 – 2,8 M FCFA Médecine (MD `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Orientation Académique Internationale
 
 VISA ÉTUDES — ARMÉNIE
@@ -1363,7 +1363,7 @@ Français 100%
 Droit, Gestion, Finance, Marketing,
 Tourisme
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Orientation Académique Internationale
 
 VISA ÉTUDES — ARMÉNIE
@@ -1380,9 +1380,9 @@ Diplôme `,
     sectors: `TOEFL ou équivalent), objectifs professionnels et secteur cible. Nous calculons vos chances réelles d'admission dans chaque université. ▸ Nous identifions le ou les programme(s) les mieux adaptés à votre profil parmi l'offre estonienne : Université de Tartu, TalTech, IT College ou autres établisseme`,
     requiredDocuments: `dossier n'est transmis sans votre validation. ▸ Documents requis dès cette étape : CV académique • Relevés de notes des 3 dernières années • Copies de diplômes • Résultats tests de langue si disponibles • Passeport valide. ✅ Consultation initiale 100% gratuite — Aucun engagement financier avant la signature du mandat. 02 Constitution du dossier de candidature Candidat + 3M Travel & Services — Dossier complet & professionnel ▸ Préparation complète du dossier selon les exigences spécifiques de l'u`,
     procedureSteps: `rique d'Europe 04 — LA PROCÉDURE D'ADMISSION — 6 ÉTAPES DÉTAILLÉES 01 Évaluation du profil & orientation académique 3M Travel & Services — Gratuite & Sans engagement ▸ Notre conseiller examine votre dossier académique complet : relevés de notes, diplômes, niveau de langue (IELTS/TOEFL ou équivalent), objectifs professionnels et secteur cible. Nous calculons vos chances réelles d'admission dans chaque université. ▸ Nous identifions le ou les programme(s) les mieux adaptés à votre profil parmi l'o`,
-    eligibilityConditions: `lissements simultanément. 03 — NIVEAUX D'ÉTUDES, CONDITIONS & CALENDRIER Licence / Bachelor Master Doctorat (PhD) 3M TRAVEL & SERVICES SARL Immigration • Orientation Académique Internationale VISA ÉTUDES — ESTONIE Le pays le plus numérique d'Europe Durée : 3 – 4 ans Durée : 1 – 2 ans Durée : 4 ans Frais scolarité : 1 600 – 6 800 €/an Frais scolarité : 2 000 – 7 500 €/an Frais scolarité : Souvent financé (contrat) Langue requise : IELTS 5.5–6.5 ou équiv. Langue requise : IELTS 6.0–7.0 ou équiv. L`,
+    eligibilityConditions: `lissements simultanément. 03 — NIVEAUX D'ÉTUDES, CONDITIONS & CALENDRIER Licence / Bachelor Master Doctorat (PhD) 3M TRAVEL AGENCY SARL Immigration • Orientation Académique Internationale VISA ÉTUDES — ESTONIE Le pays le plus numérique d'Europe Durée : 3 – 4 ans Durée : 1 – 2 ans Durée : 4 ans Frais scolarité : 1 600 – 6 800 €/an Frais scolarité : 2 000 – 7 500 €/an Frais scolarité : Souvent financé (contrat) Langue requise : IELTS 5.5–6.5 ou équiv. Langue requise : IELTS 6.0–7.0 ou équiv. L`,
     practicalTips: `& Services — Gratuite & Sans engagement ▸ Notre conseiller examine votre dossier académique complet : relevés de notes, diplômes, niveau de langue (IELTS/TOEFL ou équivalent), objectifs professionnels et secteur cible. Nous calculons vos chances réelles d'admission dans chaque université. ▸ Nous identifions le ou les programme(s) les mieux adaptés à votre profil parmi l'offre estonienne : Universi`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Orientation Académique Internationale
 
 VISA ÉTUDES — ESTONIE
@@ -1517,7 +1517,7 @@ Master
 
 Doctorat (PhD)
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration •`,
   },
   {
@@ -1531,7 +1531,7 @@ Immigration •`,
     procedureSteps: `ésidence permanente. 04 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Responsable 01 02 03 04 05 06 07 08 Analyse de profil & choix du programme d'immigration 3M Travel & Services Recherche d'employeur & obtention de l'offre d'emploi 3M Travel + Partenaires recruteurs Estonie Constitution du dossier de permis de travail Candidat + 3M Travel & Services Traitement par la PPA (Police & Garde des Frontières) PPA — Politsei- ja Piirivalveamet Visa de long séjour Type D à l'ambassade Ambassade d'E`,
     eligibilityConditions: `cteur Postes les + demandés Salaire brut moyen Conditions d'accès IT & Développement logiciel Cybersécurité Ingénierie & BTP Santé & Médecine Logistique & Transport Hôtellerie & Restauration Construction & Artisanat Business & Finance Dev. full stack, DevOps, Data Scientist Analyste SOC, Pentester, RSSI Ingénieur civil, électricien, mécanicien Médecins spécialistes, infirmiers Chauffeurs SPL, magasiniers, opérateurs Cuisiniers, serveurs, réceptionnistes Maçons, plombiers, électriciens, soudeurs `,
     practicalTips: `& Services — Gratuite & Sans engagement ▸ Notre conseiller évalue votre dossier professionnel : formation, expérience, secteur, niveau de langue (anglais principalement), situation familiale. Nous identifions la voie optimale : EU Blue Card, permis classique, Digital Nomad Visa ou transfert ICT. ▸ Nous vérifions votre code ISCO pour déterminer si votre métier figure sur la liste des professions en`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Placement Professionnel International
 
 VISA TRAVAIL — ESTONIE
@@ -1667,10 +1667,10 @@ Poin`,
     costs: `rat de travail & Immigration 08 — ESTIMATION DES FRAIS — BUDGET GLOBAL DE PROCÉDURE Le budget total varie significativement selon le programme d'immigration choisi. Il inclut les frais gouvernementaux canadiens (IRCC), les frais de 3M Travel, et les frais personnels (voyage, installation). Poste de frais Détail Montant estimé Charge Ouverture & traitement de profil Non remboursable — dû à la signa`,
     sectors: `ie structurelle de main- d'œuvre dans de nombreux secteurs, le Canada cherche activement des travailleurs qualifiés du monde entier. ▸ Marché du travail : plus de 1 million de postes vacants recensés annuellement — tous secteurs confondus. ▸ Salaire minimum : entre 15,65 CAD/h (Ontario) et 17,40 CAD`,
     requiredDocuments: `documents à préparer, coût total prévisionnel. ▸ Documents requis : CV détaillé • Copies de diplômes (avec équivalence si possible) • Lettres de référence professionnelle • Relevés bancaires (preuve de fonds) • Résultats tests de langue IELTS/TEF si disponibles • Passeport valide. ✅ Consultation initiale 100% gratuite — Aucun engagement financier à cette étape. 02 Constitution du dossier de candidature Candidat + 3M Travel & Services — Étape technique et décisive ▸ 3M Travel vous accompagne dans`,
-    procedureSteps: `mettre votre profil. 03 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Responsable 01 02 03 Analyse de profil & choix du programme d'immigration 3M Travel & Services Constitution du dossier de candidature Soumission à IRCC (Immigration Canada) Candidat + 3M Travel 3M Travel & Services 3M TRAVEL & SERVICES SARL Immigration • Placement Professionnel International VISA TRAVAIL — CANADA Contrat de travail & Immigration 04 05 06 07 08 Obtention du permis de travail / résidence IRCC — Immigration, `,
+    procedureSteps: `mettre votre profil. 03 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Responsable 01 02 03 Analyse de profil & choix du programme d'immigration 3M Travel & Services Constitution du dossier de candidature Soumission à IRCC (Immigration Canada) Candidat + 3M Travel 3M Travel & Services 3M TRAVEL AGENCY SARL Immigration • Placement Professionnel International VISA TRAVAIL — CANADA Contrat de travail & Immigration 04 05 06 07 08 Obtention du permis de travail / résidence IRCC — Immigration, `,
     eligibilityConditions: `niveau de langue). Chaque province a ses propres critères — 3M Travel vous oriente vers la province avec les meilleures chances. (secteur, La plupart des PNP fonctionnent sur un système EOI (Expression of Interest) : vous soumettez votre profil, la province vous score et vous invite si vous correspondez à ses besoins. Certaines provinces acceptent des candidatures directes. Analyse profil + marché Délai : 1–6 mois BASSIN La province vous envoie une Nomination. Si vous êtes DANS ajoute NP LE auto`,
     practicalTips: `& Services — Gratuite & Sans engagement ▸ Notre conseiller évalue votre dossier : formation, expérience professionnelle, niveau de français/anglais, situation familiale. Nous calculons votre score CRS (Entrée Express) et identifions le programme d'immigration le plus adapté à votre profil. Nous analysons également votre secteur professionnel par rapport aux besoins canadiens via le système CNP ▸ (`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Placement Professionnel International
 
 VISA TRAVAIL — CANADA
@@ -1815,7 +1815,7 @@ Candidat + 3M Travel
 
 3M Travel & Services
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigra`,
   },
   {
@@ -1829,12 +1829,12 @@ Immigra`,
     procedureSteps: `ION PROFESSIONNELLE DUALE — ALLEMAGNE 03 — LES 8 ÉTAPES — DU DOSSIER À L'ARRIVÉE EN ALLEMAGNE 01 Analyse de votre profil 3M Travel & Services — Gratuite & Sans engagement 3M Travel & Services ▸ Évaluation de votre éligibilité : âge, niveau scolaire, expériences, secteur souhaité ▸ Identification du secteur et du métier d'Ausbildung le plus adapté à votre profil ▸ Évaluation de votre niveau d'allemand actuel et plan de progression ▸ Aucun document transmis à un tiers sans votre accord écrit ✅ Con`,
     eligibilityConditions: `ment 3M Travel & Services ▸ Évaluation de votre éligibilité : âge, niveau scolaire, expériences, secteur souhaité ▸ Identification du secteur et du métier d'Ausbildung le plus adapté à votre profil ▸ Évaluation de votre niveau d'allemand actuel et plan de progression ▸ Aucun document transmis à un tiers sans votre accord écrit ✅ Consultation initiale 100% gratuite — Aucun engagement financier à cette étape 02 Préparation linguistique Allemand A2 minimum requis — B1 fortement recommandé Candidat `,
     practicalTips: `S, le candidat, qui signez ce contrat — 3M Travel conseille mais ne signe pas ▸ Le contrat est enregistré auprès de la Chambre des Métiers (HWK) ou de Commerce (IHK) ▸ Éléments à vérifier : salaire, durée, avantages (logement, transport, mutuelle) ⚠ Lisez attentivement chaque clause — notre équipe reste disponible pour vous aider 05 Constitution du dossier visa Ausbildungsvisum — Section §17 Aufen`,
-    rawText: `3M TRAVEL & SERVICES SARL Immigration • Placement Professionnel International
+    rawText: `3M TRAVEL AGENCY SARL Immigration • Placement Professionnel International
 FORMATION PROFESSIONNELLE DUALE — ALLEMAGNE
 
 FORMATION PROFESSIONNELLE DUALE
 Grand-Duché d'Allemagne — Ausbildung 2026
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — INTRODUCTION & AVANTAGES FORMATION ALLEMAGNE
 
@@ -1979,7 +1979,7 @@ EUR
 Landwirt, Gärtner, Tierwirt, Forstwirt (logement
 souvent fourni)
 
-3M TRAVEL & SERVICES SARL Immigration • Placement Professionnel International
+3M TRAVEL AGENCY SARL Immigration • Placement Professionnel International
 FORMATION PROFESSIONNELLE DUALE — ALLEMAGNE
 
 03 — LES 8 ÉTAPES — DU DOSSIER À L'ARRIVÉE EN ALLEMAGNE
@@ -2027,13 +2027,13 @@ CAD 350–550
     procedureSteps: `Détaillée 2026 05 — PROCÉDURE DÉTAILLÉE — LES 8 ÉTAPES 01 Analyse de votre profil académique 3M Travel & Services — Gratuite & Sans engagement 3M Travel & Services ▸ Évaluation de vos relevés de notes : BEPC, Probatoire, BAC, licence, master — tous niveaux. ▸ Vérification des équivalences : GPA requis selon universités (3.0/4.0 minimum pour la plupart). ▸ Identification du niveau d'études le plus adapté à votre parcours et budget. ▸ Évaluation de votre niveau de langue actuel (français/anglais) `,
     eligibilityConditions: `ÉCISIF sur tous les autres étudiants africains. ▸ Éligibilité : Analyse gratuite, confidentielle. Votre dossier n'est transmis à aucun établissement sans votre accord explicite. ▸ Niveaux couverts : Secondaire · DEC Cégep (Québec) · Baccalauréat · Maîtrise · Doctorat · DEP Formation professionnelle. ▸ Provinces phares : Québec Britannique (Vancouver) · Alberta ⛽ (Calgary). ▸ Bilingue FR/EN : les Camerounais sont les SEULS Africains nativement bilingues officiels — avantage unique Express Entry +`,
     practicalTips: `xpress Entry +16 pts CRS. ▸ Notre engagement : un conseiller dédié vous informe à chaque étape clé — de l'inscription à l'atterrissage. (Montréal, Québec City) · Ontario (Toronto, Ottawa) · Colombie- 02 — DATES DES RENTRÉES — CALENDRIER ACADÉMIQUE CANADA 2026-2027 Le Canada propose 2 à 3 rentrées par an selon l'établissement et la province. Il est CRUCIAL de planifier au moins 6 à 12 mois à l'avan`,
-    rawText: `3M TRAVEL & SERVICES SARL Immigration • Placement Professionnel International
+    rawText: `3M TRAVEL AGENCY SARL Immigration • Placement Professionnel International
 VISA ÉTUDES — CANADA — Procédure Détaillée 2026
 
 PROCÉDURE VISA ÉTUDES
 Canada — Study Permit — Détail Complet 2026
 
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — INTRODUCTION & VISION GLOBALE
 
@@ -2210,17 +2210,17 @@ D`,
     costs: `es 25-32 ans marquent le maximum de points âge ▸ Frais de dossier principal : environ 4 640 AUD (hors frais conjoint/enfants) 65 points suffisent pour entrer dans le bassin SkillSelect, mais la majorité des invitations réelles se situent entre 80 et 95+ points pour les métiers très demandés (santé, ingénierie, IT). Subclass 190 — Skilled Nominated Visa Résidence permanente directe, avec nomination`,
     sectors: `onnu 6–10 mois Sommités internationales dans un secteur stratégique Ce document détaille successivement : (02) les voies AVEC sponsor employeur, (03) les voies SANS sponsor (système de points indépendant), (04) les autres possibilités (famille, affaires, talent), (05) le système de points détaillé, `,
     requiredDocuments: `ans marquent le maximum de points âge ▸ Frais de dossier principal : environ 4 640 AUD (hors frais conjoint/enfants) 65 points suffisent pour entrer dans le bassin SkillSelect, mais la majorité des invitations réelles se situent entre 80 et 95+ points pour les métiers très demandés (santé, ingénierie, IT). Subclass 190 — Skilled Nominated Visa Résidence permanente directe, avec nomination d'un État ou Territoire (+5 points) Pour les profils n'atteignant pas le score très compétitif du 189, la no`,
-    procedureSteps: `e de points détaillé, (06) la procédure type en 8 étapes, et (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Résidence Permanente Australie • Toutes les voies d'accès 🇦🇺 RP AUSTRALIE Guide complet 2026 02 — RÉSIDENCE PERMANENTE AVEC SPONSOR EMPLOYEUR Un employeur australien disposé à vous sponsoriser ouvre l'accès dire`,
+    procedureSteps: `e de points détaillé, (06) la procédure type en 8 étapes, et (07) le budget complet. 3M Travel Agency SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL AGENCY SARL Immigration • Résidence Permanente Australie • Toutes les voies d'accès 🇦🇺 RP AUSTRALIE Guide complet 2026 02 — RÉSIDENCE PERMANENTE AVEC SPONSOR EMPLOYEUR Un employeur australien disposé à vous sponsoriser ouvre l'accès dire`,
     eligibilityConditions: `nés ▸ Passage au 888 (RP) après avoir rempli les conditions d'exploitation ou d'investissement pendant la durée requise Cette voie s'adresse à des profils entrepreneuriaux ou patrimoniaux confirmés — 3M Travel évalue la pertinence de cette filière selon votre situation réelle. Global Talent Visa (Subclass 858) Pour les profils d'excellence reconnue dans un secteur stratégique Réservé à un nombre restreint de places (4 000 en 2025-2026), ce visa cible des profils ayant un parcours exceptionnel et`,
     practicalTips: `û à la signature. Analyse profil, calcul points, conseiller dédié. Identification de la voie optimale parmi tous les programmes. Délai 8-16 semaines selon organisme (Engineers Australia, ACS, VETASSESS...). Score minimum requis selon le programme visé. 45+ documents vérifiés. Coordination Home Affairs. Frais officiels non remboursables — Subclass 189/190/491. Frais par accompagnant (conjoint/enfan`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration  •  Résidence Permanente Australie  •  Toutes les voies d'accès
 
 🇦🇺
  RP AUSTRALIE
 Guide complet 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567   |   NIU : M112417203369H
 
@@ -2252,9 +2252,9 @@ AFFAIRES
 Budget à partir de 2 000 000 FCFA hors billet d'avion  •  Document officiel pour ressortissants camerounais
 +237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration  •  Résidence Permanente Australie  •  Toutes les voies d'accès
 
 🇦🇺
@@ -2360,7 +2360,7 @@ Ce document détaille successivement : (02) les voies AVEC sponsor employeur, (0
 indépendant), (04) les autres possibilités (famille, affaires, talent), (05) le système de points détaillé, (06) la procédure type en 8 étapes, 
 et (07) le budget complet.
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité`,
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité`,
   },
   {
     country: `Nouvelle-Zélande`,
@@ -2373,7 +2373,7 @@ et (07) le budget complet.
     procedureSteps: `DE Guide complet 2026 06 — PROCÉDURE TYPE EN 8 ÉTAPES — DE L'ÉVALUATION À L'ARRIVÉE Évaluation de profil & choix de la voie optimale 3M Travel — Consultation gratuite & sans engagement 01 ▸ Analyse complète : métier, diplôme, expérience, âge, situation familiale et budget. ▸ Vérification si le métier figure sur la Green List (Tier 1 ou Tier 2) ou doit passer par le SMC standard. ▸ Rapport d'orientation écrit remis sous 48h avec stratégie personnalisée. ✅ Consultation 100% gratuite — aucun engage`,
     eligibilityConditions: `. Avec une offre d'emploi Tier 1 remplissant les conditions de qualification, d'enregistrement et de salaire, la demande de résidence se fait directement. 🌟 ▸ Offre d'emploi confirmée dans un métier Tier 1 de la Green List ▸ Conditions de qualification, d'enregistrement professionnel et de salaire minimum à respecter selon le métier ▸ Aucun test de points requis — traitement parmi les plus rapides du monde (3 à 6 mois) ▸ Famille incluse dès la demande de résidence C'est la voie reine pour les mé`,
     practicalTips: `nature. Analyse profil, vérification Green List, conseiller dédié. Identification Green List Tier 1/2 ou voie SMC standard. Sauf si diplôme déjà sur la liste LQEA. Délai 4-8 semaines. Test d'anglais (IELTS/équivalent) 150 000 – 250 000 F Selon Niveau requis variable selon la voie et le métier. Enregistrement professionnel (métiers réglementés) 100 000 – 250 000 F Selon Médecins, infirmiers, ingéni`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration  •  Résidence Permanente Nouvelle-Zélande  •  Toutes les voies
 
 🇳🇿
@@ -2381,7 +2381,7 @@ Immigration  •  Résidence Permanente Nouvelle-Zélande  •  Toutes les voies
  RP NOUVELLE-ZÉLANDE
 Guide complet 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567   |   NIU : M112417203369H
 
@@ -2411,9 +2411,9 @@ AFFAIRES
 Budget à partir de 2 000 000 FCFA hors billet d'avion  •  Document officiel pour ressortissants camerounais
 +237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration  •  Résidence Permanente Nouvelle-Zélande  •  Toutes les voies
 
 🇳🇿
@@ -2513,7 +2513,7 @@ Ce document détaille successivement : (02) les voies Green List et SMC avec off
 démarches employeur (déjà en poste, investissement), (04) famille et affaires, (05) le système de points SMC à 6 points, (06) la procédure 
 type, et (07) le budget complet.
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698`,
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698`,
   },
   {
     country: `Roumanie`,
@@ -2526,12 +2526,12 @@ type, et (07) le budget complet.
     procedureSteps: `me pour les médecins extra-UE. 04 — PROCÉDURE 8 ÉTAPES Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Objectif travail ou études. Rapport sous 48h. Lancement CNRED (si requis)CNRED / 3M Travel Reconnaissance diplôme — 4–8 semaines — EN PARALLÈLE de tout le reste. Employeur / Université 3M Travel + réseau Mise en relation employeurs vérifiés ou candidature universitaire. Autorisation ORI (travail)Employeur roumain Déposée par l'employeur — délai 2–4 `,
     eligibilityConditions: `Travail roumain L'employeur dépose en premier — prérequis Légalisé + apostillé Selon poste — 4–8 semaines Bulletin N°3 légalisé Bail ou hébergement employeur Jusqu'à inscription sécurité sociale roumaine 3 derniers mois n PROCÉDURE ROUMANIE : L'employeur DOIT initier la demande d'autorisation de travail à l'ORI AVANT que vous ne puissiez déposer votre dossier à l'ambassade. 3M Travel accompagne l'employeur dans cette démarche pour éviter tout retard. 03 — VISA ÉTUDES — ROUMANIE Paramètre Type de`,
     practicalTips: `Un médecin diplômé en Roumanie peut s'inscrire au Conseil de l'Ordre des Médecins en France dès l'obtention de son diplôme roumain — SANS passer aucun examen complémentaire. C'est le cas unique en dehors de la France elle-même pour les médecins extra-UE. 04 — PROCÉDURE 8 ÉTAPES Étape Action Responsable Détail 01 02 03 04 05 06 07 08 Évaluation profil 3M Travel (gratuit) Objectif travail ou études.`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Roumanie • Guide Complet
 Immigration 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -2658,14 +2658,14 @@ Service Alleman`,
     procedureSteps: `plus sélectives. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Évaluation profil + choix université Identification du programme et de la ville selon vos notes, votre projet et votre niveau d'allemand. Rapport d'orientation sous 48h. 3M Travel — Gratuit Candidature Bourse DAAD (si éligible) Le DAAD propose plus de 100 programmes de bourses (600–1 200 EUR/mois). 3M Travel rédige votre dossier Premium pour maximiser vos chances. 3M Travel + DAAD portal Candidature universitaire (uni-a`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Allemagne — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -2845,14 +2845,14 @@ Niv`,
     procedureSteps: `(Sommersemester). 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Évaluation profil + apprentissage allemand Apprentissage allemand (Goethe B2 ou ÖSD) Candidature universitaire + Ernst Mach Grant Approbation de la demande d'admission (Zulassung) Dossier visa D — Ambassade Autriche Paris Arrivée + Meldezettel (déclaration de résidence) Inskription définitive + ÖH (Österreichische Ho chschüler:innensch aft) Niveau B2 allemand requis pour programmes germaniques. B1 minimum conseillé ava`,
     eligibilityConditions: ``,
     practicalTips: `nd requis pour programmes germaniques. B1 minimum conseillé avant le départ. Rapport 48h. 3M Travel — Gratuit Cours intensifs Goethe Institut Yaoundé : 6–12 mois pour atteindre B2. Institut Goethe Yaoundé ou Nécessaire pour la plupart des programmes. en ligne Dossier académique + lettre de motivation en allemand ou anglais. Ernst Mach Grant pour séjours de recherche ou master. Portail université +`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Autriche — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -3021,14 +3021,14 @@ Lettre d'inscription `,
     procedureSteps: `té universitaire. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 Évaluation profil + choix université Francophone ﬁ UCLouvain / ULiège. Anglophone ﬁ VUB / UGent. Business ﬁ Solvay. Rapport 48h. 3M Travel — Gratuit Candidature Bourse ARES (si eligible) Bourse du gouvernement wallon pour étudiants subsahariens. 3M Travel prépare votre dossier complet. 3M Travel + ares-ac.be Candidature universitaire Dossier : diplôme bac + relevés + lettre de motivation + CV + portfolio si créatif. En fr`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Belgique — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -3195,7 +3195,7 @@ Sciences, Médecine, Pharmacie, Ingénierie, Économie, Vétérinai`,
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `onomie · Droit Sciences de l'environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: `3M Travel | 65 000 FCFA | Oui | Signature mandat. Conseiller dedie. Frais d'inscription universitaire | 100 000 – 150 000 F | Oui | Payer avant obtention lettre d'acceptation. Frais de visa etudiant | ≈ 60 EUR / 40 000 F | Oui | Ambassade Bulgarie a Yaounde. Frais de scolarite (1ere annee) | 1 500 – 8 000 EUR | Oui | Selon filiere et universite choisie. Logement (9 mois) | 1 800 – 3 600 EUR | Oui `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -3252,7 +3252,7 @@ Dossier academique | R`,
     procedureSteps: `4 PROCÉDURE SÛRE ET VÉRIFIÉE — ÉTAPE PAR ÉTAPE Étapes vérifiées auprès des sources officielles (IRCC, MIFI Québec) pour un dossier solide et conforme aux nouvelles exigences 2026. # Étape Ressource Détail vérifié 01 Évaluation de profil 3M Travel (gratuit) Analyse académique, linguistique et financière. Orientation vers province et établissement adaptés. 02 Lettre d'admission DLI Établissement désigné (DLI) Candidature uniquement auprès d'un établissement d'enseignement désigné (Designated Learn`,
     eligibilityConditions: `ur le Québec selon accord France-Québec, vérifier éligibilité Cameroun). Via Paris, Bruxelles ou Casablanca, vol direct rare depuis Douala. ATTENTION HAUSSE 2026 : depuis le 1er janvier 2026, la preuve de fonds pour étudier au Québec est passée à 24 617 CAD par personne seule (contre 15 508 CAD auparavant), soit une hausse de 59%. Les dossiers déposés sans respecter ce nouveau seuil sont automatiquement refusés par IRCC et le MIFI. Documents acceptés comme preuve de fonds • Relevés bancaires des`,
     practicalTips: `es ? R : 3M Travel analyse les motifs de refus et conseille un nouveau dépôt. L'option Visa Garanti prévoit un remboursement partiel selon conditions contractuelles. Q : Puis-je choisir la rentrée d'hiver si je rate celle de septembre ? R : Oui, de nombreux programmes offrent une rentrée en janvier, notamment au niveau collégial et dans certains masters. 09 POURQUOI CHOISIR 3M TRAVEL & SERVICES ? `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
@@ -3333,7 +3333,7 @@ personne, dès 2026)
 Nouveau montant en vigueur depuis le 1er janvier 2026
 pour le CAQ et le permis d'études, hausse de 59%.
 
-3M Travel & Services SARL — Guide Visa Études Canada 2026 — Page 1
+3M Travel Agency SARL — Guide Visa Études Canada 2026 — Page 1
 
 Poste de dépense
 
@@ -3395,14 +3395,14 @@ ATTENTION HAUSSE 2026 : depuis le 1er janvier 2026, la preuve de`,
     procedureSteps: `x payés d'Europe. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + choix programme EN DTU (ingénierie 100% EN), CBS (business 100% EN), UCPH/AU (médecine, sciences). Rapport 48h. 3M Travel — Gratuit IELTS 6.5 minimum Standard danois : 6.5 minimum, souvent 7.0 pour médecine. Préparer 3–4 mois British Council Yaoundé avant la candidature. Candidature universitaire Bourse Gouvernement Danois Dossier : IELTS + diplôme BAC + relevés + lettre motivation + CV. Délai : mars. Réponse `,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Danemark — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -3568,14 +3568,14 @@ Douala ﬁ Madrid / Barcelona (Air France via Paris, Iberia, Royal Air Maroc) �
     procedureSteps: `ute la procédure. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 Évaluation profil + niveau espagnol Évaluation du niveau d'espagnol + choix ville selon budget. Madrid/Barcelone ou Valence/Séville pour budget réduit. Rapport 48h. 3M Travel — Gratuit Préparation DELE (si requis) Test DELE B2 requis pour programmes en espagnol. DELE B1 + programme Centre Alliance Française / EN = voie alternative. Délai préparation : 3–6 mois. Instituto Cervantes Pré-inscription universitaire Soumission `,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Espagne — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -3729,14 +3729,14 @@ n Universidad de Valencia (U`,
     procedureSteps: `ble du processus. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + candidature studyinfo.fi Le portail studyinfo.fi est LA plateforme unique de candidature en Finlande. Deadline : 15 janvier. 3M Travel gère votre inscription en urgence. 3M Travel + studyinfo.fi Test de langue IELTS (6.0 minimum) IELTS 6.0 requis pour la plupart des programmes EN. Préparer 2–3 mois avant la candidature. British Council Yaoundé Tests d'aptitude (si requis) Certains programmes ont des tests d'ap`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Finlande — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -3904,7 +3904,7 @@ Finnois + Suédois + Ma`,
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `rielle Sciences de l'informatique Economie 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -3972,14 +3972,14 @@ ACA`,
     procedureSteps: `l'année suivante. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Évaluation profil + choix programme Médecine (Sapienza, Bologna), Ingénierie (Politecnico), Business (Bocconi), Art (Accademia). Rapport 48h. 3M Travel — Gratuit Inscription sur Universitaly Création du compte + upload des documents académiques traduits en italien universitaly.it — portail (ou anglais). Frais : 30–50 EUR. Ouverture décembre. obligatoire Test d'entrée (si requis) Médecine : IMAT (test anglais — biologie`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Italie — Visa Études — Guide
 Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -4145,7 +4145,7 @@ nn Langue
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `Ingenierie de l'information Droit europeen 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -4207,14 +4207,14 @@ Frais `,
     procedureSteps: `roun est à PARIS. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + trilinguisme Évaluation du niveau de français, anglais, et si possible allemand. Rapport 3M Travel — Gratuit d'orientation 48h. Candidature uni.lu Inscription en ligne + documents académiques. Délai : fin février. Programme uni.lu — portail officiel Bachelor : délai plus tardif. Master : parfois plus sélectif. Apprentissage de l'allemand (recommandé) Niveau A2/B1 en allemand fortement conseillé pour l'intégrat`,
     eligibilityConditions: `urse CEDIES Centre de Documentation — bourse sur critères sociaux et académiques n Important Juin–Août 2026 Visa D — Ambassade Luxembourg Paris Dossier + dépôt à l'Ambassade à Paris (compétente pour le Cameroun) Septembre 2026 RENTRÉE ACADÉMIQUE Mi-septembre 2026 — Cours de langue INDUCTION disponibles n URGENT n OBJECTIF n LUXEMBOURG SPÉCIFICITÉ : L'Université du Luxembourg est LA SEULE université du pays. Elle est trilingue (cours en français, anglais ET allemand) et ses frais (800 EUR/an) son`,
     practicalTips: `(recommandé) Niveau A2/B1 en allemand fortement conseillé pour l'intégration professionnelle au Luxembourg. Institut Goethe Yaoundé Bourse CEDIES Demande de bourse aux étudiants — sur critères sociaux et académiques. À CEDIES — Centre de Documentation déposer après l'admission. Dossier visa D — Ambassade Paris Envoyer le dossier par courrier recommandé à l'Ambassade à Paris ou déposer Ambassade Lu`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Luxembourg — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -4376,14 +4376,14 @@ Portail officiel Université
     procedureSteps: `e exceptionnelle. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + candidature UM 100% anglais = procédure simplifiée. Rapport d'orientation 48h. Médecine (UM), Tech/Gaming (privées) selon projet. 3M Travel — Gratuit Candidature admissi ons.um.edu.mt Dossier en ligne : BAC + relevés + lettre motivation + CV. Délai de réponse : Portail officiel Université 6–10 semaines. En anglais uniquement. Malte Lettre d'admission officielle La lettre est obligatoire pour le visa. Vérifier `,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Malte — Visa Études — Guide
 Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -4552,14 +4552,14 @@ Nov. `,
     procedureSteps: `msterdam en 6h45. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Évaluation profil + choix programme EN Ingénierie (TU Delft/TU/e), Business (Erasmus), Sciences (Leiden/UvA). Rapport 48h. 3M Travel — Gratuit Test IELTS (6.5 minimum) IELTS 6.5 requis (parfois 7.0). Délai de préparation : 2–4 mois. 3M Travel vous British Council ou IDP oriente vers les meilleurs centres de préparation. Yaoundé Holland Scholarship (avant 1er mai) 5 000 EUR de bourse pour non-EEE — une seule fois — sur `,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Pays-Bas — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -4717,7 +4717,7 @@ n Erasmus University Rotterdam
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `erie Biotechnologie · Chimie Environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: `3M Travel | 65 000 FCFA | Oui | Signature mandat. Conseiller dedie. Frais d'inscription | 100 000 – 200 000 F | Oui | Varsovie et Cracovie selon universite. Frais de visa etudiant | ≈ 80 EUR / 52 000 F | Oui | Ambassade Pologne a Yaounde. Scolarite (1ere annee) | 2 000 – 7 000 EUR | Oui | Selon filiere et universite. Logement (9 mois) | 2 700 – 4 500 EUR | Oui | Residence U 200-300 EUR/mois. Studi`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -4777,14 +4777,14 @@ réponse : 4–8 semaines.`,
     procedureSteps: `st très valorisé. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Évaluation profil + apprentissage portugais Langue proche du français = apprentissage rapide (3–6 mois pour B1). Rapport d'orientation 48h. 3M Travel — Gratuit Apprentissage du portugais Un minimum de niveau A2/B1 est fortement recommandé avant l'arrivée. Les Alliance Française / cours cours de portugais sont souvent gratuits à l'université à l'arrivée. en ligne Candidature universitaire Dossier académique + lettre de `,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Portugal — Visa Études —
 Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -4957,14 +4957,14 @@ Semaine d'accueil internat`,
     procedureSteps: `e très abordable. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + choix filière Médecine EN (Charles University), Ingénierie (CTU), Business (VŠE), Sciences 3M Travel — Gratuit (Masaryk). Rapport 48h. Candidature Charles University médecine Test d'entrée : biologie + chimie + physique (en anglais). Organisé à Prague ou dans certains pays. 3M Travel vous prépare aux tests. admissions.cuni.cz Bourse Gouvernement Tchèque Bourse du gouvernement tchèque pour étudiants hors-UE. 3M`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn République Tchèque — Visa
 Études — Guide Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -5116,7 +5116,7 @@ VŠE est la référence pour les études économiques en Tchéquie. Son`,
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `Economie · Droit Arts et Sciences sociales 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -5173,7 +5173,7 @@ Numerus clausus | Pas de quota pour etudiants afr`,
     procedureSteps: `d'etudes acceptes. 05 — Procédure Complète — 8 Étapes ÉTAPE 01 | Evaluation de profil | Analyse de votre dossier academique par 3M Travel. Identification de la filiere et de l'universite les plus adaptees a votre projet. ÉTAPE 02 | Choix de l'universite | Selection de 2 a 3 universites cibles. Constitution du dossier d'admission selon les exigences de chaque etablissement. ÉTAPE 03 | Lettre d'acceptation | Soumission du dossier d'admission. Obtention de la lettre d'acceptation officielle de l'un`,
     eligibilityConditions: `Droit europeen Sciences de l'environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
@@ -5230,14 +5230,14 @@ Dossier academique | Releves de notes, diplomes traduits en angl`,
     procedureSteps: `nte n En attente 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Bourse SI — PRIORITÉ ABSOLUE La bourse Swedish Institute est LA priorité : elle couvre TOUT (frais + vie + vol). 3M Travel + Délai : février. 3M Travel rédige votre dossier Premium. studyinsweden.se Candidature universitaire (univer sityadmissions.se) Pour Master : universityadmissions.se — frais : 900 SEK (environ 80 EUR). universityadmissions.se — Test IELTS 6.5 requis. Sélectionner jusqu'à 8 programmes. délai 15 janv`,
     eligibilityConditions: ``,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn Suède — Visa Études — Guide
 Complet 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -5393,11 +5393,11 @@ n`,
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `82 €/h (2026) — secteurs qualifiés : 2 800 à 7 000 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇩🇪 ALLEMAGNE Visa Travail · 1,2 Million Postes · Fachkräfteeinwanderungsgesetz · Chancenkarte 2024 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ress`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇩🇪 ALLEMAGNE Visa Travail · 1,2 Million Postes · Fachkräfteeinwanderungsgesetz · Chancenkarte 2024 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ress`,
     sectors: `e sans offre préalable. SMIC à 12,82 €/h (2026) — secteurs qualifiés : 2 800 à 7 000 €/mois selon expérience. EU Blue Card seuil réduit : 40 770 €/an brut (31 818 €/an métiers pénurie) en 2026. VFS Global Yaoundé : dépôt de visa simplifié sans se déplacer à l'ambassade. Anglais largement accepté dan`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `gné dès maintenant. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇩🇪 ALLEMAGNE Visa Travail · 1,2 Million Postes · Fachkräfteeinwanderungsgesetz · Chancenkarte 2024 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Allemagne ? Marché & Chiffres Clés 🌍 |`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇩🇪 ALLEMAGNE Visa Travail · 1,2 Million Postes · Fachkräfteeinwanderungsgesetz · Chancenkarte 2024 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Allemagne ? Marché & Chiffres Clés 🌍 |`,
     practicalTips: `t, Fribourg, Mannheim 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 800–2 000 € Munich / 600–1 400 € Berlin / 400–800 € Est | Élevée | Idéal 1ère installation. Chercher via ImmobilienScout24.de, WG-Gesucht.de, Immowelt.de, eBay Kleinanzeigen 🤝 Colocation | 350–700 €/mois chambre (WG) | Très haute | Option la pl`,
     rawText: `L'Allemagne, 1ère économie d'Europe, traverse la plus grande crise de main-d'œuvre de son histoire : 1,2 million de postes non pourvus en 2026. La révolutionnaire loi Fachkräfteeinwanderungsgesetz (2023) et la Chancenkarte (2024 — visa de recherche d'emploi directement en Allemagne) ont radicalement simplifié l'accès pour les non-UE. C'est désormais l'une des destinations Schengen les plus accessibles.
 1,2 million de postes vacants en 2026 — record historique absolu depuis 30 ans.
@@ -5411,11 +5411,11 @@ Depuis novembre 2023, la loi Fachkräfteeinwanderungsgesetz permet aux non-UE qu
 Allemagne présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Allemagne. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇩🇪 ALLEMAGNE
 Visa Travail · 1,2 Million Postes · Fachkräfteeinwanderungsgesetz · Chancenkarte 2024
 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Allemagne ? Marché & Chiffres Clés
 🌍 | La Chancenkarte permet d'arriver en Allemagne pendant 1 an pour chercher un emploi sur place — une révolution pour les Camerounais diplômés. Conditions : Bac+3 + 1 an d'expérience + B1 allemand. OU Bac+3 + 3 ans d'expérience sans exigence de langue. Travail 20h/semaine autorisé pendant la recherche.
 02  —  Système de Permis de Travail en Allemagne
@@ -5443,7 +5443,7 @@ Visa Travail · Skilled Migration · Skilled Worker 482 · Construction · Sa`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `on le visa. Type de permis Durée Offre emploi Conditions & Avantages Visa 189 — Skilled Independent PR directe Non (points 65+) Résidence permanente sans parrain. Score EOI ≥ 65. Invitation par SkillSelect. Visa 190 — State Nominated PR directe Oui (État) Nomination par un État (Victoria, NSW...). Score réduit. PR directe. ⚡ Visa 482 — TSS (Employer) Visa 186 — Direct Entry EN 2–4 ans Oui (employeur parrain) Parrainage employeur. Liste MLTSSL. Passerelle vers visa 186 (PR). PR directe Oui (après`,
     practicalTips: `arwin, Régions rurales 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé 1 800–3 500 AUD/mois Sydney / 1 200–2 200 AUD Melbourne / 800–1 500 AUD régions Élevée Idéal 1ère installation. Chercher via Domain.com.au, RealEstate.com.au, Flatmates.com.au, Gumtree.com.au Colocation 600–1 200 AUD/mois chambre partagée Très haute Opt`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Australie • Opportunités Africaines • À partir de 2 800 000 FCFA
@@ -5458,7 +5458,7 @@ AUSTRALIE
 Visa Travail · Skilled Migration · Skilled Worker 482 · Construction · Santé · IT Sydney
 
 Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN AUSTRALIE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -5542,7 +5542,7 @@ Budget à partir de 2 40`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `qualifiés. Type de permis Durée Offre emploi Conditions & Avantages EU Blue Card Permis de travail Saisonnier Chercheur Permanent 4 ans renouv. Oui (sal. ≥ 1,5x) Bac+3 min. Mobilité UE. 1–2 ans Obligatoire Demande via autorités régionales. 6-9 mois max Oui (saisonnier) Agriculture, tourisme. 1ère étape légale. Durée projet Non (université) Convention avec institution locale. Illimité Non Après 5-8 ans résidence légale. Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéfic`,
     practicalTips: `1 000 € Zones rurales 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé 400–900 € capitales / 200–500 € régions Élevée Idéal 1ère installation. Chercher via Portails locaux, Facebook Marketplace Colocation 150–400 €/mois chambre Très haute Option la plus économique. Réseau diaspora africaine recommandé. Résidence universitai`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Bulgarie • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -5557,7 +5557,7 @@ BULGARIE
 Visa Travail · IT Sofia · Agriculture · Industrie
 
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN BULGARIE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -5630,7 +5630,7 @@ Après 5-8 ans résidence légale.
 Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéficient de procédures accélérées. EU Blue Card sans quota
 toute l'année.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Bulgarie • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -5735,11 +5735,11 @@ S`,
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 800 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇦 CANADA Express Entry · LMIA · Québec · Alberta · IT · Santé · Mines Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M `,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇦 CANADA Express Entry · LMIA · Québec · Alberta · IT · Santé · Mines Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M `,
     sectors: `importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement. Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Canada. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs. Le budget varie`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `res que métropoles. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇦 CANADA Express Entry · LMIA · Québec · Alberta · IT · Santé · Mines Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Canada ? Marché & Chiffres Clés 🌍 | Le Québec dispose du Programme`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇦 CANADA Express Entry · LMIA · Québec · Alberta · IT · Santé · Mines Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Canada ? Marché & Chiffres Clés 🌍 | Le Québec dispose du Programme`,
     practicalTips: `es points bonus CRS avec test DELF/TEF. 3M Travel conseille d'avoir les 2 stratégies (Express Entry ET LMIA) en parallèle. 02 — Système de Permis de Travail en Canada Type de permis | Durée | Offre emploi | Conditions & Avantages ⭐ Résidence Permanente Express Entry | PR directe | Non (CRS score) | CRS ≥ 470-500. IELTS 7.0+. Expérience 1-3 ans. Délai 6 mois. 🏢 Permis travail LMIA | 1–3 ans | Oui (`,
     rawText: `Le Canada, destination prisée des Camerounais, offre un système d'immigration parmi les plus accessibles et transparents du monde. Express Entry (ITA basé sur le Comprehensive Ranking System), LMIA (permis de travail temporaire), Programme de Mobilité Internationale, et voies provinciales — le Canada a construit un écosystème d'immigration sophistiqué. Plus de 200 000 Africains immigrent au Canada chaque année, dont une diaspora camerounaise de 60 000 personnes.
 Express Entry CRS : système de points transparent — diplôme, langue, expérience, âge.
@@ -5753,11 +5753,11 @@ Système immigration basé sur les points et/ou parrainage employeur. Demandes e
 Canada présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Canada. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇨🇦 CANADA
 Express Entry · LMIA · Québec · Alberta · IT · Santé · Mines
 Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Canada ? Marché & Chiffres Clés
 🌍 | Le Québec dispose du Programme des Travailleurs Étrangers Temporaires (TET) et du Programme de l'expérience québécoise (PEQ) — routes distinctes du Canada anglophone. Les Camerounais francophones peuvent accumuler des points bonus CRS avec test DELF/TEF. 3M Travel conseille d'avoir les 2 stratégies (Express Entry ET LMIA) en parallèle.
 02  —  Système de Permis de Travail en Canada
@@ -5786,7 +5786,7 @@ Visa Travail · Tourisme · Finan`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `qualifiés. Type de permis Durée Offre emploi Conditions & Avantages EU Blue Card Permis de travail Saisonnier Chercheur Permanent 4 ans renouv. Oui (sal. ≥ 1,5x) Bac+3 min. Mobilité UE. 1–2 ans Obligatoire Demande via autorités régionales. 6-9 mois max Oui (saisonnier) Agriculture, tourisme. 1ère étape légale. Durée projet Non (université) Convention avec institution locale. Illimité Non Après 5-8 ans résidence légale. Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéfic`,
     practicalTips: `1 000 € Zones rurales 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé 400–900 € capitales / 200–500 € régions Élevée Idéal 1ère installation. Chercher via Portails locaux, Facebook Marketplace Colocation 150–400 €/mois chambre Très haute Option la plus économique. Réseau diaspora africaine recommandé. Résidence universitai`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Chypre • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -5801,7 +5801,7 @@ CHYPRE
 Visa Travail · Tourisme · Finance · Maritime
 
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN CHYPRE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -5874,7 +5874,7 @@ Après 5-8 ans résidence légale.
 Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéficient de procédures accélérées. EU Blue Card sans quota
 toute l'année.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Chypre • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -5996,7 +5996,7 @@ Budget à partir de 2 400 000 FCF`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `qualifiés. Type de permis Durée Offre emploi Conditions & Avantages EU Blue Card Permis de travail Saisonnier Chercheur Permanent 4 ans renouv. Oui (sal. ≥ 1,5x) Bac+3 min. Mobilité UE. 1–2 ans Obligatoire Demande via autorités régionales. 6-9 mois max Oui (saisonnier) Agriculture, tourisme. 1ère étape légale. Durée projet Non (université) Convention avec institution locale. Illimité Non Après 5-8 ans résidence légale. Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéfic`,
     practicalTips: `1 000 € Zones rurales 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé 400–900 € capitales / 200–500 € régions Élevée Idéal 1ère installation. Chercher via Portails locaux, Facebook Marketplace Colocation 150–400 €/mois chambre Très haute Option la plus économique. Réseau diaspora africaine recommandé. Résidence universitai`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Croatie • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -6011,7 +6011,7 @@ CROATIE
 Visa Travail · Tourisme · IT · Logistique
 
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN CROATIE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -6084,7 +6084,7 @@ Après 5-8 ans résidence légale.
 Délais de traitement : 30-90 jours selon secteur. Secteurs en pénurie bénéficient de procédures accélérées. EU Blue Card sans quota
 toute l'année.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Croatie • Opportunités Africaines • À partir de 2 400 000 FCFA
@@ -6189,11 +6189,11 @@ Saisonniers — 1èr`,
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇪🇪 ESTONIE Visa Travail · e-Estonia · IT Tallinn · Tech Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Servic`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇪🇪 ESTONIE Visa Travail · e-Estonia · IT Tallinn · Tech Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Servic`,
     sectors: `e vie accessible avec salaires en hausse dans les secteurs qualifiés. Marché du travail dynamique — pénurie de main-d'œuvre dans secteurs qualifiés. IT et technologie en croissance — hub émergent Estonie. Coût de vie très accessible en Europe — excellente pouvoir d'achat. Salaires compétitifs dans s`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `sser vers capitale. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇪🇪 ESTONIE Visa Travail · e-Estonia · IT Tallinn · Tech Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Estonie ? Marché & Chiffres Clés 🌍 | Estonie recrute activement les travailleurs `,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇪🇪 ESTONIE Visa Travail · e-Estonia · IT Tallinn · Tech Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Estonie ? Marché & Chiffres Clés 🌍 | Estonie recrute activement les travailleurs `,
     practicalTips: `000 € | Zones rurales 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 400–900 € capitales / 200–500 € régions | Élevée | Idéal 1ère installation. Chercher via Portails locaux, Facebook Marketplace 🤝 Colocation | 150–400 €/mois chambre | Très haute | Option la plus économique. Réseau diaspora africaine recommandé.`,
     rawText: `Estonie offre des opportunités de travail dans un environnement économique dynamique. Accès Schengen direct. Procédures modernisées depuis 2022. Coût de vie accessible avec salaires en hausse dans les secteurs qualifiés.
 Marché du travail dynamique — pénurie de main-d'œuvre dans secteurs qualifiés.
@@ -6207,11 +6207,11 @@ Permis de travail national avec résidence combinée. Processus d'approbation pa
 Estonie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Estonie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇪🇪 ESTONIE
 Visa Travail · e-Estonia · IT Tallinn · Tech
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Estonie ? Marché & Chiffres Clés
 🌍 | Estonie recrute activement les travailleurs qualifiés non-UE. Procédures simplifiées dans secteurs en pénurie.
 02  —  Système de Permis de Travail en Estonie
@@ -6242,13 +6242,13 @@ VISA DE TRAVAIL
 ÉTATS-UNIS
 
 Visa Travail · H-1B · Silicon Valley · San`,
-    costs: `EB-1A sans quota ni loterie. Employeur doit payer frais USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure. 3M TRAVEL & SERVICES SARL Immigration • Visa Travail États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Pe`,
+    costs: `EB-1A sans quota ni loterie. Employeur doit payer frais USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure. 3M TRAVEL AGENCY SARL Immigration • Visa Travail États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Pe`,
     sectors: `0 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Permis Atout Camerounais IT & Tech (Silicon Valley/NYC) 250 000+/an USD 120 000–350 000 H-1B / O-1 / L- 1 FAANG + startups. Anglais 100%. Profils africains recrutés. Méd`,
     requiredDocuments: `i estimé, budget ▸ prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre pro`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `via USCIS. Type de permis Durée Offre emploi Conditions & Avantages ⭐ H-1B Specialty Occupation O-1 Extraordinary Ability L-1 Intracompany F-1/OPT STEM 3+3 ans Oui (sponsor) Loterie 85 000 places. IT, ingénierie, santé, finance. Passerelle Green Card. 3 ans renouv. Non (talent) Pas de loterie. Publications, prix, brevets. Très puissant. 3+2 ans Oui (même groupe) Mutation multinational vers filiale US. Cadres et spécialistes. 1-3 ans OPT Non (diplôme US) Étudier aux USA + 3 ans OPT STEM. Voie ent`,
     practicalTips: `hio, Indiana, Kentucky 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé USD 2 500–5 000/mois major cities / USD 800–1 800 midwest Élevée Idéal 1ère installation. Chercher via Zillow.com, Apartments.com, Craigslist.org, Facebook Marketplace Colocation USD 700–1 500/mois chambre Très haute Option la plus économique. Réseau di`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA
@@ -6263,7 +6263,7 @@ VISA DE TRAVAIL
 Visa Travail · H-1B · Silicon Valley · Santé · Finance NYC · Green Card
 
 Budget à partir de 3 200 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN ÉTATS-UNIS ? MARCHÉ & CHIFFRES CLÉS
 
@@ -6346,7 +6346,7 @@ Intérêt national. Recherche, santé, ingénierie. Sans employeur.
 Points clés 2026 : H-1B s'enregistre en mars, résultat avril, visa octobre. O-1 et EB-1A sans quota ni loterie. Employeur doit payer frais
 USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 É`,
@@ -6365,13 +6365,13 @@ VISA DE TRAVAIL
 ÉTATS-UNIS
 
 Visa Travail · H-1B · Silicon Valley · San`,
-    costs: `EB-1A sans quota ni loterie. Employeur doit payer frais USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure. 3M TRAVEL & SERVICES SARL Immigration • Visa Travail États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Pe`,
+    costs: `EB-1A sans quota ni loterie. Employeur doit payer frais USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure. 3M TRAVEL AGENCY SARL Immigration • Visa Travail États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Pe`,
     sectors: `0 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Permis Atout Camerounais IT & Tech (Silicon Valley/NYC) 250 000+/an USD 120 000–350 000 H-1B / O-1 / L- 1 FAANG + startups. Anglais 100%. Profils africains recrutés. Méd`,
     requiredDocuments: `i estimé, budget ▸ prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre pro`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `via USCIS. Type de permis Durée Offre emploi Conditions & Avantages ⭐ H-1B Specialty Occupation O-1 Extraordinary Ability L-1 Intracompany F-1/OPT STEM 3+3 ans Oui (sponsor) Loterie 85 000 places. IT, ingénierie, santé, finance. Passerelle Green Card. 3 ans renouv. Non (talent) Pas de loterie. Publications, prix, brevets. Très puissant. 3+2 ans Oui (même groupe) Mutation multinational vers filiale US. Cadres et spécialistes. 1-3 ans OPT Non (diplôme US) Étudier aux USA + 3 ans OPT STEM. Voie ent`,
     practicalTips: `hio, Indiana, Kentucky 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé USD 2 500–5 000/mois major cities / USD 800–1 800 midwest Élevée Idéal 1ère installation. Chercher via Zillow.com, Apartments.com, Craigslist.org, Facebook Marketplace Colocation USD 700–1 500/mois chambre Très haute Option la plus économique. Réseau di`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 États-Unis • Opportunités Africaines • À partir de 3 200 000 FCFA
@@ -6386,7 +6386,7 @@ VISA DE TRAVAIL
 Visa Travail · H-1B · Silicon Valley · Santé · Finance NYC · Green Card
 
 Budget à partir de 3 200 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN ÉTATS-UNIS ? MARCHÉ & CHIFFRES CLÉS
 
@@ -6469,7 +6469,7 @@ Intérêt national. Recherche, santé, ingénierie. Sans employeur.
 Points clés 2026 : H-1B s'enregistre en mars, résultat avril, visa octobre. O-1 et EB-1A sans quota ni loterie. Employeur doit payer frais
 USCIS. 3M Travel coordonne avec cabinet avocat accrédité — essentiel pour éviter erreurs de procédure.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 É`,
@@ -6479,11 +6479,11 @@ Immigration • Visa Travail
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `1 767 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇫🇷 FRANCE Visa Travail · 350 000 Postes · 185 Métiers en Tension · EU Blue Card · DOM-TOM Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissant`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇫🇷 FRANCE Visa Travail · 350 000 Postes · 185 Métiers en Tension · EU Blue Card · DOM-TOM Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissant`,
     sectors: `éveloppeurs IT. SMIC à 1 767 €/mois brut (2026) — secteurs qualifiés : 2 500 à 6 000 €/mois. Diaspora camerounaise : 100 000+ Camerounais en France — réseau d'accueil exceptionnel. EU Blue Card : diplôme Bac+3 + salaire ≥ 44 000 €/an — mobilité UE après 18 mois. DOM-TOM (Martinique, Guadeloupe, Guya`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `contrats de l'État. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇫🇷 FRANCE Visa Travail · 350 000 Postes · 185 Métiers en Tension · EU Blue Card · DOM-TOM Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en France ? Marché & Chiffres Clés 🌍 | Pour les 18`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇫🇷 FRANCE Visa Travail · 350 000 Postes · 185 Métiers en Tension · EU Blue Card · DOM-TOM Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en France ? Marché & Chiffres Clés 🌍 | Pour les 18`,
     practicalTips: `ce, Cayenne, St-Denis 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 600–1 800 € Paris / 400–800 € province | Élevée | Idéal 1ère installation. Chercher via SeLoger, LeBonCoin, PAP.fr, Facebook Marketplace 🤝 Colocation | 300–700 €/mois chambre | Très haute | Option la plus économique. Réseau diaspora africaine r`,
     rawText: `La France, 2ème économie d'Europe, est la destination Schengen la plus accessible pour les Camerounais grâce à la langue commune, l'ambassade directe à Yaoundé et les liens historiques. Avec 350 000 postes vacants non pourvus et une liste de 185 métiers en tension (exemptés d'opposabilité de l'emploi), la France est l'une des destinations les plus ouvertes aux travailleurs non-UE qualifiés.
 350 000 postes vacants non pourvus en 2026 — pénurie structurelle dans santé, BTP, transport, IT, hôtellerie.
@@ -6497,11 +6497,11 @@ La France utilise un système d'autorisation de travail délivrée par la DREETS
 France présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en France. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇫🇷 FRANCE
 Visa Travail · 350 000 Postes · 185 Métiers en Tension · EU Blue Card · DOM-TOM
 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en France ? Marché & Chiffres Clés
 🌍 | Pour les 185 métiers en tension, l'employeur N'A PAS besoin de prouver l'absence de candidat local — ce qui réduit le délai d'autorisation à 30–45 jours. Vérifiez votre métier sur travail-emploi.gouv.fr. C'est la procédure la plus avantageuse du système français.
 02  —  Système de Permis de Travail en France
@@ -6520,7 +6520,7 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     procedureSteps: `gions & Hébergement 05 — Procédure Complète — 8 Étapes Détaillées 06 — Opportunités Spécifiques pour les Camerounais 07 — Budget Détaillé — À partir de 2 600 000 FCFA (Hors Vol) 08 — Modalités de Paiement — 3 Options Flexibles 09 — Motifs de Refus Fréquents & Solutions 3M Travel 10 — Contacts, Ambassade & Consultation Gratuite "Votre mobilite, notre expertise. Votre reussite, notre mission." Economie | 1er PIB/habitant d'Afrique Centrale. Petrole + manganese + foret. Libreville hub regional. Pos`,
     eligibilityConditions: `cessible. Type de permis | Durée | Offre emploi | Conditions 📋 Carte de Sejour Travailleur | 1 an renouv. | Contrat de travail | Casier judiciaire + diplomes + passeport + photos. Renouvellement annuel. 🌟 Permis Travail Qualifie | 2 ans renouv. | Offre emploi | Diplome superieur + experience. Secteurs mines, BTP, sante, enseignement. 👶 Regroupement Familial | 1 an renouv. | Non (conjoint) | Apres 1 an de residence legale. Conjoint autorise a travailler. Secteur | Postes/an | Salaire brut | Permi`,
     practicalTips: `65 000 FCFA | Oui | Signature mandat. Attribution conseiller dedie. Constitution dossier | Inclus | Oui | CV, lettre motivation, mise en conformite. Frais visa Gabon a Yaounde | ≈ 60 000 XAF / 55 000 F | Oui | Payables a l'ambassade Gabon a Yaounde. Traduction documents (si requis) | 20 000–60 000 F | Selon | Si documents en langue etrangere. Carte de sejour (apres arrivee) | ≈ 100 000 XAF | Oui |`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
@@ -6565,7 +6565,7 @@ Région/Ville | Secteur phare | Salaire moyen | Loyer studio | Coût vie/mois | 
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇭🇺 HONGRIE Visa Travail · BMW Debrecen · Mercedes Kecskemét · Samsung SDI · White Card 2023 · IT Budapest Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel po`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇭🇺 HONGRIE Visa Travail · BMW Debrecen · Mercedes Kecskemét · Samsung SDI · White Card 2023 · IT Budapest Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel po`,
     sectors: `ailleurs — recrutement non-UE actif dans tous les secteurs industriels. Budapest = architecture baroque unique, lac Balaton, gastronomie — qualité de vie réelle. La Hongrie utilise la White Card (Fehér kártya, 2023) comme titre principal pour qualifiés non-UE. Procédure accélérée, conditions simplif`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `ix très accessible. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
@@ -6583,11 +6583,11 @@ La Hongrie utilise la White Card (Fehér kártya, 2023) comme titre principal po
 Hongrie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Hongrie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇭🇺 HONGRIE
 Visa Travail · BMW Debrecen · Mercedes Kecskemét · Samsung SDI · White Card 2023 · IT Budapest
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Hongrie ? Marché & Chiffres Clés
 🌍 | La Hongrie a lancé la White Card (Fehér kártya) en 2023 — permis simplifié 30-60 jours, sans test marché pour secteurs en pénurie (automobile, électronique, IT, santé). L'employeur dépose en ligne. BMW, Mercedes et Samsung recrutent activement en Afrique. 3M Travel coordonne les candidatures directes avec ces employeurs.
 02  —  Système de Permis de Travail en Hongrie
@@ -6605,7 +6605,7 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     procedureSteps: `gions & Hébergement 05 — Procédure Complète — 8 Étapes Détaillées 06 — Opportunités Spécifiques pour les Camerounais 07 — Budget Détaillé — À partir de 2 600 000 FCFA (Hors Vol) 08 — Modalités de Paiement — 3 Options Flexibles 09 — Motifs de Refus Fréquents & Solutions 3M Travel 10 — Contacts, Ambassade & Consultation Gratuite "Votre mobilite, notre expertise. Votre reussite, notre mission." Economie | 3ème PIB/habitant de l'UE. Hub tech europeen (Google, Meta, Apple, Microsoft) Postes vacants 2`,
     eligibilityConditions: `codifiée Type de permis | Durée | Offre emploi | Conditions 🌟 Critical Skills Permit | 2 ans renouv. | Offre emploi | Diplome Bac+3 + salaire ≥ 32 000 EUR/an. Métiers penurie. Famille incluse. RP apres 2 ans. 📋 General Employment Permit | 2 ans renouv. | Obligatoire | Pour postes standard. Salaire min 30 000 EUR/an. Liste metiers autorises. 🔵 Stamp 4 (Residence Perm.) | Illimité | Non | Apres 5 ans. Acces total marche travail irlandais + UE. Secteur | Postes/an | Salaire brut | Permis | Atout Ca`,
     practicalTips: `65 000 FCFA | Oui | Signature mandat. Attribution conseiller dedie. Constitution dossier complet | Inclus | Oui | CV anglais, lettre motivation, mise en conformite. Frais consulaires visa | ≈ 100 EUR / 65 000 F | Oui | Frais ambassade. Payables sur place. Traduction assermentee diplomes | 40 000–100 000 F | Oui | Traducteur certifie anglais. Test IELTS (si requis) | 67 000 F | Selon | Niveau 6.0 m`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
@@ -6651,11 +6651,11 @@ Région/Ville | Secteur phare | Salaire moyen | Loyer studio | Coût vie/mois | 
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 600 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇮🇸 ISLANDE Visa Travail · Géothermie Unique · Pêche · Tourisme Aurora · Tech Reykjavik · Salaires Très Élevés Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officie`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇮🇸 ISLANDE Visa Travail · Géothermie Unique · Pêche · Tourisme Aurora · Tech Reykjavik · Salaires Très Élevés Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officie`,
     sectors: `permanent de travailleurs étrangers dans tous les secteurs. Salaire minimum parmi les plus élevés EU/EEE : 390 000 ISK/mois (≈ 2 600 €) — secteurs qualifiés : 500 000–900 000 ISK. 100% énergie renouvelable — géothermie + hydroélectrique — leader mondial énergie verte. Tourisme en explosion : 2 milli`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `rable à la Norvège. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇮🇸 ISLANDE Visa Travail · Géothermie Unique · Pêche · Tourisme Aurora · Tech Reykjavik · Salaires Très Élevés Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Islande ? Marché & Chiffres`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇮🇸 ISLANDE Visa Travail · Géothermie Unique · Pêche · Tourisme Aurora · Tech Reykjavik · Salaires Très Élevés Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Islande ? Marché & Chiffres`,
     practicalTips: `staðir, Neskaupstaður 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 700–1 500 € Reykjavik / 500–1 000 € régions | Élevée | Idéal 1ère installation. Chercher via leiga.is, mbl.is/fasteignir, Facebook Marketplace Ísland 🤝 Colocation | 400–800 €/mois chambre | Très haute | Option la plus économique. Réseau diaspor`,
     rawText: `L'Islande, pays insulaire de 370 000 habitants situé entre l'Atlantique Nord et l'Arctique, est l'un des endroits les plus singuliers et fascinants du monde. Géothermie, aurores boréales, aurores polaires, volcans, glaciers — et l'une des économies les plus saines et prospères du monde. Hors UE mais dans l'espace Schengen (accord EEE), l'Islande offre des salaires parmi les plus élevés d'Europe avec un besoin structurel permanent de travailleurs étrangers dans tous les secteurs.
 Salaire minimum parmi les plus élevés EU/EEE : 390 000 ISK/mois (≈ 2 600 €) — secteurs qualifiés : 500 000–900 000 ISK.
@@ -6669,11 +6669,11 @@ L'Islande utilise le permis de résidence pour emploi, délivré par Útlendinga
 Islande présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Islande. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇮🇸 ISLANDE
 Visa Travail · Géothermie Unique · Pêche · Tourisme Aurora · Tech Reykjavik · Salaires Très Élevés
 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Islande ? Marché & Chiffres Clés
 🌍 | L'Islande est hors UE mais dans l'espace Schengen/EEE. La procédure est gérée par la Direction des Migrations (Útlendingastofnun / UTL). Travailler en Islande = accès libre à tout l'espace Schengen. Les salaires islandais sont parmi les plus élevés d'Europe avec un système de syndicats puissants garantissant des conditions équitables.
 02  —  Système de Permis de Travail en Islande
@@ -6720,7 +6720,7 @@ Le budget de 3 000 000 FCFA couvre l'intégralité de votre procédure visa trav
     procedureSteps: `gions & Hébergement 05 — Procédure Complète — 8 Étapes Détaillées 06 — Opportunités Spécifiques pour les Camerounais 07 — Budget Détaillé — À partir de 2 600 000 FCFA (Hors Vol) 08 — Modalités de Paiement — 3 Options Flexibles 09 — Motifs de Refus Fréquents & Solutions 3M Travel 10 — Contacts, Ambassade & Consultation Gratuite "Votre mobilite, notre expertise. Votre reussite, notre mission." Economie | 1ere economie d'Afrique de l'Est. Nairobi = hub regional tech, finance, ONG, aviation. Postes `,
     eligibilityConditions: `africain. Type de permis | Durée | Offre emploi | Conditions 📋 Class G — Emploi | 2 ans renouv. | Contrat emploi | Pour employe specifique. Demande employeur. Delai 60-90 jours. 🌟 Class I — Investisseur | 3 ans renouv. | Business plan | Capital min 100 000 USD. Liberte totale marche travail. 🔬 Special Pass | 3 mois | Contrat | Pour missions courtes. Renouvelable max 6 mois. 🔵 Permanent Residence | Illimite | Non | Apres 7 ans residence legale continue. Secteur | Postes/an | Salaire brut | Permis`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
@@ -6767,11 +6767,11 @@ Région/Ville | Secteur phare | Salaire moyen | Loyer studio | Coût vie/mois | 
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `700 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇻 LETTONIE Visa Travail · IT Riga · Logistique · Santé · e-Latvia · Hub Baltic Tech · Coût de Vie Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour `,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇻 LETTONIE Visa Travail · IT Riga · Logistique · Santé · e-Latvia · Hub Baltic Tech · Coût de Vie Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour `,
     sectors: `mondial digitalisation. SMIC 700 €/mois (2026) — secteurs IT : 2 000–4 500 € — croissance salariale la plus rapide EU. Coût de vie ultra-accessible : Riga 60% moins chère que Paris — pouvoir d'achat exceptionnel. Pénurie de main-d'œuvre dans IT, santé, BTP, logistique — immigration non-UE activement`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `t de vie ultra-bas. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇻 LETTONIE Visa Travail · IT Riga · Logistique · Santé · e-Latvia · Hub Baltic Tech · Coût de Vie Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Lettonie ? Marché & Chiffres Clés `,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇻 LETTONIE Visa Travail · IT Riga · Logistique · Santé · e-Latvia · Hub Baltic Tech · Coût de Vie Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Lettonie ? Marché & Chiffres Clés `,
     practicalTips: `gava, Valmiera, Cēsis 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 350–800 € Riga / 150–400 € régions / 100–300 € rural | Élevée | Idéal 1ère installation. Chercher via ss.lv, city24.lv, Facebook Marketplace Latvija 🤝 Colocation | 150–350 €/mois chambre | Très haute | Option la plus économique. Réseau diaspora`,
     rawText: `La Lettonie, pays balte de 1,9 million d'habitants, est un hub technologique en plein essor avec un gouvernement pleinement digitalisé (e-Latvia). Riga, la capitale, est la plus grande ville des pays baltes et abrite un écosystème tech dynamique : Evolution Gaming (leader mondial jeux en direct), Printful (impression personnalisée, 1 milliard $), Tele2, Latvenergo. Coût de vie parmi les plus bas de l'EU avec des salaires en forte croissance et un accès direct au marché Schengen.
 Hub tech balte : Evolution Gaming (leader mondial live casino), Printful, Accenture Riga, Tele2.
@@ -6785,11 +6785,11 @@ La Lettonie utilise le D Visa (visa national long séjour) suivi de l'Uzturēša
 Lettonie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Lettonie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇱🇻 LETTONIE
 Visa Travail · IT Riga · Logistique · Santé · e-Latvia · Hub Baltic Tech · Coût de Vie Bas
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Lettonie ? Marché & Chiffres Clés
 🌍 | La Lettonie a simplifié ses procédures pour travailleurs qualifiés non-UE depuis 2022. Le permis de résidence temporaire pour emploi (D visa + Uzturēšanās atļauja) est traité en 30-60 jours. Pour les secteurs en pénurie, la procédure est accélérée. 3M Travel coordonne les placements avec des entreprises tech lettonnes.
 02  —  Système de Permis de Travail en Lettonie
@@ -6801,11 +6801,11 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `15 000 CHF/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇮 LIECHTENSTEIN Visa Travail · Finance & Gestion Patrimoine · Industrie Fine · Salaires Hors Norme · Entre Suisse et Autriche Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇮 LIECHTENSTEIN Visa Travail · Finance & Gestion Patrimoine · Industrie Fine · Salaires Hors Norme · Entre Suisse et Autriche Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible`,
     sectors: `importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement. Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Liechtenstein. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs. Le budge`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `moins cher que LI). 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇮 LIECHTENSTEIN Visa Travail · Finance & Gestion Patrimoine · Industrie Fine · Salaires Hors Norme · Entre Suisse et Autriche Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Liechtenst`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇮 LIECHTENSTEIN Visa Travail · Finance & Gestion Patrimoine · Industrie Fine · Salaires Hors Norme · Entre Suisse et Autriche Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Liechtenst`,
     practicalTips: `Sargans, Feldkirch AT 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 1 200–2 500 € Vaduz / 800–1 600 € Suisse frontalière / 700–1 400 € Autriche frontalière | Élevée | Idéal 1ère installation. Chercher via immoscout24.ch (Buchs SG), willhaben.at (Feldkirch), liechtenstein.immoscout.li 🤝 Colocation | 500–900 €/mo`,
     rawText: `La Principauté de Liechtenstein, micro-État de 39 000 habitants coincé entre la Suisse et l'Autriche, est l'un des pays les plus riches et les plus industrialisés du monde par habitant. 2ème producteur mondial de saucisses (Hilti), leader mondial en prothèses dentaires (Ivoclar), foyers industriels de précision et plus grande concentration de sociétés holding d'Europe — le PIB par habitant du Liechtenstein est le plus élevé du monde.
 PIB par habitant le plus élevé du MONDE : 200 000 $/an — 3x supérieur à la Suisse.
@@ -6819,11 +6819,11 @@ Le Liechtenstein utilise un système de quotas annuels (Kontingente) extrêmemen
 Liechtenstein présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Liechtenstein. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇱🇮 LIECHTENSTEIN
 Visa Travail · Finance & Gestion Patrimoine · Industrie Fine · Salaires Hors Norme · Entre Suisse et Autriche
 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Liechtenstein ? Marché & Chiffres Clés
 🌍 | Le Liechtenstein est l'un des pays les plus difficiles d'accès au monde pour les travailleurs non-UE, mais aussi l'un des mieux rémunérés. Les quotas de permis sont très stricts. Cependant, des opportunités existent via les multinationales comme Hilti et Ivoclar qui recrutent des ingénieurs et techniciens qualifiés. 3M Travel accompagne les profils hautement qualifiés.
 02  —  Système de Permis de Travail en Liechtenstein
@@ -6834,11 +6834,11 @@ Type de permis | Durée | Offre emploi | Condition`,
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `924 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇹 LITUANIE Visa Travail · IT Vilnius Hub · Revolut · Vinted · Industrie · Santé · Pays Balte le Plus Grand Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel `,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇹 LITUANIE Visa Travail · IT Vilnius Hub · Revolut · Vinted · Industrie · Santé · Pays Balte le Plus Grand Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel `,
     sectors: `-20% par an depuis 2020. SMIC 924 €/mois (2026) — secteurs IT : 2 000–5 000 € — fintech : 3 000–7 000 €. Coût de vie très accessible : Vilnius 60% moins chère que Paris — pouvoir d'achat exceptionnel. Start-up Act 2024 : simplification procédures pour fondateurs et travailleurs tech non-UE. Industri`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `lle est-européenne. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇹 LITUANIE Visa Travail · IT Vilnius Hub · Revolut · Vinted · Industrie · Santé · Pays Balte le Plus Grand Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Lituanie ? Marché & Chiffres `,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇱🇹 LITUANIE Visa Travail · IT Vilnius Hub · Revolut · Vinted · Industrie · Santé · Pays Balte le Plus Grand Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Lituanie ? Marché & Chiffres `,
     practicalTips: `ai, Panevėžys, Alytus 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 350–800 € Vilnius / 250–600 € Kaunas / 200–500 € Klaipėda | Élevée | Idéal 1ère installation. Chercher via aruodas.lt, domoplius.lt, skelbiu.lt, Facebook Marketplace Lietuva 🤝 Colocation | 150–350 €/mois chambre | Très haute | Option la plus éc`,
     rawText: `La Lituanie, plus grand pays balte avec 3 millions d'habitants, abrite un écosystème tech parmi les plus dynamiques d'Europe : Revolut (néobanque n°1 EU, 8 milliards $) a son siège tech à Vilnius, Vinted (marketplace mode, 5 milliards $) est lituanien, et Vilnius est reconnue comme l'une des capitales du fintech et de la cybersécurité européenne. La Lituanie a l'un des taux de croissance salariale les plus élevés de l'UE.
 Vilnius = hub fintech EU : Revolut HQ tech (8 Md$), Vinted HQ (5 Md$), Nord Security, Tesonet.
@@ -6852,11 +6852,11 @@ La Lituanie utilise un permis de résidence temporaire pour emploi (Leidimas lai
 Lituanie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Lituanie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇱🇹 LITUANIE
 Visa Travail · IT Vilnius Hub · Revolut · Vinted · Industrie · Santé · Pays Balte le Plus Grand
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Lituanie ? Marché & Chiffres Clés
 🌍 | La Lituanie est devenue LA destination pour les profils fintech en Europe. Revolut, la néobanque n°1 EU, a installé son siège technique à Vilnius. Vinted, la plateforme de mode n°1, est fondée et gérée depuis Vilnius. Avec une Startup Act facilitant les permis pour talents non-UE, la Lituanie est une opportunité réelle pour les développeurs et ingénieurs camerounais.
 02  —  Système de Permis de Travail en Lituanie
@@ -6880,7 +6880,7 @@ Montan`,
     procedureSteps: `t de plusieurs mois) 03 VUE D'ENSEMBLE — LES 8 ÉTAPES DE LA PROCÉDURE # Étape Description 01 Analyse de profil Évaluation gratuite de votre éligibilité. Aucune transmission sans votre accord. Responsable 3M Travel & Services 02 Transmission du Mise en relation avec notre réseau de recruteurs certifiés au Luxembourg. 3M Travel & Services dossier 03 Identification d'un poste Recherche active d'un employeur. Vous validez l'offre avant tout engagement. Partenaires recruteurs 3M Travel & Services SAR`,
     eligibilityConditions: `une transparence totale à chaque étape. Élément Éligibilité Détail Analyse gratuite, confidentielle et sans engagement. Aucune transmission de dossier sans accord explicite. Secteurs couverts BTP, Hôtellerie/Restauration, Santé & Aide à la personne, Logistique & Transport, IT & Ingénierie. Dossier requis CV détaillé (FR/EN), copies de diplômes, certificats de travail, passeport valide, casier judiciaire Bulletin n°3 (moins de 3 mois). Notre engagement Un conseiller dédié vous informe à chaque ét`,
     practicalTips: `etin n°3 (moins de 3 mois). Notre engagement Un conseiller dédié vous informe à chaque étape clé de l'avancement de votre dossier. Représentation consulaire CONFIRMÉ : Ambassade de Belgique à Yaoundé, Rue Mvolyé — représentation consulaire officielle du Luxembourg au Cameroun pour le visa D. 02 ALERTE OFFICIELLE — ARNAQUES CONFIRMÉES L'ADEM a publiquement confirmé l'existence d'un réseau de fraude`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
@@ -6987,7 +6987,7 @@ engagement.
 
 Partenaires recruteurs
 
-3M Travel & Services SARL — Procédure Visa de Travail Luxembourg 2026 — Page 1
+3M Travel Agency SARL — Procédure Visa de Travail Luxembourg 2026 — Page 1
 
 #
 
@@ -7006,7 +7006,7 @@ Descri`,
     procedureSteps: `gions & Hébergement 05 — Procédure Complète — 8 Étapes Détaillées 06 — Opportunités Spécifiques pour les Camerounais 07 — Budget Détaillé — À partir de 2 600 000 FCFA (Hors Vol) 08 — Modalités de Paiement — 3 Options Flexibles 09 — Motifs de Refus Fréquents & Solutions 3M Travel 10 — Contacts, Ambassade & Consultation Gratuite "Votre mobilite, notre expertise. Votre reussite, notre mission." Economie | 35ème economie mondiale. Hub tech et manufacturing Asie du Sud-Est. Kuala Lumpur = hub regiona`,
     eligibilityConditions: `AirAsia). Type de permis | Durée | Offre emploi | Conditions 🌟 Employment Pass Cat. 1 | 5 ans renouv. | Offre emploi | Salaire ≥ MYR 10 000/mois. Profils hautement qualifies. 📋 Employment Pass Cat. 2 | 2 ans renouv. | Offre emploi | Salaire MYR 5 000–9 999/mois. Diplome Bac+3. 📄 Employment Pass Cat. 3 | 12 mois renouv. | Contrat | Salaire MYR 3 000–4 999/mois. Competences specifiques. 🔵 Resident Pass (Long term) | 5 ans renouv. | Non | Apres 3 ans employment pass. Liberte emploi totale. Secteur `,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
@@ -7053,11 +7053,11 @@ Région/Ville | Secteur phare | Salaire moyen | Loyer studio | Coût vie/mois | 
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `34 000 € (2026) — croissan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇲🇹 MALTE Visa Travail · Hub Fintech & Gaming · Anglais Officiel · Soleil · iGaming Capital Monde Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressor`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇲🇹 MALTE Visa Travail · Hub Fintech & Gaming · Anglais Officiel · Soleil · iGaming Capital Monde Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressor`,
     sectors: `un programme spécifique pour les travailleurs des secteurs en pénurie. Malte présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement. Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la p`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `ec ferry quotidien. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇲🇹 MALTE Visa Travail · Hub Fintech & Gaming · Anglais Officiel · Soleil · iGaming Capital Monde Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Malte ? Marché & Chiffres Clés 🌍 | Malte`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇲🇹 MALTE Visa Travail · Hub Fintech & Gaming · Anglais Officiel · Soleil · iGaming Capital Monde Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Malte ? Marché & Chiffres Clés 🌍 | Malte`,
     practicalTips: `ia (Gozo), Marsalforn 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 600–1 200 € Sliema / 450–900 € intérieur / 350–700 € Gozo | Élevée | Idéal 1ère installation. Chercher via maltapark.com, classifieds.timesofmalta.com, Facebook Marketplace Malta 🤝 Colocation | 250–500 €/mois chambre | Très haute | Option la pl`,
     rawText: `Malte, micro-île de 500 000 habitants au cœur de la Méditerranée, est la capitale mondiale du iGaming (jeux en ligne) et un hub fintech/crypto de première importance. ANGLAIS est langue officielle — aucun test de langue requis pour travailleurs anglophones. Avec 300 jours de soleil par an, une position stratégique entre Europe et Afrique, et une économie en croissance de 5%/an, Malte est une destination idéale pour les Camerounais anglophones.
 L'anglais est langue OFFICIELLE de Malte — aucun test de langue requis pour travailleurs anglophones.
@@ -7071,11 +7071,11 @@ Malte utilise le permis de résidence et de travail combiné, délivré par Iden
 Malte présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Malte. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇲🇹 MALTE
 Visa Travail · Hub Fintech & Gaming · Anglais Officiel · Soleil · iGaming Capital Monde
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Malte ? Marché & Chiffres Clés
 🌍 | Malte est LE pays EU idéal pour les Camerounais anglophones. L'anglais est obligatoire dans TOUS les secteurs. Aucun test de langue requis. La diaspora africaine est présente et établie. Les entreprises iGaming recrutent des agents de service client multilingues (français + anglais = profil ultra-rare et bien payé).
 02  —  Système de Permis de Travail en Malte
@@ -7100,7 +7100,7 @@ Visa Travail · Finan`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `4 semaines. Type de permis Durée Offre emploi Conditions & Avantages ⭐ Occupation Permit Professional 3 ans renouv. Oui (employeur) Salaire ≥ MUR 60 000/mois. Très accessible. PR après 3 ans. OP Investor Premium Visa Student + Work 3 ans renouv. Non (invest.) Investissement ≥ USD 50 000. Créer/acquérir société. PR après 3 ans. 1 an renouv. Non (revenus passifs) Retraités et télétravailleurs. Revenus ≥ USD 1 500/mois. 1 an renouv. Non (études) Étudier + travailler 20h/semaine légalement. Permanen`,
     practicalTips: `ancophones connaissant marché africain. 3M Travel conseille Maurice comme destination de transition ou comme base entrepreneuriale vers Afrique et Asie. 02 — SYSTÈME DE PERMIS DE TRAVAIL EN MAURICE Maurice utilise l'Occupation Permit (OP) comme titre combiné travail + résidence. 3 catégories : Professional (salarié), Investor (entrepreneur), Self-Employed. L'EDB (Economic Development Board) traite`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail Maurice • Opportunités Africaines • À partir de 2 200 000 FCFA
 
 VISA TRAVAIL
@@ -7111,7 +7111,7 @@ VISA DE TRAVAIL MAURICE
 Visa Travail · Finance Offshore · IT Ebène · Tourisme 5* · Bilingue FR/EN
 
 Budget à partir de 2 200 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN MAURICE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -7204,14 +7204,14 @@ n Salaire moyen
     procedureSteps: `lètes · Secteurs porteurs · Permis de travail · 8 étapes détaillées · Budget & Options de paiement n ÉNERGIE Pétrole offshore n PÊCHE 1er exportateur mondial nn BTP Infrastructure n SANTÉ Médecins & infirmiers n TECH & IT Innovation digitale Honoraires à partir de 2 000 000 FCFA • Ouverture dossier : 65 000 FCFA • +237 698 104 832 • hello@3mtravelagency.com 01 nn POURQUOI CHOISIR LA NORVÈGE ? La Norvège est l'un des pays les plus riches du monde grâce à ses réserves pétrolières et gazières en me`,
     eligibilityConditions: `cations logement, déductions). 04 CONDITIONS D'ÉLIGIBILITÉ — SKILLED WORKER PERMIT Condition requise Exigence officielle UDI 2026 Conseil 3M Travel Offre d'emploi concrète OBLIGATOIRE — contrat signé + salaire ‡ 487 200 NOK/an 3M Travel met en relation avec employeurs vérifiés Qualification reconnue Diplôme Bac+3 minimum OU qualification professionnelle équivalente 3M Travel coordonne la reconnaissance via NOKUT Salaire minimum 487 200 NOK/an brut (»42 000 EUR) — revalorisé chaque mai Le contrat`,
     practicalTips: `Condition requise Exigence officielle UDI 2026 Conseil 3M Travel Offre d'emploi concrète OBLIGATOIRE — contrat signé + salaire ‡ 487 200 NOK/an 3M Travel met en relation avec employeurs vérifiés Qualification reconnue Diplôme Bac+3 minimum OU qualification professionnelle équivalente 3M Travel coordonne la reconnaissance via NOKUT Salaire minimum 487 200 NOK/an brut (»42 000 EUR) — revalorisé chaq`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 
 nn NORVÈGE • Visa Travail —
 Guide PRO 2026
 
 nn
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567 • NIU : M112417203369H
 
@@ -7334,7 +7334,7 @@ NOUVELLE-ZÉLAN`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `aisonniers. Type de permis Durée Offre emploi Conditions & Avantages Skilled Migrant Resident PR directe Non (points) Points ≥ 160. PR directe. Délai 3-6 mois. Voie principale qualifiés. ⚡ Accredited Employer Work Visa 1-3 ans Oui (employeur accrédité) Employeur accrédité Immigration NZ. Pas de quota. Rapide. RSE Seasonal Work Visa 7 mois max Oui (saisonnier) Horticulture, viticulture. Très accessible. 1ère étape recommandée. Post Study Work Visa 1-3 ans Non (diplôme NZ) Après études NZ. Passere`,
     practicalTips: `enheim, Napier, Nelson 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé NZD 1 500–3 000/mois Auckland / NZD 900– 1 800 autres villes Élevée Idéal 1ère installation. Chercher via TradeMe.co.nz, Realestate.co.nz, Flatmates.co.nz Colocation NZD 500–900/mois chambre Très haute Option la plus économique. Réseau diaspora africain`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Nouvelle-Zélande • Opportunités Africaines • À partir de 2 800 000 FCFA
@@ -7349,7 +7349,7 @@ NOUVELLE-ZÉLANDE
 Visa Travail · Skilled Migrant · IT Auckland · Horticulture · Accord Trans-Tasman
 
 Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN NOUVELLE-ZÉLANDE ? MARCHÉ & CHIFFRES CLÉS
 
@@ -7425,7 +7425,7 @@ Après Skilled Migrant ou résidence légale.
 Offre emploi = 50 points en une seule décision. Qualification reconnue NZQA = 50 points supplémentaires. Expérience 3+ ans = 30 pts.
 Âge 20-39 = 30 pts. Seuil invitation : environ 160 points. 3M Travel analyse votre profil et maximise le score avant EOI.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Nouvelle-Zélande • Opportunités Africaines • À partir de 2 800 000 FCFA
@@ -7440,11 +7440,11 @@ Guide complet 2026
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `4 300 PLN/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇱 POLOGNE Visa Travail · IT Varsovie · BTP · Logistique · Coût Très Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇱 POLOGNE Visa Travail · IT Varsovie · BTP · Logistique · Coût Très Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3`,
     sectors: `ue parmi les plus soutenues du continent. Avec un secteur IT en plein essor (Varsovie est le hub tech de l'Europe centrale), un BTP en expansion constante et un coût de vie parmi les plus accessibles de l'UE, la Pologne est une destination stratégique pour les travailleurs camerounais qualifiés. 6èm`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `ités industrielles. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇱 POLOGNE Visa Travail · IT Varsovie · BTP · Logistique · Coût Très Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Pologne ? Marché & Chiffres Clés 🌍 | La Pologne a le plus grand `,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇱 POLOGNE Visa Travail · IT Varsovie · BTP · Logistique · Coût Très Bas Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Pologne ? Marché & Chiffres Clés 🌍 | La Pologne a le plus grand `,
     practicalTips: `n, Rzeszów, Białystok 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 400–900 € Varsovie / 350–750 € Cracovie / 200–450 € Est | Élevée | Idéal 1ère installation. Chercher via OtoDOM.pl, Gratka.pl, Olx.pl, Facebook Marketplace Polska 🤝 Colocation | 150–400 €/mois chambre | Très haute | Option la plus économique. R`,
     rawText: `La Pologne, 6ème économie de l'UE et marché le plus dynamique d'Europe centrale, connaît une croissance économique parmi les plus soutenues du continent. Avec un secteur IT en plein essor (Varsovie est le hub tech de l'Europe centrale), un BTP en expansion constante et un coût de vie parmi les plus accessibles de l'UE, la Pologne est une destination stratégique pour les travailleurs camerounais qualifiés.
 6ème économie UE — PIB en croissance de 4%/an — marché dynamique.
@@ -7458,11 +7458,11 @@ La Pologne utilise le système Zezwolenie na pracę (permis de travail) délivr�
 Pologne présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Pologne. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇵🇱 POLOGNE
 Visa Travail · IT Varsovie · BTP · Logistique · Coût Très Bas
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Pologne ? Marché & Chiffres Clés
 🌍 | La Pologne a le plus grand déficit de main-d'œuvre de toute l'UE. Après avoir accueilli les travailleurs ukrainiens, le pays ouvre maintenant ses portes aux travailleurs africains qualifiés. 3M Travel dispose de partenaires employeurs vérifiés en Pologne.
 02  —  Système de Permis de Travail en Pologne
@@ -7477,11 +7477,11 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `3 040 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇹 PORTUGAL Visa Travail · Tech Visa 10 Jours · Web Summit · Tourisme · Agriculture · Digital Nomad Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour res`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇹 PORTUGAL Visa Travail · Tech Visa 10 Jours · Web Summit · Tourisme · Agriculture · Digital Nomad Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour res`,
     sectors: `importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement. Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Portugal. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs. Le budget var`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `logistique majeur. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette p`,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇹 PORTUGAL Visa Travail · Tech Visa 10 Jours · Web Summit · Tourisme · Agriculture · Digital Nomad Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Portugal ? Marché & Chiffres Clés 🌍 |`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇵🇹 PORTUGAL Visa Travail · Tech Visa 10 Jours · Web Summit · Tourisme · Agriculture · Digital Nomad Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Portugal ? Marché & Chiffres Clés 🌍 |`,
     practicalTips: `unchal, Ponta Delgada 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 600–1 400 € Lisbonne / 400–900 € Porto / 300–600 € Alentejo | Élevée | Idéal 1ère installation. Chercher via Idealista.pt, OLX.pt, CustoJusto.pt, Facebook Marketplace Portugal 🤝 Colocation | 200–500 €/mois chambre | Très haute | Option la plus `,
     rawText: `Le Portugal, élu 7 fois meilleure destination touristique d'Europe, est en plein essor économique. Hub tech (Web Summit à Lisbonne), porte d'entrée vers la Lusophonie (Angola, Mozambique, Brésil, Cap-Vert) et destination avec le coût de vie le plus accessible d'Europe occidentale — le Portugal est une destination stratégique et souvent sous-estimée par les Camerounais. Le Tech Visa (10 jours seulement) est l'une des procédures les plus rapides du monde.
 7 fois meilleure destination touristique d'Europe — Lisbonne, Porto, Algarve attirent le monde entier.
@@ -7495,11 +7495,11 @@ Le Portugal utilise le système d'Autorização de Residência para Trabalho dé
 Portugal présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Portugal. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇵🇹 PORTUGAL
 Visa Travail · Tech Visa 10 Jours · Web Summit · Tourisme · Agriculture · Digital Nomad
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Portugal ? Marché & Chiffres Clés
 🌍 | Le Portugal a l'un des taux d'acceptation visa les plus favorables Schengen pour les Camerounais. La procédure est réputée plus souple que la France ou l'Allemagne. TAP Air Portugal opère des vols directs Lisbonne-Douala/Yaoundé — connexion Afrique-Europe directe et abordable.
 02  —  Système de Permis de Travail en Portugal
@@ -7526,7 +7526,7 @@ Visa Travail · 0% Impôt · QatarEnergy · San`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
     eligibilityConditions: `ériquement. Type de permis Durée Offre emploi Conditions & Avantages ⭐ Work Permit + QRP Golden Card Qatar Free Zone QFZA 1-3 ans renouv. Oui (sponsor) Qatar Residence Permit. Sponsor employeur. QID délivré à l'arrivée. 5-10 ans 3-5 ans Non (talents) Talent exceptionnel ou investissement. Indépendant employeur. Oui (entreprise) Qatar Free Zones. Tech et industries avancées. Accéléré. Visa académique Durée contrat Oui (université) Éducation City. Georgetown, Cornell. Chercheurs. Projet / Saisonni`,
     practicalTips: `u pays libre, recours légaux améliorés. 3M Travel conseille de vérifier TOUS les termes contractuels avant départ et de conserver copies de tous documents au Cameroun. 02 — SYSTÈME DE PERMIS DE TRAVAIL EN QATAR Système MADLSA : employeur sponsor obtient permis travail, travailleur obtient QID (Qatar ID) à l'arrivée après visite médicale. Réforme 2021 facilite mobilité. LMRA gère les permis numériq`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Qatar • Opportunités Africaines • À partir de 2 600 000 FCFA
@@ -7541,7 +7541,7 @@ QATAR
 Visa Travail · 0% Impôt · QatarEnergy · Santé Hamad · IT Smart Qatar
 
 Budget à partir de 2 600 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN QATAR ? MARCHÉ & CHIFFRES CLÉS
 
@@ -7616,7 +7616,7 @@ BTP événementiel. Contrat défini. Extension possible.
 Contrats au Qatar : doivent être en arabe ET dans la langue du travailleur. TOUJOURS demander copie anglais/français. Salaire minimum
 QAR 1 000/mois + QAR 300 logement + QAR 200 alimentation si non fournis. 3M Travel vérifie tous contrats.
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Qatar • Opportunités Africaines • À partir de 2 600 000 FCFA
@@ -7631,11 +7631,11 @@ Guide complet 2026
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇷🇴 ROUMANIE Visa Travail · IT Bucarest/Cluj · Industrie Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Servic`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇷🇴 ROUMANIE Visa Travail · IT Bucarest/Cluj · Industrie Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Servic`,
     sectors: `e vie accessible avec salaires en hausse dans les secteurs qualifiés. Marché du travail dynamique — pénurie de main-d'œuvre dans secteurs qualifiés. IT et technologie en croissance — hub émergent Roumanie. Coût de vie très accessible en Europe — excellente pouvoir d'achat. Salaires compétitifs dans `,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `sser vers capitale. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇷🇴 ROUMANIE Visa Travail · IT Bucarest/Cluj · Industrie Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Roumanie ? Marché & Chiffres Clés 🌍 | Roumanie recrute activement les travailleur`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇷🇴 ROUMANIE Visa Travail · IT Bucarest/Cluj · Industrie Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Roumanie ? Marché & Chiffres Clés 🌍 | Roumanie recrute activement les travailleur`,
     practicalTips: `000 € | Zones rurales 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 400–900 € capitales / 200–500 € régions | Élevée | Idéal 1ère installation. Chercher via Portails locaux, Facebook Marketplace 🤝 Colocation | 150–400 €/mois chambre | Très haute | Option la plus économique. Réseau diaspora africaine recommandé.`,
     rawText: `Roumanie offre des opportunités de travail dans un environnement économique dynamique. Accès Schengen direct. Procédures modernisées depuis 2022. Coût de vie accessible avec salaires en hausse dans les secteurs qualifiés.
 Marché du travail dynamique — pénurie de main-d'œuvre dans secteurs qualifiés.
@@ -7649,11 +7649,11 @@ Permis de travail national avec résidence combinée. Processus d'approbation pa
 Roumanie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Roumanie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇷🇴 ROUMANIE
 Visa Travail · IT Bucarest/Cluj · Industrie
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Roumanie ? Marché & Chiffres Clés
 🌍 | Roumanie recrute activement les travailleurs qualifiés non-UE. Procédures simplifiées dans secteurs en pénurie.
 02  —  Système de Permis de Travail en Roumanie
@@ -7688,9 +7688,9 @@ Visa Travail · Skilled Worker · San`,
     sectors: `ute massivement des infirmiers et médecins, et le secteur IT britannique est en plein essor. ▸ Post-Brexit : nouveau système points-based = Camerounais à ÉGALITÉ avec Européens. ▸ NHS en crise : 110 000 postes vacants — infirmiers et médecins africains recrutés DIRECTEMENT. ▸ Londres = 1ère place fi`,
     requiredDocuments: `i estimé, budget ▸ prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre pro`,
     procedureSteps: `L Guide complet 2026 05 — PROCÉDURE COMPLÈTE — 8 ÉTAPES DÉTAILLÉES 01 Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. ▸ Identification du pays + secteur + type de permis optimal. Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité ▸ compétente. Délai anticipé dès cette p`,
-    eligibilityConditions: `l'employeur est obligatoire. 3M Travel vérifie l'éligibilité AVANT de commencer le processus. 3M TRAVEL & SERVICES SARL Immigration • Visa Travail Royaume-Uni • Opportunités Africaines • À partir de 2 800 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Permis Atout Camerounais Santé NHS — Infirmiers & Médecins IT & Développement — Tech Nation 110 000+/an 120 000+/an Finance & Banque (City / Canary Wharf) 50 000+/an `,
+    eligibilityConditions: `l'employeur est obligatoire. 3M Travel vérifie l'éligibilité AVANT de commencer le processus. 3M TRAVEL AGENCY SARL Immigration • Visa Travail Royaume-Uni • Opportunités Africaines • À partir de 2 800 000 FCFA VISA TRAVAIL Guide complet 2026 03 — SECTEURS EN TENSION & OPPORTUNITÉS PAR SECTEUR Secteur Postes/an Salaire brut/mois Permis Atout Camerounais Santé NHS — Infirmiers & Médecins IT & Développement — Tech Nation 110 000+/an 120 000+/an Finance & Banque (City / Canary Wharf) 50 000+/an `,
     practicalTips: `Galles, Yorkshire, NI 04B — TYPES DE LOGEMENT & CONSEILS HÉBERGEMENT Type de logement Coût mensuel Disponibilité Conseils pratiques Studio meublé £1 500–3 500/mois Londres / £600– 1 400 régions Élevée Idéal 1ère installation. Chercher via Rightmove.co.uk, Zoopla.co.uk, SpareRoom.co.uk, Gumtree.co.uk Colocation £500–900/mois chambre partagée Très haute Option la plus économique. Réseau diaspora afr`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Travail
 
 Royaume-Uni • Opportunités Africaines • À partir de 2 800 000 FCFA
@@ -7705,7 +7705,7 @@ ROYAUME-UNI
 Visa Travail · Skilled Worker · Santé NHS · IT Londres · Finance City · Post-Brexit
 
 Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI TRAVAILLER EN ROYAUME-UNI ? MARCHÉ & CHIFFRES CLÉS
 
@@ -7790,7 +7790,7 @@ Talent exceptionnel tech, arts, science. Approbati`,
     procedureSteps: `gions & Hébergement 05 — Procédure Complète — 8 Étapes Détaillées 06 — Opportunités Spécifiques pour les Camerounais 07 — Budget Détaillé — À partir de 2 600 000 FCFA (Hors Vol) 08 — Modalités de Paiement — 3 Options Flexibles 09 — Motifs de Refus Fréquents & Solutions 3M Travel 10 — Contacts, Ambassade & Consultation Gratuite "Votre mobilite, notre expertise. Votre reussite, notre mission." Economie | Pays le plus stable d'Afrique de l'Ouest. Croissance 6-8%/an. Dakar = hub financier CEDEAO. Pe`,
     eligibilityConditions: `Schengen. Type de permis | Durée | Offre emploi | Conditions 📋 Permis Travail Ordinaire | 1 an renouv. | Contrat emploi | Pour tout travailleur etranger. DTSS Dakar. Delai 4-8 semaines. 🌟 Permis Travail Qualifie | 2 ans renouv. | Offre emploi | Diplome Bac+3 + experience. Secteurs strategiques. 🤝 Permis CEDEAO | Facilite | Non | Ressortissants CEDEAO : procedure simplifiee. Cameroun = zone CEMAC non CEDEAO mais accordas bilateraux. Secteur | Postes/an | Salaire brut | Permis | Atout Camerounais `,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
@@ -7836,11 +7836,11 @@ Région/Ville | Secteur phare | Salaire moyen | Loyer studio | Coût vie/mois | 
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `750 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇰 SLOVAQUIE Visa Travail · N°1 Monde Automobile/Habitant · VW Bratislava · KIA Žilina · IT · Bratislava 1h Vienne Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document of`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇰 SLOVAQUIE Visa Travail · N°1 Monde Automobile/Habitant · VW Bratislava · KIA Žilina · IT · Bratislava 1h Vienne Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document of`,
     sectors: `BTP, santé, transport. SMIC à 750 €/mois (2026) — secteurs IT : 2 500–4 500 € — automobile : 1 200–2 500 €. AT&T, Dell, IBM, Accenture ont des centres de services à Bratislava — anglais 100%. Investissements EU massifs dans infrastructures slovaques — boom BTP et logistique. La Slovaquie utilise le `,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `nts internationaux. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇰 SLOVAQUIE Visa Travail · N°1 Monde Automobile/Habitant · VW Bratislava · KIA Žilina · IT · Bratislava 1h Vienne Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Slovaquie ? Marché & C`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇰 SLOVAQUIE Visa Travail · N°1 Monde Automobile/Habitant · VW Bratislava · KIA Žilina · IT · Bratislava 1h Vienne Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Slovaquie ? Marché & C`,
     practicalTips: `ý Mikuláš, Ružomberok 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 400–900 € Bratislava / 250–550 € villes moyennes / 200–450 € Est | Élevée | Idéal 1ère installation. Chercher via Reality.sk, Nehnutelnosti.sk, Bazos.sk, Facebook Marketplace Slovensko 🤝 Colocation | 150–380 €/mois chambre | Très haute | Option`,
     rawText: `La Slovaquie, petit pays de 5,5 millions d'habitants, est le plus grand producteur automobile par habitant au monde — Volkswagen, Kia, PSA (Stellantis) et Jaguar Land Rover y ont leurs usines principales. Bratislava est stratégiquement positionnée à 60 km de Vienne et 200 km de Budapest — accès simultané à trois marchés économiques. Coût de vie 50% inférieur à l'Autriche voisine avec des salaires en hausse constante.
 N°1 mondial production automobile par habitant : VW Bratislava, KIA Žilina, PSA Trnava, JLR Nitra.
@@ -7854,11 +7854,11 @@ La Slovaquie utilise le Povolenie na pobyt (permis de séjour temporaire) à des
 Slovaquie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Slovaquie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇸🇰 SLOVAQUIE
 Visa Travail · N°1 Monde Automobile/Habitant · VW Bratislava · KIA Žilina · IT · Bratislava 1h Vienne
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Slovaquie ? Marché & Chiffres Clés
 🌍 | La Slovaquie est particulièrement intéressante pour les profils techniques : le secteur automobile emploie 13% de la population active totale. La position de Bratislava est unique — à 60 km de Vienne, de nombreux Slovaques travaillent en Autriche et rentrent chaque soir. Vous pouvez faire l'inverse : travailler en Slovaquie et profiter du coût de vie ultra-accessible.
 02  —  Système de Permis de Travail en Slovaquie
@@ -7870,11 +7870,11 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `1 254 €/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇮 SLOVÉNIE Visa Travail · Ljubljana Hub Tech · Port Koper · Qualité de Vie Exceptionnelle · Gorenje · Revoz Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇮 SLOVÉNIE Visa Travail · Ljubljana Hub Tech · Port Koper · Qualité de Vie Exceptionnelle · Gorenje · Revoz Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel`,
     sectors: `habitants = pénurie de main-d'œuvre dans TOUS les secteurs. Ljubljana est une capitale accueillante avec un écosystème tech IA/fintech/greentech en pleine émergence. Le lac Bled, les Alpes juliennes et la côte Adriatique à portée de voiture. Pays le plus riche d'Europe centrale/habitant — SMIC 1 254`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `à 1h de Ljubljana. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette p`,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇮 SLOVÉNIE Visa Travail · Ljubljana Hub Tech · Port Koper · Qualité de Vie Exceptionnelle · Gorenje · Revoz Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Slovénie ? Marché & Chiffres`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇸🇮 SLOVÉNIE Visa Travail · Ljubljana Hub Tech · Port Koper · Qualité de Vie Exceptionnelle · Gorenje · Revoz Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Slovénie ? Marché & Chiffres`,
     practicalTips: `Velenje, Žalec, Laško 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 500–1 100 € Ljubljana / 350–700 € Maribor / 300–650 € régions | Élevée | Idéal 1ère installation. Chercher via Nepremicnine.net, Bolha.com, Rent.si, Facebook Marketplace Slovenija 🤝 Colocation | 200–450 €/mois chambre | Très haute | Option la p`,
     rawText: `La Slovénie, joyau méconnu de l'Europe centrale, est le pays le plus riche d'Europe centrale par habitant. Carrefour entre l'Italie, l'Autriche, la Croatie et la Hongrie, elle combine les avantages de l'Europe occidentale (salaires, infrastructures) au coût de vie de l'Europe centrale. 2 millions d'habitants = pénurie de main-d'œuvre dans TOUS les secteurs. Ljubljana est une capitale accueillante avec un écosystème tech IA/fintech/greentech en pleine émergence. Le lac Bled, les Alpes juliennes et la côte Adriatique à portée de voiture.
 Pays le plus riche d'Europe centrale/habitant — SMIC 1 254 €/mois (2026) = plus élevé UE centrale.
@@ -7888,11 +7888,11 @@ La Slovénie utilise l'Enotno dovoljenje za prebivanje in delo (permis unique r�
 Slovénie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Slovénie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇸🇮 SLOVÉNIE
 Visa Travail · Ljubljana Hub Tech · Port Koper · Qualité de Vie Exceptionnelle · Gorenje · Revoz
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Slovénie ? Marché & Chiffres Clés
 🌍 | La Slovénie a augmenté ses quotas de travailleurs non-UE en 2023 et 2024 suite à une pénurie sévère dans le BTP, la santé, la logistique et le tourisme. Le SMIC slovène à 1 254 €/mois est le plus élevé d'Europe centrale — bien au-dessus de la Pologne, Hongrie ou Tchéquie. 3M Travel dispose de partenaires en Slovénie dans le BTP, la logistique et le tourisme.
 02  —  Système de Permis de Travail en Slovénie
@@ -7903,11 +7903,11 @@ Type de permis | Durée | Off`,
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `6 500 CHF/mois`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇭 SUISSE Visa Travail · Médiane 6 500 CHF Net · Pharma · Finance · IT · Santé · Quota Annuel Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortis`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇭 SUISSE Visa Travail · Médiane 6 500 CHF Net · Pharma · Finance · IT · Santé · Quota Annuel Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortis`,
     sectors: `s-UE), les profils qualifiés camerounais dans les secteurs santé, finance, IT et recherche ont des chances réelles grâce à la pénurie structurelle de compétences. Salaires les plus élevés d'Europe : médiane 6 500 CHF/mois net — jusqu'à 15 000+ CHF pour profils senior. Quota annuel de 8 500 permis B `,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `tégie au quotidien. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇭 SUISSE Visa Travail · Médiane 6 500 CHF Net · Pharma · Finance · IT · Santé · Quota Annuel Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Suisse ? Marché & Chiffres Clés 🌍 | La Suis`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇭 SUISSE Visa Travail · Médiane 6 500 CHF Net · Pharma · Finance · IT · Santé · Quota Annuel Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Suisse ? Marché & Chiffres Clés 🌍 | La Suis`,
     practicalTips: `on, Sierre, Neuchâtel 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 2 000–4 000 CHF Zurich/Genève / 1 200–2 000 CHF Valais | Élevée | Idéal 1ère installation. Chercher via Homegate.ch, ImmoScout24.ch, Flatfox.ch, WGZimmer.ch 🤝 Colocation | 800–1 500 CHF/mois chambre | Très haute | Option la plus économique. Rés`,
     rawText: `La Suisse, non membre de l'UE mais intégrée à l'espace Schengen, offre les salaires les plus élevés d'Europe avec une médiane à 6 500 CHF/mois net (≈ 4,4 millions FCFA/mois). Bien que la procédure soit soumise à un quota annuel (8 500 permis B pour hors-UE), les profils qualifiés camerounais dans les secteurs santé, finance, IT et recherche ont des chances réelles grâce à la pénurie structurelle de compétences.
 Salaires les plus élevés d'Europe : médiane 6 500 CHF/mois net — jusqu'à 15 000+ CHF pour profils senior.
@@ -7921,11 +7921,11 @@ La Suisse applique son propre système via le SEM. Les permis hors-UE sont soumi
 Suisse présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Suisse. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇨🇭 SUISSE
 Visa Travail · Médiane 6 500 CHF Net · Pharma · Finance · IT · Santé · Quota Annuel
 Budget à partir de 2 800 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Suisse ? Marché & Chiffres Clés
 🌍 | La Suisse est une destination premium pour les profils hautement qualifiés : cadres financiers, médecins spécialistes, chercheurs, ingénieurs senior. Le processus est plus exigeant mais les salaires sont 2 à 3 fois supérieurs à la moyenne UE. Budget légèrement supérieur mais retour sur investissement exceptionnel.
 02  —  Système de Permis de Travail en Suisse
@@ -7938,11 +7938,11 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     visaType: `Travail`,
     processingTime: `2 à 8 semaines`,
     salaryMin: `2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garan`,
-    costs: `r 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇿 TCHÉQUIE Visa Travail · IT Prague · Automobile Škoda/Toyota · Ingénierie · Zaměstnanecká Karta · Blue Card Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officie`,
+    costs: `r 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇿 TCHÉQUIE Visa Travail · IT Prague · Automobile Škoda/Toyota · Ingénierie · Zaměstnanecká Karta · Blue Card Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officie`,
     sectors: `ath. Salaire médian 43 000 CZK/mois (≈ 1 700 €) — secteurs IT : 80 000–130 000 CZK (3 200–5 200 €). Coût de vie : Prague 40% moins chère que Paris — pouvoir d'achat réel excellent. Zaměstnanecká karta : permis travail + résidence combinés — délai réduit à 60 jours depuis 2022. Anglais langue de trav`,
     requiredDocuments: `élai estimé, budget prévisionnel personnalisé. ▸ Documents requis : CV Europass • copies diplômes • certificats de travail + lettres de référence • passeport valide • casier judiciaire. ✅ Consultation 100% gratuite — Aucun engagement financier avant signature du mandat. 02 | Recherche d'employeur & obtention du contrat 3M Travel + réseau partenaires employeurs locaux ▸ Mise en relation avec notre réseau d'employeurs partenaires vérifiés dans votre secteur et région cibles. Présentation de votre `,
     procedureSteps: `étrangers recrutés. 05 — Procédure Complète — 8 Étapes Détaillées 01 | Analyse de profil & stratégie personnalisée 3M Travel — Consultation gratuite & sans engagement ▸ Évaluation complète de votre dossier professionnel : formation, expérience, secteur, langue, situation familiale. Identification du pays + secteur + type de permis optimal. ▸ Pour les métiers réglementés : vérification préalable des conditions de reconnaissance de diplôme auprès de l'autorité compétente. Délai anticipé dès cette `,
-    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇿 TCHÉQUIE Visa Travail · IT Prague · Automobile Škoda/Toyota · Ingénierie · Zaměstnanecká Karta · Blue Card Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel & Services SARL 01 — Pourquoi Travailler en Tchéquie ? Marché & Chiffre`,
+    eligibilityConditions: `vices SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière. VISA DE TRAVAIL 🇨🇿 TCHÉQUIE Visa Travail · IT Prague · Automobile Škoda/Toyota · Ingénierie · Zaměstnanecká Karta · Blue Card Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION • Variable selon profil • Permis Garanti disponible Document officiel pour ressortissants camerounais — 3M Travel Agency SARL 01 — Pourquoi Travailler en Tchéquie ? Marché & Chiffre`,
     practicalTips: `Cheb, Mariánské Lázně 04b — Types de Logement & Conseils Hébergement Type de logement | Coût mensuel | Disponibilité | Conseils pratiques 🏠 Studio meublé | 500–1 200 € Prague / 300–600 € Brno / 250–550 € Ostrava | Élevée | Idéal 1ère installation. Chercher via Sreality.cz, Bezrealitky.cz, Flatzone.cz, Facebook Marketplace ČR 🤝 Colocation | 200–500 €/mois chambre | Très haute | Option la plus écono`,
     rawText: `La Tchéquie (République tchèque), l'un des pays les plus industrialisés d'Europe centrale, est un hub automobile et technologique de premier plan. Prague abrite des centres de R&D mondiaux d'Avast (cybersécurité), Oracle, IBM, Red Hat et Microsoft. Le pays est le 1er constructeur automobile de l'UE par habitant avec Škoda (VW Group), Toyota, Hyundai et PSA. Avec un taux de chômage de 2,5% — le plus bas d'Europe — la Tchéquie a une soif permanente de travailleurs qualifiés.
 Taux de chômage 2,5% — le plus bas d'Europe — marché emploi ultra-tendu en faveur du candidat.
@@ -7956,11 +7956,11 @@ La Tchéquie utilise la Zaměstnanecká karta (carte d'employé), titre combiné
 Tchéquie présente des disparités régionales importantes. Choisissez votre région selon votre secteur, votre salaire cible et votre budget logement.
 Opportunités sélectionnées pour leur adéquation avec les profils camerounais et la pénurie réelle en Tchéquie. Le bilinguisme FR/EN et la formation reconnue sont des atouts décisifs.
 Le budget varie selon votre profil. Il peut augmenter (reconnaissance diplôme, test langue) ou baisser (diplôme déjà légalisé, pas de visite médicale). Transparence totale garantie.
-Document établi par 3M Travel & Services SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
+Document établi par 3M Travel Agency SARL — À titre informatif. Frais, délais et conditions susceptibles d'évoluer. Consultez-nous pour toute situation particulière.
 VISA DE TRAVAIL 🇨🇿 TCHÉQUIE
 Visa Travail · IT Prague · Automobile Škoda/Toyota · Ingénierie · Zaměstnanecká Karta · Blue Card
 Budget à partir de 2 400 000 FCFA HORS BILLET D'AVION  •  Variable selon profil  •  Permis Garanti disponible
-Document officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel pour ressortissants camerounais — 3M Travel Agency SARL
 01  —  Pourquoi Travailler en Tchéquie ? Marché & Chiffres Clés
 🌍 | La Tchéquie a simplifié ses procédures depuis 2020. La Zaměstnanecká karta (carte d'employé) combine résidence et travail en un seul titre. Pour les métiers inscrits sur la liste officielle des professions en pénurie (IT, santé, ingénierie, BTP), la procédure est accélérée à 30 jours. 3M Travel dispose de partenaires employeurs certifiés à Prague et Brno.
 02  —  Système de Permis de Travail en Tchéquie
@@ -7989,8 +7989,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Allemagne 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Frais service VFS Global Variable 35 – 50 € Oui Oui Oui — Selon Oui Oui Oui Non remboursables en cas de refus Couverture ≥ 30 00`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Allemagne VISA VISITEUR ALLEMAGNE Visa Schengen Court Séjour — Industrie · Tech · Commerce · Conférences · Culture Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER ALLEMAGNE ? L'Allemagne est la première économie européenne et le 4ème PIB mondial. Centr`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Allemagne VISA VISITEUR ALLEMAGNE Visa Schengen Court Séjour — Industrie · Tech · Commerce · Conférences · Culture Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER ALLEMAGNE ? L'Allemagne est la première économie européenne et le 4ème PIB mondial. Centr`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8002,7 +8002,7 @@ VISA VISITEUR
 ALLEMAGNE
 
 Visa Schengen Court Séjour — Industrie · Tech · Commerce · Conférences · Culture
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER ALLEMAGNE ?
 
@@ -8098,7 +8098,7 @@ Réservation confirmée (pas forcément payée
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8129,8 +8129,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `ia ambassade d'Allemagne à Yaoundé (VFS Global) — procédure bien rodée et accessible. L'Autriche est souvent représentée par l'ambassade d'Allemagne au Cameroun. Vérifiez auprès du centre VFS Global à Yaoundé. Vienne est régulièrement classée parmi les villes les plus accueillantes pour les conférences et événements internationaux. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Via Ambassade d'Allemagne / VFS Global Yaoundé VFS Global Centre — Yaoundé (représentation Autriche) Rendez-vous : `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Autriche VISA VISITEUR AUTRICHE Visa Schengen Court Séjour — Musique · Art · Architecture · Alpes · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER AUTRICHE ? L'Autriche, patrie de Mozart, Beethoven et Freud, est un carrefour culturel et hi`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Autriche VISA VISITEUR AUTRICHE Visa Schengen Court Séjour — Musique · Art · Architecture · Alpes · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER AUTRICHE ? L'Autriche, patrie de Mozart, Beethoven et Freud, est un carrefour culturel et hi`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8142,7 +8142,7 @@ VISA VISITEUR
 AUTRICHE
 
 Visa Schengen Court Séjour — Musique · Art · Architecture · Alpes · Conférences
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER AUTRICHE ?
 
@@ -8236,7 +8236,7 @@ payée avant visa
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8265,8 +8265,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Belgique 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Belgique VISA VISITEUR BELGIQUE Visa Schengen Court Séjour — Tourisme · Institutions UE · Conférences · Commerce Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER BELGIQUE ? La Belgique, siège des institutions européennes et capitale mondiale de la diplo`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Belgique VISA VISITEUR BELGIQUE Visa Schengen Court Séjour — Tourisme · Institutions UE · Conférences · Commerce Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER BELGIQUE ? La Belgique, siège des institutions européennes et capitale mondiale de la diplo`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8278,7 +8278,7 @@ VISA VISITEUR
 BELGIQUE
 
 Visa Schengen Court Séjour — Tourisme · Institutions UE · Conférences · Commerce
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER BELGIQUE ?
 
@@ -8374,7 +8374,7 @@ Obligatoire
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8407,8 +8407,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `ambassade d'Allemagne au Cameroun via VFS Global. Procédure rigoureuse avec des délais bien respectés. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Via Ambassade d'Allemagne / VFS Global Yaoundé VFS Global — Yaoundé (représentation Danemark) Rendez-vous : vfsglobal.com — Délai 3 à 6 semaines um.dk/visa / vfsglobal.com +237 222 205 644 Infos Visa Visiteur ⏱ Délai traitement : 15 – 30 jours Frais consulaires : 80 – 90 € ✅ Taux acceptation : 55 – 65% Validité max : 90 jours / 180 jours 03 — L`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Danemark VISA VISITEUR DANEMARK Visa Schengen Court Séjour — Design · Architecture · Gastronomie · Innovation · Lego Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER DANEMARK ? Le Danemark, régulièrement classé pays le plus heureux et le moins corrompu `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Danemark VISA VISITEUR DANEMARK Visa Schengen Court Séjour — Design · Architecture · Gastronomie · Innovation · Lego Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER DANEMARK ? Le Danemark, régulièrement classé pays le plus heureux et le moins corrompu `,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8420,7 +8420,7 @@ VISA VISITEUR
 DANEMARK
 
 Visa Schengen Court Séjour — Design · Architecture · Gastronomie · Innovation · Lego
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER DANEMARK ?
 
@@ -8517,7 +8517,7 @@ Casier judiciaire
 
 Bulletin n°3 — moins de 3 mois
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8554,7 +8554,7 @@ Aucun test requis - an`,
     practicalTips: `Booking.com, Hotels.com, Airbnb Dubai, Agoda.com CONSEIL LOGEMENT : CONSEIL 3M TRAVEL DUBAI TOURISME : Reserver hotel Deira ou Al Barsha (30-50% moins cher que Marina) et utiliser metro Dubai (AED 2-7 par trajet). Le metro connecte 90% des attractions. NOOL card rechargeable = economie vs ticket unitaire. Eviter taxis : metro et RTA buses suffisent. 5. PROCEDURE COMPLETE 3M TRAVEL — 8 ETAPES ETAPE`,
     rawText: `VISA TRAVAIL DUBAI - VISA VISITEUR
 Visa Touriste Dubai - e-Visa en Ligne - Shopping Festival - Expo - Tourisme Luxe - Dubai Frame
-3M TRAVEL & SERVICES SARL | Biyem-Assi, Yaounde | +237 698 104 832 | hello@3mtravelagency.com
+3M TRAVEL AGENCY SARL | Biyem-Assi, Yaounde | +237 698 104 832 | hello@3mtravelagency.com
 
 1. POURQUOI DUBAI - VISA VISITEUR ?
 
@@ -8686,8 +8686,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `A VISITEUR Espagne 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Espagne VISA VISITEUR ESPAGNE Visa Schengen Court Séjour — Tourisme · Culture · Commerce · Festivals · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER ESPAGNE ? L'Espagne, deuxième destination touristique mondiale avec 85 millions de visite`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Espagne VISA VISITEUR ESPAGNE Visa Schengen Court Séjour — Tourisme · Culture · Commerce · Festivals · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER ESPAGNE ? L'Espagne, deuxième destination touristique mondiale avec 85 millions de visite`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8699,7 +8699,7 @@ VISA VISITEUR
 ESPAGNE
 
 Visa Schengen Court Séjour — Tourisme · Culture · Commerce · Festivals · Conférences
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER ESPAGNE ?
 
@@ -8792,7 +8792,7 @@ importante
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8830,8 +8830,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `Visa Finlande via ambassade de France à Yaoundé — procédure bien rodée, délais respectés. La Finlande est représentée par la France pour les visas au Cameroun. Le pays est réputé pour la rigueur et la transparence de sa procédure d'immigration — un dossier complet et honnête obtient généralement une décision juste. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Via Ambassade de France à Yaoundé Infos Visa Visiteur (représentation Finlande) Plateau Atémengue, Yaoundé Rendez-vous : france-visa`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Finlande VISA VISITEUR FINLANDE Visa Schengen Court Séjour — Nature · Technologie · Aurores · Sauna · Innovation Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER FINLANDE ? La Finlande, pays aux 188 000 lacs et aux forêts infinies, est l'une des destina`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Finlande VISA VISITEUR FINLANDE Visa Schengen Court Séjour — Nature · Technologie · Aurores · Sauna · Innovation Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER FINLANDE ? La Finlande, pays aux 188 000 lacs et aux forêts infinies, est l'une des destina`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8843,7 +8843,7 @@ VISA VISITEUR
 FINLANDE
 
 Visa Schengen Court Séjour — Nature · Technologie · Aurores · Sauna · Innovation
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER FINLANDE ?
 
@@ -8938,7 +8938,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8980,8 +8980,8 @@ Document re`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `SA VISITEUR France 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR France VISA VISITEUR FRANCE Visa Schengen Court Séjour — Tourisme · Culture · Affaires · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER FRANCE ? La France est la première destination touristique mondiale avec plus de 90 millions de visiteu`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR France VISA VISITEUR FRANCE Visa Schengen Court Séjour — Tourisme · Culture · Affaires · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER FRANCE ? La France est la première destination touristique mondiale avec plus de 90 millions de visiteu`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -8993,7 +8993,7 @@ VISA VISITEUR
 FRANCE
 
 Visa Schengen Court Séjour — Tourisme · Culture · Affaires · Conférences
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER FRANCE ?
 
@@ -9090,7 +9090,7 @@ Réservation confirmée (pas forcément payée
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9125,8 +9125,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `ISA VISITEUR Grèce 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Grèce VISA VISITEUR GRÈCE Visa Schengen Court Séjour — Antiquité · Îles · Méditerranée · Gastronomie · Culture Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER GRÈCE ? La Grèce, berceau de la civilisation occidentale, est une destination qui conjugue hi`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Grèce VISA VISITEUR GRÈCE Visa Schengen Court Séjour — Antiquité · Îles · Méditerranée · Gastronomie · Culture Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER GRÈCE ? La Grèce, berceau de la civilisation occidentale, est une destination qui conjugue hi`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9138,7 +9138,7 @@ VISA VISITEUR
 GRÈCE
 
 Visa Schengen Court Séjour — Antiquité · Îles · Méditerranée · Gastronomie · Culture
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER GRÈCE ?
 
@@ -9233,7 +9233,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9266,8 +9266,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `A VISITEUR Hongrie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Hongrie VISA VISITEUR HONGRIE Visa Schengen Court Séjour — Budapest · Thermes · Art Nouveau · Danube · Cuisine Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER HONGRIE ? La Hongrie et sa capitale Budapest, surnommée la 'Perle du Danube', sont parmi les `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Hongrie VISA VISITEUR HONGRIE Visa Schengen Court Séjour — Budapest · Thermes · Art Nouveau · Danube · Cuisine Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER HONGRIE ? La Hongrie et sa capitale Budapest, surnommée la 'Perle du Danube', sont parmi les `,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9279,7 +9279,7 @@ VISA VISITEUR
 HONGRIE
 
 Visa Schengen Court Séjour — Budapest · Thermes · Art Nouveau · Danube · Cuisine
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER HONGRIE ?
 
@@ -9374,7 +9374,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9414,8 +9414,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `A VISITEUR Islande 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Ressources journalières renforcées ≥ 150 €/jour recommandé Oui Oui Oui — Selon Oui Oui Oui Non remboursables en cas de `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Islande VISA VISITEUR ISLANDE Visa Schengen Court Séjour — Aurores · Geysers · Fjords · Énergie Verte · Aventure Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER ISLANDE ? L'Islande, île volcanique au confluent de l'Atlantique Nord et de l'Arctique, est`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Islande VISA VISITEUR ISLANDE Visa Schengen Court Séjour — Aurores · Geysers · Fjords · Énergie Verte · Aventure Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER ISLANDE ? L'Islande, île volcanique au confluent de l'Atlantique Nord et de l'Arctique, est`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9427,7 +9427,7 @@ VISA VISITEUR
 ISLANDE
 
 Visa Schengen Court Séjour — Aurores · Geysers · Fjords · Énergie Verte · Aventure
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER ISLANDE ?
 
@@ -9522,7 +9522,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9567,8 +9567,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `SA VISITEUR Italie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Italie VISA VISITEUR ITALIE Visa Schengen Court Séjour — Art · Histoire · Gastronomie · Mode · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER ITALIE ? L'Italie, avec 58 sites classés UNESCO — le plus grand nombre au monde — est un musée à `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Italie VISA VISITEUR ITALIE Visa Schengen Court Séjour — Art · Histoire · Gastronomie · Mode · Conférences Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER ITALIE ? L'Italie, avec 58 sites classés UNESCO — le plus grand nombre au monde — est un musée à `,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9580,7 +9580,7 @@ VISA VISITEUR
 ITALIE
 
 Visa Schengen Court Séjour — Art · Histoire · Gastronomie · Mode · Conférences
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER ITALIE ?
 
@@ -9674,7 +9674,7 @@ payée avant visa
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9708,8 +9708,8 @@ P`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Lettonie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Lettonie VISA VISITEUR LETTONIE Visa Schengen Court Séjour — Art Nouveau · Mer Baltique · Startups · Nature Nordique Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER LETTONIE ? La Lettonie, perle de la Baltique, est une destination nordique encore prése`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Lettonie VISA VISITEUR LETTONIE Visa Schengen Court Séjour — Art Nouveau · Mer Baltique · Startups · Nature Nordique Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER LETTONIE ? La Lettonie, perle de la Baltique, est une destination nordique encore prése`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9721,7 +9721,7 @@ VISA VISITEUR
 LETTONIE
 
 Visa Schengen Court Séjour — Art Nouveau · Mer Baltique · Startups · Nature Nordique
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER LETTONIE ?
 
@@ -9817,7 +9817,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9858,8 +9858,8 @@ Ob`,
     requiredDocuments: `dmin.ch +237 222 209 660 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `s, Yaoundé Rendez-vous : eda.admin.ch/visa — Même procédure que visa Suisse — Délai 3 à 8 semaines Infos Visa Visiteur ⏱ Délai traitement : 15 – 45 jours (même que Suisse) Frais consulaires : 80 – 90 € ✅ Taux acceptation : 50 – 65% Validité max : 90 jours / 180 jours llv.li / eda.admin.ch +237 222 209 660 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Liechtenstein VISA VISITEUR LIECHTENSTEIN Visa Schengen Court Séjour — Principauté Alpine · Musées · Finance · Curiosité Unique Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER LIECHTENSTEIN ? Le Liechtenstein, 4ème plus petit pays du monde, est une pri`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Liechtenstein VISA VISITEUR LIECHTENSTEIN Visa Schengen Court Séjour — Principauté Alpine · Musées · Finance · Curiosité Unique Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER LIECHTENSTEIN ? Le Liechtenstein, 4ème plus petit pays du monde, est une pri`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -9871,7 +9871,7 @@ VISA VISITEUR
 LIECHTENSTEIN
 
 Visa Schengen Court Séjour — Principauté Alpine · Musées · Finance · Curiosité Unique
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER LIECHTENSTEIN ?
 
@@ -9967,7 +9967,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10006,8 +10006,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Lituanie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Lituanie VISA VISITEUR LITUANIE Visa Schengen Court Séjour — Vilnius · Ambre · Colline des Croix · Nature · Tech Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER LITUANIE ? La Lituanie, pays de l'ambre et des forêts, est la grande balte méconnue. Vilniu`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Lituanie VISA VISITEUR LITUANIE Visa Schengen Court Séjour — Vilnius · Ambre · Colline des Croix · Nature · Tech Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER LITUANIE ? La Lituanie, pays de l'ambre et des forêts, est la grande balte méconnue. Vilniu`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10019,7 +10019,7 @@ VISA VISITEUR
 LITUANIE
 
 Visa Schengen Court Séjour — Vilnius · Ambre · Colline des Croix · Nature · Tech
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER LITUANIE ?
 
@@ -10114,7 +10114,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10150,8 +10150,8 @@ Contrat de travail,`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `ISITEUR Luxembourg 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: `lus élevé au monde (≈ 130 000 €/an) — salaires et conditions de vie exceptionnels. ▸ Trilingue officiel (Français, Allemand, Luxembourgeois) — les Camerounais francophones s'intègrent naturellement. ▸ Siège de la Cour de Justice de l'UE, Cour des Comptes, BEI (Banque Européenne d'Investissement) — institutions majeures. ▸ Secteur financier de premier rang : 150+ banques dont les plus grandes au monde — Place financière internationale. ▸ Visa visiteur idéal comme 1ère étape vers le visa travail o`,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Luxembourg VISA VISITEUR LUXEMBOURG Visa Schengen Court Séjour — Finance · Institutions UE · Travail · Découverte Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER LUXEMBOURG ? Le Luxembourg, plus petit pays fondateur de l'Union Européenne, est aussi le `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Luxembourg VISA VISITEUR LUXEMBOURG Visa Schengen Court Séjour — Finance · Institutions UE · Travail · Découverte Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER LUXEMBOURG ? Le Luxembourg, plus petit pays fondateur de l'Union Européenne, est aussi le `,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10163,7 +10163,7 @@ VISA VISITEUR
 LUXEMBOURG
 
 Visa Schengen Court Séjour — Finance · Institutions UE · Travail · Découverte
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER LUXEMBOURG ?
 
@@ -10258,7 +10258,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10291,8 +10291,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `ISA VISITEUR Malte 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Malte VISA VISITEUR MALTE Visa Schengen Court Séjour — Méditerranée · Histoire · Plongée · Film & Culture · Anglais Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER MALTE ? Malte, minuscule archipel méditerranéen de 316 km², est une destination aux prop`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Malte VISA VISITEUR MALTE Visa Schengen Court Séjour — Méditerranée · Histoire · Plongée · Film & Culture · Anglais Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER MALTE ? Malte, minuscule archipel méditerranéen de 316 km², est une destination aux prop`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10302,7 +10302,7 @@ Malte
 VISA VISITEUR MALTE
 
 Visa Schengen Court Séjour — Méditerranée · Histoire · Plongée · Film & Culture · Anglais
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER MALTE ?
 
@@ -10397,7 +10397,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10432,8 +10432,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `thèque Deichman). ▸ Non membre UE mais Schengen : procédure légèrement différente via la Direction norvégienne de l'Immigration (UDI). La Norvège (non membre UE) a sa propre direction de l'immigration (UDI). La demande se fait via l'ambassade de France à Yaoundé pour les ressortissants camerounais. Les exigences financières sont élevées — pays très cher. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Via Ambassade de France à Yaoundé Infos Visa Visiteur (représentation Norvège) Plateau Atéme`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Norvège VISA VISITEUR NORVÈGE Visa Schengen Court Séjour — Fjords · Aurores · Pétrole · Nature Sauvage · Innovation Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER NORVÈGE ? La Norvège, pays des fjords majestueux, des aurores boréales et de l'une des é`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Norvège VISA VISITEUR NORVÈGE Visa Schengen Court Séjour — Fjords · Aurores · Pétrole · Nature Sauvage · Innovation Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER NORVÈGE ? La Norvège, pays des fjords majestueux, des aurores boréales et de l'une des é`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10445,7 +10445,7 @@ VISA VISITEUR
 NORVÈGE
 
 Visa Schengen Court Séjour — Fjords · Aurores · Pétrole · Nature Sauvage · Innovation
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER NORVÈGE ?
 
@@ -10540,7 +10540,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10579,8 +10579,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `présente aussi plusieurs petits pays Schengen. La procédure est réputée rigoureuse mais équitable. Un dossier solide et complet obtient généralement une réponse positive. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Ambassade des Pays-Bas à Yaoundé Avenue Aristide Briand, Bastos, Yaoundé Rendez-vous : En ligne via VFS Global — Délai 2 à 6 semaines netherlandsworldwide.nl / vfsglobal.com +237 222 233 623 Infos Visa Visiteur ⏱ Délai traitement : 15 – 30 jours Frais consulaires : 80 – 90 € ✅ `,
     eligibilityConditions: `uverts Dossier financier insuffisant Pays-Bas = critères financiers plus stricts Préparation relevés 3 mois avant + lettre garant Justificatifs emploi, famille, propriété immobilière Vérification complète par 3M Travel avant dépôt Déclaration honnête + lettre d'explication stratégique Lettre de motivation cohérente et personnalisée Souscription AVI conforme aux normes Schengen Relevés 6 mois + attestation employeur avec salaire mensuel précisé 08 — MODALITÉS DE PAIEMENT DES HONORAIRES 3M TRAVEL `,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Pays-Bas VISA VISITEUR PAYS-BAS Visa Schengen Court Séjour — Innovation · Commerce · Culture · Tulipes & Liberté Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER PAYS-BAS ? Les Pays-Bas, nation de l'innovation, de la tolérance et du commerce internation`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Pays-Bas VISA VISITEUR PAYS-BAS Visa Schengen Court Séjour — Innovation · Commerce · Culture · Tulipes & Liberté Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER PAYS-BAS ? Les Pays-Bas, nation de l'innovation, de la tolérance et du commerce internation`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10592,7 +10592,7 @@ VISA VISITEUR
 PAYS-BAS
 
 Visa Schengen Court Séjour — Innovation · Commerce · Culture · Tulipes & Liberté
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER PAYS-BAS ?
 
@@ -10689,7 +10689,7 @@ Casier judiciaire
 
 Bulletin n°3 — moins de 3 mois
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10721,8 +10721,8 @@ P`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `A VISITEUR Pologne 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Pologne VISA VISITEUR POLOGNE Visa Schengen Court Séjour — Histoire · Culture · Gastronomie · Tech · Solidarité Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER POLOGNE ? La Pologne, économie la plus dynamique d'Europe centrale depuis 30 ans, est une de`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Pologne VISA VISITEUR POLOGNE Visa Schengen Court Séjour — Histoire · Culture · Gastronomie · Tech · Solidarité Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER POLOGNE ? La Pologne, économie la plus dynamique d'Europe centrale depuis 30 ans, est une de`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10734,7 +10734,7 @@ VISA VISITEUR
 POLOGNE
 
 Visa Schengen Court Séjour — Histoire · Culture · Gastronomie · Tech · Solidarité
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER POLOGNE ?
 
@@ -10832,7 +10832,7 @@ Casier judiciaire
 
 Bulletin n°3 — moins de 3 mois
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10864,8 +10864,8 @@ Document requ`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `es de visa Schengen dans certaines ambassades. La procédure est réputée plus souple que certains autres pays Schengen. 3M Travel maîtrise les nuances de chaque ambassade. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Ambassade du Portugal à Yaoundé Rue Nachtigal, Bastos, Yaoundé, Cameroun Rendez-vous : Via portail VFS Global — vistos.mne.gov.pt — Délai 2 à 5 semaines yaunde.embaixadaportugal.mne.gov.pt / vistos.mne.gov.pt +237 222 200 055 Infos Visa Visiteur ⏱ Délai traitement : 10 – 25 jou`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Portugal VISA VISITEUR PORTUGAL Visa Schengen Court Séjour — Tourisme · Lusophonie · Startups · Soleil & Culture Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER PORTUGAL ? Le Portugal, pays le plus à l'ouest de l'Europe continentale, est une destinatio`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Portugal VISA VISITEUR PORTUGAL Visa Schengen Court Séjour — Tourisme · Lusophonie · Startups · Soleil & Culture Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER PORTUGAL ? Le Portugal, pays le plus à l'ouest de l'Europe continentale, est une destinatio`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -10877,7 +10877,7 @@ VISA VISITEUR
 PORTUGAL
 
 Visa Schengen Court Séjour — Tourisme · Lusophonie · Startups · Soleil & Culture
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER PORTUGAL ?
 
@@ -10974,7 +10974,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accom`,
   },
   {
@@ -10996,8 +10996,8 @@ Passep`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Slovaquie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable`,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Slovaquie VISA VISITEUR SLOVAQUIE Visa Schengen Court Séjour — Châteaux · Nature · Bratislava · Tatras · Authenticité Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER SLOVAQUIE ? La Slovaquie, petite nation au cœur de l'Europe, est une destination encor`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Slovaquie VISA VISITEUR SLOVAQUIE Visa Schengen Court Séjour — Châteaux · Nature · Bratislava · Tatras · Authenticité Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER SLOVAQUIE ? La Slovaquie, petite nation au cœur de l'Europe, est une destination encor`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11009,7 +11009,7 @@ VISA VISITEUR
 SLOVAQUIE
 
 Visa Schengen Court Séjour — Châteaux · Nature · Bratislava · Tatras · Authenticité
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER SLOVAQUIE ?
 
@@ -11106,7 +11106,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11144,8 +11144,8 @@ P`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Slovénie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Slovénie VISA VISITEUR SLOVÉNIE Visa Schengen Court Séjour — Nature · Ljubljana · Alpes · Karst · Durabilité Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER SLOVÉNIE ? La Slovénie, le secret le mieux gardé d'Europe, est le pays le plus vert du continen`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Slovénie VISA VISITEUR SLOVÉNIE Visa Schengen Court Séjour — Nature · Ljubljana · Alpes · Karst · Durabilité Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER SLOVÉNIE ? La Slovénie, le secret le mieux gardé d'Europe, est le pays le plus vert du continen`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11157,7 +11157,7 @@ VISA VISITEUR
 SLOVÉNIE
 
 Visa Schengen Court Séjour — Nature · Ljubljana · Alpes · Karst · Durabilité
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER SLOVÉNIE ?
 
@@ -11253,7 +11253,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11292,8 +11292,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `lais nordiques sont généralement bien respectés — procédure sérieuse mais équitable. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Via Ambassade de France à Yaoundé Infos Visa Visiteur (représentation Suède) Plateau Atémengue, Yaoundé Rendez-vous : migrationsverket.se / france-visas.gouv.fr — Délai 3 à 6 semaines swedenabroad.se / migrationsverket.se +237 222 230 446 ⏱ Délai traitement : 15 – 30 jours Frais consulaires : 80 – 90 € ✅ Taux acceptation : 55 – 68% Validité max : 90 jours / 180 `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Suède VISA VISITEUR SUÈDE Visa Schengen Court Séjour — Innovation · Design · Nature · Durabilité · Tech Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER SUÈDE ? La Suède, pays de l'innovation, du design et du développement durable, est l'un des leaders `,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Suède VISA VISITEUR SUÈDE Visa Schengen Court Séjour — Innovation · Design · Nature · Durabilité · Tech Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER SUÈDE ? La Suède, pays de l'innovation, du design et du développement durable, est l'un des leaders `,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11305,7 +11305,7 @@ VISA VISITEUR
 SUÈDE
 
 Visa Schengen Court Séjour — Innovation · Design · Nature · Durabilité · Tech
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER SUÈDE ?
 
@@ -11401,7 +11401,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11442,8 +11442,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Billet d'avion aller-retour Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, d`,
     procedureSteps: `SA VISITEUR Suisse 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Preuve ressources augmentée ≥ 100 CHF/jour recommandé Oui Oui Oui — Selon Oui Oui Oui Non remboursables en cas de refus`,
     eligibilityConditions: `ite les demandes suisses. La Suisse a ses propres critères légèrement différents des pays UE. 02 — AMBASSADE COMPÉTENTE & INFORMATIONS PRATIQUES Ambassade de Suisse à Yaoundé Rue 1824, Bastos, Yaoundé, Cameroun Rendez-vous : En ligne — eda.admin.ch/visa — Délai 3 à 8 semaines eda.admin.ch/yaunde / ch.tlscontact.com +237 222 209 660 Infos Visa Visiteur ⏱ Délai traitement : 15 – 45 jours Frais consulaires : 80 – 90 € ✅ Taux acceptation : 50 – 65% Validité max : 90 jours / 180 jours 03 — LISTE COMP`,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Suisse VISA VISITEUR SUISSE Visa Schengen Court Séjour — Luxe · Nature · Horlogerie · Organisations Int. · Ski Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER SUISSE ? La Suisse, bien que non membre de l'Union Européenne, est pleinement intégrée dans l`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Suisse VISA VISITEUR SUISSE Visa Schengen Court Séjour — Luxe · Nature · Horlogerie · Organisations Int. · Ski Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER SUISSE ? La Suisse, bien que non membre de l'Union Européenne, est pleinement intégrée dans l`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11455,7 +11455,7 @@ VISA VISITEUR
 SUISSE
 
 Visa Schengen Court Séjour — Luxe · Nature · Horlogerie · Organisations Int. · Ski
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER SUISSE ?
 
@@ -11549,7 +11549,7 @@ payée avant visa
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11586,8 +11586,8 @@ F`,
     requiredDocuments: `x : 90 jours / 180 jours 03 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document requis Passeport valide Formulaire de demande Schengen 2 photos biométriques AVI — Assurance Voyage Int. Preuve d'hébergement Relevés bancaires (3 mois) Spécification exacte Niveau d'importance Validité ≥ 3 mois après retour + 2 pages vierges min. Complété, signé, daté — téléchargeable sur site ambassade Fond blanc, 35x45mm, récentes (moins de 6 mois) Couverture ≥ 30 000 € tous pays Schengen, durée séjour Réservation hôte`,
     procedureSteps: `VISITEUR Tchéquie 06 — ESTIMATION DES FRAIS DE PROCÉDURE Montant Obligatoire Remarque Poste Frais consulaires 80 – 90 € AVI — Assurance Voyage 30 000 – 80 000 F Ouverture dossier 3M Travel 65 000 FCFA Honoraires accompagnement 3M Sur devis Traduction documents si requis 20 000 – 60 000 F Réservation billet (indicatif) À titre indicatif Réservation hôtel (remboursable) Variable Oui Oui Oui — Selon Oui Oui Non remboursables en cas de refus Couverture ≥ 30 000 € tous pays Schengen Non remboursable `,
     eligibilityConditions: ``,
-    practicalTips: `VEL & SERVICES SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Tchéquie VISA VISITEUR TCHÉQUIE Visa Schengen Court Séjour — Prague · Bière · Châteaux · Tech · Histoire Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL 01 — POURQUOI VISITER TCHÉQUIE ? La Tchéquie (République Tchèque), cœur géographique de l'Europe, abrite l'une des plus b`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `VEL AGENCY SARL Immigration • Visa Visiteur • Conseil & Accompagnement VISA VISITEUR Tchéquie VISA VISITEUR TCHÉQUIE Visa Schengen Court Séjour — Prague · Bière · Châteaux · Tech · Histoire Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL 01 — POURQUOI VISITER TCHÉQUIE ? La Tchéquie (République Tchèque), cœur géographique de l'Europe, abrite l'une des plus b`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11599,7 +11599,7 @@ VISA VISITEUR
 TCHÉQUIE
 
 Visa Schengen Court Séjour — Prague · Bière · Châteaux · Tech · Histoire
-Document officiel établi pour ressortissants camerounais — 3M Travel & Services SARL
+Document officiel établi pour ressortissants camerounais — 3M Travel Agency SARL
 
 01 — POURQUOI VISITER TCHÉQUIE ?
 
@@ -11694,7 +11694,7 @@ Réservation confirmée — pas forcément
 
 Obligatoire
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Visa Visiteur • Conseil & Accompagnement
 
 VISA VISITEUR
@@ -11714,13 +11714,13 @@ Preuve de liens avec le Camer`,
     visaType: `Autre`,
     processingTime: `5 à 15 jours`,
     salaryMin: `65 000 FCFA ouverture de dossier  •  Document pour ressortissan`,
-    costs: `5 à 15 jours ouvrables 5 à 15 jours ouvrables Frais consulaires Environ 80–150 USD Environ 80–150 USD Les ressortissants camerounais ne bénéficient pas du e-Visa en ligne automatique. Le dépôt doit se faire physiquement ou via une ⚠ ambassade désignée. 3M Travel prépare et vérifie l'intégralité de votre dossier avant le dépôt. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • he`,
+    costs: `5 à 15 jours ouvrables 5 à 15 jours ouvrables Frais consulaires Environ 80–150 USD Environ 80–150 USD Les ressortissants camerounais ne bénéficient pas du e-Visa en ligne automatique. Le dépôt doit se faire physiquement ou via une ⚠ ambassade désignée. 3M Travel prépare et vérifie l'intégralité de votre dossier avant le dépôt. 3M Travel Agency SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • he`,
     sectors: `-d'œuvre qualifiée en forte demande dans certains secteurs, et une politique d'immigration en cours de modernisation, la Turquie représente une opportunité réelle pour les profils qualifiés, les entrepreneurs et les voyageurs d'affaires camerounais. Indicateur Données 2026 🌍 Statut géographique Pont`,
     requiredDocuments: `mplet 2026 07 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document Visa Visiteur Visa Travail Ikamet Passeport valide (6 mois min. après retour) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire 2 photos biométriques récentes (3,5×4,5 cm) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Formulaire de demande de visa (officiel) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Relevé bancaire 3 derniers mois ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Assurance voyage/santé valable en Turquie ✅ Obligatoire ✅ Recommandée ✅ Obli`,
-    procedureSteps: `ravail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Visa Travail & Visiteur Turquie • Procédures officielles 🇹🇷 TURQUIE Guide complet 2026 02 — VISA VISITEUR (TOURISME & AFFAIRES) Le visa visiteur turc est la porte d'entrée la plus rapide pour découvrir la Turquie, `,
-    eligibilityConditions: `8 ans de résidence légale continue : éligibilité à l'Ikamet long séjour. ▸ Après 5 ans : possibilité de demander la nationalité turque selon conditions. Objectif à long terme : la nationalité turque donne accès à un passeport permettant de voyager dans plus de 110 pays sans visa, dont plusieurs destinations européennes. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SE`,
+    procedureSteps: `ravail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet. 3M Travel Agency SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL AGENCY SARL Immigration • Visa Travail & Visiteur Turquie • Procédures officielles 🇹🇷 TURQUIE Guide complet 2026 02 — VISA VISITEUR (TOURISME & AFFAIRES) Le visa visiteur turc est la porte d'entrée la plus rapide pour découvrir la Turquie, `,
+    eligibilityConditions: `8 ans de résidence légale continue : éligibilité à l'Ikamet long séjour. ▸ Après 5 ans : possibilité de demander la nationalité turque selon conditions. Objectif à long terme : la nationalité turque donne accès à un passeport permettant de voyager dans plus de 110 pays sans visa, dont plusieurs destinations européennes. 3M Travel Agency SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SE`,
     practicalTips: ``,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration  •  Visa Travail & Visiteur Turquie  •  Procédures officielles
 
 🇹🇷
@@ -11728,7 +11728,7 @@ Immigration  •  Visa Travail & Visiteur Turquie  •  Procédures officielles
  TURQUIE
 Guide complet 2026
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 
 RC/YAO/2019/A/2567   |   NIU : M112417203369H
 
@@ -11738,7 +11738,7 @@ VISA TRAVAIL
  TURQUIE
 
 Procédures complètes — Permis de travail, Ikamet, Tourisme, Affaires
-Guide officiel pour ressortissants camerounais — 3M Travel & Services SARL
+Guide officiel pour ressortissants camerounais — 3M Travel Agency SARL
 
 💼
 
@@ -11759,9 +11759,9 @@ AFFAIRES
 Budget à partir de 65 000 FCFA ouverture de dossier  •  Document pour ressortissants camerounais
 +237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration  •  Visa Travail & Visiteur Turquie  •  Procédures officielles
 
 🇹🇷
@@ -11839,7 +11839,7 @@ d'expatriation intermédiaire très pertinent.
 Ce guide couvre : (02) le Visa Visiteur (tourisme & affaires), (03) le Visa Travail & permis de travail, (04) l'Ikamet (titre de séjour), (05) les 
 types de permis de travail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet.
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mis`,
+3M Travel Agency SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mis`,
   },
   {
     country: `Luxembourg`,
@@ -11939,8 +11939,8 @@ Détail frais : Soit 800 € par an`,
     requiredDocuments: `nditions d'accès et les délais de candidature. ▸ Documents requis : Relevés de notes (3 dernières années) • Copies de diplômes • Attestation de niveau de langue (Alliance Française, DELF, IELTS si programme anglophone) • Passeport valide • Casier judiciaire. ✅ Analyse initiale 100% gratuite — Aucun engagement financier à cette étape. 02 Sélection de l'établissement & du programme 3M Travel & Services + Candidat — Choix éclairé Sur la base de votre profil et de vos aspirations, nous identifions e`,
     procedureSteps: `t pour anticiper. ⚠ 03 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Analyse de profil & orientation Sélection de l'établissement Dépôt du dossier d'admission Obtention de la lettre d'admission Constitution du dossier visa Visa étudiant Type D 01 02 03 04 05 06 07 08 Responsable 3M Travel & Services 3M Travel & Services + Candidat Candidat (accompagné par 3M Travel) Établissement luxembourgeois Candidat + 3M Travel & Services Ambassade de Belgique à Yaoundé Arrivée & inscription à l'universi`,
     eligibilityConditions: `s, diplômes, niveau de langue) pour évaluer votre éligibilité et identifier les filières accessibles selon votre profil. Nous analysons également votre projet professionnel à long terme pour vous orienter vers la formation la plus ▸ adaptée : BTS technique, Licence générale, Master spécialisé ou programme doctoral. ▸ À l'issue de l'analyse, vous recevez un rapport d'orientation clair avec les établissements recommandés, les conditions d'accès et les délais de candidature. ▸ Documents requis : Re`,
-    practicalTips: `à aucun établissement sans votre accord écrit. Un conseiller dédié vous informe à chaque étape clé de l'avancement de votre candidature. ✅ 3M TRAVEL & SERVICES SARL Immigration • Orientation & Placement Académique International VISA ÉTUDES Grand-Duché de Luxembourg 04 — DÉTAIL DES ÉTAPES (1 SUR 2) 01 Analyse de profil & orientation académique 3M Travel & Services — Gratuite & Sans engagement ▸ Not`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    practicalTips: `à aucun établissement sans votre accord écrit. Un conseiller dédié vous informe à chaque étape clé de l'avancement de votre candidature. ✅ 3M TRAVEL AGENCY SARL Immigration • Orientation & Placement Académique International VISA ÉTUDES Grand-Duché de Luxembourg 04 — DÉTAIL DES ÉTAPES (1 SUR 2) 01 Analyse de profil & orientation académique 3M Travel & Services — Gratuite & Sans engagement ▸ Not`,
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Orientation & Placement Académique International
 
 VISA ÉTUDES
@@ -12080,7 +12080,7 @@ Montan`,
     procedureSteps: `nt de votre dossier. 02 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Analyse de profil — Évaluation gratuite de votre éligibilité. Aucune transmission sans votre accord. Responsable 3M Travel & Services 01 02 03 04 05 06 07 08 Transmission du dossier — Mise en relation avec notre réseau de recruteurs certifiés au Luxembourg. 3M Travel & Services Identification d'un poste — Recherche active d'un employeur. Vous validez l'offre avant tout engagement. Partenaires recruteurs Signature du contra`,
     eligibilityConditions: `'analyse de profil jusqu'à votre installation. ▸ Éligibilité : Analyse gratuite, confidentielle et sans engagement. Votre dossier n'est transmis à aucun tiers sans votre accord explicite. ▸ Secteurs couverts : BTP, Hôtellerie/Restauration, Santé & Aide à la personne, Logistique & Transport, IT & Ingénierie. ▸ Dossier requis : CV détaillé (FR/EN), copies de diplômes, certificats de travail, passeport valide, casier judiciaire Bulletin n°3 (moins de 3 mois). ▸ Notre engagement : Un conseiller dédi`,
     practicalTips: `n°3 (moins de 3 mois). ▸ Notre engagement : Un conseiller dédié vous informe à chaque étape clé de l'avancement de votre dossier. 02 — VUE D'ENSEMBLE : LES 8 ÉTAPES Étape Description Analyse de profil — Évaluation gratuite de votre éligibilité. Aucune transmission sans votre accord. Responsable 3M Travel & Services 01 02 03 04 05 06 07 08 Transmission du dossier — Mise en relation avec notre résea`,
-    rawText: `3M TRAVEL & SERVICES SARL
+    rawText: `3M TRAVEL AGENCY SARL
 Immigration • Placement Professionnel International
 
 VISA DE TRAVAIL
@@ -12165,7 +12165,7 @@ Installation — Inscription communale, titre de séjour, CNS
 
 Candidat
 
-3M TRAVEL & SERVICES SARL
+3M TRAVEL AGENCY SARL
 Immigration • Placement Professionnel International
 
 VISA DE TRAVAIL

@@ -349,7 +349,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   <div class="container">
     <div class="header">
       <img class="brand-logo" src="https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M Travel &amp; Services" />
-      <p class="brand-name">3M Travel &amp; Services SARL</p>
+      <p class="brand-name">3M Travel Agency SARL</p>
       <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
       <p>Évaluation indicative d’agence — 3M Travel & Services</p>
     </div>
@@ -418,7 +418,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     </div>
     
     <div class="footer">
-      <p class="brand-signature"><strong>3M Travel &amp; Services SARL</strong></p>
+      <p class="brand-signature"><strong>3M Travel Agency SARL</strong></p>
       <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
       <p>RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
       <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>
@@ -498,7 +498,7 @@ Lien de paiement : https://www.3mtravelagency.com/verify-application-email?dossi
 Cordialement,
 
 Aureol DONFACK - PDG
-3M Travel & Services SARL
+3M Travel Agency SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
 RC/YAO/2019/A/2567 | NIU: M112417203369H

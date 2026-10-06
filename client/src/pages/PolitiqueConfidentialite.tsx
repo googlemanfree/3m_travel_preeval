@@ -138,13 +138,6 @@ export default function PolitiqueConfidentialite() {
             </div>
           </div>
 
-          {/* Note */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700 italic">
-              <strong>Note :</strong> Ce texte est un modèle de base. Il est recommandé de le faire valider par un juriste pour garantir sa conformité avec la réglementation camerounaise sur la protection des données personnelles.
-            </p>
-          </div>
-
         </div>
       </section>
 
