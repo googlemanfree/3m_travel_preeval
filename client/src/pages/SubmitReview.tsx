@@ -228,7 +228,7 @@ export default function SubmitReview({ embedded = false }: { embedded?: boolean 
                       key={star}
                       type="button"
                       onClick={() => setFormData({ ...formData, rating: star })}
-                      className="focus:outline-none transition-transform hover:scale-110"
+                      className="rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
                       <Star
                         className={`w-8 h-8 ${

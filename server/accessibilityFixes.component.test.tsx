@@ -169,6 +169,37 @@ describe("contraste non textuel : icônes et badges (axe : « color-contrast »,
   });
 });
 
+describe("focus clavier visible (axe : « focus-visible », WCAG 2.4.7)", () => {
+  it("chaque usage de focus:outline-none a un indicateur de focus de remplacement (ring, ou changement de bordure) dans le même fichier", () => {
+    const appSource = read("client/src/App.tsx");
+    const pageFiles = Array.from(appSource.matchAll(/(?:from|import)\(?\s*"\.\/pages\/([A-Za-z0-9_/]+)"/g)).map(
+      (m) => `client/src/pages/${m[1]}.tsx`
+    );
+    const candidateFiles = Array.from(new Set([...pageFiles, ...[
+      "client/src/components/DocumentUploader.tsx",
+    ]]));
+
+    const offenders: string[] = [];
+    for (const path of candidateFiles) {
+      let source: string;
+      try {
+        source = read(path);
+      } catch {
+        continue;
+      }
+      if (!source.includes("focus:outline-none")) continue;
+      const hasReplacement = /focus:ring|focus-visible|focus:border/.test(source);
+      if (!hasReplacement) offenders.push(path);
+    }
+    expect(offenders, `Fichiers avec focus:outline-none sans remplacement visible : ${offenders.join(", ")}`).toEqual([]);
+  });
+
+  it("les étoiles de notation (SubmitReview) ont un ring de focus visible au clavier", () => {
+    const source = read("client/src/pages/SubmitReview.tsx");
+    expect(source).toMatch(/focus-visible:ring-2 focus-visible:ring-blue-500/);
+  });
+});
+
 describe("repère de région (axe : « landmark-one-main », « region »)", () => {
   it("la page d'accueil est enveloppée dans un unique repère <main>", () => {
     const source = read("client/src/pages/Home.tsx");

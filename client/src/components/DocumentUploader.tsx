@@ -278,7 +278,7 @@ export function DocumentUploader({
       {hasRequirements && (
         <div className="mb-6" data-testid="requirement-select-block">
           <label htmlFor="document-requirement-select" className="mb-2 block text-sm font-semibold text-gray-900">Quelle pièce envoyez-vous ?</label>
-          <select id="document-requirement-select" value={selectedRequirement} onChange={(event) => chooseRequirement(event.target.value)} className="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none">
+          <select id="document-requirement-select" value={selectedRequirement} onChange={(event) => chooseRequirement(event.target.value)} className="h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 focus:border-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
             <option value="">Choisissez la pièce demandée…</option>
             {requirementGroups.map(([group, labels]) => (
               <optgroup key={group} label={group}>
