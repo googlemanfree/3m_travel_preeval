@@ -8,7 +8,7 @@
  * (accès direct HTTP, ou confirmation par une source tierce quand l'accès direct est bloqué depuis notre réseau).
  * Mettre à jour cette date UNIQUEMENT après avoir revérifié les liens.
  */
-export const LINKS_VERIFIED_ON = { iso: "2026-09-27", label: "27 septembre 2026" } as const;
+export const LINKS_VERIFIED_ON = { iso: "2026-10-07", label: "7 octobre 2026" } as const;
 
 export const GENERIC_FRAUD_REMINDER =
   "Aucune administration ni agence ne demande de paiement pour garantir la délivrance d'un visa, et aucune décision n'est jamais garantie à l'avance. 3M Travel & Services ne facilite aucun accord informel avec une autorité. Avant tout paiement ou envoi de document personnel, vérifiez l'information reçue directement sur le site officiel ci-dessus.";

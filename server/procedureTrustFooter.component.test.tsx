@@ -67,7 +67,12 @@ describe("sources officielles : aucun lien mort connu, panne réseau documentée
 
   it("la note de contrôle des liens ne prétend pas avoir vérifié en direct un portail injoignable depuis notre réseau", () => {
     const source = read("client/src/data/destinationOfficialSources.ts");
-    expect(source).toMatch(/recontrôlés le 2026-09-27/);
-    expect(source).toMatch(/italien[\s\S]*injoignable[\s\S]*réseau|réseau[\s\S]*italien/i);
+    expect(source).toMatch(/recontrôlés le 2026-10-07/);
+    expect(source).toMatch(/injoignables? depuis notre[\s*]+réseau/i);
+    expect(source).toMatch(/403[\s\S]*navigateur/i);
+    expect(source).toContain("https://www.moj.go.jp/isa/");
+    const luxembourg = read("client/src/data/countryProcedures/luxembourg.ts");
+    expect(luxembourg).toContain("pays-tiers/salarie.html");
+    expect(luxembourg).not.toContain("plus-3-mois/ressortissant-pays-tiers");
   });
 });

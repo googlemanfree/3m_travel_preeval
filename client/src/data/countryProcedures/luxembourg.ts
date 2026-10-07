@@ -161,7 +161,7 @@ export const luxembourgProcedure: CountryProcedure = {
   documentNote: "Consultation personnalisée gratuite disponible sur rendez-vous. Document établi par 3M Travel Agency SARL à titre informatif — les conditions sont susceptibles d'évoluer.",
   officialSources: [
     { label: "ADEM — Recrutement de ressortissants de pays tiers", url: "https://adem.public.lu/fr/marche-emploi-luxembourg/international-dynamique/etranger.html", description: "Repères officiels sur le marché de l’emploi luxembourgeois et les démarches liées au recrutement international." },
-    { label: "Guichet.lu — Salarié ressortissant d’un pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-pays-tiers/salarie.html", description: "Portail administratif officiel pour vérifier les conditions et formalités applicables." },
+    { label: "Guichet.lu — Salarié ressortissant d’un pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/salarie.html", description: "Portail administratif officiel pour vérifier les conditions et formalités applicables." },
     { label: "MAE Luxembourg — Visas", url: "https://mae.gouvernement.lu/fr/services-aux-citoyens/visa-immigration.html", description: "Informations officielles sur les visas et la représentation consulaire à vérifier avant dépôt." },
   ],
 };
