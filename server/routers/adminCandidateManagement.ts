@@ -563,6 +563,29 @@ export const adminCandidateManagementRouter = router({
       }
       return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, openingPayment, canActivate: blockers.length === 0, blockers };
     }),
+  getOpeningPaymentHistory: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+      const sourceRecord = reference.source === "online"
+        ? (await db.select({ email: applications.email, fullName: applications.fullName }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      const candidate = (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
+      const record = candidate ? await getOpeningPaymentRecord(db, candidate.id) : null;
+      const auditRows = await db.select().from(paymentAuditLogs)
+        .where(and(eq(paymentAuditLogs.paymentId, candidate?.id ?? reference.id), eq(paymentAuditLogs.candidateEmail, sourceRecord.email)))
+        .orderBy(desc(paymentAuditLogs.createdAt)).limit(100);
+      const payments = record ? [
+        { key: "primary", label: "Frais d’ouverture — procédure principale", reference: record.reference, amount: record.confirmedAmount, proofFileUrl: record.proofFileUrl, validatedAt: record.validatedAt, validatedBy: record.validatedBy },
+        ...(record.additionalPayment ? [{ key: "additional", label: "Second frais d’ouverture — procédure supplémentaire", reference: record.additionalPayment.reference, amount: record.additionalPayment.confirmedAmount, proofFileUrl: record.additionalPayment.proofFileUrl, validatedAt: record.validatedAt, validatedBy: record.validatedBy }] : []),
+      ] : [];
+      return { candidateId: input.candidateId, fullName: sourceRecord.fullName, email: sourceRecord.email, payments, auditRows };
+    }),
 
   /**
    * Confirme le paiement des frais d'ouverture directement sur un compte sans dossier : l'admin saisit soit une

@@ -99,6 +99,31 @@ describe("conditions d'ouverture du dossier : dites ce qui manque AVANT le clic"
   });
 });
 
+describe("rapport d'historique des paiements multiples", () => {
+  it("retourne séparément les frais principal et supplémentaire avec le journal admin", async () => {
+    const record = {
+      candidateId: 42,
+      validatedAt: "2026-10-06T10:00:00.000Z",
+      validatedBy: "agent@3mtravelagency.com",
+      reference: "OM-PRINCIPAL",
+      proofFileUrl: null,
+      confirmedAmount: 72000,
+      additionalPayment: { reference: "OM-SECONDE", proofFileUrl: "/manus-storage/proof.mp4", confirmedAmount: 91000 },
+    };
+    state.reads = [
+      [{ email: "candidat@example.com", fullName: "Candidat Test" }],
+      [{ id: 42 }],
+      [{ settingValue: JSON.stringify(record) }],
+      [{ id: 1, action: "confirmed", amount: "72000 XAF", adminEmail: "agent@3mtravelagency.com", createdAt: new Date() }, { id: 2, action: "confirmed", amount: "91000 XAF", adminEmail: "agent@3mtravelagency.com", createdAt: new Date() }],
+    ];
+    const result = await caller().getOpeningPaymentHistory({ ...base, candidateId: "agency_34" });
+    expect(result.payments).toHaveLength(2);
+    expect(result.payments.map((payment) => payment.reference)).toEqual(["OM-PRINCIPAL", "OM-SECONDE"]);
+    expect(result.payments[1]).toMatchObject({ amount: 91000, proofFileUrl: "/manus-storage/proof.mp4" });
+    expect(result.auditRows).toHaveLength(2);
+  });
+});
+
 describe("activation : mêmes conditions, mêmes messages, et la référence change toute seule", () => {
   it("refuse sans paiement validé avec EXACTEMENT le message que l'écran affiche avant le clic", async () => {
     const expected = (await (async () => { state.reads = [[candidate(validatedEvaluation)], [], [], []]; return caller().preDossierActivationReadiness({ ...base, candidateId: 42 }); })()).blockers[0].message;
