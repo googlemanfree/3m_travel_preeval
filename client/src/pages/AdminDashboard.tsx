@@ -1951,6 +1951,30 @@ export default function AdminDashboard() {
 
           <TabsContent value="flights" className="space-y-6">
             <FlightAgentDashboard />
+            <div className="border-t border-slate-200 pt-6">
+              <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-slate-500">Supervision technique &amp; réglages de commission</h3>
+              <div className="space-y-6">
+                <SearchApiMonitoring />
+                <Card className="border-0 shadow-sm hover:-translate-y-1">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    <Plane className="w-5 h-5 text-blue-600" />
+                    Configuration de la Commission Agence sur les Vols
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Définissez le pourcentage de commission appliqué automatiquement sur les prix des billets d'avion affichés aux clients.
+                  </p>
+                  <FlightCommissionSettings />
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <a href="/admin/flight-requests" className="flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                      Ouvrir la file des demandes de vols
+                    </a>
+                    <a href="/admin/super-dashboard" className="flex h-12 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                      Pilotage global administrateur
+                    </a>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="evaluation-review" className="space-y-6">
@@ -2225,28 +2249,6 @@ export default function AdminDashboard() {
                   <p className="text-xs text-gray-400 mt-1">Les votes exprimés par les visiteurs sur l'accueil s'afficheront ici en temps réel.</p>
                 </div>
               )}
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="flights" className="space-y-6">
-            <SearchApiMonitoring />
-            <Card className="border-0 shadow-sm hover:-translate-y-1">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                <Plane className="w-5 h-5 text-blue-600" />
-                Configuration de la Commission Agence sur les Vols
-              </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Définissez le pourcentage de commission appliqué automatiquement sur les prix des billets d'avion affichés aux clients.
-              </p>
-              <FlightCommissionSettings />
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <a href="/admin/flight-requests" className="flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                  Ouvrir la file des demandes de vols
-                </a>
-                <a href="/admin/super-dashboard" className="flex h-12 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
-                  Pilotage global administrateur
-                </a>
-              </div>
             </Card>
           </TabsContent>
 
