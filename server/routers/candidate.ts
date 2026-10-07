@@ -2185,7 +2185,9 @@ export const candidateRouter = router({
     }),
 
   // ── Tableau de bord client unifié complet ─────────────────────────────────
-  getClientDashboardSummary: candidateProcedure.query(async ({ ctx }) => {
+  getClientDashboardSummary: candidateProcedure
+    .input(z.object({ selectedDossierNumber: z.string().trim().min(1).max(50).optional() }).optional())
+    .query(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -2225,7 +2227,22 @@ export const candidateRouter = router({
     // "active" meme si une ligne plus recente et non payee a ete creee depuis - sinon
     // le paiement confirme et le protocole d'accord a signer deviennent invisibles pour
     // le candidat (appRows est trie du plus recent au plus ancien).
-    const activeApp = appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null;
+    // Un candidat peut aussi ouvrir volontairement un second dossier en ligne pour un
+    // autre projet (ex. Études puis Travail) : selectedDossierNumber permet au client de
+    // choisir explicitement lequel afficher ; sans sélection, le comportement par défaut
+    // ci-dessus (le payé, sinon le plus récent) est inchangé.
+    const selectedApp = input?.selectedDossierNumber
+      ? appRows.find((app) => app.dossierNumber === input.selectedDossierNumber) ?? null
+      : null;
+    const activeApp = selectedApp || appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null;
+    const onlineDossiers = appRows.map((app) => ({
+      dossierNumber: app.dossierNumber,
+      visaType: app.visaType,
+      destination: app.destination,
+      dossierStatus: app.dossierStatus,
+      paymentStatus: app.paymentStatus,
+      createdAt: app.createdAt,
+    }));
     const [activeAgencyDossier] = await db
       .select()
       .from(agencyDossiers)
@@ -2319,6 +2336,7 @@ export const candidateRouter = router({
           : null,
       },
       applications: appRows,
+      onlineDossiers,
       favoriteFlights: favFlights,
       evaluations: clientEvaluations,
       messages: messageRows,

@@ -76,15 +76,22 @@ export default function EvaluationSpace() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [agreementSignatureName, setAgreementSignatureName] = useState("");
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
+  // Un candidat peut ouvrir plusieurs dossiers en ligne pour des projets différents (ex. Études puis
+  // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
+  // dossier payé, sinon le plus récent).
+  const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);
 
   // Requête unique pour le résumé complet du tableau de bord client
   // Les données que l'administrateur fait évoluer se rafraîchissent seules (onglet visible) : voir clientSpaceSync.
-  const { data: dashboardData, dataUpdatedAt: dashboardUpdatedAt, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
-    enabled: isAuthenticated,
-    ...clientSpacePolling(CLIENT_SPACE_SUMMARY_POLL_MS),
-    retry: 3,
-    retryDelay: 1000,
-  });
+  const { data: dashboardData, dataUpdatedAt: dashboardUpdatedAt, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(
+    selectedDossierNumber ? { selectedDossierNumber } : undefined,
+    {
+      enabled: isAuthenticated,
+      ...clientSpacePolling(CLIENT_SPACE_SUMMARY_POLL_MS),
+      retry: 3,
+      retryDelay: 1000,
+    }
+  );
   // Évaluation à validation administrateur : avis d’attente, demandes de complément puis rapport PUBLIÉ (jamais de brouillon).
   const structuredEvaluationQuery = trpc.evaluationValidation.myEvaluation.useQuery(undefined, { enabled: isAuthenticated, ...clientSpacePolling(), retry: 1 });
   const structuredEvaluation = structuredEvaluationQuery.data;
@@ -284,7 +291,9 @@ export default function EvaluationSpace() {
     );
   }
 
-  const { candidate: rawCProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null }) =>
+    dossier.visaType || dossier.destination || dossier.dossierNumber || "";
   const cProfile = {
     ...rawCProfile,
     dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
@@ -484,6 +493,38 @@ export default function EvaluationSpace() {
           </div>
         </div>
       </header>
+
+      {/* Sélecteur de dossier : les onglets n'apparaissent qu'à partir de 2 dossiers en ligne (ex. Études + Travail),
+          mais le lien pour en ouvrir un second reste visible dès le premier dossier. */}
+      {onlineDossiers.length >= 1 && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center gap-2">
+            {onlineDossiers.length > 1 && <span className="text-xs font-semibold text-gray-500 mr-1">Mes dossiers :</span>}
+            {onlineDossiers.length > 1 && onlineDossiers.map((dossier) => {
+              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
+              return (
+                <button
+                  key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
+                  type="button"
+                  onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    isSelected ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {dossierSwitcherLabel(dossier)}
+                  <span className="ml-1.5 opacity-75">{dossier.dossierNumber}</span>
+                </button>
+              );
+            })}
+            <a
+              href="/evaluation"
+              className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+            >
+              + Ouvrir un dossier pour un autre projet
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Barre de navigation principale du tableau de bord */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
