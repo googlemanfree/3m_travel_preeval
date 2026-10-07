@@ -1950,12 +1950,18 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
-            <FlightAgentDashboard />
-            <div className="border-t border-slate-200 pt-6">
+            <nav aria-label="Raccourcis de l’onglet vols" className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-sky-100 bg-white/95 p-3 shadow-sm backdrop-blur">
+              <span className="mr-1 text-xs font-black uppercase tracking-wide text-slate-500">Accès rapide</span>
+              <a href="#flight-queue" className="rounded-lg bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800 underline-offset-2 hover:bg-sky-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">File des demandes</a>
+              <a href="#flight-monitoring" className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 underline-offset-2 hover:bg-slate-200 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600">Supervision technique</a>
+              <a href="#flight-commission" className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900 underline-offset-2 hover:bg-amber-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700">Commission agence</a>
+            </nav>
+            <div id="flight-queue" className="scroll-mt-24"><FlightAgentDashboard /></div>
+            <div id="flight-monitoring" className="scroll-mt-24 border-t border-slate-200 pt-6">
               <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-slate-500">Supervision technique &amp; réglages de commission</h3>
               <div className="space-y-6">
                 <SearchApiMonitoring />
-                <Card className="border-0 shadow-sm hover:-translate-y-1">
+                <Card id="flight-commission" className="scroll-mt-24 border-0 shadow-sm hover:-translate-y-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <Plane className="w-5 h-5 text-blue-600" />
                     Configuration de la Commission Agence sur les Vols
@@ -2719,6 +2725,7 @@ export default function AdminDashboard() {
 function FlightCommissionSettings() {
   const { data, refetch } = trpc.flights.getCommission.useQuery();
   const [commission, setCommission] = useState<number>(8);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -2744,10 +2751,21 @@ function FlightCommissionSettings() {
       toast({ title: "Session administrateur requise", description: "Reconnectez-vous avant de modifier la commission.", variant: "destructive" });
       return;
     }
+    setIsConfirmationOpen(true);
+  };
+
+  const confirmSave = () => {
+    const sessionToken = localStorage.getItem("adminSessionToken");
+    if (!sessionToken) {
+      setIsConfirmationOpen(false);
+      toast({ title: "Session administrateur requise", description: "Reconnectez-vous avant de modifier la commission.", variant: "destructive" });
+      return;
+    }
     updateMutation.mutate({
       sessionToken,
       commissionPercent: Number(commission),
     });
+    setIsConfirmationOpen(false);
   };
 
   return (
@@ -2764,7 +2782,7 @@ function FlightCommissionSettings() {
             onChange={(e) => setCommission(Number(e.target.value))}
             className="font-bold text-lg"
           />
-          <Button type="submit" disabled={updateMutation.isPending} className="bg-[#1E3A8A] text-white font-bold px-6">
+                  <Button type="submit" disabled={updateMutation.isPending} className="bg-[#1E3A8A] text-white font-bold px-6">
             {updateMutation.isPending ? "Enregistrement..." : "Enregistrer"}
           </Button>
         </div>
@@ -2781,6 +2799,22 @@ function FlightCommissionSettings() {
       <p className="text-xs text-gray-400">
         Une fois enregistrée, cette commission est automatiquement incluse dans les grilles tarifaires de vols présentées aux candidats et sur les récapitulatifs e-mail.
       </p>
+      <AlertDialog open={isConfirmationOpen} onOpenChange={setIsConfirmationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la modification de commission</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette valeur modifiera les tarifs de vols affichés aux candidats et les récapitulatifs e-mail. Confirmez-vous l’application d’une commission de <strong>{commission}%</strong> ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateMutation.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction type="button" onClick={confirmSave} disabled={updateMutation.isPending} className="bg-blue-800 text-white hover:bg-blue-900">
+              {updateMutation.isPending ? "Enregistrement…" : "Confirmer et enregistrer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

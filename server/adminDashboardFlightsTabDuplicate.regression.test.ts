@@ -21,6 +21,29 @@ describe("AdminDashboard — un seul <TabsContent> par valeur d'onglet", () => {
     expect(flightsTab).toContain("Supervision technique");
   });
 
+  it("expose des ancres de navigation vers la file, la supervision et la commission", () => {
+    const start = source.indexOf('<TabsContent value="flights"');
+    const end = source.indexOf("</TabsContent>", start);
+    const flightsTab = source.slice(start, end);
+    expect(flightsTab).toContain('href="#flight-queue"');
+    expect(flightsTab).toContain('href="#flight-monitoring"');
+    expect(flightsTab).toContain('href="#flight-commission"');
+    expect(flightsTab).toContain('id="flight-commission"');
+  });
+
+  it("demande une confirmation avant d’enregistrer une commission sensible", () => {
+    expect(source).toContain("Confirmer la modification de commission");
+    expect(source).toContain("Confirmer et enregistrer");
+    expect(source).toContain("Cette valeur modifiera les tarifs de vols affichés aux candidats");
+  });
+
+  it("conserve un filtre explicite par statut dans la file des demandes", () => {
+    const flightAgentSource = readFileSync(resolve(import.meta.dirname, "../client/src/pages/FlightAgentDashboard.tsx"), "utf8");
+    expect(flightAgentSource).toContain('aria-label="Filtrer par statut"');
+    expect(flightAgentSource).toContain('value={statusFilter}');
+    expect(flightAgentSource).toContain("Tous les statuts");
+  });
+
   it("garde-fou général : aucune autre valeur d'onglet n'est déclarée en double dans ce fichier", () => {
     const values = Array.from(source.matchAll(/<TabsContent value="([^"]+)"/g), (match) => match[1]);
     const counts = new Map<string, number>();
