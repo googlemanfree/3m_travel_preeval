@@ -9,6 +9,7 @@ vi.mock("./db", () => ({
       return chain;
     },
     update: () => ({ set: () => ({ where: async () => undefined }) }),
+    delete: () => ({ where: async () => undefined }),
     insert: () => ({ values: async (row: any) => { state.inserts.push(row); return [{ insertId: 1 }]; } }),
   }),
 }));
