@@ -138,6 +138,27 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.getByRole("dialog").textContent).toContain("OM-123");
   });
 
+  it("propose aussi l’aperçu rapide depuis le dialogue d’activation", () => {
+    h.account = account({ paymentValidated: true, paymentProofUrl: "https://storage.example/facture-dialogue.jpg" });
+    h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
+    open();
+    fireEvent.click(screen.getByTestId("activation-payment-proof-preview"));
+    const previewDialog = screen.getAllByRole("dialog").at(-1)!;
+    expect(previewDialog.textContent).toContain("Aperçu de la preuve de paiement");
+    expect(screen.getByAltText("Preuve de paiement de DJAMBONG TESSA").getAttribute("src")).toBe("https://storage.example/facture-dialogue.jpg");
+  });
+
+  it("affiche les champs séparés pour une seconde procédure et son second paiement", () => {
+    h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une seconde" }));
+    const fields = screen.getByTestId("additional-procedure-fields");
+    expect(fields).toBeTruthy();
+    expect(fields.querySelector("#predossier-additional-payment-reference")).toBeTruthy();
+    expect(fields.querySelector("#predossier-additional-payment-amount")).toBeTruthy();
+    expect(screen.getByText("Deux procédures en parallèle")).toBeTruthy();
+  });
+
   it("filtre les comptes dont le paiement d’ouverture est encore en attente", () => {
     h.account = account({ paymentValidated: false });
     render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);

@@ -159,6 +159,48 @@ describe("confirmOpeningPaymentForAccount : valider le paiement directement sur 
     expect(result.record).toMatchObject({ reference: null, proofFileUrl: "/manus-storage/candidates/opening-payment-proof/42/facture.jpg" });
   });
 
+  it("conserve un montant variable et enregistre un second frais avec sa référence", async () => {
+    state.reads = [[candidate()], [], []];
+    const result = await caller().confirmOpeningPaymentForAccount({
+      ...base,
+      candidateId: 42,
+      paymentReference: "OM-PRINCIPAL",
+      confirmedAmount: 72000,
+      additionalPaymentReference: "OM-SECONDE",
+      additionalConfirmedAmount: 91000,
+    });
+    expect(result.record).toMatchObject({
+      reference: "OM-PRINCIPAL",
+      confirmedAmount: 72000,
+      additionalPayment: { reference: "OM-SECONDE", confirmedAmount: 91000 },
+    });
+    expect(state.inserts.filter(row => row.action === "confirmed")).toHaveLength(2);
+  });
+
+  it("ajoute deux dossiers agence distincts après validation des deux frais", async () => {
+    const record = {
+      candidateId: 42,
+      validatedAt: "2026-10-06T10:00:00.000Z",
+      validatedBy: "agent@3mtravelagency.com",
+      reference: "OM-PRINCIPAL",
+      proofFileUrl: null,
+      confirmedAmount: 72000,
+      additionalPayment: { reference: "OM-SECONDE", proofFileUrl: null, confirmedAmount: 91000 },
+    };
+    state.reads = [[candidate(validatedEvaluation)], [{ settingValue: JSON.stringify(record) }], []];
+    const result = await caller().activatePreDossierAccount({
+      ...base,
+      candidateId: 42,
+      destination: "luxembourg",
+      visaType: "Études",
+      additionalProcedure: { destination: "canada", visaType: "Travail" },
+    });
+    expect(result).toMatchObject({ success: true, additionalAgencyDossierId: 34, additionalDossierReference: "3M-AGN-0034" });
+    const dossierInserts = state.inserts.filter(row => row.source === "manual_admin");
+    expect(dossierInserts).toHaveLength(2);
+    expect(dossierInserts[1]).toMatchObject({ destination: "canada", visaType: "Travail" });
+  });
+
   it("refuse si ni référence ni preuve ne sont fournies, avant toute lecture", async () => {
     await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42 })).rejects.toThrow();
     expect(state.inserts).toHaveLength(0);

@@ -115,6 +115,11 @@ type OpeningPaymentRecord = {
   reference: string | null;
   proofFileUrl: string | null;
   confirmedAmount: number | null;
+  additionalPayment?: {
+    reference: string;
+    proofFileUrl: string | null;
+    confirmedAmount: number | null;
+  };
 };
 
 async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<OpeningPaymentRecord | null> {
@@ -572,6 +577,8 @@ export const adminCandidateManagementRouter = router({
       paymentReference: z.string().trim().max(255).optional(),
       proofFileUrl: z.string().max(1000).optional(),
       confirmedAmount: z.number().int().positive().max(100000000).optional(),
+      additionalPaymentReference: z.string().trim().max(255).optional(),
+      additionalConfirmedAmount: z.number().int().positive().max(100000000).optional(),
     }).refine((value) => Boolean(value.paymentReference?.trim()) || Boolean(value.proofFileUrl?.trim()), {
       message: "Indiquez une référence de transaction ou joignez une preuve (photo ou vidéo de la facture).",
     }))
@@ -583,20 +590,39 @@ export const adminCandidateManagementRouter = router({
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       const existing = await getOpeningPaymentRecord(db, candidate.id);
-      if (existing) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n’est nécessaire.` });
+      if (existing && !input.additionalPaymentReference?.trim()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n'est nécessaire.` });
       }
       if (input.proofFileUrl && storageKeyFromStoredUrl(input.proofFileUrl) === null) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Preuve de paiement invalide : redéposez la photo ou la vidéo." });
       }
-      const record: OpeningPaymentRecord = {
-        candidateId: candidate.id,
-        validatedAt: new Date().toISOString(),
-        validatedBy: admin.email || "Administrateur",
-        reference: input.paymentReference?.trim() || null,
-        proofFileUrl: input.proofFileUrl?.trim() || null,
-        confirmedAmount: input.confirmedAmount ?? null,
-      };
+      const now = new Date().toISOString();
+      const record: OpeningPaymentRecord = existing
+        ? {
+            ...existing,
+            additionalPayment: {
+              reference: input.additionalPaymentReference!.trim(),
+              proofFileUrl: input.proofFileUrl?.trim() || null,
+              confirmedAmount: input.additionalConfirmedAmount ?? input.confirmedAmount ?? null,
+            },
+          }
+        : {
+            candidateId: candidate.id,
+            validatedAt: now,
+            validatedBy: admin.email || "Administrateur",
+            reference: input.paymentReference?.trim() || null,
+            proofFileUrl: input.proofFileUrl?.trim() || null,
+            confirmedAmount: input.confirmedAmount ?? null,
+            ...(input.additionalPaymentReference?.trim()
+              ? {
+                  additionalPayment: {
+                    reference: input.additionalPaymentReference.trim(),
+                    proofFileUrl: null,
+                    confirmedAmount: input.additionalConfirmedAmount ?? null,
+                  },
+                }
+              : {}),
+          };
       await setOpeningPaymentRecord(db, record);
       await db.insert(paymentAuditLogs).values({
         adminName: admin.email || "Administrateur",
@@ -605,13 +631,34 @@ export const adminCandidateManagementRouter = router({
         paymentId: candidate.id,
         candidateEmail: candidate.email,
         amount: `${input.confirmedAmount ?? 65000} XAF`,
-        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}.`,
+        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
       });
+      if (record.additionalPayment) {
+        await db.insert(paymentAuditLogs).values({
+          adminName: admin.email || "Administrateur",
+          adminEmail: admin.email || "",
+          action: "confirmed",
+          paymentId: candidate.id,
+          candidateEmail: candidate.email,
+          amount: `${record.additionalPayment.confirmedAmount ?? 65000} XAF`,
+          details: `Second paiement d'ouverture confirmé pour une seconde procédure de ${accountReference(candidate.id)} · ${record.additionalPayment.reference}.`,
+        });
+      }
       return { success: true, record };
     }),
 
   activatePreDossierAccount: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive(), destination: z.string().trim().min(2).max(100), visaType: z.string().trim().min(2).max(100), adminNotes: z.string().trim().max(5000).optional() }))
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      destination: z.string().trim().min(2).max(100),
+      visaType: z.string().trim().min(2).max(100),
+      adminNotes: z.string().trim().max(5000).optional(),
+      additionalProcedure: z.object({
+        destination: z.string().trim().min(2).max(100),
+        visaType: z.string().trim().min(2).max(100),
+      }).optional(),
+    }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
@@ -622,8 +669,12 @@ export const adminCandidateManagementRouter = router({
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }
-      if (!(await getOpeningPaymentRecord(db, candidate.id)) && !(await isOpeningPaymentValidated(db, candidate))) {
+      const openingPayment = await getOpeningPaymentRecord(db, candidate.id);
+      if (!openingPayment && !(await isOpeningPaymentValidated(db, candidate))) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.payment });
+      }
+      if (input.additionalProcedure && !openingPayment?.additionalPayment) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le second paiement d'ouverture doit être validé avant d'ajouter la seconde procédure." });
       }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
@@ -666,6 +717,34 @@ export const adminCandidateManagementRouter = router({
         newValue: dossierReference,
         details: "Référence de compte remplacée par le numéro de dossier actif après paiement des frais d’ouverture validé et activation par l’administration",
       });
+      let additionalAgencyDossierId: number | null = null;
+      let additionalDossierReference: string | null = null;
+      if (input.additionalProcedure) {
+        const additionalInserted = await db.insert(agencyDossiers).values({
+          fullName: candidate.fullName,
+          email: candidate.email,
+          phone: candidate.phone ?? "Non renseigné",
+          dateOfBirth: candidate.dateOfBirth,
+          nationality: candidate.nationality,
+          destination: input.additionalProcedure.destination,
+          visaType: input.additionalProcedure.visaType,
+          status: "nouveau",
+          createdByAdmin: admin.email,
+          assignedToAdmin: admin.email,
+          adminNotes: input.adminNotes ?? null,
+          source: "manual_admin",
+        });
+        additionalAgencyDossierId = Number((additionalInserted as any)[0]?.insertId || 0);
+        additionalDossierReference = agencyDossierReference(additionalAgencyDossierId);
+        await db.insert(agencyDossierHistory).values({
+          dossierId: additionalAgencyDossierId,
+          action: "account_linked",
+          changedBy: admin.email || "unknown",
+          oldValue: null,
+          newValue: JSON.stringify({ candidateId: candidate.id, email: candidate.email, procedure: 2 }),
+          details: "Seconde procédure rattachée au compte candidat après validation de son second frais d’ouverture",
+        });
+      }
       try {
         await db.insert(clientNotifications).values({
           candidateId: candidate.id,
@@ -698,7 +777,7 @@ export const adminCandidateManagementRouter = router({
       } catch (err) {
         console.error("[activatePreDossierAccount] Nettoyage des doublons non effectué:", err);
       }
-      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference, archivedDuplicates };
+      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference, archivedDuplicates, additionalAgencyDossierId, additionalDossierReference };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

@@ -98,6 +98,12 @@ export default function AdminPreDossierAccountsPanel({
   >("agence");
   const [offlineNote, setOfflineNote] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [additionalProcedureEnabled, setAdditionalProcedureEnabled] = useState(false);
+  const [additionalDestination, setAdditionalDestination] = useState("europe");
+  const [additionalVisaType, setAdditionalVisaType] = useState("Études");
+  const [additionalPaymentReference, setAdditionalPaymentReference] = useState("");
+  const [additionalPaymentAmount, setAdditionalPaymentAmount] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [isUploadingProof, setIsUploadingProof] = useState(false);
   const [proofUploadProgress, setProofUploadProgress] = useState(0);
@@ -207,11 +213,22 @@ export default function AdminPreDossierAccountsPanel({
   // Dépose d'abord la preuve (photo/vidéo) si fournie, puis confirme le paiement : la référence seule suffit aussi.
   const handleConfirmOpeningPayment = async () => {
     if (!selected) return;
-    if (!paymentReference.trim() && !proofFile) {
+    const validatingSecondPayment = additionalProcedureEnabled && Boolean(readiness.data?.paymentValidated);
+    const activePaymentReference = validatingSecondPayment ? additionalPaymentReference : paymentReference;
+    const activePaymentAmount = validatingSecondPayment ? additionalPaymentAmount : paymentAmount;
+    if (!activePaymentReference.trim() && !proofFile) {
       toast({
         title: "Preuve manquante",
         description:
           "Indiquez une référence de transaction ou joignez une photo ou vidéo de la facture.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (additionalProcedureEnabled && !additionalPaymentReference.trim()) {
+      toast({
+        title: "Second paiement manquant",
+        description: "Saisissez la référence du second frais d’ouverture avant de valider deux procédures.",
         variant: "destructive",
       });
       return;
@@ -264,8 +281,15 @@ export default function AdminPreDossierAccountsPanel({
     confirmOpeningPaymentMutation.mutate({
       sessionToken,
       candidateId: selected.id,
-      paymentReference: paymentReference.trim() || undefined,
+      paymentReference: activePaymentReference.trim() || undefined,
       proofFileUrl,
+      ...(activePaymentAmount.trim() ? { confirmedAmount: Number(activePaymentAmount) } : {}),
+      ...(additionalProcedureEnabled
+        ? {
+            additionalPaymentReference: additionalPaymentReference.trim(),
+            ...(additionalPaymentAmount.trim() ? { additionalConfirmedAmount: Number(additionalPaymentAmount) } : {}),
+          }
+        : {}),
     });
   };
   const reviewMutation =
@@ -355,6 +379,12 @@ export default function AdminPreDossierAccountsPanel({
     setOfflineNote("");
     setOfflineChannel("agence");
     setPaymentReference("");
+    setPaymentAmount("");
+    setAdditionalProcedureEnabled(false);
+    setAdditionalDestination("europe");
+    setAdditionalVisaType("Études");
+    setAdditionalPaymentReference("");
+    setAdditionalPaymentAmount("");
     setProofFile(null);
     setProofUploadProgress(0);
     setProofUploadConfirmed(false);
@@ -379,7 +409,10 @@ export default function AdminPreDossierAccountsPanel({
   const evaluationDeclared = Boolean(selected?.pendingEvaluationReference);
   const blockers = readiness.data?.blockers ?? [];
   const paymentBlocked = Boolean(
-    readiness.data && !readiness.data.paymentValidated
+    readiness.data && (!readiness.data.paymentValidated || (additionalProcedureEnabled && !readiness.data.openingPayment?.additionalPayment))
+  );
+  const additionalPaymentBlocked = additionalProcedureEnabled && Boolean(
+    readiness.data?.paymentValidated && !readiness.data.openingPayment?.additionalPayment
   );
   const busy =
     activateMutation.isPending ||
@@ -391,6 +424,8 @@ export default function AdminPreDossierAccountsPanel({
     ? "Indiquez la procédure (études, travail, tourisme…)."
     : readiness.isLoading
       ? "Vérification des conditions d’ouverture…"
+    : additionalPaymentBlocked
+      ? "Validez le second frais d’ouverture avant d’activer deux procédures."
       : blockers.length > 0
         ? blockers[0].message
         : !readiness.data &&
@@ -761,13 +796,27 @@ export default function AdminPreDossierAccountsPanel({
                     : "… Paiement : vérification en cours"}
                 </p>
               </div>
+              {selected?.paymentProofUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="activation-payment-proof-preview"
+                  onClick={() => setPaymentPreview(selected)}
+                  className="w-full justify-center gap-2 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                >
+                  <Eye className="h-4 w-4" /> Prévisualiser la preuve de facture
+                </Button>
+              )}
               {paymentBlocked && (
                 <div
                   data-testid="opening-payment-block"
                   className="rounded-xl border border-amber-200 bg-amber-50 p-3"
                 >
                   <p className="text-sm font-semibold text-amber-950">
-                    Valider le paiement des frais d’ouverture
+                    {additionalProcedureEnabled && readiness.data?.paymentValidated
+                      ? "Valider le second frais d’ouverture"
+                      : "Valider le paiement des frais d’ouverture"}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-amber-900">
                     Indiquez l’ID de transaction remis par le candidat, ou
@@ -777,13 +826,20 @@ export default function AdminPreDossierAccountsPanel({
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                     <Input
                       value={paymentReference}
-                      onChange={event =>
-                        setPaymentReference(event.target.value)
-                      }
-                      placeholder="ID de transaction / référence"
+                      onChange={event => setPaymentReference(event.target.value)}
+                      placeholder={additionalProcedureEnabled && readiness.data?.paymentValidated ? "Référence du second paiement" : "ID de transaction / référence"}
                       maxLength={255}
-                      aria-label="Référence ou ID de transaction du paiement"
+                      aria-label={additionalProcedureEnabled && readiness.data?.paymentValidated ? "Référence du second paiement" : "Référence ou ID de transaction du paiement"}
                       className="sm:flex-1"
+                    />
+                    <Input
+                      type="number"
+                      min="1"
+                      value={paymentAmount}
+                      onChange={event => setPaymentAmount(event.target.value)}
+                      placeholder="Montant XAF (variable)"
+                      aria-label="Montant payé en XAF"
+                      className="sm:w-44"
                     />
                     <div
                       data-testid="opening-payment-proof-dropzone"
@@ -871,6 +927,8 @@ export default function AdminPreDossierAccountsPanel({
                       ? "Dépôt de la preuve…"
                       : confirmOpeningPaymentMutation.isPending
                         ? "Confirmation…"
+                      : additionalProcedureEnabled && readiness.data?.paymentValidated
+                        ? "Confirmer le second paiement"
                         : "Confirmer le paiement"}
                   </Button>
                 </div>
@@ -994,6 +1052,56 @@ export default function AdminPreDossierAccountsPanel({
                   maxLength={100}
                 />
               </div>
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-sm font-semibold text-blue-950">Deux procédures en parallèle</p>
+                    <p className="text-xs leading-5 text-blue-800">Chaque procédure doit avoir son propre frais d’ouverture et sa propre référence de transaction.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={additionalProcedureEnabled ? "default" : "outline"}
+                    size="sm"
+                    aria-pressed={additionalProcedureEnabled}
+                    onClick={() => setAdditionalProcedureEnabled(current => !current)}
+                    disabled={busy}
+                    className="shrink-0"
+                  >
+                    {additionalProcedureEnabled ? "Retirer la seconde" : "Ajouter une seconde"}
+                  </Button>
+                </div>
+                {additionalProcedureEnabled && (
+                  <div data-testid="additional-procedure-fields" className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label>Seconde destination</Label>
+                      <Select value={additionalDestination} onValueChange={setAdditionalDestination}>
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="canada">Canada</SelectItem>
+                          <SelectItem value="luxembourg">Luxembourg</SelectItem>
+                          <SelectItem value="europe">Europe / Schengen</SelectItem>
+                          <SelectItem value="pologne">Pologne</SelectItem>
+                          <SelectItem value="golfe">Golfe</SelectItem>
+                          <SelectItem value="France">France</SelectItem>
+                          <SelectItem value="Allemagne">Allemagne</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="predossier-additional-visa">Seconde procédure</Label>
+                      <Input id="predossier-additional-visa" value={additionalVisaType} onChange={event => setAdditionalVisaType(event.target.value)} className="mt-1" placeholder="Travail, études…" maxLength={100} />
+                    </div>
+                    <div>
+                      <Label htmlFor="predossier-additional-payment-reference">Référence du second paiement</Label>
+                      <Input id="predossier-additional-payment-reference" value={additionalPaymentReference} onChange={event => setAdditionalPaymentReference(event.target.value)} className="mt-1" placeholder="ID de transaction" maxLength={255} />
+                    </div>
+                    <div>
+                      <Label htmlFor="predossier-additional-payment-amount">Montant du second paiement (XAF)</Label>
+                      <Input id="predossier-additional-payment-amount" type="number" min="1" value={additionalPaymentAmount} onChange={event => setAdditionalPaymentAmount(event.target.value)} className="mt-1" placeholder="Montant variable" />
+                    </div>
+                  </div>
+                )}
+              </div>
               <div>
                 <Label htmlFor="predossier-notes">
                   Note interne facultative
@@ -1038,6 +1146,9 @@ export default function AdminPreDossierAccountsPanel({
                           destination,
                           visaType,
                           adminNotes: adminNotes || undefined,
+                          ...(additionalProcedureEnabled
+                            ? { additionalProcedure: { destination: additionalDestination, visaType: additionalVisaType } }
+                            : {}),
                         })
                       }
                       disabled={busy || Boolean(disabledReason)}
