@@ -17,6 +17,7 @@ vi.mock("./db", () => ({
     },
     update: () => ({ set: (values: any) => ({ where: async () => { if (state.failTrash && values.deletedAt) throw new Error("corbeille indisponible"); state.updates.push(values); } }) }),
     insert: () => ({ values: async (row: any) => { state.inserts.push(row); return [{ insertId: 34 }]; } }),
+    delete: () => ({ where: async () => undefined }),
   }),
 }));
 vi.mock("./routers/adminAuth", () => ({
@@ -114,6 +115,7 @@ describe("rapport d'historique des paiements multiples", () => {
       [{ email: "candidat@example.com", fullName: "Candidat Test" }],
       [{ id: 42 }],
       [{ settingValue: JSON.stringify(record) }],
+      [{ settingValue: JSON.stringify({ candidateId: 42, proofFileUrl: "/manus-storage/pending.jpg", uploadedAt: "2026-10-07T09:00:00.000Z", uploadedBy: "agent@3mtravelagency.com", fileName: "facture.jpg", mimeType: "image/jpeg" }) }],
       [{ id: 1, action: "confirmed", amount: "72000 XAF", adminEmail: "agent@3mtravelagency.com", createdAt: new Date() }, { id: 2, action: "confirmed", amount: "91000 XAF", adminEmail: "agent@3mtravelagency.com", createdAt: new Date() }],
     ];
     const result = await caller().getOpeningPaymentHistory({ ...base, candidateId: "agency_34" });
@@ -121,6 +123,7 @@ describe("rapport d'historique des paiements multiples", () => {
     expect(result.payments.map((payment) => payment.reference)).toEqual(["OM-PRINCIPAL", "OM-SECONDE"]);
     expect(result.payments[1]).toMatchObject({ amount: 91000, proofFileUrl: "/manus-storage/proof.mp4" });
     expect(result.auditRows).toHaveLength(2);
+    expect(result.pendingProof).toMatchObject({ fileName: "facture.jpg", proofFileUrl: "/manus-storage/pending.jpg" });
   });
 });
 

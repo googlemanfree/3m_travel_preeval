@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
 import { candidates } from "../../drizzle/schema";
-import { requireAdminTreatmentSession } from "./adminCandidateManagement";
+import { requireAdminTreatmentSession, setPendingOpeningPaymentProof } from "./adminCandidateManagement";
 
 const TRPC_ERROR_HTTP_STATUS: Record<string, number> = {
   UNAUTHORIZED: 401,
@@ -99,6 +99,7 @@ export function registerOpeningPaymentProofUploadRoute(app: Express): void {
       const safeName = sanitizeFileName(file.originalname);
       const storageKey = `candidates/opening-payment-proof/${candidateId}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const stored = await storagePut(storageKey, file.buffer, file.mimetype);
+      await setPendingOpeningPaymentProof(db, { candidateId, proofFileUrl: stored.url, uploadedAt: new Date().toISOString(), uploadedBy: (await requireAdminTreatmentSession(req.headers.cookie, sessionToken)).email || "Administrateur", fileName: safeName, mimeType: file.mimetype });
 
       res.status(201).json({ success: true, fileUrl: stored.url, fileName: safeName, mimeType: file.mimetype, fileSizeBytes: file.size });
     } catch (error) {

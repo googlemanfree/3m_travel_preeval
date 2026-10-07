@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, FileText,
   FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
-  ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap,
+  ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -189,6 +189,26 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const refresh = async () => {
     await utils.admin.getCandidate360.invalidate({ sessionToken, candidateId: candidate.id });
     onRefresh();
+  };
+
+  const exportPaymentHistoryCsv = () => {
+    if (!openingPaymentHistory) return;
+    const rows = [["Type", "Référence", "Montant", "Preuve", "Validé par", "Date"], ...openingPaymentHistory.payments.map((payment: any) => [payment.label, payment.reference || "", payment.amount ? `${payment.amount} XAF` : "", payment.proofFileUrl || "", payment.validatedBy || "", formatDate(payment.validatedAt)]), ...openingPaymentHistory.auditRows.map((entry: any) => [`Journal: ${entry.action}`, "", entry.amount || "", "", entry.adminEmail || entry.adminName || "", formatDate(entry.createdAt)])];
+    const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = `historique-paiements-${candidate.folderCode || candidate.id}.csv`; link.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportPaymentHistoryPdf = async () => {
+    if (!openingPaymentHistory) return;
+    const { default: JsPDF } = await import("jspdf");
+    const pdf = new JsPDF({ unit: "mm", format: "a4" });
+    pdf.setTextColor(15, 55, 105); pdf.setFontSize(18); pdf.text("3M TRAVEL AGENCY", 18, 20);
+    pdf.setTextColor(40, 40, 40); pdf.setFontSize(11); pdf.text("Historique des paiements d’ouverture", 18, 30); pdf.text(`${openingPaymentHistory.fullName} · ${openingPaymentHistory.email}`, 18, 37);
+    let y = 50; pdf.setFontSize(10);
+    for (const payment of openingPaymentHistory.payments) { if (y > 270) { pdf.addPage(); y = 20; } pdf.setFont("helvetica", "bold"); pdf.text(payment.label, 18, y); pdf.setFont("helvetica", "normal"); y += 6; pdf.text(`Référence : ${payment.reference || "Non renseignée"}`, 22, y); y += 5; pdf.text(`Montant : ${payment.amount ? `${payment.amount} XAF` : "Non renseigné"} · Validé par : ${payment.validatedBy || "Administrateur"}`, 22, y); y += 5; pdf.text(`Date : ${formatDate(payment.validatedAt)}${payment.proofFileUrl ? " · Preuve jointe" : ""}`, 22, y + 1); y += 12; }
+    if (openingPaymentHistory.pendingProof) { if (y > 260) { pdf.addPage(); y = 20; } pdf.setTextColor(170, 90, 0); pdf.setFont("helvetica", "bold"); pdf.text("Preuve en attente de validation", 18, y); pdf.setFont("helvetica", "normal"); pdf.text(`Déposée par ${openingPaymentHistory.pendingProof.uploadedBy} le ${formatDate(openingPaymentHistory.pendingProof.uploadedAt)}`, 18, y + 6); }
+    pdf.setTextColor(40, 40, 40); pdf.setFontSize(8); pdf.text(`Généré le ${formatDate(new Date())} · Document interne 3M Travel Agency`, 18, 285); pdf.save(`historique-paiements-${candidate.folderCode || candidate.id}.pdf`);
   };
 
   const updateMutation = trpc.admin.updateCandidate360Workflow.useMutation({
@@ -620,6 +640,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         ))}
       </section>
 
+      {openingPaymentHistory?.pendingProof ? <div role="status" className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"><CircleAlert className="h-5 w-5 shrink-0 text-amber-700" /><span><strong>Preuve de paiement en attente :</strong> une nouvelle pièce doit être validée par un administrateur.</span><Button type="button" size="sm" variant="outline" className="ml-auto border-amber-400 bg-white text-amber-900" onClick={() => setActiveTab("payments")}>Voir</Button></div> : null}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
@@ -891,10 +912,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </Dialog>
 
         <TabsContent value="payments" className="space-y-3 pt-4">
+          {openingPaymentHistory?.pendingProof ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-sm"><div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><div><p className="font-semibold">Nouvelle preuve de paiement à valider</p><p className="mt-1 text-sm">{openingPaymentHistory.pendingProof.fileName || "Une preuve"} a été déposée le {formatDate(openingPaymentHistory.pendingProof.uploadedAt)} par {openingPaymentHistory.pendingProof.uploadedBy}. Validez-la avant toute activation.</p></div></div><Button type="button" size="sm" className="bg-amber-700 text-white hover:bg-amber-800" onClick={() => setActiveTab("payments")}>Ouvrir les paiements</Button></div> : null}
           <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4" aria-label="Historique des paiements multiples">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-indigo-700" />Historique des paiements d’ouverture</h4><p className="mt-1 text-sm text-slate-600">Suivi séparé du premier frais et du second frais éventuel, avec références, montants, preuves et validations administratives.</p></div>
-              {openingPaymentHistory?.payments?.length ? <Badge className="border-indigo-200 bg-white text-indigo-800">{openingPaymentHistory.payments.length} paiement(s)</Badge> : null}
+              <div className="flex flex-wrap gap-2">{openingPaymentHistory?.payments?.length || openingPaymentHistory?.auditRows?.length ? <><Button type="button" size="sm" variant="outline" className="gap-2 border-indigo-200 bg-white text-indigo-800" onClick={exportPaymentHistoryCsv}><FileSpreadsheet className="h-4 w-4" />CSV</Button><Button type="button" size="sm" variant="outline" className="gap-2 border-indigo-200 bg-white text-indigo-800" onClick={() => void exportPaymentHistoryPdf()}><Download className="h-4 w-4" />PDF</Button></> : null}{openingPaymentHistory?.payments?.length ? <Badge className="border-indigo-200 bg-white text-indigo-800">{openingPaymentHistory.payments.length} paiement(s)</Badge> : null}</div>
             </div>
             {openingPaymentHistoryLoading ? <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Chargement de l’historique…</div> : openingPaymentHistory?.payments?.length ? <div className="mt-4 space-y-2">{openingPaymentHistory.payments.map((payment: any) => <div key={payment.key} className="rounded-lg border border-indigo-100 bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium text-slate-900">{payment.label}</p><Badge className="border-emerald-200 bg-emerald-50 text-emerald-800"><CheckCircle2 className="mr-1 h-3 w-3" />Validé</Badge></div><p className="mt-1 text-sm text-slate-600">Référence : <strong>{payment.reference || "Non renseignée"}</strong> · Montant : <strong>{payment.amount ? `${Number(payment.amount).toLocaleString("fr-FR")} XAF` : "Non renseigné"}</strong></p><p className="mt-1 text-xs text-slate-500">Validé par {payment.validatedBy || "Administrateur"} · {formatDate(payment.validatedAt)}{payment.proofFileUrl ? " · Preuve jointe" : ""}</p></div>)}</div> : <p className="mt-4 rounded-lg border border-dashed border-indigo-200 bg-white p-3 text-sm text-slate-500">Aucun frais d’ouverture confirmé directement sur ce compte.</p>}
             {openingPaymentHistory?.auditRows?.length ? <div className="mt-4 border-t border-indigo-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">Journal des opérations</p><div className="mt-2 space-y-1">{openingPaymentHistory.auditRows.slice(0, 8).map((entry: any) => <p key={entry.id} className="text-xs text-slate-600"><span className="font-medium text-slate-800">{entry.action === "confirmed" ? "Validation" : entry.action}</span> · {entry.amount} · {entry.adminEmail || entry.adminName} · {formatDate(entry.createdAt)}</p>)}</div></div> : null}

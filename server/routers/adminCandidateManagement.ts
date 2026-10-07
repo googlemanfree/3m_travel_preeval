@@ -107,6 +107,7 @@ const ACTIVATION_MESSAGES = {
  * dossier" où cet onglet n'a justement rien à montrer.
  */
 const OPENING_PAYMENT_KEY_PREFIX = "opening_payment:";
+const PENDING_OPENING_PAYMENT_KEY_PREFIX = "opening_payment_pending:";
 
 type OpeningPaymentRecord = {
   candidateId: number;
@@ -120,6 +121,15 @@ type OpeningPaymentRecord = {
     proofFileUrl: string | null;
     confirmedAmount: number | null;
   };
+};
+
+export type PendingOpeningPaymentProof = {
+  candidateId: number;
+  proofFileUrl: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  fileName?: string;
+  mimeType?: string;
 };
 
 async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<OpeningPaymentRecord | null> {
@@ -143,6 +153,24 @@ async function setOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof
   } else {
     await db.insert(agencySettings).values({ settingKey: key, settingValue });
   }
+}
+
+export async function setPendingOpeningPaymentProof(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, proof: PendingOpeningPaymentProof): Promise<void> {
+  const settingKey = `${PENDING_OPENING_PAYMENT_KEY_PREFIX}${proof.candidateId}`;
+  const settingValue = JSON.stringify(proof);
+  const [existing] = await db.select({ id: agencySettings.id }).from(agencySettings).where(eq(agencySettings.settingKey, settingKey)).limit(1);
+  if (existing) await db.update(agencySettings).set({ settingValue, updatedAt: new Date() }).where(eq(agencySettings.id, existing.id));
+  else await db.insert(agencySettings).values({ settingKey, settingValue });
+}
+
+async function getPendingOpeningPaymentProof(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<PendingOpeningPaymentProof | null> {
+  const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings).where(eq(agencySettings.settingKey, `${PENDING_OPENING_PAYMENT_KEY_PREFIX}${candidateId}`)).limit(1);
+  if (!row) return null;
+  try { return JSON.parse(row.settingValue) as PendingOpeningPaymentProof; } catch { return null; }
+}
+
+async function clearPendingOpeningPaymentProof(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<void> {
+  await db.delete(agencySettings).where(eq(agencySettings.settingKey, `${PENDING_OPENING_PAYMENT_KEY_PREFIX}${candidateId}`));
 }
 
 /**
@@ -577,6 +605,7 @@ export const adminCandidateManagementRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const candidate = (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
       const record = candidate ? await getOpeningPaymentRecord(db, candidate.id) : null;
+      const pendingProof = candidate ? await getPendingOpeningPaymentProof(db, candidate.id) : null;
       const auditRows = await db.select().from(paymentAuditLogs)
         .where(and(eq(paymentAuditLogs.paymentId, candidate?.id ?? reference.id), eq(paymentAuditLogs.candidateEmail, sourceRecord.email)))
         .orderBy(desc(paymentAuditLogs.createdAt)).limit(100);
@@ -584,7 +613,7 @@ export const adminCandidateManagementRouter = router({
         { key: "primary", label: "Frais d’ouverture — procédure principale", reference: record.reference, amount: record.confirmedAmount, proofFileUrl: record.proofFileUrl, validatedAt: record.validatedAt, validatedBy: record.validatedBy },
         ...(record.additionalPayment ? [{ key: "additional", label: "Second frais d’ouverture — procédure supplémentaire", reference: record.additionalPayment.reference, amount: record.additionalPayment.confirmedAmount, proofFileUrl: record.additionalPayment.proofFileUrl, validatedAt: record.validatedAt, validatedBy: record.validatedBy }] : []),
       ] : [];
-      return { candidateId: input.candidateId, fullName: sourceRecord.fullName, email: sourceRecord.email, payments, auditRows };
+      return { candidateId: input.candidateId, fullName: sourceRecord.fullName, email: sourceRecord.email, payments, auditRows, pendingProof };
     }),
 
   /**
@@ -647,6 +676,7 @@ export const adminCandidateManagementRouter = router({
               : {}),
           };
       await setOpeningPaymentRecord(db, record);
+      await clearPendingOpeningPaymentProof(db, candidate.id);
       await db.insert(paymentAuditLogs).values({
         adminName: admin.email || "Administrateur",
         adminEmail: admin.email || "",
