@@ -262,7 +262,7 @@ export default function EvisaDetailPage() {
                   </div>
                 )}
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl text-xs text-blue-900 space-y-1">
-                  <p className="font-bold">Garantie 3M Travel & Services :</p>
+                  <p className="font-bold">Contrôle 3M Travel & Services :</p>
                   <p>Validation par nos experts avant soumission officielle sur le portail consulaire.</p>
                 </div>
 

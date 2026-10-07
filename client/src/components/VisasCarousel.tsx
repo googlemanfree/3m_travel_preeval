@@ -9,7 +9,6 @@ interface VisaAccorded {
   flag: string;
   visaType: string;
   date: string;
-  successRate: number;
 }
 
 const visasData: VisaAccorded[] = [
@@ -19,7 +18,6 @@ const visasData: VisaAccorded[] = [
     flag: "🇵🇱",
     visaType: "Visa Type D (Études)",
     date: "Juillet 2026",
-    successRate: 95,
   },
   {
     id: "2",
@@ -27,7 +25,6 @@ const visasData: VisaAccorded[] = [
     flag: "🇨🇦",
     visaType: "Permis d'Études",
     date: "Juin 2026",
-    successRate: 90,
   },
   {
     id: "3",
@@ -35,7 +32,6 @@ const visasData: VisaAccorded[] = [
     flag: "🇪🇺",
     visaType: "Visa Schengen (Affaires)",
     date: "Mai 2026",
-    successRate: 88,
   },
   {
     id: "4",
@@ -43,7 +39,6 @@ const visasData: VisaAccorded[] = [
     flag: "🇩🇪",
     visaType: "Visa de Travail",
     date: "Avril 2026",
-    successRate: 92,
   },
   {
     id: "5",
@@ -51,7 +46,6 @@ const visasData: VisaAccorded[] = [
     flag: "🇱🇺",
     visaType: "Visa de Résidence",
     date: "Mars 2026",
-    successRate: 85,
   },
 ];
 
@@ -115,23 +109,6 @@ export function VisasCarousel() {
                 <div className="p-6">
                   <p className="text-sm text-gray-600 mb-2">Type de Visa</p>
                   <p className="font-semibold text-gray-900 mb-4">{visa.visaType}</p>
-
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-semibold text-gray-600">
-                        Taux de Succès
-                      </span>
-                      <span className="text-sm font-bold text-blue-600">
-                        {visa.successRate}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-green-400 to-blue-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${visa.successRate}%` }}
-                      />
-                    </div>
-                  </div>
 
                   <p className="text-xs text-gray-500">{visa.date}</p>
                 </div>

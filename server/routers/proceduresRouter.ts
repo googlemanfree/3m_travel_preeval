@@ -149,18 +149,4 @@ Si tu ne sais pas la réponse, propose de contacter l'équipe directement.`;
 
       return { destinations, success: true };
     }),
-
-  /**
-   * Obtenir les statistiques sur les procédures
-   */
-  getStatistics: publicProcedure.query(async () => {
-    return {
-      totalCountries: 195,
-      averageProcessingTime: "12 semaines",
-      successRate: "92%",
-      topDestinations: ["Luxembourg", "Belgique", "Canada", "France", "Suisse"],
-      topSectors: ["IT", "Santé", "Ingénierie", "Finance", "Services"],
-      success: true,
-    };
-  }),
 });

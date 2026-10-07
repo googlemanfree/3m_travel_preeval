@@ -394,7 +394,7 @@ export default function Evisa() {
           <Card className="p-6 border-l-4 border-blue-600 bg-blue-50 flex gap-4">
             <Shield className="text-blue-600 flex-shrink-0" size={32} />
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">🛡️ Garantie Conformité 3M Travel</h3>
+              <h3 className="font-bold text-gray-900 mb-2">🛡️ Contrôle de conformité 3M Travel</h3>
               <p className="text-gray-700 text-sm">
                 Nos experts vérifient la qualité de votre scan de passeport, la conformité de votre photo et l'exactitude de vos dates avant la soumission officielle, afin de limiter tout risque de rejet.
               </p>

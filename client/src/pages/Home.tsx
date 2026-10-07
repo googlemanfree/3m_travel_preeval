@@ -1274,7 +1274,7 @@ export default function Home() {
               { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
               { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
               { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-[#0369a1] bg-[#e0f2fe]" },
-              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-[#7cb9e8] bg-[#f0f9ff]" },
+              { icon: CheckCircle2, title: "Suivi transparent",           desc: "Étapes, pièces à fournir et échéances visibles dans votre espace client", color: "text-[#7cb9e8] bg-[#f0f9ff]" },
             ].map((item, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
                 <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
