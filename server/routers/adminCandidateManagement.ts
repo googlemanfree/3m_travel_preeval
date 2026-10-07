@@ -645,7 +645,9 @@ export const adminCandidateManagementRouter = router({
       if (existing && !input.additionalPaymentReference?.trim()) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n'est nécessaire.` });
       }
-      if (input.proofFileUrl && storageKeyFromStoredUrl(input.proofFileUrl) === null) {
+      // La preuve doit être un fichier déposé POUR CE COMPTE par la route de dépôt dédiée : une adresse de notre stockage ne suffit
+      // pas (sinon une pièce d'un autre candidat, un passeport par exemple, pourrait être jointe comme « preuve »).
+      if (input.proofFileUrl && !(storageKeyFromStoredUrl(input.proofFileUrl) ?? "").startsWith(`candidates/opening-payment-proof/${candidate.id}/`)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Preuve de paiement invalide : redéposez la photo ou la vidéo." });
       }
       const now = new Date().toISOString();
