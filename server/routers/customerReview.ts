@@ -241,6 +241,19 @@ export const customerReviewRouter = router({
         .limit(100);
     }),
 
+  listForAdmin: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await requireDb();
+      const rows = await db.select().from(customerReviews).orderBy(desc(customerReviews.createdAt), asc(customerReviews.id)).limit(200);
+      return rows.map((review) => ({
+        ...review,
+        createdAt: review.createdAt instanceof Date ? review.createdAt.toISOString() : String(review.createdAt),
+        reviewedAt: review.reviewedAt instanceof Date ? review.reviewedAt.toISOString() : review.reviewedAt ? String(review.reviewedAt) : null,
+      }));
+    }),
+
   approveReview: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512), reviewId: z.number().int().positive() }))
     .mutation(async ({ input }) => {

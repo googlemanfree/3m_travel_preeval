@@ -51,6 +51,7 @@ import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
+import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
@@ -625,6 +626,7 @@ export default function EvaluationSpace() {
               <DossierPaymentCard dossierNumber={activeDossier?.dossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={Boolean(workflow?.paymentConfirmed)} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
+              <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               <PrivacyDataCard />

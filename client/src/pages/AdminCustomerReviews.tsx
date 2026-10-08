@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
@@ -23,11 +23,13 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminCustomerReviews() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateSort, setDateSort] = useState<"newest" | "oldest">("newest");
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", destinationCountry: "", serviceType: "", rating: "5", reviewText: "", displayNameChoice: "first_name_only" as "full_name" | "first_name_only" | "initials", consentToPublish: false });
   const sessionToken = typeof window !== "undefined"
     ? sessionStorage.getItem("admin_session_token") || localStorage.getItem("admin_session_token") || ""
     : "";
-  const { data: pendingReviews, isLoading, refetch } = trpc.customerReview.getPendingReviews.useQuery(
+  const { data: adminReviews, isLoading, refetch } = trpc.customerReview.listForAdmin.useQuery(
     { sessionToken },
     { refetchInterval: 30000, enabled: !!sessionToken }
   );
@@ -56,7 +58,12 @@ export default function AdminCustomerReviews() {
     onError: (error) => toast.error(error.message),
   });
 
-  const items = pendingReviews ?? [];
+  const items = useMemo(() => [...(adminReviews ?? [])]
+    .filter((review) => statusFilter === "all" || review.status === statusFilter)
+    .sort((a, b) => {
+      const difference = new Date(String(a.createdAt)).getTime() - new Date(String(b.createdAt)).getTime();
+      return dateSort === "newest" ? -difference : difference;
+    }), [adminReviews, dateSort, statusFilter]);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -92,10 +99,13 @@ export default function AdminCustomerReviews() {
           <div className="flex justify-center py-16">
             <Loader className="w-6 h-6 animate-spin text-blue-600" />
           </div>
-        ) : items.length === 0 ? (
-          <p className="text-center text-gray-500 py-16">Aucun avis en attente de validation.</p>
         ) : (
-          <div className="space-y-4">
+          <>
+          <Card className="mb-4 flex flex-col gap-3 border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="font-bold text-slate-900">File des témoignages</p><p className="text-xs text-slate-500">{items.length} résultat(s) affiché(s)</p></div>
+            <div className="flex flex-wrap gap-2"><select aria-label="Filtrer les avis par statut" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="all">Tous les statuts</option><option value="pending_review">À valider</option><option value="approved">Publiés</option><option value="rejected">Rejetés</option></select><select aria-label="Trier les avis par date" value={dateSort} onChange={(event) => setDateSort(event.target.value as typeof dateSort)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="newest">Plus récents</option><option value="oldest">Plus anciens</option></select></div>
+          </Card>
+          {items.length === 0 ? <p className="text-center text-gray-500 py-16">Aucun avis ne correspond à ces filtres.</p> : <div className="space-y-4">
             {items.map((review) => (
               <Card key={review.id} className="p-5">
                 <div className="flex items-center justify-between mb-2">
@@ -152,7 +162,8 @@ export default function AdminCustomerReviews() {
                 </div>
               </Card>
             ))}
-          </div>
+          </div>}
+          </>
         )}
       </div>
     </main>

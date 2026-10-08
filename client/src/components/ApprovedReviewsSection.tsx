@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpDown, Filter, Quote, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpDown, Filter, Quote, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
@@ -107,6 +107,7 @@ export default function ApprovedReviewsSection() {
   const [showOriginal, setShowOriginal] = useState<Record<number, boolean>>({});
   const [visibleCount, setVisibleCount] = useState(REVIEWS_PAGE_SIZE);
   const [sortBy, setSortBy] = useState<SortOption>("rating-desc");
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
 
@@ -148,6 +149,12 @@ export default function ApprovedReviewsSection() {
     [filteredReviews, visibleCount],
   );
   const hasMoreReviews = visibleCount < filteredReviews.length;
+
+  useEffect(() => {
+    if (approvedReviews.length < 2) return;
+    const timer = window.setInterval(() => setCarouselIndex((current) => (current + 1) % approvedReviews.length), 5000);
+    return () => window.clearInterval(timer);
+  }, [approvedReviews.length]);
 
   useEffect(() => {
     // Les témoignages approuvés sont soumis majoritairement en français. Pour
@@ -421,6 +428,18 @@ export default function ApprovedReviewsSection() {
             {displayedReviews.length} {labels.results}
           </p>
         </motion.div>
+
+        {approvedReviews.length > 0 && (
+          <div className="mb-10 rounded-3xl bg-gradient-to-br from-[#0b1f4d] to-[#173d84] p-6 text-white shadow-xl md:p-8" aria-roledescription="carrousel" aria-label="Témoignages approuvés">
+            {(() => {
+              const review = approvedReviews[carouselIndex % approvedReviews.length];
+              return <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="max-w-3xl"><Quote className="h-9 w-9 text-amber-300" aria-hidden="true" /><p className="mt-4 text-lg font-semibold leading-8 md:text-2xl">“{review.reviewText}”</p><div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-blue-100"><span className="font-black text-white">{review.displayName}</span>{review.destinationCountry && <span>· {review.destinationCountry}</span>}<span className="flex gap-0.5" aria-label={`${review.rating ?? 0} / 5`}>{Array.from({ length: 5 }).map((_, index) => <Star key={index} className={`h-4 w-4 ${index < (review.rating ?? 0) ? "fill-amber-300 text-amber-300" : "text-white/30"}`} aria-hidden="true" />)}</span></div></div>
+                <div className="flex shrink-0 items-center gap-2"><button type="button" onClick={() => setCarouselIndex((current) => (current - 1 + approvedReviews.length) % approvedReviews.length)} aria-label="Témoignage précédent" className="rounded-full border border-white/30 p-3 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><ArrowLeft className="h-5 w-5" /></button><span className="min-w-12 text-center text-sm font-bold" aria-live="polite">{carouselIndex + 1}/{approvedReviews.length}</span><button type="button" onClick={() => setCarouselIndex((current) => (current + 1) % approvedReviews.length)} aria-label="Témoignage suivant" className="rounded-full border border-white/30 p-3 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><ArrowRight className="h-5 w-5" /></button></div>
+              </div>;
+            })()}
+          </div>
+        )}
 
         {displayedReviews.length > 0 ? (
           <div id="approved-reviews-grid" className="grid md:grid-cols-3 gap-6 mb-8">
