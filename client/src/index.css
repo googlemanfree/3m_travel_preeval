@@ -439,6 +439,10 @@
   isolation: isolate;
 }
 
+.mobile-section-transition {
+  will-change: opacity, transform;
+}
+
 /* ── Tables admin glassmorphism & préférence de mouvement ───────────────────── */
 .admin-glass-table {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.76));

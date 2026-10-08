@@ -40,13 +40,18 @@ const fadeUp = {
 export default function Home() {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     document.title = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setShowBackToTop(window.scrollY > 520);
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 520);
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(scrollableHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollableHeight) * 100)) : 0);
+    };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -72,6 +77,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white font-sans">
+      <div
+        className="fixed inset-x-0 top-0 z-[70] h-1 bg-white/20"
+        role="progressbar"
+        aria-label="Progression du défilement de la page"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(scrollProgress)}
+        data-testid="mobile-scroll-progress"
+      >
+        <div className="h-full origin-left bg-gradient-to-r from-[#d5a84b] via-[#f3c969] to-[#165dff] transition-[width] duration-150 ease-out" style={{ width: `${scrollProgress}%` }} />
+      </div>
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
 
@@ -83,14 +99,20 @@ export default function Home() {
       />
 
       {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
-      <QuickActionsSection />
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <QuickActionsSection />
+      </motion.div>
 
       {/* ─── PREUVES + AVIS : réassurance tôt pour convaincre avant le catalogue de services ── */}
-      <ProofGallerySection />
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ProofGallerySection />
+      </motion.div>
 
-      <ReviewsErrorBoundary>
-        <ApprovedReviewsSection />
-      </ReviewsErrorBoundary>
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ReviewsErrorBoundary>
+          <ApprovedReviewsSection />
+        </ReviewsErrorBoundary>
+      </motion.div>
 
       <ProfileVerificationModule />
 
@@ -502,4 +524,3 @@ function PricingSection() {
     </section>
   );
 }
-

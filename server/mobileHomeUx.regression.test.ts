@@ -12,6 +12,7 @@ const styles = read("client/src/index.css");
 const floating = read("client/src/components/FloatingActionMenu.tsx");
 const home = read("client/src/pages/Home.tsx");
 const quickActions = read("client/src/components/QuickActionsSection.tsx");
+const reviews = read("client/src/components/ApprovedReviewsSection.tsx");
 
 describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   it("garde un header téléphone compact sur une seule ligne", () => {
@@ -44,5 +45,19 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain("bottom-[max(1.5rem,env(safe-area-inset-bottom))]");
     expect(home).toContain("w-full max-w-[22rem] sm:w-auto");
     expect(home).toContain("min-h-12 w-full");
+  });
+
+  it("affiche une progression de défilement et des transitions accessibles", () => {
+    expect(home).toContain('data-testid="mobile-scroll-progress"');
+    expect(home).toContain("aria-valuenow={Math.round(scrollProgress)}");
+    expect(home).toContain("mobile-section-transition");
+    expect(styles).toContain(".mobile-section-transition");
+  });
+
+  it("permet de partager rapidement un témoignage approuvé", () => {
+    expect(reviews).toContain("navigator.share");
+    expect(reviews).toContain("https://wa.me/?text=");
+    expect(reviews).toContain("Partager le témoignage");
+    expect(reviews).toContain("min-h-11");
   });
 });

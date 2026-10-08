@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, ArrowUpDown, Filter, Quote, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpDown, Filter, Quote, Share2, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
@@ -20,6 +20,16 @@ interface Review {
 
 type DestinationFilter = "all" | "canada" | "schengen" | "other";
 type SortOption = "rating-desc" | "rating-asc" | "date-desc" | "date-asc";
+
+async function shareReview(review: Review) {
+  const text = `Témoignage 3M Travel de ${review.displayName ?? "un client"}${review.destinationCountry ? ` (${review.destinationCountry})` : ""} : “${review.reviewText ?? ""}”`;
+  const url = window.location.href.split("#")[0] + "#avis-clients";
+  if (navigator.share) {
+    await navigator.share({ title: "Avis client 3M Travel Agency", text, url }).catch(() => undefined);
+    return;
+  }
+  window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank", "noopener,noreferrer");
+}
 
 function reviewTimestamp(value: Review["createdAt"]) {
   if (!value) return 0;
@@ -508,7 +518,17 @@ export default function ApprovedReviewsSection() {
                     {review.destinationCountry && review.serviceType ? " • " : ""}
                     {review.serviceType}
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">{formatReviewDate(review.createdAt, language)}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-slate-400">{formatReviewDate(review.createdAt, language)}</p>
+                    <button
+                      type="button"
+                      onClick={() => void shareReview(review)}
+                      aria-label={`Partager le témoignage de ${review.displayName ?? "ce client"}`}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-blue-200 px-3 py-1.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                    >
+                      <Share2 className="h-3.5 w-3.5" aria-hidden="true" /> Partager
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
