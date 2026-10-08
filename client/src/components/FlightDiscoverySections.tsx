@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BadgeCheck, CreditCard, ListChecks, MessageCircle, Plane, Route as RouteIcon, Search, Send, ShieldCheck, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  FEATURED_AFRICA_CARRIERS,
   FLIGHT_ADVANTAGES,
   FLIGHT_BOOKING_STEPS,
   FLIGHT_COMPANION_SERVICES,
@@ -11,6 +13,7 @@ import {
   FLIGHT_SERVICE_TABS,
   type FlightRoute,
 } from "@/data/flightDiscovery";
+import { PROOF_CATEGORY_LABELS, PROOF_PHOTOS } from "@/data/proofPhotos";
 
 type PickRoute = (route: FlightRoute) => void;
 
@@ -522,11 +525,134 @@ function RoutesByDeparture({ onPick }: { onPick: PickRoute }) {
   );
 }
 
+function CarrierLogo({ name, logo }: { name: string; logo: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {!failed ? (
+        <img src={logo} alt="" className="h-full w-full object-contain p-1.5" loading="lazy" onError={() => setFailed(true)} />
+      ) : (
+        <Plane className="h-4 w-4 text-slate-400" aria-hidden="true" />
+      )}
+      <span className="sr-only">{name}</span>
+    </div>
+  );
+}
+
+/** Bandeau compagnies Afrique / Cameroun — logos utiles, aucun tarif inventé. */
+export function FlightAfricaCarriersBand() {
+  const reduceMotion = useReducedMotion();
+  return (
+    <section
+      aria-labelledby="flight-africa-carriers-title"
+      className="border-y border-slate-100 bg-white py-8"
+      data-testid="flight-africa-carriers"
+    >
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto mb-6 max-w-2xl text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Depuis le Cameroun &amp; l’Afrique centrale</p>
+          <h2 id="flight-africa-carriers-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
+            Compagnies fréquemment relevées
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Camair-Co, Ethiopian, ASKY, Royal Air Maroc et d’autres liaisons vers l’Afrique, l’Europe et le Golfe. Les tarifs n’apparaissent qu’après une recherche live.
+          </p>
+        </div>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+          {FEATURED_AFRICA_CARRIERS.map((carrier, index) => (
+            <motion.li
+              key={carrier.code}
+              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.35, delay: reduceMotion ? 0 : Math.min(index, 9) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3"
+              data-testid={`flight-carrier-${carrier.code}`}
+            >
+              <CarrierLogo name={carrier.name} logo={carrier.logo} />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-slate-900">{carrier.name}</span>
+                <span className="block truncate text-[11px] font-semibold text-slate-500">{carrier.code} · {carrier.hub}</span>
+              </span>
+            </motion.li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/** Pont billet → visa : preuves réelles déjà publiées (données masquées), sans slogans inventés. */
+export function FlightMobilityProofBridge() {
+  const reduceMotion = useReducedMotion();
+  const samples = PROOF_PHOTOS.filter((photo) => ["canada", "schengen", "chine"].includes(photo.category)).slice(0, 6);
+  return (
+    <section
+      aria-labelledby="flight-mobility-bridge-title"
+      className="bg-gradient-to-b from-slate-50 to-white py-12"
+      data-testid="flight-mobility-proof-bridge"
+    >
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Mobilité internationale · Yaoundé</p>
+          <h2 id="flight-mobility-bridge-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
+            Le billet, puis le visa — au même endroit
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Extraits de dossiers réellement traités (identités masquées, accord des candidats). Aucune statistique inventée : uniquement des preuves concrètes Canada, Schengen et Chine.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {samples.map((photo, index) => (
+            <motion.figure
+              key={photo.src}
+              initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: reduceMotion ? 0 : index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 ease-out hover:scale-[1.03] motion-reduce:transition-none motion-reduce:hover:scale-100"
+                />
+              </div>
+              <figcaption className="p-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-blue-700">{PROOF_CATEGORY_LABELS[photo.category]}</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-slate-800">{photo.caption}</p>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="/#proof-gallery-title"
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E3A8A] px-5 text-sm font-black text-white transition hover:bg-[#163066]"
+          >
+            Voir toutes les preuves
+          </a>
+          <a
+            href="/procedures"
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50"
+          >
+            Préparer un visa
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Sections toujours visibles sous les résultats : étapes, garanties, services liés et maillage par ville de départ. */
 export function FlightLowerSections({ onPick }: { onPick: PickRoute }) {
   return (
     <>
+      <FlightAfricaCarriersBand />
       <HowItWorks />
+      <FlightMobilityProofBridge />
       <Advantages />
       <CompanionServices />
       <RoutesByDeparture onPick={onPick} />

@@ -374,7 +374,7 @@ export function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void }) {
+export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn, staggerIndex = 0 }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void; staggerIndex?: number }) {
   const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
@@ -440,15 +440,16 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative"
+      transition={{ duration: 0.35, delay: Math.min(staggerIndex, 10) * 0.045, ease: [0.22, 1, 0.36, 1] }}
+      className="premium-card-enter bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative motion-reduce:animate-none"
     >
       {/* Provenance : dans le fil normal de la carte (jamais en survol du tarif, comme quand elles flottaient par-dessus). */}
       {(flight.isLiveGoogleFlights || servedFromCache) && (
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-slate-50/70 px-4 py-1.5 md:px-5">
           {flight.isLiveGoogleFlights && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white">✨ En direct de Google Flights</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-700 to-[#0B2A52] px-2.5 py-0.5 text-[10px] font-bold text-white">En direct de Google Flights</span>
           )}
           {servedFromCache && (
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700"><RefreshCw className="w-3 h-3" /> Résultat en cache</span>
@@ -1002,17 +1003,38 @@ export default function Flights() {
     <main className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
 
-      {/* Search Panel */}
-      <div className="bg-white px-4 pb-10 pt-10 md:pt-14" data-testid="flight-hero">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <h1 className="mx-auto max-w-3xl text-3xl font-medium leading-tight text-[#0B1B4D] md:text-5xl">
-              Rechercher des <span className="text-amber-500">billets d’avion</span> pas chers et des bons plans voyages
+      {/* Hero atmosphère mobilité — image réelle, marque d’abord, puis recherche */}
+      <section className="relative overflow-hidden" data-testid="flight-hero" aria-labelledby="flights-hero-title">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img
+            src="/manus-storage/3m-home-mobility-hero_f9957244.webp"
+            alt=""
+            className="flights-hero-media h-full w-full object-cover object-center"
+            width={1600}
+            height={900}
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020C3B]/88 via-[#0B1F55]/78 to-[#061a36]/92" />
+        </div>
+        <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-12 md:pb-12 md:pt-16">
+          <motion.div
+            initial={false}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 text-center text-white"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300 md:text-sm" data-testid="flights-hero-brand">
+              3M Travel &amp; Services · Yaoundé
+            </p>
+            <h1 id="flights-hero-title" className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight md:text-5xl">
+              Billets d’avion depuis le Cameroun
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600">Comparez les tarifs de plusieurs compagnies au départ de Yaoundé, Douala et du monde entier. Un conseiller 3M confirme le tarif avant toute réservation.</p>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-100 md:text-base">
+              Comparez les compagnies au départ de Yaoundé et Douala. Un conseiller 3M confirme le tarif relevé avant toute réservation — aucun prix de vitrine.
+            </p>
           </motion.div>
 
-          <div className="rounded-3xl bg-gradient-to-br from-[#0F2A6B] via-[#0B1F55] to-[#020C3B] p-4 shadow-2xl md:p-6">
+          <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-[#0F2A6B]/95 via-[#0B1F55]/95 to-[#020C3B]/95 p-4 shadow-2xl backdrop-blur-sm md:p-6">
           <FlightServiceTabs />
           {recentSearches.length > 0 && !searchEnabled && (
             <section aria-label="Recherches récentes" className="mb-5 rounded-2xl border border-white/15 bg-white/10 p-3 text-white backdrop-blur-sm">
@@ -1179,7 +1201,7 @@ export default function Flights() {
           </motion.div>
           </div>
         </div>
-      </div>
+      </section>
 
       <section id="3m-booking" className="order-5 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
         <ThreeMBookingExperience />
@@ -1363,8 +1385,8 @@ export default function Flights() {
 
               {/* Flight cards */}
               <div className="space-y-4">
-                {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
+                {filtered.map((flight, index) => (
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} staggerIndex={index} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
                 ))}
                 {filtered.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 px-4" data-testid="flight-filters-empty">

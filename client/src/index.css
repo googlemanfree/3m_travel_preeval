@@ -503,6 +503,24 @@
   }
 }
 
+/* Hero /flights : présence légère sans page blanche (pas de opacity:0 initiale). */
+.flights-hero-media {
+  transform: scale(1.04);
+  animation: flights-hero-ken 18s ease-in-out infinite alternate;
+}
+
+@keyframes flights-hero-ken {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to { transform: scale(1.1) translate3d(0, -1.5%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flights-hero-media {
+    animation: none !important;
+    transform: scale(1.04) !important;
+  }
+}
+
 @keyframes acknowledgementToastCountdown {
   from { transform: scaleX(1); }
   to { transform: scaleX(0); }

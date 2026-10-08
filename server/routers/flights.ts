@@ -113,6 +113,15 @@ const AIRLINES: Record<string, { name: string; code: string; logo: string; color
   AT: { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", color: "#006233", alliance: "Oneworld" },
   SN: { code: "SN", name: "Brussels Airlines", logo: "https://logo.clearbit.com/brusselsairlines.com", color: "#003399", alliance: "Star Alliance" },
   WB: { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", color: "#00A0E3", alliance: "Autre" },
+  // Compagnies fréquentes depuis le Cameroun / Afrique centrale (logos fournisseurs ; repli icône si indisponible).
+  QC: { code: "QC", name: "Camair-Co", logo: "https://logo.clearbit.com/camair-co.cm", color: "#0B5C2E", alliance: "Autre" },
+  KP: { code: "KP", name: "ASKY Airlines", logo: "https://logo.clearbit.com/flyasky.com", color: "#E30613", alliance: "Autre" },
+  HF: { code: "HF", name: "Air Côte d’Ivoire", logo: "https://logo.clearbit.com/aircotedivoire.com", color: "#F77F00", alliance: "Autre" },
+  MS: { code: "MS", name: "EgyptAir", logo: "https://logo.clearbit.com/egyptair.com", color: "#00205B", alliance: "Star Alliance" },
+  SA: { code: "SA", name: "South African Airways", logo: "https://logo.clearbit.com/flysaa.com", color: "#00205B", alliance: "Autre" },
+  DT: { code: "DT", name: "TAAG Angola Airlines", logo: "https://logo.clearbit.com/taag.com", color: "#C8102E", alliance: "Autre" },
+  TU: { code: "TU", name: "Tunisair", logo: "https://logo.clearbit.com/tunisair.com", color: "#E30613", alliance: "Autre" },
+  HC: { code: "HC", name: "Air Senegal", logo: "https://logo.clearbit.com/air-senegal.com", color: "#00853F", alliance: "Autre" },
 };
 
 function formatDuration(minutes: number) {
