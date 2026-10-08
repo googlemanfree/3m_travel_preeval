@@ -461,23 +461,24 @@ export default function EvaluationSpace() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
+    <main className="premium-page-shell min-h-screen pb-16">
       {/* En-tête du tableau de bord unifié */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-4 sm:px-6 md:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <div className="relative">
               <CandidateAvatar avatarUrl={cProfile.avatarUrl} fullName={cProfile.fullName} size="lg" />
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900">{cProfile.fullName}</h1>
-                <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h1 className="premium-section-title text-xl sm:text-2xl">{cProfile.fullName}</h1>
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
                   {formerAccountReference ? "Dossier" : "Compte"} {displayReference}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
+              <p className="mt-1 text-sm text-slate-600">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
             </div>
           </div>
 
@@ -486,16 +487,16 @@ export default function EvaluationSpace() {
               onClick={handleManualRefresh}
               variant="outline"
               size="sm"
-              className="h-11 gap-2 text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
               Actualiser
             </Button>
             <Button
               onClick={() => setLocation("/")}
               variant="outline"
               size="sm"
-              className="h-11 text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
             >
               Accueil
             </Button>
@@ -557,12 +558,12 @@ export default function EvaluationSpace() {
         </div>
       )}
       {onlineDossiers.length > 0 && (
-        <Card className="mt-4 border-blue-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5 shadow-sm" aria-labelledby="global-dossiers-summary-title">
+        <Card className="premium-surface mt-4 border-blue-100/80 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5" aria-labelledby="global-dossiers-summary-title">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
-              <h2 id="global-dossiers-summary-title" className="mt-1 text-lg font-black text-slate-950">Résumé de vos dossiers ouverts</h2>
-              <p className="mt-1 text-sm text-slate-600">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY, avec la prochaine action à effectuer pour chacun.</p>
+              <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
+              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY, avec la prochaine action à effectuer pour chacun.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
@@ -582,7 +583,7 @@ export default function EvaluationSpace() {
       {/* Barre de navigation principale du tableau de bord */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <ClientSpaceNavigation compact />
-          <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-gray-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
+          <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-slate-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
           {[
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
@@ -604,13 +605,13 @@ export default function EvaluationSpace() {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls="candidate-space-content"
-                className={`flex min-h-11 items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shrink-0 ${
+                className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-200 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                    ? "premium-action text-white shadow-md"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="h-4 w-4" />
                 {tab.label}
               </button>
             );
@@ -1064,23 +1065,24 @@ export default function EvaluationSpace() {
 
           {activeTab === "messages" && (
             <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-slate-900 p-4 rounded-xl border border-blue-200 dark:border-slate-800 mb-6 flex items-center justify-between">
+              <div className="premium-surface mb-2 flex items-center justify-between rounded-2xl border-blue-100/80 bg-blue-50/70 p-5">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    💬 Messagerie avec votre conseiller 3M TRAVEL AGENCY
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client</p>
+                  <h3 className="premium-section-title mt-1 text-lg sm:text-xl">
+                    Messagerie avec votre conseiller 3M TRAVEL AGENCY
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Posez vos questions à notre équipe 3M TRAVEL AGENCY ou échangez directement avec votre conseiller attitré.
+                  <p className="premium-copy mt-1 text-sm">
+                    Posez vos questions à l’équipe ou échangez directement avec votre conseiller attitré.
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Assistance 3M TRAVEL AGENCY</h4>
+                  <h4 className="mb-3 text-sm font-bold text-slate-900">Assistance 3M TRAVEL AGENCY</h4>
                   <AureolAssistantChat />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Messages Agence & Conseiller</h4>
+                  <h4 className="mb-3 text-sm font-bold text-slate-900">Messages Agence & Conseiller</h4>
                   <ClientMessagesPanel />
                 </div>
               </div>

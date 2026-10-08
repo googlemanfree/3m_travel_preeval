@@ -71,36 +71,38 @@ export default function AdminLogin() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <main className="premium-page-shell flex min-h-screen items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-            <Lock className="w-8 h-8 text-white" />
+        <div className="mb-8 text-center">
+          <div className="premium-action mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl">
+            <Lock className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin 3M TRAVEL AGENCY</h1>
-          <p className="text-gray-500 mt-1">Connexion Sécurisée</p>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Administration</p>
+          <div className="premium-gold-rule mx-auto mt-2" aria-hidden="true" />
+          <h1 className="premium-section-title mt-3 text-2xl sm:text-3xl">3M TRAVEL AGENCY</h1>
+          <p className="premium-copy mt-2 text-sm">Connexion sécurisée à l’espace administrateur</p>
         </div>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+        <Card className="premium-surface border-0 shadow-xl">
+          <CardHeader className="rounded-t-lg bg-gradient-to-r from-[#0a2b5c] to-[#165dff] text-white">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Lock className="w-5 h-5" />
+              <Lock className="h-5 w-5" />
               Espace administrateur
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <Label htmlFor="admin-email" className="text-gray-700 font-semibold mb-2 block">
+                <Label htmlFor="admin-email" className="mb-2 block font-semibold text-slate-800">
                   Email administrateur
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
                     id="admin-email"
                     type="email"
@@ -116,11 +118,11 @@ export default function AdminLogin() {
               </div>
 
               <div>
-                <Label htmlFor="admin-password" className="text-gray-700 font-semibold mb-2 block">
+                <Label htmlFor="admin-password" className="mb-2 block font-semibold text-slate-800">
                   Mot de passe
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
                     id="admin-password"
                     type={showPassword ? 'text' : 'password'}
@@ -136,21 +138,21 @@ export default function AdminLogin() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               {needsTwoFactor && <div>
-                <Label htmlFor="admin-two-factor" className="text-gray-700 font-semibold mb-2 block">Code 2FA ou récupération</Label>
+                <Label htmlFor="admin-two-factor" className="mb-2 block font-semibold text-slate-800">Code 2FA ou récupération</Label>
                 <Input id="admin-two-factor" inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={(e) => { setTwoFactorCode(e.target.value); setLocalError(''); }} placeholder="Code à six chiffres" disabled={loginMutation.isPending} maxLength={32} />
               </div>}
 
               {localError && (
-                <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <span>{localError}</span>
                 </div>
               )}
@@ -158,7 +160,7 @@ export default function AdminLogin() {
               <Button
                 type="submit"
                 disabled={loginMutation.isPending}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="premium-action w-full text-white"
               >
                 {loginMutation.isPending ? 'Connexion...' : 'Se connecter'}
               </Button>
@@ -166,19 +168,19 @@ export default function AdminLogin() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-5">
+        <div className="mt-5 text-center">
           <button
             type="button"
             onClick={handleRequestTemporaryPassword}
             disabled={temporaryPasswordMutation.isPending || loginMutation.isPending}
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-60"
+            className="text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline disabled:opacity-60"
           >
             {temporaryPasswordMutation.isPending ? "Envoi du temporaire..." : "Recevoir un mot de passe temporaire par e-mail"}
           </button>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          <a href="/" className="text-blue-600 hover:underline">← Retour à l'accueil</a>
+        <p className="mt-6 text-center text-sm text-slate-600">
+          <a href="/" className="font-semibold text-blue-700 hover:underline">← Retour à l'accueil</a>
         </p>
       </motion.div>
     </main>

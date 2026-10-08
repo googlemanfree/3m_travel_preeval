@@ -6,7 +6,12 @@ import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type 
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white/90 p-2.5 shadow-[0_10px_28px_-24px_rgba(7,27,61,0.65)]"><p className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{title}</p><TabsList className="flex h-auto w-full flex-wrap gap-1 bg-slate-100/90 p-1">{children}</TabsList></section>;
+  return (
+    <section className="premium-surface min-w-0 rounded-2xl p-3">
+      <p className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.14em] text-slate-600">{title}</p>
+      <TabsList className="flex h-auto w-full flex-wrap gap-1 bg-slate-100/90 p-1">{children}</TabsList>
+    </section>
+  );
 }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1506,14 +1511,15 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.2),_transparent_34rem),linear-gradient(180deg,_#f8fbff_0%,_#f1f6ff_100%)] text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <main className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
-      <div className="glass-admin-header bg-gradient-to-r from-[#071b3d]/95 via-[#0b2f6f]/95 to-[#123c86]/95 text-white sticky top-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
-        <div className="mx-auto w-full max-w-[1920px] px-4 py-4 sm:px-6 xl:px-8 2xl:px-10 space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="glass-admin-header sticky top-0 z-50 bg-gradient-to-r from-[#071b3d]/96 via-[#0b2f6f]/96 to-[#123c86]/96 text-white shadow-lg backdrop-blur-xl transition-colors duration-300">
+        <div className="mx-auto w-full max-w-[1920px] space-y-3 px-4 py-4 sm:px-6 xl:px-8 2xl:px-10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
-              <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M TRAVEL AGENCY</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#efd38a]">Administration · 3M TRAVEL AGENCY</p>
+              <h1 className="mt-1 font-[family-name:Sora,Manrope,sans-serif] text-xl font-extrabold tracking-tight sm:text-2xl">Tableau de bord Admin</h1>
+              <p className="mt-1 text-sm text-blue-100/95">Bienvenue, {adminName} — pilotage unifié des dossiers et services.</p>
             </div>
             
             {/* Recherche globale + filtre dossiers */}
@@ -1669,23 +1675,23 @@ export default function AdminDashboard() {
 
       <div className="mx-auto w-full max-w-[1920px] px-4 py-6 space-y-6 sm:px-6 xl:px-8 2xl:px-10">
         {/* Statistiques */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "Total", value: stats.total, icon: <Users className="w-4 h-4" />, color: "text-gray-700 bg-gray-100" },
-            { label: "Éval. 48h", value: stats.pending, icon: <Clock className="w-4 h-4" />, color: "text-amber-700 bg-amber-100" },
-            { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="w-4 h-4" />, color: "text-blue-700 bg-blue-100" },
-            { label: "Documents", value: stats.documents, icon: <Send className="w-4 h-4" />, color: "text-purple-700 bg-purple-100" },
-            { label: "Soumis", value: stats.submitted, icon: <Globe className="w-4 h-4" />, color: "text-indigo-700 bg-indigo-100" },
-            { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="w-4 h-4" />, color: "text-green-700 bg-green-100" },
+            { label: "Total", value: stats.total, icon: <Users className="h-4 w-4" />, color: "bg-slate-100 text-slate-800" },
+            { label: "Éval. 48h", value: stats.pending, icon: <Clock className="h-4 w-4" />, color: "bg-amber-100 text-amber-800" },
+            { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="h-4 w-4" />, color: "bg-blue-100 text-blue-800" },
+            { label: "Documents", value: stats.documents, icon: <Send className="h-4 w-4" />, color: "bg-violet-100 text-violet-800" },
+            { label: "Soumis", value: stats.submitted, icon: <Globe className="h-4 w-4" />, color: "bg-indigo-100 text-indigo-800" },
+            { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-800" },
           ].map((s) => (
-            <Card key={s.label} className="border border-white/90 bg-white/90 shadow-[0_12px_30px_-24px_rgba(7,27,61,0.55)]">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
+            <Card key={s.label} className="premium-surface border-white/90">
+              <CardContent className="p-3.5">
+                <div className="flex items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs text-gray-500">{s.label}</p>
-                    <p className="text-2xl font-bold text-gray-800">{s.value}</p>
+                    <p className="text-xs font-semibold text-slate-600">{s.label}</p>
+                    <p className="mt-0.5 text-2xl font-black tracking-tight text-slate-950">{s.value}</p>
                   </div>
-                  <div className={`p-2 rounded-lg ${s.color}`}>{s.icon}</div>
+                  <div className={`rounded-xl p-2.5 ${s.color}`}>{s.icon}</div>
                 </div>
               </CardContent>
             </Card>
@@ -1693,14 +1699,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sources */}
-        <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
           <span className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-sky-500" />
+            <Globe className="h-3.5 w-3.5 text-sky-600" />
             <strong>{stats.web}</strong> dossiers en ligne
           </span>
-          <span className="text-gray-300">|</span>
+          <span className="text-slate-300">|</span>
           <span className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-orange-500" />
+            <Building2 className="h-3.5 w-3.5 text-orange-600" />
             <strong>{stats.agency}</strong> dossiers agence
           </span>
         </div>
@@ -1895,7 +1901,14 @@ export default function AdminDashboard() {
         <SchedulerDryRunBanner />
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
-          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p><h2 className="text-xl font-black tracking-tight text-slate-950">Espaces de travail</h2></div><p className="text-xs font-medium text-slate-500">Sélectionnez une section pour traiter les demandes manuellement.</p></div>
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p>
+              <div className="premium-gold-rule mt-2" aria-hidden="true" />
+              <h2 className="premium-section-title mt-2 text-xl sm:text-2xl">Espaces de travail</h2>
+            </div>
+            <p className="premium-copy max-w-md text-sm">Sélectionnez une section pour traiter les demandes manuellement.</p>
+          </div>
           <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
             <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>

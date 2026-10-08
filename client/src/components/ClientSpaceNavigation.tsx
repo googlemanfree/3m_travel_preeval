@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { PremiumReveal } from "@/components/PremiumReveal";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -147,12 +148,14 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
 
   return (
     <section className="mb-8 space-y-4" aria-labelledby="client-space-navigation-title">
-      <Card className="border-blue-100 bg-white p-5 shadow-sm md:p-6">
+      <PremiumReveal>
+      <Card className="premium-surface border-blue-100/80 p-5 md:p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Espace Client</p>
-            <h2 id="client-space-navigation-title" className="mt-1 text-xl font-black text-slate-900">Bonjour {candidate?.fullName || "Candidat"}</h2>
-            <p className="mt-1 text-sm text-slate-600">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>
+            <div className="premium-gold-rule mt-2" aria-hidden="true" />
+            <h2 id="client-space-navigation-title" className="premium-section-title mt-2 text-xl sm:text-2xl">Bonjour {candidate?.fullName || "Candidat"}</h2>
+            <p className="premium-copy mt-2 text-[0.95rem]">Votre dossier actif, les documents demandés et les échanges utiles avec votre conseiller.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> {referenceInfo && !referenceInfo.activated ? "Compte :" : "Dossier actif :"}</span>
               {dossierNumber ? (
@@ -170,31 +173,33 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
               {isAgencyDossierNumber && <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">Dossier Agence</Badge>}
             </div>
           </div>
-          <a href="/mon-espace?section=dossier" className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-800 px-5 font-bold text-white hover:bg-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+          <a href="/mon-espace?section=dossier" className="premium-action inline-flex h-12 items-center justify-center rounded-xl px-5 font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
             <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
           </a>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {visibleQuickLinks.map(({ href, label, description, icon: Icon, tone }) => (
-            <a key={href} href={href} className="group min-h-36 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md">
+            <a key={href} href={href} className="group min-h-36 rounded-2xl border border-slate-200/80 bg-white/80 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md">
               <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
-              <span className="mt-3 block text-sm font-black text-slate-900">{label}</span>
-              <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+              <span className="mt-3 block text-sm font-black text-slate-950">{label}</span>
+              <span className="mt-1 block text-sm leading-6 text-slate-600">{description}</span>
             </a>
           ))}
         </div>
       </Card>
+      </PremiumReveal>
 
       {!compact && <>
-      <Card className="border-slate-200 bg-slate-50 p-5 shadow-sm">
+      <PremiumReveal delay={0.05}>
+      <Card className="premium-surface border-slate-200/80 p-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-3">
             <span className="rounded-2xl bg-slate-200 p-3 text-slate-700"><WifiOff className="h-5 w-5" /></span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-600">Application & connexion</p>
-              <h3 className="mt-1 text-base font-black text-slate-900">Actualiser les données de l’application</h3>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Utilisez cette action si une page semble ne pas afficher les dernières informations. Vos données de dossier restent sauvegardées sur votre compte.</p>
+              <h3 className="premium-section-title mt-1 text-base">Actualiser les données de l’application</h3>
+              <p className="premium-copy mt-1 text-sm">Utilisez cette action si une page semble ne pas afficher les dernières informations. Vos données de dossier restent sauvegardées sur votre compte.</p>
             </div>
           </div>
           <Button
@@ -210,15 +215,17 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
           </Button>
         </div>
       </Card>
+      </PremiumReveal>
 
-      <Card className="overflow-hidden border-amber-100 bg-gradient-to-r from-amber-50 via-white to-sky-50 p-5 shadow-sm">
+      <PremiumReveal delay={0.08}>
+      <Card className="premium-surface overflow-hidden border-amber-100/80 bg-gradient-to-r from-amber-50 via-white to-sky-50 p-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-3">
             <span className="rounded-2xl bg-amber-100 p-3 text-amber-700"><Trophy className="h-6 w-6" /></span>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">3M TRAVEL AGENCY Rewards</p>
-              <h3 className="mt-1 text-lg font-black text-slate-900">Vos récompenses de voyage</h3>
-              <p className="mt-1 text-xs text-slate-600">Les points sont ajoutés uniquement après l’émission humaine et validée d’un billet.</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">3M TRAVEL AGENCY Rewards</p>
+              <h3 className="premium-section-title mt-1 text-lg">Vos récompenses de voyage</h3>
+              <p className="premium-copy mt-1 text-sm">Les points sont ajoutés uniquement après l’émission humaine et validée d’un billet.</p>
             </div>
           </div>
           {loyaltyQuery.isLoading ? <p className="text-sm font-bold text-slate-500">Chargement…</p> : <div className="grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.availablePoints ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Points</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-sm font-black capitalize text-blue-800">{loyaltyQuery.data?.account.tier ?? "explorer"}</p><p className="text-[10px] font-bold uppercase text-slate-500">Niveau</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.issuedBookings ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Billets émis</p></div></div>}
@@ -308,11 +315,13 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
           </div>
         </div>
       </Card>
+      </PremiumReveal>
 
-      <Card className="border-sky-100 bg-sky-50/70 p-5 shadow-sm">
+      <PremiumReveal delay={0.1}>
+      <Card className="premium-surface border-sky-100/80 bg-sky-50/70 p-5">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div><h3 className="flex items-center gap-2 text-base font-black text-sky-950"><ReceiptText className="h-5 w-5 text-sky-700" /> Mes demandes de vols</h3><p className="mt-1 text-xs text-sky-800">Suivi des demandes transmises à l’agence pour revalidation.</p></div>
-          <a href="/flights" className="inline-flex h-11 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800"><Plus className="mr-2 h-4 w-4" /> Nouvelle recherche</a>
+          <div><h3 className="premium-section-title flex items-center gap-2 text-base text-sky-950"><ReceiptText className="h-5 w-5 text-sky-700" /> Mes demandes de vols</h3><p className="premium-copy mt-1 text-sm text-sky-900">Suivi des demandes transmises à l’agence pour revalidation.</p></div>
+          <a href="/flights" className="premium-action inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-white"><Plus className="mr-2 h-4 w-4" /> Nouvelle recherche</a>
         </div>
         <div className="mt-4 grid gap-3 rounded-2xl border border-white/80 bg-white/70 p-3 sm:grid-cols-2" aria-label="Filtres des demandes de vols">
           <label className="flex items-center gap-2 text-xs font-bold text-sky-950"><Filter className="h-4 w-4 text-sky-700" />
@@ -417,14 +426,16 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
 	            )}
             </div>
           </div>
-        </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}
+        </div>)}</div> : <p className="mt-4 text-sm text-sky-900">Aucune demande ne correspond aux filtres sélectionnés.</p>}
       </Card>
+      </PremiumReveal>
 
-      <Card className="border-orange-100 bg-orange-50/60 p-5 shadow-sm">
+      <PremiumReveal delay={0.12}>
+      <Card className="premium-surface border-orange-100/80 bg-orange-50/60 p-5">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h3 className="flex items-center gap-2 text-base font-black text-orange-950"><BedDouble className="h-5 w-5 text-orange-700" /> Mes séjours & hébergements</h3>
-            <p className="mt-1 text-xs text-orange-900">Suivez les demandes d’hôtel transmises via 3M Booking, de la réception jusqu’à la confirmation.</p>
+            <h3 className="premium-section-title flex items-center gap-2 text-base text-orange-950"><BedDouble className="h-5 w-5 text-orange-700" /> Mes séjours & hébergements</h3>
+            <p className="premium-copy mt-1 text-sm text-orange-950">Suivez les demandes d’hôtel transmises via 3M Booking, de la réception jusqu’à la confirmation.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => hotelRequestsQuery.refetch()} disabled={hotelRequestsQuery.isFetching} className="h-11 rounded-xl border-orange-200 bg-white font-bold text-orange-900 hover:bg-orange-50"><RefreshCw className={`mr-2 h-4 w-4 ${hotelRequestsQuery.isFetching ? "animate-spin" : ""}`} /> Actualiser</Button>
@@ -462,8 +473,9 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
           </article>;
         })}</div>}
       </Card>
+      </PremiumReveal>
 
-      {comparisonRequestId && <Card className="border-sky-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Comparateur transparent</p><h3 className="mt-1 text-base font-black text-slate-900">Devis partenaires vérifiés</h3><p className="mt-1 text-xs text-slate-600">Seuls les devis saisis et vérifiés par l’agence sont affichés. Aucun prix tiers n’est estimé ou inventé.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setComparisonRequestId(null)}>Fermer</Button></div>{partnerQuotesQuery.isLoading ? <p className="mt-4 text-sm text-slate-500">Chargement des devis…</p> : partnerQuotesQuery.data?.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{quote.partnerName}</p><p className="mt-1 text-xs text-slate-500">Vérifié le {new Date(quote.verifiedAt).toLocaleDateString("fr-FR")}</p></div><p className="text-base font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</p></div>{quote.fareDetails && <p className="mt-3 text-xs text-slate-700"><strong>Tarif :</strong> {quote.fareDetails}</p>}{quote.baggageDetails && <p className="mt-2 text-xs text-slate-700"><strong>Bagages :</strong> {quote.baggageDetails}</p>}{quote.terms && <p className="mt-2 text-xs text-slate-600"><strong>Conditions :</strong> {quote.terms}</p>}</div>)}</div> : <p className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">Aucun devis partenaire vérifié n’est encore disponible pour cette réservation. Votre conseiller peut ajouter une comparaison dès réception d’une offre réelle.</p>}</Card>}
+      {comparisonRequestId && <Card className="premium-surface border-sky-100 p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Comparateur transparent</p><h3 className="premium-section-title mt-1 text-base">Devis partenaires vérifiés</h3><p className="premium-copy mt-1 text-sm">Seuls les devis saisis et vérifiés par l’agence sont affichés. Aucun prix tiers n’est estimé ou inventé.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setComparisonRequestId(null)}>Fermer</Button></div>{partnerQuotesQuery.isLoading ? <p className="mt-4 text-sm text-slate-600">Chargement des devis…</p> : partnerQuotesQuery.data?.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{quote.partnerName}</p><p className="mt-1 text-xs text-slate-600">Vérifié le {new Date(quote.verifiedAt).toLocaleDateString("fr-FR")}</p></div><p className="text-base font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</p></div>{quote.fareDetails && <p className="mt-3 text-xs text-slate-700"><strong>Tarif :</strong> {quote.fareDetails}</p>}{quote.baggageDetails && <p className="mt-2 text-xs text-slate-700"><strong>Bagages :</strong> {quote.baggageDetails}</p>}{quote.terms && <p className="mt-2 text-xs text-slate-600"><strong>Conditions :</strong> {quote.terms}</p>}</div>)}</div> : <p className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-600">Aucun devis partenaire vérifié n’est encore disponible pour cette réservation. Votre conseiller peut ajouter une comparaison dès réception d’une offre réelle.</p>}</Card>}
       </>}
     </section>
   );

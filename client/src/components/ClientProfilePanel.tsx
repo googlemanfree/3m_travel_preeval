@@ -153,7 +153,7 @@ export default function ClientProfilePanel() {
   const primaryDestinationOption = savedDestinations[0] ? getCandidateDestinationOption(savedDestinations[0]) : undefined;
 
   return (
-    <Card className="border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="client-profile-title">
+    <Card className="premium-surface border-blue-100/80 p-5 sm:p-6" aria-labelledby="client-profile-title">
       <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
         <CandidateAvatar
           fullName={candidate?.fullName || form.fullName || "Candidat"}
@@ -163,9 +163,10 @@ export default function ClientProfilePanel() {
           editable
         />
         <div>
-          <h2 id="client-profile-title" className="flex items-center gap-2 text-lg font-black text-slate-900"><UserRound className="h-5 w-5 text-blue-700" /> Mon profil</h2>
-          <p className="mt-1 text-sm text-slate-600">Ces informations servent à préparer et suivre votre dossier.</p>
-          <p className="mt-2 text-xs font-semibold text-slate-500">E-mail de connexion : {profileQuery.data.email}</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>
+          <h2 id="client-profile-title" className="premium-section-title mt-1 flex items-center gap-2 text-lg sm:text-xl"><UserRound className="h-5 w-5 text-blue-700" /> Mon profil</h2>
+          <p className="premium-copy mt-1 text-sm">Ces informations servent à préparer et suivre votre dossier.</p>
+          <p className="mt-2 text-sm font-semibold text-slate-600">E-mail de connexion : {profileQuery.data.email}</p>
         </div>
       </div>
 
@@ -187,7 +188,7 @@ export default function ClientProfilePanel() {
           </p>
           <p className="text-xs text-slate-500">C’est le premier pays de « Mes destinations favorites » ci-dessous : modifiez-le à cet endroit.</p>
         </div>
-        <Button type="submit" disabled={updateMutation.isPending} className="h-11 rounded-xl bg-blue-700 px-5 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
+        <Button type="submit" disabled={updateMutation.isPending} className="premium-action h-11 rounded-xl px-5 text-white"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Enregistrement…" : "Enregistrer mon profil"}</Button>
       </form>
 
       <FavoriteDestinationsCard saved={savedDestinations} />

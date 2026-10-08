@@ -51,19 +51,20 @@ export default function ClientMessagesPanel() {
   const messages = messagesQuery.data ?? [];
 
   return (
-    <Card className="border-blue-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="client-messages-title">
+    <Card className="premium-surface border-blue-100/80 p-5 sm:p-6" aria-labelledby="client-messages-title">
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 id="client-messages-title" className="text-lg font-black text-slate-900">Messagerie 3M TRAVEL AGENCY</h2>
-            <p className="text-sm text-slate-600">Échangez avec l’équipe qui suit votre dossier.</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client</p>
+            <h2 id="client-messages-title" className="premium-section-title text-lg sm:text-xl">Messagerie 3M TRAVEL AGENCY</h2>
+            <p className="premium-copy mt-1 text-sm">Échangez avec l’équipe qui suit votre dossier.</p>
           </div>
         </div>
         {typeof unreadQuery.data?.count === "number" && unreadQuery.data.count > 0 && (
-          <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+          <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
             {unreadQuery.data.count} nouveau{unreadQuery.data.count > 1 ? "x" : ""} message{unreadQuery.data.count > 1 ? "s" : ""}
           </span>
         )}
@@ -71,7 +72,7 @@ export default function ClientMessagesPanel() {
 
       <div className="mt-5 max-h-[28rem] space-y-3 overflow-y-auto pr-1" aria-live="polite">
         {messagesQuery.isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-600">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             Chargement de vos échanges…
           </div>
@@ -80,7 +81,7 @@ export default function ClientMessagesPanel() {
             Les messages ne sont pas disponibles pour le moment. Actualisez la page ou réessayez dans quelques instants.
           </div>
         ) : messages.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-sm leading-6 text-slate-700">
             Aucun message pour le moment. Écrivez à votre conseiller pour commencer la conversation.
           </div>
         ) : (
@@ -93,9 +94,9 @@ export default function ClientMessagesPanel() {
                     <Headphones className="h-4 w-4" aria-hidden="true" />
                   </span>
                 )}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${isCandidate ? "rounded-br-md bg-blue-700 text-white" : "rounded-bl-md border border-slate-200 bg-slate-50 text-slate-800"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${isCandidate ? "rounded-br-md bg-blue-800 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                  <p className={`mt-2 flex items-center gap-1 text-[11px] ${isCandidate ? "text-blue-100" : "text-slate-500"}`}>
+                  <p className={`mt-2 flex items-center gap-1 text-[11px] ${isCandidate ? "text-blue-100" : "text-slate-600"}`}>
                     {isCandidate ? <UserRound className="h-3 w-3" aria-hidden="true" /> : <Headphones className="h-3 w-3" aria-hidden="true" />}
                     {isCandidate ? "Vous" : "Équipe 3M TRAVEL AGENCY"} · {new Date(message.createdAt).toLocaleString("fr-FR")}
                   </p>
@@ -108,7 +109,7 @@ export default function ClientMessagesPanel() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 border-t border-slate-100 pt-4">
-        <label htmlFor="client-message" className="mb-2 block text-sm font-bold text-slate-800">Nouveau message</label>
+        <label htmlFor="client-message" className="mb-2 block text-sm font-bold text-slate-900">Nouveau message</label>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Textarea
             id="client-message"
@@ -120,12 +121,12 @@ export default function ClientMessagesPanel() {
             className="min-h-24 resize-y rounded-xl border-slate-200"
             disabled={sendMutation.isPending}
           />
-          <Button type="submit" disabled={!content.trim() || sendMutation.isPending} className="h-11 shrink-0 rounded-xl bg-blue-700 px-5 hover:bg-blue-800 sm:w-auto">
+          <Button type="submit" disabled={!content.trim() || sendMutation.isPending} className="premium-action h-11 shrink-0 rounded-xl px-5 text-white sm:w-auto">
             {sendMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="mr-2 h-4 w-4" aria-hidden="true" />}
             Envoyer
           </Button>
         </div>
-        <p className="mt-2 text-xs text-slate-500">Réponse habituelle de l’équipe : sous 24 heures ouvrées.</p>
+        <p className="mt-2 text-sm text-slate-600">Réponse habituelle de l’équipe : sous 24 heures ouvrées.</p>
       </form>
     </Card>
   );
