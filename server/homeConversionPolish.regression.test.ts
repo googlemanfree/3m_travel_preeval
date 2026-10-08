@@ -12,7 +12,8 @@ describe("polish conversion accueil", () => {
     const profil = form.indexOf('{ label: "Profil"');
     expect(projet).toBeGreaterThan(-1);
     expect(profil).toBeGreaterThan(projet);
-    expect(form).toContain("grid-cols-5");
+    expect(form).toContain("grid-cols-3");
+    expect(form).toContain('data-testid="evaluation-phase-stepper"');
     expect(form).toContain("Étape 0 = Projet");
   });
 
