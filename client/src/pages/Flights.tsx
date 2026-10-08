@@ -19,6 +19,7 @@ import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
 import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchEmptyState, FlightSearchSkeleton, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import FlightReservationPendingBand from "@/components/FlightReservationPendingBand";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
@@ -389,6 +390,7 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
     try {
       sessionStorage.setItem("3m-selected-flight", JSON.stringify({
         flight,
+        quotedTotalPrice: flight.totalPrice,
         searchParams,
         selectedAt: Date.now(),
       }));
@@ -508,12 +510,15 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
                   <Plane className="w-4 h-4 mr-1" /> Choisir le retour
                 </Button>
               ) : (
-                <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
+                <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout} data-testid="flight-reserve-online">
                   <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
                     <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
                   </Button>
                 </a>
               )}
+              <p className="text-[10px] leading-4 text-slate-500 md:text-right" data-testid="flight-reserve-microcopy">
+                Tarif relevé → revalidation agence → paiement en attente → billet
+              </p>
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
@@ -1243,6 +1248,7 @@ export default function Flights() {
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
+        <FlightReservationPendingBand />
         {!searchEnabled && offersQuery.data?.status === "live" && <FlightBestOffers offers={offersQuery.data.offers} retrievedAt={offersQuery.data.retrievedAt} onPick={pickOffer} onAdvisor={askAdvisor} />}
         {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 

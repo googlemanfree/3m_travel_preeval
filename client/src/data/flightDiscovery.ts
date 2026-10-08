@@ -130,6 +130,49 @@ export type RecentFlightSearch = LastFlightSearch & { savedAt: number };
 export const RECENT_FLIGHT_SEARCHES_KEY = "3m-recent-flight-searches";
 export const MAX_RECENT_FLIGHT_SEARCHES = 5;
 
+/** Dernière demande de réservation créée sur cet appareil (suivi + paiement en attente). */
+export const LAST_FLIGHT_BOOKING_KEY = "3m-last-flight-booking";
+export type LastFlightBookingSnapshot = {
+  requestId: number;
+  requestRef: string;
+  email: string;
+  status: string;
+  createdAt: number;
+  routeLabel: string;
+  quotedTotalPrice?: number;
+};
+
+export function parseLastFlightBooking(raw: string | null): LastFlightBookingSnapshot | null {
+  if (!raw || raw.length > 800) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return null;
+    const requestId = typeof parsed.requestId === "number" && Number.isInteger(parsed.requestId) && parsed.requestId > 0 ? parsed.requestId : null;
+    const requestRef = typeof parsed.requestRef === "string" && /^3M-FL-/i.test(parsed.requestRef) ? parsed.requestRef : null;
+    const email = typeof parsed.email === "string" && parsed.email.includes("@") ? parsed.email.trim().slice(0, 320) : null;
+    const status = typeof parsed.status === "string" ? parsed.status.slice(0, 40) : "pending_review";
+    const createdAt = typeof parsed.createdAt === "number" && Number.isFinite(parsed.createdAt) ? parsed.createdAt : null;
+    const routeLabel = typeof parsed.routeLabel === "string" ? parsed.routeLabel.slice(0, 120) : "";
+    const quotedTotalPrice = typeof parsed.quotedTotalPrice === "number" && Number.isFinite(parsed.quotedTotalPrice) && parsed.quotedTotalPrice > 0
+      ? parsed.quotedTotalPrice
+      : undefined;
+    if (!requestId || !requestRef || !email || !createdAt) return null;
+    // Expire après 14 jours : au-delà, le suivi passe par e-mail / espace client.
+    if (Date.now() - createdAt > 14 * 24 * 60 * 60 * 1000) return null;
+    return { requestId, requestRef, email, status, createdAt, routeLabel, quotedTotalPrice };
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastFlightBooking(snapshot: LastFlightBookingSnapshot): void {
+  try {
+    sessionStorage.setItem(LAST_FLIGHT_BOOKING_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Navigation privée : le suivi reste possible via e-mail de confirmation.
+  }
+}
+
 const CABINS = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 const count = (value: unknown, min: number, max: number) => (typeof value === "number" && Number.isInteger(value) && value >= min && value <= max ? value : null);

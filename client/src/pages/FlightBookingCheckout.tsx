@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Loader, Share2, CalendarPlus, Copy, Link2, Hotel, Car } from "lucide-react";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Loader, Share2, CalendarPlus, Copy, Link2, Hotel, Car, Clock3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import Footer from "@/components/Footer";
 import PassportScanUploader from "@/components/PassportScanUploader";
 import { trpc } from "@/lib/trpc";
+import { saveLastFlightBooking } from "@/data/flightDiscovery";
+import { flightStatusLabel } from "@shared/flightRequestStatus";
 
 function formatXaf(amount: number) {
   return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`;
@@ -79,6 +81,7 @@ export default function FlightBookingCheckout() {
   const [submitted, setSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dossierRef, setDossierRef] = useState("");
+  const [submittedRequestId, setSubmittedRequestId] = useState<number | null>(null);
   const [friendEmail, setFriendEmail] = useState("");
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isTicketExporting, setIsTicketExporting] = useState(false);
@@ -87,9 +90,22 @@ export default function FlightBookingCheckout() {
   const createRequestMutation = trpc.flightBooking.createRequest.useMutation({
     onSuccess: (result) => {
       setDossierRef(result.requestRef);
+      setSubmittedRequestId(result.requestId);
       setBookingSubmitError(null);
       setShowConfirmModal(false);
       setSubmitted(true);
+      const routeLabel = selectedFlight
+        ? `${selectedFlight.originCity || selectedFlight.origin} → ${selectedFlight.destinationCity || selectedFlight.destination}`
+        : "";
+      saveLastFlightBooking({
+        requestId: result.requestId,
+        requestRef: result.requestRef,
+        email: formData.email,
+        status: result.status,
+        createdAt: Date.now(),
+        routeLabel,
+        quotedTotalPrice: quotedTotalPrice ?? selectedFlight?.totalPrice,
+      });
       toast({ title: "Demande transmise à l'agence", description: `${result.requiresAccountActivation ? "Votre demande est enregistrée. Créez ou activez votre espace client pour suivre son évolution. " : ""}Référence ${result.requestRef}. Le tarif et la disponibilité seront revalidés par un agent.` });
     },
     onError: (error) => {
@@ -154,7 +170,7 @@ export default function FlightBookingCheckout() {
   const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
   const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
-  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nTarif relevé (à confirmer par un conseiller): ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
+  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nTarif relevé (à confirmer par un conseiller): ${selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
@@ -466,22 +482,45 @@ export default function FlightBookingCheckout() {
               </div>
             </form>
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-xl rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-xl rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl" data-testid="flight-booking-success">
               <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-emerald-600" />
-              <h2 className="text-2xl font-black text-slate-900">Demande de réservation préparée</h2>
-              <p className="mt-2 text-sm text-slate-600">Votre référence provisoire est <span className="font-mono font-bold text-blue-700">{dossierRef}</span>. Contactez l’agence pour revalider le tarif, les places et finaliser l’émission.</p>
+              <h2 className="text-2xl font-black text-slate-900">Demande de réservation envoyée</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Référence <span className="font-mono font-bold text-blue-700">{dossierRef}</span>
+                <span className="mt-1 block text-xs font-semibold text-blue-800">{flightStatusLabel("pending_review")}</span>
+              </p>
 
-              <div className="my-6 rounded-2xl bg-blue-50 p-4 text-left text-xs leading-6 text-blue-900">
-                <p className="font-black mb-1">Dernière étape : validation par l’agence</p>
-                <p>Les coordonnées du vol sélectionné et vos informations de passeport sont prêtes à être vérifiées par nos conseillers avant toute émission.</p>
+              <ol className="my-6 space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left text-xs leading-5 text-slate-700" data-testid="flight-booking-pipeline">
+                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-black text-white">1</span><span><strong>Demande reçue</strong> — un conseiller vérifie disponibilité et tarif relevé (aucun prix inventé).</span></li>
+                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-white">2</span><span><strong>Paiement en attente</strong> — après revalidation, réglez en ligne (CinetPay) ou via Mobile Money / agence.</span></li>
+                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[10px] font-black text-slate-700">3</span><span><strong>Émission du billet</strong> — uniquement après confirmation du paiement par l’agence (jamais automatique).</span></li>
+              </ol>
+
+              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-left text-xs text-amber-950" data-testid="flight-payment-pending-hint">
+                <p className="flex items-center gap-1.5 font-black"><Clock3 className="h-4 w-4" aria-hidden="true" /> Paiement : pas encore exigible</p>
+                <p className="mt-1 leading-5">Le statut passera à « En attente de paiement » lorsque le tarif sera revalidé. Vous pourrez alors payer en ligne ou déclarer un règlement hors ligne.</p>
               </div>
 
-              <a href={`/paiement?ref=${encodeURIComponent(dossierRef)}&type=vol`} data-testid="how-to-pay" className="mb-6 flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white p-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50">
-                Comment payer ? Virement, dépôt Mobile Money ou agence
-              </a>
-              <a href={`/suivi-vol?ref=${encodeURIComponent(dossierRef)}`} data-testid="track-flight-link" className="mb-6 flex items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-900 transition hover:bg-blue-100">
-                Suivre ma demande et renseigner les passeports
-              </a>
+              <div className="mb-6 grid gap-2">
+                <a href={`/suivi-vol?ref=${encodeURIComponent(dossierRef)}`} data-testid="track-flight-link" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-900 transition hover:bg-blue-100">
+                  Suivre ma demande et renseigner les passeports
+                </a>
+                <a href={`/paiement?ref=${encodeURIComponent(dossierRef)}&type=vol`} data-testid="how-to-pay" className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white p-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50">
+                  <CreditCard className="h-4 w-4" aria-hidden="true" /> Comment payer ? Mobile Money, virement ou agence
+                </a>
+                {submittedRequestId && formData.email && (
+                  <a
+                    href={`/payment/flight/${submittedRequestId}?email=${encodeURIComponent(formData.email)}`}
+                    data-testid="cinetpay-flight-link"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#1E3A8A] p-3 text-sm font-black text-white transition hover:bg-[#163066]"
+                  >
+                    Accès paiement en ligne (après revalidation)
+                  </a>
+                )}
+                <a href="/flights" data-testid="back-to-flights" className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 p-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                  Retour aux vols — retrouver votre dossier
+                </a>
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 font-bold text-emerald-800 transition hover:bg-emerald-100">
