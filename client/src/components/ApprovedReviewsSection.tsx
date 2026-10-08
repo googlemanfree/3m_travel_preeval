@@ -228,8 +228,8 @@ export default function ApprovedReviewsSection() {
       }
     : {
         loading: "Chargement des avis approuvés...",
-        title: "Ce que nos clients disent",
-        subtitle: "Découvrez les expériences réelles partagées par nos clients approuvés.",
+        title: "Ils nous ont fait confiance",
+        subtitle: "Avis vérifiés par l’équipe 3M avant publication — des retours réels, jamais inventés.",
         average: "Note moyenne",
         verified: "Avis approuvés",
         all: "Toutes les destinations",

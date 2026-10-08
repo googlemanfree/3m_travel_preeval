@@ -15,7 +15,7 @@ export default function Services() {
       primaryLabel="Parler à un conseiller"
       notice="Les décisions de visa, de délivrance de documents et de tarification appartiennent aux autorités et prestataires concernés : 3M prépare, oriente et suit votre dossier sans garantir de résultat."
     >
-      <ServiceSection title="Que voulez-vous faire ?" introduction="Partez de votre besoin : chaque carte mène directement à la bonne démarche." tone="slate">
+      <ServiceSection title="Que voulez-vous accomplir ?" introduction="Partez de votre intention : chaque carte mène directement à la bonne démarche, avec un accompagnement jusqu’au dépôt." tone="slate">
         <QuickActionsGrid />
       </ServiceSection>
 

@@ -30,7 +30,7 @@ const CATEGORIES: ServiceCategory[] = [
     icon: Globe2,
     color: "text-[#1e3a8a] bg-[#dbeafe]",
     title: "Mobilité internationale",
-    description: "Études, travail, immigration ou regroupement familial : nous construisons et déposons un dossier solide, du premier renseignement jusqu'à l'installation.",
+    description: "Études, travail, immigration ou famille : un dossier construit pièce par pièce, avec un suivi jusqu’à la mise en route.",
     items: [{ label: "Études" }, { label: "Travail" }, { label: "Immigration" }, { label: "Regroupement familial" }],
     cta: { label: "Voir les procédures par destination", href: "/procedures" },
   },
@@ -38,7 +38,7 @@ const CATEGORIES: ServiceCategory[] = [
     icon: Stamp,
     color: "text-[#7c3aed] bg-[#ede9fe]",
     title: "Visas",
-    description: "Quel que soit le motif du séjour, nous préparons votre demande de visa et vous accompagnons jusqu'au dépôt.",
+    description: "Visite, études ou travail : checklist, préparation des pièces et accompagnement jusqu’au dépôt auprès des autorités.",
     items: [{ label: "Visa étudiant" }, { label: "Visa de travail" }, { label: "Visa de visiteur" }, { label: "e-Visa", href: "/evisas" }],
     cta: { label: "Voir les types de visa", href: "/procedures" },
   },
@@ -46,7 +46,7 @@ const CATEGORIES: ServiceCategory[] = [
     icon: Plane,
     color: "text-[#2563eb] bg-[#eff6ff]",
     title: "Travel & Booking",
-    description: "Tout ce qu'il faut pour préparer et sécuriser un déplacement, ici comme à l'étranger.",
+    description: "Vols, hébergement, véhicule et assurance : organisez le départ dans le même accompagnement que votre dossier.",
     items: [
       { label: "Billets d'avion", href: "/flights" },
       { label: "Hôtels", href: "/tourisme?service=hotel" },
@@ -59,7 +59,7 @@ const CATEGORIES: ServiceCategory[] = [
     icon: IdCard,
     color: "text-[#0369a1] bg-[#e0f2fe]",
     title: "Démarches administratives",
-    description: "Pré-enrôlement CNI et passeport, e-Visa Cameroun : nous préparons votre dossier et suivons son avancement.",
+    description: "CNI, passeport et e-Visa Cameroun : dossier préparé, suivi transparent et conseils pour éviter les allers-retours inutiles.",
     items: [
       { label: "Pré-enrôlement CNI", href: "/cni-passeport" },
       { label: "Passeport", href: "/cni-passeport" },
@@ -100,11 +100,11 @@ export default function ServicesOverviewSection() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-10 md:mb-14">
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
-            <Sparkles className="h-4 w-4" aria-hidden="true" /> Nos services
+            <Sparkles className="h-4 w-4" aria-hidden="true" /> Accompagnement complet
           </p>
-          <h2 id="services-overview-title" className="mt-4 text-3xl md:text-4xl font-black text-slate-950">Bien plus qu'une agence de voyage. Un accompagnement international.</h2>
+          <h2 id="services-overview-title" className="mt-4 text-3xl md:text-4xl font-black text-slate-950">Un interlocuteur unique pour un projet international sérieux</h2>
           <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600 md:text-base">
-            De la préparation de votre projet à l'organisation de votre départ, 3M Travel Agency réunit les solutions essentielles à votre mobilité.
+            Visa, études, travail, voyage : 3M Travel Agency structure votre dossier, clarifie les prochaines étapes et vous accompagne jusqu’au départ.
           </p>
         </div>
 
@@ -162,7 +162,7 @@ export default function ServicesOverviewSection() {
         </div>
 
         <p className="mt-8 text-center text-base font-bold italic text-slate-800">
-          Une seule ambition : transformer votre projet international en une démarche claire, préparée et concrète.
+          Une seule ambition : transformer votre projet international en une démarche claire, préparée et crédible.
         </p>
 
         <p className="mt-6 text-center">

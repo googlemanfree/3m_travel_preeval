@@ -2,7 +2,7 @@ import { Briefcase, Building2, Car, Cpu, GraduationCap, Globe2, HeartHandshake, 
 import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 
 /**
- * Catalogue unique des activités de 3M Travel & Services : l'accueil (« Que voulez-vous faire ? », « Nos services »)
+ * Catalogue unique des activités de 3M Travel & Services : l'accueil (« Que voulez-vous accomplir ? », « Nos services »)
  * et la page /services s'appuient sur la même source. Descriptions volontairement factuelles : aucun prix, délai
  * ni résultat garanti ; les décisions appartiennent aux autorités ou aux prestataires concernés.
  */
@@ -59,23 +59,23 @@ export const SERVICE_POLES: ServicePole[] = [
 
 export type QuickAction = { id: string; title: string; hint: string; href: string; icon: LucideIcon };
 
-/** « Que voulez-vous faire ? » : l'intention du visiteur d'abord, le nom du service ensuite. */
+/** « Que voulez-vous accomplir ? » : l'intention du visiteur d'abord, le nom du service ensuite. */
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "etudier", title: "Étudier à l’étranger", hint: "Évaluation gratuite de mon projet", href: buildFreeEvaluationHref("etudes"), icon: GraduationCap },
-  { id: "travailler", title: "Travailler à l’étranger", hint: "Évaluation gratuite de mon projet", href: buildFreeEvaluationHref("travail"), icon: Briefcase },
-  { id: "visa", title: "Demander un visa", hint: "Procédures par destination", href: "/procedures", icon: Stamp },
-  { id: "vol", title: "Réserver un vol", hint: "Recherche avec 3M Booking", href: "/flights", icon: Plane },
-  { id: "assurance", title: "M’assurer pour voyager", hint: "Assurance voyage", href: "/assurance", icon: HeartHandshake },
-  { id: "evisa", title: "Obtenir un e-Visa", hint: "Préparation et suivi", href: "/evisas", icon: Globe2 },
-  { id: "cni", title: "Refaire ma CNI ou mon passeport", hint: "Renouvellement, perte ou vol", href: "/cni-passeport", icon: IdCard },
-  { id: "conseiller", title: "Parler à un conseiller", hint: "Prendre rendez-vous", href: "/consultation", icon: MessageCircle },
+  { id: "etudier", title: "Étudier à l’étranger", hint: "Orientation gratuite de votre dossier", href: buildFreeEvaluationHref("etudes"), icon: GraduationCap },
+  { id: "travailler", title: "Travailler à l’étranger", hint: "Orientation gratuite de votre profil", href: buildFreeEvaluationHref("travail"), icon: Briefcase },
+  { id: "visa", title: "Demander un visa", hint: "Checklist et dépôt guidés", href: "/procedures", icon: Stamp },
+  { id: "vol", title: "Réserver un vol", hint: "Devis et billetterie 3M Booking", href: "/flights", icon: Plane },
+  { id: "assurance", title: "M’assurer pour voyager", hint: "Couverture adaptée à votre séjour", href: "/assurance", icon: HeartHandshake },
+  { id: "evisa", title: "Obtenir un e-Visa", hint: "Préparation documentaire sécurisée", href: "/evisas", icon: Globe2 },
+  { id: "cni", title: "Refaire ma CNI ou mon passeport", hint: "Dossier prêt pour Yaoundé", href: "/cni-passeport", icon: IdCard },
+  { id: "conseiller", title: "Parler à un conseiller", hint: "Échange direct, sans engagement", href: "/consultation", icon: MessageCircle },
 ];
 
 /** Étapes communes à toutes les demandes ; le délai de réponse n'est pas promis ici, il figure sur la page de rendez-vous. */
 export const HOW_IT_WORKS = [
-  { title: "Vous décrivez votre besoin", text: "Par un formulaire, sur WhatsApp ou en agence à Yaoundé : quelques informations suffisent pour commencer." },
-  { title: "Un conseiller prépare votre dossier", text: "Nous vous indiquons les pièces à réunir, les frais tiers possibles et les étapes, avant toute démarche." },
-  { title: "Vous suivez l’avancement", text: "Votre espace client rassemble l’état de votre dossier, vos pièces et les messages de l’équipe." },
+  { title: "Vous précisez votre projet", text: "Formulaire, WhatsApp ou agence à Yaoundé : quelques informations suffisent pour cadrer votre objectif." },
+  { title: "Nous structurons votre dossier", text: "Un conseiller liste les pièces, les frais tiers éventuels et l’ordre des étapes — avant tout engagement." },
+  { title: "Vous avancez en toute clarté", text: "Votre espace client centralise le statut, les documents et les échanges avec l’équipe 3M." },
 ] as const;
 
 export const ALL_CATALOG_HREFS: string[] = [

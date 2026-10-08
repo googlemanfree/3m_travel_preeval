@@ -606,6 +606,13 @@ export default function Home() {
       {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
       <QuickActionsSection />
 
+      {/* ─── PREUVES + AVIS : réassurance tôt pour convaincre avant le catalogue de services ── */}
+      <ProofGallerySection />
+
+      <ReviewsErrorBoundary>
+        <ApprovedReviewsSection />
+      </ReviewsErrorBoundary>
+
       <ProfileVerificationModule />
 
       {/* ─── NOS SERVICES : mobilité internationale, travel et services administratifs/numériques ── */}
@@ -614,7 +621,8 @@ export default function Home() {
       {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-6">Procédures les plus demandées depuis Yaoundé</h2>
+          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Les parcours les plus demandés depuis Yaoundé</h2>
+          <p className="mb-6 text-center text-sm text-slate-600 md:text-base">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
               { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },
@@ -642,22 +650,13 @@ export default function Home() {
       {/* ─── NOS DESTINATIONS : grille des 23 pays de formation/emploi qualifie ── */}
       <DestinationsShowcaseSection />
 
-      {/* ─── PREUVES DE DOSSIERS REELS TRAITES (documents redactes, filigranes) ── */}
-      <ProofGallerySection />
-
-      {/* ─── AVIS CLIENTS APPROUVÉS : preuve sociale positionnee au plus tot, ────
-          masquee automatiquement s'il n'existe encore aucun avis approuve ── */}
-      <ReviewsErrorBoundary>
-        <ApprovedReviewsSection />
-      </ReviewsErrorBoundary>
-
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
       <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Évaluation prioritaire</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluation Multi-Projets</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">Choisissez votre projet (Travail, Études ou Tourisme) et recevez une orientation personnalisée avant d’engager une démarche.</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Sans engagement · réponse structurée</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluez votre projet avant d’avancer</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M vous oriente sur la bonne procédure, les pièces à préparer et les prochaines étapes — gratuitement.</p>
           </motion.div>
           <SimpleMultiProjectForm />
         </div>

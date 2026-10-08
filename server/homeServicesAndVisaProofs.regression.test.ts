@@ -39,15 +39,18 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     expect(section).toContain("DESTINATION_COUNT");
     expect(section).toContain("procedures107Complete.map((country) => country.id.replace(");
     expect(section).toContain("{DESTINATION_COUNT} destinations");
-    expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et concrète.");
+    expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et crédible.");
   });
 
-  it("est affichée sur l'accueil, avant les procédures les plus demandées", () => {
+  it("est affichée sur l'accueil, avant les procédures les plus demandées, après les preuves sociales", () => {
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain('import ServicesOverviewSection from "@/components/ServicesOverviewSection"');
     expect(home.indexOf("<ServicesOverviewSection />")).toBeGreaterThan(-1);
+    expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
+    expect(home.indexOf("<ApprovedReviewsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     expect(home.indexOf("<ServicesOverviewSection />")).toBeLessThan(home.indexOf('aria-label="Procédures les plus demandées"'));
   });
+
 
   it("ajoute les quatre visas Schengen à la galerie, avec des fichiers existants et légers", () => {
     const gallery = read("client/src/data/proofPhotos.ts");

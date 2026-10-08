@@ -31,12 +31,12 @@ export default function QuickActionsSection() {
     <section aria-labelledby="quick-actions-title" className="bg-white pb-6 pt-10 md:pt-14">
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-6 text-center md:mb-8">
-          <h2 id="quick-actions-title" className="text-2xl font-black text-slate-950 md:text-3xl">Que voulez-vous faire ?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 md:text-base">Choisissez votre besoin : nous vous orientons vers la bonne démarche, de la demande au suivi.</p>
+          <h2 id="quick-actions-title" className="text-2xl font-black text-slate-950 md:text-3xl">Que voulez-vous accomplir ?</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 md:text-base">Choisissez votre intention : on vous place immédiatement sur la bonne démarche, avec un conseiller 3M pour vous accompagner jusqu’au dépôt.</p>
         </div>
         <QuickActionsGrid />
         <p className="mt-5 text-center text-sm text-slate-600">
-          Vous ne trouvez pas votre démarche ? <a href="/services" className="font-bold text-blue-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Voir tous nos services</a>
+          Besoin d’un autre service ? <a href="/services" className="font-bold text-blue-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Voir tous nos services</a>
         </p>
       </div>
     </section>

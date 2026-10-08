@@ -70,9 +70,9 @@ describe("page /services", () => {
     }
   });
 
-  it("propose « Que voulez-vous faire ? », la méthode en 3 étapes et un contact direct", () => {
+  it("propose « Que voulez-vous accomplir ? », la méthode en 3 étapes et un contact direct", () => {
     render(<Services />);
-    expect(screen.getAllByText("Que voulez-vous faire ?").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Que voulez-vous accomplir ?").length).toBeGreaterThan(0);
     expect(within(screen.getByTestId("quick-actions")).getAllByRole("link")).toHaveLength(8);
     HOW_IT_WORKS.forEach((step) => expect(screen.getByText(step.title)).toBeTruthy());
     expect(screen.getAllByRole("link", { name: /Prendre rendez-vous|Parler à un conseiller/ }).length).toBeGreaterThan(0);
@@ -87,7 +87,7 @@ describe("page /services", () => {
   });
 });
 
-describe("accueil : « Que voulez-vous faire ? »", () => {
+describe("accueil : « Que voulez-vous accomplir ? »", () => {
   it("affiche les huit actions, dont l'évaluation gratuite sans compte pour les études et le travail", () => {
     render(<QuickActionsSection />);
     const links = within(screen.getByTestId("quick-actions")).getAllByRole("link");
