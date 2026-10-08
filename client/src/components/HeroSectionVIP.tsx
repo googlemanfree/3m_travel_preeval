@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
@@ -58,19 +59,22 @@ export default function HeroSectionVIP({
     };
   }, []);
 
-  const fadeUp = {
+  // Apparition en fondu au chargement : titre puis boutons, respect de prefers-reduced-motion.
+  const fadeIn = {
     hidden: {
       opacity: prefersReducedMotion ? 1 : 0,
-      y: prefersReducedMotion ? 0 : 18,
+      y: prefersReducedMotion ? 0 : 16,
+      filter: prefersReducedMotion ? "none" : "blur(4px)",
     },
     visible: (i = 0) => ({
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
       transition: prefersReducedMotion
         ? { duration: 0 }
         : {
-            duration: 0.65,
-            delay: i * 0.12,
+            duration: 0.85,
+            delay: 0.15 + i * 0.18,
             ease: [0.22, 1, 0.36, 1] as const,
           },
     }),
@@ -111,11 +115,12 @@ export default function HeroSectionVIP({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.55)_0%,transparent_70%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-10">
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 md:pb-20">
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeUp}
+          variants={fadeIn}
+          custom={0}
           className="mb-6 flex justify-center"
         >
           <img
@@ -131,9 +136,10 @@ export default function HeroSectionVIP({
         <motion.h1
           initial="hidden"
           animate="visible"
-          variants={fadeUp}
+          variants={fadeIn}
           custom={1}
           className="mb-5 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:text-6xl md:mb-6 md:text-7xl lg:text-[6.5rem]"
+          data-testid="hero-title"
         >
           3M TRAVEL AGENCY
         </motion.h1>
@@ -141,7 +147,7 @@ export default function HeroSectionVIP({
         <motion.p
           initial="hidden"
           animate="visible"
-          variants={fadeUp}
+          variants={fadeIn}
           custom={2}
           className="mx-auto mb-8 max-w-2xl text-lg font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
         >
@@ -151,7 +157,7 @@ export default function HeroSectionVIP({
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeUp}
+          variants={fadeIn}
           custom={3}
           className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
           data-testid="hero-cta-group"
@@ -159,28 +165,60 @@ export default function HeroSectionVIP({
           <PublicEvaluationCTA
             project="travail"
             aria-label="Évaluer mon projet gratuitement"
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_18px_40px_-8px_rgba(249,115,22,0.55)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
-            <span className="relative z-10">ÉVALUER MON PROJET — GRATUIT</span>
+            <span
+              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+              aria-hidden="true"
+            />
+            <span
+              className="pointer-events-none absolute -inset-1 rounded-xl bg-orange-400/0 opacity-0 blur-md transition-all duration-300 group-hover:bg-orange-400/35 group-hover:opacity-100"
+              aria-hidden="true"
+            />
+            <span className="relative z-10 transition-transform duration-300 group-hover:tracking-wide">
+              ÉVALUER MON PROJET — GRATUIT
+            </span>
           </PublicEvaluationCTA>
           <Button
             asChild
             variant="outline"
-            className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-white/50 hover:bg-white/10 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white/5 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/15 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
             <a
               href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              PARLER À UN CONSEILLER
+              <span
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+                aria-hidden="true"
+              />
+              <span className="relative z-10 transition-transform duration-300 group-hover:tracking-wide">
+                PARLER À UN CONSEILLER
+              </span>
             </a>
           </Button>
         </motion.div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0">
+      <motion.a
+        href="#quick-actions-title"
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        custom={4}
+        className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        aria-label="Défiler vers la suite de la page"
+        data-testid="hero-scroll-cue"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">Découvrir</span>
+        <ChevronDown
+          className="h-5 w-5 animate-bounce motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+      </motion.a>
+
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg
           viewBox="0 0 1440 60"
           fill="none"

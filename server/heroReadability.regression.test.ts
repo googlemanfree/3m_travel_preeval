@@ -34,7 +34,19 @@ describe("hero : lisibilité et hiérarchie", () => {
     const cta = hero.indexOf("<PublicEvaluationCTA");
     expect(cta).toBeGreaterThan(hero.indexOf("Études, travail, voyage et visas"));
     expect(cta).toBeLessThan(hero.indexOf("PARLER À UN CONSEILLER"));
-    expect(hero.slice(cta, cta + 600)).toContain("from-orange-400");
+    expect(hero.slice(cta, cta + 900)).toContain("from-orange-400");
     expect(hero).toContain("ÉVALUER MON PROJET — GRATUIT");
   });
+
+  it("anime l’apparition en fondu, renforce le survol des CTA et propose un indicateur de défilement", () => {
+    expect(hero).toContain("const fadeIn");
+    expect(hero).toContain('data-testid="hero-title"');
+    expect(hero).toContain("hover:-translate-y-1.5 hover:scale-[1.04]");
+    expect(hero).toContain("group-hover:translate-x-full");
+    expect(hero).toContain('data-testid="hero-scroll-cue"');
+    expect(hero).toContain('href="#quick-actions-title"');
+    expect(hero).toContain("animate-bounce motion-reduce:animate-none");
+    expect(hero).not.toContain("repeat: Infinity");
+  });
 });
+
