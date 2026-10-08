@@ -174,10 +174,10 @@ export default function ProceduresAdvanced() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            📋 Procédures Avancées - {PUBLIC_PROCEDURES.length} Destinations
+          <h1 className="premium-section-title mb-4 text-4xl md:text-5xl">
+            Procédures avancées — {PUBLIC_PROCEDURES.length} destinations
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="premium-section-lead mx-auto text-center text-lg">
             Filtres avancés, comparaisons interactives et calculateur de budget pour trouver la meilleure destination.
           </p>
         </motion.div>
@@ -187,19 +187,19 @@ export default function ProceduresAdvanced() {
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇨🇦</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Canada : Résidence & Emploi</h2>
-            <p className="mt-2 text-sm text-slate-600">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
+            <p className="premium-copy mt-2 text-sm">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
             <Link href="/canada" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Canada →</Link>
           </Card>
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇪🇺</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Visa Schengen & Court Séjour</h2>
-            <p className="mt-2 text-sm text-slate-600">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
+            <p className="premium-copy mt-2 text-sm">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
             <Link href="/schengen" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Schengen →</Link>
           </Card>
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🎓</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Études Internationales</h2>
-            <p className="mt-2 text-sm text-slate-600">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
+            <p className="premium-copy mt-2 text-sm">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
             <Link href="/etudes" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer les 10 destinations →</Link>
           </Card>
         </div>
@@ -207,11 +207,11 @@ export default function ProceduresAdvanced() {
         {/* Outils d’orientation : le simulateur CRS reste volontairement dans la section Canada pour éviter toute confusion. */}
         <section className="mb-12 grid gap-6 lg:grid-cols-2" aria-label="Outils de préparation du dossier">
           <Card className="border-blue-200 !bg-gradient-to-br !from-blue-700 !to-indigo-800 p-6 text-white shadow-lg">
-            <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="mt-2 max-w-xl text-sm leading-6 text-blue-50">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="premium-copy-on-dark mt-2 max-w-xl text-base">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
             <Link href="/canada" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-black text-blue-800 hover:bg-blue-50">Ouvrir le calculateur CRS <ExternalLink className="h-4 w-4" /></Link>
           </Card>
           <Card className="border-emerald-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="mt-2 text-sm leading-6 text-slate-600">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="premium-copy mt-2 text-[0.95rem]">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
             <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M TRAVEL AGENCY et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
           </Card>
         </section>

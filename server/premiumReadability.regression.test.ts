@@ -18,6 +18,8 @@ describe("lisibilité premium site-wide", () => {
     expect(css).toContain(".premium-copy-on-dark");
     expect(css).toContain(".premium-section-lead");
     expect(css).toContain("line-height: 1.65");
+    expect(css).toContain("color: rgb(51 65 85 / var(--tw-text-opacity, 1)); /* slate-700 */");
+    expect(css).toContain(".text-\\[10px\\]");
   });
 
   it("rend le hero et /flights avec un contraste lisible", () => {
@@ -34,5 +36,14 @@ describe("lisibilité premium site-wide", () => {
     expect(footer).toContain("text-base leading-relaxed text-slate-200");
     expect(footer).toContain("text-sm leading-relaxed text-slate-300");
     expect(footer).not.toContain("text-xs leading-relaxed text-slate-400");
+  });
+
+  it("applique la typo premium au shell de pages services et à l’accueil", () => {
+    const shell = read("client/src/components/ServicePageShell.tsx");
+    const home = read("client/src/pages/Home.tsx");
+    expect(shell).toContain("premium-copy-on-dark");
+    expect(shell).toContain("premium-section-lead");
+    expect(home).toContain("premium-section-title");
+    expect(home).toContain("premium-copy-on-dark");
   });
 });

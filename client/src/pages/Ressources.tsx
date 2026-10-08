@@ -174,7 +174,7 @@ export default function Ressources() {
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
               {language === 'en' ? '3M TRAVEL AGENCY Guides & Procedures' : 'Guides & Procédures 3M TRAVEL AGENCY'}
             </h1>
-            <p className="text-blue-100 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="premium-copy-on-dark mx-auto max-w-2xl text-base md:text-lg">
               {language === 'en'
                 ? `Download our official procedure sheets for ${totalAll} destinations — Work, Study, Visitor Visas and specialized guides.`
                 : `Téléchargez nos fiches de procédures officielles pour ${totalAll} destinations — Visa Travail, Études, Visiteur et guides spécialisés.`}
