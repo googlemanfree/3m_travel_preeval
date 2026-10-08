@@ -40,6 +40,7 @@ const fadeUp = {
 export default function Home() {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showStickyCta, setShowStickyCta] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -47,14 +48,29 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const isNearSection = (id: string) => {
+      const el = document.getElementById(id);
+      if (!el) return false;
+      const rect = el.getBoundingClientRect();
+      // Masquer la barre si la section cible occupe déjà le viewport (évite le doublon).
+      return rect.top < window.innerHeight * 0.72 && rect.bottom > window.innerHeight * 0.28;
+    };
+
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 520);
+      const pastHero = window.scrollY > Math.min(480, window.innerHeight * 0.55);
+      const nearFormOrFinal = isNearSection("evaluation-multi") || isNearSection("home-final-cta");
+      setShowStickyCta(pastHero && !nearFormOrFinal);
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
       setScrollProgress(scrollableHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollableHeight) * 100)) : 0);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -348,13 +364,43 @@ export default function Home() {
 
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
+      {showStickyCta && (
+        <div
+          className="safe-bottom-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-blue-100 bg-white/95 px-3 pt-2 shadow-[0_-8px_30px_-12px_rgba(15,47,111,0.28)] backdrop-blur md:hidden"
+          data-testid="home-sticky-cta"
+          role="region"
+          aria-label="Actions rapides d’évaluation"
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <a
+              href="#evaluation-multi"
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-3 text-center text-sm font-black text-white shadow-md shadow-orange-900/20 transition active:scale-[0.98]"
+            >
+              Évaluer — gratuit
+            </a>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-center text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 active:scale-[0.98]"
+            >
+              WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
       {showBackToTop && (
         <button
           type="button"
           aria-label="Retour en haut de la page"
           title="Retour en haut"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6"
+          className={`fixed left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6 ${
+            showStickyCta
+              ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-6"
+              : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
+          }`}
         >
           <ChevronUp className="h-5 w-5" aria-hidden="true" />
         </button>

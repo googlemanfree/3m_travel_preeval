@@ -48,6 +48,15 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain("min-h-12 w-full");
   });
 
+  it("affiche une barre CTA sticky mobile (Évaluer + WhatsApp) hors du formulaire", () => {
+    expect(home).toContain('data-testid="home-sticky-cta"');
+    expect(home).toContain("showStickyCta");
+    expect(home).toContain("Évaluer — gratuit");
+    expect(home).toContain("md:hidden");
+    expect(home).toContain('aria-label="Actions rapides d’évaluation"');
+    expect(styles).toContain('body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp');
+  });
+
   it("affiche une progression de défilement et des transitions accessibles", () => {
     expect(home).toContain('data-testid="mobile-scroll-progress"');
     expect(home).toContain("aria-valuenow={Math.round(scrollProgress)}");
