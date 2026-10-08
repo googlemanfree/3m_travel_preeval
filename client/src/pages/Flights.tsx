@@ -1203,6 +1203,10 @@ export default function Flights() {
         </div>
       </section>
 
+      <div className="order-3" data-testid="flight-social-proof">
+        <FlightClientReviews reviews={reviewsQuery.data ?? []} />
+      </div>
+
       <section id="3m-booking" className="order-5 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
         <ThreeMBookingExperience />
       </section>
@@ -1265,7 +1269,7 @@ export default function Flights() {
         </motion.div>
       </div>
 
-      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightClientReviews reviews={reviewsQuery.data ?? []} /><FlightBookingFAQ /></div>
+      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightBookingFAQ /></div>
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">

@@ -49,4 +49,12 @@ describe("premium /flights Afrique — logos, hero, mobilité", () => {
     expect(flights).toContain("Math.min(staggerIndex, 10) * 0.045");
     expect(flights).toContain("premium-card-enter");
   });
+
+  it("affiche la preuve sociale approuvée immédiatement sous le hero", () => {
+    expect(flights).toContain('data-testid="flight-social-proof"');
+    expect(flights).toContain("<FlightClientReviews reviews={reviewsQuery.data ?? []} />");
+    expect(flights.indexOf('data-testid="flight-hero"')).toBeLessThan(flights.indexOf('data-testid="flight-social-proof"'));
+    expect(flights.indexOf('data-testid="flight-social-proof"')).toBeLessThan(flights.indexOf('<section id="3m-booking"'));
+    expect(flights.match(/<FlightClientReviews reviews=\{reviewsQuery\.data \?\? \[\]\} \/>/g)?.length ?? 0).toBe(1);
+  });
 });
