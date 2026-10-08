@@ -250,16 +250,16 @@ export function SimpleMultiProjectForm() {
           <Button type="button" onClick={() => setLocation(`/register?from=${encodeURIComponent(evaluationReturnPath)}`)} className="bg-[#0B2A52] text-white hover:bg-[#163d73]">Créer mon compte</Button>
           <Button type="button" variant="outline" onClick={() => setLocation(`/login?redirect=1&from=${encodeURIComponent(evaluationReturnPath)}`)} className="border-blue-200 text-blue-900 hover:bg-blue-50">Se connecter</Button>
         </div>
-        <p className="mt-4 text-xs text-slate-500">Après activation, vous reviendrez directement à cette évaluation.</p>
+        <p className="mt-4 text-sm text-slate-600">Après activation, vous reviendrez directement à cette évaluation.</p>
       </Card>
     );
   }
 
   return (
     <motion.div className="w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
-      <Card className="border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
+      <Card className="premium-form-surface border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-7">
-          <div className="flex items-end justify-between gap-3"><div><h2 className="text-2xl font-black text-slate-950">Évaluation guidée</h2><p className="mt-1 text-sm text-slate-600">Un parcours adapté à votre pays et à votre projet.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
+          <div className="flex items-end justify-between gap-3"><div><h2 className="premium-section-title text-2xl">Évaluation guidée</h2><p className="premium-copy mt-1 text-sm">Un parcours adapté à votre pays et à votre projet.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
           {isPostRegistrationOnboarding && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950" role="status"><strong>Votre compte est activé.</strong> Complétez maintenant cette évaluation préparatoire ; elle organise les informations utiles, mais ne remplace pas un formulaire consulaire officiel ni une décision.</div>}
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de l’évaluation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
             <motion.div className="h-full rounded-full bg-gradient-to-r from-[#0B2A52] via-blue-700 to-[#D8A928]" initial={false} animate={{ width: `${progress}%` }} transition={{ duration: 0.32, ease: "easeOut" }} />
@@ -281,7 +281,7 @@ export function SimpleMultiProjectForm() {
                   <Field label="Pays de destination *"><CountrySelect id="home-evaluation-destination" ariaLabel="Pays de destination" placeholder="Sélectionner un pays" value={formData.destinationCountry === "Autre pays" ? "" : formData.destinationCountry} priority={COUNTRIES_BY_PROJECT[formData.projectType].filter((country) => country.value !== "Autre pays").map((country) => country.value)} onChange={(country) => update("destinationCountry", country)} /></Field>
                   {formData.destinationCountry && <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>Repère pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry] ?? COUNTRY_GUIDANCE["Autre pays"]}</div>}
                   {officialPortal && <a href={officialPortal.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-900 underline underline-offset-2 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Consulter le portail institutionnel : {officialPortal.label} ↗</a>}
-                  <p className="text-xs leading-5 text-slate-500">Ensuite : vos coordonnées, puis les critères et documents utiles — sans engagement de résultat.</p>
+                  <p className="text-sm leading-6 text-slate-600">Ensuite : vos coordonnées, puis les critères et documents utiles — sans engagement de résultat.</p>
                 </div>}
                 {currentStep === 1 && <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <Field label="Nom complet *"><Input name="fullName" value={formData.fullName} onChange={onTextChange} placeholder="Jean Dupont" maxLength={255} /></Field>
@@ -309,7 +309,7 @@ export function SimpleMultiProjectForm() {
           </form>
         )}
         {!isSuccessVisible && <div className="mt-5 grid gap-2 sm:grid-cols-2"><button type="button" onClick={() => window.open(`https://wa.me/237698104832?text=${encodeURIComponent(summary)}`, "_blank")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 active:scale-[0.98]"><MessageCircleMore className="h-4 w-4" />Partager au conseiller WhatsApp</button><button type="button" onClick={async () => { try { await navigator.clipboard.writeText(summary); toast.success("Récapitulatif copié"); } catch { toast.error("Copie non disponible sur cet appareil"); } }} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.98]"><MailCheck className="h-4 w-4" />Copier le récapitulatif</button></div>}
-        <p className="mt-5 text-center text-xs text-slate-500">Évaluation gratuite · Réponse par un conseiller · Informations confidentielles</p>
+        <p className="mt-5 text-center text-sm text-slate-600">Évaluation gratuite · Réponse par un conseiller · Informations confidentielles</p>
       </Card>
     </motion.div>
   );
@@ -320,5 +320,5 @@ function SummarySection({ title, lines, onEdit }: { title: string; lines: string
 }
 
 function Field({ label, hint, full, children }: { label: string; hint?: string; full?: boolean; children: React.ReactNode }) {
-  return <div className={full ? "md:col-span-2" : ""}><Label className="font-semibold text-slate-800">{label}</Label><div className="mt-2">{children}</div>{hint && <p className="mt-1 text-xs font-medium text-red-600">{hint}</p>}</div>;
+  return <div className={full ? "md:col-span-2" : ""}><Label className="text-base font-semibold text-slate-900">{label}</Label><div className="mt-2">{children}</div>{hint && <p className="mt-1.5 text-sm font-medium text-red-700">{hint}</p>}</div>;
 }
