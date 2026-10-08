@@ -26,6 +26,8 @@ describe("lisibilité premium site-wide", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     const flights = read("client/src/pages/Flights.tsx");
     expect(hero).toContain("text-white drop-shadow");
+    expect(hero).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]");
+    expect(hero).toContain("bg-[#020C3B]/45");
     expect(hero).not.toContain("text-transparent");
     expect(hero).toContain("premium-copy-on-dark");
     expect(flights).toContain("premium-copy-on-dark");
