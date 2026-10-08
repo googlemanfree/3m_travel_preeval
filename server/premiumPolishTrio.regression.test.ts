@@ -34,6 +34,8 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     const evisa = read("client/src/pages/Evisa.tsx");
     expect(shell).toContain("PremiumReveal");
     expect(shell).toContain("py-16 sm:px-6 sm:py-20");
+    expect(shell).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]");
+    expect(shell).toContain("bg-[#020C3B]/35");
     expect(tarifs).toContain("PremiumReveal");
     expect(tarifs).toContain("premium-section-lead");
     expect(schengen).toContain("premium-copy");
@@ -46,5 +48,13 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     expect(reveal).toContain("useReducedMotion");
     expect(reveal).toContain("whileInView");
     expect(reveal).toContain("once: true");
+  });
+
+  it("applique le contraste translucide et l’apparition progressive au texte du hero", () => {
+    const hero = read("client/src/components/HeroSectionVIP.tsx");
+    expect(hero).toContain("premium-copy-on-dark");
+    expect(hero).toContain("bg-[#020C3B]/45");
+    expect(hero).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]");
+    expect(hero).toContain("variants={fadeIn}");
   });
 });
