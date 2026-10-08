@@ -13,6 +13,12 @@ describe("signaux publics de marque et d’évaluation", () => {
     expect(html).not.toContain("instagram.com/3mtravelagency");
   });
 
+  it("publie le titre HTML avec la marque publique unifiée", () => {
+    const html = composePublicPrerender(template, "/").html;
+    expect(html).toContain("<title>3M TRAVEL AGENCY | Voyages, Visas, Études &amp; Mobilité Internationale</title>");
+    expect(html).not.toContain("3M Travel &amp; Services | Voyages, Visas, Études &amp; Mobilité Internationale");
+  });
+
   it("garde la réponse compte et CV obligatoire identique dans la FAQ partagée", () => {
     const accountQuestion = PUBLIC_FAQ_ITEMS.find((item) => item.question === "Faut-il créer un compte avant de commencer ?");
     expect(accountQuestion?.answer).toContain("Créez d’abord votre compte");
