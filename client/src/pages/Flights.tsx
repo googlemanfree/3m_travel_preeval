@@ -18,7 +18,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchEmptyState, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
@@ -1347,25 +1347,35 @@ export default function Flights() {
         )}
 
         {searchEnabled && !isFetching && error && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 bg-rose-50 border border-rose-200 rounded-3xl max-w-2xl mx-auto my-8 p-8">
-            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-            <h3 className="text-lg font-black text-rose-800 mb-2">La recherche n’a pas abouti</h3>
-            <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1, y: 0 }}>
+            <FlightSearchEmptyState
+              reason="error"
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id, context: "search_error" });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })}
+              whatsappTestId="search-whatsapp-search_error"
+            />
           </motion.div>
         )}
 
         {searchEnabled && !isFetching && !error && outbound.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
-            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
-            <div className="mt-5 flex justify-center">
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1 }}>
+            <FlightSearchEmptyState
+              reason={data?.providerNotice ? "unavailable" : "no_results"}
+              notice={data?.providerNotice}
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })}
+              whatsappTestId="search-whatsapp-no_results"
+            />
           </motion.div>
         )}
       </div>
