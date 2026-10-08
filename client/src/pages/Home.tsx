@@ -3,14 +3,15 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
   Plane, Mail,
-  CheckCircle2, CheckCircle, ArrowRight, Users,
-  Clock, Shield, ChevronUp, Info
+  CheckCircle, ArrowRight,
+  Clock, Shield, ChevronUp, Info, MapPin, FileCheck, BookOpen, LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import { PublicFAQ } from "@/components/PublicFAQ";
@@ -26,6 +27,9 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+
+const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
+const yaoundeOffice = COMPANY_PROFILE.offices.cameroon;
 
 const createSimulatorExpress = () => lazy(() => import("@/components/SimulatorExpress").then((module) => ({ default: module.SimulatorExpress })));
 
@@ -212,29 +216,84 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* ─── POURQUOI NOUS ───────────────────────────────────────────────── */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi nous choisir</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">L'expertise à votre service</h2>
+      {/* ─── POURQUOI 3M : preuves concrètes, pas de slogans vides ─────────── */}
+      <section aria-labelledby="why-3m-title" className="py-16 bg-white" data-testid="why-3m-section">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-10 md:mb-12">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M Travel</p>
+            <h2 id="why-3m-title" className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Des preuves concrètes, pas des promesses vagues</h2>
+            <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
+              Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
-              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
-              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-[#0369a1] bg-[#e0f2fe]" },
-              { icon: CheckCircle2, title: "Suivi transparent",           desc: "Étapes, pièces à fournir et échéances visibles dans votre espace client", color: "text-[#7cb9e8] bg-[#f0f9ff]" },
+              {
+                icon: MapPin,
+                title: "Agence physique à Yaoundé",
+                desc: `${yaoundeOffice.addressLines.join(" · ")}. Accueil en agence ou suivi à distance, WhatsApp ${yaoundeOffice.whatsappDisplay}.`,
+                href: "/contact",
+                linkLabel: "Voir le contact",
+                color: "text-[#1e3a8a] bg-[#dbeafe]",
+              },
+              {
+                icon: FileCheck,
+                title: "Dossiers réellement traités",
+                desc: "Extraits de dossiers publiés avec données masquées et accord des candidats — pour juger sur du concret.",
+                href: "#proof-gallery-title",
+                linkLabel: "Voir les preuves",
+                color: "text-[#2563eb] bg-[#eff6ff]",
+              },
+              {
+                icon: BookOpen,
+                title: "Sources officielles",
+                desc: "Chaque procédure s’appuie sur les portails institutionnels : vous savez d’où viennent les exigences.",
+                href: "/sources-officielles",
+                linkLabel: "Consulter les sources",
+                color: "text-[#0369a1] bg-[#e0f2fe]",
+              },
+              {
+                icon: LayoutDashboard,
+                title: "Suivi dans votre espace",
+                desc: "Étapes, pièces à fournir et messages de l’équipe visibles dans votre espace client sécurisé.",
+                href: "/login",
+                linkLabel: "Accéder à mon espace",
+                color: "text-[#0f766e] bg-[#ccfbf1]",
+              },
             ].map((item, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
-                <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
-                  <item.icon className="w-7 h-7" />
+              <motion.article
+                key={item.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                variants={fadeUp}
+                className="flex h-full flex-col rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-left transition-colors hover:border-blue-200 hover:bg-white"
+              >
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.color}`} aria-hidden="true">
+                  <item.icon className="h-6 w-6" />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-              </motion.div>
+                <h3 className="mt-4 text-base font-black text-slate-950">{item.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{item.desc}</p>
+                <a
+                  href={item.href}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  {item.linkLabel} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </motion.article>
             ))}
           </div>
+          <p className="mt-8 text-center text-sm text-slate-600">
+            Besoin d’échanger avant de démarrer ?{" "}
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+              Écrire sur WhatsApp
+            </a>
+            {" · "}
+            <a href="#evaluation-multi" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+              Évaluer mon projet gratuitement
+            </a>
+          </p>
         </div>
       </section>
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
