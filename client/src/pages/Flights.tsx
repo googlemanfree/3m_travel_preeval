@@ -18,7 +18,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchSkeleton, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
@@ -1205,17 +1205,7 @@ export default function Flights() {
         {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 
         {isFetching && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24 bg-white rounded-3xl border border-blue-100 shadow-xl max-w-xl mx-auto my-12 p-8">
-            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-blue-50 rounded-full">
-              <div className="absolute inset-0 border-4 border-blue-200 border-t-[#2563EB] rounded-full animate-spin"></div>
-              <Plane className="w-8 h-8 text-[#2563EB] animate-pulse" />
-            </div>
-            <h3 className="text-xl font-black text-[#1E3A8A] mb-2">Recherche en temps réel...</h3>
-            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-4">Interrogation des compagnies aériennes et agrégation des grilles tarifaires officielles.</p>
-            <div className="w-48 h-1.5 bg-gray-100 rounded-full mx-auto overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 animate-[pulse_1s_infinite]"></div>
-            </div>
-          </motion.div>
+          <FlightSearchSkeleton routeLabel={`${airportLabel(origin)} → ${airportLabel(destination)}`} />
         )}
 
         {searchEnabled && !isFetching && !error && outbound.length > 0 && (

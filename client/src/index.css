@@ -483,6 +483,26 @@
   100% { background-position: -100% 0; }
 }
 
+/* Barre de progression du chargement /flights (cartes fantômes) */
+@keyframes flight-skeleton-slide {
+  0% { transform: translateX(-30%); }
+  50% { transform: translateX(180%); }
+  100% { transform: translateX(-30%); }
+}
+
+.flight-skeleton-progress {
+  width: 40%;
+  animation: flight-skeleton-slide 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-skeleton-progress {
+    animation: none !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+}
+
 @keyframes acknowledgementToastCountdown {
   from { transform: scaleX(1); }
   to { transform: scaleX(0); }

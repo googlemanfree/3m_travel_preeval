@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowRight, BadgeCheck, CreditCard, ListChecks, MessageCircle, Plane, Route as RouteIcon, Search, Send, ShieldCheck, Star } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   FLIGHT_ADVANTAGES,
   FLIGHT_BOOKING_STEPS,
@@ -198,6 +199,97 @@ function RouteButton({ route, onPick }: { route: FlightRoute; onPick: PickRoute 
         <Search className="h-3.5 w-3.5" aria-hidden="true" /> Voir les vols
       </span>
     </button>
+  );
+}
+
+/** Carte fantôme : silhouette d’un résultat, sans aucun montant affiché. */
+function FlightSkeletonCard() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2">
+        <Skeleton className="h-4 w-40 rounded-full motion-reduce:animate-none" />
+      </div>
+      <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:p-5">
+        <div className="flex min-w-[140px] items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl motion-reduce:animate-none" />
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-24 motion-reduce:animate-none" />
+            <Skeleton className="h-3 w-16 motion-reduce:animate-none" />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center gap-3">
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-6 w-14 motion-reduce:animate-none" />
+            <Skeleton className="mx-auto h-3 w-10 motion-reduce:animate-none" />
+          </div>
+          <div className="flex flex-1 flex-col items-center gap-2">
+            <Skeleton className="h-2.5 w-16 motion-reduce:animate-none" />
+            <div className="flex w-full items-center gap-1">
+              <div className="h-px flex-1 bg-slate-200" />
+              <Plane className="h-3.5 w-3.5 text-slate-300" />
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+            <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" />
+          </div>
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-6 w-14 motion-reduce:animate-none" />
+            <Skeleton className="mx-auto h-3 w-10 motion-reduce:animate-none" />
+          </div>
+        </div>
+        <div className="flex flex-col items-stretch gap-2 md:min-w-[160px] md:items-end">
+          <Skeleton className="h-8 w-28 motion-reduce:animate-none md:ml-auto" />
+          <Skeleton className="h-3 w-24 motion-reduce:animate-none md:ml-auto" />
+          <Skeleton className="mt-1 h-10 w-full rounded-xl motion-reduce:animate-none" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Chargement premium de la recherche : cartes fantômes + barre de progression.
+ * Aucun tarif inventé — uniquement un état d’attente rassurant.
+ */
+export function FlightSearchSkeleton({ routeLabel }: { routeLabel?: string }) {
+  return (
+    <section
+      className="mx-auto my-8 max-w-5xl"
+      data-testid="flight-search-skeleton"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Recherche de vols en cours"
+    >
+      <div className="mb-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-800">
+            <Plane className="h-5 w-5 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-widest text-blue-700">Recherche en cours</p>
+            <h3 className="mt-1 text-lg font-black text-slate-950">
+              {routeLabel ? `Comparaison des vols ${routeLabel}` : "Interrogation des compagnies aériennes"}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Les tarifs s’afficheront uniquement lorsqu’ils seront relevés en direct — aucun prix de vitrine.
+            </p>
+            <div
+              className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"
+              role="progressbar"
+              aria-label="Progression de la recherche"
+            >
+              <div className="flight-skeleton-progress h-full rounded-full bg-gradient-to-r from-blue-500 via-blue-700 to-[#0B2A52]" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <FlightSkeletonCard />
+        <FlightSkeletonCard />
+        <FlightSkeletonCard />
+      </div>
+      <p className="mt-4 text-center text-xs text-slate-500">Patientez quelques secondes — un conseiller peut aussi lancer la recherche pour vous.</p>
+    </section>
   );
 }
 
