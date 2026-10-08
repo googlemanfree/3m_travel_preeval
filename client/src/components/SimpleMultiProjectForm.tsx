@@ -50,13 +50,21 @@ type DynamicResponse = { question: string; answer: string };
 
 type CountryOption = { value: string; label: string; flag: string; hint: string };
 
+/** Sous-étapes internes (validation / contenu). */
 const STEPS = [
-  { label: "Projet", description: "Pays et objectif — commencez ici" },
-  { label: "Profil", description: "Vos coordonnées de contact" },
-  { label: "Critères", description: "Questions ciblées" },
-  { label: "Documents", description: "Pièces à préparer" },
-  { label: "Récapitulatif", description: "Vérifiez avant envoi" },
-];
+  { label: "Projet", description: "Pays et objectif — commencez ici", phase: 0 },
+  { label: "Profil", description: "Vos coordonnées de contact", phase: 1 },
+  { label: "Critères", description: "Questions ciblées", phase: 1 },
+  { label: "Documents", description: "Pièces à préparer", phase: 1 },
+  { label: "Envoi", description: "Vérifiez et envoyez votre évaluation", phase: 2 },
+] as const;
+
+/** 3 phases visibles pour rassurer sur mobile (Projet → Profil → Envoi). */
+const PHASES = [
+  { label: "Projet", description: "Pays et objectif" },
+  { label: "Profil", description: "Coordonnées, critères, pièces" },
+  { label: "Envoi", description: "Récapitulatif et soumission" },
+] as const;
 
 
 const COUNTRIES_BY_PROJECT: Record<ProjectType, CountryOption[]> = {
@@ -145,6 +153,8 @@ export function SimpleMultiProjectForm() {
   const officialSourceKey = formData.destinationCountry ? OFFICIAL_SOURCE_KEY_BY_COUNTRY[formData.destinationCountry] : undefined;
   const officialPortal = officialSourceKey ? OFFICIAL_CONSULAR_PORTALS[officialSourceKey] : undefined;
   const progress = Math.round(((currentStep + 1) / STEPS.length) * 100);
+  const currentPhase = STEPS[currentStep]?.phase ?? 0;
+  const profilSubStep = currentPhase === 1 ? currentStep : 0; // 1, 2 ou 3 pendant la phase Profil
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
@@ -259,14 +269,54 @@ export function SimpleMultiProjectForm() {
     <motion.div className="w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
       <Card className="border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-7">
-          <div className="flex items-end justify-between gap-3"><div><h2 className="text-2xl font-black text-slate-950">Évaluation guidée</h2><p className="mt-1 text-sm text-slate-600">Un parcours adapté à votre pays et à votre projet.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
-          {isPostRegistrationOnboarding && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950" role="status"><strong>Votre compte est activé.</strong> Complétez maintenant cette évaluation préparatoire ; elle organise les informations utiles, mais ne remplace pas un formulaire consulaire officiel ni une décision.</div>}
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de l’évaluation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-[#0B2A52] via-blue-700 to-[#D8A928]" initial={false} animate={{ width: `${progress}%` }} transition={{ duration: 0.32, ease: "easeOut" }} />
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-black text-slate-950">Évaluation guidée</h2>
+              <p className="mt-1 text-sm text-slate-600">Trois étapes claires : projet, profil, envoi.</p>
+            </div>
+            <span className="text-sm font-bold text-blue-800" aria-hidden="true">{progress}%</span>
           </div>
-          <ol className="mt-4 grid grid-cols-5 gap-1" aria-label="Étapes de l’évaluation">
-            {STEPS.map((step, index) => <li key={step.label} className="text-center"><span className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${index < currentStep ? "bg-emerald-700 text-white" : index === currentStep ? "bg-[#0B2A52] text-white ring-4 ring-blue-100" : "bg-slate-100 text-slate-500"}`}>{index < currentStep ? <CheckCircle2 className="h-4 w-4" /> : index + 1}</span><span className="mt-1 block text-[10px] font-bold text-slate-600 sm:text-xs">{step.label}</span></li>)}
+          {isPostRegistrationOnboarding && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950" role="status"><strong>Votre compte est activé.</strong> Complétez maintenant cette évaluation préparatoire ; elle organise les informations utiles, mais ne remplace pas un formulaire consulaire officiel ni une décision.</div>}
+          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Progression de l’évaluation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <motion.div className="h-full rounded-full bg-gradient-to-r from-[#0B2A52] via-blue-700 to-[#D8A928]" initial={false} animate={{ width: `${progress}%` }} transition={{ duration: 0.35, ease: "easeOut" }} />
+          </div>
+          <ol className="mt-5 grid grid-cols-3 gap-2 sm:gap-3" aria-label="Phases de l’évaluation" data-testid="evaluation-phase-stepper">
+            {PHASES.map((phase, phaseIndex) => {
+              const isDone = currentPhase > phaseIndex;
+              const isActive = currentPhase === phaseIndex;
+              return (
+                <li key={phase.label} className="relative text-center">
+                  {phaseIndex < PHASES.length - 1 && (
+                    <span
+                      aria-hidden="true"
+                      className={`absolute left-[calc(50%+1.1rem)] right-[calc(-50%+1.1rem)] top-5 hidden h-0.5 sm:block ${isDone ? "bg-emerald-700" : "bg-slate-200"}`}
+                    />
+                  )}
+                  <span
+                    className={`relative z-[1] mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-black transition-all duration-300 ${
+                      isDone
+                        ? "bg-emerald-700 text-white shadow-md shadow-emerald-900/20"
+                        : isActive
+                          ? "bg-[#0B2A52] text-white shadow-lg shadow-blue-900/25 ring-4 ring-blue-100 scale-105"
+                          : "bg-slate-100 text-slate-500"
+                    }`}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    {isDone ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : phaseIndex + 1}
+                  </span>
+                  <span className={`mt-2 block text-xs font-black sm:text-sm ${isActive ? "text-[#0B2A52]" : isDone ? "text-emerald-800" : "text-slate-500"}`}>
+                    {phase.label}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] leading-snug text-slate-500 sm:text-[11px]">{phase.description}</span>
+                </li>
+              );
+            })}
           </ol>
+          {currentPhase === 1 && (
+            <p className="mt-3 text-center text-xs font-semibold text-slate-600" data-testid="evaluation-profil-substep" aria-live="polite">
+              Phase Profil · {profilSubStep} sur 3 — {STEPS[currentStep].label}
+            </p>
+          )}
         </div>
 
         {isSuccessVisible ? (
