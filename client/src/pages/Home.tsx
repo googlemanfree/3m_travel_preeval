@@ -1,16 +1,11 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Plane, Mail,
+  Plane,
   CheckCircle, ArrowRight,
   Clock, Shield, ChevronUp, Info, MapPin, FileCheck, BookOpen, LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/lib/trpc";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
@@ -22,7 +17,6 @@ import ServicesOverviewSection from "@/components/ServicesOverviewSection";
 import QuickActionsSection from "@/components/QuickActionsSection";
 import DestinationsShowcaseSection from "@/components/DestinationsShowcaseSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
-import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
@@ -30,8 +24,6 @@ import ProfileVerificationModule from "@/components/ProfileVerificationModule";
 
 const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
 const yaoundeOffice = COMPANY_PROFILE.offices.cameroon;
-
-const createSimulatorExpress = () => lazy(() => import("@/components/SimulatorExpress").then((module) => ({ default: module.SimulatorExpress })));
 
 const WHATSAPP_NUMBER = "237698104832";
 
@@ -47,11 +39,6 @@ const fadeUp = {
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
   const [showEvalModal, setShowEvalModal] = useState(false);
-  const [showExpressSimulator, setShowExpressSimulator] = useState(false);
-  const [expressSimulatorAttempt, setExpressSimulatorAttempt] = useState(0);
-  const SimulatorExpress = useMemo(createSimulatorExpress, [expressSimulatorAttempt]);
-  const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();
-  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -82,24 +69,6 @@ export default function Home() {
       window.clearTimeout(retry);
     };
   }, []);
-
-  const contactMutation = trpc.contact.sendContactEmail.useMutation({
-    onSuccess: () => {
-      toast.success("Votre message a bien été envoyé.");
-      setContactForm({ name: "", email: "", message: "" });
-    },
-    onError: error => toast.error(error.message || "Impossible d’envoyer votre message."),
-  });
-
-  const handleContactSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    contactMutation.mutate({
-      name: contactForm.name,
-      email: contactForm.email,
-      subject: "Demande depuis la page d’accueil",
-      message: contactForm.message,
-    });
-  };
 
   return (
     <main className="min-h-screen bg-white font-sans">
@@ -193,8 +162,8 @@ export default function Home() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 focus-within:-translate-y-1 focus-within:border-blue-500 focus-within:shadow-lg">
-              <p className="text-sm font-black text-slate-950">Canada</p>
-              <p className="mt-1 text-sm text-slate-600">Calculez votre score indicatif avant d’explorer les parcours.</p>
+              <p className="text-sm font-black text-slate-950">Canada · Simulateur CRS</p>
+              <p className="mt-1 text-sm text-slate-600">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
@@ -296,166 +265,54 @@ export default function Home() {
           </p>
         </div>
       </section>
-      {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <PublicFAQ />
 
-      {/* --- TARIFS & GARANTIES --- */}
       <PricingSection />
 
-      {/* --- CTA --- */}
-      <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
-          <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#evaluation-multi">
-              <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
-                Évaluer mon projet — gratuit <ArrowRight className="w-5 h-5 ml-2" />
+      <FlightBookingFAQ />
+
+      {/* CTA final unique : une seule action forte avant le footer */}
+      <section className="py-16" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <h2 id="home-final-cta-title" className="text-3xl font-extrabold text-white md:text-4xl">Prêt à avancer sur votre projet ?</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
+            Évaluez gratuitement votre parcours ou écrivez directement à un conseiller 3M — sans engagement de résultat.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <a href="#evaluation-multi">
+              <Button size="lg" className="bg-white px-8 font-bold text-[#1e3a8a] shadow-xl transition-transform hover:bg-[#dbeafe] active:scale-[0.97]">
+                Évaluer mon projet — gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
             </a>
-            <a href="mailto:hello@3mtravelagency.com">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 active:scale-[0.97] transition-transform">
-                <Mail className="w-4 h-4 mr-2" />Nous écrire
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="lg" variant="outline" className="border-white px-8 font-semibold text-white transition-transform hover:bg-white/10 active:scale-[0.97]">
+                WhatsApp conseiller
               </Button>
             </a>
           </div>
+          <p className="mt-5 text-sm text-blue-200/90">
+            <a href="/sources-officielles" className="font-semibold underline-offset-4 hover:underline">Sources officielles</a>
+            {" · "}
+            <a href="/contact" className="font-semibold underline-offset-4 hover:underline">Contact agence</a>
+            {" · "}
+            <a href="/tarifs" className="font-semibold underline-offset-4 hover:underline">Comprendre les tarifs</a>
+          </p>
         </div>
       </section>
 
-      {/* ─── ASSISTANCE & TRANSPARENCE (avant le footer global) ─────────────── */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-12 text-center"
-          >
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Assistance & transparence</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Préparez votre démarche avec les bonnes informations</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Consultez les sources institutionnelles, posez une question à l’agence et retrouvez toutes les coordonnées dans le footer unique ci-dessous.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-10"
-          >
-            <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-5 rounded-2xl border border-blue-100 bg-white p-6 text-center md:flex-row md:text-left">
-              <div>
-                <p className="font-bold text-slate-900">Une information claire avant toute décision</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Les exigences, frais et délais relèvent des autorités compétentes et peuvent évoluer. Notre rôle est de vous accompagner dans vos démarches.</p>
-              </div>
-              <div className="flex shrink-0 flex-wrap justify-center gap-3">
-                <a href="/sources-officielles"><Button variant="outline" className="border-blue-200 text-blue-800">Sources officielles</Button></a>
-                <a href="/contact"><Button className="bg-blue-700 hover:bg-blue-800">Contacter l’agence</Button></a>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <details className="mx-auto max-w-xl rounded-2xl border border-blue-100 bg-white p-5">
-              <summary className="cursor-pointer list-none text-center font-bold text-slate-900">Envoyer une question à l’agence</summary>
-              <div className="mt-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                <h4 className="font-semibold text-gray-900 mb-4">Envoyez-nous un message</h4>
-                <form className="space-y-4" onSubmit={handleContactSubmit}>
-                  <div>
-                    <Label htmlFor="contact-name" className="text-sm font-medium text-gray-700 mb-1 block">
-                      Votre nom
-                    </Label>
-                    <Input
-                      id="contact-name"
-                      placeholder="Jean Dupont"
-                      value={contactForm.name}
-                      onChange={event => setContactForm(current => ({ ...current, name: event.target.value }))}
-                      required
-                      maxLength={255}
-                      className="bg-white border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-email" className="text-sm font-medium text-gray-700 mb-1 block">
-                      Votre email
-                    </Label>
-                    <Input
-                      id="contact-email"
-                      type="email"
-                      placeholder="jean@example.com"
-                      value={contactForm.email}
-                      onChange={event => setContactForm(current => ({ ...current, email: event.target.value }))}
-                      required
-                      maxLength={320}
-                      className="bg-white border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-message" className="text-sm font-medium text-gray-700 mb-1 block">
-                      Message
-                    </Label>
-                    <Textarea
-                      id="contact-message"
-                      placeholder="Votre message..."
-                      value={contactForm.message}
-                      onChange={event => setContactForm(current => ({ ...current, message: event.target.value }))}
-                      required
-                      maxLength={2000}
-                      className="bg-white border-gray-300 resize-none"
-                      rows={3}
-                    />
-                  </div>
-                  <Button type="submit" disabled={contactMutation.isPending} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                    {contactMutation.isPending ? "Envoi en cours..." : "Envoyer"}
-                  </Button>
-                </form>
-              </div>
-            </details>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── FAQ INTERACTIVE DES RÉSERVATIONS ET VOLS ──────────────────────── */}
-      <FlightBookingFAQ />
-
-      {/* Footer partagé unique : FooterLegal */}
-
-      {/* ─── SIMULATEUR EXPRESS 30 SECONDES ────────────────────────────────────── */}
-      {showExpressSimulator ? (
-        <SimulatorRetryBoundary
-          label="Le simulateur express"
-          onRetry={() => setExpressSimulatorAttempt((attempt) => attempt + 1)}
-          onFailure={() => reportSimulatorFailure.mutate({ route: "/", simulator: "express" })}
-        >
-          <Suspense fallback={<section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du simulateur express…</section>}>
-            <SimulatorExpress key={expressSimulatorAttempt} />
-          </Suspense>
-        </SimulatorRetryBoundary>
-      ) : (
-        <section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
-          <h2 className="text-xl font-black text-slate-950">Besoin d’une estimation rapide ?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-700">Le simulateur express reste disponible à la demande — l’évaluation guidée ci-dessus reste le parcours principal.</p>
-          <button type="button" onClick={() => setShowExpressSimulator(true)} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Ouvrir le simulateur express</button>
-        </section>
-      )}
-
-      {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
-      {/* Les boutons WhatsApp et Aureol sont désormais montés une seule fois
-          dans App.tsx afin de rester séparés sur toutes les pages. */}
-          {showBackToTop && (
+      {showBackToTop && (
         <button
           type="button"
           aria-label="Retour en haut de la page"
           title="Retour en haut"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95"
+          className="fixed bottom-6 left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:left-6"
         >
           <ChevronUp className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -477,15 +334,15 @@ function PricingSection() {
       borderColor: "border-[#2563eb]/30",
       badgeBg: "",
       textAccent: "text-[#7cb9e8]",
-      description: "Payez en une seule fois et bénéficiez d'un traitement prioritaire de votre dossier, sans frais supplémentaires.",
+      description: "Honoraires d’agence réglés en une fois pour la préparation et le suivi de votre dossier. Les frais consulaires ou médicaux restent à part.",
       features: [
-        "Traitement prioritaire du dossier",
-        "Suivi personnalisé dédié",
-        "Réponse sous 24h",
-        "Accompagnement complet",
-        "Sans frais supplémentaires",
+        "Honoraires d’agence clarifiés avant engagement",
+        "Suivi personnalisé du dossier",
+        "Réponse de l’équipe sous 24h ouvrées (annoncé)",
+        "Accompagnement jusqu’au dépôt",
+        "Frais tiers (autorités) non inclus",
       ],
-      cta: "Choisir cette option",
+      cta: "Demander cette formule",
       highlight: false,
     },
     {
@@ -498,15 +355,15 @@ function PricingSection() {
       borderColor: "border-[#2563eb]",
       badgeBg: "bg-yellow-400 text-yellow-900",
       textAccent: "text-yellow-300",
-      description: "Un paiement structuré et modulable sur 4 à 5 mois pour adapter nos honoraires à votre situation.",
+      description: "Échelonnement des honoraires d’agence sur 4 à 5 mois. Le montant exact et le calendrier sont confirmés avant tout règlement.",
       features: [
-        "Paiement sur 4 à 5 mensualités",
-        "Plan personnalisé selon votre budget",
-        "Suivi régulier de votre dossier",
-        "Flexibilité des échéances",
-        "Accompagnement complet inclus",
+        "Honoraires d’agence en plusieurs échéances",
+        "Plan adapté après étude de votre cas",
+        "Suivi régulier du dossier",
+        "Conditions écrites avant paiement",
+        "Frais tiers (autorités) non inclus",
       ],
-      cta: "Choisir cette option",
+      cta: "Demander cette formule",
       highlight: true,
     },
     {
@@ -514,18 +371,18 @@ function PricingSection() {
       icon: <Shield className="w-7 h-7" />,
       badge: "Sur éligibilité",
       title: "Paiement Différé",
-      subtitle: "Part des honoraires réglée en fin de dossier",
+      subtitle: "Part des honoraires en fin de suivi",
       color: "from-[#059669] to-[#047857]",
       borderColor: "border-emerald-500/40",
       badgeBg: "bg-emerald-400 text-emerald-900",
       textAccent: "text-emerald-300",
-      description: "Sous réserve d'éligibilité vérifiée, une partie de nos honoraires d'agence est réglée en fin de suivi. La décision de visa reste exclusivement du ressort des autorités compétentes.",
+      description: "Sous réserve d’éligibilité vérifiée, une part des honoraires d’agence peut être réglée en fin de suivi. Aucun visa n’est garanti.",
       features: [
         "Éligibilité vérifiée avant proposition",
-        "Part des honoraires réglée en fin de dossier",
-        "Engagement total de notre équipe",
-        "Suivi jusqu'à la décision finale",
-        "Conditions d'éligibilité à confirmer",
+        "Part des honoraires en fin de suivi",
+        "Conditions d’éligibilité à confirmer",
+        "Décision de visa hors de notre contrôle",
+        "Frais tiers (autorités) non inclus",
       ],
       cta: "Vérifier mon éligibilité",
       highlight: false,
@@ -554,7 +411,7 @@ function PricingSection() {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
           >
-            Nos Formules Tarifaires
+            Honoraires d’agence — en toute clarté
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
@@ -563,7 +420,7 @@ function PricingSection() {
             transition={{ delay: 0.2 }}
             className="text-gray-500 max-w-2xl mx-auto text-base"
           >
-            Choisissez la formule qui correspond à votre situation. Transparence totale, aucun frais caché.
+            Ces formules concernent uniquement nos honoraires d’accompagnement. Les frais gouvernementaux, consulaires, médicaux ou biométriques sont distincts et dépendent des autorités.
           </motion.p>
         </div>
 
@@ -637,7 +494,8 @@ function PricingSection() {
           className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
         >
           <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
-          Les honoraires d'agence couvrent l'accompagnement, la préparation du dossier et le suivi administratif. La décision d'octroi du visa appartient exclusivement aux autorités compétentes.
+          Honoraires 3M = accompagnement et suivi. Frais tiers = autorités / prestataires externes. Montants communiqués avant engagement. La décision de visa n’appartient qu’aux autorités compétentes.{" "}
+          <a href="/tarifs" className="font-semibold text-blue-700 underline-offset-2 hover:underline">Voir la page tarifs</a>
         </motion.p>
       </div>
     </section>

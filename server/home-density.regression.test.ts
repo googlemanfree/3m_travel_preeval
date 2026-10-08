@@ -48,5 +48,15 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).not.toContain("<VisasCarousel />");
     expect(home).toContain('href="#evaluation-multi"');
   });
+
+  it("allège le bas de page : CTA final unique, sans simulateur express embarqué", () => {
+    expect(home).toContain('data-testid="home-final-cta"');
+    expect(home).toContain("WhatsApp conseiller");
+    expect(home).not.toContain("<SimulatorExpress");
+    expect(home).not.toContain("Ouvrir le simulateur express");
+    expect(home).not.toContain("Envoyer une question à l’agence");
+    expect(home).toContain("Honoraires d’agence — en toute clarté");
+  });
 });
+
 
