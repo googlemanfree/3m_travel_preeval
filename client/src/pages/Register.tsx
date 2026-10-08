@@ -242,7 +242,7 @@ export default function Register() {
           <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
         </div>
         <div className="relative z-10 text-center max-w-md">
-          <img src={LOGO_URL} alt="3M Travel" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
+          <img src={LOGO_URL} alt="3M TRAVEL AGENCY" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
           <h1 className="text-4xl font-black mb-4">Votre Espace Candidat</h1>
           <p className="text-blue-200 text-lg mb-8">Créez votre compte et suivez l'avancement de votre dossier d'immigration en temps réel.</p>
           <div className="space-y-4 text-left">
@@ -281,7 +281,7 @@ export default function Register() {
               <UserPlus className="w-7 h-7 text-white" />
             </div>
             <h2 className="text-2xl font-black text-gray-900">Inscription</h2>
-            <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M Travel</p>
+            <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M TRAVEL AGENCY</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4" aria-busy={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}>
@@ -579,7 +579,7 @@ export default function Register() {
             {/* Portrait humain obligatoire */}
             <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
               <legend className="px-1 text-sm font-bold text-slate-800">Évaluation déjà effectuée ?</legend>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M Travel par e-mail ou directement en agence ?</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M TRAVEL AGENCY par e-mail ou directement en agence ?</p>
               <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Évaluation déjà effectuée">
                 {([
                   ["yes", "Oui, reçue par e-mail ou en agence"],

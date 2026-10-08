@@ -1,5 +1,5 @@
 /**
- * Email Templates Service - 3M Travel & Services
+ * Email Templates Service - 3M TRAVEL AGENCY
  * Generates VIP evaluation report emails with Resend integration
  */
 

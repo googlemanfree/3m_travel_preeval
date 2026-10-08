@@ -51,7 +51,7 @@ describe("redirection Google et suivi candidat", () => {
     const signatures = read("client/src/components/SignableDocumentsPanel.tsx");
     expect(space).toContain('id: "signatures", label: "Documents à signer"');
     expect(space).toContain("<SignableDocumentsPanel");
-    expect(signatures).toContain("Protocole d’accord 3M Travel &amp; Services");
+    expect(signatures).toContain("Protocole d’accord 3M TRAVEL AGENCY");
     expect(signatures).toContain("Le protocole sera rendu signable après la confirmation du paiement.");
     expect(signatures).toContain("documentsToSign");
   });

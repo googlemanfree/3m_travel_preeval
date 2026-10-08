@@ -74,17 +74,17 @@ export default function CountryDetailPage() {
     if (!country) return;
     const displayTitle = getProcedureDisplayTitle(country, locale);
     if (locale === 'en') {
-      document.title = `${displayTitle} from Yaoundé | 3M Travel & Services`;
+      document.title = `${displayTitle} from Yaoundé | 3M TRAVEL AGENCY`;
       document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
         "content",
-        `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M Travel & Services.`,
+        `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M TRAVEL AGENCY.`,
       );
       document.documentElement.lang = 'en';
     } else {
-      document.title = `${displayTitle} à Yaoundé | 3M Travel & Services`;
+      document.title = `${displayTitle} à Yaoundé | 3M TRAVEL AGENCY`;
       document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
         "content",
-        `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M Travel & Services.`,
+        `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M TRAVEL AGENCY.`,
       );
       document.documentElement.lang = 'fr';
     }

@@ -373,7 +373,7 @@ export function SecureDocumentUpload({
       <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-blue-700">
-          Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M Travel peuvent y accéder.
+          Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M TRAVEL AGENCY peuvent y accéder.
         </p>
       </div>
     </div>

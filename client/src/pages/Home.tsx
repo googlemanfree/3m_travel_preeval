@@ -44,7 +44,7 @@ export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    document.title = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
+    document.title = "3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale";
   }, []);
 
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function Home() {
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Les parcours les plus demandés depuis Yaoundé</h2>
-          <p className="mb-6 text-center text-sm text-slate-600 md:text-base">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
+          <p className="premium-section-lead mx-auto mb-6 text-center">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
               { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },
@@ -220,22 +220,22 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 focus-within:-translate-y-1 focus-within:border-blue-500 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Canada · Simulateur CRS</p>
-              <p className="mt-1 text-sm text-slate-600">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
+              <p className="premium-copy mt-1.5 text-sm">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Procédures par destination</p>
-              <p className="mt-1 text-sm text-slate-600">Comparer les pays, visas et sources officielles.</p>
+              <p className="premium-copy mt-1.5 text-sm">Comparer les pays, visas et sources officielles.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Ressources et actualités</p>
-              <p className="mt-1 text-sm text-slate-600">Guides, informations pratiques et mises à jour.</p>
+              <p className="premium-copy mt-1.5 text-sm">Guides, informations pratiques et mises à jour.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Consulter les ressources <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Services et accompagnement</p>
-              <p className="mt-1 text-sm text-slate-600">Parler à l’agence pour un besoin précis.</p>
+              <p className="premium-copy mt-1.5 text-sm">Parler à l’agence pour un besoin précis.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Nous contacter <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
           </div>
@@ -246,9 +246,9 @@ export default function Home() {
       <section aria-labelledby="why-3m-title" className="py-16 bg-white" data-testid="why-3m-section">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M Travel</p>
-            <h2 id="why-3m-title" className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Des preuves concrètes, pas des promesses vagues</h2>
-            <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
+            <h2 id="why-3m-title" className="premium-section-title mb-3 text-3xl md:text-4xl">Des preuves concrètes, pas des promesses vagues</h2>
+            <p className="premium-section-lead mx-auto text-center">
               Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
@@ -300,7 +300,7 @@ export default function Home() {
                   <item.icon className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-base font-black text-slate-950">{item.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{item.desc}</p>
+                <p className="premium-copy mt-2 flex-1 text-[0.95rem]">{item.desc}</p>
                 <a
                   href={item.href}
                   className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
@@ -310,9 +310,9 @@ export default function Home() {
               </motion.article>
             ))}
           </div>
-          <p className="mt-8 text-center text-sm text-slate-600">
+          <p className="premium-copy mx-auto mt-8 max-w-2xl text-center text-base">
             Besoin d’échanger avant de démarrer ?{" "}
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
               Écrire sur WhatsApp
             </a>
             {" · "}
@@ -332,7 +332,7 @@ export default function Home() {
       <section className="py-16" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 id="home-final-cta-title" className="text-3xl font-extrabold text-white md:text-4xl">Prêt à avancer sur votre projet ?</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
+          <p className="premium-copy-on-dark mx-auto mt-4 max-w-2xl text-lg md:text-xl">
             Évaluez gratuitement votre parcours ou écrivez directement à un conseiller 3M — sans engagement de résultat.
           </p>
           <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -342,7 +342,7 @@ export default function Home() {
               </Button>
             </a>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full max-w-[22rem] sm:w-auto"
@@ -352,7 +352,7 @@ export default function Home() {
               </Button>
             </a>
           </div>
-          <p className="mt-5 text-sm text-blue-200/90">
+          <p className="mt-5 text-sm text-blue-50">
             <a href="/sources-officielles" className="font-semibold underline-offset-4 hover:underline">Sources officielles</a>
             {" · "}
             <a href="/contact" className="font-semibold underline-offset-4 hover:underline">Contact agence</a>
@@ -379,7 +379,7 @@ export default function Home() {
               Évaluer — gratuit
             </a>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-center text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 active:scale-[0.98]"
@@ -497,7 +497,7 @@ function PricingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
+            className="premium-section-title mb-4 text-3xl md:text-4xl text-[#1e3a8a]"
           >
             Honoraires d’agence — en toute clarté
           </motion.h2>
@@ -506,7 +506,7 @@ function PricingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-gray-500 max-w-2xl mx-auto text-base"
+            className="premium-section-lead mx-auto text-center"
           >
             Ces formules concernent uniquement nos honoraires d’accompagnement. Les frais gouvernementaux, consulaires, médicaux ou biométriques sont distincts et dépendent des autorités.
           </motion.p>
@@ -541,7 +541,7 @@ function PricingSection() {
 
               {/* Corps */}
               <div className="bg-white flex flex-col flex-1 p-7">
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">{plan.description}</p>
+                <p className="premium-copy mb-6 text-[0.95rem]">{plan.description}</p>
 
                 {/* Features */}
                 <ul className="space-y-3 mb-8 flex-1">
@@ -555,7 +555,7 @@ function PricingSection() {
 
                 {/* CTA */}
                 <a
-                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${

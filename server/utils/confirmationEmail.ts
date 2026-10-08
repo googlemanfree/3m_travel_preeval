@@ -36,7 +36,7 @@ export function getConfirmationEmailHTML(params: ConfirmationEmailParams): strin
   <div class="container">
     <div class="header">
       <h1>✓ Dossier Enregistré</h1>
-      <p>3M Travel & Services</p>
+      <p>3M TRAVEL AGENCY</p>
     </div>
     
     <div class="content">
@@ -67,7 +67,7 @@ export function getConfirmationEmailHTML(params: ConfirmationEmailParams): strin
     </div>
 
     <div class="footer">
-      <p>© ${new Date().getFullYear()} 3M Travel & Services - Votre mobilité, notre expertise</p>
+      <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY - Votre mobilité, notre expertise</p>
       <p>RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi</p>
     </div>
   </div>
@@ -102,7 +102,7 @@ BESOIN D'AIDE ?
 💬 WhatsApp : +237 698 104 832
 
 ---
-© ${new Date().getFullYear()} 3M Travel & Services - Votre mobilité, notre expertise
+© ${new Date().getFullYear()} 3M TRAVEL AGENCY - Votre mobilité, notre expertise
 RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi
   `.trim();
 }

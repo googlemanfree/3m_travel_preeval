@@ -183,7 +183,7 @@ function Router() {
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
       <Route path={"/consultation"} component={ConsultationBooking} />
 
-      {/* Pages protégées — nécessitent un compte 3M Travel */}
+      {/* Pages protégées — nécessitent un compte 3M TRAVEL AGENCY */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/billets"}>{() => <Redirect to="/flights" />}</Route>
       <Route path={"/3m-booking"}>{() => <Redirect to="/flights#3m-booking" />}</Route>
@@ -380,12 +380,12 @@ function Router() {
         </AdminGuard>
       </Route>
       <Route path={"/admin/super-dashboard"}>
-        <AdminGuard message="Accès réservé aux administrateurs de 3M Travel Agency.">
+        <AdminGuard message="Accès réservé aux administrateurs de 3M TRAVEL AGENCY.">
           <SuperAdminDashboard />
         </AdminGuard>
       </Route>
       <Route path={"/admin/flight-requests"}>
-        <AdminGuard message="Accès réservé aux agents et administrateurs de 3M Travel Agency.">
+        <AdminGuard message="Accès réservé aux agents et administrateurs de 3M TRAVEL AGENCY.">
           <FlightAgentDashboard />
         </AdminGuard>
       </Route>

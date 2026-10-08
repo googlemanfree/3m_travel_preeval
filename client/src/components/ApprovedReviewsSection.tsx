@@ -22,10 +22,10 @@ type DestinationFilter = "all" | "canada" | "schengen" | "other";
 type SortOption = "rating-desc" | "rating-asc" | "date-desc" | "date-asc";
 
 async function shareReview(review: Review) {
-  const text = `Témoignage 3M Travel de ${review.displayName ?? "un client"}${review.destinationCountry ? ` (${review.destinationCountry})` : ""} : “${review.reviewText ?? ""}”`;
+  const text = `Témoignage 3M TRAVEL AGENCY de ${review.displayName ?? "un client"}${review.destinationCountry ? ` (${review.destinationCountry})` : ""} : “${review.reviewText ?? ""}”`;
   const url = window.location.href.split("#")[0] + "#avis-clients";
   if (navigator.share) {
-    await navigator.share({ title: "Avis client 3M Travel Agency", text, url }).catch(() => undefined);
+    await navigator.share({ title: "Avis client 3M TRAVEL AGENCY", text, url }).catch(() => undefined);
     return;
   }
   window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank", "noopener,noreferrer");
@@ -307,7 +307,7 @@ export default function ApprovedReviewsSection() {
         <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
           <Quote className="mx-auto h-8 w-8 text-orange-400 opacity-70" aria-hidden="true" />
           <h2 id="no-reviews-yet-title" className="mt-4 text-xl font-bold text-slate-900">{labels.noReviewsYetTitle}</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{labels.noReviewsYetBody}</p>
+          <p className="premium-copy mt-3 text-[0.95rem]">{labels.noReviewsYetBody}</p>
           <a
             href="/avis#deposer-un-avis"
             className="mt-6 inline-block bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
@@ -338,7 +338,7 @@ export default function ApprovedReviewsSection() {
           <h2 id="approved-reviews-title" className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
             ⭐ {labels.title}
           </h2>
-          <p className="text-lg text-slate-600 mb-6">{labels.subtitle}</p>
+          <p className="premium-section-lead mb-6 text-lg">{labels.subtitle}</p>
 
           {stats && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">

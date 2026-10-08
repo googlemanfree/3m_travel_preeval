@@ -27,7 +27,7 @@ export const proceduresRouter = router({
     .mutation(async ({ input }) => {
       try {
         // Construire le contexte pour l'IA
-        const systemPrompt = `Tu es un assistant expert en procédures de visa pour 3M Travel & Services.
+        const systemPrompt = `Tu es un assistant expert en procédures de visa pour 3M TRAVEL AGENCY.
 Tu aides les candidats à comprendre les procédures de visa, les délais, les frais, et les destinations.
 
 Informations clés:
@@ -37,7 +37,7 @@ Informations clés:
 - Tous les frais sont transparents et expliqués avant engagement
 - Les données sont protégées selon le RGPD
 
-Sois professionnel, courtois, et fournis des réponses précises basées sur les procédures de 3M Travel.
+Sois professionnel, courtois, et fournis des réponses précises basées sur les procédures de 3M TRAVEL AGENCY.
 Si tu ne sais pas la réponse, propose de contacter l'équipe directement.`;
 
         // Préparer les messages pour l'API OpenAI

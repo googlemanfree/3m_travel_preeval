@@ -23,7 +23,7 @@ const crsFaq = [
   { question: "Le score calculé ici est-il exactement celui d’IRCC ?", answer: "Cette calculatrice donne une estimation indicative basée sur le barème public du Système de classement global (SCG/CRS). Le calcul officiel dépend de justificatifs précis (résultats de test, diplômes, preuves d’expérience) qu’IRCC seul peut valider au moment du dépôt du profil." },
   { question: "Pourquoi dois-je renseigner chaque compétence linguistique séparément ?", answer: "IRCC note la compréhension écrite, l’expression écrite, la compréhension orale et l’expression orale indépendamment, puis combine les quatre résultats. Un score global ne reflète pas toujours cette répartition : c’est pourquoi la calculatrice reprend le même détail que l’outil officiel." },
   { question: "Mon score est sous le seuil d’une ronde récente, dois-je abandonner mon projet ?", answer: "Non. Les seuils varient à chaque ronde selon la taille du bassin de candidats et le programme ciblé (Entrée express général, Candidats des provinces, Catégorie de l’expérience canadienne, tirages catégoriels). Améliorer un résultat de langue, obtenir une évaluation comparative des études, cumuler de l’expérience qualifiée ou explorer une nomination provinciale peut faire évoluer votre classement." },
-  { question: "Puis-je garder une trace de ma simulation ?", answer: "Oui : la calculatrice sauvegarde votre brouillon sur cet appareil, propose un lien partageable, un partage WhatsApp/Facebook et un récapitulatif par e-mail. Le téléchargement du rapport PDF complet est réservé aux candidats ayant créé un compte 3M Travel, pour assurer le suivi de votre dossier." },
+  { question: "Puis-je garder une trace de ma simulation ?", answer: "Oui : la calculatrice sauvegarde votre brouillon sur cet appareil, propose un lien partageable, un partage WhatsApp/Facebook et un récapitulatif par e-mail. Le téléchargement du rapport PDF complet est réservé aux candidats ayant créé un compte 3M TRAVEL AGENCY, pour assurer le suivi de votre dossier." },
 ];
 
 export default function CanadaCrsPage() {
@@ -47,7 +47,7 @@ export default function CanadaCrsPage() {
             <h2 className="mt-3 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">Un résultat CRS lisible, avec les quatre compétences linguistiques.</h2>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-blue-50 sm:text-base">Âge, études, langue officielle première et seconde, expérience canadienne, conjoint, transférabilité et points additionnels sont regroupés dans un rapport clair. Le calcul ne mélange pas les barèmes des autres pays.</p>
           </div>
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm"><ShieldCheck className="h-8 w-8 text-amber-300" /><p className="mt-3 text-sm font-bold">Référence officielle</p><p className="mt-2 text-xs leading-5 text-blue-100">La calculatrice 3M Travel sert à préparer une discussion et ne remplace pas le résultat généré par le profil Entrée express.</p><a href={IRCC_CALCULATOR_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-amber-200 underline underline-offset-4"><ExternalLink className="h-4 w-4" /> Voir la source IRCC</a></div>
+          <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm"><ShieldCheck className="h-8 w-8 text-amber-300" /><p className="mt-3 text-sm font-bold">Référence officielle</p><p className="mt-2 text-xs leading-5 text-blue-100">La calculatrice 3M TRAVEL AGENCY sert à préparer une discussion et ne remplace pas le résultat généré par le profil Entrée express.</p><a href={IRCC_CALCULATOR_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-amber-200 underline underline-offset-4"><ExternalLink className="h-4 w-4" /> Voir la source IRCC</a></div>
         </div>
       </section>
 
@@ -138,7 +138,7 @@ export default function CanadaCrsPage() {
             href="/contact"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
           >
-            <UsersRound className="h-4 w-4" aria-hidden="true" />Contacter 3M Travel
+            <UsersRound className="h-4 w-4" aria-hidden="true" />Contacter 3M TRAVEL AGENCY
           </Link>
         </div>
       </ServiceSection>

@@ -104,7 +104,7 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
   let [approval] = await db.select().from(paymentReceiptApprovals).where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, dossier.email))).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1);
   if (!approval) {
     const approvedAt = new Date();
-    const signatureLabel = `3M Travel & Services · ${adminEmail}`;
+    const signatureLabel = `3M TRAVEL AGENCY · ${adminEmail}`;
     const signatureHash = receiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber: dossier.dossierNumber, candidateEmail: dossier.email, amount: String(dossier.amount), currency: dossier.currency, approvedByEmail: adminEmail, approvedAt });
     await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber: dossier.dossierNumber, candidateEmail: dossier.email, amount: `${dossier.amount} ${dossier.currency}`, currency: dossier.currency, approvedByName: adminEmail, approvedByEmail: adminEmail, approvedAt, signatureLabel, signatureHash });
     await db.insert(paymentAuditLogs).values({ adminName: adminEmail, adminEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail: dossier.email, amount: `${dossier.amount} ${dossier.currency}`, details: `Reçu validé et signé électroniquement pour ${dossier.dossierNumber} lors de l’envoi groupé reçu + protocole. Empreinte ${signatureHash}.` });

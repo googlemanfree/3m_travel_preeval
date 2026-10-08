@@ -46,7 +46,7 @@ export function buildReviewInviteMessage(input: { firstName?: string | null; url
   return [
     `Bonjour${name ? ` ${name}` : ""},`,
     "",
-    "Merci d’avoir fait confiance à 3M Travel & Services.",
+    "Merci d’avoir fait confiance à 3M TRAVEL AGENCY.",
     "Votre avis nous aide à nous améliorer et éclaire les personnes qui préparent un projet comme le vôtre : positif ou critique, il est le bienvenu.",
     "",
     `Vous pouvez le déposer ici, en quelques minutes : ${input.url}`,

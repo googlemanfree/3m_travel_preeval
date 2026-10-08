@@ -51,7 +51,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('3M Travel & Services', 32, 14);
+  doc.text('3M TRAVEL AGENCY', 32, 14);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text('Visa & Immigration Simplifiés', 32, 22);
@@ -288,7 +288,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
       { align: 'center' }
     );
     doc.text(
-      '© 2026 3M Travel & Services - Tous droits réservés | Confidentiel',
+      '© 2026 3M TRAVEL AGENCY - Tous droits réservés | Confidentiel',
       pageWidth / 2,
       pageHeight - 5,
       { align: 'center' }

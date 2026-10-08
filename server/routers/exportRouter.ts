@@ -157,7 +157,7 @@ export const exportRouter = router({
   </style>
 </head>
 <body>
-  <h1>Rapport de Statistiques - 3M Travel Agency</h1>
+  <h1>Rapport de Statistiques - 3M TRAVEL AGENCY</h1>
   <p>Date d'export: <strong>${new Date().toLocaleDateString("fr-FR")}</strong></p>
   <h2>Indicateurs Clés</h2>
   <div class="stat-box"><div class="stat-value">${appCount.total}</div><div class="stat-label">Total Dossiers</div></div>
@@ -188,7 +188,7 @@ export const exportRouter = router({
     <tr><th>Numéro Dossier</th><th>Montant (XOF)</th><th>Statut</th><th>Date</th></tr>
     ${recentTxns.map(txn => `<tr><td>${txn.dossierNumber}</td><td>${(txn.amount || 0).toLocaleString("fr-FR")}</td><td>${txn.status}</td><td>${txn.createdAt ? new Date(txn.createdAt).toLocaleDateString("fr-FR") : "N/A"}</td></tr>`).join("")}
   </table>
-  <div class="footer"><p>Rapport généré automatiquement par 3M Travel Agency - ${new Date().toLocaleString("fr-FR")}</p></div>
+  <div class="footer"><p>Rapport généré automatiquement par 3M TRAVEL AGENCY - ${new Date().toLocaleString("fr-FR")}</p></div>
 </body>
 </html>`;
 

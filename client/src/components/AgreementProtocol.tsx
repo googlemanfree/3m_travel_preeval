@@ -164,7 +164,7 @@ export default function AgreementProtocol({
               </h3>
               <p>
                 Le présent protocole est conclu entre{" "}
-                <strong>3M Travel and Services</strong>, agence spécialisée en
+                <strong>3M TRAVEL AGENCY and Services</strong>, agence spécialisée en
                 accompagnement à la mobilité internationale (ci-après
                 «&nbsp;l'Agence&nbsp;»), et{" "}
                 <strong>{candidateName || "le Candidat"}</strong> (ci-après
@@ -439,7 +439,7 @@ export default function AgreementProtocol({
                       htmlFor="acceptsData"
                       className="text-sm text-slate-700 cursor-pointer leading-relaxed"
                     >
-                      J'autorise 3M Travel and Services à traiter mes données
+                      J'autorise 3M TRAVEL AGENCY and Services à traiter mes données
                       personnelles dans le cadre exclusif de ma demande de visa
                       conformément à la politique de confidentialité.
                     </Label>

@@ -9,7 +9,7 @@ export const luxembourgProcedure: CountryProcedure = {
   subtitle: "Procédure officielle & anti-arnaque",
   editionYear: "2026",
   intro: {
-    vision: "Le Luxembourg applique des démarches encadrées pour le recrutement de ressortissants de pays tiers. 3M Travel & Services vous accompagne dans la préparation du dossier, sans garantir un emploi, un permis ou une autorisation de séjour.",
+    vision: "Le Luxembourg applique des démarches encadrées pour le recrutement de ressortissants de pays tiers. 3M TRAVEL AGENCY vous accompagne dans la préparation du dossier, sans garantir un emploi, un permis ou une autorisation de séjour.",
     eligibility: "Analyse gratuite, confidentielle et sans engagement. Aucune transmission de dossier sans accord explicite. Les conditions doivent être vérifiées sur les portails officiels au moment de la démarche.",
     sectors: ["BTP", "Hôtellerie / Restauration", "Santé & Aide à la personne", "Logistique & Transport", "IT & Ingénierie"],
     requiredDocs: "CV détaillé (FR/EN), copies de diplômes, certificats de travail, passeport valide, casier judiciaire Bulletin n°3 (moins de 3 mois).",
@@ -36,7 +36,7 @@ export const luxembourgProcedure: CountryProcedure = {
     {
       number: 1,
       title: "Analyse de votre profil",
-      responsible: "3M Travel — Gratuite & Sans engagement",
+      responsible: "3M TRAVEL AGENCY — Gratuite & Sans engagement",
       shortDescription: "Évaluation gratuite de votre éligibilité. Aucune transmission sans votre accord.",
       details: [
         { label: "Contenu", value: "Examen rigoureux pour évaluer l'éligibilité réelle : formation, expérience, adéquation secteurs porteurs, situation familiale. Analyse confidentielle." },
@@ -47,7 +47,7 @@ export const luxembourgProcedure: CountryProcedure = {
     {
       number: 2,
       title: "Transmission du dossier",
-      responsible: "3M Travel & Services",
+      responsible: "3M TRAVEL AGENCY",
       shortDescription: "Mise en relation avec notre réseau de recruteurs certifiés au Luxembourg.",
       details: [
         { label: "Contenu", value: "Dossier complet transmis à notre réseau de partenaires recruteurs certifiés, spécialisés profils non-UE." },
@@ -130,7 +130,7 @@ export const luxembourgProcedure: CountryProcedure = {
   ],
   fees: [
     { label: "Ouverture & traitement de profil", detail: "Dû à la signature du mandat, non remboursable", amount: "65 000 FCFA", chargedTo: "Client" },
-    { label: "Honoraires 3M Travel", detail: "Analyse, mise en relation, suivi complet jusqu'au visa", amount: "1 500 000 FCFA", chargedTo: "Client" },
+    { label: "Honoraires 3M TRAVEL AGENCY", detail: "Analyse, mise en relation, suivi complet jusqu'au visa", amount: "1 500 000 FCFA", chargedTo: "Client" },
     { label: "Visa Type D", detail: "Frais officiels Ambassade de Belgique (représentation Luxembourg)", amount: "≈131 000 FCFA", chargedTo: "Client" },
     { label: "Frais médicaux", detail: "Certificat médical si exigé par l'ambassade", amount: "15 000 – 30 000 FCFA", chargedTo: "Client" },
     { label: "Billet d'avion", detail: "Yaoundé → Luxembourg, aller simple, variable selon saison", amount: "400 000 – 650 000 FCFA", chargedTo: "Client" },
@@ -147,9 +147,9 @@ export const luxembourgProcedure: CountryProcedure = {
   faq: [
     { question: "Une agence peut-elle garantir un visa de travail à 100% ?", answer: "Non, aucune agence sérieuse ne peut garantir l'issue d'une décision qui relève exclusivement de la Direction de l'Immigration. Méfiez-vous des promesses de visa garanti sans emploi réel." },
     { question: "Dois-je payer pour le test ADEM ou le permis de travail ?", answer: "Non, ces procédures sont intégralement à la charge de l'employeur. Toute demande de paiement est frauduleuse." },
-    { question: "Qui signe le contrat de travail ?", answer: "Vous, le candidat, directement avec l'employeur. 3M Travel ne signe jamais à votre place." },
+    { question: "Qui signe le contrat de travail ?", answer: "Vous, le candidat, directement avec l'employeur. 3M TRAVEL AGENCY ne signe jamais à votre place." },
     { question: "Quelle est l'ambassade compétente pour le visa ?", answer: "L'Ambassade de Belgique à Yaoundé (Rue Mvolyé), qui assure la représentation consulaire du Luxembourg." },
-    { question: "Que faire face à une offre suspecte reçue en ligne ?", answer: "Ne transmettez rien, et contactez 3M Travel ou l'ADEM directement avant toute démarche." },
+    { question: "Que faire face à une offre suspecte reçue en ligne ?", answer: "Ne transmettez rien, et contactez 3M TRAVEL AGENCY ou l'ADEM directement avant toute démarche." },
   ],
   contact: {
     phones: ["+237 698 104 832", "+237 620 996 045"],

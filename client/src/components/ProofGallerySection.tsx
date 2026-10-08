@@ -45,9 +45,9 @@ export default function ProofGallerySection() {
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Preuves réelles · données masquées
           </p>
-          <h2 id="proof-gallery-title" className="mt-4 text-2xl md:text-3xl font-black text-slate-950">Ils ont avancé avec 3M — voici les preuves</h2>
-          <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600">
-            Extraits de dossiers réellement traités par 3M Travel &amp; Services. Identités et données sensibles masquées, avec l’accord des candidats concernés — pour juger sur du concret, pas sur des slogans.
+          <h2 id="proof-gallery-title" className="premium-section-title mt-4 text-2xl md:text-3xl">Ils ont avancé avec 3M — voici les preuves</h2>
+          <p className="premium-section-lead mx-auto text-center">
+            Extraits de dossiers réellement traités par 3M TRAVEL AGENCY. Identités et données sensibles masquées, avec l’accord des candidats concernés — pour juger sur du concret, pas sur des slogans.
           </p>
           <p className="mt-3 text-sm font-bold text-blue-800" data-testid="proof-count" aria-live="polite">
             {PROOF_PHOTOS.length} preuves publiées

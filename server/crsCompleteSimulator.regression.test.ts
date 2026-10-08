@@ -5,7 +5,7 @@ const source = readFileSync(new URL("../client/src/components/CanadaScoreSimulat
 
 describe("simulateur CRS complet", () => {
   it("propose un parcours guidé et une collecte de profil", () => {
-    expect(source).toContain("Évaluation guidée 3M Travel");
+    expect(source).toContain("Évaluation guidée 3M TRAVEL AGENCY");
     expect(source).toContain("crs-full-name");
     expect(source).toContain("crs-residence");
     expect(source).toContain("crs-test-date");

@@ -74,7 +74,7 @@ export async function sendAdmissibilityReportWhatsApp(params: {
   recommendation: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const message = `
-🌟 *3M Travel & Services - Bilan d'Admissibilité*
+🌟 *3M TRAVEL AGENCY - Bilan d'Admissibilité*
 
 Bonjour ${params.candidateName},
 
@@ -89,7 +89,7 @@ ${params.recommendation}
 Pour toute question, contactez-nous via WhatsApp ou email.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -121,7 +121,7 @@ Votre rendez-vous a été confirmé :
 Veuillez arriver 10 minutes avant l'heure prévue.
 
 À bientôt !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -160,7 +160,7 @@ Votre paiement a été enregistré :
 Un reçu détaillé vous a été envoyé par email.
 
 Merci !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -184,7 +184,7 @@ Votre visa ${params.visaType} pour ${params.destinationCountry} a été approuv�
 Consultez votre espace candidat pour les détails et les prochaines étapes.
 
 Merci de votre confiance !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -212,7 +212,7 @@ Finalisez votre dossier en procédant au paiement dès maintenant.
 ${params.paymentLink ? `Lien de paiement : ${params.paymentLink}` : 'Consultez votre email pour le lien de paiement'}
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -238,7 +238,7 @@ Prochaine étape : Soumission aux agences partenaires.
 Nous vous tiendrons informé de l'avancement.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -263,7 +263,7 @@ Votre dossier pour ${params.destinationCountry} a été soumis à ${params.agenc
 Nous vous tiendrons informé de la progression du recrutement.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -293,7 +293,7 @@ Excellente nouvelle ! Vous avez obtenu un contrat de travail ! 🎉
 Consultez votre espace candidat pour les détails et les prochaines étapes.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -319,7 +319,7 @@ Malheureusement, votre dossier n'a pas pu être approuvé.
 Nous vous invitons à nous contacter pour discuter des options disponibles.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);

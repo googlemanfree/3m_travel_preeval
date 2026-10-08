@@ -12,7 +12,7 @@ describe("PDF Watermark and Formal Header Anti-Plagiarism", () => {
       },
     };
 
-    expect(pdfMetadata.agencyName).toContain("3M Travel");
+    expect(pdfMetadata.agencyName).toContain("3M TRAVEL AGENCY");
     expect(pdfMetadata.watermarkText).toContain("3M TRAVEL AGENCY");
     expect(pdfMetadata.header.securityNotice).toContain("protégé");
   });

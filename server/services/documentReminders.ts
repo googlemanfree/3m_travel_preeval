@@ -79,9 +79,9 @@ export function buildDocumentReminderEmail(input: {
   const intro = input.stage >= 3
     ? "C’est notre dernier rappel automatique. Votre dossier avance dès que vos pièces sont reçues : si vous rencontrez une difficulté, écrivez-nous, nous vous aidons volontiers."
     : "Votre dossier avance dès que vos pièces sont reçues. Chaque pièce s’envoie en un geste depuis votre espace client, photo du téléphone comprise.";
-  const whatsappHref = `https://wa.me/${input.whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel & Services, j’ai besoin d’aide pour envoyer mes documents.")}`;
+  const whatsappHref = `https://wa.me/${input.whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, j’ai besoin d’aide pour envoyer mes documents.")}`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:22px;color:#172554">
-<div style="background:#1e3a8a;padding:22px;text-align:center;border-radius:14px 14px 0 0"><h1 style="color:#ffffff;font-size:19px;margin:0">3M Travel &amp; Services</h1><p style="color:#bfdbfe;font-size:13px;margin:6px 0 0">${escapeHtml(headline)}</p></div>
+<div style="background:#1e3a8a;padding:22px;text-align:center;border-radius:14px 14px 0 0"><h1 style="color:#ffffff;font-size:19px;margin:0">3M TRAVEL AGENCY</h1><p style="color:#bfdbfe;font-size:13px;margin:6px 0 0">${escapeHtml(headline)}</p></div>
 <div style="border:1px solid #e2e8f0;border-top:0;padding:22px;border-radius:0 0 14px 14px">
 <p>Bonjour${input.fullName ? ` <strong>${escapeHtml(oneLine(input.fullName, 120))}</strong>` : ""},</p>
 <p>${escapeHtml(intro)}</p>

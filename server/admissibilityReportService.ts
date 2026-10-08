@@ -71,13 +71,13 @@ function generateAdmissibilityReport(evaluation: any): string {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">3M Travel & Services</div>
+          <div class="logo">3M TRAVEL AGENCY</div>
           <h1>Bilan d'Admissibilité</h1>
         </div>
 
         <div class="content">
           <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
-          <p>Merci d'avoir soumis votre demande d'évaluation auprès de 3M Travel & Services. Nos experts ont analysé votre profil avec attention.</p>
+          <p>Merci d'avoir soumis votre demande d'évaluation auprès de 3M TRAVEL AGENCY. Nos experts ont analysé votre profil avec attention.</p>
 
           <h2>📊 Résultat de votre Évaluation</h2>
           <div class="score-box">
@@ -111,7 +111,7 @@ function generateAdmissibilityReport(evaluation: any): string {
         </div>
 
         <div class="footer">
-          <p>© 2026 3M Travel & Services. Tous droits réservés.</p>
+          <p>© 2026 3M TRAVEL AGENCY. Tous droits réservés.</p>
           <p>Cet email a été envoyé à ${esc(email)}</p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export async function sendAdmissibilityReport(evaluationId: number): Promise<{ s
     try {
       await sendGenericEmail({
         to: evaluation.email,
-        subject: `Votre Bilan d'Admissibilité - 3M Travel & Services`,
+        subject: `Votre Bilan d'Admissibilité - 3M TRAVEL AGENCY`,
         html: reportContent
       });
 

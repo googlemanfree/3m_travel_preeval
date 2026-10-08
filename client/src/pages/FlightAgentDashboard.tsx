@@ -327,7 +327,7 @@ export default function FlightAgentDashboard() {
       toast({ title: "Impression bloquée", description: "Autorisez les fenêtres contextuelles puis réessayez.", variant: "destructive" });
       return;
     }
-    popup.document.write(`<!DOCTYPE html><html lang="fr"><head><title>Fiche opérationnelle 3M Travel</title><style>body{font-family:Arial,sans-serif;color:#0f172a;padding:28px}#flight-request-detail{max-width:900px;margin:auto}section{break-inside:avoid;margin-bottom:18px}.grid{display:grid!important}.sm\\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bg-gradient-to-r{background:#0f3b8f!important;color:#fff!important}.text-white{color:#fff!important}@media print{body{padding:0}}</style></head><body><h1 style="font-size:20px">3M Travel — Fiche opérationnelle de réservation</h1><p style="color:#475569">Imprimée le ${new Date().toLocaleString("fr-FR")}</p>${detail.outerHTML}</body></html>`);
+    popup.document.write(`<!DOCTYPE html><html lang="fr"><head><title>Fiche opérationnelle 3M TRAVEL AGENCY</title><style>body{font-family:Arial,sans-serif;color:#0f172a;padding:28px}#flight-request-detail{max-width:900px;margin:auto}section{break-inside:avoid;margin-bottom:18px}.grid{display:grid!important}.sm\\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bg-gradient-to-r{background:#0f3b8f!important;color:#fff!important}.text-white{color:#fff!important}@media print{body{padding:0}}</style></head><body><h1 style="font-size:20px">3M TRAVEL AGENCY — Fiche opérationnelle de réservation</h1><p style="color:#475569">Imprimée le ${new Date().toLocaleString("fr-FR")}</p>${detail.outerHTML}</body></html>`);
     popup.document.close();
     popup.focus();
     window.setTimeout(() => popup.print(), 250);

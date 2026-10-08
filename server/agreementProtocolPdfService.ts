@@ -54,7 +54,7 @@ export async function createAgreementProtocolOnePdf(input: {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("3M Travel & Services", 48, 16);
+  doc.text("3M TRAVEL AGENCY", 48, 16);
   doc.setFontSize(10);
   doc.text("Protocole d’accord N°01 — accompagnement administratif", 48, 25);
   doc.setTextColor(31, 41, 55);
@@ -93,7 +93,7 @@ export async function createAgreementProtocolOnePdf(input: {
   y += 7;
   doc.setTextColor(71, 85, 105);
   doc.setFontSize(8);
-  writeParagraph(doc, "Ce document est généré après validation administrative du paiement. La signature électronique reste exclusivement accessible au candidat depuis son espace client après confirmation du paiement. 3M Travel & Services ne garantit aucune décision d’une autorité, d’un employeur ou d’un partenaire.", 18, y, 174);
+  writeParagraph(doc, "Ce document est généré après validation administrative du paiement. La signature électronique reste exclusivement accessible au candidat depuis son espace client après confirmation du paiement. 3M TRAVEL AGENCY ne garantit aucune décision d’une autorité, d’un employeur ou d’un partenaire.", 18, y, 174);
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(input.dossierNumber || "dossier").replace(/[^a-zA-Z0-9_-]/g, "-");
   return { ...await storagePut(`agreement-protocols/${reference}/protocole-01.pdf`, bytes, "application/pdf"), bytes };

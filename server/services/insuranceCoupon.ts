@@ -16,7 +16,7 @@ export function createInsuranceCouponPdf(data: InsuranceCouponData): Buffer {
   pdf.rect(0, 0, 210, 42, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(20);
-  pdf.text("3M Travel & Services", 16, 20);
+  pdf.text("3M TRAVEL AGENCY", 16, 20);
   pdf.setFontSize(11);
   pdf.text("Coupon de réservation d’assurance voyage", 16, 29);
 
@@ -47,6 +47,6 @@ export function createInsuranceCouponPdf(data: InsuranceCouponData): Buffer {
   pdf.text("L’attestation finale sera ajoutée à votre espace client et envoyée par e-mail après traitement par l’agence.", 16, y + 27, { maxWidth: 178 });
   pdf.setFontSize(9);
   pdf.setTextColor(71, 85, 105);
-  pdf.text("3M Travel & Services — hello@3mtravelagency.com — +237 698 104 832", 16, 282);
+  pdf.text("3M TRAVEL AGENCY — hello@3mtravelagency.com — +237 698 104 832", 16, 282);
   return Buffer.from(pdf.output("arraybuffer"));
 }

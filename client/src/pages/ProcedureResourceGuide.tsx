@@ -35,7 +35,7 @@ export default function ProcedureResourceGuide() {
 
   const shareGuide = async () => {
     if (navigator.share) {
-      await navigator.share({ title: "Guides & procédures 3M Travel", text: "Retrouvez les procédures et ressources PDF 3M Travel.", url: shareUrl });
+      await navigator.share({ title: "Guides & procédures 3M TRAVEL AGENCY", text: "Retrouvez les procédures et ressources PDF 3M TRAVEL AGENCY.", url: shareUrl });
       return;
     }
     await copyShareLink();
@@ -50,8 +50,8 @@ export default function ProcedureResourceGuide() {
             Lien client à partager
           </div>
           <h1 className="max-w-3xl text-3xl font-black tracking-tight md:text-5xl">Guides & procédures de mobilité internationale</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-blue-100 md:text-lg">
-            Une bibliothèque claire pour retrouver les procédures par destination, type de visa et document PDF disponible dans les ressources 3M Travel.
+          <p className="premium-copy-on-dark mt-4 max-w-2xl text-base md:text-lg">
+            Une bibliothèque claire pour retrouver les procédures par destination, type de visa et document PDF disponible dans les ressources 3M TRAVEL AGENCY.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button onClick={copyShareLink} className="rounded-xl bg-white text-blue-900 hover:bg-blue-50">
@@ -66,10 +66,10 @@ export default function ProcedureResourceGuide() {
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm text-blue-100">
+          <div className="mt-8 flex flex-wrap gap-3 text-sm text-blue-50">
             <span className="rounded-full bg-white/10 px-3 py-1.5">{allResources} ressources cataloguées</span>
             <span className="rounded-full bg-white/10 px-3 py-1.5">Accès public</span>
-            <span className="rounded-full bg-white/10 px-3 py-1.5">Mise à jour par 3M Travel</span>
+            <span className="rounded-full bg-white/10 px-3 py-1.5">Mise à jour par 3M TRAVEL AGENCY</span>
           </div>
         </div>
       </header>

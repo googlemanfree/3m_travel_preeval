@@ -213,7 +213,7 @@ export function getPasswordChangedEmailTemplate(params: AdminEmailTemplateParams
 
           <!-- Footer -->
           <div class="footer">
-            <p><strong>3M Travel Agency</strong></p>
+            <p><strong>3M TRAVEL AGENCY</strong></p>
             <p>Yaoundé, Biyem-Assi | Cameroun</p>
             <p>Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; color: #999;">
@@ -389,7 +389,7 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
               <strong>🔒 Sécurité</strong>
               <ul>
                 <li>Ne partagez jamais ce lien avec quiconque</li>
-                <li>3M Travel Agency ne vous demandera jamais votre mot de passe par email</li>
+                <li>3M TRAVEL AGENCY ne vous demandera jamais votre mot de passe par email</li>
                 <li>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email</li>
                 <li>Votre compte reste sécurisé jusqu'à ce que vous cliquiez sur le lien</li>
               </ul>
@@ -402,7 +402,7 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
 
           <!-- Footer -->
           <div class="footer">
-            <p><strong>3M Travel Agency</strong></p>
+            <p><strong>3M TRAVEL AGENCY</strong></p>
             <p>Yaoundé, Biyem-Assi | Cameroun</p>
             <p>Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; color: #999;">
@@ -569,7 +569,7 @@ export function getPasswordResetSuccessEmailTemplate(params: AdminEmailTemplateP
           </div>
 
           <div class="footer">
-            <p><strong>3M Travel Agency</strong></p>
+            <p><strong>3M TRAVEL AGENCY</strong></p>
             <p>Cet email a été envoyé automatiquement pour votre sécurité.</p>
           </div>
         </div>
@@ -686,7 +686,7 @@ export function getPasswordChangeFailedEmailTemplate(params: AdminEmailTemplateP
           </div>
 
           <div class="footer">
-            <p><strong>3M Travel Agency</strong></p>
+            <p><strong>3M TRAVEL AGENCY</strong></p>
             <p>Cet email a été envoyé automatiquement pour votre sécurité.</p>
           </div>
         </div>

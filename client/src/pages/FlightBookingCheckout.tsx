@@ -169,19 +169,19 @@ export default function FlightBookingCheckout() {
   const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
   const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
-  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nTarif relevé (à confirmer par un conseiller): ${selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
+  const shareText = `✈️ Ma demande de réservation 3M TRAVEL AGENCY\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nTarif relevé (à confirmer par un conseiller): ${selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
   const smsUrl = `sms:?body=${encodeURIComponent(shareText)}`;
-  const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef}`)}&body=${encodeURIComponent(shareText)}`;
+  const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M TRAVEL AGENCY - Réf ${dossierRef}`)}&body=${encodeURIComponent(shareText)}`;
   const telUrl = `tel:${whatsappNumber}`;
 
   const handleSendRecapToFriend = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const recipient = friendEmail.trim();
     if (!recipient) return;
-    const subject = `Récapitulatif de vol 3M Travel - ${dossierRef}`;
+    const subject = `Récapitulatif de vol 3M TRAVEL AGENCY - ${dossierRef}`;
     const body = `${shareText}\n\nLien de l’itinéraire : ${shareLink}`;
     window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     toast({ title: "E-mail préparé", description: "Votre application de messagerie va ouvrir le récapitulatif pour votre proche." });
@@ -214,7 +214,7 @@ export default function FlightBookingCheckout() {
       return;
     }
     const title = encodeURIComponent(`Vol ${selectedFlight.airline.name} — ${selectedFlight.flightNumber}`);
-    const details = encodeURIComponent(`Demande de réservation 3M Travel Agency.\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nRéférence: ${dossierRef}`);
+    const details = encodeURIComponent(`Demande de réservation 3M TRAVEL AGENCY.\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nRéférence: ${dossierRef}`);
     const location = encodeURIComponent(`${selectedFlight.originCity} → ${selectedFlight.destinationCity}`);
     const dates = `${toCalendarStamp(selectedFlight.departureDate, selectedFlight.departureTime)}/${toCalendarStamp(selectedFlight.departureDate, selectedFlight.arrivalTime)}`;
     const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${dates}`;
@@ -229,7 +229,7 @@ export default function FlightBookingCheckout() {
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//3M Travel Agency//Vol Confirme//FR",
+      "PRODID:-//3M TRAVEL AGENCY//Vol Confirme//FR",
       "BEGIN:VEVENT",
       `SUMMARY:Vol ${selectedFlight.airline.name} - ${selectedFlight.flightNumber}`,
       `DESCRIPTION:Demande de réservation pour ${formData.fullName} (Passeport: ${formData.passportNumber}, Réf: ${dossierRef}).`,
@@ -292,7 +292,7 @@ export default function FlightBookingCheckout() {
         `Tarif relevé${returnFlight ? " aller-retour" : ""} (à confirmer) : ${formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice)}`,
         "",
         "VALIDATION",
-        "Le tarif, les places et l’émission doivent être revalidés par 3M Travel Agency avant tout paiement ou émission définitive.",
+        "Le tarif, les places et l’émission doivent être revalidés par 3M TRAVEL AGENCY avant tout paiement ou émission définitive.",
         "Contact : hello@3mtravelagency.com · +237 698 10 48 32",
       ];
 
@@ -639,7 +639,7 @@ export default function FlightBookingCheckout() {
                     <button type="button" aria-label="Fermer" onClick={() => setShowWalletModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
                   </div>
                   <div className="my-5 space-y-3 text-sm text-slate-600">
-                    <p>Le pass pour {walletType === "apple" ? "Apple Wallet" : "Google Wallet"} nécessite l’émission définitive de votre billet par l’agence 3M Travel.</p>
+                    <p>Le pass pour {walletType === "apple" ? "Apple Wallet" : "Google Wallet"} nécessite l’émission définitive de votre billet par l’agence 3M TRAVEL AGENCY.</p>
                     <div className="rounded-2xl bg-amber-50 p-4 text-xs font-medium text-amber-900">
                       <p className="font-bold">Pass provisoire sécurisé :</p>
                       <p className="mt-1">Votre dossier <strong>{dossierRef}</strong> est enregistré. Téléchargez votre reçu PDF ci-dessous ou contactez notre agence pour recevoir votre pass portefeuille officiel directement par e-mail ou WhatsApp.</p>

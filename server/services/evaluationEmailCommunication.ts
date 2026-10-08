@@ -28,8 +28,8 @@ export function verifyEvaluationEmailTrackingToken(token: string): number | null
 }
 
 export function buildAdvisorSignatureHtml(advisorName?: string | null): string {
-  const name = (advisorName || "L’équipe 3M Travel & Services").trim();
-  return `<p style="margin-top:26px;line-height:1.55">Bien cordialement,<br/><strong>${escapeHtmlText(name)}</strong><br/>3M Travel &amp; Services</p>`;
+  const name = (advisorName || "L’équipe 3M TRAVEL AGENCY").trim();
+  return `<p style="margin-top:26px;line-height:1.55">Bien cordialement,<br/><strong>${escapeHtmlText(name)}</strong><br/>3M TRAVEL AGENCY</p>`;
 }
 
 export function appendEvaluationOpenTrackingPixel(html: string, emailId: number): string {

@@ -123,7 +123,7 @@ export default function AmbassadorProgram() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
-            🌟 Programme Ambassadeur 3M Travel
+            🌟 Programme Ambassadeur 3M TRAVEL AGENCY
           </h1>
           <p className="text-xl text-gray-600 mb-6">
             Gagnez de l'argent en parrainant vos amis et votre réseau

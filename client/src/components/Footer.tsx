@@ -33,7 +33,7 @@ const footerCopy = {
   ottawaOffice: { fr: "Bureau Ottawa", en: "Ottawa office" },
   legalNotice: { fr: "Rôle de conseil et d’accompagnement. Les décisions de visa appartiennent aux autorités consulaires.", en: "We provide advisory and support services. Visa decisions remain with consular authorities." },
   newsletterTitle: { fr: "Recevoir nos actualités utiles", en: "Receive useful updates" },
-  newsletterText: { fr: "Conseils, sources officielles et nouveautés 3M Travel, sans promesse commerciale excessive.", en: "Tips, official sources and 3M Travel updates, without excessive marketing promises." },
+  newsletterText: { fr: "Conseils, sources officielles et nouveautés 3M TRAVEL AGENCY, sans promesse commerciale excessive.", en: "Tips, official sources and 3M TRAVEL AGENCY updates, without excessive marketing promises." },
   newsletterEmail: { fr: "Votre adresse e-mail", en: "Your email address" },
   newsletterConsent: { fr: "J’accepte de recevoir la newsletter et peux me désinscrire à tout moment.", en: "I agree to receive the newsletter and can unsubscribe at any time." },
   newsletterSubmit: { fr: "S’inscrire", en: "Subscribe" },
@@ -108,7 +108,7 @@ function NewsletterSignup({ language }: { language: Language }) {
   return (
     <section aria-labelledby="newsletter-title" data-testid="footer-newsletter" className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 sm:p-5">
       <h2 id="newsletter-title" className="text-sm font-bold text-white">{copy(footerCopy.newsletterTitle)}</h2>
-      <p className="mt-1 text-xs leading-snug text-slate-300">{copy(footerCopy.newsletterText)}</p>
+      <p className="mt-1 text-sm leading-relaxed text-slate-200">{copy(footerCopy.newsletterText)}</p>
       <form className="mt-3 space-y-2.5" onSubmit={submit}>
         <label htmlFor="newsletter-email" className="sr-only">{copy(footerCopy.newsletterEmail)}</label>
         <input
@@ -122,7 +122,7 @@ function NewsletterSignup({ language }: { language: Language }) {
           placeholder={copy(footerCopy.newsletterEmail)}
           className="min-h-11 w-full rounded-xl border border-white/25 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300"
         />
-        <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-300">
+        <label className="flex items-start gap-2 text-sm leading-relaxed text-slate-200">
           <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400" />
           <span>{copy(footerCopy.newsletterConsent)}</span>
         </label>
@@ -201,7 +201,7 @@ export default function Footer() {
   return (
     <footer
       className="relative mt-auto overflow-hidden bg-[#061a36] text-slate-100"
-      aria-label="Informations et contacts 3M Travel"
+      aria-label="Informations et contacts 3M TRAVEL AGENCY"
       data-testid="site-footer"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.18),_transparent_55%),linear-gradient(180deg,#061a36_0%,#0a2450_100%)]" aria-hidden="true" />
@@ -209,15 +209,15 @@ export default function Footer() {
         {/* Marque + CTA */}
         <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <img src="/logo-3m.webp" alt="Logo 3M Travel Agency" className="h-12 w-auto shrink-0 object-contain" />
+            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.agencySummary)}</p>
-              <p className="mt-3 max-w-xl text-xs leading-relaxed text-slate-400">{copy(footerCopy.aboutText)}</p>
+              <p className="mt-1 max-w-xl text-base leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.aboutText)}</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
-            <p className="text-xs font-semibold text-slate-300 sm:text-right">{copy(footerCopy.question)}</p>
+            <p className="text-sm font-semibold text-slate-200 sm:text-right">{copy(footerCopy.question)}</p>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Link
                 href="/contact"
@@ -239,7 +239,7 @@ export default function Footer() {
         </div>
 
         {/* Anti-fraude */}
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-400/5 px-4 py-3 text-xs leading-relaxed text-slate-200" data-testid="footer-fraud-notice">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-400/5 px-4 py-3.5 text-sm leading-relaxed text-slate-100" data-testid="footer-fraud-notice">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
           <p>
             <strong className="text-white">{copy(footerCopy.fraudLabel)}</strong> {copy(footerCopy.fraudText)}
@@ -250,7 +250,7 @@ export default function Footer() {
         <section aria-labelledby="footer-offices-title" className="mt-8" data-testid="footer-offices">
           <div className="mb-4">
             <h2 id="footer-offices-title" className="text-base font-black text-white">{copy(footerCopy.officesTitle)}</h2>
-            <p className="mt-1 text-xs text-slate-400">{copy(footerCopy.officesIntro)}</p>
+            <p className="mt-1 text-sm text-slate-300">{copy(footerCopy.officesIntro)}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-4 sm:p-5">
@@ -322,7 +322,7 @@ export default function Footer() {
                 <LinkColumn title={copy(footerCopy.useful)} links={USEFUL_LINKS} language={language} onTrack={trackShortcut} />
                 <div>
                   <h2 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">{copy(footerCopy.contacts)}</h2>
-                  <p className="mb-2 text-xs leading-relaxed text-slate-400">{copy(footerCopy.officialPage)}</p>
+                  <p className="mb-2 text-sm leading-relaxed text-slate-300">{copy(footerCopy.officialPage)}</p>
                   <a
                     href={SOCIAL_LINKS[0].href}
                     target="_blank"
@@ -366,12 +366,12 @@ export default function Footer() {
               );
             })}
           </div>
-          <div className="max-w-2xl text-xs leading-relaxed text-slate-400 sm:text-right">
+          <div className="max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-right">
             <p>
-              <span className="font-medium text-slate-200">{COMPANY_PROFILE.legalName}</span>
+              <span className="font-medium text-white">{COMPANY_PROFILE.legalName}</span>
               {" — "}RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
             </p>
-            <p className="mt-1">{copy(footerCopy.legalNotice)}</p>
+            <p className="mt-1 text-slate-200">{copy(footerCopy.legalNotice)}</p>
             <p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. {language === "fr" ? "Tous droits réservés." : "All rights reserved."}</p>
           </div>
         </div>

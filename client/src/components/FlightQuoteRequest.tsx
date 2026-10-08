@@ -31,8 +31,8 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
     onSuccess: () => {
       setSent(true);
       const whatsappText = watching
-        ? "Bonjour 3M Travel, je viens de demander le suivi d'un tarif de vol. Merci de me prévenir en cas de baisse."
-        : "Bonjour 3M Travel, je viens d'envoyer une demande de devis vol. Merci de me contacter.";
+        ? "Bonjour 3M TRAVEL AGENCY, je viens de demander le suivi d'un tarif de vol. Merci de me prévenir en cas de baisse."
+        : "Bonjour 3M TRAVEL AGENCY, je viens d'envoyer une demande de devis vol. Merci de me contacter.";
       window.open(`https://wa.me/237698104832?text=${encodeURIComponent(whatsappText)}`, "_blank", "noopener,noreferrer");
       toast({ title: "Demande envoyée", description: "Notre équipe reçoit votre besoin et vous contactera avec des options adaptées." });
     },

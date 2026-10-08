@@ -15,10 +15,10 @@ function destinationHref(destination: Destination20) {
 
 export default function DestinationsHub() {
   useEffect(() => {
-    document.title = "23 destinations, un seul accompagnement | 3M Travel & Services";
+    document.title = "23 destinations, un seul accompagnement | 3M TRAVEL AGENCY";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      "Formation professionnelle et emploi qualifié dans 23 destinations : Allemagne, Autriche, Suisse et 20 autres pays. 3M Travel & Services vous oriente vers la destination la plus réaliste selon votre profil.",
+      "Formation professionnelle et emploi qualifié dans 23 destinations : Allemagne, Autriche, Suisse et 20 autres pays. 3M TRAVEL AGENCY vous oriente vers la destination la plus réaliste selon votre profil.",
     );
   }, []);
 
@@ -29,7 +29,7 @@ export default function DestinationsHub() {
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">Réseau de destinations</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">23 destinations, un seul accompagnement</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-50">
-            3M Travel &amp; Services élargit son réseau à 20 nouvelles destinations en formation professionnelle et emploi qualifié, en plus de l'Allemagne, l'Autriche et la Suisse déjà couvertes. Chaque profil est différent : notre rôle est de vous orienter vers la destination la plus réaliste selon votre secteur, votre niveau de langue et votre budget.
+            3M TRAVEL AGENCY élargit son réseau à 20 nouvelles destinations en formation professionnelle et emploi qualifié, en plus de l'Allemagne, l'Autriche et la Suisse déjà couvertes. Chaque profil est différent : notre rôle est de vous orienter vers la destination la plus réaliste selon votre secteur, votre niveau de langue et votre budget.
           </p>
           <Link href="/evaluation?project=etudes" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
             Démarrer mon évaluation gratuite <ArrowRight className="h-4 w-4" aria-hidden="true" />

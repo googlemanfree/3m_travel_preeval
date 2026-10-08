@@ -43,7 +43,7 @@
 }
 
 :root {
-  /* ── Palette 3M Travel & Services ─────────────────────────────────────────
+  /* ── Palette 3M TRAVEL AGENCY ─────────────────────────────────────────
      Bleu royal foncé  : #1E3A8A  (anneau extérieur du logo)
      Bleu moyen        : #2563EB  (couleur principale des éléments)
      Bleu ciel         : #7CB9E8  (anneau intérieur / texte 3M clair)
@@ -70,11 +70,10 @@
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
-  --muted-foreground: #40516a; /* Accessible institutional slate */
+  --muted-foreground: #334155; /* Contraste AA sur fond clair */
   --secondary: #eef3f9; /* Cool mist */
   --secondary-foreground: #1f2937; /* Darker Gray for better contrast */
   --muted: #e3eaf3; /* Cool gray */
-  --muted-foreground: #40516a; /* Accessible institutional slate */
   --accent: #d5a84b;
   --accent-foreground: #10213b; /* Ink on gold */
   --destructive: #dc2626; /* Red-600 */
@@ -134,6 +133,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-padding-top: 6rem;
+    text-rendering: optimizeLegibility;
   }
   * {
     @apply border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
@@ -142,6 +142,17 @@
     @apply bg-background text-foreground;
     min-width: 320px;
     overflow-x: hidden;
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Sora", "Manrope", sans-serif;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -238,6 +249,35 @@
       radial-gradient(circle at 8% 0%, rgba(213, 168, 75, 0.08), transparent 26rem),
       radial-gradient(circle at 94% 8%, rgba(22, 93, 255, 0.08), transparent 30rem),
       var(--background);
+  }
+
+  /* Texte d’accompagnement lisible (contraste + interligne) — à utiliser hors badges/labels */
+  .premium-copy {
+    color: #334155;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+  }
+
+  .premium-copy-on-dark {
+    color: rgba(241, 245, 249, 0.92);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .premium-section-title {
+    font-family: "Sora", "Manrope", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #0f1f36;
+  }
+
+  .premium-section-lead {
+    margin-top: 0.75rem;
+    max-width: 42rem;
+    color: #334155;
+    font-size: 1.0625rem;
+    line-height: 1.7;
   }
 
   @media (min-width: 640px) {
@@ -718,6 +758,43 @@ html.text-size-xlarge {
   font-size: 20px;
 }
 
+/**
+ * Remonte d’un cran les gris Tailwind trop pâles (textes « presque illisibles »).
+ * slate-400 → slate-500, slate-500 → slate-600, slate-600 → slate-700.
+ * Les icônes restent lisibles ; le corps de texte gagne en contraste AA.
+ */
+@layer utilities {
+  .text-slate-400 {
+    --tw-text-opacity: 1;
+    color: rgb(100 116 139 / var(--tw-text-opacity, 1)); /* slate-500 */
+  }
+  .text-slate-500 {
+    --tw-text-opacity: 1;
+    color: rgb(71 85 105 / var(--tw-text-opacity, 1)); /* slate-600 */
+  }
+  .text-slate-600 {
+    --tw-text-opacity: 1;
+    color: rgb(51 65 85 / var(--tw-text-opacity, 1)); /* slate-700 */
+  }
+  .text-gray-500 {
+    --tw-text-opacity: 1;
+    color: rgb(75 85 99 / var(--tw-text-opacity, 1)); /* gray-600 */
+  }
+  .text-gray-600 {
+    --tw-text-opacity: 1;
+    color: rgb(55 65 81 / var(--tw-text-opacity, 1)); /* gray-700 */
+  }
+  /* Micro-textes trop petits pour la lecture courante */
+  .text-\[10px\] {
+    font-size: 0.75rem; /* 12px */
+    line-height: 1.4;
+  }
+  .text-\[11px\] {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.45;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a, button, [role="button"] {
     transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
@@ -742,8 +819,16 @@ html.text-size-xlarge {
   .secondary-page-surface h1,
   .secondary-page-surface h2,
   .secondary-page-surface h3 {
-    color: #10233f;
+    font-family: "Sora", "Manrope", sans-serif;
+    color: #0f1f36;
     letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .secondary-page-surface p,
+  .secondary-page-surface li {
+    color: #334155;
+    line-height: 1.7;
   }
 
   .secondary-page-surface input,

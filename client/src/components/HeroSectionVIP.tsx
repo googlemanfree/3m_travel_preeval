@@ -102,7 +102,7 @@ export default function HeroSectionVIP({
           />
           <img
             src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-            alt="Voyageurs préparant un projet de mobilité internationale avec 3M Travel Agency"
+            alt="Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY"
             ref={backgroundRef}
             loading="eager"
             decoding="async"
@@ -125,7 +125,7 @@ export default function HeroSectionVIP({
         >
           <img
             src={logoUrl}
-            alt="3M Travel Agency"
+            alt="3M TRAVEL AGENCY"
             width={96}
             height={96}
             decoding="async"
@@ -138,7 +138,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
+          className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
           data-testid="hero-title"
         >
           3M TRAVEL AGENCY
@@ -149,7 +149,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="mx-auto mb-7 max-w-2xl text-base font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
+          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-lg font-medium sm:mb-10 sm:text-xl md:text-2xl"
         >
           Études, travail, voyage et visas : votre projet international commence ici.
         </motion.p>
@@ -185,7 +185,7 @@ export default function HeroSectionVIP({
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white/5 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/15 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
             <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
+              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
               target="_blank"
               rel="noopener noreferrer"
             >

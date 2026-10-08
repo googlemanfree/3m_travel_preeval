@@ -13,7 +13,7 @@ describe("communication contrôlée des bilans", () => {
   it("insère une signature sûre du conseiller", () => {
     const signature = buildAdvisorSignatureHtml("Conseiller <3M>");
     expect(signature).toContain("Conseiller &lt;3M&gt;");
-    expect(signature).toContain("3M Travel");
+    expect(signature).toContain("3M TRAVEL AGENCY");
   });
 
   it("ne livre jamais un bilan sans validation humaine et planification explicite", () => {

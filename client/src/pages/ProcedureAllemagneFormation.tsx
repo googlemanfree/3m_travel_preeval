@@ -72,10 +72,10 @@ const SOURCES = [
 
 export default function ProcedureAllemagneFormation() {
   useEffect(() => {
-    document.title = "Allemagne : cours de langue, Ausbildung & visa | 3M Travel & Services";
+    document.title = "Allemagne : cours de langue, Ausbildung & visa | 3M TRAVEL AGENCY";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      "Cours de langue intensif ou Ausbildung rémunérée en Allemagne : conditions, étapes du visa et documents requis, avec l'accompagnement 3M Travel & Services depuis Yaoundé.",
+      "Cours de langue intensif ou Ausbildung rémunérée en Allemagne : conditions, étapes du visa et documents requis, avec l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé.",
     );
   }, []);
 
@@ -92,7 +92,7 @@ export default function ProcedureAllemagneFormation() {
             L'Allemagne forme aujourd'hui plus de <strong className="text-white">213 000 apprentis étrangers</strong> dans le cadre de son système d'Ausbildung — une formation professionnelle rémunérée, reconnue dans toute l'Union européenne, ouverte à des secteurs en forte tension comme la santé, l'hôtellerie-restauration et l'artisanat technique. Un apprenti perçoit entre <strong className="text-white">724 € et 1 490 € par mois</strong> pendant sa formation : la formation est payante pour l'entreprise, pas pour vous.
           </p>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-blue-100">
-            3M Travel & Services vous accompagne à chaque étape : évaluation de votre profil, préparation linguistique, mise en relation avec des employeurs partenaires, constitution du dossier de visa, et suivi jusqu'à votre installation en Allemagne.
+            3M TRAVEL AGENCY vous accompagne à chaque étape : évaluation de votre profil, préparation linguistique, mise en relation avec des employeurs partenaires, constitution du dossier de visa, et suivi jusqu'à votre installation en Allemagne.
           </p>
           <Link href={EVAL_LINK} className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
             Démarrer mon évaluation gratuite <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -211,7 +211,7 @@ export default function ProcedureAllemagneFormation() {
         <section className="mt-8 rounded-2xl bg-blue-900 p-6 text-white sm:p-10">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-7 w-7 text-blue-200" aria-hidden="true" />
-            <h2 className="text-2xl font-black">Pourquoi passer par 3M Travel & Services</h2>
+            <h2 className="text-2xl font-black">Pourquoi passer par 3M TRAVEL AGENCY</h2>
           </div>
           <div className="mt-6 grid gap-3">
             {WHY_3M.map((item) => (
@@ -237,7 +237,7 @@ export default function ProcedureAllemagneFormation() {
           <ul className="mt-4 space-y-2 text-sm leading-6 text-amber-900">
             <li>Les montants (compte bloqué, rémunération d'Ausbildung) varient selon la ville et le secteur d'activité — les chiffres indiqués sont indicatifs et doivent être confirmés au cas par cas.</li>
             <li>Les délais de traitement consulaire varient fortement selon le pays de résidence et la période de l'année.</li>
-            <li>La décision finale de délivrance du visa relève exclusivement des autorités consulaires allemandes ; 3M Travel & Services accompagne la préparation du dossier mais ne garantit pas l'issue de la demande.</li>
+            <li>La décision finale de délivrance du visa relève exclusivement des autorités consulaires allemandes ; 3M TRAVEL AGENCY accompagne la préparation du dossier mais ne garantit pas l'issue de la demande.</li>
             <li>Toute demande doit être déposée depuis le pays de résidence du candidat, et non depuis l'Allemagne.</li>
           </ul>
         </section>

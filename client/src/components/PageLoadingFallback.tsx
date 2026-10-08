@@ -37,7 +37,7 @@ export default function PageLoadingFallback() {
           </div>
 
           <div className="min-w-0 flex-1 space-y-3">
-            <p className="text-xs font-black uppercase tracking-[.2em] text-amber-200">3M Travel &amp; Services</p>
+            <p className="text-xs font-black uppercase tracking-[.2em] text-amber-200">3M TRAVEL AGENCY</p>
             <div>
               <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Nous préparons votre espace</h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">Le contenu demandé est en cours de chargement. Votre navigation et votre session restent actives.</p>

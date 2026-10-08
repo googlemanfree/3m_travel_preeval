@@ -14,7 +14,7 @@ describe("page /flights — anti page blanche et tarifs fiables", () => {
     expect(transition).toContain("initial={motionDisabled ? false : { y: 8 }}");
     expect(flights).toContain('data-testid="flight-search-panel"');
     expect(flights).toContain("initial={false}");
-    expect(flights).toContain('document.title = "Billets d\'avion et vols | 3M Travel & Services"');
+    expect(flights).toContain('document.title = "Billets d\'avion internationaux | 3M TRAVEL AGENCY"');
   });
 
   it("filtre les résultats sans lever d’exception si airline est absent", () => {

@@ -8,7 +8,7 @@ export default function PaymentFailed() {
   const dossierNumber = params.get("dossier") ?? "";
 
   const whatsappMsg = encodeURIComponent(
-    `Bonjour 3M Travel Agency, j'ai rencontré un problème lors du paiement de mon dossier.\n\n` +
+    `Bonjour 3M TRAVEL AGENCY, j'ai rencontré un problème lors du paiement de mon dossier.\n\n` +
     `📋 Numéro de dossier : ${dossierNumber}\n\n` +
     `Pouvez-vous m'aider à finaliser le paiement ?`
   );

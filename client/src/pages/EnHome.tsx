@@ -13,10 +13,10 @@ const PRIORITY_DESTINATIONS = [
 
 export default function EnHome() {
   useEffect(() => {
-    document.title = "3M Travel & Services | International Mobility from Yaoundé";
+    document.title = "3M TRAVEL AGENCY | International Mobility from Yaoundé";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      "3M Travel & Services supports your international mobility project — visa applications, study abroad, and travel services — from Yaoundé, Cameroon.",
+      "3M TRAVEL AGENCY supports your international mobility project — visa applications, study abroad, and travel services — from Yaoundé, Cameroon.",
     );
     document.documentElement.lang = "en";
   }, []);
@@ -32,7 +32,7 @@ export default function EnHome() {
             Your international mobility project, prepared with method
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-blue-100">
-            3M Travel & Services accompanies candidates through visa, study, and travel projects with clear steps, verified sources, and human review of every sensitive step. Decisions by authorities, employers, and partners remain independent of the agency.
+            3M TRAVEL AGENCY accompanies candidates through visa, study, and travel projects with clear steps, verified sources, and human review of every sensitive step. Decisions by authorities, employers, and partners remain independent of the agency.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href="/?project=travail&destination=canada#evaluation-multi">
@@ -71,7 +71,7 @@ export default function EnHome() {
         </p>
       </section>
 
-      <section aria-label="Why 3M Travel & Services" className="bg-white px-4 py-14 sm:px-6 lg:px-8">
+      <section aria-label="Why 3M TRAVEL AGENCY" className="bg-white px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
           <Card className="rounded-2xl border-slate-200 p-6">
             <Sparkles className="h-6 w-6 text-amber-500" aria-hidden="true" />

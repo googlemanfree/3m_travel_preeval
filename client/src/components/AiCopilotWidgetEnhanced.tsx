@@ -39,7 +39,7 @@ const QUICK_ACTIONS = [
 const WELCOME_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Bonjour ! Je suis Aureol, votre guide 3M Travel. Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
+    "Bonjour ! Je suis Aureol, votre guide 3M TRAVEL AGENCY. Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
   feedback: null,
   showActions: true,
 };
@@ -106,7 +106,7 @@ export default function AiCopilotWidgetEnhanced() {
     if (action.whatsapp) {
       window.open(
         `https://wa.me/237698104832?text=${encodeURIComponent(
-          "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel pour une évaluation."
+          "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M TRAVEL AGENCY pour une évaluation."
         )}`,
         "_blank"
       );
@@ -138,7 +138,7 @@ export default function AiCopilotWidgetEnhanced() {
       case "whatsapp":
         window.open(
           `https://wa.me/237698104832?text=${encodeURIComponent(
-            "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel."
+            "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M TRAVEL AGENCY."
           )}`,
           "_blank"
         );
@@ -157,7 +157,7 @@ export default function AiCopilotWidgetEnhanced() {
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               onClick={() => setIsOpen(true)}
-              aria-label="Ouvrir Aureol, le guide 3M Travel"
+              aria-label="Ouvrir Aureol, le guide 3M TRAVEL AGENCY"
               className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
             >
               <MessageSquare className="w-5 h-5 md:w-6 md:h-6" />

@@ -40,7 +40,7 @@ export async function extractDocumentInformation(
     detectedType = "Relevé de Notes Académique";
   }
 
-  // Génération d’extractions structurées pertinentes pour 3M Travel
+  // Génération d’extractions structurées pertinentes pour 3M TRAVEL AGENCY
   const keyFields: { label: string; value: string }[] = [];
   let summary = "";
   let confidence = 92;
@@ -67,7 +67,7 @@ export async function extractDocumentInformation(
       { label: "Statut de certification", value: "Lisible et vérifiable" },
       { label: "Compatibilité procédure", value: "Favorable pour permis d'études ou travail qualifié" }
     );
-    summary = "Diplôme validé pour les grilles d'évaluation de l'agence 3M Travel.";
+    summary = "Diplôme validé pour les grilles d'évaluation de l'agence 3M TRAVEL AGENCY.";
   } else {
     keyFields.push(
       { label: "Intitulé du fichier", value: fileName },
@@ -95,7 +95,7 @@ export async function extractDocumentInformation(
     expirationDate,
     isExpired,
     recommendations: [
-      "Document conforme aux standards de l'agence 3M Travel.",
+      "Document conforme aux standards de l'agence 3M TRAVEL AGENCY.",
       "Aucune anomalie détectée lors du contrôle automatique."
     ]
   };

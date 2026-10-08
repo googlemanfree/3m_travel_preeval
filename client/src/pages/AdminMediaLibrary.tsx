@@ -114,7 +114,7 @@ export default function AdminMediaLibrary() {
               <FolderOpen className="w-8 h-8 text-blue-500" /> Bibliothèque de Médias Optimisés
             </h1>
             <p className="text-slate-400 text-sm mt-1">
-              Stockage centralisé, conversion WebP automatique, réutilisation rapide et traçabilité pour les services et destinations de 3M Travel Agency.
+              Stockage centralisé, conversion WebP automatique, réutilisation rapide et traçabilité pour les services et destinations de 3M TRAVEL AGENCY.
             </p>
           </div>
 

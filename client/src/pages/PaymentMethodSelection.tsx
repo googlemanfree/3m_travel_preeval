@@ -246,7 +246,7 @@ export default function PaymentMethodSelection() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Paiement en personne</p>
-                  <p className="text-sm text-gray-600">Versez directement à l'agence 3M Travel</p>
+                  <p className="text-sm text-gray-600">Versez directement à l'agence 3M TRAVEL AGENCY</p>
                 </div>
               </div>
 

@@ -68,7 +68,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-800 ring-8 ring-blue-50/70">
             <Lock className="h-7 w-7" aria-hidden="true" />
           </div>
-          <p className="mt-6 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">3M Travel &amp; Services</p>
+          <p className="mt-6 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">3M TRAVEL AGENCY</p>
           <h1 className="mt-2 text-xl font-black text-slate-950">{loadingMessage}</h1>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-600">{loadingDetail}</p>
           <div className="mt-6" role="progressbar" aria-label="Chargement de l’espace administrateur" aria-valuemin={0} aria-valuemax={100}>
@@ -135,7 +135,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
             </div>
 
             <p className="text-xs text-gray-500 mt-6">
-              © 2026 3M Travel & Services - Tous droits réservés
+              © 2026 3M TRAVEL AGENCY - Tous droits réservés
             </p>
           </div>
         </motion.div>
