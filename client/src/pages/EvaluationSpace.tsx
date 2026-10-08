@@ -562,7 +562,7 @@ export default function EvaluationSpace() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
               <h2 id="global-dossiers-summary-title" className="mt-1 text-lg font-black text-slate-950">Résumé de vos dossiers ouverts</h2>
-              <p className="mt-1 text-sm text-slate-600">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M Travel, avec la prochaine action à effectuer pour chacun.</p>
+              <p className="mt-1 text-sm text-slate-600">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY, avec la prochaine action à effectuer pour chacun.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
@@ -1067,16 +1067,16 @@ export default function EvaluationSpace() {
               <div className="bg-blue-50 dark:bg-slate-900 p-4 rounded-xl border border-blue-200 dark:border-slate-800 mb-6 flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    💬 Messagerie avec votre conseiller 3M Travel
+                    💬 Messagerie avec votre conseiller 3M TRAVEL AGENCY
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Posez vos questions à notre équipe 3M Travel ou échangez directement avec votre conseiller attitré.
+                    Posez vos questions à notre équipe 3M TRAVEL AGENCY ou échangez directement avec votre conseiller attitré.
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Assistance 3M Travel</h4>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Assistance 3M TRAVEL AGENCY</h4>
                   <AureolAssistantChat />
                 </div>
                 <div>

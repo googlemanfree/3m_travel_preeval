@@ -848,7 +848,7 @@ export const flightsRouter = router({
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px; border-radius: 16px;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 30px; text-align: center; color: white; border-radius: 12px 12px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">3M Travel & Services</h1>
+            <h1 style="margin: 0; font-size: 24px;">3M TRAVEL AGENCY</h1>
             <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Récapitulatif de votre sélection de vol</p>
           </div>
           <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
@@ -868,7 +868,7 @@ export const flightsRouter = router({
               <a href="https://wa.me/237698104832?text=Bonjour,%20je%20souhaite%20réserver%20le%20vol%20${encodeURIComponent(flightDetails.flightNumber)}%20du%20${encodeURIComponent(flightDetails.departureDate)}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
             </div>
 
-            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© ${new Date().getFullYear()} 3M Travel & Services • hello@3mtravelagency.com</p>
+            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© ${new Date().getFullYear()} 3M TRAVEL AGENCY • hello@3mtravelagency.com</p>
           </div>
         </div>
       `;

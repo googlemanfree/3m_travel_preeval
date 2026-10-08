@@ -18,7 +18,7 @@ export default function VisaEtudes() {
   const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();
   // Informations factuelles sur les démarches propres à chaque destination.
   // Campus France, uni-assist, etc. sont des plateformes officielles réelles
-  // gérées par les autorités de chaque pays — 3M Travel n'en est pas
+  // gérées par les autorités de chaque pays — 3M TRAVEL AGENCY n'en est pas
   // partenaire, mais vous accompagne dans ces démarches.
   const destinations = [
     { flag: '🇨🇦', country: 'Canada', gradient: 'from-red-500 to-red-700', note: 'Permis d\'études via IRCC. Large choix de programmes collégiaux et universitaires.', platform: 'Demande via le portail IRCC' },
@@ -51,7 +51,7 @@ export default function VisaEtudes() {
 
   const faqs = [
     { question: 'Quel niveau d\'études faut-il pour partir étudier à l\'étranger ?', answer: 'Cela dépend de la destination et du programme visé : certains programmes sont accessibles après le Baccalauréat, d\'autres exigent une Licence ou un diplôme équivalent. Notre évaluation gratuite permet de clarifier les options réellement accessibles selon votre parcours.' },
-    { question: 'Qu\'est-ce que Campus France, et dois-je forcément y passer ?', answer: 'Campus France est la procédure officielle française de candidature pour la majorité des étudiants internationaux souhaitant étudier en France. C\'est une démarche gérée par les autorités françaises, pas par 3M Travel — nous vous accompagnons pour la compléter correctement et dans les délais.' },
+    { question: 'Qu\'est-ce que Campus France, et dois-je forcément y passer ?', answer: 'Campus France est la procédure officielle française de candidature pour la majorité des étudiants internationaux souhaitant étudier en France. C\'est une démarche gérée par les autorités françaises, pas par 3M TRAVEL AGENCY — nous vous accompagnons pour la compléter correctement et dans les délais.' },
     { question: 'Dois-je déjà avoir une admission avant de vous contacter ?', answer: 'Non. Nous pouvons vous accompagner dès la phase de recherche d\'établissement, ou reprendre le dossier si vous avez déjà une lettre d\'admission.' },
     { question: 'Combien de temps prend une demande de visa étudiant ?', answer: 'Le délai varie fortement selon le pays et la période de l\'année (les mois précédant la rentrée académique sont souvent plus chargés). Nous recommandons de démarrer les démarches plusieurs mois avant la date de rentrée visée.' },
     { question: 'Le visa étudiant permet-il de travailler pendant les études ?', answer: 'Dans plusieurs destinations (Canada, France, Belgique...), un permis de travail à temps partiel est possible sous conditions. Les règles précises dépendent du pays et sont confirmées avec vous au cas par cas.' },
@@ -71,7 +71,7 @@ export default function VisaEtudes() {
               Étudiez à l'étranger, accompagné à chaque étape
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              De l'évaluation de votre profil à la préparation de votre dossier, 3M Travel & Services vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
+              De l'évaluation de votre profil à la préparation de votre dossier, 3M TRAVEL AGENCY vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
             </p>
             <Link href="/evaluation?destination=etudes">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function VisaEtudes() {
       {/* Benefits */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Pourquoi passer par 3M Travel & Services</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Pourquoi passer par 3M TRAVEL AGENCY</h2>
           <div className="grid sm:grid-cols-2 gap-8">
             <div className="flex gap-4"><Users className="text-blue-600 flex-shrink-0" size={32} /><div><h3 className="font-bold text-gray-900 mb-1">Un conseiller dédié</h3><p className="text-gray-600 text-sm">Un seul interlocuteur qui suit votre dossier du début à la fin, joignable par WhatsApp.</p></div></div>
             <div className="flex gap-4"><Globe className="text-blue-600 flex-shrink-0" size={32} /><div><h3 className="font-bold text-gray-900 mb-1">Plusieurs destinations</h3><p className="text-gray-600 text-sm">Canada, France, Belgique, Allemagne, Pologne et d'autres selon votre profil.</p></div></div>

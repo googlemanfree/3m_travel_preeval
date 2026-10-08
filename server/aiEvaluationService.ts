@@ -143,7 +143,7 @@ function generateDefaultEvaluationReport(
 
   const destinationScore = Math.max(50, Math.min(75, totalScore - 10));
 
-  return `Rapport d'Évaluation Professionnelle — 3M Travel & Services
+  return `Rapport d'Évaluation Professionnelle — 3M TRAVEL AGENCY
 
 Bonjour ${candidateName},
 

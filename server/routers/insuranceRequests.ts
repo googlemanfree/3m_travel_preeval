@@ -40,7 +40,7 @@ const requestSchema = z.object({
 const statusSchema = z.enum(["new", "contacted", "quote_sent", "completed", "cancelled"]);
 const makeReference = () => `ASR-${new Date().getFullYear()}-${randomInt(100000, 1000000)}`;
 const whatsappSummary = (input: z.infer<typeof requestSchema>, reference: string) => [
-  "Bonjour 3M Travel, une demande d’assurance voyage vient d’être créée.",
+  "Bonjour 3M TRAVEL AGENCY, une demande d’assurance voyage vient d’être créée.",
   `Référence : ${reference}`,
   `Client : ${input.fullName}`,
   `Destination : ${input.destinationCountry}`,

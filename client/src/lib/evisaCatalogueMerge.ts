@@ -49,7 +49,7 @@ export function mergeEvisaCatalogue(base: EvisaDestination[], overrides: Array<P
     type: override.visaType, duration: override.duration, delay: override.delay, docs: override.requirements, fee: override.fee,
     note: override.notes, image: override.imageUrl || "", officialPortalUrl: override.officialPortalUrl,
     officialPortalLabel: override.officialPortalLabel, officialVerifiedAt: override.officialVerifiedAt,
-    highlights: override.highlights ?? [], emblems: override.emblems ?? [], steps: override.steps ?? [], culture: "Destination e‑Visa administrée par 3M Travel & Services.", workInfo: "Conditions à confirmer selon le projet de voyage.",
+    highlights: override.highlights ?? [], emblems: override.emblems ?? [], steps: override.steps ?? [], culture: "Destination e‑Visa administrée par 3M TRAVEL AGENCY.", workInfo: "Conditions à confirmer selon le projet de voyage.",
   }));
   return [...merged, ...custom];
 }

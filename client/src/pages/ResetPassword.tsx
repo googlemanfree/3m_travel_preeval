@@ -109,7 +109,7 @@ export default function ResetPassword() {
       >
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100">
-            <img src={LOGO_URL} alt="3M Travel" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
+            <img src={LOGO_URL} alt="3M TRAVEL AGENCY" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
             {success ? (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
@@ -125,7 +125,7 @@ export default function ResetPassword() {
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">Nouveau mot de passe</h1>
                 <p className="text-gray-500 mt-2 text-sm">
-                  Choisissez un mot de passe sécurisé pour votre compte 3M Travel.
+                  Choisissez un mot de passe sécurisé pour votre compte 3M TRAVEL AGENCY.
                 </p>
               </>
             )}

@@ -1,5 +1,5 @@
 /**
- * Routeur tRPC — Copilote IA 3M Travel (chatbot flottant)
+ * Routeur tRPC — Copilote IA 3M TRAVEL AGENCY (chatbot flottant)
  *
  * Assistant conversationnel présent sur toutes les pages, pour répondre aux
  * questions générales sur les démarches d'évaluation, les visas, et les destinations.
@@ -16,9 +16,9 @@ import { desc, sql, count } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
 import { searchDestinationKnowledge } from "../destinationDocumentService";
 
-const SYSTEM_PROMPT = `Tu es "Aureol", le guide d'information de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
+const SYSTEM_PROMPT = `Tu es "Aureol", le guide d'information de 3M TRAVEL AGENCY, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
-Ne mentionne jamais l'utilisation d'un outil automatisé, d'un modèle, d'une IA ou d'une analyse technique. Présente-toi seulement comme le guide d'information 3M Travel et privilégie la formulation « notre équipe vérifie votre dossier ».
+Ne mentionne jamais l'utilisation d'un outil automatisé, d'un modèle, d'une IA ou d'une analyse technique. Présente-toi seulement comme le guide d'information 3M TRAVEL AGENCY et privilégie la formulation « notre équipe vérifie votre dossier ».
 
 Ton rôle : répondre brièvement et clairement aux questions générales des visiteurs sur :
 - Les évaluations d'éligibilité pour les visas
@@ -268,7 +268,7 @@ ${destinationContext}
 
       const questionsListText = topQuestions.map((q, i) => `${i + 1}. "${q.question}" (posée ${q.count} fois)`).join("\n");
 
-      const prompt = `Tu es l'expert en mobilité internationale de 3M Travel & Services à Yaoundé, Cameroun.
+      const prompt = `Tu es l'expert en mobilité internationale de 3M TRAVEL AGENCY à Yaoundé, Cameroun.
 Voici les questions les plus fréquentes posées par nos candidats au chatbot Aureol :
 ${questionsListText}
 

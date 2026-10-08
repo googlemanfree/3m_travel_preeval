@@ -23,38 +23,38 @@ type Props = {
 type EvaluationAttachment = { name: string; mimeType: "application/pdf" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "image/jpeg" | "image/png"; contentBase64: string; size: number };
 
 const MESSAGE_TEMPLATES = {
-  en_standard: { label: "English — Standard assessment", subject: "Your 3M Travel & Services profile assessment", message: "Hello,\n\nOur team has completed the preliminary review of your profile. This assessment outlines your strengths, areas to improve and recommended next steps for your international mobility project." },
-  en_promising: { label: "English — Promising profile", subject: "Your profile shows promising prospects - 3M Travel", message: "Hello,\n\nYour profile shows promising strengths for your project. Please review the attached assessment and prepare the recommended information to strengthen your application." },
-  en_canada: { label: "English — Canada assessment", subject: "Your Canada procedure assessment - 3M Travel", message: "Hello,\n\nOur team has completed the review of your Canada project. Your assessment presents the points reviewed, documents to prepare and recommended next steps." },
-  en_luxembourg: { label: "English — Luxembourg assessment", subject: "Your Luxembourg procedure assessment - 3M Travel", message: "Hello,\n\nYour Luxembourg assessment is ready. Please review the priorities and prepare the supporting documents listed for the next stage of your file." },
+  en_standard: { label: "English — Standard assessment", subject: "Your 3M TRAVEL AGENCY profile assessment", message: "Hello,\n\nOur team has completed the preliminary review of your profile. This assessment outlines your strengths, areas to improve and recommended next steps for your international mobility project." },
+  en_promising: { label: "English — Promising profile", subject: "Your profile shows promising prospects - 3M TRAVEL AGENCY", message: "Hello,\n\nYour profile shows promising strengths for your project. Please review the attached assessment and prepare the recommended information to strengthen your application." },
+  en_canada: { label: "English — Canada assessment", subject: "Your Canada procedure assessment - 3M TRAVEL AGENCY", message: "Hello,\n\nOur team has completed the review of your Canada project. Your assessment presents the points reviewed, documents to prepare and recommended next steps." },
+  en_luxembourg: { label: "English — Luxembourg assessment", subject: "Your Luxembourg procedure assessment - 3M TRAVEL AGENCY", message: "Hello,\n\nYour Luxembourg assessment is ready. Please review the priorities and prepare the supporting documents listed for the next stage of your file." },
   standard: {
     label: "Bilan standard",
-    subject: "Votre Bilan d'Évaluation - 3M Travel & Services",
+    subject: "Votre Bilan d'Évaluation - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nNotre équipe a finalisé l'analyse préliminaire de votre profil. Vous trouverez dans ce bilan vos points forts, les axes à renforcer et les prochaines étapes recommandées pour votre projet de mobilité internationale.",
   },
   promising: {
     label: "Profil prometteur",
-    subject: "Votre profil présente de belles perspectives - 3M Travel",
+    subject: "Votre profil présente de belles perspectives - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nVotre profil présente des atouts intéressants pour votre projet. Nous vous invitons à consulter le bilan joint et à préparer les éléments recommandés afin de renforcer votre candidature.",
   },
   improvement: {
     label: "Profil à renforcer",
-    subject: "Votre plan d'amélioration personnalisé - 3M Travel",
+    subject: "Votre plan d'amélioration personnalisé - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nNotre analyse identifie des axes précis à renforcer avant la suite de votre procédure. Votre bilan détaille les actions prioritaires qui permettront d'améliorer la présentation et la cohérence de votre dossier.",
   },
   canada: {
     label: "Canada — bilan et prochaines étapes",
-    subject: "Votre bilan de procédure Canada - 3M Travel",
+    subject: "Votre bilan de procédure Canada - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nNotre équipe a finalisé la revue de votre projet Canada. Votre bilan présente les éléments retenus, les justificatifs à préparer et les prochaines étapes recommandées pour faire avancer votre dossier.",
   },
   luxembourg: {
     label: "Luxembourg — bilan et pièces à préparer",
-    subject: "Votre bilan de procédure Luxembourg - 3M Travel",
+    subject: "Votre bilan de procédure Luxembourg - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nVotre bilan pour le Luxembourg est prêt. Nous vous invitons à consulter les priorités indiquées et à préparer les pièces justificatives listées pour la prochaine étape de votre dossier.",
   },
   europe: {
     label: "Europe — orientation et plan d’action",
-    subject: "Votre bilan de mobilité Europe - 3M Travel",
+    subject: "Votre bilan de mobilité Europe - 3M TRAVEL AGENCY",
     message: "Bonjour,\n\nNotre équipe a préparé votre bilan de mobilité Europe. Vous y trouverez l’orientation retenue, les points à renforcer et le plan d’action recommandé avant la suite de la procédure.",
   },
 } as const;
@@ -358,7 +358,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       toast({ title: "WhatsApp indisponible", description: "Aucun numéro WhatsApp vérifié n’est enregistré pour ce candidat.", variant: "destructive" });
       return;
     }
-    const text = `${subject.trim() || "Votre évaluation 3M Travel & Services"}\n\nBonjour ${data?.application?.fullName || ""},\n\n${message.trim() || "Votre évaluation est disponible dans votre espace client."}\n\nLe bilan complet est consultable dans votre espace client. Cette ouverture WhatsApp nécessite votre confirmation avant l’envoi.`;
+    const text = `${subject.trim() || "Votre évaluation 3M TRAVEL AGENCY"}\n\nBonjour ${data?.application?.fullName || ""},\n\n${message.trim() || "Votre évaluation est disponible dans votre espace client."}\n\nLe bilan complet est consultable dans votre espace client. Cette ouverture WhatsApp nécessite votre confirmation avant l’envoi.`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
   const openPdfPreview = async () => {
@@ -430,7 +430,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       if (y + height > 280) { doc.addPage(); y = 18; }
       doc.text(leftLines, 14, y); doc.text(rightLines, 110, y); y += height + 6;
     };
-    doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 28, "F"); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.text("3M Travel & Services — Audit de versions", 14, 17);
+    doc.setFillColor(30, 58, 138); doc.rect(0, 0, 210, 28, "F"); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.text("3M TRAVEL AGENCY — Audit de versions", 14, 17);
     doc.setTextColor(31, 41, 55); doc.setFontSize(10); doc.setFont("helvetica", "normal"); y = 40;
     doc.text(`${data.application.fullName} · Dossier ${data.application.dossierNumber}`, 14, y); y += 7;
     doc.text(`Comparatif exporté le ${new Date().toLocaleString("fr-FR")}`, 14, y); y += 10;

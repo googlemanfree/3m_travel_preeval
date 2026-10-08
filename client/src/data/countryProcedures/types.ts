@@ -1,5 +1,5 @@
 /**
- * Modèle de données pour une fiche procédure pays complète — 3M Travel & Services.
+ * Modèle de données pour une fiche procédure pays complète — 3M TRAVEL AGENCY.
  * Un seul format réutilisable pour toutes les destinations (visa de travail,
  * études, etc.), avec ses volets officiel + anti-arnaque + tarification.
  */

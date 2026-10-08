@@ -69,7 +69,7 @@ describe("SMTP Configuration", () => {
       const info = await transporter.sendMail({
         from: SMTP_FROM,
         to: SMTP_USER, // Envoyer à soi-même pour le test
-        subject: "[Test] Configuration SMTP 3M Travel & Services",
+        subject: "[Test] Configuration SMTP 3M TRAVEL AGENCY",
         html: `
           <h2>Test de configuration SMTP</h2>
           <p>Cet email confirme que votre configuration SMTP fonctionne correctement.</p>

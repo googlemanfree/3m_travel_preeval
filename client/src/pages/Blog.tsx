@@ -64,12 +64,12 @@ export default function Blog() {
             Ressources et actualités à vérifier
           </p>
           <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-            Le centre d’information 3M Travel
+            Le centre d’information 3M TRAVEL AGENCY
           </h1>
           <p className="mt-5 text-base leading-7 text-slate-600">
             Des repères utiles pour préparer un projet de mobilité internationale. Les règles et disponibilités peuvent évoluer : les liens officiels restent la référence avant toute démarche.
           </p>
-          <SocialShareButtons title="Le centre d’information 3M Travel" className="mt-6" />
+          <SocialShareButtons title="Le centre d’information 3M TRAVEL AGENCY" className="mt-6" />
         </header>
 
         <section className="mt-12 grid gap-5 md:grid-cols-2">

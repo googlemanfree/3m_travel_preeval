@@ -136,7 +136,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [offlineEvaluationNote, setOfflineEvaluationNote] = useState("");
   const [agreementSubject, setAgreementSubject] = useState(`Protocole d’accord de service — ${AGREEMENT_PROTOCOL_VERSION}`);
   const [agreementContent, setAgreementContent] = useState(() => buildAgreementProtocolText(candidate.destinationCountry, candidate.projectType));
-  const [resendMessage, setResendMessage] = useState("Bonjour,\n\nNous vous renvoyons votre bilan d’évaluation. Nous restons disponibles si vous avez besoin d’une précision.\n\nCordialement,\n3M Travel & Services");
+  const [resendMessage, setResendMessage] = useState("Bonjour,\n\nNous vous renvoyons votre bilan d’évaluation. Nous restons disponibles si vous avez besoin d’une précision.\n\nCordialement,\n3M TRAVEL AGENCY");
   const [selectedClarification, setSelectedClarification] = useState<{ id: number; documentLabel: string; requestMessage: string } | null>(null);
   const [clarificationDeadlineDrafts, setClarificationDeadlineDrafts] = useState<Record<number, string>>({});
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
@@ -219,7 +219,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     let y = 50; pdf.setFontSize(10);
     for (const payment of openingPaymentHistory.payments) { if (y > 270) { pdf.addPage(); y = 20; } pdf.setFont("helvetica", "bold"); pdf.text(payment.label, 18, y); pdf.setFont("helvetica", "normal"); y += 6; pdf.text(`Référence : ${payment.reference || "Non renseignée"}`, 22, y); y += 5; pdf.text(`Montant : ${payment.amount ? `${payment.amount} XAF` : "Non renseigné"} · Validé par : ${payment.validatedBy || "Administrateur"}`, 22, y); y += 5; pdf.text(`Date : ${formatDate(payment.validatedAt)}${payment.proofFileUrl ? " · Preuve jointe" : ""}`, 22, y + 1); y += 12; }
     if (openingPaymentHistory.pendingProof) { if (y > 260) { pdf.addPage(); y = 20; } pdf.setTextColor(170, 90, 0); pdf.setFont("helvetica", "bold"); pdf.text("Preuve en attente de validation", 18, y); pdf.setFont("helvetica", "normal"); pdf.text(`Déposée par ${openingPaymentHistory.pendingProof.uploadedBy} le ${formatDate(openingPaymentHistory.pendingProof.uploadedAt)}`, 18, y + 6); }
-    pdf.setTextColor(40, 40, 40); pdf.setFontSize(8); pdf.text(`Généré le ${formatDate(new Date())} · Document interne 3M Travel Agency`, 18, 285); pdf.save(`historique-paiements-${candidate.folderCode || candidate.id}.pdf`);
+    pdf.setTextColor(40, 40, 40); pdf.setFontSize(8); pdf.text(`Généré le ${formatDate(new Date())} · Document interne 3M TRAVEL AGENCY`, 18, 285); pdf.save(`historique-paiements-${candidate.folderCode || candidate.id}.pdf`);
   };
 
   const updateMutation = trpc.admin.updateCandidate360Workflow.useMutation({

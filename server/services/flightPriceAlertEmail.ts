@@ -20,7 +20,7 @@ const routeLine = (input: AlertEmailInput) =>
   `${oneLine(input.origin, 3)} → ${oneLine(input.destination, 3)} · départ ${oneLine(input.departureDate, 10)}${input.tripType === "ROUND_TRIP" && input.returnDate ? ` · retour ${oneLine(input.returnDate, 10)}` : " (aller simple)"}`;
 
 const frame = (body: string, footer: string) =>
-  `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#172554">${body}<p style="margin:24px 0 0;font-size:12px;color:#94a3b8">3M Travel &amp; Services · Yaoundé · hello@3mtravelagency.com. ${footer}</p></div>`;
+  `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#172554">${body}<p style="margin:24px 0 0;font-size:12px;color:#94a3b8">3M TRAVEL AGENCY · Yaoundé · hello@3mtravelagency.com. ${footer}</p></div>`;
 
 const button = (href: string, label: string, color: string) =>
   `<p style="margin:0 0 20px"><a href="${escapeHtml(href)}" style="display:inline-block;background:${color};color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">${escapeHtml(label)}</a></p>`;
@@ -40,7 +40,7 @@ ${button(input.confirmUrl, "Activer mon alerte", "#16a34a")}
 <p style="margin:0;font-size:13px;color:#475569">Vous n'êtes pas à l'origine de cette demande ? Ne cliquez pas : sans confirmation, rien n'est activé. <a href="${escapeHtml(input.stopUrl)}" style="color:#475569">Supprimer cette alerte</a>.</p>`,
     "Vous recevez ce message parce qu'une alerte de tarif a été demandée avec cette adresse.",
   );
-  return { subject: "Confirmez votre alerte de tarif — 3M Travel & Services", html };
+  return { subject: "Confirmez votre alerte de tarif — 3M TRAVEL AGENCY", html };
 }
 
 export function buildPriceDropEmail(input: AlertEmailInput & { priceXaf: number; previousXaf: number; searchUrl: string; stopUrl: string; retrievedAt: Date }): { subject: string; html: string } {
@@ -57,7 +57,7 @@ ${button(input.searchUrl, "Voir ce vol", "#1d4ed8")}
 <p style="margin:0;font-size:13px;color:#475569"><a href="${escapeHtml(input.stopUrl)}" style="color:#475569">Arrêter cette alerte</a></p>`,
     "Vous recevez ce message car vous avez activé une alerte de tarif.",
   );
-  return { subject: `Le tarif ${oneLine(input.origin, 3)} → ${oneLine(input.destination, 3)} a baissé — 3M Travel & Services`, html };
+  return { subject: `Le tarif ${oneLine(input.origin, 3)} → ${oneLine(input.destination, 3)} a baissé — 3M TRAVEL AGENCY`, html };
 }
 
 export function searchUrlFor(siteUrl: string, input: AlertEmailInput): string {

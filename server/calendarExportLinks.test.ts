@@ -3,10 +3,10 @@ import { describe, it, expect } from "vitest";
 describe("Calendar Export Links (Google Calendar & Outlook)", () => {
   it("generates correct web links for adding appointments to Google Calendar and Outlook", () => {
     const appointment = {
-      title: "Consultation 3M Travel - Canada Express Entry",
+      title: "Consultation 3M TRAVEL AGENCY - Canada Express Entry",
       date: "2026-08-25",
       time: "11:00",
-      location: "Agence 3M Travel & Services ou Vidéo",
+      location: "Agence 3M TRAVEL AGENCY ou Vidéo",
       details: "Référence: 3M-APT-9921",
     };
 

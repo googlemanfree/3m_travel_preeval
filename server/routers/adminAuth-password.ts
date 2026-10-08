@@ -272,9 +272,9 @@ export const adminAuthRouter = router({
       try {
         const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
+          <h2 style="color: #1e40af;">Accès Administrateur — 3M TRAVEL AGENCY</h2>
           <p>Bonjour ${esc(input.fullName)},</p>
-          <p>${esc(inviter.fullName)} vous a donné accès à l'espace administrateur de 3M Travel &amp; Services, avec le rôle <strong>${esc(input.adminType)}</strong>.</p>
+          <p>${esc(inviter.fullName)} vous a donné accès à l'espace administrateur de 3M TRAVEL AGENCY, avec le rôle <strong>${esc(input.adminType)}</strong>.</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
             <p style="margin: 4px 0;"><strong>Email :</strong> ${esc(input.email)}</p>
             <p style="margin: 4px 0;"><strong>Mot de passe temporaire :</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${tempPassword}</code></p>
@@ -283,12 +283,12 @@ export const adminAuthRouter = router({
           <div style="text-align: center; margin: 24px 0;">
             <a href="${loginUrl}" style="background-color: #1e40af; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se connecter</a>
           </div>
-          <p style="color: #666;">Si vous ne vous attendiez pas à cet accès, contactez l'équipe 3M Travel.</p>
+          <p style="color: #666;">Si vous ne vous attendiez pas à cet accès, contactez l'équipe 3M TRAVEL AGENCY.</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+          <p style="color: #999; font-size: 12px;">3M TRAVEL AGENCY - Pré-évaluation Visa & Immigration</p>
         </div>`;
 
-        await sendEmail({ to: input.email, subject: "🔐 Votre accès administrateur - 3M Travel", html: htmlContent });
+        await sendEmail({ to: input.email, subject: "🔐 Votre accès administrateur - 3M TRAVEL AGENCY", html: htmlContent });
       } catch (emailErr) {
         console.error("[Admin Auth] Invite email send failed:", emailErr);
         return {
@@ -335,12 +335,12 @@ export const adminAuthRouter = router({
 
       try {
         const loginUrl = `${process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com"}/admin/login`;
-        const subject = input.customSubject || "🔐 Nouveau mot de passe — Accès administrateur 3M Travel";
+        const subject = input.customSubject || "🔐 Nouveau mot de passe — Accès administrateur 3M TRAVEL AGENCY";
         const bodyText = input.customBody
           ? input.customBody.replace(/\{inviteLink\}/g, loginUrl)
           : `Voici votre nouveau mot de passe temporaire pour accéder à l'espace administrateur.`;
         const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1e40af;">Nouveau mot de passe — 3M Travel</h2>
+          <h2 style="color: #1e40af;">Nouveau mot de passe — 3M TRAVEL AGENCY</h2>
           <p>Bonjour ${esc(admin.fullName)},</p>
           <p style="white-space: pre-line;">${esc(bodyText)}</p>
           <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -351,7 +351,7 @@ export const adminAuthRouter = router({
             <a href="${loginUrl}" style="background-color: #1e40af; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se connecter</a>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+          <p style="color: #999; font-size: 12px;">3M TRAVEL AGENCY - Pré-évaluation Visa & Immigration</p>
         </div>`;
 
         await sendEmail({ to: input.email, subject, html: htmlContent });

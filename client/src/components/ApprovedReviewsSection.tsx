@@ -22,10 +22,10 @@ type DestinationFilter = "all" | "canada" | "schengen" | "other";
 type SortOption = "rating-desc" | "rating-asc" | "date-desc" | "date-asc";
 
 async function shareReview(review: Review) {
-  const text = `Témoignage 3M Travel de ${review.displayName ?? "un client"}${review.destinationCountry ? ` (${review.destinationCountry})` : ""} : “${review.reviewText ?? ""}”`;
+  const text = `Témoignage 3M TRAVEL AGENCY de ${review.displayName ?? "un client"}${review.destinationCountry ? ` (${review.destinationCountry})` : ""} : “${review.reviewText ?? ""}”`;
   const url = window.location.href.split("#")[0] + "#avis-clients";
   if (navigator.share) {
-    await navigator.share({ title: "Avis client 3M Travel Agency", text, url }).catch(() => undefined);
+    await navigator.share({ title: "Avis client 3M TRAVEL AGENCY", text, url }).catch(() => undefined);
     return;
   }
   window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank", "noopener,noreferrer");

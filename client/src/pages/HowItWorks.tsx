@@ -57,7 +57,7 @@ export default function HowItWorks() {
     {
       number: 8,
       title: "Gestion administrative complete",
-      description: "3M Travel & Services gere toutes les demarches administratives pour l'obtention de votre permis de travail et visa. Vous pouvez vous concentrer sur votre avenir.",
+      description: "3M TRAVEL AGENCY gere toutes les demarches administratives pour l'obtention de votre permis de travail et visa. Vous pouvez vous concentrer sur votre avenir.",
       icon: Award,
       color: "bg-emerald-100 text-emerald-600",
     },

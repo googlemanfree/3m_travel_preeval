@@ -1,4 +1,4 @@
-Décrocher un visa de travail à l'étranger peut sembler complexe, mais avec 3M Travel & Services, votre parcours est simplifié, sécurisé et transparent. Nous vous accompagnons à chaque étape pour maximiser vos chances de succès. Découvrez notre processus clair et efficace, conçu pour vous mener vers votre nouvelle carrière internationale.
+Décrocher un visa de travail à l'étranger peut sembler complexe, mais avec 3M TRAVEL AGENCY, votre parcours est simplifié, sécurisé et transparent. Nous vous accompagnons à chaque étape pour maximiser vos chances de succès. Découvrez notre processus clair et efficace, conçu pour vous mener vers votre nouvelle carrière internationale.
 
 ## Notre Processus Étape par Étape : Confiance et Efficacité
 
@@ -31,9 +31,9 @@ Cette étape marque le passage de l'évaluation à l'action concrète, nous perm
 
 Dès que votre dossier est complet et les frais réglés, nous le soumettons à notre réseau d'agences de recrutement et de placement partenaires dans votre pays de destination. Notre objectif est de vous aider à obtenir un contrat de travail et un permis de travail, en mettant en avant votre profil auprès des employeurs potentiels.
 
-### Étape 7 : Gestion Administrative Complète par 3M Travel & Services
+### Étape 7 : Gestion Administrative Complète par 3M TRAVEL AGENCY
 
-Laissez-nous gérer les complexités administratives. 3M Travel & Services prend en charge toutes les démarches liées à l'obtention de votre permis de travail et de votre visa. Nous assurons le suivi avec les autorités compétentes et les agences de recrutement, vous tenant informé à chaque avancée. Vous pouvez vous concentrer sur votre avenir, nous nous occupons du reste.
+Laissez-nous gérer les complexités administratives. 3M TRAVEL AGENCY prend en charge toutes les démarches liées à l'obtention de votre permis de travail et de votre visa. Nous assurons le suivi avec les autorités compétentes et les agences de recrutement, vous tenant informé à chaque avancée. Vous pouvez vous concentrer sur votre avenir, nous nous occupons du reste.
 
 ---
 

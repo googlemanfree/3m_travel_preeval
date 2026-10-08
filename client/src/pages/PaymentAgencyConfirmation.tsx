@@ -164,7 +164,7 @@ export default function PaymentAgencyConfirmation() {
         >
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
             <Building2 className="w-6 h-6 text-blue-600" />
-            Coordonnées de l'Agence 3M Travel
+            Coordonnées de l'Agence 3M TRAVEL AGENCY
           </h3>
 
           <div className="space-y-4">

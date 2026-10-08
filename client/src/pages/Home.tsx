@@ -44,7 +44,7 @@ export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    document.title = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
+    document.title = "3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale";
   }, []);
 
   useEffect(() => {
@@ -246,7 +246,7 @@ export default function Home() {
       <section aria-labelledby="why-3m-title" className="py-16 bg-white" data-testid="why-3m-section">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M Travel</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
             <h2 id="why-3m-title" className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Des preuves concrètes, pas des promesses vagues</h2>
             <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
               Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
@@ -312,7 +312,7 @@ export default function Home() {
           </div>
           <p className="mt-8 text-center text-sm text-slate-600">
             Besoin d’échanger avant de démarrer ?{" "}
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
               Écrire sur WhatsApp
             </a>
             {" · "}
@@ -342,7 +342,7 @@ export default function Home() {
               </Button>
             </a>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full max-w-[22rem] sm:w-auto"
@@ -379,7 +379,7 @@ export default function Home() {
               Évaluer — gratuit
             </a>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-center text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 active:scale-[0.98]"
@@ -555,7 +555,7 @@ function PricingSection() {
 
                 {/* CTA */}
                 <a
-                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${

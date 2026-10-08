@@ -6,7 +6,7 @@ const copy = {
   fr: {
     eyebrow: "ÉTAT DU SERVICE",
     title: "Une information claire, au bon moment.",
-    intro: "Consultez ici l’état général des services publics de 3M Travel & Services.",
+    intro: "Consultez ici l’état général des services publics de 3M TRAVEL AGENCY.",
     updated: "Dernière vérification : disponibilité publique observée",
     operational: "Opérationnel",
     services: "Services publics",
@@ -24,7 +24,7 @@ const copy = {
   en: {
     eyebrow: "SERVICE STATUS",
     title: "Clear information, when you need it.",
-    intro: "Check the general status of 3M Travel & Services public services here.",
+    intro: "Check the general status of 3M TRAVEL AGENCY public services here.",
     updated: "Last checked: public availability observed",
     operational: "Operational",
     services: "Public services",

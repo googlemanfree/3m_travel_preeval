@@ -17,7 +17,7 @@ export default function PaymentSuccess() {
   );
 
   const whatsappMsg = encodeURIComponent(
-    `Bonjour 3M Travel Agency, je viens d'ouvrir mon dossier d'immigration.\n\n` +
+    `Bonjour 3M TRAVEL AGENCY, je viens d'ouvrir mon dossier d'immigration.\n\n` +
     `📋 Numéro de dossier : ${dossierNumber}\n` +
     `👤 Nom : ${application?.fullName ?? ""}\n` +
     `🌍 Destination : ${application?.destination ?? ""}\n\n` +

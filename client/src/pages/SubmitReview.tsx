@@ -251,7 +251,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
                   id="reviewText"
                   value={formData.reviewText}
                   onChange={(e) => setFormData({ ...formData, reviewText: e.target.value })}
-                  placeholder="Partagez votre expérience avec 3M Travel Agency..."
+                  placeholder="Partagez votre expérience avec 3M TRAVEL AGENCY..."
                   rows={6}
                   maxLength={1000}
                   className={errors.reviewText ? "border-red-500" : ""}
@@ -307,7 +307,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
                     className="mt-1"
                   />
                   <span className="text-sm text-slate-700">
-                    Je consens à la publication de mon avis sur le site 3M Travel Agency.
+                    Je consens à la publication de mon avis sur le site 3M TRAVEL AGENCY.
                     Mon avis sera validé par l'équipe avant publication.
                   </span>
                 </label>

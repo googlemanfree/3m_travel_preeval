@@ -114,7 +114,7 @@ export async function exportConsultationSummaryPdf(input: ConsultationSummaryPdf
     doc.line(margin, height - 15, width - margin, height - 15);
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Confidentiel — 3M Travel Agency · Page ${page}/${pages}`, width / 2, height - 9, { align: "center" });
+    doc.text(`Confidentiel — 3M TRAVEL AGENCY · Page ${page}/${pages}`, width / 2, height - 9, { align: "center" });
   }
 
   doc.save(buildConsultationPdfFilename(input.candidateName));

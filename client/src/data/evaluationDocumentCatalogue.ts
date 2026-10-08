@@ -34,7 +34,7 @@ const PROJECT_REQUIREMENTS: Record<EvaluationProjectType, EvaluationDocumentRequ
 const COUNTRY_REQUIREMENTS: Partial<Record<string, Partial<Record<EvaluationProjectType, EvaluationDocumentRequirement[]>>>> = {
   Canada: {
     travail: [
-      { category: "Projet", label: "Offre ou perspective professionnelle", detail: "À fournir uniquement si disponible ; aucune offre n’est garantie par 3M Travel.", priority: "selon le cas" },
+      { category: "Projet", label: "Offre ou perspective professionnelle", detail: "À fournir uniquement si disponible ; aucune offre n’est garantie par 3M TRAVEL AGENCY.", priority: "selon le cas" },
       { category: "Profil", label: "Résultats linguistiques", detail: "Tests ou niveaux de français/anglais si déjà disponibles.", priority: "selon le cas" },
     ],
     etudes: [

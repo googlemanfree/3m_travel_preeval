@@ -74,7 +74,7 @@ export const adminPasswordResetRouter = router({
 
       await sendEmail({
         to: admin.email,
-        subject: "Votre mot de passe temporaire — 3M Travel",
+        subject: "Votre mot de passe temporaire — 3M TRAVEL AGENCY",
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
           <h2 style="color:#1e40af">Mot de passe temporaire administrateur</h2>
           <p>Bonjour ${esc(admin.fullName || admin.email)},</p>

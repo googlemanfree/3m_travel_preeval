@@ -239,7 +239,7 @@ export default function SubmitDocuments() {
                 Veuillez vous presenter a notre agence avec vos documents originaux:
               </p>
               <div className="bg-white p-4 rounded-lg border border-blue-200">
-                <p className="font-semibold text-gray-900">3M Travel & Services</p>
+                <p className="font-semibold text-gray-900">3M TRAVEL AGENCY</p>
                 <p className="text-gray-600">Yaoundé, Cameroun</p>
                 <p className="text-gray-600">Tel: +237 XXX XXX XXX</p>
               </div>

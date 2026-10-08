@@ -40,7 +40,7 @@ export async function beginTwoFactorEnrollment(actorType: TwoFactorActor, actorI
   const current = (await db.select().from(securityTotpFactors).where(and(eq(securityTotpFactors.actorType, actorType), eq(securityTotpFactors.actorId, actorId))).limit(1))[0];
   if (current) await db.update(securityTotpFactors).set({ secretCiphertext, enabled: false, enrolledAt: null }).where(eq(securityTotpFactors.id, current.id));
   else await db.insert(securityTotpFactors).values({ actorType, actorId, secretCiphertext, enabled: false });
-  return { otpAuthUri: generateURI({ issuer: "3M Travel & Services", label, secret }) };
+  return { otpAuthUri: generateURI({ issuer: "3M TRAVEL AGENCY", label, secret }) };
 }
 
 export async function confirmTwoFactorEnrollment(actorType: TwoFactorActor, actorId: number, token: string) {

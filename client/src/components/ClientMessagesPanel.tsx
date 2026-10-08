@@ -32,7 +32,7 @@ export default function ClientMessagesPanel() {
         utils.candidate.unreadCount.invalidate(),
         utils.candidate.getMyDossierData.invalidate(),
       ]);
-      toast.success("Votre message a bien été envoyé à l’équipe 3M Travel.");
+      toast.success("Votre message a bien été envoyé à l’équipe 3M TRAVEL AGENCY.");
     },
     onError: (error) => toast.error(error.message || "Impossible d’envoyer le message."),
   });
@@ -58,7 +58,7 @@ export default function ClientMessagesPanel() {
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 id="client-messages-title" className="text-lg font-black text-slate-900">Messagerie 3M Travel</h2>
+            <h2 id="client-messages-title" className="text-lg font-black text-slate-900">Messagerie 3M TRAVEL AGENCY</h2>
             <p className="text-sm text-slate-600">Échangez avec l’équipe qui suit votre dossier.</p>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function ClientMessagesPanel() {
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
                   <p className={`mt-2 flex items-center gap-1 text-[11px] ${isCandidate ? "text-blue-100" : "text-slate-500"}`}>
                     {isCandidate ? <UserRound className="h-3 w-3" aria-hidden="true" /> : <Headphones className="h-3 w-3" aria-hidden="true" />}
-                    {isCandidate ? "Vous" : "Équipe 3M Travel"} · {new Date(message.createdAt).toLocaleString("fr-FR")}
+                    {isCandidate ? "Vous" : "Équipe 3M TRAVEL AGENCY"} · {new Date(message.createdAt).toLocaleString("fr-FR")}
                   </p>
                 </div>
               </div>

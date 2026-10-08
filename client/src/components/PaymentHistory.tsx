@@ -101,7 +101,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
       const paymentDate = transaction.completedAt ?? transaction.createdAt;
 
       pdf.setFontSize(18);
-      pdf.text('3M Travel & Services', 20, 24);
+      pdf.text('3M TRAVEL AGENCY', 20, 24);
       pdf.setFontSize(14);
       pdf.text('Reçu de paiement', 20, 36);
       pdf.setFontSize(11);
@@ -121,7 +121,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
         pdf.text(String(value), 62, y, { maxWidth: 120 });
       });
       pdf.setFontSize(9);
-      pdf.text('Document généré depuis votre espace 3M Travel & Services.', 20, 155);
+      pdf.text('Document généré depuis votre espace 3M TRAVEL AGENCY.', 20, 155);
       pdf.save(`Recu_Paiement_${transaction.dossierNumber || transaction.transactionId}.pdf`);
       toast.success('Le reçu de paiement a été téléchargé.');
     } catch {

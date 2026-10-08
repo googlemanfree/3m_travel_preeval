@@ -1,6 +1,6 @@
 /**
  * Illustration originale — Traitement de dossier / démarches administratives
- * Création propre pour 3M Travel & Services, aucune ressource externe.
+ * Création propre pour 3M TRAVEL AGENCY, aucune ressource externe.
  */
 export default function DocumentProcessIllustration({ className }: { className?: string }) {
   return (

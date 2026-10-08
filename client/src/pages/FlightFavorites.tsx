@@ -42,7 +42,7 @@ export default function FlightFavorites() {
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     doc.setFontSize(18);
     doc.setTextColor(15, 36, 96);
-    doc.text("3M Travel & Services — Mes vols favoris", 14, 18);
+    doc.text("3M TRAVEL AGENCY — Mes vols favoris", 14, 18);
     doc.setFontSize(9);
     doc.setTextColor(90, 100, 115);
     doc.text(`Export généré le ${new Date().toLocaleString("fr-FR")}`, 14, 25);

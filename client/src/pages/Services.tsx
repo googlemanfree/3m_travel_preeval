@@ -10,7 +10,7 @@ export default function Services() {
     <ServicePageShell
       eyebrow="Tous nos services"
       title="Visas, voyages et démarches administratives : un seul interlocuteur"
-      introduction="3M Travel & Services accompagne la mobilité internationale, organise vos déplacements et prépare des démarches administratives et numériques, à Yaoundé et à distance."
+      introduction="3M TRAVEL AGENCY accompagne la mobilité internationale, organise vos déplacements et prépare des démarches administratives et numériques, à Yaoundé et à distance."
       primaryHref="/consultation"
       primaryLabel="Parler à un conseiller"
       notice="Les décisions de visa, de délivrance de documents et de tarification appartiennent aux autorités et prestataires concernés : 3M prépare, oriente et suit votre dossier sans garantir de résultat."

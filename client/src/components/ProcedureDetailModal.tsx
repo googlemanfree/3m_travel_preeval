@@ -197,7 +197,7 @@ const PROCEDURE_DETAILS: Record<string, {
       "Formation professionnelle ou expérience dans le secteur ciblé",
       "Aptitude physique pour les postes industriels",
       "Casier judiciaire vierge",
-      "Contrat de travail avec employeur polonais (fourni par 3M Travel)",
+      "Contrat de travail avec employeur polonais (fourni par 3M TRAVEL AGENCY)",
       "Visa de travail D délivré par l'Ambassade de Pologne",
     ],
     documents: [
@@ -423,7 +423,7 @@ export default function ProcedureDetailModal({ procedure, open, onClose, onConti
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-amber-800">Frais d'ouverture de dossier 3M Travel</p>
+                <p className="text-sm font-bold text-amber-800">Frais d'ouverture de dossier 3M TRAVEL AGENCY</p>
                 <p className="text-sm text-amber-700 mt-1">
                   <strong>65 000 FCFA</strong> — frais obligatoires et non remboursables pour l'ouverture et le traitement de votre dossier par nos conseillers. Ces frais couvrent l'évaluation complète, la constitution du dossier et le suivi jusqu'à l'obtention du visa.
                 </p>

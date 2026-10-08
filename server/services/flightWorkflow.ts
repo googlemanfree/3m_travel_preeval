@@ -42,8 +42,8 @@ export function buildPaymentDecisionEmail(input: { requestRef: string; approved:
   const body = input.approved
     ? `<p>L’agence a <strong>confirmé la réception de votre paiement</strong> pour la réservation <strong>${escapeHtml(ref)}</strong>. Nous préparons maintenant l’émission de votre billet : vous recevrez un message dès que la référence de réservation (PNR) sera disponible. Ceci n’est pas encore un billet.</p>`
     : `<p>L’agence n’a <strong>pas pu confirmer votre paiement</strong> pour la réservation <strong>${escapeHtml(ref)}</strong> (montant, référence ou preuve à vérifier). Aucun billet n’est émis à ce stade. Contactez l’agence au ${escapeHtml(input.whatsappDisplay)} avec votre preuve de paiement, ou consultez les moyens de paiement : <a href="${escapeHtml(payLink(input.siteUrl, ref))}">Comment payer</a>.</p>`;
-  const html = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:22px;color:#172554"><h2 style="margin:0 0 10px;color:${input.approved ? "#047857" : "#b45309"}">${input.approved ? "Paiement confirmé" : "Paiement non confirmé"}</h2><p>Bonjour,</p>${body}<p style="margin-top:18px">Cordialement,<br/><strong>3M Travel &amp; Services</strong></p></div>`;
-  return { subject: `[3M Travel] ${input.approved ? "Paiement confirmé" : "Paiement non confirmé"} — ${ref}`, html };
+  const html = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:22px;color:#172554"><h2 style="margin:0 0 10px;color:${input.approved ? "#047857" : "#b45309"}">${input.approved ? "Paiement confirmé" : "Paiement non confirmé"}</h2><p>Bonjour,</p>${body}<p style="margin-top:18px">Cordialement,<br/><strong>3M TRAVEL AGENCY</strong></p></div>`;
+  return { subject: `[3M TRAVEL AGENCY] ${input.approved ? "Paiement confirmé" : "Paiement non confirmé"} — ${ref}`, html };
 }
 
 /** Alerte au comptoir quand le client déclare un paiement à vérifier (mode + référence de transaction saisis par lui). */
@@ -51,7 +51,7 @@ export function buildPaymentDeclaredAlert(input: { requestRef: string; clientEma
   const ref = oneLine(input.requestRef, 60);
   const row = (label: string, value: string) => `<tr><td style="padding:5px 10px;color:#64748b;font-size:12px">${escapeHtml(label)}</td><td style="padding:5px 10px;font-weight:bold;font-size:14px">${escapeHtml(value)}</td></tr>`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:22px;color:#172554"><h2 style="margin:0 0 10px;color:#b45309">Paiement déclaré à vérifier</h2><p style="font-size:13px">Le client indique avoir payé. <strong>Rien n’est validé</strong> : vérifiez la réception (Mobile Money, relevé, comptoir), puis validez ou rejetez le paiement dans l’administration.</p><table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;margin:0 0 14px">${row("Réservation", ref)}${row("Client", oneLine(input.clientEmail))}${row("Mode déclaré", paymentMethodLabel(input.method))}${row("Référence de transaction déclarée", oneLine(input.transactionId, 120))}</table><a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir l’administration</a></div>`;
-  return { subject: `[3M Travel] Paiement déclaré à vérifier — ${ref}`, html };
+  return { subject: `[3M TRAVEL AGENCY] Paiement déclaré à vérifier — ${ref}`, html };
 }
 
 /** Alerte au comptoir quand CinetPay confirme lui-même un paiement en ligne : rien à vérifier (le montant est déjà contrôlé), mais le billet reste à émettre. */
@@ -59,5 +59,5 @@ export function buildOnlinePaymentConfirmedAlert(input: { requestRef: string; cl
   const ref = oneLine(input.requestRef, 60);
   const row = (label: string, value: string) => `<tr><td style="padding:5px 10px;color:#64748b;font-size:12px">${escapeHtml(label)}</td><td style="padding:5px 10px;font-weight:bold;font-size:14px">${escapeHtml(value)}</td></tr>`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:22px;color:#172554"><h2 style="margin:0 0 10px;color:#047857">Paiement en ligne confirmé</h2><p style="font-size:13px">CinetPay a confirmé ce paiement : le montant est déjà vérifié par le fournisseur. Préparez maintenant l'émission du billet (PNR, checklist).</p><table style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;margin:0 0 14px">${row("Réservation", ref)}${row("Client", oneLine(input.clientEmail))}${row("Montant réglé", `${new Intl.NumberFormat("fr-FR").format(Math.round(input.amountXaf))} XAF`)}${row("Référence CinetPay", oneLine(input.transactionId, 120))}</table><a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir l'administration</a></div>`;
-  return { subject: `[3M Travel] Paiement en ligne confirmé — ${ref}`, html };
+  return { subject: `[3M TRAVEL AGENCY] Paiement en ligne confirmé — ${ref}`, html };
 }

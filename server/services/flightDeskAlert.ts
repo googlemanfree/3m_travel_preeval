@@ -29,7 +29,7 @@ export function buildDeskAlertEmail(data: DeskAlertData, options: { adminUrl: st
   const clientLink = data.passengerPhone && normalizeWhatsAppNumber(data.passengerPhone) ? whatsAppLink(data.passengerPhone, clientContactMessage(data)) : null;
   const deskLink = whatsAppLink(options.deskWhatsApp, summary);
   const urgent = data.priority === "URGENTE";
-  const subject = oneLine(`${urgent ? "[URGENT] " : ""}[3M Travel] Réservation vol ${data.requestRef} — ${data.outbound.route} — ${data.outbound.date}`);
+  const subject = oneLine(`${urgent ? "[URGENT] " : ""}[3M TRAVEL AGENCY] Réservation vol ${data.requestRef} — ${data.outbound.route} — ${data.outbound.date}`);
   const row = (label: string, value: string) => `<tr><td style="padding:6px 10px;color:#64748b;font-size:12px;white-space:nowrap;vertical-align:top">${escapeHtml(label)}</td><td style="padding:6px 10px;font-weight:bold;color:#0f172a;font-size:14px">${value}</td></tr>`;
   const leg = (title: string, value: DeskAlertData["outbound"]) => row(title, `${escapeHtml(value.airline)} ${escapeHtml(value.flightNumber)}<br/><span style="font-weight:normal">${escapeHtml(value.route)} · ${escapeHtml(value.date)} · ${escapeHtml(value.departureTime)} → ${escapeHtml(value.arrivalTime)}</span>`);
   const price = data.quotedTotalPrice === null ? "à confirmer" : `${new Intl.NumberFormat("fr-FR").format(data.quotedTotalPrice)} ${escapeHtml(data.currency)}`;
@@ -57,7 +57,7 @@ ${data.comment ? row("Commentaire client", escapeHtml(data.comment)) : ""}
 <li>Émettre le billet <strong>uniquement après paiement validé</strong>.</li>
 </ol>
 <p style="margin:0 0 4px">${clientLink ? button(clientLink, "Écrire au client sur WhatsApp", "#16a34a") : ""}${button(deskLink, "Transmettre au comptoir par WhatsApp", "#0f766e")}${button(options.adminUrl, "Ouvrir la file des réservations", "#1d4ed8")}</p>
-<p style="margin:12px 0 0;font-size:11px;color:#94a3b8">Message automatique du site 3M Travel &amp; Services. Le résumé ci-dessus est aussi disponible en un clic (copier) dans l’administration.</p>
+<p style="margin:12px 0 0;font-size:11px;color:#94a3b8">Message automatique du site 3M TRAVEL AGENCY. Le résumé ci-dessus est aussi disponible en un clic (copier) dans l’administration.</p>
 </div>`;
   return { subject, html };
 }

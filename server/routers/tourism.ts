@@ -170,7 +170,7 @@ export const tourismRouter = router({
       })).filter((hotel) => input.amenities.every((amenity) => hotel.amenities.includes(amenity))).slice(0, 12);
     }
     try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: buildHotelDiscoveryQuery(input.destination, input.amenities) }); places = (google.results || []).slice(0, 5).map(buildTourismPlace); } catch { /* suggestions facultatives */ }
-    let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M Travel avant toute réservation.";
+    let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M TRAVEL AGENCY avant toute réservation.";
     try {
       const ai = await invokeLLM({
         messages: [
@@ -342,7 +342,7 @@ export const tourismRouter = router({
       .orderBy(desc(tourismServiceRequests.createdAt))
       .limit(1000);
     
-    let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//3M Travel & Services//Admin Calendar//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
+    let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//3M TRAVEL AGENCY//Admin Calendar//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
     for (const r of confirmed) {
       const start = r.departureDate ? new Date(r.departureDate).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : new Date(r.createdAt).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
       const end = r.returnDate ? new Date(r.returnDate).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : start;

@@ -70,7 +70,7 @@ function RequestForm() {
           <p className="font-black">Votre demande a bien été envoyée.</p>
           <p className="mt-1 text-sm leading-6">Notre équipe vous recontacte pour confirmer les pièces à fournir et la marche à suivre.</p>
           <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel, je viens d’envoyer une demande CNI & passeport. Merci de me contacter.")}`}
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je viens d’envoyer une demande CNI & passeport. Merci de me contacter.")}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-emerald-900 underline"
@@ -128,7 +128,7 @@ export default function CniPasseport() {
     <ServicePageShell
       eyebrow="Services 3M · Documents d’identité et de voyage"
       title="CNI et passeport : un accompagnement clair, de la demande au suivi"
-      introduction="Carte nationale d’identité ou passeport : première demande, renouvellement, perte ou vol. 3M Travel & Services vous aide à préparer un dossier complet et à en suivre l’avancement."
+      introduction="Carte nationale d’identité ou passeport : première demande, renouvellement, perte ou vol. 3M TRAVEL AGENCY vous aide à préparer un dossier complet et à en suivre l’avancement."
       primaryHref="/cni-passeport#demande"
       primaryLabel="Faire ma demande"
       notice="Les frais officiels, les délais et la décision de délivrance relèvent de l’administration. 3M prépare et suit votre dossier, sans garantir un résultat."

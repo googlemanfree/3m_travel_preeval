@@ -151,7 +151,7 @@ function ServiceCardContent({ item }: { item: typeof services[number] & { tag?: 
           <span>Lancer la démarche</span>
           <span>→</span>
         </span>
-        <span className="text-[11px] font-semibold text-slate-400">3M Travel</span>
+        <span className="text-[11px] font-semibold text-slate-400">3M TRAVEL AGENCY</span>
       </div>
     </>
   );

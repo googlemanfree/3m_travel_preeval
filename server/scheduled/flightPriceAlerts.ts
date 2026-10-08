@@ -203,7 +203,7 @@ export async function alertsAreRunning(db: Db, now = new Date()): Promise<boolea
 }
 
 const page = (title: string, body: string) =>
-  `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${title}</title></head><body style="font-family:Arial,sans-serif;max-width:560px;margin:48px auto;padding:0 20px;color:#172554"><h1 style="font-size:22px">${title}</h1><p style="line-height:1.6">${body}</p><p><a href="${siteUrl()}/flights" style="color:#1d4ed8">Retour aux vols 3M Travel</a></p></body></html>`;
+  `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${title}</title></head><body style="font-family:Arial,sans-serif;max-width:560px;margin:48px auto;padding:0 20px;color:#172554"><h1 style="font-size:22px">${title}</h1><p style="line-height:1.6">${body}</p><p><a href="${siteUrl()}/flights" style="color:#1d4ed8">Retour aux vols 3M TRAVEL AGENCY</a></p></body></html>`;
 
 async function changeAlert(req: Request, res: Response, mode: "confirm" | "stop"): Promise<void> {
   const token = typeof req.query.a === "string" ? req.query.a : "";

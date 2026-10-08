@@ -3,7 +3,7 @@
  * Aucune donnée personnelle : seulement le titre de la page publique (nettoyé et borné) ou son type.
  */
 
-export const DEFAULT_WHATSAPP_MESSAGE = "Bonjour, je souhaiterais obtenir des informations sur les procédures de visa 3M Travel.";
+export const DEFAULT_WHATSAPP_MESSAGE = "Bonjour, je souhaiterais obtenir des informations sur les procédures de visa 3M TRAVEL AGENCY.";
 
 const MAX_TITLE_LENGTH = 80;
 
@@ -13,7 +13,7 @@ export function cleanPageTitle(rawTitle: string | null | undefined): string {
   const withoutControl = Array.from(first).filter((char) => char.charCodeAt(0) >= 32 && char.charCodeAt(0) !== 127).join("");
   const title = withoutControl
     .replace(/\s+à\s+Yaound[ée]\s*$/i, "")
-    .replace(/\s*[—–-]\s*3M Travel.*$/i, "")
+    .replace(/\s*[—–-]\s*3M TRAVEL AGENCY.*$/i, "")
     .replace(/\s+/g, " ")
     .trim();
   return title.length > MAX_TITLE_LENGTH ? `${title.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…` : title;

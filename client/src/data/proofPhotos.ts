@@ -24,7 +24,7 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-passports-letters-1.jpg",
     alt: "Confirmations de résidence permanente et passeports de clients, informations personnelles masquées",
-    caption: "Dossiers de résidence permanente Canada traités par 3M Travel & Services",
+    caption: "Dossiers de résidence permanente Canada traités par 3M TRAVEL AGENCY",
     category: "canada",
   },
   {
@@ -36,7 +36,7 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-china-visa-1.jpg",
     alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa de travail Chine obtenu grâce à l'accompagnement 3M Travel & Services",
+    caption: "Visa de travail Chine obtenu grâce à l'accompagnement 3M TRAVEL AGENCY",
     category: "chine",
   },
   {
@@ -66,7 +66,7 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-china-visa-3.jpg",
     alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Chine délivré à Yaoundé pour un candidat suivi par 3M Travel & Services",
+    caption: "Visa Chine délivré à Yaoundé pour un candidat suivi par 3M TRAVEL AGENCY",
     category: "chine",
   },
   {
@@ -78,13 +78,13 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-china-visa-5.jpg",
     alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Chine obtenu par un candidat accompagné par 3M Travel & Services",
+    caption: "Visa Chine obtenu par un candidat accompagné par 3M TRAVEL AGENCY",
     category: "chine",
   },
   {
     src: "/proof-photos/proof-schengen-visa-1.jpg",
     alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen obtenu pour un candidat accompagné par 3M Travel & Services",
+    caption: "Visa Schengen obtenu pour un candidat accompagné par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {
@@ -96,7 +96,7 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-schengen-visa-3.jpg",
     alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen pour travail saisonnier obtenu par un candidat suivi par 3M Travel",
+    caption: "Visa Schengen pour travail saisonnier obtenu par un candidat suivi par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {
@@ -108,25 +108,25 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
   {
     src: "/proof-photos/proof-schengen-visa-5.jpg",
     alt: "Visa Schengen (Lituanie) approuvé dans un passeport de client, informations personnelles masquées",
-    caption: "Visa Schengen délivré à un candidat accompagné de bout en bout par 3M Travel",
+    caption: "Visa Schengen délivré à un candidat accompagné de bout en bout par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {
     src: "/proof-photos/proof-visa-espagne-1.jpg",
     alt: "Visa Schengen Espagne approuvé, informations personnelles masquées",
-    caption: "Visa Schengen Espagne obtenu pour un candidat accompagné par 3M Travel & Services",
+    caption: "Visa Schengen Espagne obtenu pour un candidat accompagné par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {
     src: "/proof-photos/proof-visa-france-1.jpg",
     alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
-    caption: "Visa Schengen France — tourisme — obtenu pour un candidat accompagné par 3M Travel",
+    caption: "Visa Schengen France — tourisme — obtenu pour un candidat accompagné par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {
     src: "/proof-photos/proof-visa-france-2.jpg",
     alt: "Visa Schengen France (visite familiale) approuvé, informations personnelles masquées",
-    caption: "Visa Schengen France — visite familiale — dossier traité par 3M Travel & Services",
+    caption: "Visa Schengen France — visite familiale — dossier traité par 3M TRAVEL AGENCY",
     category: "schengen",
   },
   {

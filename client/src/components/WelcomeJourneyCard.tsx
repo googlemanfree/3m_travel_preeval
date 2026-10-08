@@ -47,7 +47,7 @@ export default function WelcomeJourneyCard({ evaluationRequired, checklistMissin
     <Card className="border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-sky-50 p-5" data-testid="welcome-journey" role="region" aria-labelledby="welcome-journey-title">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">Bienvenue chez 3M Travel &amp; Services</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">Bienvenue chez 3M TRAVEL AGENCY</p>
           <h2 id="welcome-journey-title" className="mt-1 text-lg font-black text-slate-950">Votre parcours en 3 étapes · {doneCount} sur {steps.length}</h2>
         </div>
         <button type="button" onClick={dismiss} aria-label="Fermer l’accueil" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" data-testid="welcome-dismiss"><X className="h-4 w-4" aria-hidden="true" /></button>

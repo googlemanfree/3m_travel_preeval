@@ -22,8 +22,8 @@ describe("pré-rendu public indexable", () => {
     const keywords = rendered.html.match(/<meta name="keywords" content="([^"]*)"/)?.[1].split(", ") ?? [];
     const heading = rendered.html.match(/<h2>([^<]*)<\/h2>/)?.[1] ?? "";
     // Titre et description fixés par l'agence : exactement ces textes, dans des bornes raisonnables.
-    expect(title).toBe("3M Travel Agency | Voyages, Visas, Études & Mobilité Internationale");
-    expect(description).toBe("3M Travel Agency accompagne vos projets de voyage, études, visas, immigration, travail, billets d'avion et démarches administratives, à Yaoundé et à Ottawa.");
+    expect(title).toBe("3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale");
+    expect(description).toBe("3M TRAVEL AGENCY accompagne voyages, études, visas, immigration, billets d'avion internationaux et démarches, à Yaoundé et Ottawa.");
     expect(title.length).toBeGreaterThanOrEqual(30);
     expect(title.length).toBeLessThanOrEqual(75);
     expect(description.length).toBeGreaterThanOrEqual(50);
@@ -31,7 +31,7 @@ describe("pré-rendu public indexable", () => {
     expect(keywords.length).toBeGreaterThanOrEqual(3);
     expect(keywords.length).toBeLessThanOrEqual(8);
     expect(heading.length).toBeLessThanOrEqual(80);
-    expect(rendered.html).toContain("<h1>3M Travel Agency : voyages, visas, études et mobilité internationale depuis Yaoundé et Ottawa</h1>");
+    expect(rendered.html).toContain("<h1>3M TRAVEL AGENCY : voyages, visas, études et mobilité internationale depuis Yaoundé et Ottawa</h1>");
     expect(rendered.html).toContain("<h2>Informations vérifiables avant toute démarche</h2>");
     expect(rendered.html).toContain('<script type="application/ld+json">');
     expect(rendered.html).toContain('"@type":"Organization"');
@@ -96,7 +96,7 @@ describe("pré-rendu public indexable", () => {
     const page = composePublicPrerender(template, "/flights");
     expect(page.status).toBe(200);
     expect(page.html).not.toContain('content="noindex');
-    expect(page.html).toContain("<title>Billets d&#39;avion et vols");
+    expect(page.html).toContain("<title>Billets d&#39;avion internationaux | 3M TRAVEL AGENCY</title>");
   });
 
   it("renvoie une vraie 404 pour une page inconnue", () => {

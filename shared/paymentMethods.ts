@@ -1,5 +1,5 @@
 /**
- * Moyens de paiement de 3M Travel & Services.
+ * Moyens de paiement de 3M TRAVEL AGENCY.
  *
  * Règle centrale : AUCUNE coordonnée bancaire ni numéro Mobile Money n'est écrit dans le code. Ils sont saisis par
  * l'administrateur (réglages de l'agence) et affichés sur le site dès qu'ils sont renseignés ; tant qu'ils ne le sont
@@ -168,7 +168,7 @@ export function formatAmount(amount: number | null | undefined, currency = "XAF"
 export function paymentFallbackMessage(input: { reference: string; amount?: number | null; currency?: string; method?: ManualMethodId | null; name?: string | null }): string {
   const method = input.method ? MANUAL_METHOD_LABELS[input.method].toLowerCase() : "virement, dépôt Mobile Money ou paiement en agence";
   return [
-    "Bonjour 3M Travel & Services,",
+    "Bonjour 3M TRAVEL AGENCY,",
     "mon paiement en ligne n’a pas abouti.",
     `Référence : ${input.reference || "à préciser"}`,
     `Montant : ${formatAmount(input.amount, input.currency)}`,
