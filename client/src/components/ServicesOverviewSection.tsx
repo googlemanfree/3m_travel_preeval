@@ -102,8 +102,8 @@ export default function ServicesOverviewSection() {
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
             <Sparkles className="h-4 w-4" aria-hidden="true" /> Accompagnement complet
           </p>
-          <h2 id="services-overview-title" className="mt-4 text-3xl md:text-4xl font-black text-slate-950">Un interlocuteur unique pour un projet international sérieux</h2>
-          <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600 md:text-base">
+          <h2 id="services-overview-title" className="premium-section-title mt-4 text-3xl md:text-4xl">Un interlocuteur unique pour un projet international sérieux</h2>
+          <p className="premium-section-lead mx-auto text-center">
             Visa, études, travail, voyage : 3M TRAVEL AGENCY structure votre dossier, clarifie les prochaines étapes et vous accompagne jusqu’au départ.
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function ServicesOverviewSection() {
                 <category.icon className="h-6 w-6" />
               </div>
               <h3 className="mt-4 text-lg font-black text-slate-950">{category.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{category.description}</p>
+              <p className="premium-copy mt-2 text-[0.95rem]">{category.description}</p>
               <ul className="mt-4 flex-1 space-y-2">
                 {category.items.map((item) => {
                   const ItemIcon = ITEM_ICONS[item.label];

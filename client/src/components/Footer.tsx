@@ -212,12 +212,12 @@ export default function Footer() {
             <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.agencySummary)}</p>
-              <p className="mt-3 max-w-xl text-xs leading-relaxed text-slate-400">{copy(footerCopy.aboutText)}</p>
+              <p className="mt-1 max-w-xl text-base leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.aboutText)}</p>
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
-            <p className="text-xs font-semibold text-slate-300 sm:text-right">{copy(footerCopy.question)}</p>
+            <p className="text-sm font-semibold text-slate-200 sm:text-right">{copy(footerCopy.question)}</p>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <Link
                 href="/contact"
@@ -239,7 +239,7 @@ export default function Footer() {
         </div>
 
         {/* Anti-fraude */}
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-400/5 px-4 py-3 text-xs leading-relaxed text-slate-200" data-testid="footer-fraud-notice">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-400/5 px-4 py-3.5 text-sm leading-relaxed text-slate-100" data-testid="footer-fraud-notice">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
           <p>
             <strong className="text-white">{copy(footerCopy.fraudLabel)}</strong> {copy(footerCopy.fraudText)}
@@ -250,7 +250,7 @@ export default function Footer() {
         <section aria-labelledby="footer-offices-title" className="mt-8" data-testid="footer-offices">
           <div className="mb-4">
             <h2 id="footer-offices-title" className="text-base font-black text-white">{copy(footerCopy.officesTitle)}</h2>
-            <p className="mt-1 text-xs text-slate-400">{copy(footerCopy.officesIntro)}</p>
+            <p className="mt-1 text-sm text-slate-300">{copy(footerCopy.officesIntro)}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-4 sm:p-5">
@@ -322,7 +322,7 @@ export default function Footer() {
                 <LinkColumn title={copy(footerCopy.useful)} links={USEFUL_LINKS} language={language} onTrack={trackShortcut} />
                 <div>
                   <h2 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">{copy(footerCopy.contacts)}</h2>
-                  <p className="mb-2 text-xs leading-relaxed text-slate-400">{copy(footerCopy.officialPage)}</p>
+                  <p className="mb-2 text-sm leading-relaxed text-slate-300">{copy(footerCopy.officialPage)}</p>
                   <a
                     href={SOCIAL_LINKS[0].href}
                     target="_blank"
@@ -366,12 +366,12 @@ export default function Footer() {
               );
             })}
           </div>
-          <div className="max-w-2xl text-xs leading-relaxed text-slate-400 sm:text-right">
+          <div className="max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-right">
             <p>
-              <span className="font-medium text-slate-200">{COMPANY_PROFILE.legalName}</span>
+              <span className="font-medium text-white">{COMPANY_PROFILE.legalName}</span>
               {" — "}RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
             </p>
-            <p className="mt-1">{copy(footerCopy.legalNotice)}</p>
+            <p className="mt-1 text-slate-200">{copy(footerCopy.legalNotice)}</p>
             <p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. {language === "fr" ? "Tous droits réservés." : "All rights reserved."}</p>
           </div>
         </div>
