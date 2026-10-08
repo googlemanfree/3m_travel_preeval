@@ -44,7 +44,7 @@ export function FloatingActionMenu() {
         whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
         aria-label="Contacter 3M Travel sur WhatsApp"
         data-testid="floating-whatsapp"
-        className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-green-900/20 ring-2 ring-white/90 transition-shadow hover:shadow-xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 md:h-14 md:w-14"
+        className="touch-target group relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-green-900/20 ring-2 ring-white/90 transition-shadow hover:shadow-xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 md:h-14 md:w-14"
       >
         <MessageCircle className="relative z-10 h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
         {!prefersReducedMotion && (

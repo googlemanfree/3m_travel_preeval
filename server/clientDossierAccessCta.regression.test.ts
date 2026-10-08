@@ -19,8 +19,8 @@ describe("CTA public et accès direct au dossier connecté", () => {
   });
 
   it("renforce la taille du titre et du texte d’introduction du hero", () => {
-    expect(heroSource).toContain("text-5xl font-extrabold tracking-tight");
-    expect(heroSource).toContain("sm:text-6xl md:mb-6 md:text-7xl lg:text-[6.5rem]");
+    expect(heroSource).toContain("text-4xl font-extrabold tracking-tight");
+    expect(heroSource).toContain("sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]");
     expect(heroSource).toContain("sm:text-xl md:text-2xl");
   });
 

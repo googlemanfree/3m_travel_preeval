@@ -73,7 +73,8 @@ const nativeLinkClass = (highlight?: boolean) =>
     : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-bold text-slate-800 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
 const authButtonClass = "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
-const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
+const mobileAuthButtonClass = "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
+
 
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
@@ -137,18 +138,18 @@ export default function Navbar() {
   return (
     <header className="glass-nav tablet-compact-header sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 py-3 lg:gap-x-4 lg:gap-y-2 lg:py-3">
+        <div className="flex min-w-0 flex-nowrap items-center gap-x-2 py-2.5 sm:gap-x-3 sm:py-3 lg:flex-wrap lg:gap-x-4 lg:gap-y-2">
           <a
             href="/"
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="order-1 flex shrink-0 items-center gap-3 group hover:opacity-80 transition-opacity"
+            className="order-1 flex min-w-0 shrink items-center gap-2 group hover:opacity-80 transition-opacity sm:gap-3"
           >
             <img
               src="/logo-3m.webp"
               alt="Logo 3M Travel Agency"
-              className="h-12 w-auto object-contain"
+              className="h-10 w-auto object-contain sm:h-12"
             />
           </a>
 
@@ -306,10 +307,10 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="flex lg:hidden items-center gap-2">
-            <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
-              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
-              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
+            <div className="flex items-center gap-0.5 rounded-xl border border-blue-200/60 bg-blue-50 p-0.5 dark:border-slate-600 dark:bg-slate-800" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
+              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "fr" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
+              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "en" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button
@@ -319,7 +320,7 @@ export default function Navbar() {
               aria-controls="mobile-main-navigation"
               ref={menuTriggerRef}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              className="touch-target rounded-2xl bg-gray-50 p-2.5 text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               animate={isMenuOpen ? "open" : "closed"}
               variants={hamburgerVariants}
               transition={{ duration: 0.3 }}
@@ -334,7 +335,7 @@ export default function Navbar() {
         {isMenuOpen && (
           <motion.div
             id="mobile-main-navigation"
-            className="lg:hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border-t border-blue-100 dark:border-white/10 px-4 pt-3 pb-8 shadow-2xl"
+            className="mobile-scroll-region max-h-[min(70dvh,calc(100dvh-4.5rem))] overflow-y-auto overscroll-contain border-t border-blue-100 bg-white/95 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/95 lg:hidden"
             variants={menuVariants}
             initial="hidden"
             animate="visible"
@@ -345,7 +346,7 @@ export default function Navbar() {
               <motion.a
                 href="/mon-espace"
                 onClick={() => { handleNavigationClick(); closeMenu(); }}
-                className="flex items-center gap-3 rounded-2xl border border-blue-100/60 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-3.5 transition hover:bg-white"
+                className="mb-2 flex min-h-14 items-center gap-3 rounded-2xl border border-blue-100/60 bg-gradient-to-r from-blue-50 to-sky-50 p-3.5 transition hover:bg-white"
                 aria-label={`${copy(NAV_COPY.openSpace)} : ${candidate.fullName || copy(NAV_COPY.accountSpace)}`}
                 variants={itemVariants}
                 initial="hidden"
@@ -355,7 +356,7 @@ export default function Navbar() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-black text-white shadow-md shadow-blue-500/20">
                   {getInitial(candidate.fullName)}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || copy(NAV_COPY.accountSpace)}</p>
                   <p className="text-xs font-medium text-blue-600">{copy(NAV_COPY.openSpace)}</p>
                   <p className="max-w-[220px] truncate text-[11px] text-slate-500">{candidate.email}</p>
@@ -368,14 +369,14 @@ export default function Navbar() {
               onMouseEnter={() => handleNavigationIntent("/panier")}
               onFocus={() => handleNavigationIntent("/panier")}
               onClick={() => { handleNavigationClick(); closeMenu(); }}
-              className="mb-2 flex w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 font-bold text-blue-700"
+              className="mb-2 flex min-h-12 w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 font-bold text-blue-700"
               aria-label={`${copy(NAV_COPY.cart)}${totalItems ? `, ${totalItems} ${copy(totalItems > 1 ? NAV_COPY.items : NAV_COPY.item)}` : ` ${copy(NAV_COPY.empty)}`}`}
             >
               <span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.cart)}</span>
               <span className="rounded-full bg-orange-700 px-2 py-0.5 text-[10px] font-black text-white">{totalItems}</span>
             </a>
 
-            <nav aria-label={copy(NAV_COPY.mobileNav)} className="space-y-1 mb-4">
+            <nav aria-label={copy(NAV_COPY.mobileNav)} className="mb-4 space-y-1">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
@@ -385,7 +386,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent(item.href)}
                   onFocus={() => handleNavigationIntent(item.href)}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
-                  className="flex min-h-11 items-center px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors w-full text-left"
+                  className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left font-semibold text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
                   variants={itemVariants}
                   initial="hidden"
                   animate="visible"
@@ -410,7 +411,7 @@ export default function Navbar() {
               <motion.button
                 type="button"
                 onClick={handleLogout}
-                className="w-full text-center bg-rose-50 text-rose-600 py-3 rounded-xl font-bold transition hover:bg-rose-100"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-3 text-center font-bold text-rose-600 transition hover:bg-rose-100"
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"

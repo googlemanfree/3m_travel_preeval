@@ -201,6 +201,11 @@
     min-width: 2.75rem;
   }
 
+  /* Langue FR/EN : hauteur tactile 44px sans forcer une largeur carrée (évite le wrap du header). */
+  .touch-target.lang-chip {
+    min-width: 0;
+  }
+
   .mobile-scroll-region {
     scrollbar-width: thin;
     scroll-padding-inline: 1rem;
@@ -551,6 +556,17 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 .safe-bottom-floating-chat,
 .safe-bottom-floating-panel {
   bottom: calc(12.5rem + env(safe-area-inset-bottom));
+}
+
+/* Téléphone : header compact, une seule ligne. */
+@media (max-width: 767px) {
+  .tablet-compact-header {
+    min-height: 3.75rem;
+  }
+
+  .tablet-compact-header .max-w-7xl {
+    padding-inline: 0.875rem;
+  }
 }
 
 /* Tablette : garder un header compact sans réduire les zones tactiles. */

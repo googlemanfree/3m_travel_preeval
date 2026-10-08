@@ -278,9 +278,9 @@ export default function Home() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
             Évaluez gratuitement votre parcours ou écrivez directement à un conseiller 3M — sans engagement de résultat.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <a href="#evaluation-multi">
-              <Button size="lg" className="bg-white px-8 font-bold text-[#1e3a8a] shadow-xl transition-transform hover:bg-[#dbeafe] active:scale-[0.97]">
+          <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <a href="#evaluation-multi" className="w-full max-w-[22rem] sm:w-auto">
+              <Button size="lg" className="min-h-12 w-full bg-white px-8 font-bold text-[#1e3a8a] shadow-xl transition-transform hover:bg-[#dbeafe] active:scale-[0.97]">
                 Évaluer mon projet — gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
             </a>
@@ -288,8 +288,9 @@ export default function Home() {
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
+              className="w-full max-w-[22rem] sm:w-auto"
             >
-              <Button size="lg" variant="outline" className="border-white px-8 font-semibold text-white transition-transform hover:bg-white/10 active:scale-[0.97]">
+              <Button size="lg" variant="outline" className="min-h-12 w-full border-white px-8 font-semibold text-white transition-transform hover:bg-white/10 active:scale-[0.97]">
                 WhatsApp conseiller
               </Button>
             </a>
@@ -312,7 +313,7 @@ export default function Home() {
           aria-label="Retour en haut de la page"
           title="Retour en haut"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:left-6"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6"
         >
           <ChevronUp className="h-5 w-5" aria-hidden="true" />
         </button>

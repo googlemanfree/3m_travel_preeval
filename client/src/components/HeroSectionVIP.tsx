@@ -83,7 +83,7 @@ export default function HeroSectionVIP({
   return (
     <section
       ref={heroRef}
-      className="relative flex min-h-[78vh] items-center overflow-hidden py-16 text-center text-white md:min-h-[88vh] md:py-24"
+      className="relative flex min-h-[72vh] items-center overflow-hidden py-12 text-center text-white sm:min-h-[78vh] sm:py-16 md:min-h-[88vh] md:py-24"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
@@ -115,7 +115,7 @@ export default function HeroSectionVIP({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.55)_0%,transparent_70%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 md:pb-20">
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-14 sm:pb-16 md:pb-20">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -138,7 +138,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mb-5 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:text-6xl md:mb-6 md:text-7xl lg:text-[6.5rem]"
+          className="mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
           data-testid="hero-title"
         >
           3M TRAVEL AGENCY
@@ -149,7 +149,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="mx-auto mb-8 max-w-2xl text-lg font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
+          className="mx-auto mb-7 max-w-2xl text-base font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
         >
           Études, travail, voyage et visas : votre projet international commence ici.
         </motion.p>
@@ -175,7 +175,7 @@ export default function HeroSectionVIP({
               className="pointer-events-none absolute -inset-1 rounded-xl bg-orange-400/0 opacity-0 blur-md transition-all duration-300 group-hover:bg-orange-400/35 group-hover:opacity-100"
               aria-hidden="true"
             />
-            <span className="relative z-10 transition-transform duration-300 group-hover:tracking-wide">
+            <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
               ÉVALUER MON PROJET — GRATUIT
             </span>
           </PublicEvaluationCTA>
@@ -193,7 +193,7 @@ export default function HeroSectionVIP({
                 className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
                 aria-hidden="true"
               />
-              <span className="relative z-10 transition-transform duration-300 group-hover:tracking-wide">
+              <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
                 PARLER À UN CONSEILLER
               </span>
             </a>
@@ -207,7 +207,7 @@ export default function HeroSectionVIP({
         animate="visible"
         variants={fadeIn}
         custom={4}
-        className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:bottom-10"
         aria-label="Défiler vers la suite de la page"
         data-testid="hero-scroll-cue"
       >
