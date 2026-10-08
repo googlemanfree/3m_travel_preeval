@@ -82,7 +82,7 @@ export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { o
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-amber-600">Meilleures offres</p>
         <h2 id="flight-offers-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Les tarifs les plus bas relevés pour vous</h2>
-        <p className="mt-2 text-sm text-slate-600">Comparez les meilleurs tarifs sur les parcours les plus demandés, puis lancez la recherche en un clic.</p>
+        <p className="premium-copy mt-2 text-sm">Comparez les meilleurs tarifs sur les parcours les plus demandés, puis lancez la recherche en un clic.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {offers.map((offer) => (
@@ -154,7 +154,7 @@ export function FlightClientReviews({ reviews }: { reviews: ClientReview[] }) {
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-amber-600">Avis de nos clients</p>
         <h2 id="flight-reviews-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Ils ont voyagé avec 3M</h2>
-        <p className="mt-2 text-sm text-slate-600">Avis déposés par des clients, publiés avec leur accord après vérification par notre équipe.</p>
+        <p className="premium-copy mt-2 text-sm">Avis déposés par des clients, publiés avec leur accord après vérification par notre équipe.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {shown.map((review, index) => (
@@ -348,7 +348,7 @@ export function FlightSearchEmptyState({
       </div>
       <p className="mt-4 text-xs font-black uppercase tracking-widest text-blue-700">{copy.eyebrow}</p>
       <h3 id="flight-empty-title" className="mt-2 text-xl font-black text-slate-950 sm:text-2xl">{copy.title}</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{notice?.trim() || copy.body}</p>
+      <p className="premium-section-lead mx-auto mt-2 text-center">{notice?.trim() || copy.body}</p>
 
       <div className="mt-6 text-left" data-testid="flight-empty-shortcuts">
         <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500">Parcours fréquents depuis Yaoundé</p>
@@ -415,7 +415,7 @@ export function FlightPopularRoutes({ onPick }: { onPick: PickRoute }) {
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-blue-700">Parcours fréquents</p>
         <h2 id="flight-popular-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Où voulez-vous aller ?</h2>
-        <p className="mt-2 text-sm text-slate-600">Choisissez un trajet : nous lançons la recherche avec des dates dans deux semaines, que vous pouvez modifier ensuite. Le prix affiché est toujours celui de la recherche, jamais un tarif de vitrine.</p>
+        <p className="premium-copy mt-2 text-sm">Choisissez un trajet : nous lançons la recherche avec des dates dans deux semaines, que vous pouvez modifier ensuite. Le prix affiché est toujours celui de la recherche, jamais un tarif de vitrine.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         {FLIGHT_ROUTE_GROUPS.map((group) => (
@@ -450,7 +450,7 @@ function HowItWorks() {
               <span className="absolute -top-3 left-5 rounded-full bg-blue-700 px-2.5 py-0.5 text-xs font-black text-white">Étape {index + 1}</span>
               <Icon className="mb-3 mt-1 h-6 w-6 text-blue-700" aria-hidden="true" />
               <h3 className="text-base font-black text-slate-900">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-6 text-slate-600">{step.text}</p>
+              <p className="premium-copy mt-1.5 text-[0.95rem]">{step.text}</p>
             </li>
           );
         })}
@@ -554,7 +554,7 @@ export function FlightAfricaCarriersBand() {
           <h2 id="flight-africa-carriers-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
             Compagnies fréquemment relevées
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="premium-copy mt-2 text-sm">
             Camair-Co, Ethiopian, ASKY, Air France, Turkish et d’autres compagnies pour vos vols internationaux. Les tarifs n’apparaissent qu’après une recherche live — aucun prix de vitrine.
           </p>
         </div>
@@ -598,7 +598,7 @@ export function FlightMobilityProofBridge() {
           <h2 id="flight-mobility-bridge-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
             Billet, visa, assurance — au même endroit
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="premium-copy mt-2 text-[0.95rem]">
             Outre les billets d’avion internationaux, 3M TRAVEL AGENCY accompagne visas, e-Visa, assurance et séjours. Preuves réelles de dossiers traités (identités masquées) — aucune statistique inventée.
           </p>
         </div>

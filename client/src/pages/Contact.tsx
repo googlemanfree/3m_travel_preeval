@@ -114,11 +114,12 @@ export default function Contact() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+            <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-blue-700">3M TRAVEL AGENCY</p>
+            <h1 className="premium-section-title mb-6 text-4xl sm:text-5xl lg:text-6xl">
               Nous contacter
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="premium-section-lead mx-auto mb-8 text-center text-lg sm:text-xl">
               Notre équipe est à votre disposition pour répondre à vos questions et vous accompagner dans vos démarches de visas, eVisas, légalisations, traductions et assurances voyage.
             </p>
 
@@ -145,7 +146,7 @@ export default function Contact() {
       {/* Google Maps Section */}
       <section id="carte-yaounde" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h2 className="premium-section-title mb-8 text-center text-3xl">
             Nos localisations
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
@@ -159,7 +160,7 @@ export default function Contact() {
               <div className="bg-white p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Bureau principal</p>
                 <h3 className="mt-1 text-lg font-bold text-gray-900 mb-2">Carte interactive — {cameroon.shortLabel}</h3>
-                <p className="text-sm text-gray-600 mb-4">{cameroon.label}</p>
+                <p className="premium-copy mb-4 text-sm">{cameroon.label}</p>
               </div>
               <iframe
                 src={officeMapEmbedUrl({ id: "cameroon", ...cameroon })}

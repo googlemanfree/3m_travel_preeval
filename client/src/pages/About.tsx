@@ -37,12 +37,12 @@ export default function About() {
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
       <section className="px-4 pb-16 pt-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl text-center">
-          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">3M TRAVEL AGENCY</p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-700">3M TRAVEL AGENCY</p>
+          <h1 className="premium-section-title mt-4 text-4xl sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
+          <p className="premium-section-lead mx-auto mt-6 text-center text-lg">
             3M TRAVEL AGENCY accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
           </p>
-          <p className="mx-auto mt-4 max-w-3xl text-sm leading-6 text-slate-500">
+          <p className="premium-copy mx-auto mt-4 max-w-3xl text-center text-base">
             Nous présentons ici notre mode d’accompagnement, et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function About() {
                 <Card key={item.title} className="border-slate-200 p-6 shadow-sm">
                   <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
                   <h2 className="mt-4 text-lg font-black text-slate-950">{item.title}</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                  <p className="premium-copy mt-2 text-[0.95rem]">{item.text}</p>
                 </Card>
               );
             })}

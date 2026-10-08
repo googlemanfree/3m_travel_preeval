@@ -108,7 +108,7 @@ function NewsletterSignup({ language }: { language: Language }) {
   return (
     <section aria-labelledby="newsletter-title" data-testid="footer-newsletter" className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 sm:p-5">
       <h2 id="newsletter-title" className="text-sm font-bold text-white">{copy(footerCopy.newsletterTitle)}</h2>
-      <p className="mt-1 text-xs leading-snug text-slate-300">{copy(footerCopy.newsletterText)}</p>
+      <p className="mt-1 text-sm leading-relaxed text-slate-200">{copy(footerCopy.newsletterText)}</p>
       <form className="mt-3 space-y-2.5" onSubmit={submit}>
         <label htmlFor="newsletter-email" className="sr-only">{copy(footerCopy.newsletterEmail)}</label>
         <input
@@ -122,7 +122,7 @@ function NewsletterSignup({ language }: { language: Language }) {
           placeholder={copy(footerCopy.newsletterEmail)}
           className="min-h-11 w-full rounded-xl border border-white/25 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300"
         />
-        <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-300">
+        <label className="flex items-start gap-2 text-sm leading-relaxed text-slate-200">
           <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400" />
           <span>{copy(footerCopy.newsletterConsent)}</span>
         </label>

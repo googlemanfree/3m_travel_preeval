@@ -91,7 +91,7 @@ export function FlightBookingFAQ() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
           Tout ce que vous devez savoir sur nos services de voyage
         </h2>
-        <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
+        <p className="premium-section-lead mx-auto text-center text-base">
           Consultez les réponses aux questions les plus fréquentes concernant la recherche de vols, l'envoi de récapitulatifs et l'accompagnement par nos experts.
         </p>
 
