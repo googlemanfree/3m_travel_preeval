@@ -138,7 +138,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
+          className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
           data-testid="hero-title"
         >
           3M TRAVEL AGENCY
@@ -149,7 +149,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="mx-auto mb-7 max-w-2xl text-base font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
+          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-lg font-medium sm:mb-10 sm:text-xl md:text-2xl"
         >
           Études, travail, voyage et visas : votre projet international commence ici.
         </motion.p>

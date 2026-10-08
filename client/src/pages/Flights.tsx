@@ -1023,13 +1023,13 @@ export default function Flights() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 text-center text-white"
           >
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300 md:text-sm" data-testid="flights-hero-brand">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-amber-200 md:text-base" data-testid="flights-hero-brand">
               3M TRAVEL AGENCY
             </p>
-            <h1 id="flights-hero-title" className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight md:text-5xl">
+            <h1 id="flights-hero-title" className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight text-white md:text-5xl">
               Billets d’avion internationaux
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-100 md:text-base">
+            <p className="premium-copy-on-dark mx-auto mt-4 max-w-2xl text-base md:text-lg">
               Comparez les compagnies pour vos vols internationaux — et poursuivez avec visas, e-Visa, assurance, hôtels et accompagnement. Un conseiller 3M TRAVEL AGENCY confirme le tarif relevé avant toute réservation.
             </p>
           </motion.div>

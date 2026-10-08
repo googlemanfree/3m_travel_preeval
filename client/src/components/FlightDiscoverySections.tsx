@@ -465,7 +465,7 @@ function Advantages() {
   return (
     <section aria-labelledby="flight-advantages-title" className="bg-slate-50 py-10" data-testid="flight-advantages">
       <div className="mx-auto max-w-6xl px-4">
-        <h2 id="flight-advantages-title" className="mb-8 text-center text-2xl font-black text-slate-900 md:text-3xl">Pourquoi réserver avec 3M TRAVEL AGENCY</h2>
+        <h2 id="flight-advantages-title" className="premium-section-title mb-8 text-center text-2xl md:text-3xl">Pourquoi réserver avec 3M TRAVEL AGENCY</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FLIGHT_ADVANTAGES.map((item, index) => {
             const Icon = ADVANTAGE_ICONS[index] ?? ShieldCheck;
@@ -473,7 +473,7 @@ function Advantages() {
               <div key={item.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" aria-hidden="true" /></span>
                 <h3 className="text-base font-black text-slate-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.text}</p>
+                <p className="premium-copy mt-1.5 text-[0.95rem]">{item.text}</p>
               </div>
             );
           })}
@@ -486,13 +486,13 @@ function Advantages() {
 function CompanionServices() {
   return (
     <section aria-labelledby="flight-companion-title" className="mx-auto max-w-6xl px-4 py-10" data-testid="flight-companion-services">
-      <h2 id="flight-companion-title" className="mb-2 text-center text-2xl font-black text-slate-900 md:text-3xl">Complétez votre voyage</h2>
-      <p className="mx-auto mb-8 max-w-2xl text-center text-sm text-slate-600">Le billet n’est qu’une étape : préparez aussi votre visa, votre assurance et votre hébergement au même endroit.</p>
+      <h2 id="flight-companion-title" className="premium-section-title mb-2 text-center text-2xl md:text-3xl">Complétez votre voyage</h2>
+      <p className="premium-section-lead mx-auto mb-8 text-center">Le billet n’est qu’une étape : préparez aussi votre visa, votre assurance et votre hébergement au même endroit.</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {FLIGHT_COMPANION_SERVICES.map((item) => (
           <a key={item.title} href={item.href} className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
             <h3 className="text-base font-black text-slate-900">{item.title}</h3>
-            <p className="mt-1.5 flex-1 text-sm leading-6 text-slate-600">{item.text}</p>
+            <p className="premium-copy mt-1.5 flex-1 text-[0.95rem]">{item.text}</p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-blue-700">{item.cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
           </a>
         ))}

@@ -158,7 +158,7 @@ export default function Home() {
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Les parcours les plus demandés depuis Yaoundé</h2>
-          <p className="mb-6 text-center text-sm text-slate-600 md:text-base">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
+          <p className="premium-section-lead mx-auto mb-6 text-center">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
               { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },
@@ -248,7 +248,7 @@ export default function Home() {
           <div className="text-center mb-10 md:mb-12">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
             <h2 id="why-3m-title" className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Des preuves concrètes, pas des promesses vagues</h2>
-            <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
+            <p className="premium-section-lead mx-auto text-center">
               Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
