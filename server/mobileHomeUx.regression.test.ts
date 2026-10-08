@@ -9,6 +9,7 @@ const navbar = read("client/src/components/Navbar.tsx");
 const hero = read("client/src/components/HeroSectionVIP.tsx");
 const themeToggle = read("client/src/components/ThemeToggle.tsx");
 const styles = read("client/src/index.css");
+const indexHtml = read("client/index.html");
 const floating = read("client/src/components/FloatingActionMenu.tsx");
 const home = read("client/src/pages/Home.tsx");
 const quickActions = read("client/src/components/QuickActionsSection.tsx");
@@ -62,6 +63,13 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain('href="/procedures"');
     expect(home).toContain("sm:hidden");
     expect(home).toContain("touch-target inline-flex");
+  });
+
+  it("précharge l’image hero adaptée au viewport", () => {
+    expect(indexHtml).toContain('rel="preload" as="image"');
+    expect(indexHtml).toContain("3m-hero-real-woman-man-mobile_335e606e.webp");
+    expect(indexHtml).toContain('media="(max-width: 767px)"');
+    expect(indexHtml).toContain('fetchpriority="high"');
   });
 
   it("permet de partager rapidement un témoignage approuvé", () => {
