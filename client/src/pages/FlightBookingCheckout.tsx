@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
-import Footer from "@/components/Footer";
 import PassportScanUploader from "@/components/PassportScanUploader";
 import { trpc } from "@/lib/trpc";
 import { saveLastFlightBooking } from "@/data/flightDiscovery";
@@ -705,7 +704,6 @@ export default function FlightBookingCheckout() {
           </AnimatePresence>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

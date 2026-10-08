@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 
 export default function ConditionsUtilisation() {
   return (
@@ -106,7 +105,6 @@ export default function ConditionsUtilisation() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

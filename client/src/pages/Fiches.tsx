@@ -8,7 +8,6 @@ import {
   ChevronDown, ChevronUp, Download, ArrowRight, Info,
   Building, Users, Star
 } from "lucide-react";
-import Footer from "@/components/Footer";
 import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
 import { getDestinationDetailForProcedure, isDestinationRecentlyUpdated } from "@/lib/publicDestinationCatalog";
@@ -442,7 +441,6 @@ export default function Fiches() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

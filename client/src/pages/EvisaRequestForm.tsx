@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, ArrowLeft, Loader, Sparkles } from 'lucide-react';
-import Footer from '@/components/Footer';
 import { FileUploadField } from '@/components/FileUploadField';
 import { ValidationStep } from '@/components/ValidationStep';
 import { FormProgressBar } from '@/components/FormProgressBar';
@@ -397,7 +396,6 @@ export default function EvisaRequestForm() {
           requestId={requestId || undefined}
           onReturnHome={() => navigate('/evisas')}
         />
-        <Footer />
       </main>
     );
   }
@@ -823,7 +821,6 @@ export default function EvisaRequestForm() {
           )}
         </Card>
       </div>
-      <Footer />
     </main>
   );
 }

@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 
 export default function PolitiqueConfidentialite() {
   return (
@@ -141,7 +140,6 @@ export default function PolitiqueConfidentialite() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

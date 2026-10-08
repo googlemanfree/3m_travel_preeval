@@ -17,7 +17,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -331,7 +330,6 @@ export default function Community() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
 import { XCircle, RefreshCw, MessageCircle, Home } from "lucide-react";
 import PaymentFallbackPanel from "@/components/PaymentFallbackPanel";
 
@@ -86,7 +85,6 @@ export default function PaymentFailed() {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }

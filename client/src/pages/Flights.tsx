@@ -11,7 +11,6 @@ import {
   Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2, Share2,
 } from "lucide-react";
 import { Link } from "wouter";
-import Footer from "@/components/Footer";
 import { Mail, Check, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -1487,7 +1486,6 @@ export default function Flights() {
         />
       )}
 
-      <div className="order-6"><Footer /></div>
     </main>
   );
 }

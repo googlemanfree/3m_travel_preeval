@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
 import {
   Search, Download, FileText, Briefcase, GraduationCap,
   Globe, BookOpen, X, ExternalLink, Filter,
@@ -307,7 +306,6 @@ export default function Ressources() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

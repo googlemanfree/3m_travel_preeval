@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 import FullDossierForm from "@/components/FullDossierForm";
 import type { VisaCategory } from "@/components/FullDossierForm";
 import { useSearch } from "wouter";
@@ -50,7 +49,6 @@ export default function OpenDossier() {
           </div>
         </div>
       </div>
-      <Footer />
     </main>
   );
 }
