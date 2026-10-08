@@ -58,6 +58,13 @@ export const FLIGHT_ROUTE_GROUPS: FlightRouteGroup[] = [
 
 export const ALL_FLIGHT_ROUTES: FlightRoute[] = FLIGHT_ROUTE_GROUPS.flatMap((group) => group.routes);
 
+/** Raccourcis empty state : Yaoundé → Paris / Montréal / Dubaï. Aucun tarif ici. */
+export const FLIGHT_EMPTY_STATE_ROUTES: FlightRoute[] = [
+  route(YAOUNDE, ["CDG", "Paris"]),
+  route(YAOUNDE, ["YUL", "Montréal"]),
+  route(YAOUNDE, ["DXB", "Dubaï"]),
+];
+
 /** Liens de recherche par ville de départ (maillage interne) : mêmes parcours, regroupés autrement. */
 export const FLIGHT_ROUTES_BY_DEPARTURE: Array<{ city: string; routes: FlightRoute[] }> = ["NSI", "DLA"].map((iata) => {
   const routes = ALL_FLIGHT_ROUTES.filter((item) => item.from.iata === iata);

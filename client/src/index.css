@@ -580,16 +580,20 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 
 /* Barre CTA sticky mobile : remonte la pile WhatsApp / Aureol au-dessus (téléphone uniquement). */
 @media (max-width: 767px) {
-  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp {
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-whatsapp {
     bottom: calc(8.25rem + env(safe-area-inset-bottom));
   }
 
-  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-flight {
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-flight,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-flight {
     bottom: calc(12.25rem + env(safe-area-inset-bottom));
   }
 
   body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-chat,
-  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-panel {
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-panel,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-chat,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-panel {
     bottom: calc(16.25rem + env(safe-area-inset-bottom));
   }
 }

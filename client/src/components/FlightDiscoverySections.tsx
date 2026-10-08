@@ -5,6 +5,7 @@ import {
   FLIGHT_ADVANTAGES,
   FLIGHT_BOOKING_STEPS,
   FLIGHT_COMPANION_SERVICES,
+  FLIGHT_EMPTY_STATE_ROUTES,
   FLIGHT_ROUTES_BY_DEPARTURE,
   FLIGHT_ROUTE_GROUPS,
   FLIGHT_SERVICE_TABS,
@@ -289,6 +290,117 @@ export function FlightSearchSkeleton({ routeLabel }: { routeLabel?: string }) {
         <FlightSkeletonCard />
       </div>
       <p className="mt-4 text-center text-xs text-slate-500">Patientez quelques secondes — un conseiller peut aussi lancer la recherche pour vous.</p>
+    </section>
+  );
+}
+
+/**
+ * État vide premium après une recherche sans résultat (ou fournisseur indisponible).
+ * Aucun tarif inventé : uniquement des parcours cliquables + WhatsApp conseiller.
+ */
+export function FlightSearchEmptyState({
+  reason,
+  notice,
+  whatsappUrl,
+  onPickRoute,
+  onRetry,
+  onWhatsAppClick,
+  whatsappTestId = "search-whatsapp-no_results",
+}: {
+  reason: "no_results" | "unavailable" | "error";
+  notice?: string | null;
+  whatsappUrl: string;
+  onPickRoute: PickRoute;
+  onRetry?: () => void;
+  onWhatsAppClick?: () => void;
+  whatsappTestId?: string;
+}) {
+  const copy =
+    reason === "unavailable"
+      ? {
+          eyebrow: "Recherche en direct",
+          title: "Tarifs momentanément indisponibles",
+          body: "Nous préférons n’afficher aucun prix plutôt qu’un tarif non vérifié. Réessayez ou écrivez à un conseiller 3M.",
+        }
+      : reason === "error"
+        ? {
+            eyebrow: "Recherche interrompue",
+            title: "La recherche n’a pas abouti",
+            body: "Vérifiez les dates et les aéroports, puis relancez. Vous pouvez aussi démarrer sur un parcours fréquent depuis Yaoundé.",
+          }
+        : {
+            eyebrow: "Aucun vol pour ces critères",
+            title: "Essayez un autre parcours ou une autre date",
+            body: "Aucun résultat pour cette recherche. Lancez un trajet fréquent en un tap — le prix viendra uniquement d’une vraie recherche.",
+          };
+
+  return (
+    <section
+      className="mx-auto my-8 max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-6 text-center shadow-sm sm:p-8"
+      data-testid="flight-search-empty-state"
+      aria-labelledby="flight-empty-title"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-800" aria-hidden="true">
+        <Plane className="h-7 w-7" />
+      </div>
+      <p className="mt-4 text-xs font-black uppercase tracking-widest text-blue-700">{copy.eyebrow}</p>
+      <h3 id="flight-empty-title" className="mt-2 text-xl font-black text-slate-950 sm:text-2xl">{copy.title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{notice?.trim() || copy.body}</p>
+
+      <div className="mt-6 text-left" data-testid="flight-empty-shortcuts">
+        <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500">Parcours fréquents depuis Yaoundé</p>
+        <ul className="grid gap-2">
+          {FLIGHT_EMPTY_STATE_ROUTES.map((route) => (
+            <li key={route.id}>
+              <button
+                type="button"
+                onClick={() => onPickRoute(route)}
+                data-testid={`flight-empty-route-${route.id}`}
+                className="touch-target group flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+              >
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 text-sm font-black text-slate-900">
+                    <span className="truncate">{route.from.city}</span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden="true" />
+                    <span className="truncate">{route.to.city}</span>
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
+                    {route.from.iata} → {route.to.iata} · sans tarif affiché avant recherche
+                  </span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-800 group-hover:bg-blue-700 group-hover:text-white">
+                  <Search className="h-3 w-3" aria-hidden="true" /> Voir
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E3A8A] px-5 text-sm font-black text-white transition hover:bg-[#163066] active:scale-[0.98]"
+          >
+            Relancer la recherche
+          </button>
+        )}
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid={whatsappTestId}
+          onClick={onWhatsAppClick}
+          className="touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-black text-white transition hover:bg-emerald-800 active:scale-[0.98]"
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp conseiller
+        </a>
+      </div>
+      <p className="mt-4 text-[11px] leading-5 text-slate-500">
+        Aucun prix de vitrine : les tarifs n’apparaissent qu’après une recherche live, confirmés ensuite par l’agence.
+      </p>
     </section>
   );
 }

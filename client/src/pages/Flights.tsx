@@ -8,7 +8,7 @@ import {
   Plane, ArrowLeftRight, Calendar, Users, ChevronDown, Search,
   Filter, X, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
-  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2,
+  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2, Share2,
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
@@ -18,7 +18,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchSkeleton, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchEmptyState, FlightSearchSkeleton, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
@@ -828,6 +828,24 @@ export default function Flights() {
     }
   }, [searchEnabled, origin, destination, departureDate, returnDate, tripType, passengers.adults, passengers.cabinClass, saveSearchHistoryMutation]);
 
+  // Écrit l’URL pour refresh / partage WhatsApp (lue au mount, mais jamais réécrite auparavant).
+  useEffect(() => {
+    if (!searchEnabled) return;
+    const params = new URLSearchParams({
+      origin,
+      destination,
+      date: departureDate,
+      tripType,
+      adults: String(passengers.adults),
+      cabinClass: passengers.cabinClass,
+    });
+    if (tripType === "ROUND_TRIP") params.set("returnDate", returnDate);
+    const next = `?${params.toString()}`;
+    if (window.location.search !== next) {
+      window.history.replaceState(null, "", `${window.location.pathname}${next}`);
+    }
+  }, [searchEnabled, origin, destination, departureDate, returnDate, tripType, passengers.adults, passengers.cabinClass]);
+
   function handleDepartureDateChange(value: string) {
     const nextDeparture = isValidIsoDate(value) && value >= today() ? value : minDate(7);
     setDepartureDate(nextDeparture);
@@ -852,6 +870,30 @@ export default function Flights() {
     `Passagers : ${passengers.adults} adulte(s)${passengers.children > 0 ? `, ${passengers.children} enfant(s)` : ""}${passengers.infants > 0 ? `, ${passengers.infants} bébé(s)` : ""}`,
     `Classe : ${CABIN_LABELS[passengers.cabinClass] || passengers.cabinClass}`,
   ].join("\n");
+
+  async function shareSearch() {
+    const url = window.location.href;
+    const title = `Vols ${airportLabel(origin)} → ${airportLabel(destination)}`;
+    const text = `Recherche 3M Travel : ${airportLabel(origin)} → ${airportLabel(destination)} · ${departureDate}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title, text, url });
+        trackEvent("flight_search_shared", { method: "web_share" });
+        return;
+      }
+    } catch {
+      // Annulation utilisateur : ne pas forcer le fallback.
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Lien copié", description: "Collez-le dans WhatsApp ou un message." });
+      trackEvent("flight_search_shared", { method: "clipboard" });
+    } catch {
+      window.open(digitalWhatsAppUrl(`${text}\n${url}`), "_blank", "noopener,noreferrer");
+      trackEvent("flight_search_shared", { method: "whatsapp_fallback" });
+    }
+  }
 
   function handleSearch() {
     if (!isValidIsoDate(departureDate) || departureDate < today()) {
@@ -1289,9 +1331,17 @@ export default function Flights() {
                 <div className="text-sm font-semibold text-gray-600">
                   <span className="text-[#1E3A8A] font-black text-lg">{filtered.length}</span> vol{filtered.length > 1 ? "s" : ""} trouvé{filtered.length > 1 ? "s" : ""}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => void shareSearch()}
+                    data-testid="flight-share-search"
+                    className="touch-target inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1E3A8A] transition hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    <Share2 className="h-4 w-4" aria-hidden="true" /> Partager
+                  </button>
                   <button onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden flex items-center gap-1 text-sm font-semibold text-[#2563EB] border border-[#2563EB] px-3 py-1.5 rounded-lg">
+                    className="lg:hidden flex items-center gap-1 text-sm font-semibold text-[#2563EB] border border-[#2563EB] px-3 py-1.5 rounded-lg min-h-10">
                     <Filter className="w-4 h-4" /> Filtres
                   </button>
                   <div className="flex items-center gap-1 text-xs">
@@ -1312,11 +1362,28 @@ export default function Flights() {
                   <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
                 ))}
                 {filtered.length === 0 && (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 px-4" data-testid="flight-filters-empty">
                     <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 font-semibold">Aucun vol ne correspond à vos filtres.</p>
-                    <button onClick={() => { setMaxStops(null); setSelectedAirlines([]); setPriceRange([minPrice, maxPrice]); }}
-                      className="mt-3 text-[#2563EB] text-sm font-semibold hover:underline">Réinitialiser les filtres</button>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setMaxStops(null); setSelectedAirlines([]); setPriceRange([minPrice, maxPrice]); }}
+                        className="touch-target min-h-10 rounded-xl bg-[#1E3A8A] px-4 text-sm font-black text-white"
+                      >
+                        Réinitialiser les filtres
+                      </button>
+                      <a
+                        href={digitalWhatsAppUrl(searchWhatsAppMessage)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackEvent("whatsapp_clicked", { context: "filters_empty" })}
+                        data-testid="search-whatsapp-filters_empty"
+                        className="touch-target inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white hover:bg-emerald-800"
+                      >
+                        <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp conseiller
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1337,28 +1404,70 @@ export default function Flights() {
         )}
 
         {searchEnabled && !isFetching && error && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 bg-rose-50 border border-rose-200 rounded-3xl max-w-2xl mx-auto my-8 p-8">
-            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-            <h3 className="text-lg font-black text-rose-800 mb-2">La recherche n’a pas abouti</h3>
-            <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1, y: 0 }}>
+            <FlightSearchEmptyState
+              reason="error"
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id, context: "search_error" });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })}
+              whatsappTestId="search-whatsapp-search_error"
+            />
           </motion.div>
         )}
 
         {searchEnabled && !isFetching && !error && outbound.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
-            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
-            <div className="mt-5 flex justify-center">
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1 }}>
+            <FlightSearchEmptyState
+              reason={data?.providerNotice ? "unavailable" : "no_results"}
+              notice={data?.providerNotice}
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })}
+              whatsappTestId="search-whatsapp-no_results"
+            />
           </motion.div>
         )}
       </div>
+
+      {searchEnabled && !isFetching && outbound.length > 0 && (
+        <div
+          className="safe-bottom-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-blue-100 bg-white/95 px-3 pt-2 shadow-[0_-8px_30px_-12px_rgba(15,47,111,0.28)] backdrop-blur md:hidden"
+          data-testid="flights-sticky-cta"
+          role="region"
+          aria-label="Actions rapides vols"
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={() => {
+                document.querySelector('[data-testid="flight-search-panel"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-center text-sm font-bold text-[#1E3A8A] transition active:scale-[0.98]"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" /> Modifier
+            </button>
+            <a
+              href={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent("whatsapp_clicked", { context: "flights_sticky_cta" })}
+              data-testid="flights-sticky-whatsapp"
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3 text-center text-sm font-black text-white transition hover:bg-emerald-800 active:scale-[0.98]"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
       {pendingOutbound && (
         <ReturnFlightModal
           outboundFlight={pendingOutbound}
