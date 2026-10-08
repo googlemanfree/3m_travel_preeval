@@ -26,7 +26,7 @@ export function ServicePageShell({ eyebrow, title, introduction, primaryHref, pr
           <div>
             <p className="inline-flex items-center rounded-full border border-blue-200/40 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-amber-100">{eyebrow}</p>
             <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight !text-white sm:text-5xl lg:text-6xl">{title}</h1>
-            <p className="premium-copy-on-dark mt-6 max-w-3xl text-base sm:text-lg md:text-xl">{introduction}</p>
+            <p className="premium-copy-on-dark mt-6 max-w-3xl rounded-2xl bg-[#020C3B]/35 px-4 py-3 !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ring-1 ring-white/10 backdrop-blur-[2px] text-base sm:text-lg md:text-xl">{introduction}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {primaryHref.startsWith("#") ? (
                 <a href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950">
@@ -56,7 +56,7 @@ export function ServicePageShell({ eyebrow, title, introduction, primaryHref, pr
           <aside className="rounded-2xl border border-white/25 bg-slate-950/35 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
             <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
             <h2 className="mt-4 text-lg font-black !text-white">Une orientation, pas une promesse</h2>
-            <p className="premium-copy-on-dark mt-2 text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
+            <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
           </aside>
         </div>
       </section>
