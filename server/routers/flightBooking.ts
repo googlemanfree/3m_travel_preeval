@@ -491,7 +491,7 @@ export const flightBookingRouter = router({
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text("3M Travel & Services", 15, 15);
+    doc.text("3M TRAVEL AGENCY", 15, 15);
     doc.setFontSize(11);
     doc.text("Relevé détaillé 3M Rewards", 15, 23);
     doc.setFont("helvetica", "normal");
@@ -674,7 +674,7 @@ export const flightBookingRouter = router({
         const flightSummary = getFlightEmailSummary((existing.flightData ?? {}) as FlightTimingData);
         await sendEmail({
           to: input.assignedAgentEmail,
-          subject: `[3M Travel] Réservation ${existing.requestRef} affectée à votre file`,
+          subject: `[3M TRAVEL AGENCY] Réservation ${existing.requestRef} affectée à votre file`,
           html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Nouvelle réservation affectée</h2><p>La demande <strong>${esc(existing.requestRef)}</strong> vous a été affectée.</p><p><strong>Client :</strong> ${esc(existing.candidateEmail)}<br/><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Compagnie :</strong> ${esc(flightSummary.airline)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}<br/><strong>Priorité :</strong> ${esc(String(existing.priority))}</p><p>Connectez-vous au tableau de bord pour mettre à jour le statut et ajouter vos notes internes.</p></div>`,
         });
         notificationEmailSent = true;
@@ -707,8 +707,8 @@ export const flightBookingRouter = router({
         const flightSummary = getFlightEmailSummary((existing.flightData ?? {}) as FlightTimingData);
         await sendEmail({
           to: existing.candidateEmail,
-          subject: `[3M Travel] Mise à jour de votre réservation ${existing.requestRef}`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${esc(existing.requestRef)}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${esc(customerStatusLabels[input.status])}</p><p style="margin:0"><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${esc(input.details).replace(/\n/g, "<br/>")}</p>` : ""}${paymentHintHtml(input.status, process.env.SITE_URL || "https://www.3mtravelagency.com", existing.requestRef)}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel &amp; Services</strong></p></div>`,
+          subject: `[3M TRAVEL AGENCY] Mise à jour de votre réservation ${existing.requestRef}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${esc(existing.requestRef)}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${esc(customerStatusLabels[input.status])}</p><p style="margin:0"><strong>Trajet :</strong> ${esc(flightSummary.origin)} → ${esc(flightSummary.destination)}<br/><strong>Départ :</strong> ${esc(flightSummary.departure)}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${esc(input.details).replace(/\n/g, "<br/>")}</p>` : ""}${paymentHintHtml(input.status, process.env.SITE_URL || "https://www.3mtravelagency.com", existing.requestRef)}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M TRAVEL AGENCY</strong></p></div>`,
         });
         notificationEmailSent = true;
       } catch (error) {
@@ -738,7 +738,7 @@ export const flightBookingRouter = router({
 
       await sendEmail({
         to: existing.candidateEmail,
-        subject: `[3M Travel] Reçu de paiement et quittance - Dossier ${existing.requestRef}`,
+        subject: `[3M TRAVEL AGENCY] Reçu de paiement et quittance - Dossier ${existing.requestRef}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
             <h2 style="color: #1e3a8a; margin-top: 0;">Quittance de Paiement Validée</h2>
@@ -749,7 +749,7 @@ export const flightBookingRouter = router({
               <p style="margin: 0 0 8px 0;"><strong>ID de transaction :</strong> <span style="font-family: monospace; font-weight: bold;">${esc(existing.paymentTransactionId || 'N/A')}</span></p>
               <p style="margin: 0;"><strong>Statut :</strong> Paiement validé et vérifié par l'agence</p>
             </div>
-            <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+            <p>Cordialement,<br/><strong>L'équipe 3M TRAVEL AGENCY</strong></p>
           </div>
         `,
       });
@@ -926,12 +926,12 @@ export const flightBookingRouter = router({
         if (clientEmail) {
           await sendEmail({
             to: clientEmail,
-            subject: `[3M Travel] Confirmation de votre billet et reçu PNR - ${existing.requestRef}`,
+            subject: `[3M TRAVEL AGENCY] Confirmation de votre billet et reçu PNR - ${existing.requestRef}`,
             attachments: sheetAttachments(existing, input.pnrReference),
             html: `
               <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 8px;">
                 <div style="background: #1E3A8A; color: #ffffff; padding: 16px 20px; border-radius: 6px 6px 0 0; text-align: center;">
-                  <h2 style="margin: 0; font-size: 20px;">3M Travel & Services</h2>
+                  <h2 style="margin: 0; font-size: 20px;">3M TRAVEL AGENCY</h2>
                   <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;">Confirmation Officielle de Réservation & PNR</p>
                 </div>
                 <div style="padding: 24px 20px;">
@@ -944,7 +944,7 @@ export const flightBookingRouter = router({
                   </div>
                   ${pdfLink ? `<p style="text-align: center; margin: 24px 0;"><a href="${pdfLink}" style="background: #059669; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">📥 Télécharger votre Billet / Confirmation PDF</a></p>` : ''}
                   <p>Vous pouvez également retrouver ce document et gérer vos options de voyage à tout moment depuis votre <a href="https://www.3mtravelagency.com/mon-espace" style="color: #2563EB; text-decoration: underline;">Espace Client 3M</a>.</p>
-                  <p style="margin-top: 24px; font-size: 13px; color: #64748B;">Cordialement,<br><strong>L'équipe Billetterie & Mobilité - 3M Travel & Services</strong><br><a href="mailto:hello@3mtravelagency.com" style="color: #2563EB;">hello@3mtravelagency.com</a></p>
+                  <p style="margin-top: 24px; font-size: 13px; color: #64748B;">Cordialement,<br><strong>L'équipe Billetterie & Mobilité - 3M TRAVEL AGENCY</strong><br><a href="mailto:hello@3mtravelagency.com" style="color: #2563EB;">hello@3mtravelagency.com</a></p>
                 </div>
                 <div style="background: #F1F5F9; padding: 12px 20px; text-align: center; font-size: 11px; color: #64748B; border-radius: 0 0 6px 6px;">
                   Ceci est un message automatisé officiel. Merci de ne pas y répondre directement.
@@ -1040,7 +1040,7 @@ export const flightBookingRouter = router({
       try {
         await sendEmail({
           to: existing.candidateEmail,
-          subject: `[3M Travel] Votre document PNR final est disponible - Dossier ${existing.requestRef}`,
+          subject: `[3M TRAVEL AGENCY] Votre document PNR final est disponible - Dossier ${existing.requestRef}`,
           attachments: sheetAttachments(existing, input.pnrReference),
           html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
@@ -1054,7 +1054,7 @@ export const flightBookingRouter = router({
               <p style="text-align: center; margin: 30px 0;">
                 <a href="${url}" target="_blank" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Télécharger mon billet PNR (PDF)</a>
               </p>
-              <p>Merci de faire confiance à <strong>3M Travel & Services</strong> pour votre mobilité internationale.</p>
+              <p>Merci de faire confiance à <strong>3M TRAVEL AGENCY</strong> pour votre mobilité internationale.</p>
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
               <p style="font-size: 11px; color: #64748b; text-align: center;">Ceci est un message automatique, veuillez ne pas y répondre directement.</p>
             </div>
@@ -1128,7 +1128,7 @@ export const flightBookingRouter = router({
         </head>
         <body>
           <div class="header">
-            <h1>3M Travel & Services — Rapport d’Audit & Initiales</h1>
+            <h1>3M TRAVEL AGENCY — Rapport d’Audit & Initiales</h1>
             <p>Historique infalsifiable des validations, contrôles et émissions PNR</p>
           </div>
           <div class="meta">
@@ -1164,7 +1164,7 @@ export const flightBookingRouter = router({
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.setTextColor(30, 58, 138);
-      doc.text("3M Travel & Services - Rapport d'Audit & Initiales", 15, 20);
+      doc.text("3M TRAVEL AGENCY - Rapport d'Audit & Initiales", 15, 20);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -1305,7 +1305,7 @@ export const flightBookingRouter = router({
 
       await sendEmail({
         to: existing.candidateEmail,
-        subject: `[Rappel 3M Travel] Téléchargement de votre billet PNR en attente - Dossier ${existing.requestRef}`,
+        subject: `[Rappel 3M TRAVEL AGENCY] Téléchargement de votre billet PNR en attente - Dossier ${existing.requestRef}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
             <h2 style="color: #1e3a8a; margin-top: 0;">Rappel : Votre billet PNR est disponible</h2>
@@ -1318,7 +1318,7 @@ export const flightBookingRouter = router({
             <p style="text-align: center; margin: 30px 0;">
               <a href="${existing.issuedPdfUrl}" target="_blank" style="background: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Télécharger mon billet PNR</a>
             </p>
-            <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+            <p>Cordialement,<br/><strong>L'équipe 3M TRAVEL AGENCY</strong></p>
           </div>
         `,
       });

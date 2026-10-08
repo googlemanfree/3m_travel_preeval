@@ -496,12 +496,12 @@ export function buildClientReport(version: AdminEvaluationVersion, meta: { candi
 
 // ── E-mail de notification ───────────────────────────────────────────────────
 
-export const NOTIFICATION_EMAIL_SUBJECT = "Votre évaluation professionnelle est disponible — 3M Travel & Services";
+export const NOTIFICATION_EMAIL_SUBJECT = "Votre évaluation professionnelle est disponible — 3M TRAVEL AGENCY";
 export const NOTIFICATION_PORTAL_PLACEHOLDER = "[LIEN_PORTAIL_CLIENT]";
 
 export const NOTIFICATION_EMAIL_SIGNATURE = [
   "Direction de la Mobilité Internationale",
-  "3M Travel & Services",
+  "3M TRAVEL AGENCY",
   "",
   "Cameroun / WhatsApp : +237 698 104 832 | +237 620 996 045",
   "Bureau Canada : +1 672 897 2999",

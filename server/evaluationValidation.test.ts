@@ -509,7 +509,7 @@ describe("rendu texte du rapport client", () => {
 
 describe("e-mail de notification", () => {
   it("reprend l'objet et le texte du brief", () => {
-    expect(NOTIFICATION_EMAIL_SUBJECT).toBe("Votre évaluation professionnelle est disponible — 3M Travel & Services");
+    expect(NOTIFICATION_EMAIL_SUBJECT).toBe("Votre évaluation professionnelle est disponible — 3M TRAVEL AGENCY");
     const email = defaultNotificationEmail({ candidateName: "Aïcha Nkolo", priorityCountry: "Canada" });
     expect(email.subject).toBe(NOTIFICATION_EMAIL_SUBJECT);
     expect(email.body).toContain("Bonjour Aïcha Nkolo,");

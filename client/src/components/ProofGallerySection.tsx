@@ -47,7 +47,7 @@ export default function ProofGallerySection() {
           </p>
           <h2 id="proof-gallery-title" className="mt-4 text-2xl md:text-3xl font-black text-slate-950">Ils ont avancé avec 3M — voici les preuves</h2>
           <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600">
-            Extraits de dossiers réellement traités par 3M Travel &amp; Services. Identités et données sensibles masquées, avec l’accord des candidats concernés — pour juger sur du concret, pas sur des slogans.
+            Extraits de dossiers réellement traités par 3M TRAVEL AGENCY. Identités et données sensibles masquées, avec l’accord des candidats concernés — pour juger sur du concret, pas sur des slogans.
           </p>
           <p className="mt-3 text-sm font-bold text-blue-800" data-testid="proof-count" aria-live="polite">
             {PROOF_PHOTOS.length} preuves publiées

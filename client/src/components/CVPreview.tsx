@@ -149,7 +149,7 @@ export default function CVPreview({ data, template = 'modern', theme = 'blue' }:
 
       {/* Footer */}
       <div className="text-center text-xs text-gray-500 border-t pt-4">
-        <p>CV généré par 3M Travel & Services</p>
+        <p>CV généré par 3M TRAVEL AGENCY</p>
       </div>
     </div>
   );

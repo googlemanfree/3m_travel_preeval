@@ -34,7 +34,7 @@ export default function EvaluationReportView({ report, headingId = "evaluation-r
   return (
     <article className="space-y-5" aria-labelledby={headingId}>
       <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-blue-50 p-6 shadow-sm">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Évaluation validée par 3M Travel &amp; Services</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Évaluation validée par 3M TRAVEL AGENCY</p>
         <h2 id={headingId} className="mt-1 text-2xl font-black text-slate-950">Votre évaluation professionnelle</h2>
         <p className="mt-1 text-sm text-slate-600">
           {report.candidateName} · pays prioritaire : <strong>{report.priorityCountry}</strong>

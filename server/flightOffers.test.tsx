@@ -355,7 +355,7 @@ describe("page de vols unique : reprises de l'ancienne page Billets", () => {
   it("aucun résultat ou moteur en panne : un conseiller peut chercher (WhatsApp prérempli avec l'itinéraire)", () => {
     expect(source).toContain('data-testid="search-whatsapp-no_results"');
     expect(source).toContain('data-testid="search-whatsapp-search_error"');
-    expect(source).toContain("Bonjour 3M Travel, je souhaite une recherche personnalisée de vol.");
+    expect(source).toContain("Bonjour 3M TRAVEL AGENCY, je souhaite une recherche personnalisée de vol.");
     expect(source).toContain("digitalWhatsAppUrl(searchWhatsAppMessage)");
   });
 

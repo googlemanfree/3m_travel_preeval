@@ -1,7 +1,7 @@
 /**
  * Moteur de scoring — Évaluation d'éligibilité Luxembourg
  * Grille de points fixe (algorithme déclaratif, pas d'IA), telle que
- * spécifiée par 3M Travel & Services.
+ * spécifiée par 3M TRAVEL AGENCY.
  */
 
 export type EducationLevel = "master_dual" | "licence_cert" | "bac_cqp";

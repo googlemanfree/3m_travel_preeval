@@ -64,7 +64,7 @@ export async function sendClientDossierConfirmationEmail(
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© ${new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p>
+            <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.</p>
           </div>
         </div>
       `,
@@ -222,7 +222,7 @@ export async function sendVerificationLink(
   try {
     await sendGenericEmail({
       to,
-      subject: "✓ Confirmez votre email - 3M Travel & Services",
+      subject: "✓ Confirmez votre email - 3M TRAVEL AGENCY",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
@@ -230,7 +230,7 @@ export async function sendVerificationLink(
           </div>
           <div style="padding: 40px; background: #f9fafb;">
             <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p>
+            <p>Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong> ! 🎉</p>
             <p>Pour finaliser votre inscription et activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
             ${priorEvaluationNotice}
             
@@ -257,7 +257,7 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
   try {
     await sendGenericEmail({
       to,
-      subject: "🔐 Votre code de vérification 3M Travel",
+      subject: "🔐 Votre code de vérification 3M TRAVEL AGENCY",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
@@ -286,7 +286,7 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
   try {
     await sendGenericEmail({
       to,
-      subject: "🔑 Réinitialisation de votre mot de passe 3M Travel",
+      subject: "🔑 Réinitialisation de votre mot de passe 3M TRAVEL AGENCY",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
@@ -335,11 +335,11 @@ export async function sendEmailChangeConfirmation(input: EmailChangeConfirmation
 
   await sendGenericEmail({
     to: input.to,
-    subject: `3M Travel & Services — ${title}`,
+    subject: `3M TRAVEL AGENCY — ${title}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#172033;">
         <div style="background:#0B2A52;padding:28px 32px;color:#fff;">
-          <p style="margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">3M Travel &amp; Services</p>
+          <p style="margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">3M TRAVEL AGENCY</p>
           <h1 style="margin:0;font-size:24px;">${title}</h1>
         </div>
         <div style="padding:28px 32px;background:#f8fafc;">
@@ -372,14 +372,14 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
   try {
     await sendGenericEmail({
       to,
-      subject: `Bienvenue chez 3M Travel & Services - Votre voyage vers ${destLabel} commence !`,
+      subject: `Bienvenue chez 3M TRAVEL AGENCY - Votre voyage vers ${destLabel} commence !`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
             <h1 style="margin: 0;">Bienvenue, ${escapeEmailHtml(fullName)} !</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Nous sommes ravis de vous accueillir chez <strong>3M Travel & Services</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
+            <p>Nous sommes ravis de vous accueillir chez <strong>3M TRAVEL AGENCY</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
             <p>Notre équipe est prête à vous accompagner à chaque étape de votre projet. Vous pouvez dès maintenant accéder à votre tableau de bord pour suivre l'avancement de votre dossier et gérer vos informations.</p>
             
             <p style="text-align: center; margin-top: 30px;">
@@ -393,7 +393,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© ${new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p>
+            <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.</p>
           </div>
         </div>
       `,
@@ -413,7 +413,7 @@ export async function sendDossierConfirmationEmail(
   previousAccountReference?: string | null,
 ): Promise<boolean> {
   const dashboardUrl = `${SITE_URL}/mon-espace`;
-  const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
+  const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
   
   let avatarHtml = "";
   try {
@@ -475,7 +475,7 @@ export async function sendDossierConfirmationEmail(
             </p>
           </div>
           <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0 0 4px;">3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+            <p style="margin: 0 0 4px;">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
             <p style="margin: 0;">Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
           </div>
         </div>
@@ -570,7 +570,7 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #172033;">
           <div style="background: linear-gradient(135deg, #123b70 0%, #2563eb 100%); padding: 28px 32px; color: white;">
-            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">3M Travel &amp; Services</p>
+            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">3M TRAVEL AGENCY</p>
             <h1 style="margin: 0; font-size: 24px;">${safeTitle}</h1>
           </div>
           <div style="padding: 28px 32px; background: #f8fafc;">
@@ -608,7 +608,7 @@ export async function sendEvaluationReceptionEmail(input: {
     title: "Votre évaluation a bien été reçue",
     body: `Votre référence est ${input.referenceCode}. Votre demande${destination} est transmise à l’équipe pour une revue humaine. L’objectif de revue est de 24 heures ; ce délai reste indicatif et aucune décision de visa, d’admission ou d’emploi n’est automatique.`,
     actionUrl: "/mon-espace",
-    sourceLabel: "3M Travel & Services",
+    sourceLabel: "3M TRAVEL AGENCY",
   });
 }
 
@@ -624,6 +624,6 @@ export async function sendValidatedEvaluationResponseEmail(input: {
     title: "Votre évaluation a été examinée",
     body: `Référence ${input.referenceCode}\n\n${input.response}\n\nCette réponse a été révisée par un conseiller. Consultez votre espace pour la suite du dossier.`,
     actionUrl: "/mon-espace",
-    sourceLabel: "3M Travel & Services",
+    sourceLabel: "3M TRAVEL AGENCY",
   });
 }

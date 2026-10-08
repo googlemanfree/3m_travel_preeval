@@ -148,7 +148,7 @@ export default function Navbar() {
           >
             <img
               src="/logo-3m.webp"
-              alt="Logo 3M Travel Agency"
+              alt="Logo 3M TRAVEL AGENCY"
               className="h-10 w-auto object-contain sm:h-12"
             />
           </a>

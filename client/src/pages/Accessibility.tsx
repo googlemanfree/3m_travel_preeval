@@ -86,7 +86,7 @@ export default function Accessibility() {
 
         <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">{t("Un accès simple et inclusif", "Simple and inclusive access")}</h2>
-          <p className="leading-relaxed text-gray-700">{t("3M Travel Agency s’efforce de rendre ses services numériques accessibles aux candidats et voyageurs, quel que soit leur appareil ou leur mode de navigation.", "3M Travel Agency works to make its digital services accessible to candidates and travellers, regardless of device or navigation method.")}</p>
+          <p className="leading-relaxed text-gray-700">{t("3M TRAVEL AGENCY s’efforce de rendre ses services numériques accessibles aux candidats et voyageurs, quel que soit leur appareil ou leur mode de navigation.", "3M TRAVEL AGENCY works to make its digital services accessible to candidates and travellers, regardless of device or navigation method.")}</p>
           <h2 className="text-2xl font-bold text-gray-900">{t("Mesures mises en place", "Measures in place")}</h2>
           <p className="leading-relaxed text-gray-700">{t("Nous privilégions des contrastes lisibles, une navigation au clavier, des libellés explicites, des états de focus visibles et des interfaces adaptées aux écrans mobiles.", "We prioritise readable contrast, keyboard navigation, explicit labels, visible focus states and interfaces adapted to mobile screens.")}</p>
           <h2 className="text-2xl font-bold text-gray-900">{t("Besoin d’aide ?", "Need help?")}</h2>

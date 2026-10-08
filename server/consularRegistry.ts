@@ -1,5 +1,5 @@
 /**
- * Registre Officiel des Liens Consulaires et des Procédures — 3M Travel & Services
+ * Registre Officiel des Liens Consulaires et des Procédures — 3M TRAVEL AGENCY
  * Permet aux administrateurs d'accéder en un clic aux portails officiels des consulats et e-visas mondiaux.
  */
 

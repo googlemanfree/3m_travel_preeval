@@ -64,7 +64,7 @@ describe("contacts multi-bureaux", () => {
     const ottawaMessage = buildQuickOfficeContactMessage(OFFICE_CONTACTS.ottawa, contact);
     const cameroonMessage = buildQuickOfficeContactMessage(OFFICE_CONTACTS.cameroon, contact);
 
-    expect(ottawaMessage).toContain("Bureau 3M Travel d’Ottawa, Canada");
+    expect(ottawaMessage).toContain("Bureau 3M TRAVEL AGENCY d’Ottawa, Canada");
     expect(cameroonMessage).toContain("Bureau de Yaoundé, Cameroun");
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.ottawa, ottawaMessage)).toContain("wa.me/16728972999");
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.cameroon, cameroonMessage)).toContain("wa.me/237698104832");

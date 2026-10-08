@@ -62,11 +62,11 @@ describe("Payment receipt professional delivery", () => {
       paymentMethod: "Agence",
       validatedBy: "aureoldonfack@gmail.com",
       receiptApprovedAt: new Date("2026-09-08T12:12:49Z"),
-      receiptSignatureLabel: "3M Travel & Services · aureoldonfack@gmail.com",
+      receiptSignatureLabel: "3M TRAVEL AGENCY · aureoldonfack@gmail.com",
       receiptSignatureHash: "abcdef1234567890abcdef1234567890",
     });
     expect(html).toContain("non remboursables");
-    expect(html).toContain("3M Travel &amp; Services");
+    expect(html).toContain("3M TRAVEL AGENCY");
   });
 
   it("requires an approval record before the admin receipt send mutation", () => {

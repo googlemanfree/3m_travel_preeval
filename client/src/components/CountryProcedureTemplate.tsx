@@ -9,7 +9,7 @@ import ConsultationRequestForm from "@/components/ConsultationRequestForm";
 import DocumentProcessIllustration from "@/components/illustrations/DocumentProcessIllustration";
 
 /**
- * Fiche procédure pays réutilisable — structure officielle 3M Travel & Services
+ * Fiche procédure pays réutilisable — structure officielle 3M TRAVEL AGENCY
  * (vision, alerte anti-arnaque, étapes détaillées, frais, paiement, FAQ).
  * Alimentée par les données de /data/countryProcedures/<pays>.ts — pour ajouter
  * un nouveau pays, créer un fichier de données suivant le même modèle
@@ -147,7 +147,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
         {/* 05 — Protection anti-arnaque */}
         <section>
           <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-green-600" /> Comment 3M Travel Vous Protège
+            <ShieldCheck className="w-5 h-5 text-green-600" /> Comment 3M TRAVEL AGENCY Vous Protège
           </h2>
           <Card className="p-6">
             <ul className="space-y-2">

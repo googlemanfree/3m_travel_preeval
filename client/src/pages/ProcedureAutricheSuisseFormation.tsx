@@ -74,11 +74,11 @@ export default function ProcedureAutricheSuisseFormation() {
 
   useEffect(() => {
     document.title = isSuisseRoute
-      ? "Suisse : apprentissage (formation professionnelle) & visa | 3M Travel & Services"
-      : "Autriche : Lehre (apprentissage) & Red-White-Red Card | 3M Travel & Services";
+      ? "Suisse : apprentissage (formation professionnelle) & visa | 3M TRAVEL AGENCY"
+      : "Autriche : Lehre (apprentissage) & Red-White-Red Card | 3M TRAVEL AGENCY";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      "Apprentissage rémunéré en Autriche (Lehre) ou en Suisse : conditions, étapes du visa et documents requis, avec l'accompagnement 3M Travel & Services depuis Yaoundé.",
+      "Apprentissage rémunéré en Autriche (Lehre) ou en Suisse : conditions, étapes du visa et documents requis, avec l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé.",
     );
   }, [isSuisseRoute]);
 
@@ -95,7 +95,7 @@ export default function ProcedureAutricheSuisseFormation() {
             Le modèle allemand de formation en alternance (Ausbildung) n'est pas unique : l'Autriche (Lehre) et la Suisse (formation professionnelle initiale) proposent des systèmes structurellement très proches — formation rémunérée en entreprise combinée à l'école professionnelle, diplôme reconnu à la clé, et une vraie voie d'installation durable pour les candidats non-européens qui remplissent les conditions.
           </p>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-blue-100">
-            3M Travel &amp; Services élargit son accompagnement à ces deux destinations : évaluation de votre profil, orientation vers le pays le plus adapté à votre situation, préparation linguistique, et suivi du dossier de visa jusqu'à votre installation.
+            3M TRAVEL AGENCY élargit son accompagnement à ces deux destinations : évaluation de votre profil, orientation vers le pays le plus adapté à votre situation, préparation linguistique, et suivi du dossier de visa jusqu'à votre installation.
           </p>
           <Link href={EVAL_LINK} className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
             Comparer mon profil pour l'Allemagne, l'Autriche et la Suisse <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -215,7 +215,7 @@ export default function ProcedureAutricheSuisseFormation() {
         <section className="mt-8 rounded-2xl bg-blue-900 p-6 text-white sm:p-10">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-7 w-7 text-blue-200" aria-hidden="true" />
-            <h2 className="text-2xl font-black">Pourquoi passer par 3M Travel &amp; Services pour ces destinations</h2>
+            <h2 className="text-2xl font-black">Pourquoi passer par 3M TRAVEL AGENCY pour ces destinations</h2>
           </div>
           <div className="mt-6 grid gap-3">
             {WHY_3M.map((item) => (
@@ -237,7 +237,7 @@ export default function ProcedureAutricheSuisseFormation() {
           </div>
           <ul className="mt-4 space-y-2 text-sm leading-6 text-amber-900">
             <li>Les conditions d'âge, de rémunération et de sélectivité varient selon le canton (Suisse) ou le secteur (Autriche) — les chiffres indiqués sont indicatifs.</li>
-            <li>La décision finale de délivrance du visa ou du contrat relève exclusivement des autorités et employeurs concernés ; 3M Travel &amp; Services accompagne la préparation du dossier sans garantir l'issue de la demande.</li>
+            <li>La décision finale de délivrance du visa ou du contrat relève exclusivement des autorités et employeurs concernés ; 3M TRAVEL AGENCY accompagne la préparation du dossier sans garantir l'issue de la demande.</li>
             <li>La Suisse impose des critères d'âge et d'expérience préalable plus stricts que l'Allemagne ou l'Autriche — une évaluation individuelle est indispensable avant tout engagement.</li>
           </ul>
         </section>

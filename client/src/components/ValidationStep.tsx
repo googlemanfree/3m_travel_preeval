@@ -116,7 +116,7 @@ export function ValidationStep({
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text('3M Travel & Services', 15, 13);
+    doc.text('3M TRAVEL AGENCY', 15, 13);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text('Récapitulatif des données passeport vérifiées', 15, 21);

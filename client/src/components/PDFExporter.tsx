@@ -178,7 +178,7 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       yPosition = pageHeight - 15;
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
-      pdf.text(`© 2026 3M Travel Agency | Candidat: ${candidate.fullName}`, margin, yPosition);
+      pdf.text(`© 2026 3M TRAVEL AGENCY | Candidat: ${candidate.fullName}`, margin, yPosition);
 
       // Save the PDF
       setExportProgress(85);

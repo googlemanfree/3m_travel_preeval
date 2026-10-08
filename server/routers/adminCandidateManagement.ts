@@ -443,7 +443,7 @@ export const adminCandidateManagementRouter = router({
           evaluationReviewedBy: admin.email,
           evaluationReviewNote: traceNote,
         }).where(eq(candidates.id, candidate.id));
-        const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
+        const visibleMessage = "Votre évaluation a été validée par un conseiller 3M TRAVEL AGENCY. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
         const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
         const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
         await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: visibleMessage, isRead: false });
@@ -559,7 +559,7 @@ export const adminCandidateManagementRouter = router({
         title: input.subject.trim(),
         body,
         actionUrl: "/mon-espace",
-        sourceLabel: "3M Travel & Services",
+        sourceLabel: "3M TRAVEL AGENCY",
       });
       if (emailSent && notificationId > 0) {
         await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
@@ -1260,7 +1260,7 @@ export const adminCandidateManagementRouter = router({
       const approvedAt = new Date();
       const approvedByEmail = admin.email || "Administrateur";
       const approvedByName = approvedByEmail;
-      const signatureLabel = `3M Travel & Services · ${approvedByName}`;
+      const signatureLabel = `3M TRAVEL AGENCY · ${approvedByName}`;
       const signatureHash = createReceiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount, currency, approvedByEmail, approvedAt });
       const [approval] = await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount: `${amount} ${currency}`, currency, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash }).$returningId();
       await db.insert(paymentAuditLogs).values({ adminName: approvedByName, adminEmail: approvedByEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail, amount: `${amount} ${currency}`, details: `Reçu validé et signé électroniquement pour ${dossierNumber}. Empreinte ${signatureHash}.` });
@@ -1422,9 +1422,9 @@ export const adminCandidateManagementRouter = router({
 <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; background: #eef2f7; padding: 24px;">
   <div style="background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15,36,96,0.12);">
     <div style="background: linear-gradient(135deg, #0f2460 0%, #1E3A8A 55%, #2563EB 100%); padding: 36px 30px 28px; text-align: center;">
-      <img src="${logoUrl}" alt="3M Travel & Services" width="72" height="72" style="width:72px;height:72px;border-radius:50%;background:#ffffff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,0.25);" />
+      <img src="${logoUrl}" alt="3M TRAVEL AGENCY" width="72" height="72" style="width:72px;height:72px;border-radius:50%;background:#ffffff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,0.25);" />
       <p style="display:inline-block;margin:18px 0 0;background:rgba(255,255,255,0.15);color:#dbeafe;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:999px;">Protocole d’accord officiel</p>
-      <h1 style="color:#ffffff;font-size:24px;margin:14px 0 0;">3M Travel &amp; Services</h1>
+      <h1 style="color:#ffffff;font-size:24px;margin:14px 0 0;">3M TRAVEL AGENCY</h1>
       <div style="width:60px;height:3px;background:#c9972b;margin:14px auto 0;border-radius:2px;"></div>
     </div>
     <div style="padding: 32px 30px;">
@@ -1445,7 +1445,7 @@ export const adminCandidateManagementRouter = router({
     </div>
     <div style="border-top:2px solid #f1f5f9;padding:20px 30px;text-align:center;background:#fafbfc;">
       <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">Ce document est une preuve officielle de votre engagement. Conservez-le précieusement.</p>
-      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M Travel &amp; Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
       <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">Yaoundé, Cameroun • hello@3mtravelagency.com</p>
       <p style="margin:0;font-size:11px;color:#c7cdd6;">Document généré le ${generatedOn}</p>
     </div>

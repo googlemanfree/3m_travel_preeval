@@ -1304,7 +1304,7 @@ export const candidateRouter = router({
       await db.insert(candidateMessages).values({
         candidateId: candidate.id,
         senderRole: "advisor",
-        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera prochainement.`,
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M TRAVEL AGENCY est activé. Notre équipe vous contactera prochainement.`,
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
@@ -1340,7 +1340,7 @@ export const candidateRouter = router({
       await db.insert(candidateMessages).values({
         candidateId: input.candidateId,
         senderRole: "advisor",
-        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera prochainement.`,
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M TRAVEL AGENCY est activé. Notre équipe vous contactera prochainement.`,
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
@@ -1501,7 +1501,7 @@ export const candidateRouter = router({
           <p>Votre protocole d'accord a été signé avec succès le ${new Date().toLocaleDateString("fr-FR")}.</p>
           <p><strong>Numéro de dossier :</strong> ${esc(input.dossierNumber)}</p>
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
         await sendEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
@@ -1576,7 +1576,7 @@ export const candidateRouter = router({
           <p>Vos ${input.documents.length} document(s) ont été reçus avec succès.</p>
           <p><strong>Numéro de dossier :</strong> ${esc(input.dossierNumber)}</p>
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
         await sendEmail({ to: app[0].email, subject: `📄 Documents Reçus - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
@@ -2423,8 +2423,8 @@ export const candidateRouter = router({
       }
       const departureCity = String(flight.departureCity || flight.departure || "Départ");
       const arrivalCity = String(flight.arrivalCity || flight.arrival || "Destination");
-      const subject = `Itinéraire de vol 3M Travel Agency : ${departureCity} ➔ ${arrivalCity}`;
-      const textBody = `Bonjour,\n\nVoici un itinéraire de vol partagé par ${ctx.candidate.fullName} via 3M Travel Agency :\n\nTrajet : ${departureCity} vers ${arrivalCity}\nCompagnie : ${String(flight.airline || "À confirmer")}\nPrix estimé : ${String(flight.price ?? "À confirmer")} ${String(flight.currency || "XAF")}\nCabine : ${String(flight.cabinClass || "Économique")}\nDate : ${String(flight.departureDate || "Libre")}\n\nContactez-nous pour réserver dès maintenant !\n3M Travel Agency — hello@3mtravelagency.com`;
+      const subject = `Itinéraire de vol 3M TRAVEL AGENCY : ${departureCity} ➔ ${arrivalCity}`;
+      const textBody = `Bonjour,\n\nVoici un itinéraire de vol partagé par ${ctx.candidate.fullName} via 3M TRAVEL AGENCY :\n\nTrajet : ${departureCity} vers ${arrivalCity}\nCompagnie : ${String(flight.airline || "À confirmer")}\nPrix estimé : ${String(flight.price ?? "À confirmer")} ${String(flight.currency || "XAF")}\nCabine : ${String(flight.cabinClass || "Économique")}\nDate : ${String(flight.departureDate || "Libre")}\n\nContactez-nous pour réserver dès maintenant !\n3M TRAVEL AGENCY — hello@3mtravelagency.com`;
 
       try {
         await sendGenericEmail({

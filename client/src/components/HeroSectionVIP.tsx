@@ -102,7 +102,7 @@ export default function HeroSectionVIP({
           />
           <img
             src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-            alt="Voyageurs préparant un projet de mobilité internationale avec 3M Travel Agency"
+            alt="Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY"
             ref={backgroundRef}
             loading="eager"
             decoding="async"
@@ -125,7 +125,7 @@ export default function HeroSectionVIP({
         >
           <img
             src={logoUrl}
-            alt="3M Travel Agency"
+            alt="3M TRAVEL AGENCY"
             width={96}
             height={96}
             decoding="async"
@@ -185,7 +185,7 @@ export default function HeroSectionVIP({
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white/5 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/15 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
             <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
+              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
               target="_blank"
               rel="noopener noreferrer"
             >

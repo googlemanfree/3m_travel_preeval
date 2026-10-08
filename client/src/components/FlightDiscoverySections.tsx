@@ -465,7 +465,7 @@ function Advantages() {
   return (
     <section aria-labelledby="flight-advantages-title" className="bg-slate-50 py-10" data-testid="flight-advantages">
       <div className="mx-auto max-w-6xl px-4">
-        <h2 id="flight-advantages-title" className="mb-8 text-center text-2xl font-black text-slate-900 md:text-3xl">Pourquoi réserver avec 3M Travel</h2>
+        <h2 id="flight-advantages-title" className="mb-8 text-center text-2xl font-black text-slate-900 md:text-3xl">Pourquoi réserver avec 3M TRAVEL AGENCY</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FLIGHT_ADVANTAGES.map((item, index) => {
             const Icon = ADVANTAGE_ICONS[index] ?? ShieldCheck;
@@ -550,12 +550,12 @@ export function FlightAfricaCarriersBand() {
     >
       <div className="mx-auto max-w-6xl px-4">
         <div className="mx-auto mb-6 max-w-2xl text-center">
-          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Depuis le Cameroun &amp; l’Afrique centrale</p>
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Billets internationaux · 3M TRAVEL AGENCY</p>
           <h2 id="flight-africa-carriers-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
             Compagnies fréquemment relevées
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Camair-Co, Ethiopian, ASKY, Royal Air Maroc et d’autres liaisons vers l’Afrique, l’Europe et le Golfe. Les tarifs n’apparaissent qu’après une recherche live.
+            Camair-Co, Ethiopian, ASKY, Air France, Turkish et d’autres compagnies pour vos vols internationaux. Les tarifs n’apparaissent qu’après une recherche live — aucun prix de vitrine.
           </p>
         </div>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
@@ -594,12 +594,12 @@ export function FlightMobilityProofBridge() {
     >
       <div className="mx-auto max-w-6xl px-4">
         <div className="mx-auto mb-8 max-w-2xl text-center">
-          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Mobilité internationale · Yaoundé</p>
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">3M TRAVEL AGENCY · tous les services</p>
           <h2 id="flight-mobility-bridge-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
-            Le billet, puis le visa — au même endroit
+            Billet, visa, assurance — au même endroit
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Extraits de dossiers réellement traités (identités masquées, accord des candidats). Aucune statistique inventée : uniquement des preuves concrètes Canada, Schengen et Chine.
+            Outre les billets d’avion internationaux, 3M TRAVEL AGENCY accompagne visas, e-Visa, assurance et séjours. Preuves réelles de dossiers traités (identités masquées) — aucune statistique inventée.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,6 +1,6 @@
 /**
  * Illustration originale — Mobilité internationale (avion + globe + trajet)
- * Création propre pour 3M Travel & Services, aucune ressource externe.
+ * Création propre pour 3M TRAVEL AGENCY, aucune ressource externe.
  */
 export default function GlobalMobilityIllustration({ className }: { className?: string }) {
   return (

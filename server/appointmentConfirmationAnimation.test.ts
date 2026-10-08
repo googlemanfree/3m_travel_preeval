@@ -9,7 +9,7 @@ describe("Appointment Booking Confirmation Animation & Detailed Summary", () => 
         advisorName: "Maître Aureol Donfack",
         date: "2026-08-22",
         time: "10:30",
-        location: "Agence Principale 3M Travel (Douala / Yaoundé) ou Consultation Vidéo",
+        location: "Agence Principale 3M TRAVEL AGENCY (Douala / Yaoundé) ou Consultation Vidéo",
         reference: "3M-APT-8842",
       },
     };

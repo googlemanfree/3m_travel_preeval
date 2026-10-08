@@ -362,7 +362,7 @@ export default function CompleteProfile() {
                 )}
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Photo de profil obligatoire</h2>
-              <p className="text-gray-600 text-sm">Ajoutez votre photo pour personnaliser votre espace 3M Travel Agency.</p>
+              <p className="text-gray-600 text-sm">Ajoutez votre photo pour personnaliser votre espace 3M TRAVEL AGENCY.</p>
             </div>
 
             <div className="space-y-4">

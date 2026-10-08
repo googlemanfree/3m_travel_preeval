@@ -57,7 +57,7 @@ export function SignableDocumentsPanel({
                 {protocolSigned ? <CheckCircle2 className="h-5 w-5" /> : paymentConfirmed ? <FileSignature className="h-5 w-5" /> : <Clock3 className="h-5 w-5" />}
               </span>
               <div className="min-w-0">
-                <p className="font-bold text-slate-950">Protocole d’accord 3M Travel &amp; Services</p>
+                <p className="font-bold text-slate-950">Protocole d’accord 3M TRAVEL AGENCY</p>
                 {!hasActiveDossier ? <><p className="mt-1 font-semibold text-blue-900">Pas encore de dossier actif</p><p className="mt-1 text-sm text-slate-600">Votre pré-compte est enregistré, mais aucun dossier officiel n’a encore été ouvert. Le protocole ne peut pas être signé à cette étape.</p></>
                   : protocolSigned ? <p className="mt-1 text-sm text-emerald-800">Signé et enregistré pour le dossier {activeDossier?.dossierNumber ?? "actif"}.</p>
                   : paymentConfirmed ? <p className="mt-1 text-sm text-amber-900">Paiement confirmé : votre signature est maintenant requise avant le traitement humain.</p>

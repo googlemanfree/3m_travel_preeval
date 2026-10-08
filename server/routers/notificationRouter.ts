@@ -51,14 +51,14 @@ export const notificationRouter = router({
           <h3>📊 Score d'admissibilité : ${data.scorePercentage}%</h3>
           <p>${esc(data.recommendation)}</p>
           <p>Consultez votre espace candidat pour les détails complets.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         // Envoyer la notification double
         const result = await sendDualNotification(
           data.email,
           data.phoneNumber,
-          `Votre Bilan d'Admissibilité - 3M Travel & Services`,
+          `Votre Bilan d'Admissibilité - 3M TRAVEL AGENCY`,
           emailHtml,
           `🌟 Votre évaluation pour ${data.destinationCountry} est prête ! Score : ${data.scorePercentage}%. Consultez votre email pour les détails.`
         );
@@ -108,13 +108,13 @@ export const notificationRouter = router({
             <li><strong>Transaction :</strong> ${esc(data.transactionId)}</li>
           </ul>
           <p>Prochaine étape : Soumettre vos documents.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendDualNotification(
           data.email,
           data.phoneNumber,
-          `Confirmation de Paiement - 3M Travel & Services`,
+          `Confirmation de Paiement - 3M TRAVEL AGENCY`,
           emailHtml,
           `💳 Votre paiement de ${data.amount} ${data.currency} a été confirmé. Facture : ${data.invoiceNumber}`
         );
@@ -162,7 +162,7 @@ export const notificationRouter = router({
           <h3>Montant à payer : ${esc(data.amount)} ${esc(data.currency)}</h3>
           <p>Finalisez votre dossier en procédant au paiement dès maintenant.</p>
           <p>Consultez votre espace candidat pour le lien de paiement.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendPaymentReminderWhatsApp({
@@ -206,7 +206,7 @@ export const notificationRouter = router({
           <p>Nous avons reçu et vérifié <strong>${data.documentCount} document(s)</strong>. ✅</p>
           <p>Prochaine étape : Soumission aux agences partenaires.</p>
           <p>Nous vous tiendrons informé de l'avancement.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendDocumentsReceivedWhatsApp({
@@ -248,7 +248,7 @@ export const notificationRouter = router({
           <p>Bonjour ${esc(data.candidateName)},</p>
           <p>Excellente nouvelle ! Votre visa <strong>${esc(data.visaType)}</strong> pour <strong>${esc(data.destinationCountry)}</strong> a été approuvé ! ✅</p>
           <p>Consultez votre espace candidat pour les détails et les prochaines étapes.</p>
-          <p>Merci de votre confiance !<br/>3M Travel & Services</p>
+          <p>Merci de votre confiance !<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendVisaApprovedWhatsApp({
@@ -298,7 +298,7 @@ export const notificationRouter = router({
             <li><strong>Destination :</strong> ${esc(data.destinationCountry)}</li>
           </ul>
           <p>Consultez votre espace candidat pour les détails et les prochaines étapes.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendContractObtainedWhatsApp({
@@ -343,7 +343,7 @@ export const notificationRouter = router({
           <h3>Raison :</h3>
           <p>${esc(data.reason)}</p>
           <p>Nous vous invitons à nous contacter pour discuter des options disponibles.</p>
-          <p>Cordialement,<br/>3M Travel & Services</p>
+          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
         `;
 
         const result = await sendApplicationRejectedWhatsApp({

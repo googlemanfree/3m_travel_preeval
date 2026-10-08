@@ -172,7 +172,7 @@ export default function Ressources() {
               {language === 'en' ? 'Resource Library' : 'Bibliothèque de ressources'}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              {language === 'en' ? '3M Travel Guides & Procedures' : 'Guides & Procédures 3M Travel'}
+              {language === 'en' ? '3M TRAVEL AGENCY Guides & Procedures' : 'Guides & Procédures 3M TRAVEL AGENCY'}
             </h1>
             <p className="text-blue-100 text-base md:text-lg max-w-2xl mx-auto">
               {language === 'en'

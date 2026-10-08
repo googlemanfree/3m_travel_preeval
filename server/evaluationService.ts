@@ -348,10 +348,10 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
 <body>
   <div class="container">
     <div class="header">
-      <img class="brand-logo" src="https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M Travel &amp; Services" />
+      <img class="brand-logo" src="https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M TRAVEL AGENCY" />
       <p class="brand-name">3M Travel Agency SARL</p>
       <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
-      <p>Évaluation indicative d’agence — 3M Travel & Services</p>
+      <p>Évaluation indicative d’agence — 3M TRAVEL AGENCY</p>
     </div>
     
     <div class="body">
@@ -439,7 +439,7 @@ export function generateEvaluationReportText(app: Application): string {
   const topScore = scores[0];
   const criteria = extractScoringCriteria(app);
 
-  return `Rapport d'Évaluation Professionnelle — 3M Travel & Services
+  return `Rapport d'Évaluation Professionnelle — 3M TRAVEL AGENCY
 
 Bonjour ${app.fullName},
 

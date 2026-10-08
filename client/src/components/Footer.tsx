@@ -33,7 +33,7 @@ const footerCopy = {
   ottawaOffice: { fr: "Bureau Ottawa", en: "Ottawa office" },
   legalNotice: { fr: "Rôle de conseil et d’accompagnement. Les décisions de visa appartiennent aux autorités consulaires.", en: "We provide advisory and support services. Visa decisions remain with consular authorities." },
   newsletterTitle: { fr: "Recevoir nos actualités utiles", en: "Receive useful updates" },
-  newsletterText: { fr: "Conseils, sources officielles et nouveautés 3M Travel, sans promesse commerciale excessive.", en: "Tips, official sources and 3M Travel updates, without excessive marketing promises." },
+  newsletterText: { fr: "Conseils, sources officielles et nouveautés 3M TRAVEL AGENCY, sans promesse commerciale excessive.", en: "Tips, official sources and 3M TRAVEL AGENCY updates, without excessive marketing promises." },
   newsletterEmail: { fr: "Votre adresse e-mail", en: "Your email address" },
   newsletterConsent: { fr: "J’accepte de recevoir la newsletter et peux me désinscrire à tout moment.", en: "I agree to receive the newsletter and can unsubscribe at any time." },
   newsletterSubmit: { fr: "S’inscrire", en: "Subscribe" },
@@ -201,7 +201,7 @@ export default function Footer() {
   return (
     <footer
       className="relative mt-auto overflow-hidden bg-[#061a36] text-slate-100"
-      aria-label="Informations et contacts 3M Travel"
+      aria-label="Informations et contacts 3M TRAVEL AGENCY"
       data-testid="site-footer"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.18),_transparent_55%),linear-gradient(180deg,#061a36_0%,#0a2450_100%)]" aria-hidden="true" />
@@ -209,7 +209,7 @@ export default function Footer() {
         {/* Marque + CTA */}
         <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <img src="/logo-3m.webp" alt="Logo 3M Travel Agency" className="h-12 w-auto shrink-0 object-contain" />
+            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
               <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.agencySummary)}</p>

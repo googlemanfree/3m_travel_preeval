@@ -2,7 +2,7 @@
 // Protocoles d'Accord N01 et N02, parametres par pays de destination. Le modele complet
 // et les montants reels ne sont aujourd'hui disponibles que pour le Luxembourg (procedure
 // de placement salarie via agences partenaires) : c'est la seule destination du site ou
-// 3M Travel facture un second protocole avec un bareme de paiement chiffre (voir
+// 3M TRAVEL AGENCY facture un second protocole avec un bareme de paiement chiffre (voir
 // client/src/data/countryProcedures/luxembourg.ts, memes montants). Pour toute autre
 // destination, tant qu'aucun bareme reel n'a ete communique par l'agence, le modele par
 // defaut reste volontairement generique et n'invente aucun chiffre.
@@ -271,7 +271,7 @@ export interface ProtocolTwoVariables {
   dateDuJour: string;
 }
 
-const LETTERHEAD = `3M TRAVEL AGENCY SARL — Société à Responsabilité Limitée au capital enregistré
+const LETTERHEAD = `3M Travel Agency SARL — Société à Responsabilité Limitée au capital enregistré
 Registre du Commerce : RC/YAO/2019/A/2567 | Numéro d'Identifiant Unique (NIU) : M112417203369H
 Siège social : Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
 Téléphones / WhatsApp : +237 698 104 832 / +237 620 996 045 | Courriel : hello@3mtravelagency.com | www.3mtravelagency.com
@@ -288,7 +288,7 @@ MANDAT D'OUVERTURE DE DOSSIER, DE TRAITEMENT ADMINISTRATIF ET DE SOUMISSION PART
 (Destination : ${profile.destinationLabel})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE MANDATAIRE : 3M TRAVEL AGENCY SARL, RC/YAO/2019/A/2567, NIU M112417203369H, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
+D'une part, L'AGENCE MANDATAIRE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
 D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
@@ -304,7 +304,7 @@ Article 3 — Caractère strictement non remboursable des frais
 Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant la soumission. La recherche auprès des partenaires peut aboutir ou non ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.
 
 Article 4 — Obligation de moyens et absence de garantie de résultat
-Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M TRAVEL AGENCY SARL.
+Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.
 
 Article 5 — Clause de réorientation sans frais complémentaires
 Si la prospection menée pour ${profile.destinationLabel} n'aboutit pas à une sélection dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une réorientation sans aucun frais d'ouverture supplémentaire vers ${profile.reorientationAlternatives}.
@@ -319,7 +319,7 @@ Article 8 — Valeur probante de la signature électronique
 L'acceptation numérique du présent protocole dans l'Espace Client, combinée aux données du Reçu de Confirmation de Paiement horodaté, constitue un contrat bilatéral parfait et juridiquement opposable.
 
 Fait à Yaoundé, sous format numérique certifié, le ${vars.dateDuJour}.
-Pour 3M TRAVEL AGENCY SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
+Pour 3M Travel Agency SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
 Pour LE CLIENT : ${vars.clientNomComplet} — Statut : Lu et approuvé — IP : ${vars.clientIpAddress}`;
 }
 
@@ -340,7 +340,7 @@ MANDAT D'ACCOMPAGNEMENT CONTRACTUEL ET PROCÉDURE DE VISA
 (Procédure Post-Sélection — Destination : ${profile.destinationLabel})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE : 3M TRAVEL AGENCY SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
+D'une part, L'AGENCE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
 D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, Employeur/Partenaire d'accueil : ${vars.employeurNom}, Poste/Projet retenu : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
 
 PRÉAMBULE

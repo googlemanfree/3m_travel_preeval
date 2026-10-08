@@ -431,7 +431,7 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
   };
 
   function buildWhatsAppMsg() {
-    const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Tarif relevé : ${formatXAF(flight.totalPrice)}\n\nMerci de vérifier la disponibilité et le tarif, puis de me contacter pour finaliser la réservation.`;
+    const msg = `Bonjour 3M TRAVEL AGENCY, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Tarif relevé : ${formatXAF(flight.totalPrice)}\n\nMerci de vérifier la disponibilité et le tarif, puis de me contacter pour finaliser la réservation.`;
     return `https://wa.me/237698104832?text=${encodeURIComponent(msg)}`;
   }
 
@@ -620,7 +620,7 @@ export default function Flights() {
 
   useEffect(() => {
     // Titre lisible (jamais JSON-encodé) — évite « \u0026 » dans les barres d’aperçu.
-    document.title = "Billets d'avion et vols | 3M Travel & Services";
+    document.title = "Billets d'avion internationaux | 3M TRAVEL AGENCY";
   }, []);
 
   const initialParams = new URLSearchParams(window.location.search);
@@ -869,7 +869,7 @@ export default function Flights() {
 
   // Recherche personnalisée par un conseiller (aucun vol trouvé, moteur indisponible ou simple préférence).
   const searchWhatsAppMessage = [
-    "Bonjour 3M Travel, je souhaite une recherche personnalisée de vol.",
+    "Bonjour 3M TRAVEL AGENCY, je souhaite une recherche personnalisée de vol.",
     `Itinéraire : ${airportLabel(origin)} → ${airportLabel(destination)}`,
     `Départ : ${departureDate}${tripType === "ROUND_TRIP" ? ` ; retour : ${returnDate}` : " (aller simple)"}`,
     `Passagers : ${passengers.adults} adulte(s)${passengers.children > 0 ? `, ${passengers.children} enfant(s)` : ""}${passengers.infants > 0 ? `, ${passengers.infants} bébé(s)` : ""}`,
@@ -879,7 +879,7 @@ export default function Flights() {
   async function shareSearch() {
     const url = window.location.href;
     const title = `Vols ${airportLabel(origin)} → ${airportLabel(destination)}`;
-    const text = `Recherche 3M Travel : ${airportLabel(origin)} → ${airportLabel(destination)} · ${departureDate}`;
+    const text = `Recherche 3M TRAVEL AGENCY : ${airportLabel(origin)} → ${airportLabel(destination)} · ${departureDate}`;
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title, text, url });
@@ -1024,13 +1024,13 @@ export default function Flights() {
             className="mb-8 text-center text-white"
           >
             <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300 md:text-sm" data-testid="flights-hero-brand">
-              3M Travel &amp; Services · Yaoundé
+              3M TRAVEL AGENCY
             </p>
             <h1 id="flights-hero-title" className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight md:text-5xl">
-              Billets d’avion depuis le Cameroun
+              Billets d’avion internationaux
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-100 md:text-base">
-              Comparez les compagnies au départ de Yaoundé et Douala. Un conseiller 3M confirme le tarif relevé avant toute réservation — aucun prix de vitrine.
+              Comparez les compagnies pour vos vols internationaux — et poursuivez avec visas, e-Visa, assurance, hôtels et accompagnement. Un conseiller 3M TRAVEL AGENCY confirme le tarif relevé avant toute réservation.
             </p>
           </motion.div>
 

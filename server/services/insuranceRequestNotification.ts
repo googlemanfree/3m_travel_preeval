@@ -51,7 +51,7 @@ export async function sendInsuranceClientDelivery(delivery: InsuranceClientDeliv
     `<p>Bonjour ${escapeHtml(delivery.fullName)},</p>`,
     `<p>Votre document d’assurance lié à la référence <strong>${escapeHtml(delivery.reference)}</strong> est prêt.</p>`,
     `<p><a href="${escapeHtml(delivery.documentUrl)}">Télécharger ${escapeHtml(delivery.documentLabel)}</a></p>`,
-    `<p>Ce lien est personnel. Conservez votre référence pour tout échange avec l’équipe 3M Travel.</p>`,
+    `<p>Ce lien est personnel. Conservez votre référence pour tout échange avec l’équipe 3M TRAVEL AGENCY.</p>`,
   ].join("");
   await sendEmail({ to: delivery.email, subject: `[Assurance] ${delivery.reference} — ${documentTitle}`, html });
 }

@@ -27,12 +27,13 @@ describe("premium /flights Afrique — logos, hero, mobilité", () => {
     expect(band).not.toContain("à partir de");
   });
 
-  it("ancre le hero /flights dans une image mobilité réelle + marque 3M", () => {
+  it("ancre le hero /flights dans une image mobilité réelle + marque 3M TRAVEL AGENCY", () => {
     expect(flights).toContain('data-testid="flight-hero"');
     expect(flights).toContain('data-testid="flights-hero-brand"');
-    expect(flights).toContain("3M Travel &amp; Services · Yaoundé");
+    expect(flights).toContain("3M TRAVEL AGENCY");
     expect(flights).toContain("/manus-storage/3m-home-mobility-hero_f9957244.webp");
-    expect(flights).toContain("Billets d’avion depuis le Cameroun");
+    expect(flights).toContain("Billets d’avion internationaux");
+    expect(flights).toContain("document.title = \"Billets d'avion internationaux | 3M TRAVEL AGENCY\"");
     expect(css).toContain("@keyframes flights-hero-ken");
     expect(css).toContain(".flights-hero-media");
   });

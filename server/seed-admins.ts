@@ -33,7 +33,7 @@ const ADMINS = [
   },
   {
     email: "hello@3mtravelagency.com",
-    fullName: "3M Travel & Services",
+    fullName: "3M TRAVEL AGENCY",
     phone: "+237698104832",
     adminType: "procedures" as const,
     password: process.env.SEED_PWD_3 || "",

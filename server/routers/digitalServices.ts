@@ -24,7 +24,7 @@ const makeReference = () => `DGT-${new Date().getFullYear()}-${randomInt(100000,
 
 const defaultContent = {
   heroTitle: "Le digital qui fait avancer vos projets.",
-  heroDescription: "3M Solutions est le pôle de services numériques de 3M Travel Agency : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
+  heroDescription: "3M Solutions est le pôle de services numériques de 3M TRAVEL AGENCY : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
   serviceIntro: "Le pôle 3M Solutions met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer.",
   requestIntro: "Chaque demande reçoit une référence, entre dans la file de traitement du back-office et peut être suivie par nos conseillers avant toute proposition.",
   serviceDefinitionsJson: JSON.stringify([
@@ -125,7 +125,7 @@ export const digitalServicesRouter = router({
     } catch (err) { logger.error("digital_services.team_notification_failed", { reference }, err); }
 
     try {
-      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Solutions — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Solutions vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Solutions — 3M Travel Agency</p>` });
+      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Solutions — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Solutions vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Solutions — 3M TRAVEL AGENCY</p>` });
     } catch (err) { logger.error("digital_services.candidate_confirmation_failed", { reference }, err); }
 
     return { reference };

@@ -18,7 +18,7 @@ describe("Resend API Key Validation", () => {
     const response = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: "delivered@resend.dev",
-      subject: "Test Email - 3M Travel Agency",
+      subject: "Test Email - 3M TRAVEL AGENCY",
       html: "<p>This is a test email to validate the Resend API key.</p>",
     });
     

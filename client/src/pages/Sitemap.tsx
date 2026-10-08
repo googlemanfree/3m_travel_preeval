@@ -11,7 +11,7 @@ type SitemapSection = { key: string; title: Copy; description: Copy; icon: typeo
 
 const COPY = {
   eyebrow: { fr: "Navigation complète", en: "Full navigation" },
-  title: { fr: "Plan du site 3M Travel & Services", en: "3M Travel & Services sitemap" },
+  title: { fr: "Plan du site 3M TRAVEL AGENCY", en: "3M TRAVEL AGENCY sitemap" },
   intro: { fr: "Retrouvez chaque service, ressource et espace d’information dans une navigation structurée. Les liens d’aide indiquent leur rôle avant l’ouverture de la page.", en: "Find every service, resource and information area through structured navigation. Each link explains its purpose before you open the page." },
   access: { fr: "Les services publics restent accessibles sans compte lorsque cela est indiqué ; les espaces de suivi demandent une connexion sécurisée.", en: "Public services remain available without an account where indicated; tracking areas require a secure sign-in." },
   searchLabel: { fr: "Rechercher dans le plan du site", en: "Search the sitemap" },
@@ -27,7 +27,7 @@ const COPY = {
 
 const SITE_SECTIONS: SitemapSection[] = [
   {
-    key: "discover", title: { fr: "Découvrir 3M Travel", en: "Discover 3M Travel" }, description: { fr: "Les accès essentiels pour comprendre l’accompagnement, les tarifs et les canaux de contact.", en: "Essential links to understand support, pricing and contact channels." }, icon: Compass,
+    key: "discover", title: { fr: "Découvrir 3M TRAVEL AGENCY", en: "Discover 3M TRAVEL AGENCY" }, description: { fr: "Les accès essentiels pour comprendre l’accompagnement, les tarifs et les canaux de contact.", en: "Essential links to understand support, pricing and contact channels." }, icon: Compass,
     links: [
       { key: "home", label: { fr: "Accueil", en: "Home" }, href: "/", description: { fr: "Revenir aux services principaux et à l’évaluation gratuite.", en: "Return to core services and the free assessment." } },
       { key: "about", label: { fr: "À propos", en: "About us" }, href: "/about", description: { fr: "Découvrir le rôle de conseil et les engagements de transparence.", en: "Learn about our advisory role and transparency commitments." } },

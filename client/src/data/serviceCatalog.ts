@@ -2,7 +2,7 @@ import { Briefcase, Building2, Car, Cpu, GraduationCap, Globe2, HeartHandshake, 
 import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 
 /**
- * Catalogue unique des activités de 3M Travel & Services : l'accueil (« Que voulez-vous accomplir ? », « Nos services »)
+ * Catalogue unique des activités de 3M TRAVEL AGENCY : l'accueil (« Que voulez-vous accomplir ? », « Nos services »)
  * et la page /services s'appuient sur la même source. Descriptions volontairement factuelles : aucun prix, délai
  * ni résultat garanti ; les décisions appartiennent aux autorités ou aux prestataires concernés.
  */

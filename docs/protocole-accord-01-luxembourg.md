@@ -1,4 +1,4 @@
-# 3M TRAVEL AGENCY SARL
+# 3M Travel Agency SARL
 **Société à Responsabilité Limitée au capital enregistré**  
 **Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M112417203369H  
 **Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
@@ -10,7 +10,7 @@
 ```
 ====================================================================================================
                         RÉPUBLIQUE DU CAMEROUN — PAIX - TRAVAIL - PATRIE
-                                  3M TRAVEL AGENCY SARL
+                                  3M Travel Agency SARL
                     DÉPARTEMENT IMMIGRATION & MOBILITÉ PROFESSIONNELLE INTERNATIONALE
 ====================================================================================================
 ```
@@ -24,7 +24,7 @@
 ### IDENTIFICATION DES PARTIES CONTRACTANTES
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
-* **Dénomination sociale :** 3M TRAVEL AGENCY SARL
+* **Dénomination sociale :** 3M Travel Agency SARL
 * **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M112417203369H
 * **Siège social :** Yaoundé, Cameroun
 * **Représentée par :** La Direction Générale des Opérations et son Conseiller Validateur habilité,  
@@ -72,7 +72,7 @@ Conformément aux stipulations du Reçu Officiel de paiement, les frais confirm�
 #### ARTICLE 4 : OBLIGATION DE MOYENS & ABSENCE DE GARANTIE DE RÉSULTAT
 4.1. Conformément à la mention légale figurant sur le Reçu administratif, **ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu**.  
 4.2. L'AGENCE est tenue à une stricte obligation de moyens professionnels renforcés dans la prospection et la transmission du profil.  
-4.3. Les décisions d'employeurs, d'agences de placement partenaires et des autorités publiques de l'immigration restent totalement et souverainement indépendantes de 3M TRAVEL AGENCY SARL.
+4.3. Les décisions d'employeurs, d'agences de placement partenaires et des autorités publiques de l'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.
 
 #### ARTICLE 5 : CLAUSE DE RÉORIENTATION SANS FRAIS COMPLÉMENTAIRES
 Dans l'hypothèse où la prospection menée auprès des agences partenaires au Grand-Duché de Luxembourg n'aboutirait pas à une sélection dans un délai raisonnable de 90 jours ouvrés, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une **réorientation sans aucun frais d'ouverture supplémentaire** vers une destination internationale alternative compatible avec son profil (notamment Canada, Suisse, ou États membres de l'Espace Schengen).
@@ -93,7 +93,7 @@ Conformément aux normes régissant les transactions électroniques, l'acceptati
 
 Fait à Yaoundé, sous format numérique certifié, le `{{DATE_DU_JOUR}}`.
 
-| Pour la Société 3M TRAVEL AGENCY SARL | Pour LE CLIENT BÉNÉFICIAIRE |
+| Pour la Société 3M Travel Agency SARL | Pour LE CLIENT BÉNÉFICIAIRE |
 | :--- | :--- |
 | **Le Conseiller Validateur Habilité** | **Le Candidat Titulaire du Dossier** |
 | *(Signature électronique & Sceau d'Agence)* | **Mention obligatoire :** *« Lu, compris et approuvé »* |

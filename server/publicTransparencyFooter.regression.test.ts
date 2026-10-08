@@ -55,7 +55,7 @@ describe("transparence publique et footer consolidé", () => {
     expect(footer).toContain("surface: \"footer_social\"");
     const sitemap = read("client/src/pages/Sitemap.tsx");
     expect(sitemap).toContain("SITE_SECTIONS");
-    expect(sitemap).toContain("Plan du site 3M Travel & Services");
+    expect(sitemap).toContain("Plan du site 3M TRAVEL AGENCY");
     expect(sitemap).toContain('href: "/sources-officielles"');
     expect(sitemap).toContain('id="sitemap-search"');
     expect(sitemap).toContain("setLanguage(item)");

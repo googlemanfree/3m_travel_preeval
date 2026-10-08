@@ -1,5 +1,5 @@
 /**
- * Dashboard Administrateur — 3M Travel & Services
+ * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
@@ -1513,7 +1513,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
-              <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
+              <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M TRAVEL AGENCY</p>
             </div>
             
             {/* Recherche globale + filtre dossiers */}

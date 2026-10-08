@@ -48,7 +48,7 @@ export default function Avis() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white px-4 py-14 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence 3M Travel</p>
+        <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence 3M TRAVEL AGENCY</p>
         <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
           Retours d’expérience et qualité de service
         </h1>

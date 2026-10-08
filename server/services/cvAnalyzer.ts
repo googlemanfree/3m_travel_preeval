@@ -33,7 +33,7 @@ export async function analyzeCandidateCV(
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `
-Tu es l'Expert Consulaire en Chef de 3M Travel Agency à Yaoundé.
+Tu es l'Expert Consulaire en Chef de 3M TRAVEL AGENCY à Yaoundé.
 Analyse le profil et le CV du candidat pour un projet de : ${formData.projectType} vers : ${formData.destinationCountry}.
 
 --- FORMULAIRE ---

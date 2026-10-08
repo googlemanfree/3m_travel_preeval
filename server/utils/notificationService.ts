@@ -26,7 +26,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Dossier Créé - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre dossier a été créé avec succès !</p>
 
@@ -51,7 +51,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -60,7 +60,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Mise à Jour de Votre Dossier - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre dossier a été mis à jour.</p>
 
@@ -79,7 +79,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -88,7 +88,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Documents Reçus - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Vos documents ont été reçus et enregistrés.</p>
 
@@ -106,7 +106,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -115,7 +115,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Votre Bilan d'Admissibilité - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre bilan d'admissibilité est maintenant disponible !</p>
 
@@ -133,7 +133,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -142,7 +142,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Paiement Reçu - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Votre paiement a été reçu et enregistré.</p>
 
@@ -161,7 +161,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;
@@ -170,7 +170,7 @@ export async function sendDossierNotification(notification: DossierNotification)
       subject = `Nouveau Message - N° ${dossierNumber}`;
       htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-          <h2 style="color: #0066cc;">3M Travel Agency</h2>
+          <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
           <p>Bonjour <strong>${esc(candidateName)}</strong>,</p>
           <p>Vous avez reçu un nouveau message de notre équipe.</p>
 
@@ -188,7 +188,7 @@ export async function sendDossierNotification(notification: DossierNotification)
           </p>
 
           <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
+          <p style="font-size: 12px; color: #666;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | www.3mtravelagency.com</p>
         </div>
       `;
       break;

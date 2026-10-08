@@ -216,7 +216,7 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
           <div className="flex items-start gap-3">
             <span className="rounded-2xl bg-amber-100 p-3 text-amber-700"><Trophy className="h-6 w-6" /></span>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">3M Travel Rewards</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">3M TRAVEL AGENCY Rewards</p>
               <h3 className="mt-1 text-lg font-black text-slate-900">Vos récompenses de voyage</h3>
               <p className="mt-1 text-xs text-slate-600">Les points sont ajoutés uniquement après l’émission humaine et validée d’un billet.</p>
             </div>

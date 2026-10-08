@@ -10,7 +10,7 @@ export default function FacebookFeedSection() {
             <span>Informations et échanges vérifiables</span>
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Restons en contact avec 3M Travel
+            Restons en contact avec 3M TRAVEL AGENCY
           </h2>
           <p className="mt-3 text-base leading-7 text-gray-600">
             Consultez nos canaux publics ou contactez directement l’agence. Les publications, avis et statistiques provenant de plateformes tierces ne sont affichés ici que lorsqu’une source vérifiable est disponible.
@@ -22,7 +22,7 @@ export default function FacebookFeedSection() {
             <Facebook className="h-8 w-8 text-blue-700" aria-hidden="true" />
             <h3 className="mt-4 text-lg font-black text-slate-950">Page Facebook</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Retrouvez les informations publiées directement sur la page Facebook de 3M Travel.
+              Retrouvez les informations publiées directement sur la page Facebook de 3M TRAVEL AGENCY.
             </p>
             <a
               href="https://www.facebook.com/3mtravelcm"

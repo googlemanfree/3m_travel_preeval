@@ -28,7 +28,7 @@ export default function SuiviVol() {
     onError: (error) => toast.error(error.message),
   });
   const result = track.data;
-  const whatsappHref = `https://wa.me/${office.whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services, je souhaite des nouvelles de ma réservation de vol ${requestRef.trim()}.`)}`;
+  const whatsappHref = `https://wa.me/${office.whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY, je souhaite des nouvelles de ma réservation de vol ${requestRef.trim()}.`)}`;
 
   return (
     <ServicePageShell

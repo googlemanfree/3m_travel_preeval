@@ -48,7 +48,7 @@ export default function ForgotPassword() {
       >
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100">
-            <img src={LOGO_URL} alt="3M Travel" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
+            <img src={LOGO_URL} alt="3M TRAVEL AGENCY" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
             {sent ? (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />

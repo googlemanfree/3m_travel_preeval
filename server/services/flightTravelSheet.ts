@@ -34,7 +34,7 @@ export function createTravelSheetPdf(input: TravelSheetInput): Buffer {
   pdf.rect(0, 0, 210, 40, "F");
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(20);
-  pdf.text("3M Travel & Services", 16, 18);
+  pdf.text("3M TRAVEL AGENCY", 16, 18);
   pdf.setFontSize(11);
   pdf.text("Fiche de voyage", 16, 28);
 
@@ -93,7 +93,7 @@ export function createTravelSheetPdf(input: TravelSheetInput): Buffer {
   pdf.setFontSize(9);
   pdf.setTextColor(71, 85, 105);
   pdf.text(`Émise le ${input.issuedAt.toISOString().slice(0, 10)} — ${COMPANY_PROFILE.website}`, 16, 276);
-  pdf.text(`3M Travel & Services — hello@3mtravelagency.com — WhatsApp ${office.whatsappDisplay}`, 16, 282);
+  pdf.text(`3M TRAVEL AGENCY — hello@3mtravelagency.com — WhatsApp ${office.whatsappDisplay}`, 16, 282);
   return Buffer.from(pdf.output("arraybuffer"));
 }
 

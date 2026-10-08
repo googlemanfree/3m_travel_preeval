@@ -71,8 +71,8 @@ const canadaFaq = [
   { question: "Un permis d’études permet-il automatiquement de rester au Canada ?", answer: "Non. Un permis d’études autorise un séjour selon ses conditions et sa durée. L’admission relève de l’établissement et toute possibilité ultérieure de travail ou de résidence permanente dépend de règles et d’une admissibilité distinctes." },
   { question: "Quelle est la différence entre un visa de visiteur et une AVE/eTA ?", answer: "Le document requis dépend notamment de la nationalité, du mode de transport et de la situation du voyageur. Une AVE/eTA n’est pas un visa de visiteur et aucun de ces documents ne garantit l’entrée au Canada, qui est évaluée à la frontière." },
   { question: "Combien coûte une procédure canadienne ?", answer: "Les coûts peuvent comprendre les frais gouvernementaux, les tests de langue, l’évaluation des diplômes, les biométries, les examens médicaux, les traductions et, le cas échéant, l’accompagnement professionnel. Les frais et montants officiels doivent être vérifiés sur Canada.ca avant toute décision." },
-  { question: "Que fait 3M Travel dans l’accompagnement ?", answer: "3M Travel aide à structurer les informations, repérer les documents à vérifier, préparer les prochaines étapes et suivre les éléments communiqués dans un espace sécurisé. L’agence ne remplace pas IRCC, les provinces, les établissements ni les autorités frontalières." },
-  { question: "Les délais et les résultats sont-ils garantis ?", answer: "Non. Les délais, invitations, admissions, permis, visas et décisions dépendent des autorités ou organismes compétents et peuvent évoluer. 3M Travel ne garantit ni emploi, ni contrat, ni invitation, ni permis, ni résidence permanente." },
+  { question: "Que fait 3M TRAVEL AGENCY dans l’accompagnement ?", answer: "3M TRAVEL AGENCY aide à structurer les informations, repérer les documents à vérifier, préparer les prochaines étapes et suivre les éléments communiqués dans un espace sécurisé. L’agence ne remplace pas IRCC, les provinces, les établissements ni les autorités frontalières." },
+  { question: "Les délais et les résultats sont-ils garantis ?", answer: "Non. Les délais, invitations, admissions, permis, visas et décisions dépendent des autorités ou organismes compétents et peuvent évoluer. 3M TRAVEL AGENCY ne garantit ni emploi, ni contrat, ni invitation, ni permis, ni résidence permanente." },
 ];
 
 const profileChecks = [
@@ -109,7 +109,7 @@ export default function Canada() {
       secondaryLabel="Calculatrice CRS Canada"
       officialHref="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html"
       officialLabel="Vérifier les programmes IRCC"
-      notice="Les programmes, critères, quotas et délais peuvent évoluer. Aucun emploi, contrat de travail, invitation ou résidence permanente n’est garanti par 3M Travel & Services."
+      notice="Les programmes, critères, quotas et délais peuvent évoluer. Aucun emploi, contrat de travail, invitation ou résidence permanente n’est garanti par 3M TRAVEL AGENCY."
     >
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-xl">
         <div className="grid items-stretch lg:grid-cols-[1.05fr_.95fr]">
@@ -125,7 +125,7 @@ export default function Canada() {
           <div className="flex flex-col justify-center bg-[#102747] p-7 sm:p-9">
             <Globe2 className="h-9 w-9 text-amber-300" aria-hidden="true" />
             <h3 className="mt-5 text-2xl font-black text-white">Comprendre les voies avant de choisir</h3>
-            <p className="mt-3 text-sm leading-7 text-slate-200">Le Canada propose plusieurs parcours. Le rôle de 3M Travel est de structurer les informations, d’identifier les points à vérifier et de vous orienter vers les sources officielles — jamais de garantir une décision d’IRCC.</p>
+            <p className="mt-3 text-sm leading-7 text-slate-200">Le Canada propose plusieurs parcours. Le rôle de 3M TRAVEL AGENCY est de structurer les informations, d’identifier les points à vérifier et de vous orienter vers les sources officielles — jamais de garantir une décision d’IRCC.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="border-l-2 border-amber-300 pl-3"><p className="text-xs font-black uppercase tracking-wide text-amber-200">Repère 01</p><p className="mt-1 text-sm text-white">Profil et projet</p></div>
               <div className="border-l-2 border-amber-300 pl-3"><p className="text-xs font-black uppercase tracking-wide text-amber-200">Repère 02</p><p className="mt-1 text-sm text-white">Programme à confirmer</p></div>
@@ -295,7 +295,7 @@ export default function Canada() {
                 <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" />
                 <div>
                   <h4 className="text-base font-black">Parcours Canada déverrouillés avec succès !</h4>
-                  <p className="text-xs leading-5 text-emerald-700">Vous pouvez désormais consulter l’intégralité des voies d’immigration, les critères de vérification et les étapes de l’accompagnement 3M Travel.</p>
+                  <p className="text-xs leading-5 text-emerald-700">Vous pouvez désormais consulter l’intégralité des voies d’immigration, les critères de vérification et les étapes de l’accompagnement 3M TRAVEL AGENCY.</p>
                 </div>
               </div>
 
@@ -345,7 +345,7 @@ export default function Canada() {
             <BriefcaseBusiness className="h-8 w-8 text-blue-300" aria-hidden="true" />
             <h3 className="mt-4 text-xl font-black">Accompagnement professionnel responsable</h3>
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Le travail de 3M Travel consiste à organiser les informations, améliorer la présentation du profil lorsque cela est pertinent et aider le candidat à comprendre les étapes de son projet. Il ne constitue pas une promesse d’embauche ni de contrat.
+              Le travail de 3M TRAVEL AGENCY consiste à organiser les informations, améliorer la présentation du profil lorsque cela est pertinent et aider le candidat à comprendre les étapes de son projet. Il ne constitue pas une promesse d’embauche ni de contrat.
             </p>
           </div>
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-7">
@@ -360,7 +360,7 @@ export default function Canada() {
 
       <ServiceSection
         tone="slate"
-        title="L’accompagnement 3M Travel, étape par étape"
+        title="L’accompagnement 3M TRAVEL AGENCY, étape par étape"
         introduction="Le parcours reste adaptable : les actions dépendent du programme réellement pertinent et des documents disponibles."
       >
         <ol className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -386,7 +386,7 @@ export default function Canada() {
           <div className="absolute inset-0 flex flex-col justify-center p-5 sm:p-8">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-300">Source de référence</p>
             <h3 className="mt-2 max-w-md text-xl font-black leading-tight text-white sm:text-2xl">Les décisions d’immigration relèvent d’IRCC</h3>
-            <p className="mt-2 max-w-lg text-xs leading-5 text-slate-200 sm:text-sm sm:leading-6">Immigration, Réfugiés et Citoyenneté Canada publie les programmes, frais et formulaires officiels. 3M Travel n’est pas affilié au gouvernement du Canada.</p>
+            <p className="mt-2 max-w-lg text-xs leading-5 text-slate-200 sm:text-sm sm:leading-6">Immigration, Réfugiés et Citoyenneté Canada publie les programmes, frais et formulaires officiels. 3M TRAVEL AGENCY n’est pas affilié au gouvernement du Canada.</p>
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -402,12 +402,12 @@ export default function Canada() {
       <ServiceSection
         tone="slate"
         title="Actualités et retours de la communauté"
-        introduction="Retrouvez une publication récente de 3M Travel & Services sur Facebook. Le contenu est hébergé par Facebook et peut nécessiter l’activation des contenus externes dans votre navigateur."
+        introduction="Retrouvez une publication récente de 3M TRAVEL AGENCY sur Facebook. Le contenu est hébergé par Facebook et peut nécessiter l’activation des contenus externes dans votre navigateur."
       >
         <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
           <div className="aspect-[500/718] w-full overflow-hidden rounded-xl bg-slate-100">
             <iframe
-              title="Publication Facebook de 3M Travel & Services"
+              title="Publication Facebook de 3M TRAVEL AGENCY"
               src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fweb.facebook.com%2F3mtravelcm%2Fposts%2Fpfbid0xwH3rbiH6FbsAiuF7nTkvCwgmzd2sYvrCYVj29K3v12HEcR99UHAGSHYCxKwq3RWl&show_text=true&width=500"
               className="h-full w-full border-0"
               loading="lazy"
@@ -416,7 +416,7 @@ export default function Canada() {
               allowFullScreen
             />
           </div>
-          <p className="mt-3 text-center text-xs leading-5 text-slate-500">Publication intégrée depuis la page Facebook officielle de 3M Travel & Services.</p>
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">Publication intégrée depuis la page Facebook officielle de 3M TRAVEL AGENCY.</p>
         </div>
       </ServiceSection>
 
@@ -450,7 +450,7 @@ export default function Canada() {
             href="/contact"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
           >
-            <UsersRound className="h-4 w-4" aria-hidden="true" />Contacter 3M Travel
+            <UsersRound className="h-4 w-4" aria-hidden="true" />Contacter 3M TRAVEL AGENCY
           </Link>
         </div>
       </ServiceSection>

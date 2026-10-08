@@ -37,7 +37,7 @@ export default function DocumentReceiptButton({
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(18);
       pdf.setTextColor(10, 37, 64);
-      pdf.text("3M Travel Agency", 105, 24, { align: "center" });
+      pdf.text("3M TRAVEL AGENCY", 105, 24, { align: "center" });
       pdf.setFontSize(14);
       pdf.text("DÉCHARGE DE REMISE DE DOCUMENT", 105, 40, { align: "center" });
       pdf.setDrawColor(255, 152, 0);
@@ -57,7 +57,7 @@ export default function DocumentReceiptButton({
       lines.forEach((line, index) => pdf.text(escapePdfText(line), 25, 68 + index * 10));
       pdf.setFontSize(10);
       pdf.text("Ce document confirme la remise numérique de la pièce au dossier du candidat.", 25, 155, { maxWidth: 160 });
-      pdf.text("La pièce reste conservée dans l’espace sécurisé de 3M Travel Agency.", 25, 168, { maxWidth: 160 });
+      pdf.text("La pièce reste conservée dans l’espace sécurisé de 3M TRAVEL AGENCY.", 25, 168, { maxWidth: 160 });
       pdf.line(35, 220, 95, 220);
       pdf.line(115, 220, 175, 220);
       pdf.setFontSize(9);

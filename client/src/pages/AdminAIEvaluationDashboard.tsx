@@ -179,7 +179,7 @@ function buildPdf(items: DashboardItem[]) {
 
   pdf.setFontSize(16);
   pdf.setTextColor(20, 58, 138);
-  pdf.text("3M Travel & Services — Évaluations complètes", margin, y);
+  pdf.text("3M TRAVEL AGENCY — Évaluations complètes", margin, y);
   y += 7;
   pdf.setFontSize(8);
   pdf.setTextColor(90, 100, 115);
@@ -266,7 +266,7 @@ function initialReviewDraft(item: DashboardItem) {
     "Cette réponse reste une orientation préparatoire. Les conditions applicables seront vérifiées avec vous sur les sources officielles avant toute démarche.",
     "",
     "Cordialement,",
-    "3M Travel & Services",
+    "3M TRAVEL AGENCY",
   ].join("\n");
 }
 
@@ -460,7 +460,7 @@ export default function AdminAIEvaluationDashboard() {
     setEmailPreview({
       fullName: item.fullName,
       email: item.email,
-      subject: `Votre évaluation 3M Travel & Services`,
+      subject: `Votre évaluation 3M TRAVEL AGENCY`,
       body: reviewDraft.trim(),
     });
   };
