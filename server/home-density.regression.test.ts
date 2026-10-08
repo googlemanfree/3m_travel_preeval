@@ -39,4 +39,14 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).not.toContain("<TravelSearchHero />");
     expect(home).not.toContain("<FacebookFeedSection />");
   });
+
+  it("ne conserve qu’un seul formulaire d’évaluation public sur l’accueil", () => {
+    expect(home).toContain('id="evaluation-multi"');
+    expect(home).toContain("<SimpleMultiProjectForm />");
+    expect(home).not.toContain('id="evaluation"');
+    expect(home).not.toContain("Pré-Évaluation Gratuite");
+    expect(home).not.toContain("<VisasCarousel />");
+    expect(home).toContain('href="#evaluation-multi"');
+  });
 });
+

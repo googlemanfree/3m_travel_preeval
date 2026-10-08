@@ -15,9 +15,12 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
   it("garde le formulaire gratuit ancré sur la page d’accueil", () => {
     expect(home).toContain('id="evaluation-multi"');
     expect(home).toContain("SimpleMultiProjectForm");
-    expect(home).toContain('window.location.hash !== "#evaluation-multi"');
+    expect(home).toContain('hash !== "#evaluation-multi" && hash !== "#evaluation"');
     expect(home).toContain('scrollIntoView({ behavior: "smooth", block: "start" })');
     expect(home).toContain("window.setTimeout(scrollToEvaluation, 420)");
+    expect(home).toContain('id="evaluation-multi"');
+    expect(home).not.toContain('id="evaluation"');
+    expect(home).toContain('href="#evaluation-multi"');
   });
 
   it("oriente le hero, le menu et les anciens liens vers le formulaire sans compte", () => {
