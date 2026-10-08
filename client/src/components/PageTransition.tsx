@@ -14,7 +14,9 @@ export default function PageTransition({ children }: { children: ReactNode }) {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location}
-        initial={motionDisabled ? false : { opacity: 0, y: 8 }}
+        // Ne jamais démarrer à opacity:0 : sur certains WebViews (aperçu Manus),
+        // l’animation d’entrée peut ne pas démarrer et laisser une page blanche.
+        initial={motionDisabled ? false : { y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={motionDisabled ? undefined : { opacity: 0, y: -8 }}
         transition={motionDisabled ? { duration: 0 } : { duration, ease: [0.23, 1, 0.32, 1] }}

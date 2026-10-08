@@ -466,7 +466,7 @@ export function composePublicPrerender(template: string, url: string) {
     ...hreflangTags,
     `<meta property="og:type" content="${socialType}" />`,
     `<meta property="og:locale" content="${isEnPath ? "en_US" : "fr_FR"}" />`,
-    `<meta property="og:site_name" content="${SITE}" />`,
+    `<meta property="og:site_name" content="${esc(SITE)}" />`,
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
     `<meta property="og:url" content="${canonicalAttr}" />`,

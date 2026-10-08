@@ -612,6 +612,12 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Flights() {
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Titre lisible (jamais JSON-encodé) — évite « \u0026 » dans les barres d’aperçu.
+    document.title = "Billets d'avion et vols | 3M Travel & Services";
+  }, []);
+
   const initialParams = new URLSearchParams(window.location.search);
   const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">(
     (initialParams.get("tripType") as "ONE_WAY" | "ROUND_TRIP") || "ROUND_TRIP"
@@ -797,32 +803,30 @@ export default function Flights() {
   const quotePrefillNonce = useRef(1);
 
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
+  const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
 
   useEffect(() => {
-    if (searchEnabled) {
-      try {
-        let email = undefined;
-        const userStr = localStorage.getItem("manus_user") || sessionStorage.getItem("manus_user");
-        if (userStr) {
-          const u = JSON.parse(userStr);
-          if (u?.email) email = u.email;
-        }
-        saveSearchHistoryMutation({
-          userEmail: email,
-          origin,
-          destination,
-          departureDate,
-          returnDate: tripType === "ROUND_TRIP" ? returnDate : undefined,
-          adults: passengers.adults,
-          cabinClass: passengers.cabinClass,
-        });
-      } catch {
-        // ignore
+    if (!searchEnabled) return;
+    try {
+      let email: string | undefined;
+      const userStr = localStorage.getItem("manus_user") || sessionStorage.getItem("manus_user");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        if (u?.email) email = u.email;
       }
+      saveSearchHistoryMutation({
+        userEmail: email,
+        origin,
+        destination,
+        departureDate,
+        returnDate: tripType === "ROUND_TRIP" ? returnDate : undefined,
+        adults: passengers.adults,
+        cabinClass: passengers.cabinClass,
+      });
+    } catch {
+      // Historique serveur facultatif : la recherche reste utilisable.
     }
-  }, [searchEnabled, origin, destination, departureDate]);
-
-  const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
+  }, [searchEnabled, origin, destination, departureDate, returnDate, tripType, passengers.adults, passengers.cabinClass, saveSearchHistoryMutation]);
 
   function handleDepartureDateChange(value: string) {
     const nextDeparture = isValidIsoDate(value) && value >= today() ? value : minDate(7);
@@ -868,28 +872,39 @@ export default function Flights() {
     }
   }
 
-  // Derived filtered/sorted results
+  // Derived filtered/sorted results — accès compagnie/prix défensif (évite un crash = page blanche).
   const outbound: Flight[] = data?.outbound ?? [];
   const servedFromCache = Boolean(data?.cache?.servedFromCache);
+  const airlineCodeOf = (flight: Flight) => flight.airline?.code ?? "";
   const filtered = outbound
     .filter((f) => maxStops === null || f.stops <= maxStops)
-    .filter((f) => selectedAirlines.length === 0 || selectedAirlines.includes(f.airline.code))
-    .filter((f) => f.totalPrice >= priceRange[0] && f.totalPrice <= priceRange[1])
+    .filter((f) => {
+      const code = airlineCodeOf(f);
+      return selectedAirlines.length === 0 || (code !== "" && selectedAirlines.includes(code));
+    })
+    .filter((f) => Number.isFinite(f.totalPrice) && f.totalPrice >= priceRange[0] && f.totalPrice <= priceRange[1])
     .sort((a, b) => {
       if (sortBy === "price") return a.totalPrice - b.totalPrice;
       if (sortBy === "duration") return a.durationMinutes - b.durationMinutes;
       return a.stops - b.stops;
     });
 
-  const allAirlines = Array.from(new Set(outbound.map((f) => f.airline.code))).map((code) => outbound.find((f) => f.airline.code === code)!.airline);
-  const maxPrice = Math.max(...outbound.map((f) => f.totalPrice), 10000000);
-  const minPrice = Math.min(...outbound.map((f) => f.totalPrice), 0);
+  const allAirlines = Array.from(
+    new Map(
+      outbound
+        .filter((flight) => flight.airline?.code)
+        .map((flight) => [flight.airline.code, flight.airline] as const),
+    ).values(),
+  );
+  const pricedOutbound = outbound.map((f) => f.totalPrice).filter((price) => Number.isFinite(price) && price >= 0);
+  const minPrice = pricedOutbound.length > 0 ? Math.min(...pricedOutbound) : 0;
+  const maxPrice = pricedOutbound.length > 0 ? Math.max(...pricedOutbound) : 10_000_000;
 
   useEffect(() => {
-    if (outbound.length > 0) {
+    if (pricedOutbound.length > 0) {
       setPriceRange([minPrice, maxPrice]);
     }
-  }, [outbound.length]);
+  }, [outbound.length, minPrice, maxPrice, pricedOutbound.length]);
 
   const swapAirports = () => {
     const tmp = origin;
@@ -944,7 +959,7 @@ export default function Flights() {
       {/* Search Panel */}
       <div className="bg-white px-4 pb-10 pt-10 md:pt-14" data-testid="flight-hero">
         <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+          <motion.div initial={false} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
             <h1 className="mx-auto max-w-3xl text-3xl font-medium leading-tight text-[#0B1B4D] md:text-5xl">
               Rechercher des <span className="text-amber-500">billets d’avion</span> pas chers et des bons plans voyages
             </h1>
@@ -1005,11 +1020,11 @@ export default function Flights() {
 
           {/* Search form */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
             aria-busy={isSearchBusy}
+            data-testid="flight-search-panel"
           >
             {/* Départ / arrivée : sur leur propre ligne, chacun avec toute la largeur disponible. */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
