@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Facebook, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
+import { AlertCircle, Facebook, MapPin, MessageCircle, Phone, Mail, ArrowUp } from "lucide-react";
 import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
@@ -40,6 +40,9 @@ const footerCopy = {
   newsletterSuccess: { fr: "Votre inscription est enregistrée.", en: "Your subscription is recorded." },
   newsletterAlready: { fr: "Cette adresse est déjà inscrite.", en: "This address is already subscribed." },
   newsletterError: { fr: "Impossible d’enregistrer l’inscription pour le moment.", en: "The subscription could not be recorded right now." },
+  officesTitle: { fr: "Nos bureaux", en: "Our offices" },
+  officesIntro: { fr: "Appelez ou écrivez au bureau qui correspond à votre zone.", en: "Call or message the office that serves your area." },
+  exploreTitle: { fr: "Explorer", en: "Explore" },
 } satisfies Record<string, Copy>;
 
 const SOCIAL_LINKS: SocialLink[] = [
@@ -102,22 +105,72 @@ function NewsletterSignup({ language }: { language: Language }) {
     subscribe.mutate({ email, language, consentGiven: true });
   };
   const copy = (value: Copy) => value[language];
-  return <section aria-labelledby="newsletter-title" className="border-t border-white/20 pt-3">
-    <h2 id="newsletter-title" className="text-sm font-bold text-white">{copy(footerCopy.newsletterTitle)}</h2>
-    <p className="mt-1 text-xs leading-snug text-slate-200">{copy(footerCopy.newsletterText)}</p>
-    <form className="mt-2 space-y-2" onSubmit={submit}>
-      <label htmlFor="newsletter-email" className="sr-only">{copy(footerCopy.newsletterEmail)}</label>
-      <input id="newsletter-email" type="email" required maxLength={320} autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); setFeedback(null); }} placeholder={copy(footerCopy.newsletterEmail)} className="min-h-9 w-full rounded-lg border border-white/30 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300" />
-      <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-200"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400" /> <span>{copy(footerCopy.newsletterConsent)}</span></label>
-      <button type="submit" disabled={subscribe.isPending || !consent} className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-bold text-[#061a36] transition hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-60">{subscribe.isPending ? "…" : copy(footerCopy.newsletterSubmit)}</button>
-      <p role="status" aria-live="polite" className="min-h-5 text-xs text-amber-200">{feedback === "success" ? copy(footerCopy.newsletterSuccess) : feedback === "already" ? copy(footerCopy.newsletterAlready) : feedback === "error" ? copy(footerCopy.newsletterError) : ""}</p>
-    </form>
-  </section>; 
+  return (
+    <section aria-labelledby="newsletter-title" data-testid="footer-newsletter" className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 sm:p-5">
+      <h2 id="newsletter-title" className="text-sm font-bold text-white">{copy(footerCopy.newsletterTitle)}</h2>
+      <p className="mt-1 text-xs leading-snug text-slate-300">{copy(footerCopy.newsletterText)}</p>
+      <form className="mt-3 space-y-2.5" onSubmit={submit}>
+        <label htmlFor="newsletter-email" className="sr-only">{copy(footerCopy.newsletterEmail)}</label>
+        <input
+          id="newsletter-email"
+          type="email"
+          required
+          maxLength={320}
+          autoComplete="email"
+          value={email}
+          onChange={(event) => { setEmail(event.target.value); setFeedback(null); }}
+          placeholder={copy(footerCopy.newsletterEmail)}
+          className="min-h-11 w-full rounded-xl border border-white/25 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-amber-300"
+        />
+        <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-300">
+          <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} required className="mt-0.5 h-4 w-4 shrink-0 accent-amber-400" />
+          <span>{copy(footerCopy.newsletterConsent)}</span>
+        </label>
+        <button
+          type="submit"
+          disabled={subscribe.isPending || !consent}
+          className="touch-target inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-amber-300 px-3 py-2 text-sm font-bold text-[#061a36] transition hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {subscribe.isPending ? "…" : copy(footerCopy.newsletterSubmit)}
+        </button>
+        <p role="status" aria-live="polite" className="min-h-5 text-xs text-amber-200">
+          {feedback === "success" ? copy(footerCopy.newsletterSuccess) : feedback === "already" ? copy(footerCopy.newsletterAlready) : feedback === "error" ? copy(footerCopy.newsletterError) : ""}
+        </p>
+      </form>
+    </section>
+  );
 }
 
 function FooterShortcut({ link, language, onTrack }: FooterShortcutProps) {
   const descriptionId = `footer-shortcut-${link.key}`;
-  return <Link href={link.href} aria-label={link.label[language]} aria-describedby={descriptionId} onClick={() => onTrack(link)} className={FOOTER_SHORTCUT_CLASS}><span>{link.label[language]}</span><span id={descriptionId} role="tooltip" className="sr-only">{link.description[language]}</span><span aria-hidden="true" className="ml-1 text-blue-100 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">↗</span></Link>;
+  return (
+    <Link
+      href={link.href}
+      aria-label={link.label[language]}
+      aria-describedby={descriptionId}
+      onClick={() => onTrack(link)}
+      className={FOOTER_SHORTCUT_CLASS}
+    >
+      <span>{link.label[language]}</span>
+      <span id={descriptionId} role="tooltip" className="sr-only">{link.description[language]}</span>
+      <span aria-hidden="true" className="ml-1 text-blue-100 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">↗</span>
+    </Link>
+  );
+}
+
+function LinkColumn({ title, links, language, onTrack }: { title: string; links: FooterLink[]; language: Language; onTrack: (link: FooterLink) => void }) {
+  return (
+    <div>
+      <h2 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">{title}</h2>
+      <ul className="space-y-1 text-sm text-slate-200">
+        {links.map((link) => (
+          <li key={link.key}>
+            <FooterShortcut link={link} language={language} onTrack={onTrack} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export default function Footer() {
@@ -145,28 +198,197 @@ export default function Footer() {
   const trackShortcut = (link: FooterLink) => recordEngagement.mutate({ surface: "footer_shortcut", targetKey: link.key, href: link.href, language });
   const trackSocial = (link: SocialLink) => recordEngagement.mutate({ surface: "footer_social", targetKey: link.key, href: link.href, language });
 
-  return <footer className="mt-auto bg-[#061a36] text-slate-100" aria-label="Informations et contacts 3M Travel"><div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
-    <div className="grid gap-4 border-b border-white/25 pb-5 lg:grid-cols-1 lg:justify-items-center"><div className="flex items-center justify-center gap-3 text-center"><img src="/logo-3m.webp" alt="Logo 3M Travel Agency" className="h-11 w-auto object-contain" /><div><p className="text-sm font-bold text-white">{COMPANY_PROFILE.publicName}</p><p className="mt-1 text-xs leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p></div></div><div className="grid w-full max-w-4xl gap-3 text-center sm:grid-cols-[1.2fr_auto] sm:items-center"><div className="flex items-start justify-center gap-3 rounded-xl border border-amber-200/25 bg-white/5 px-4 py-3 text-xs leading-relaxed text-slate-200"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" /><p><strong className="text-white">{copy(footerCopy.fraudLabel)}</strong> {copy(footerCopy.fraudText)}</p></div><div className="flex flex-col items-center gap-2 sm:items-center"><p className="text-xs text-slate-200">{copy(footerCopy.question)}</p><div className="flex flex-wrap justify-center gap-2"><Link href="/contact" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-blue-800 hover:bg-blue-50">{copy(footerCopy.contact)}</Link><a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/35 px-3 py-2 text-xs font-bold text-white hover:bg-white/10">{copy(footerCopy.whatsapp)}</a></div></div></div></div>
-    <section aria-labelledby="footer-phone-title" className="mx-auto my-5 max-w-3xl rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-blue-950/40 px-4 py-5 text-center shadow-xl shadow-black/10 sm:px-6">
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-300/15 text-amber-200 ring-1 ring-amber-200/30"><Phone className="h-5 w-5" aria-hidden="true" /></div>
-      <h2 id="footer-phone-title" className="mt-2 text-base font-bold tracking-wide text-white">{language === "fr" ? "Nos numéros" : "Our phone numbers"}</h2>
-      <p className="mt-1 text-xs text-slate-300">{language === "fr" ? "Appelez directement le bureau qui correspond à votre zone." : "Call the office that serves your area."}</p>
-      <div className="mx-auto mt-4 grid max-w-2xl gap-3 sm:grid-cols-2">
-        <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="group/phone rounded-xl border border-white/15 bg-[#0f2c5c]/80 px-4 py-3 text-center transition hover:-translate-y-0.5 hover:border-blue-200/60 hover:bg-[#163d78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200">{language === "fr" ? "Bureau de Yaoundé" : "Yaoundé office"}</span>
-          <span className="mt-1 flex items-center justify-center gap-2 text-lg font-bold text-white sm:justify-center"><Phone className="h-4 w-4 text-blue-200 transition-transform group-hover/phone:scale-110" aria-hidden="true" />{COMPANY_CONTACTS.yaounde.phone}</span>
-        </a>
-        <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="group/phone rounded-xl border border-white/15 bg-[#0f2c5c]/80 px-4 py-3 text-center transition hover:-translate-y-0.5 hover:border-blue-200/60 hover:bg-[#163d78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200">{language === "fr" ? "Bureau d’Ottawa" : "Ottawa office"}</span>
-          <span className="mt-1 flex items-center justify-center gap-2 text-lg font-bold text-white sm:justify-center"><Phone className="h-4 w-4 text-blue-200 transition-transform group-hover/phone:scale-110" aria-hidden="true" />{OFFICE_CONTACTS.ottawa.whatsappDisplay}</span>
-        </a>
+  return (
+    <footer
+      className="relative mt-auto overflow-hidden bg-[#061a36] text-slate-100"
+      aria-label="Informations et contacts 3M Travel"
+      data-testid="site-footer"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.18),_transparent_55%),linear-gradient(180deg,#061a36_0%,#0a2450_100%)]" aria-hidden="true" />
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
+        {/* Marque + CTA */}
+        <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <img src="/logo-3m.webp" alt="Logo 3M Travel Agency" className="h-12 w-auto shrink-0 object-contain" />
+            <div className="min-w-0">
+              <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-300">{copy(footerCopy.agencySummary)}</p>
+              <p className="mt-3 max-w-xl text-xs leading-relaxed text-slate-400">{copy(footerCopy.aboutText)}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <p className="text-xs font-semibold text-slate-300 sm:text-right">{copy(footerCopy.question)}</p>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <Link
+                href="/contact"
+                className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a2b5c] transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                {copy(footerCopy.contact)}
+              </Link>
+              <a
+                href={COMPANY_CONTACTS.yaounde.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-100 transition hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                {copy(footerCopy.whatsapp)}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Anti-fraude */}
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-400/5 px-4 py-3 text-xs leading-relaxed text-slate-200" data-testid="footer-fraud-notice">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+          <p>
+            <strong className="text-white">{copy(footerCopy.fraudLabel)}</strong> {copy(footerCopy.fraudText)}
+          </p>
+        </div>
+
+        {/* Bureaux */}
+        <section aria-labelledby="footer-offices-title" className="mt-8" data-testid="footer-offices">
+          <div className="mb-4">
+            <h2 id="footer-offices-title" className="text-base font-black text-white">{copy(footerCopy.officesTitle)}</h2>
+            <p className="mt-1 text-xs text-slate-400">{copy(footerCopy.officesIntro)}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-4 sm:p-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-200">{language === "fr" ? "Bureau de Yaoundé" : "Yaoundé office"}</p>
+              <div className="mt-3 space-y-2.5 text-sm text-slate-200">
+                <div className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <span>Yaoundé : {COMPANY_CONTACTS.yaounde.address}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />
+                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-100 underline-offset-2 hover:underline">
+                    {copy(footerCopy.yaoundeWhatsapp)} : {COMPANY_CONTACTS.yaounde.whatsappNumber}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="font-semibold hover:text-white">
+                    {copy(footerCopy.yaoundePhone)} : {COMPANY_CONTACTS.yaounde.phone}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-4 sm:p-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-blue-200">{language === "fr" ? "Bureau d’Ottawa" : "Ottawa office"}</p>
+              <div className="mt-3 space-y-2.5 text-sm text-slate-200">
+                <div className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <span>Ottawa : {COMPANY_CONTACTS.ottawa.address}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="font-semibold hover:text-white">
+                    {copy(footerCopy.ottawaOffice)} : {OFFICE_CONTACTS.ottawa.whatsappDisplay}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
+                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Liens + newsletter */}
+        <details className="group mt-8 lg:contents" open={isDesktopFooter}>
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white lg:hidden">
+            {language === "fr" ? "Liens, destinations et informations" : "Links, destinations and information"}
+            <span className="text-lg text-blue-200 transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="mt-6 grid gap-8 border-t border-white/10 pt-8 lg:mt-10 lg:grid-cols-[1.6fr_1fr] lg:gap-10 lg:border-t lg:pt-10">
+            <div>
+              <h2 className="mb-5 text-sm font-black text-white">{copy(footerCopy.exploreTitle)}</h2>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 xl:grid-cols-5">
+                <div className="sr-only">
+                  <h2>{copy(footerCopy.aboutTitle)}</h2>
+                  <p>{copy(footerCopy.aboutText)}</p>
+                </div>
+                <LinkColumn title={copy(footerCopy.navigation)} links={NAVIGATION_LINKS} language={language} onTrack={trackShortcut} />
+                <LinkColumn title={copy(footerCopy.destinations)} links={DESTINATION_LINKS} language={language} onTrack={trackShortcut} />
+                <nav aria-label={copy(footerCopy.sitemap)}>
+                  <LinkColumn title={copy(footerCopy.sitemap)} links={MINI_SITE_MAP} language={language} onTrack={trackShortcut} />
+                </nav>
+                <LinkColumn title={copy(footerCopy.useful)} links={USEFUL_LINKS} language={language} onTrack={trackShortcut} />
+                <div>
+                  <h2 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">{copy(footerCopy.contacts)}</h2>
+                  <p className="mb-2 text-xs leading-relaxed text-slate-400">{copy(footerCopy.officialPage)}</p>
+                  <a
+                    href={SOCIAL_LINKS[0].href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-blue-100 underline-offset-2 hover:text-white hover:underline"
+                  >
+                    {SOCIAL_LINKS[0].label[language]}
+                  </a>
+                </div>
+              </div>
+            </div>
+            <NewsletterSignup language={language} />
+          </div>
+        </details>
+
+        {/* Bas de page */}
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/15 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {SOCIAL_LINKS.map((social) => {
+              const Icon = social.icon;
+              const descriptionId = `footer-social-${social.key}`;
+              return (
+                <span key={social.key} className="group relative inline-flex">
+                  <motion.a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-describedby={descriptionId}
+                    aria-label={`${language === "fr" ? "Ouvrir" : "Open"} ${social.label[language]}`}
+                    onClick={() => trackSocial(social)}
+                    initial={false}
+                    whileHover={enableSocialMotion ? { y: -3, scale: 1.12 } : undefined}
+                    whileTap={enableSocialMotion ? { scale: 0.95 } : undefined}
+                    transition={{ type: "spring", stiffness: 480, damping: 20, mass: 0.35 }}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/10 outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none ${social.color}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </motion.a>
+                  <span id={descriptionId} className="sr-only">{social.description[language]}</span>
+                </span>
+              );
+            })}
+          </div>
+          <div className="max-w-2xl text-xs leading-relaxed text-slate-400 sm:text-right">
+            <p>
+              <span className="font-medium text-slate-200">{COMPANY_PROFILE.legalName}</span>
+              {" — "}RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
+            </p>
+            <p className="mt-1">{copy(footerCopy.legalNotice)}</p>
+            <p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. {language === "fr" ? "Tous droits réservés." : "All rights reserved."}</p>
+          </div>
+        </div>
       </div>
-    </section>
-    <details className="group lg:contents" open={isDesktopFooter}>
-      <summary className="flex cursor-pointer list-none items-center justify-between border-b border-white/20 py-3 text-sm font-semibold text-white lg:hidden">{language === "fr" ? "Liens, destinations et coordonnées" : "Links, destinations and contact details"}<span className="text-lg text-blue-200 transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true">⌄</span></summary>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-5 py-5 text-center sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6"><div className="text-center"><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.aboutTitle)}</h2><p className="text-center text-xs leading-relaxed text-slate-200">{copy(footerCopy.aboutText)}</p></div><div className="text-center"><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.navigation)}</h2><ul className="space-y-1 text-center text-sm">{NAVIGATION_LINKS.map((link) => <li key={link.key}><FooterShortcut link={link} language={language} onTrack={trackShortcut} /></li>)}</ul></div><div className="text-center"><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.destinations)}</h2><ul className="space-y-1 text-center text-sm">{DESTINATION_LINKS.map((link) => <li key={link.key}><FooterShortcut link={link} language={language} onTrack={trackShortcut} /></li>)}</ul></div><nav className="text-center" aria-label={copy(footerCopy.sitemap)}><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.sitemap)}</h2><ul className="space-y-1 text-center text-sm">{MINI_SITE_MAP.map((link) => <li key={link.key}><FooterShortcut link={link} language={language} onTrack={trackShortcut} /></li>)}</ul></nav><div className="text-center"><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.contacts)}</h2><div className="space-y-2 text-center text-xs leading-relaxed"><div className="flex items-start justify-center gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" /><span>Yaoundé : {COMPANY_CONTACTS.yaounde.address}</span></div><div className="flex items-center justify-center gap-2"><MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" /><a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-200">{copy(footerCopy.yaoundeWhatsapp)} : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a></div><div className="flex items-center justify-center gap-2"><Phone className="h-4 w-4 shrink-0 text-blue-300" /><a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-100">{copy(footerCopy.yaoundePhone)} : {COMPANY_CONTACTS.yaounde.phone}</a></div><div className="flex items-center justify-center gap-2"><MapPin className="h-4 w-4 shrink-0 text-blue-300" /><span>Ottawa : {COMPANY_CONTACTS.ottawa.address}</span></div><div className="flex items-center justify-center gap-2"><Phone className="h-4 w-4 shrink-0 text-blue-300" /><a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="hover:text-blue-100">{copy(footerCopy.ottawaOffice)} : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</a></div><div className="flex items-center justify-center gap-2"><Mail className="h-4 w-4 shrink-0 text-blue-300" /><a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-blue-100">{COMPANY_CONTACTS.yaounde.email}</a></div></div></div><div className="text-center"><h2 className="mb-2 text-sm font-bold text-white">{copy(footerCopy.useful)}</h2><ul className="space-y-1 text-center text-sm">{USEFUL_LINKS.map((link) => <li key={link.key}><FooterShortcut link={link} language={language} onTrack={trackShortcut} /></li>)}</ul><div className="mt-3 border-t border-white/25 pt-3 text-center"><p className="mb-2 text-xs font-semibold text-blue-100">{copy(footerCopy.officialPage)}</p><a href={SOCIAL_LINKS[0].href} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-100 underline-offset-2 hover:text-white hover:underline">{SOCIAL_LINKS[0].label[language]}</a></div><NewsletterSignup language={language} /></div>      </div>
-    </details>
-    <div className="flex flex-col items-center justify-center gap-3 border-t border-white/25 pt-4 text-center sm:flex-row sm:justify-center"><div className="flex justify-center gap-3">{SOCIAL_LINKS.map((social) => { const Icon = social.icon; const descriptionId = `footer-social-${social.key}`; return <span key={social.key} className="group relative inline-flex"><motion.a href={social.href} target="_blank" rel="noopener noreferrer" aria-describedby={descriptionId} aria-label={`${language === "fr" ? "Ouvrir" : "Open"} ${social.label[language]}`} onClick={() => trackSocial(social)} initial={false} whileHover={enableSocialMotion ? { y: -3, scale: 1.12 } : undefined} whileTap={enableSocialMotion ? { scale: 0.95 } : undefined} transition={{ type: "spring", stiffness: 480, damping: 20, mass: 0.35 }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/10 outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none ${social.color}`}><Icon className="h-4 w-4" /></motion.a></span>; })}</div><div className="max-w-2xl text-center text-xs leading-relaxed text-slate-400"><p><span className="font-medium text-slate-200">{COMPANY_PROFILE.legalName}</span> — RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p><p className="mt-1">{copy(footerCopy.legalNotice)}</p><p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. {language === "fr" ? "Tous droits réservés." : "All rights reserved."}</p></div></div>
-    {showBackToTop && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="fixed bottom-5 right-5 z-40 inline-flex min-h-9 items-center gap-2 rounded-full border border-white/25 bg-[#123665]/95 px-3 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-[#1a4a86] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-reduce:scroll-auto motion-reduce:transition-none" aria-label={language === "fr" ? "Revenir en haut de la page" : "Back to top"}>↑ <span className="hidden sm:inline">{language === "fr" ? "Haut" : "Top"}</span></button>}
-  </div></footer>;
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#123665]/95 px-3 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-[#1a4a86] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-reduce:scroll-auto motion-reduce:transition-none md:bottom-6 md:left-6"
+          aria-label={language === "fr" ? "Revenir en haut de la page" : "Back to top"}
+          data-testid="footer-back-to-top"
+        >
+          <ArrowUp className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">{language === "fr" ? "Haut" : "Top"}</span>
+        </button>
+      )}
+    </footer>
+  );
 }
