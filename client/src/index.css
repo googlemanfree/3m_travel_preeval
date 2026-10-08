@@ -433,6 +433,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .mobile-section-transition {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .page-transition-shell {

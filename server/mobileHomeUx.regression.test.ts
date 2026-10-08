@@ -52,6 +52,16 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain("aria-valuenow={Math.round(scrollProgress)}");
     expect(home).toContain("mobile-section-transition");
     expect(styles).toContain(".mobile-section-transition");
+    expect(styles).toContain("opacity: 1 !important");
+  });
+
+  it("rend les ressources prioritaires directement visibles sur mobile", () => {
+    expect(home).toContain('id="mobile-home-nav"');
+    expect(home).toContain('aria-label="Accès rapides mobile"');
+    expect(home).toContain('href="#evaluation-multi"');
+    expect(home).toContain('href="/procedures"');
+    expect(home).toContain("sm:hidden");
+    expect(home).toContain("touch-target inline-flex");
   });
 
   it("permet de partager rapidement un témoignage approuvé", () => {

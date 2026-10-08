@@ -98,6 +98,25 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
+      <nav
+        id="mobile-home-nav"
+        aria-label="Accès rapides mobile"
+        className="sticky top-0 z-30 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur sm:hidden"
+      >
+        <a href="#quick-actions-title" className="touch-target inline-flex shrink-0 items-center rounded-full bg-blue-900 px-4 text-xs font-bold text-white transition-transform active:scale-[0.97]">
+          Démarrer
+        </a>
+        <a href="#approved-reviews-title" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          Avis clients
+        </a>
+        <a href="#evaluation-multi" className="touch-target inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-4 text-xs font-bold text-blue-800 transition-colors hover:bg-blue-100">
+          Évaluer mon projet
+        </a>
+        <a href="/procedures" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          Procédures
+        </a>
+      </nav>
+
       {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
         <QuickActionsSection />
