@@ -280,6 +280,28 @@
     line-height: 1.7;
   }
 
+  /* Formulaires publics : labels et champs plus lisibles */
+  .premium-form-surface label,
+  [data-slot="label"] {
+    color: #1e293b;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .premium-form-surface input,
+  .premium-form-surface select,
+  .premium-form-surface textarea,
+  [data-slot="input"],
+  [data-slot="select-trigger"] {
+    color: #0f172a;
+  }
+
+  .premium-form-surface input::placeholder,
+  [data-slot="input"]::placeholder {
+    color: #64748b;
+    opacity: 1;
+  }
+
   @media (min-width: 640px) {
     .container {
       padding-left: 1.5rem; /* 24px - tablet padding */

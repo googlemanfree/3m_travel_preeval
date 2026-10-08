@@ -69,8 +69,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
-    : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-bold text-slate-800 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
+    ? "min-h-11 w-auto justify-start px-2.5 py-2.5 text-sm font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
+    : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-sm font-bold text-slate-900 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
 const authButtonClass = "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -195,7 +195,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('fr')}
                 aria-label="Français"
                 aria-pressed={language === 'fr'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
+                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'fr' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span>
               </button>
@@ -204,7 +204,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('en')}
                 aria-label="English"
                 aria-pressed={language === 'en'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
+                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'en' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span>
               </button>
@@ -224,7 +224,7 @@ export default function Navbar() {
                     {getInitial(candidate.fullName)}
                   </div>
                   <div className="text-left">
-                    <span className="block max-w-[120px] truncate text-xs font-bold text-[#0a2540]">
+                    <span className="block max-w-[120px] truncate text-sm font-bold text-[#0a2540]">
                       {candidate.fullName || copy(NAV_COPY.accountSpace)}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
@@ -309,8 +309,8 @@ export default function Navbar() {
 
           <div className="order-2 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
             <div className="flex items-center gap-0.5 rounded-xl border border-blue-200/60 bg-blue-50 p-0.5 dark:border-slate-600 dark:bg-slate-800" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
-              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "fr" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
-              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "en" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
+              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "fr" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
+              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "en" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { PremiumReveal } from '@/components/PremiumReveal';
 import { CheckCircle, Globe, FileText, Clock, Shield, Zap, ArrowRight, AlertCircle, CreditCard, Camera, Plane, MessageCircle, Search, XCircle } from 'lucide-react';
 import GlobalMobilityIllustration from '@/components/illustrations/GlobalMobilityIllustration';
 import { Card } from '@/components/ui/card';
@@ -89,6 +90,7 @@ const continentLabels: Record<Continent, string> = {
 export default function Evisa() {
   const [search, setSearch] = useState('');
   const [continent, setContinent] = useState<Continent>('tous');
+  const reduceMotion = useReducedMotion();
 
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -205,29 +207,29 @@ export default function Evisa() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Hero + Search */}
-      <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative px-4 pb-16 pt-20 sm:px-6 sm:pb-20 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="text-center"
           >
             <div className="mb-6 inline-block">
-              <span className="px-4 py-2 rounded-full bg-blue-100 border border-blue-300 text-blue-700 text-sm font-semibold">
-                🛂 Annuaire e-Visa
+              <span className="rounded-full border border-blue-300 bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-800">
+                Annuaire e-Visa · 3M TRAVEL AGENCY
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Annuaire des e-Visas & Autorisations de Voyage
+            <h1 className="premium-section-title mb-6 text-4xl sm:text-5xl lg:text-6xl">
+              Annuaire des e-Visas & autorisations de voyage
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 mb-4 max-w-3xl mx-auto">
-              Vérifiez ce qu'il vous faut réellement pour voyager avec un passeport camerounais — eVisa, visa à l'arrivée ou visa consulaire classique — et lancez votre démarche avec notre accompagnement.
+            <p className="premium-section-lead mx-auto mb-4 text-center text-lg sm:text-xl">
+              Vérifiez ce qu’il vous faut réellement pour voyager avec un passeport camerounais — eVisa, visa à l’arrivée ou visa consulaire classique — et lancez votre démarche avec notre accompagnement.
             </p>
-            <p className="text-sm text-gray-500 mb-8 max-w-2xl mx-auto">
-              Informations vérifiées pour les titulaires d'un passeport camerounais. Les règles évoluent : nous confirmons toujours votre cas exact avant toute soumission.
+            <p className="premium-copy mx-auto mb-10 max-w-2xl text-center text-base">
+              Informations vérifiées pour les titulaires d’un passeport camerounais. Les règles évoluent : nous confirmons toujours votre cas exact avant toute soumission.
             </p>
 
             <div className="max-w-md mx-auto mb-10">
@@ -320,9 +322,9 @@ export default function Evisa() {
                 {filtered.map((d, index) => (
                   <motion.div
                     key={d.country}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(index * 0.04, 0.4) }}
+                    transition={{ delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24), duration: 0.35 }}
                   >
                     <Card className={`p-6 hover:shadow-lg transition-all duration-300 h-full flex flex-col border ${statusConfig[d.status].ring}`}>
                       <div className="flex items-start justify-between mb-3">
@@ -339,8 +341,8 @@ export default function Evisa() {
                           )}
                         </div>
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">{d.country}</h3>
-                      <p className="text-gray-600 text-sm mb-4 flex-1">{d.detail}</p>
+                      <h3 className="mb-2 text-lg font-black text-slate-950">{d.country}</h3>
+                      <p className="premium-copy mb-4 flex-1 text-[0.95rem]">{d.detail}</p>
                       {ctaFor(d)}
                     </Card>
                   </motion.div>
@@ -352,36 +354,33 @@ export default function Evisa() {
       </section>
 
       {/* Requirements Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">
-            📄 Pièces générales requises pour un e-Visa
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            La liste exacte dépend du pays et vous est confirmée par notre équipe — voici ce qui est presque toujours demandé
-          </p>
-          <div className="grid md:grid-cols-2 gap-6">
+      <section className="bg-blue-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <PremiumReveal>
+            <h2 className="premium-section-title mb-4 text-center text-3xl">
+              Pièces générales requises pour un e-Visa
+            </h2>
+            <p className="premium-section-lead mx-auto mb-12 text-center">
+              La liste exacte dépend du pays et vous est confirmée par notre équipe — voici ce qui est presque toujours demandé.
+            </p>
+          </PremiumReveal>
+          <div className="grid gap-6 md:grid-cols-2">
             {requirements.map((req, index) => {
               const Icon = req.icon;
               return (
-                <motion.div
-                  key={req.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="p-6 h-full flex gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Icon className="text-blue-600" size={24} />
+                <PremiumReveal key={req.title} delay={Math.min(index * 0.05, 0.2)}>
+                  <Card className="flex h-full gap-4 p-6 sm:p-7">
+                    <div className="shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100">
+                        <Icon className="text-blue-700" size={24} />
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 mb-1">{req.title}</h3>
-                      <p className="text-gray-600 text-sm">{req.detail}</p>
+                      <h3 className="mb-1 font-black text-slate-950">{req.title}</h3>
+                      <p className="premium-copy text-[0.95rem]">{req.detail}</p>
                     </div>
                   </Card>
-                </motion.div>
+                </PremiumReveal>
               );
             })}
           </div>
@@ -389,33 +388,35 @@ export default function Evisa() {
       </section>
 
       {/* Guarantee block */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="p-6 border-l-4 border-blue-600 bg-blue-50 flex gap-4">
-            <Shield className="text-blue-600 flex-shrink-0" size={32} />
+      <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <PremiumReveal className="mx-auto max-w-4xl">
+          <Card className="flex gap-4 border-l-4 border-blue-600 bg-blue-50 p-6 sm:p-7">
+            <Shield className="shrink-0 text-blue-700" size={32} />
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">🛡️ Contrôle de conformité 3M TRAVEL AGENCY</h3>
-              <p className="text-gray-700 text-sm">
-                Nos experts vérifient la qualité de votre scan de passeport, la conformité de votre photo et l'exactitude de vos dates avant la soumission officielle, afin de limiter tout risque de rejet.
+              <h3 className="mb-2 font-black text-slate-950">Contrôle de conformité 3M TRAVEL AGENCY</h3>
+              <p className="premium-copy text-[0.95rem]">
+                Nos experts vérifient la qualité de votre scan de passeport, la conformité de votre photo et l’exactitude de vos dates avant la soumission officielle, afin de limiter tout risque de rejet.
               </p>
             </div>
           </Card>
-        </div>
+        </PremiumReveal>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Questions fréquentes
-          </h2>
+      <section className="bg-slate-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <PremiumReveal>
+            <h2 className="premium-section-title mb-10 text-center text-3xl">
+              Questions fréquentes
+            </h2>
+          </PremiumReveal>
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`} className="bg-white border border-gray-200 rounded-lg px-4">
-                <AccordionTrigger className="text-left font-semibold text-gray-900">
+              <AccordionItem key={index} value={`item-${index}`} className="rounded-xl border border-slate-200 bg-white px-4">
+                <AccordionTrigger className="text-left text-base font-bold text-slate-950">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-600">
+                <AccordionContent className="premium-copy text-base">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -425,37 +426,37 @@ export default function Evisa() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Besoin d'un e-Visa ?
+      <section className="bg-blue-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <PremiumReveal className="mx-auto max-w-4xl text-center">
+          <h2 className="premium-section-title mb-6 text-3xl">
+            Besoin d’un e-Visa ?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Trouvez votre destination ci-dessus, ou contactez-nous directement pour toute autre demande
+          <p className="premium-section-lead mx-auto mb-8 text-center text-lg">
+            Trouvez votre destination ci-dessus, ou contactez-nous directement pour toute autre demande.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Link href="/evisa-demande">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2"
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-4 text-lg font-bold text-white shadow-lg transition hover:from-blue-700 hover:to-blue-600 hover:shadow-xl sm:w-auto"
               >
-                🚀 Commander mon eVisa
+                Commander mon eVisa
                 <ArrowRight size={20} />
               </motion.button>
             </Link>
             <a href={`${whatsappBase}${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, j'ai une question sur le service eVisa.")}`} target="_blank" rel="noopener noreferrer">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-green-500 text-green-600 font-bold rounded-full text-lg transition-all duration-300 hover:bg-green-50 inline-flex items-center justify-center gap-2"
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-emerald-500 bg-white px-8 py-4 text-lg font-bold text-emerald-700 transition hover:bg-emerald-50 sm:w-auto"
               >
                 <MessageCircle size={20} />
                 Poser une question
               </motion.button>
             </a>
           </div>
-        </div>
+        </PremiumReveal>
       </section>
     </main>
   );
