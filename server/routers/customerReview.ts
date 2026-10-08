@@ -122,6 +122,41 @@ export const customerReviewRouter = router({
     };
   }),
 
+  /**
+   * Dépôt par l’administration d’un avis fourni par un client.
+   * Le consentement reste obligatoire et l’avis arrive en attente : même un
+   * administrateur ne peut pas le publier directement sans la validation prévue.
+   */
+  createByAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      fullName: z.string().trim().min(3).max(255),
+      email: z.string().email().max(320),
+      destinationCountry: z.string().trim().max(100).optional(),
+      serviceType: z.string().trim().max(100).optional(),
+      rating: z.number().int().min(1).max(5),
+      reviewText: z.string().trim().min(10).max(1000),
+      consentToPublish: z.literal(true),
+      displayNameChoice: displayNameChoiceSchema.default("first_name_only"),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await requireDb();
+      await db.insert(customerReviews).values({
+        fullName: input.fullName,
+        email: input.email.toLowerCase(),
+        destinationCountry: input.destinationCountry || null,
+        serviceType: input.serviceType || null,
+        rating: input.rating,
+        reviewText: input.reviewText,
+        consentToPublish: true,
+        displayNameChoice: input.displayNameChoice,
+        status: "pending_review",
+        adminNotes: "Avis fourni par l’administration — consentement client confirmé.",
+      });
+      return { success: true, message: "Avis enregistré en attente de validation." };
+    }),
+
   listApproved: publicProcedure.query(async () => {
     const db = await requireDb();
     const rows = await db

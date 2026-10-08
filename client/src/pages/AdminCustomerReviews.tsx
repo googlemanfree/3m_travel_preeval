@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle2, XCircle, Loader } from "lucide-react";
+import { Star, CheckCircle2, XCircle, Loader, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import ReviewInvitationPanel from "@/components/ReviewInvitationPanel";
 import AdminReviewsToInvite from "@/components/AdminReviewsToInvite";
@@ -22,6 +22,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminCustomerReviews() {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createForm, setCreateForm] = useState({ fullName: "", email: "", destinationCountry: "", serviceType: "", rating: "5", reviewText: "", displayNameChoice: "first_name_only" as "full_name" | "first_name_only" | "initials", consentToPublish: false });
   const sessionToken = typeof window !== "undefined"
     ? sessionStorage.getItem("admin_session_token") || localStorage.getItem("admin_session_token") || ""
     : "";
@@ -44,6 +46,16 @@ export default function AdminCustomerReviews() {
     },
   });
 
+  const createMutation = trpc.customerReview.createByAdmin.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      setCreateForm({ fullName: "", email: "", destinationCountry: "", serviceType: "", rating: "5", reviewText: "", displayNameChoice: "first_name_only", consentToPublish: false });
+      setShowCreateForm(false);
+      refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   const items = pendingReviews ?? [];
 
   return (
@@ -54,6 +66,25 @@ export default function AdminCustomerReviews() {
 
         {sessionToken && <AdminReviewsToInvite sessionToken={sessionToken} />}
         {sessionToken && <ReviewInvitationPanel />}
+        {sessionToken && (
+          <Card className="mb-6 border-blue-200 bg-blue-50/60 p-5">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div><h2 className="font-bold text-slate-900">Avis fourni par un client</h2><p className="mt-1 text-sm text-slate-600">Saisissez uniquement un témoignage réellement reçu avec l’autorisation de publication.</p></div>
+              <Button type="button" variant="outline" onClick={() => setShowCreateForm((value) => !value)} className="gap-2 border-blue-300 bg-white"><PlusCircle className="h-4 w-4" />{showCreateForm ? "Fermer" : "Ajouter un avis"}</Button>
+            </div>
+            {showCreateForm && <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={(event) => { event.preventDefault(); if (!createForm.consentToPublish) { toast.error("Confirmez le consentement du client avant l’enregistrement."); return; } createMutation.mutate({ sessionToken, ...createForm, consentToPublish: true, rating: Number(createForm.rating) }); }}>
+              <label className="text-sm font-semibold text-slate-700">Nom du client<input required value={createForm.fullName} onChange={(event) => setCreateForm((current) => ({ ...current, fullName: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500" /></label>
+              <label className="text-sm font-semibold text-slate-700">E-mail du client<input required type="email" value={createForm.email} onChange={(event) => setCreateForm((current) => ({ ...current, email: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500" /></label>
+              <label className="text-sm font-semibold text-slate-700">Destination<input value={createForm.destinationCountry} onChange={(event) => setCreateForm((current) => ({ ...current, destinationCountry: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500" /></label>
+              <label className="text-sm font-semibold text-slate-700">Service<input value={createForm.serviceType} onChange={(event) => setCreateForm((current) => ({ ...current, serviceType: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500" /></label>
+              <label className="text-sm font-semibold text-slate-700">Note<select value={createForm.rating} onChange={(event) => setCreateForm((current) => ({ ...current, rating: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500">{[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value}/5</option>)}</select></label>
+              <label className="text-sm font-semibold text-slate-700">Nom affiché<select value={createForm.displayNameChoice} onChange={(event) => setCreateForm((current) => ({ ...current, displayNameChoice: event.target.value as typeof current.displayNameChoice }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500"><option value="first_name_only">Prénom uniquement</option><option value="initials">Initiales</option><option value="full_name">Nom complet autorisé</option></select></label>
+              <label className="text-sm font-semibold text-slate-700 md:col-span-2">Témoignage<textarea required minLength={10} maxLength={1000} value={createForm.reviewText} onChange={(event) => setCreateForm((current) => ({ ...current, reviewText: event.target.value }))} className="mt-1 min-h-28 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:ring-2 focus:ring-blue-500" /></label>
+              <label className="flex items-start gap-2 text-sm text-slate-700 md:col-span-2"><input type="checkbox" checked={createForm.consentToPublish} onChange={(event) => setCreateForm((current) => ({ ...current, consentToPublish: event.target.checked }))} className="mt-1 h-4 w-4" />Je confirme que ce témoignage vient réellement du client et qu’il a autorisé sa publication.</label>
+              <Button type="submit" disabled={createMutation.isPending} className="md:col-span-2 md:w-fit">{createMutation.isPending ? "Enregistrement…" : "Enregistrer pour validation"}</Button>
+            </form>}
+          </Card>
+        )}
 
         {!sessionToken ? (
           <p className="text-center text-amber-600 py-16">Veuillez vous connecter en tant qu'administrateur pour accéder à la modération.</p>
