@@ -21,16 +21,17 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).toContain('href="/ressources"');
   });
 
-  it("pointe explicitement vers le simulateur CRS de la page Canada", () => {
+  it("pointe explicitement vers le simulateur CRS de la page Canada depuis le hub d’accueil", () => {
     expect(home).toContain('href="/canada#simulateur-crs-canada"');
     expect(home).toContain("Ouvrir le simulateur CRS Canada");
     expect(canada).toContain('id="simulateur-crs-canada"');
     const hero = readFileSync(resolve(root, "client/src/components/HeroSectionVIP.tsx"), "utf8");
-    expect(hero).toContain("Simulateur CRS Canada");
+    expect(hero).not.toContain("Simulateur CRS Canada");
     expect(hero).toContain('const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";');
-    expect(hero).toContain(">Populaire</span>");
-    expect(hero).toContain("items-center gap-3 sm:flex-row");
+    expect(hero).toContain('data-testid="hero-cta-group"');
+    expect(hero).toContain("items-center justify-center gap-3 sm:flex-row");
   });
+
 
   it("retire les widgets lourds détaillés de l’accueil au profit du hub compact", () => {
     expect(home).not.toContain("<EmbassyNewsWidget />");

@@ -97,16 +97,17 @@ describe("accueil : « Que voulez-vous faire ? »", () => {
     expect(screen.getByRole("link", { name: "Voir tous nos services" }).getAttribute("href")).toBe("/services");
   });
 
-  it("est placé juste après le hero, avant le reste de l'accueil ; le hero renvoie vers les trois pôles", () => {
+  it("est placé juste après le hero, avant le reste de l'accueil ; le hero reste allégé", () => {
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain("<QuickActionsSection />");
     expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf("<QuickActionsSection />"));
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");
-    for (const pole of SERVICE_POLES) expect(hero).toContain(`href="/services#${pole.id}"`);
-    expect(hero).toContain("Études, travail, voyage, visa ou immigration");
+    expect(hero).toContain("Études, travail, voyage et visas : votre projet international commence ici.");
     expect(hero).not.toContain("expertise reconnue");
+    for (const pole of SERVICE_POLES) expect(hero).not.toContain(`href="/services#${pole.id}"`);
   });
+
 
   it("la page /services est déclarée côté client et pré-rendue côté serveur", () => {
     expect(app).toContain('<Route path={"/services"} component={Services} />');

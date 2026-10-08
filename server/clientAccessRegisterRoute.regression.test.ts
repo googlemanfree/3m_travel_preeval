@@ -10,8 +10,10 @@ const heroSource = readFileSync(resolve(import.meta.dirname, "../client/src/comp
 describe("accès client et inscription publique", () => {
   it("utilise le libellé de connexion demandé dans les accès publics", () => {
     expect(navbarSource).toContain('account: { fr: "Se connecter", en: "Sign in" }');
-    expect(heroSource).toContain('<a href="/login">🔑 Se connecter</a>');
+    expect(navbarSource).toContain('href="/login"');
+    expect(heroSource).not.toContain('href="/login"');
   });
+
 
   it("charge l’inscription directement plutôt que par un module susceptible d’expirer", () => {
     expect(appSource).toContain('import Register from "./pages/Register";');

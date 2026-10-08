@@ -31,8 +31,10 @@ describe("expérience candidat et navigation admin", () => {
   });
 
   it("renforce la hiérarchie typographique du hero", () => {
-    expect(hero).toContain("text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem]");
-    expect(hero).toContain("text-2xl sm:text-3xl md:text-4xl");
-    expect(hero).toContain("text-xl md:text-2xl");
+    expect(hero).toContain("text-5xl font-extrabold tracking-tight");
+    expect(hero).toContain("sm:text-6xl md:mb-6 md:text-7xl lg:text-[6.5rem]");
+    expect(hero).toContain("sm:text-xl md:text-2xl");
+    expect(hero).not.toContain("text-2xl sm:text-3xl md:text-4xl");
   });
+
 });

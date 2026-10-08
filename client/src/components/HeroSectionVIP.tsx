@@ -1,10 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PROCEDURE_VISUALS } from "@/data/procedureVisuals";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
-import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -14,24 +11,13 @@ interface HeroSectionVIPProps {
 
 const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";
 
-// Prestations réelles du site, chacune renvoie vers une page existante.
-const HERO_OFFERS = [
-  { icon: "🇨🇦", label: "Canada", href: "/canada" },
-  { icon: "🇪🇺", label: "Europe Schengen", href: "/schengen" },
-  { icon: "🇺🇸", label: "États-Unis", href: "/procedures" },
-  { icon: "✈️", label: "Billets, hôtels & assurance", href: "/services#travel" },
-];
-
-export default function HeroSectionVIP({ 
-  onEvalClick, 
+export default function HeroSectionVIP({
   logoUrl = "/logo-3m.webp",
-  whatsappNumber = "237698104832"
+  whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  // Annee extraite du numero RCCM officiel (format RC/Ville/Annee/Type/Numero) : donnee reelle, pas une statistique inventee.
-  const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -93,12 +79,12 @@ export default function HeroSectionVIP({
   return (
     <section
       ref={heroRef}
-      className="relative py-10 md:py-28 overflow-hidden text-center text-white"
+      className="relative flex min-h-[78vh] items-center overflow-hidden py-16 text-center text-white md:min-h-[88vh] md:py-24"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
+      data-testid="home-hero"
     >
-        {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <picture className="absolute inset-0 block">
           <source
@@ -123,212 +109,84 @@ export default function HeroSectionVIP({
         </picture>
         <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/75 via-[#0a1d3a]/62 to-[#07162c]/88" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.55)_0%,transparent_70%)]" />
-        <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
-        <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>
-        <div className="absolute right-1/4 bottom-10 text-[7rem] leading-none opacity-[0.12] select-none">🇺🇸</div>
-        <div className="absolute top-10 left-1/3 w-72 h-72 rounded-full bg-blue-500 blur-3xl opacity-15" />
-        <div className="absolute bottom-10 right-1/4 w-96 h-96 rounded-full bg-indigo-500 blur-3xl opacity-15" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 relative z-10">
-        {/* Badge animé */}
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-10">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-sm sm:text-base font-semibold mb-4 sm:mb-6"
+          className="mb-6 flex justify-center"
         >
-          <Star className="w-4 h-4 text-yellow-300" aria-hidden="true" />
-          Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
+          <img
+            src={logoUrl}
+            alt="3M Travel Agency"
+            width={96}
+            height={96}
+            decoding="async"
+            className="h-16 w-16 rounded-full border-2 border-white/50 bg-white object-cover shadow-xl md:h-24 md:w-24"
+          />
         </motion.div>
 
-        {/* Logo parfaitement centré avec effet lumineux professionnel */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={1}
-          className="mb-5 flex justify-center items-center"
-        >
-          <div className="relative inline-block">
-            <img
-              src={logoUrl}
-              alt="3M Travel Agency"
-              width={96}
-              height={96}
-              decoding="async"
-              className="relative w-16 h-16 md:w-24 md:h-24 rounded-full border-2 border-white/50 shadow-xl object-cover bg-white"
-            />
-          </div>
-        </motion.div>
-
-        {/* Titre principal avec typographie moderne */}
         <motion.h1
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          custom={2}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tight mb-4 sm:mb-6 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
+          custom={1}
+          className="mb-5 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent drop-shadow-md will-change-[opacity,transform] sm:text-6xl md:mb-6 md:text-7xl lg:text-[6.5rem]"
         >
           3M TRAVEL AGENCY
         </motion.h1>
 
-        {/* Sous-titre percutant */}
-        <motion.h2
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={3}
-          className="text-2xl sm:text-3xl md:text-4xl text-blue-100 font-semibold mb-4 sm:mb-7"
-        >
-          L'Afrique vers le monde. <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Votre projet international commence ici.</span>
-        </motion.h2>
-
-        {/* Slogan court + repères de prestations */}
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          custom={4}
-          className="text-white text-xl md:text-2xl max-w-3xl mx-auto mb-4 sm:mb-5 leading-relaxed font-medium"
+          custom={2}
+          className="mx-auto mb-8 max-w-2xl text-lg font-medium leading-relaxed text-white sm:mb-10 sm:text-xl md:text-2xl"
         >
-          Études, travail, voyage, visa ou immigration : 3M Travel Agency vous accompagne dans la préparation et la réalisation de vos projets internationaux, avec une approche structurée, personnalisée et transparente.
+          Études, travail, voyage et visas : votre projet international commence ici.
         </motion.p>
-        <motion.ul
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={4.5}
-          className="flex flex-wrap justify-center gap-2 mb-6 sm:mb-9"
-          aria-label="Prestations principales"
-          data-testid="hero-offers"
-        >
-          {HERO_OFFERS.map((offer) => (
-            <li key={offer.href}>
-              <a href={offer.href} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#07162c]/60 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">
-                <span aria-hidden="true">{offer.icon}</span>{offer.label}
-              </a>
-            </li>
-          ))}
-        </motion.ul>
 
-        {/* CTAs principales */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          custom={5}
-          className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4 justify-center mb-8 sm:mb-10"
+          custom={3}
+          className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+          data-testid="hero-cta-group"
         >
           <PublicEvaluationCTA
             project="travail"
             aria-label="Évaluer mon projet gratuitement"
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
-              <span className="relative z-10 inline-flex items-center gap-2">
-                <span className="text-lg transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" aria-hidden="true">🚀</span>
-                <span>ÉVALUER MON PROJET — GRATUIT</span>
-              </span>
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
+            <span className="relative z-10">ÉVALUER MON PROJET — GRATUIT</span>
           </PublicEvaluationCTA>
           <Button
             asChild
             variant="outline"
-            className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-white/10 hover:border-white/50 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
+            className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-white/50 hover:bg-white/10 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
             <a
               href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              💬 PARLER À UN CONSEILLER
+              PARLER À UN CONSEILLER
             </a>
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="group flex min-h-14 w-full items-center justify-center rounded-xl border border-amber-300/80 bg-amber-400/10 px-6 py-4 text-center font-bold text-amber-100 shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-amber-300 hover:text-slate-950 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px]"
-          >
-            <a href="/canada#simulateur-crs-canada" className="relative">
-              <span className="absolute -right-2 -top-3 rounded-full border border-amber-200/80 bg-amber-300 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-950 shadow-sm">Populaire</span>
-              <span className="inline-flex items-center gap-2"><span aria-hidden="true">🇨🇦</span> Simulateur CRS Canada <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></span>
-            </a>
-          </Button>
-        </motion.div>
-
-        {/* Boutons Connexion/Inscription */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={5.5}
-          className="flex flex-col justify-center gap-4 mb-8 sm:flex-row"
-        >
-          <Button
-            asChild
-            variant="outline"
-            className={`${heroButtonSize} flex items-center justify-center rounded-xl border border-blue-300/70 px-6 py-4 text-center font-semibold text-blue-100 shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-blue-500/20 hover:border-blue-200 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
-          >
-            <a href="/login">🔑 Se connecter</a>
-          </Button>
-          <Button
-            asChild
-            className={`${heroButtonSize} flex items-center justify-center rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-blue-950/20 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-blue-500 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
-          >
-            <a href="/register">✍️ Inscription</a>
-          </Button>
-        </motion.div>
-
-        {/* Repères destinations */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={5.8}
-          className="flex flex-wrap justify-center gap-2 mb-7"
-          aria-label="Nos trois pôles d'activité"
-        >
-          <a href="/services#mobilite" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">🌍 Mobilité internationale</a>
-          <a href="/services#travel" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">✈️ Travel</a>
-          <a href="/services#services" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">🛂 Services</a>
-        </motion.div>
-
-        {/* Repères de service */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={6}
-          className="flex flex-col sm:flex-row gap-8 justify-center border-t border-white/10 pt-8"
-        >
-          <div>
-            <p className="text-2xl md:text-3xl font-bold">3M</p>
-            <p className="text-sm text-slate-400">Travel &amp; Services</p>
-          </div>
-          <div>
-            <p className="text-2xl md:text-3xl font-bold">3</p>
-            <p className="text-sm text-slate-400">Projets : travail, études, tourisme</p>
-          </div>
-          <div>
-            <p className="text-2xl md:text-3xl font-bold">24h</p>
-            <p className="text-sm text-slate-400">Délai de réponse annoncé</p>
-          </div>
-          {registrationYear && (
-            <div>
-              <p className="text-2xl md:text-3xl font-bold">{registrationYear}</p>
-              <p className="text-sm text-slate-400">Agence enregistrée à Yaoundé depuis</p>
-            </div>
-          )}
         </motion.div>
       </div>
 
-      {/* Divider SVG */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg
           viewBox="0 0 1440 60"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full"
+          aria-hidden="true"
         >
           <path
             d="M0 60L1440 60L1440 0C1440 0 1080 60 720 60C360 60 0 0 0 0L0 60Z"
