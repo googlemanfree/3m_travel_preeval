@@ -55,6 +55,25 @@ import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseD
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 
+export type ClientDossierStatusSummary = {
+  label: string;
+  progress: number;
+  tone: string;
+  nextAction: string;
+};
+
+export function clientDossierStatusSummary(status: string | null | undefined, paymentStatus?: string | null): ClientDossierStatusSummary {
+  const normalized = String(status ?? "evaluation").toLowerCase();
+  if (["approuve", "visa_approuve", "approved"].includes(normalized)) return { label: "Visa approuvé", progress: 100, tone: "border-emerald-200 bg-emerald-50 text-emerald-800", nextAction: "Préparer votre départ" };
+  if (["refuse", "rejected"].includes(normalized)) return { label: "Décision à revoir", progress: 100, tone: "border-rose-200 bg-rose-50 text-rose-800", nextAction: "Contacter votre conseiller" };
+  if (["soumis", "submitted"].includes(normalized)) return { label: "Dossier soumis", progress: 80, tone: "border-indigo-200 bg-indigo-50 text-indigo-800", nextAction: "Suivre la décision" };
+  if (["traitement", "processing"].includes(normalized)) return { label: "En traitement", progress: 65, tone: "border-blue-200 bg-blue-50 text-blue-800", nextAction: "Vérifier les messages" };
+  if (["documents", "documents_requis"].includes(normalized)) return { label: "Documents requis", progress: 45, tone: "border-amber-200 bg-amber-50 text-amber-800", nextAction: "Déposer les pièces demandées" };
+  if (String(paymentStatus).toUpperCase() !== "SUCCESS") return { label: "Paiement à confirmer", progress: 25, tone: "border-orange-200 bg-orange-50 text-orange-800", nextAction: "Vérifier le paiement d’ouverture" };
+  if (["evaluation", "evaluation_en_cours"].includes(normalized)) return { label: "Évaluation en cours", progress: 20, tone: "border-violet-200 bg-violet-50 text-violet-800", nextAction: "Consulter l’évaluation" };
+  return { label: "Nouveau dossier", progress: 10, tone: "border-slate-200 bg-slate-50 text-slate-800", nextAction: "Compléter votre profil" };
+}
+
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
@@ -83,7 +102,7 @@ export default function EvaluationSpace() {
 
   // Requête unique pour le résumé complet du tableau de bord client
   // Les données que l'administrateur fait évoluer se rafraîchissent seules (onglet visible) : voir clientSpaceSync.
-  const { data: dashboardData, dataUpdatedAt: dashboardUpdatedAt, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(
+  const { data: dashboardData, dataUpdatedAt: dashboardUpdatedAt, isLoading, isFetching, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(
     selectedDossierNumber ? { selectedDossierNumber } : undefined,
     {
       enabled: isAuthenticated,
@@ -498,21 +517,27 @@ export default function EvaluationSpace() {
           mais le lien pour en ouvrir un second reste visible dès le premier dossier. */}
       {onlineDossiers.length >= 1 && (
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center gap-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-2">
             {onlineDossiers.length > 1 && <span className="text-xs font-semibold text-gray-500 mr-1">Mes dossiers :</span>}
             {onlineDossiers.length > 1 && onlineDossiers.map((dossier) => {
               const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
                   type="button"
                   onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    isSelected ? "bg-blue-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  aria-pressed={isSelected}
+                  aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
+                    isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {dossierSwitcherLabel(dossier)}
                   <span className="ml-1.5 opacity-75">{dossier.dossierNumber}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isSelected ? "bg-white/20 text-white" : status.tone}`}>
+                    {status.label}
+                  </span>
                 </button>
               );
             })}
@@ -522,8 +547,35 @@ export default function EvaluationSpace() {
             >
               + Ouvrir un dossier pour un autre projet
             </a>
+            {isFetching && selectedDossierNumber && (
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700" role="status" aria-live="polite">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Chargement du dossier sélectionné…
+              </span>
+            )}
           </div>
         </div>
+      )}
+      {onlineDossiers.length > 0 && (
+        <Card className="mt-4 border-blue-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5 shadow-sm" aria-labelledby="global-dossiers-summary-title">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
+              <h2 id="global-dossiers-summary-title" className="mt-1 text-lg font-black text-slate-950">Résumé de vos dossiers ouverts</h2>
+              <p className="mt-1 text-sm text-slate-600">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M Travel, avec la prochaine action à effectuer pour chacun.</p>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {onlineDossiers.map((dossier) => {
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
+              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
+                <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
+                <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
+              </button>;
+            })}
+          </div>
+        </Card>
       )}
 
       {/* Barre de navigation principale du tableau de bord */}
