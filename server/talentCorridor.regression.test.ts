@@ -71,6 +71,22 @@ describe("corridor de talents — 4 interfaces", () => {
     expect(read("client/src/components/SelectableProfileCard.tsx")).toContain("TooltipContent");
     expect(read("client/src/index.css")).toContain("reveal-on-scroll");
   });
+  it("couvre la sélection multiple, l’export CSV sûr et les brouillons sans mot de passe", () => {
+    const kanban = read("client/src/components/AdminPlacementPipeline.tsx");
+    expect(kanban).toContain("selectedSubmissionIds");
+    expect(kanban).toContain("exportSelectedCsv");
+    expect(kanban).toContain("\\uFEFF");
+    expect(kanban).toContain("'${text}");
+    const placement = read("client/src/pages/PlacementPartnerPortal.tsx");
+    expect(placement).toContain("3m-placement-partner-request-draft");
+    expect(placement).toContain("hasErrors");
+    const employer = read("client/src/pages/EmployerPortal.tsx");
+    expect(employer).toContain("3m-employer-login-draft");
+    expect(employer).not.toContain('JSON.stringify({ email, password })');
+    const candidate = read("client/src/components/SelectableProfileCard.tsx");
+    expect(candidate).toContain("detailsOpen");
+    expect(candidate).toContain("Prochaines étapes de votre profil international");
+  });
 
   it("indexe les landings corridor pour la découverte internationale", () => {
     const prerender = read("server/publicPrerender.ts");

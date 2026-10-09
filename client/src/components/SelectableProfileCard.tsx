@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Info, Sparkles, Target } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
@@ -7,6 +7,7 @@ import { SELECTABLE_STAGE_COPY } from "@shared/talentCorridor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * Parcours « profil sélectionnable » — badge + checklist pour l’espace candidat.
@@ -15,6 +16,7 @@ export function SelectableProfileCard() {
   const { language } = useLanguage();
   const lang = language === "en" ? "en" : "fr";
   const candidateToken = useMemo(() => getCandidateToken(), []);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const statusQuery = trpc.placementPortal.getMySelectableStatus.useQuery(
     { candidateToken: candidateToken ?? "" },
     { enabled: Boolean(candidateToken), retry: false, staleTime: 60_000, refetchOnWindowFocus: false },
@@ -63,11 +65,13 @@ export function SelectableProfileCard() {
           </CardTitle>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge tabIndex={0} className={`cursor-help transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-indigo-600 ${stage === "selectable" || stage === "shared" ? "bg-emerald-700 text-white" : "bg-slate-800 text-white"}`}>
+              <button type="button" onClick={() => setDetailsOpen(true)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600" aria-label={lang === "en" ? "Open profile preparation steps" : "Ouvrir les prochaines étapes du profil"}>
+              <Badge tabIndex={0} className={`cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md ${stage === "selectable" || stage === "shared" ? "bg-emerald-700 text-white" : "bg-slate-800 text-white"}`}>
                 <Sparkles className="mr-1 h-3 w-3" />
                 {copy.badge}
                 <Info className="ml-1 h-3 w-3 opacity-80" aria-hidden="true" />
               </Badge>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs text-sm leading-5">
               {lang === "en"
@@ -97,6 +101,23 @@ export function SelectableProfileCard() {
           </p>
         )}
       </CardContent>
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{lang === "en" ? "Next steps for your international profile" : "Prochaines étapes de votre profil international"}</DialogTitle>
+            <DialogDescription>{lang === "en" ? "Your profile remains under your control. Complete the missing items below so 3M can review it safely." : "Votre profil reste sous votre contrôle. Complétez les éléments ci-dessous afin que 3M puisse l’examiner en toute sécurité."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-slate-700">
+            <ol className="list-decimal space-y-2 pl-5">
+              <li className={checklist.evaluationValidated ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.evaluationValidated ? "Évaluation validée par 3M." : "Terminer ou transmettre les informations d’évaluation pour vérification."}</li>
+              <li className={checklist.destinationSet ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.destinationSet ? "Destination et projet enregistrés." : "Préciser la destination et le projet professionnel visé."}</li>
+              <li className={checklist.identityComplete ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.identityComplete ? "Informations d’identité de base complètes." : "Compléter les informations d’identité demandées dans votre espace."}</li>
+              <li className={checklist.consentGranted ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.consentGranted ? "Consentement au partage anonymisé actif." : "Lire et confirmer le consentement avant tout partage."}</li>
+            </ol>
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 leading-6"><strong>Conseil de préparation :</strong> gardez vos informations professionnelles cohérentes, vérifiez les dates et ne transmettez jamais de document sensible par un canal non approuvé. Les organisations partenaires ne reçoivent qu’un profil anonymisé après contrôle humain.</div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

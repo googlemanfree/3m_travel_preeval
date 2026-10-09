@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, LockKeyhole, ShieldCheck, UsersRound } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,17 +8,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 export default function PlacementPartnerPortal() {
-  const [form, setForm] = useState({ name: "", email: "", legalName: "", country: "", organizationType: "placement_partner" as "placement_partner" | "employer", message: "" });
+  const draftKey = "3m-placement-partner-request-draft";
+  const emptyForm = { name: "", email: "", legalName: "", country: "", organizationType: "placement_partner" as "placement_partner" | "employer", message: "" };
+  const [form, setForm] = useState(() => { try { return JSON.parse(localStorage.getItem(draftKey) || "null") ?? emptyForm; } catch { return emptyForm; } });
+  const errors = useMemo(() => ({
+    name: form.name.trim().length < 2 ? "Indiquez au moins 2 caractères." : "",
+    email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "Saisissez un e-mail professionnel valide." : "",
+    legalName: form.legalName.trim().length < 2 ? "La raison sociale est requise." : "",
+    country: form.country.trim().length < 2 ? "Indiquez le pays d’activité." : "",
+    message: form.message.trim().length < 10 ? "Décrivez votre besoin en au moins 10 caractères." : "",
+  }), [form]);
+  const hasErrors = Object.values(errors).some(Boolean);
+  useEffect(() => { localStorage.setItem(draftKey, JSON.stringify(form)); }, [form]);
   const requestAccess = trpc.contact.sendContactEmail.useMutation({
     onSuccess: () => {
       toast.success("Demande transmise à 3M TRAVEL AGENCY.");
-      setForm({ name: "", email: "", legalName: "", country: "", organizationType: "placement_partner", message: "" });
+      setForm(emptyForm);
+      localStorage.removeItem(draftKey);
     },
     onError: (error) => toast.error("Demande non envoyée", { description: error.message }),
   });
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (hasErrors) { toast.error("Vérifiez les champs signalés."); return; }
     requestAccess.mutate({
       name: form.name,
       email: form.email,
@@ -50,13 +63,14 @@ export default function PlacementPartnerPortal() {
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100"><div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${([form.name, form.email, form.legalName, form.country, form.message].filter((value) => value.trim()).length / 5) * 100}%` }} /></div>
           </div>
           <form onSubmit={submit} className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="text-sm font-semibold">Nom du contact<Input required maxLength={200} value={form.name} onChange={(event) => update("name", event.target.value)} className="mt-1" /></label>
-            <label className="text-sm font-semibold">E-mail professionnel<Input required type="email" maxLength={320} value={form.email} onChange={(event) => update("email", event.target.value)} className="mt-1" /></label>
-            <label className="text-sm font-semibold">Raison sociale<Input required maxLength={255} value={form.legalName} onChange={(event) => update("legalName", event.target.value)} className="mt-1" /></label>
-            <label className="text-sm font-semibold">Pays d’activité<Input required maxLength={120} value={form.country} onChange={(event) => update("country", event.target.value)} className="mt-1" /></label>
+            <label className="text-sm font-semibold">Nom du contact<Input required maxLength={200} value={form.name} onChange={(event) => update("name", event.target.value)} className="mt-1" />{form.name && errors.name && <span className="mt-1 block text-xs font-medium text-red-700">{errors.name}</span>}</label>
+            <label className="text-sm font-semibold">E-mail professionnel<Input required type="email" maxLength={320} value={form.email} onChange={(event) => update("email", event.target.value)} className="mt-1" />{form.email && errors.email && <span className="mt-1 block text-xs font-medium text-red-700">{errors.email}</span>}</label>
+            <label className="text-sm font-semibold">Raison sociale<Input required maxLength={255} value={form.legalName} onChange={(event) => update("legalName", event.target.value)} className="mt-1" />{form.legalName && errors.legalName && <span className="mt-1 block text-xs font-medium text-red-700">{errors.legalName}</span>}</label>
+            <label className="text-sm font-semibold">Pays d’activité<Input required maxLength={120} value={form.country} onChange={(event) => update("country", event.target.value)} className="mt-1" />{form.country && errors.country && <span className="mt-1 block text-xs font-medium text-red-700">{errors.country}</span>}</label>
             <label className="text-sm font-semibold md:col-span-2">Type d’organisation<Select value={form.organizationType} onValueChange={(value) => update("organizationType", value)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="placement_partner">Agence de placement</SelectItem><SelectItem value="employer">Employeur international</SelectItem></SelectContent></Select></label>
-            <label className="text-sm font-semibold md:col-span-2">Message<textarea required minLength={10} maxLength={3000} value={form.message} onChange={(event) => update("message", event.target.value)} className="mt-1 min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" placeholder="Décrivez vos besoins de recrutement ou de placement." /></label>
-            <Button type="submit" disabled={requestAccess.isPending} className="min-h-11 bg-indigo-700 text-white hover:bg-indigo-800 md:col-span-2">{requestAccess.isPending ? "Envoi en cours…" : "Envoyer la demande"}</Button>
+            <label className="text-sm font-semibold md:col-span-2">Message<textarea required minLength={10} maxLength={3000} value={form.message} onChange={(event) => update("message", event.target.value)} className="mt-1 min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" placeholder="Décrivez vos besoins de recrutement ou de placement." />{form.message && errors.message && <span className="mt-1 block text-xs font-medium text-red-700">{errors.message}</span>}</label>
+            <p className="text-xs text-slate-500 md:col-span-2" aria-live="polite">Brouillon sauvegardé automatiquement sur cet appareil.</p>
+            <Button type="submit" disabled={requestAccess.isPending || hasErrors} className="min-h-11 bg-indigo-700 text-white hover:bg-indigo-800 md:col-span-2">{requestAccess.isPending ? "Envoi en cours…" : "Envoyer la demande"}</Button>
           </form>
         </section>
         <section className="rounded-2xl border border-white/20 bg-white/10 p-5 text-blue-50" aria-label="Règles de confidentialité partenaire">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
 import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Download, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -40,7 +40,20 @@ export default function EmployerPortal() {
   const [auditActor, setAuditActor] = useState("all");
   const [auditTarget, setAuditTarget] = useState("all");
   const [reviewingCollaborator, setReviewingCollaborator] = useState<{ id: number; fullName: string } | null>(null);
+  const [loginDraftSaved, setLoginDraftSaved] = useState(false);
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    try {
+      const draft = JSON.parse(localStorage.getItem("3m-employer-login-draft") || "null") as { email?: string } | null;
+      if (draft?.email) setEmail(draft.email);
+    } catch { /* brouillon local facultatif */ }
+  }, []);
+  useEffect(() => {
+    if (!email && !password) return;
+    localStorage.setItem("3m-employer-login-draft", JSON.stringify({ email }));
+    setLoginDraftSaved(true);
+  }, [email, password]);
 
   const login = trpc.placementPortal.employerLogin.useMutation({
     onSuccess: result => {
@@ -185,7 +198,8 @@ export default function EmployerPortal() {
         <div className="relative"><Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} className="pr-10" />{email.trim() && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("E-mail renseigné", "Email entered")} />}</div>
         <div className="relative"><Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} className="pr-10" />{password && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("Mot de passe renseigné", "Password entered")} />}</div>
         {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
-        <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" aria-live="polite"><span className={`h-2 w-2 rounded-full ${email.trim() && password ? "bg-emerald-500" : "bg-amber-400"}`} aria-hidden="true" />{email.trim() && password ? t("Formulaire prêt pour la vérification.", "Form ready for verification.") : t("Renseignez les deux champs pour continuer.", "Fill both fields to continue.")}</p>
+        <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" aria-live="polite"><span className={`h-2 w-2 rounded-full ${email.trim() && password ? "bg-emerald-500" : "bg-amber-400"}`} aria-hidden="true" />{!email.trim() ? t("L’e-mail professionnel est requis.", "Business email is required.") : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? t("Vérifiez le format de l’e-mail.", "Check the email format.") : !password ? t("Le mot de passe est requis.", "Password is required.") : t("Formulaire prêt pour la vérification.", "Form ready for verification.")}</p>
+        {loginDraftSaved && <p className="text-[11px] text-slate-500">{t("Brouillon de connexion sauvegardé sur cet appareil.", "Login draft saved on this device.")}</p>}
         <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}><LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}</Button>
         <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
       </CardContent></Card>
