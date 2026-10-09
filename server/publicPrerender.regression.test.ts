@@ -104,4 +104,17 @@ describe("pré-rendu public indexable", () => {
     expect(missingPage.status).toBe(404);
     expect(missingPage.html).toContain("Page introuvable");
   });
+
+  it("/about expose Aureol DONFACK à Meta (og + JSON-LD Person)", () => {
+    const about = composePublicPrerender(template, "/about");
+    expect(about.status).toBe(200);
+    expect(about.html).toContain("Aureol DONFACK");
+    expect(about.html).toContain('property="og:type" content="profile"');
+    expect(about.html).toContain('property="og:image" content="https://www.3mtravelagency.com/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg"');
+    expect(about.html).toContain('property="profile:first_name" content="Aureol"');
+    expect(about.html).toContain('property="profile:last_name" content="DONFACK"');
+    expect(about.html).toContain('"@type":"Person"');
+    expect(about.html).toContain('"@type":"AboutPage"');
+    expect(about.html).toContain("fondateur");
+  });
 });

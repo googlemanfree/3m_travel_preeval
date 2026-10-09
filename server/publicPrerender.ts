@@ -62,6 +62,21 @@ const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Voyages, Visas, Études & Mobilité I
 const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne voyages, études, visas, immigration, billets d'avion internationaux et démarches, à Yaoundé et Ottawa.`;
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
+/** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK sur /about. */
+const FOUNDER = {
+  name: "Aureol DONFACK",
+  jobTitle: "Fondateur & PDG — 3M Group SARL",
+  organization: "3M Group SARL",
+  brand: BRAND_PUBLIC_NAME,
+  imageHd: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg`,
+  imageJpg: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg`,
+  imageWebp: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp`,
+  imageSquare: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp`,
+  imageAlt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY)",
+  aboutUrl: `${ORIGIN}/about`,
+  description:
+    "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), pilote l’accompagnement des projets de mobilité internationale à Yaoundé.",
+} as const;
 const socialImageFor = (title: string | undefined, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title?.trim() || SITE)}&path=${encodeURIComponent(path)}`;
 
 type PublicMeta = {
@@ -415,7 +430,12 @@ export function composePublicPrerender(template: string, url: string) {
   const canonical = `${ORIGIN}${path}`;
   // Le chemin vient de l’URL demandée : le JSON-LD l’échappe déjà, pas les attributs HTML.
   const canonicalAttr = esc(canonical);
-  const socialImage = socialImageFor(current.title, path);
+  const isAboutPage = path === "/about";
+  const socialImage = isAboutPage ? FOUNDER.imageHd : socialImageFor(current.title, path);
+  const socialImageAlt = isAboutPage ? FOUNDER.imageAlt : SOCIAL_IMAGE_ALT;
+  const socialImageType = isAboutPage ? "image/jpeg" : "image/png";
+  const socialImageWidth = isAboutPage ? "1152" : "1200";
+  const socialImageHeight = isAboutPage ? "864" : "630";
   const robot = current.noindex ? `<meta name="robots" content="noindex,follow" />` : `<meta name="robots" content="index,follow" />`;
   const breadcrumb = path !== "/" && !current.noindex ? {
     "@type": "BreadcrumbList",
@@ -434,11 +454,35 @@ export function composePublicPrerender(template: string, url: string) {
     publisher: { "@type": "Organization", name: "3M TRAVEL AGENCY", url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 } },
     inLanguage: isEnPath ? "en" : "fr-FR",
   } : null;
+  const founderPerson = {
+    "@type": "Person",
+    "@id": `${ORIGIN}/about#aureol-donfack`,
+    name: FOUNDER.name,
+    jobTitle: FOUNDER.jobTitle,
+    image: [FOUNDER.imageHd, FOUNDER.imageJpg, FOUNDER.imageWebp, FOUNDER.imageSquare],
+    url: FOUNDER.aboutUrl,
+    description: FOUNDER.description,
+    worksFor: {
+      "@type": "Organization",
+      "@id": `${ORIGIN}/#organization`,
+      name: FOUNDER.organization,
+      alternateName: FOUNDER.brand,
+      url: ORIGIN,
+    },
+  };
   const structuredData = path === "/" || path === "/en"
     ? { "@context": "https://schema.org", "@graph": [
-        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M TRAVEL AGENCY", alternateName: "3M TRAVEL AGENCY", url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 }, image: LOGO_URL, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm"] },
+        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M TRAVEL AGENCY", alternateName: "3M TRAVEL AGENCY", url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 }, image: LOGO_URL, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm"], founder: { "@id": `${ORIGIN}/about#aureol-donfack` }, employee: { "@id": `${ORIGIN}/about#aureol-donfack` } },
+        { "@type": "Person", "@id": `${ORIGIN}/about#aureol-donfack`, name: FOUNDER.name, jobTitle: FOUNDER.jobTitle, url: FOUNDER.aboutUrl, image: FOUNDER.imageHd, worksFor: { "@id": `${ORIGIN}/#organization` } },
         { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M TRAVEL AGENCY", alternateName: "3M TRAVEL AGENCY", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: isEnPath ? "en" : "fr-FR" },
       ] }
+    : isAboutPage
+      ? { "@context": "https://schema.org", "@graph": [
+          founderPerson,
+          { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: FOUNDER.organization, alternateName: FOUNDER.brand, url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 }, founder: { "@id": `${ORIGIN}/about#aureol-donfack` }, employee: { "@id": `${ORIGIN}/about#aureol-donfack` } },
+          { "@type": "AboutPage", "@id": `${ORIGIN}/about#webpage`, url: FOUNDER.aboutUrl, name: current.title, description: current.description, mainEntity: { "@id": `${ORIGIN}/about#aureol-donfack` }, isPartOf: { "@id": `${ORIGIN}/#website` } },
+          breadcrumb,
+        ] }
     : path === "/procedures"
       ? { "@context": "https://schema.org", "@graph": [
           { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
@@ -467,24 +511,29 @@ export function composePublicPrerender(template: string, url: string) {
     robot,
     `<link rel="canonical" href="${canonicalAttr}" />`,
     ...hreflangTags,
-    `<meta property="og:type" content="${socialType}" />`,
+    `<meta property="og:type" content="${isAboutPage ? "profile" : socialType}" />`,
     `<meta property="og:locale" content="${isEnPath ? "en_US" : "fr_FR"}" />`,
     `<meta property="og:site_name" content="${esc(SITE)}" />`,
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
     `<meta property="og:url" content="${canonicalAttr}" />`,
     `<meta property="og:image" content="${socialImage}" />`,
-    `<meta property="og:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
-    `<meta property="og:image:type" content="image/png" />`,
-    `<meta property="og:image:width" content="1200" />`,
-    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${esc(socialImageAlt)}" />`,
+    `<meta property="og:image:type" content="${socialImageType}" />`,
+    `<meta property="og:image:width" content="${socialImageWidth}" />`,
+    `<meta property="og:image:height" content="${socialImageHeight}" />`,
+    ...(isAboutPage ? [
+      `<meta property="profile:first_name" content="Aureol" />`,
+      `<meta property="profile:last_name" content="DONFACK" />`,
+      `<meta property="profile:username" content="Aureol DONFACK" />`,
+    ] : []),
     ...(isStudyArticle ? [`<meta property="article:publisher" content="${esc(COMPANY_PROFILE.website)}" />`] : []),
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(current.title)}" />`,
     `<meta name="twitter:description" content="${esc(current.description)}" />`,
     `<meta name="twitter:url" content="${canonicalAttr}" />`,
     `<meta name="twitter:image" content="${socialImage}" />`,
-    `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
+    `<meta name="twitter:image:alt" content="${esc(socialImageAlt)}" />`,
     structuredDataTag,
   ].join("\n");
   const canadaFallback = path === "/canada" ? `<section aria-label="Parcours Canada"><h2>Préparer votre parcours Canada</h2><p>Accédez à l’évaluation protégée, consultez les ressources IRCC et contactez l’agence pour clarifier votre projet.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Créer un compte pour évaluer mon profil Canada</a> · <a href="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" rel="noreferrer">Consulter les programmes IRCC</a> · <a href="/contact">Contacter 3M TRAVEL AGENCY</a></p></section>` : "";
