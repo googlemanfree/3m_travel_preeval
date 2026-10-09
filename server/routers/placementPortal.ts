@@ -16,12 +16,14 @@ import {
   placementProfileSubmissions,
   placementSubmissionEvents,
 } from "../../drizzle/schema";
+import { computeSelectableStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/talentCorridor";
 
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -92,6 +94,35 @@ export const placementPortalRouter = router({
     if (existing) await db.update(candidatePlacementConsents).set(values).where(eq(candidatePlacementConsents.id, existing.id));
     else await db.insert(candidatePlacementConsents).values({ candidateId, ...values });
     return { status: values.status };
+  }),
+
+  /** Statut « profil sélectionnable » pour l’espace client (corridor Afrique → monde). */
+  getMySelectableStatus: publicProcedure.input(z.object({ candidateToken: z.string().min(20) })).query(async ({ input }) => {
+    const candidateId = verifyCandidateToken(input.candidateToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const [candidate, consent, profiles] = await Promise.all([
+      db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1),
+      db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1),
+      db.select({ id: placementCandidateProfiles.id }).from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).limit(1),
+    ]);
+    const row = candidate[0];
+    if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
+    const preferredRaw = String(row.preferredDestinations ?? "").trim();
+    const checklist = {
+      evaluationValidated: row.evaluationDeclarationStatus === "validated",
+      consentGranted: consent[0]?.status === "granted",
+      destinationSet: Boolean(row.destination && row.destination !== "autre") || preferredRaw.length > 2,
+      identityComplete: Boolean(row.fullName?.trim()) && Boolean(row.email?.trim()),
+    };
+    const hasSharedProfile = profiles.length > 0;
+    const stage = computeSelectableStage(checklist, hasSharedProfile);
+    return {
+      stage,
+      checklist,
+      hasSharedProfile,
+      consentStatus: consent[0]?.status ?? "withdrawn",
+    };
   }),
 
   adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(20) })).query(async ({ input }) => {
@@ -424,8 +455,82 @@ export const placementPortalRouter = router({
     const submission = (await db.select().from(placementProfileSubmissions).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0];
     if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Profil non accessible." });
     const now = new Date();
-    await db.update(placementProfileSubmissions).set({ status: input.decision, lastResponseAt: now }).where(eq(placementProfileSubmissions.id, submission.id));
-    await db.insert(placementSubmissionEvents).values({ submissionId: submission.id, actorType: "employer", actorId: account.id, action: input.decision, note: input.note ?? null });
-    return { message: "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat." };
+    const patch: Partial<typeof placementProfileSubmissions.$inferInsert> = { status: input.decision, lastResponseAt: now };
+    if (input.decision === "selected") {
+      patch.adminPipelineStage = "selected";
+    }
+    await db.update(placementProfileSubmissions).set(patch).where(eq(placementProfileSubmissions.id, submission.id));
+    await db.insert(placementSubmissionEvents).values({
+      submissionId: submission.id,
+      actorType: "employer",
+      actorId: account.id,
+      action: input.decision,
+      note: input.note ?? (input.decision === "selected"
+        ? `Sélection confirmée par ${organization.legalName}. File admin : contrat / lettre d’invitation puis Protocole N°02.`
+        : null),
+    });
+    return {
+      message: input.decision === "selected"
+        ? "Sélection enregistrée. 3M vérifiera le retour, puis gérera contrat, lettre d’invitation et Protocole N°02."
+        : "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat.",
+      protocolTwoSuggested: input.decision === "selected",
+    };
+  }),
+
+  /** Avance la file admin post-sélection : sélectionné → contrat/invitation → N°02 → procédure. */
+  adminAdvancePostSelection: publicProcedure.input(z.object({
+    sessionToken: z.string().min(20),
+    submissionId: z.number().int().positive(),
+    note: z.string().trim().max(1000).optional(),
+  })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const submission = (await db.select().from(placementProfileSubmissions).where(eq(placementProfileSubmissions.id, input.submissionId)).limit(1))[0];
+    if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Soumission introuvable." });
+    const inPipeline = submission.status === "selected"
+      || submission.status === "procedure_ready"
+      || Boolean(submission.adminPipelineStage);
+    if (!inPipeline) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seules les soumissions sélectionnées entrent dans la file post-sélection." });
+    }
+    const current: PostSelectionStage = (submission.adminPipelineStage as PostSelectionStage | null)
+      ?? (submission.status === "procedure_ready" ? "procedure_ready" : "selected");
+    const next = nextPostSelectionStage(current);
+    if (!next) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette soumission est déjà en procédure administrative." });
+    const now = new Date();
+    const patch: Partial<typeof placementProfileSubmissions.$inferInsert> = {
+      adminPipelineStage: next,
+      lastResponseAt: now,
+      adminNote: input.note?.trim() || submission.adminNote,
+    };
+    if (next === "contract_invitation") {
+      patch.contractConfirmedAt = now;
+      patch.invitationConfirmedAt = now;
+    }
+    if (next === "protocol_two") {
+      patch.protocolTwoOpenedAt = now;
+    }
+    if (next === "procedure_ready") {
+      patch.status = "procedure_ready";
+    }
+    await db.update(placementProfileSubmissions).set(patch).where(eq(placementProfileSubmissions.id, submission.id));
+    await db.insert(placementSubmissionEvents).values({
+      submissionId: submission.id,
+      actorType: "admin",
+      actorId: admin.id,
+      action: `post_selection_${next}`,
+      note: input.note?.trim() || `Avancé vers ${next}`,
+    });
+    return {
+      stage: next,
+      message: next === "protocol_two"
+        ? "Étape Protocole N°02. Ouvrez la fiche 360° du candidat pour activer employeur + poste."
+        : next === "procedure_ready"
+          ? "Procédure administrative engagée."
+          : "Contrat et lettre d’invitation confirmés.",
+      openProtocolTwo: next === "protocol_two",
+      candidateId: (await db.select({ candidateId: placementCandidateProfiles.candidateId }).from(placementCandidateProfiles).where(eq(placementCandidateProfiles.id, submission.profileId)).limit(1))[0]?.candidateId ?? null,
+    };
   }),
 });

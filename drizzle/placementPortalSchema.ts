@@ -64,6 +64,11 @@ export const placementProfileSubmissions = mysqlTable("placement_profile_submiss
   profileId: int("profile_id").notNull(),
   organizationId: int("organization_id").notNull(),
   status: mysqlEnum("status", ["submitted", "under_review", "shortlisted", "selected", "not_selected", "documents_requested", "procedure_ready", "withdrawn"]).notNull().default("submitted"),
+  /** Étape admin après sélection : contrat/invitation → N°02 → procédure. */
+  adminPipelineStage: mysqlEnum("admin_pipeline_stage", ["selected", "contract_invitation", "protocol_two", "procedure_ready"]),
+  contractConfirmedAt: timestamp("contract_confirmed_at"),
+  invitationConfirmedAt: timestamp("invitation_confirmed_at"),
+  protocolTwoOpenedAt: timestamp("protocol_two_opened_at"),
   submittedByAdminId: int("submitted_by_admin_id").notNull(),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   lastResponseAt: timestamp("last_response_at"),

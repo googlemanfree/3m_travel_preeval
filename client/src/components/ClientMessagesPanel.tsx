@@ -15,14 +15,18 @@ export default function ClientMessagesPanel() {
 
   const messagesQuery = trpc.candidate.getMessages.useQuery(undefined, {
     enabled: isAuthenticated && Boolean(candidate),
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 45_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 20_000,
     retry: 1,
   });
   const unreadQuery = trpc.candidate.unreadCount.useQuery(undefined, {
     enabled: isAuthenticated && Boolean(candidate),
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 45_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 20_000,
   });
   const sendMutation = trpc.candidate.sendMessage.useMutation({
     onSuccess: async () => {

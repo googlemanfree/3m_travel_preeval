@@ -138,17 +138,28 @@ export default function Home() {
         <QuickActionsSection />
       </motion.div>
 
-      <section aria-labelledby="home-b2b-title" className="border-y border-indigo-100 bg-indigo-50/60 py-10">
+      <section aria-labelledby="home-b2b-title" className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-12" data-testid="home-talent-corridor">
         <div className="mx-auto max-w-6xl px-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-700">Partenariats internationaux</p>
-          <h2 id="home-b2b-title" className="mt-1 text-2xl font-black text-slate-950 md:text-3xl">Vous recrutez ou accompagnez des talents ?</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">Deux parcours B2B distincts, avec profils anonymisés, organisations vérifiées et consentement candidat obligatoire.</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <a href="/agences-placement" className="group rounded-2xl border border-indigo-200 bg-white p-5 transition hover:-translate-y-1 hover:border-indigo-500 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">Agences de placement</p><p className="mt-1 text-sm text-slate-600">Accéder aux profils éligibles pour des missions ciblées.</p><span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Découvrir le portail agence →</span>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Afrique → Europe · Amériques · Asie</p>
+          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">Corridor de talents international</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">
+            Quatre interfaces : espace candidat, back-office 3M, agences de placement et employeurs directs. Profils anonymisés, organisations vérifiées, consentement obligatoire — 3M gère la procédure admin après sélection.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <a href="/partenaires" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">Hub partenaires</p>
+              <p className="mt-1 text-sm text-slate-600">Comprendre les 4 espaces et les règles de crédibilité internationale.</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Voir le corridor →</span>
             </a>
-            <a href="/employeurs" className="group rounded-2xl border border-amber-200 bg-white p-5 transition hover:-translate-y-1 hover:border-amber-500 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">Employeurs internationaux</p><p className="mt-1 text-sm text-slate-600">Retrouver les meilleurs profils autorisés et gérer vos décisions.</p><span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">Ouvrir le portail employeur →</span>
+            <a href="/agences-placement" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">Agences de placement</p>
+              <p className="mt-1 text-sm text-slate-600">Accéder aux profils éligibles pour des missions ciblées.</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Portail agence →</span>
+            </a>
+            <a href="/employeurs" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">Employeurs internationaux</p>
+              <p className="mt-1 text-sm text-slate-600">Sélectionner les meilleurs profils autorisés.</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">Portail employeur →</span>
             </a>
           </div>
         </div>
@@ -173,8 +184,8 @@ export default function Home() {
       {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Les parcours les plus demandés depuis Yaoundé</h2>
-          <p className="premium-section-lead mx-auto mb-6 text-center">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
+          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Depuis l’Afrique vers le monde — parcours les plus demandés</h2>
+          <p className="premium-section-lead mx-auto mb-6 text-center">Candidats de tous les pays africains : commencez par la destination qui correspond à votre projet. Chaque fiche détaille les étapes et les documents à préparer.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
               { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },

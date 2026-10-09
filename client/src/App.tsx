@@ -77,13 +77,19 @@ const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
 const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
 const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
 const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
+const PartnersHub = lazyWithTimeout(() => import("./pages/PartnersHub"));
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 const Tourism = lazyWithTimeout(() => import("./pages/Tourism"));
-import { FloatingActionMenu } from "./components/FloatingActionMenu";
-import { SmartFlightAssistant } from "./components/SmartFlightAssistant";
+const FloatingActionMenu = lazyWithTimeout(() =>
+  import("./components/FloatingActionMenu").then((module) => ({ default: module.FloatingActionMenu })),
+);
+const SmartFlightAssistant = lazyWithTimeout(() =>
+  import("./components/SmartFlightAssistant").then((module) => ({ default: module.SmartFlightAssistant })),
+);
+const AiCopilotWidgetEnhanced = lazyWithTimeout(() => import("./components/AiCopilotWidgetEnhanced"));
 import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 const HowItWorks = lazyWithTimeout(() => import("./pages/HowItWorks"));
@@ -92,7 +98,6 @@ const DocumentCompliancePage = lazyWithTimeout(() => import("./pages/DocumentCom
 const PaymentSuccessPage = lazyWithTimeout(() => import("./pages/PaymentSuccessPage"));
 const PaymentErrorPage = lazyWithTimeout(() => import("./pages/PaymentErrorPage"));
 const ConsultationBooking = lazyWithTimeout(() => import("./pages/ConsultationBooking"));
-import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
@@ -201,6 +206,7 @@ function Router() {
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/etat-du-service"} component={ServiceStatus} />
+      <Route path={"/partenaires"} component={PartnersHub} />
       <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
@@ -538,6 +544,34 @@ function AppShell() {
   const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
   const showPublicFooter = !isAdminRoute;
+  /** Widgets flottants après le premier paint : ils ne doivent pas concurrencer le hero / le LCP. */
+  const [floatingToolsReady, setFloatingToolsReady] = React.useState(false);
+  React.useEffect(() => {
+    if (!showFloatingTools) {
+      setFloatingToolsReady(false);
+      return;
+    }
+    let cancelled = false;
+    const enable = () => {
+      if (!cancelled) setFloatingToolsReady(true);
+    };
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      const idleId = idleWindow.requestIdleCallback(enable, { timeout: 2500 });
+      return () => {
+        cancelled = true;
+        idleWindow.cancelIdleCallback?.(idleId);
+      };
+    }
+    const timer = window.setTimeout(enable, 1200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [showFloatingTools]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -604,12 +638,13 @@ function AppShell() {
                         </PageTransition>
                       </div>
                       {showPublicFooter && <FooterLegal />}
-                      {/* Menu d'actions flottantes unifié */}
-                      {showFloatingTools && <FloatingActionMenu />}
-                      {/* Guide d’information flottant */}
-                      {showFloatingTools && <AiCopilotWidgetEnhanced />}
-                      {/* Assistant intelligent de réservation de vol */}
-                      {showFloatingTools && <SmartFlightAssistant />}
+                      {showFloatingTools && floatingToolsReady && (
+                        <React.Suspense fallback={null}>
+                          <FloatingActionMenu />
+                          <AiCopilotWidgetEnhanced />
+                          <SmartFlightAssistant />
+                        </React.Suspense>
+                      )}
                     </>
                   )}
                   </MultiServiceCartProvider>
