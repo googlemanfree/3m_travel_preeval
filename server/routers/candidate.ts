@@ -1438,8 +1438,9 @@ export const candidateRouter = router({
     .input(
       z.object({
         dossierNumber: z.string().max(50),
-        signatureName: z.string().min(2, "Le nom est requis"),
-        signatureDataUrl: z.string().max(500000).optional(),
+        signatureName: z.string().min(2, "Le nom est requis").max(255),
+        /** Signature manuscrite dessinée dans l’espace client — obligatoire pour le Protocole N°01. */
+        signatureDataUrl: z.string().min(80, "La signature manuscrite est requise").max(500000),
         ipAddress: z.string().max(45).optional(),
       })
     )
@@ -1447,9 +1448,7 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      // Récupérer l'application
-      const { applications } = await import("../../drizzle/schema");
-      const app = await db
+      const appRows = await db
         .select()
         .from(applications)
         .where(
@@ -1463,57 +1462,169 @@ export const candidateRouter = router({
         )
         .limit(1);
 
-            if (!app || app.length === 0) {
+      if (!appRows || appRows.length === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
       }
-      if (app[0].paymentStatus !== "SUCCESS") {
+      const application = appRows[0];
+      if (application.agreementSigned) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce protocole a déjà été signé." });
+      }
+      if (application.paymentStatus !== "SUCCESS") {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être signé qu’après confirmation du paiement." });
       }
-      // Sauvegarder l'image de la signature dessinée, si fournie
-      let signatureImageUrl: string | undefined;
-      if (input.signatureDataUrl) {
-        try {
-          const { storagePut } = await import("../storage");
-          const base64Data = input.signatureDataUrl.includes(",") ? input.signatureDataUrl.split(",")[1] : input.signatureDataUrl;
-          const buffer = Buffer.from(base64Data, "base64");
-          const uploadResult = await storagePut(`signatures/${input.dossierNumber}-${Date.now()}.png`, buffer, "image/png");
-          signatureImageUrl = uploadResult.url;
-        } catch (err) {
-          console.warn("Signature image upload failed:", err);
+
+      const forwarded = (ctx as { req?: { headers?: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } } })?.req;
+      const headerIp = forwarded?.headers?.["x-forwarded-for"];
+      const rawIp = input.ipAddress
+        || (typeof headerIp === "string" ? headerIp : Array.isArray(headerIp) ? headerIp[0] : undefined)
+        || forwarded?.socket?.remoteAddress
+        || "unknown";
+      const ipAddress = String(rawIp).split(",")[0].trim().slice(0, 64);
+
+      const base64Data = input.signatureDataUrl.includes(",")
+        ? input.signatureDataUrl.split(",")[1]
+        : input.signatureDataUrl;
+      let signaturePngBytes: Buffer;
+      try {
+        signaturePngBytes = Buffer.from(base64Data, "base64");
+        if (signaturePngBytes.length < 40) {
+          throw new Error("signature trop courte");
         }
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "La signature manuscrite est invalide. Redessinez-la puis soumettez à nouveau." });
       }
 
-      // Mettre à jour le protocole d'accord
-      const now = Math.floor(Date.now() / 1000); // Unix timestamp en secondes
+      let signatureImageUrl: string | undefined;
+      try {
+        const uploadResult = await storagePut(
+          `signatures/${input.dossierNumber}-${Date.now()}.png`,
+          signaturePngBytes,
+          "image/png",
+        );
+        signatureImageUrl = uploadResult.url;
+      } catch (err) {
+        console.warn("[Agreement] Signature image upload failed:", err);
+      }
+
+      const signedAtDate = new Date();
+      const now = Math.floor(signedAtDate.getTime() / 1000);
+      const empreinteSha = createHash("sha256")
+        .update(`${application.dossierNumber}|${application.email}|${input.signatureName}|${now}|${ipAddress}`)
+        .digest("hex")
+        .slice(0, 24);
+
+      const { buildProtocolOneRichText } = await import("../../shared/agreementProtocolCountryTemplates");
+      const { createAgreementProtocolOnePdf } = await import("../agreementProtocolPdfService");
+      const { buildSignedAgreementEmail } = await import("../services/signedAgreementEmail");
+      const { AGREEMENT_PROTOCOL_VERSION } = await import("../../shared/agreementProtocolContent");
+
+      const protocolVariables = {
+        clientNomComplet: application.fullName,
+        dossierRef: application.dossierNumber,
+        destinationProjet: application.destination || "Non spécifiée",
+        clientTelephoneWhatsapp: application.whatsappNumber || undefined,
+        clientEmail: application.email,
+        modePaiement: application.paymentMethod || "Paiement confirmé",
+        dateHeurePaiement: (application.paymentValidatedAt || application.paymentDate)
+          ? new Date(application.paymentValidatedAt || application.paymentDate as Date).toLocaleString("fr-FR", { timeZone: "Africa/Douala" })
+          : "Non renseignée",
+        conseillerEmail: application.adminAssignedTo || "conseiller@3mtravelagency.com",
+        empreinteSha,
+        clientIpAddress: ipAddress,
+        dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      };
+      const protocolText = buildProtocolOneRichText(protocolVariables, application.destination);
+      const protocolPdf = await createAgreementProtocolOnePdf({
+        dossierNumber: application.dossierNumber,
+        fullName: application.fullName,
+        destination: application.destination,
+        variables: protocolVariables,
+        content: protocolText,
+        signature: {
+          name: input.signatureName.trim(),
+          pngBytes: signaturePngBytes,
+          signedAt: signedAtDate,
+          ipAddress,
+        },
+      });
+
       await db
         .update(applications)
         .set({
           agreementSigned: true,
           agreementSignedAt: now,
-          agreementSignatureName: input.signatureName,
-          agreementIpAddress: input.ipAddress,
-          dossierStatus: app[0].paymentStatus === "SUCCESS" ? "paye" : "en_attente_paiement",
-          lastStatusUpdateAt: new Date(),
+          agreementSignatureName: input.signatureName.trim(),
+          agreementIpAddress: ipAddress,
+          dossierStatus: "paye",
+          lastStatusUpdateAt: signedAtDate,
         })
-        .where(eq(applications.id, app[0].id));
+        .where(eq(applications.id, application.id));
 
-      // Envoyer un email de confirmation
+      const protocolFileName = `Protocole-accord-01-signe-${application.dossierNumber}.pdf`;
       try {
-        const { sendEmail } = await import("../_core/email");
-        const confirmationHTML = `
-          <h2>Protocole d'Accord Signé</h2>
-          <p>Bonjour ${esc(app[0].fullName)},</p>
-          <p>Votre protocole d'accord a été signé avec succès le ${new Date().toLocaleDateString("fr-FR")}.</p>
-          <p><strong>Numéro de dossier :</strong> ${esc(input.dossierNumber)}</p>
-          <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
-          <p>Cordialement,<br/>3M TRAVEL AGENCY</p>
-        `;
-        await sendEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
+        await db.insert(clientDocuments).values({
+          evaluationId: application.id,
+          candidateEmail: application.email,
+          documentType: "other",
+          documentName: protocolFileName,
+          documentUrl: protocolPdf.url,
+          fileSize: protocolPdf.bytes.length,
+          source: "manual_admin",
+          uploadedByAdmin: "signature-espace-client",
+          receivedByAdmin: true,
+          status: "verified",
+          verificationStatus: "approved",
+          verifiedByAdmin: "system",
+          verifiedAt: signedAtDate,
+          adminNotes: `PDF signé du Protocole ${AGREEMENT_PROTOCOL_VERSION} généré après signature électronique dans l’espace client. Empreinte ${empreinteSha}.`,
+        });
       } catch (err) {
-        console.warn("Email confirmation failed:", err);
+        console.warn("[Agreement] Signed PDF archive in client documents failed:", err);
       }
 
-      return { success: true, message: "Protocole d'accord signé avec succès" };
+      const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+      const emailPayload = buildSignedAgreementEmail({
+        fullName: application.fullName,
+        dossierNumber: application.dossierNumber,
+        signatureName: input.signatureName.trim(),
+        signedAt: signedAtDate,
+        siteUrl,
+        protocolFileName,
+        signatureImageUrl,
+      });
+
+      let emailSent = false;
+      try {
+        await sendGenericEmail({
+          to: application.email,
+          subject: emailPayload.subject,
+          html: emailPayload.html,
+          attachments: [{ filename: protocolFileName, content: protocolPdf.bytes, contentType: "application/pdf" }],
+        });
+        emailSent = true;
+      } catch (err) {
+        console.warn("[Agreement] Signed protocol email failed:", err);
+      }
+
+      try {
+        await notifyAdmins({
+          type: "new_document",
+          title: "Protocole d’accord signé",
+          message: `${application.fullName} a signé le protocole N°01 (${application.dossierNumber}).`,
+          relatedId: application.dossierNumber,
+        });
+      } catch {
+        // notification admin optionnelle
+      }
+
+      return {
+        success: true,
+        emailSent,
+        signedPdfUrl: protocolPdf.url,
+        message: emailSent
+          ? "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail."
+          : "Protocole d’accord signé et archivé. L’e-mail n’a pas pu être envoyé pour le moment ; le PDF reste disponible dans vos documents.",
+      };
     }),
 
   // ── Soumettre des documents après signature ────────────────────────────────
