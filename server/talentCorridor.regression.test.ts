@@ -66,7 +66,8 @@ describe("corridor de talents — 4 interfaces", () => {
     expect(kanban).toContain("postSelectionSearch");
     expect(kanban).toContain("postSelectionFilter");
     expect(kanban).toContain("postSelectionSort");
-    expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain("Préparation de la demande");
+    expect(read("client/src/components/B2bPartnerRegistrationForm.tsx")).toContain("Préparation de la demande");
+    expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain("B2bPartnerRegistrationForm");
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain("Formulaire prêt pour la vérification");
     expect(read("client/src/components/SelectableProfileCard.tsx")).toContain("TooltipContent");
     expect(read("client/src/index.css")).toContain("reveal-on-scroll");
@@ -77,9 +78,12 @@ describe("corridor de talents — 4 interfaces", () => {
     expect(kanban).toContain("exportSelectedCsv");
     expect(kanban).toContain("\\uFEFF");
     expect(kanban).toContain("'${text}");
-    const placement = read("client/src/pages/PlacementPartnerPortal.tsx");
-    expect(placement).toContain("3m-placement-partner-request-draft");
-    expect(placement).toContain("hasErrors");
+    const registration = read("client/src/components/B2bPartnerRegistrationForm.tsx");
+    expect(registration).toContain("3m-placement-partner-request-draft");
+    expect(registration).toContain("hasErrors");
+    expect(registration).toContain("sans mot de passe");
+    expect(registration).not.toContain("type=\"password\"");
+    expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain("B2bPartnerRegistrationForm");
     const employer = read("client/src/pages/EmployerPortal.tsx");
     expect(employer).toContain("3m-employer-login-draft");
     expect(employer).not.toContain('JSON.stringify({ email, password })');

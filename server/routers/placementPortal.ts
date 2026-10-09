@@ -4,8 +4,10 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
+  adminNotifications,
   candidatePlacementConsents,
   candidates,
+  placementAccessRequests,
   placementCandidateProfiles,
   placementEmployerAccounts,
   placementEmployerFavorites,
@@ -18,6 +20,8 @@ import {
 } from "../../drizzle/schema";
 import { computeSelectableStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
+import { sendEmail } from "../_core/email";
+import { logger } from "../_core/logger";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
@@ -28,6 +32,21 @@ import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/ta
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const makeProfileCode = () => `PRF-${randomBytes(4).toString("hex").toUpperCase()}`;
+const partnerAccessRequestSchema = z.object({
+  organizationType: z.enum(["placement_partner", "employer"]),
+  legalName: z.string().trim().min(2).max(255),
+  registrationNumber: z.string().trim().max(120).optional(),
+  country: z.string().trim().min(2).max(120),
+  city: z.string().trim().max(120).optional(),
+  website: z.string().trim().max(320).optional(),
+  contactFullName: z.string().trim().min(2).max(255),
+  contactEmail: z.string().email().max(320),
+  contactPhone: z.string().trim().min(6).max(64),
+  contactRole: z.string().trim().min(2).max(160),
+  sectors: z.string().trim().max(255).optional(),
+  targetMarkets: z.string().trim().max(255).optional(),
+  message: z.string().trim().min(20).max(3000),
+});
 const collaborationAuditActionSchema = z.enum([
   "favorite_shared",
   "favorite_share_revoked",
@@ -125,16 +144,191 @@ export const placementPortalRouter = router({
     };
   }),
 
+  /** Inscription / identification B2B — aucune connexion ni profil avant revue humaine. */
+  requestPartnerAccess: publicProcedure.input(partnerAccessRequestSchema).mutation(async ({ input }) => {
+    checkLoginAttempts(`partner-access:${input.contactEmail.toLowerCase()}`);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const email = input.contactEmail.toLowerCase();
+    const website = input.website?.trim()
+      ? (input.website.startsWith("http://") || input.website.startsWith("https://") ? input.website.trim() : `https://${input.website.trim()}`)
+      : null;
+    const mapAccessError = (error: unknown): never => {
+      const detail = error instanceof Error ? error.message : String(error);
+      if (/placement_access_requests|ER_NO_SUCH_TABLE|doesn't exist/i.test(detail)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Le registre d’inscription partenaire n’est pas encore activé. Appliquez la migration 0076 puis réessayez.",
+        });
+      }
+      console.error("[placementPortal.requestPartnerAccess]", error);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible d’enregistrer la demande pour le moment." });
+    };
+    try {
+      const pending = (await db.select({ id: placementAccessRequests.id }).from(placementAccessRequests)
+        .where(and(eq(placementAccessRequests.contactEmail, email), inArray(placementAccessRequests.status, ["pending", "under_review"])))
+        .limit(1))[0];
+      if (pending) {
+        recordFailedAttempt(`partner-access:${email}`);
+        throw new TRPCError({ code: "CONFLICT", message: "Une demande est déjà en cours d’examen pour cet e-mail professionnel." });
+      }
+      const existingAccount = (await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, email)).limit(1))[0];
+      if (existingAccount) {
+        throw new TRPCError({ code: "CONFLICT", message: "Un accès existe déjà pour cet e-mail. Utilisez le formulaire de connexion." });
+      }
+      const result = await db.insert(placementAccessRequests).values({
+        organizationType: input.organizationType,
+        legalName: input.legalName,
+        registrationNumber: input.registrationNumber?.trim() || null,
+        country: input.country,
+        city: input.city?.trim() || null,
+        website,
+        contactFullName: input.contactFullName,
+        contactEmail: email,
+        contactPhone: input.contactPhone,
+        contactRole: input.contactRole,
+        sectors: input.sectors?.trim() || null,
+        targetMarkets: input.targetMarkets?.trim() || null,
+        message: input.message,
+        status: "pending",
+      });
+      const requestId = Number((result as any)[0]?.insertId ?? 0);
+      const orgKind = input.organizationType === "placement_partner" ? "Agence de placement" : "Employeur international";
+      try {
+        await db.insert(adminNotifications).values({
+          type: "new_contact_message",
+          title: "Nouvelle inscription partenaire B2B",
+          message: `${orgKind} — ${input.legalName} (${input.country}) — ${input.contactFullName} <${email}>`,
+          relatedId: String(requestId || email),
+          targetAdminType: "accompagnement",
+        });
+      } catch (notifyError) {
+        logger.error("placement_portal.admin_notification_failed", { requestId, email }, notifyError);
+      }
+      const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      try {
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `Nouvelle identification B2B — ${orgKind} — ${input.legalName}`,
+          html: `<p><strong>${esc(orgKind)}</strong> : ${esc(input.legalName)} (${esc(input.country)})</p>
+<p>Contact : ${esc(input.contactFullName)} — ${esc(input.contactRole)}<br>E-mail : ${esc(email)}<br>Tél. : ${esc(input.contactPhone)}</p>
+${input.registrationNumber ? `<p>Enregistrement : ${esc(input.registrationNumber)}</p>` : ""}
+${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarkets].filter(Boolean).map(esc).join(" · ")}</p>` : ""}
+<p>${esc(input.message)}</p>
+<p>Revue dans l’admin → Pilotage de placement international.</p>`,
+        });
+      } catch (mailError) {
+        logger.error("placement_portal.team_mail_failed", { requestId, email }, mailError);
+      }
+      resetLoginAttempts(`partner-access:${email}`);
+      return {
+        requestId,
+        message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie votre organisation avant de remettre un accès.",
+      };
+    } catch (error) {
+      if (error instanceof TRPCError) throw error;
+      return mapAccessError(error);
+    }
+  }),
+
   adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(20) })).query(async ({ input }) => {
     await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
-    const [organizations, profiles, submissions] = await Promise.all([
+    const [organizations, profiles, submissions, accessRequests] = await Promise.all([
       db.select().from(placementOrganizations).limit(200),
       db.select().from(placementCandidateProfiles).where(isNull(placementCandidateProfiles.archivedAt)).limit(500),
       db.select().from(placementProfileSubmissions).limit(500),
+      db.select().from(placementAccessRequests).orderBy(desc(placementAccessRequests.createdAt)).limit(200),
     ]);
-    return { organizations, profiles, submissions };
+    return { organizations, profiles, submissions, accessRequests };
+  }),
+
+  adminReviewAccessRequest: publicProcedure.input(z.object({
+    sessionToken: z.string().min(20),
+    requestId: z.number().int().positive(),
+    decision: z.enum(["approved", "rejected", "under_review"]),
+    reviewNote: z.string().trim().max(2000).optional(),
+    markVerified: z.boolean().optional(),
+    createAccess: z.boolean().optional(),
+  })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const request = (await db.select().from(placementAccessRequests).where(eq(placementAccessRequests.id, input.requestId)).limit(1))[0];
+    if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande introuvable." });
+    if (request.status === "approved" || request.status === "rejected") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Cette demande a déjà été clôturée." });
+    }
+    const now = new Date();
+    if (input.decision === "under_review") {
+      await db.update(placementAccessRequests).set({
+        status: "under_review",
+        reviewNote: input.reviewNote ?? request.reviewNote,
+        reviewedAt: now,
+        reviewedByAdminId: admin.id,
+      }).where(eq(placementAccessRequests.id, request.id));
+      return { status: "under_review" as const, organizationId: request.organizationId, contactEmail: request.contactEmail, temporaryPassword: null as string | null };
+    }
+    if (input.decision === "rejected") {
+      await db.update(placementAccessRequests).set({
+        status: "rejected",
+        reviewNote: input.reviewNote ?? null,
+        reviewedAt: now,
+        reviewedByAdminId: admin.id,
+      }).where(eq(placementAccessRequests.id, request.id));
+      return { status: "rejected" as const, organizationId: null as number | null, contactEmail: request.contactEmail, temporaryPassword: null as string | null };
+    }
+    const verified = Boolean(input.markVerified);
+    let organizationId = request.organizationId;
+    if (!organizationId) {
+      const orgResult = await db.insert(placementOrganizations).values({
+        organizationType: request.organizationType,
+        legalName: request.legalName,
+        country: request.country,
+        contactEmail: request.contactEmail,
+        verificationStatus: verified ? "verified" : "pending",
+        verifiedAt: verified ? now : null,
+        verifiedByAdminId: verified ? admin.id : null,
+      });
+      organizationId = Number((orgResult as any)[0]?.insertId ?? 0);
+    } else if (verified) {
+      await db.update(placementOrganizations).set({
+        verificationStatus: "verified",
+        verifiedAt: now,
+        verifiedByAdminId: admin.id,
+      }).where(eq(placementOrganizations.id, organizationId));
+    }
+    let temporaryPassword: string | null = null;
+    if (input.createAccess) {
+      if (!verified && !organizationId) throw new TRPCError({ code: "BAD_REQUEST", message: "Vérifiez l’organisation avant de créer l’accès." });
+      const organization = (await db.select().from(placementOrganizations).where(eq(placementOrganizations.id, organizationId!)).limit(1))[0];
+      if (!organization || organization.verificationStatus !== "verified") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cochez « organisation vérifiée » pour générer les identifiants." });
+      }
+      const existingEmail = (await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, request.contactEmail)).limit(1))[0];
+      if (existingEmail) throw new TRPCError({ code: "CONFLICT", message: "Un accès existe déjà pour cet e-mail." });
+      temporaryPassword = randomBytes(12).toString("base64url");
+      const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+      const existingAccounts = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.organizationId, organization.id)).limit(2);
+      await db.insert(placementEmployerAccounts).values({
+        organizationId: organization.id,
+        fullName: request.contactFullName,
+        email: request.contactEmail,
+        passwordHash,
+        status: "active",
+        collaborationRole: existingAccounts.length === 0 ? "manager" : "reader",
+        createdByAdminId: admin.id,
+      });
+    }
+    await db.update(placementAccessRequests).set({
+      status: "approved",
+      organizationId,
+      reviewNote: input.reviewNote ?? null,
+      reviewedAt: now,
+      reviewedByAdminId: admin.id,
+    }).where(eq(placementAccessRequests.id, request.id));
+    return { status: "approved" as const, organizationId, contactEmail: request.contactEmail, temporaryPassword };
   }),
 
   adminCreateOrganization: publicProcedure.input(z.object({ sessionToken: z.string().min(20), organizationType: z.enum(["placement_partner", "employer"]), legalName: z.string().trim().min(2).max(255), country: z.string().trim().min(2).max(120), contactEmail: z.string().email().max(320), verified: z.boolean() })).mutation(async ({ input }) => {

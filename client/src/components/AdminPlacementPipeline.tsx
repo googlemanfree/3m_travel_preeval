@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BriefcaseBusiness, Building2, Check, Download, Eye, FilePlus2, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { BriefcaseBusiness, Building2, Download, Eye, FilePlus2, IdCard, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { POST_SELECTION_LABELS, POST_SELECTION_STAGES, nextPostSelectionStage, resolvePostSelectionStage, type PostSelectionStage } from "@shared/talentCorridor";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,12 @@ const submissionLabels: Record<string, string> = {
   procedure_ready: "Procédure à ouvrir",
   withdrawn: "Retiré",
 };
+const accessRequestLabels: Record<string, string> = {
+  pending: "En attente",
+  under_review: "En examen",
+  approved: "Approuvée",
+  rejected: "Refusée",
+};
 
 export function AdminPlacementPipeline({ sessionToken }: Props) {
   const utils = trpc.useUtils();
@@ -29,6 +35,7 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const [issuedAccess, setIssuedAccess] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const [profile, setProfile] = useState({ candidateId: "", summary: "", targetDestination: "", targetProcedure: "", sector: "", yearsExperience: "", languagesSummary: "" });
   const [submission, setSubmission] = useState({ profileId: "", organizationId: "", adminNote: "" });
+  const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const [lockedActions, setLockedActions] = useState<Record<string, boolean>>({});
   const [postSelectionSearch, setPostSelectionSearch] = useState("");
   const [postSelectionFilter, setPostSelectionFilter] = useState<"all" | PostSelectionStage>("all");
@@ -70,6 +77,22 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
     },
     onError: (error) => { unlockAction("employerAccess"); toast.error("Accès non créé", { description: error.message }); },
   });
+  const reviewAccessMutation = trpc.placementPortal.adminReviewAccessRequest.useMutation({
+    onSuccess: (result) => {
+      if (result.temporaryPassword) {
+        setIssuedAccess({ email: result.contactEmail, temporaryPassword: result.temporaryPassword });
+        toast.success("Demande approuvée — identifiants générés", { description: "Remettez le mot de passe temporaire par un canal approuvé." });
+      } else if (result.status === "approved") {
+        toast.success("Demande approuvée", { description: "Organisation créée. Générez l’accès dans la carte Accès partenaire si besoin." });
+      } else if (result.status === "rejected") {
+        toast.success("Demande refusée");
+      } else {
+        toast.success("Demande marquée en examen");
+      }
+      refresh();
+    },
+    onError: (error) => toast.error("Revue impossible", { description: error.message }),
+  });
   const advanceMutation = trpc.placementPortal.adminAdvancePostSelection.useMutation({
     onSuccess: (result) => {
       toast.success(result.message);
@@ -84,6 +107,11 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const organizations = listQuery.data?.organizations ?? [];
   const profiles = listQuery.data?.profiles ?? [];
   const submissions = listQuery.data?.submissions ?? [];
+  const accessRequests = listQuery.data?.accessRequests ?? [];
+  const openAccessRequests = useMemo(
+    () => accessRequests.filter((row) => row.status === "pending" || row.status === "under_review"),
+    [accessRequests],
+  );
   const verifiedOrganizations = useMemo(() => organizations.filter((row) => row.verificationStatus === "verified"), [organizations]);
   const profilesById = useMemo(() => new Map(profiles.map((row) => [row.id, row])), [profiles]);
   const orgsById = useMemo(() => new Map(organizations.map((row) => [row.id, row])), [organizations]);
@@ -174,7 +202,12 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
         </Button>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-5">
+        <div className="rounded-xl border border-violet-100 bg-white p-3">
+          <p className="text-xs font-bold uppercase text-violet-700">Inscriptions</p>
+          <p className="mt-1 text-2xl font-black text-violet-950">{openAccessRequests.length}</p>
+          <p className="text-xs text-slate-500">À examiner</p>
+        </div>
         <div className="rounded-xl border border-indigo-100 bg-white p-3">
           <p className="text-xs font-bold uppercase text-indigo-700">Organisations</p>
           <p className="mt-1 text-2xl font-black text-indigo-950">{organizations.length}</p>
@@ -195,6 +228,94 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
           <p className="mt-1 text-2xl font-black text-emerald-950">{byStage.procedure_ready.length}</p>
           <p className="text-xs text-slate-500">Décision humaine obligatoire</p>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="admin-partner-access-requests">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 font-bold text-violet-950"><IdCard className="h-4 w-4" />Demandes d’identification partenaires</p>
+            <p className="mt-1 text-sm text-violet-900">Examinez l’identité légale, puis approuvez avec vérification et génération d’accès si l’organisation est confirmée.</p>
+          </div>
+          <Badge className="bg-violet-100 text-violet-900">{openAccessRequests.length} ouverte(s)</Badge>
+        </div>
+        {issuedAccess && (
+          <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
+            <p className="font-bold">Identifiants à remettre maintenant</p>
+            <p className="mt-1">{issuedAccess.email}</p>
+            <code className="mt-2 block select-all rounded bg-white p-2 font-mono text-sm">{issuedAccess.temporaryPassword}</code>
+          </div>
+        )}
+        {openAccessRequests.length === 0 ? (
+          <p className="mt-3 rounded-lg bg-white/80 p-3 text-sm text-slate-600">Aucune demande d’inscription en attente.</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {openAccessRequests.slice(0, 12).map((row) => (
+              <li key={row.id} className="rounded-xl border border-violet-100 bg-white p-3 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-950">{row.legalName}</p>
+                    <p className="text-slate-600">
+                      {row.organizationType === "placement_partner" ? "Agence de placement" : "Employeur"} · {row.country}
+                      {row.city ? ` · ${row.city}` : ""}
+                    </p>
+                    <p className="mt-1 text-slate-700">{row.contactFullName} · {row.contactRole}</p>
+                    <p className="text-slate-600">{row.contactEmail} · {row.contactPhone}</p>
+                    {row.registrationNumber && <p className="text-xs text-slate-500">Enregistrement : {row.registrationNumber}</p>}
+                    {(row.sectors || row.targetMarkets) && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {[row.sectors, row.targetMarkets].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    <p className="mt-2 whitespace-pre-wrap text-slate-700">{row.message}</p>
+                  </div>
+                  <Badge variant="outline">{accessRequestLabels[row.status] ?? row.status}</Badge>
+                </div>
+                <Textarea
+                  className="mt-3"
+                  value={reviewNotes[row.id] ?? ""}
+                  onChange={(event) => setReviewNotes((current) => ({ ...current, [row.id]: event.target.value }))}
+                  placeholder="Note de revue interne (facultatif)"
+                  maxLength={2000}
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={reviewAccessMutation.isPending}
+                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "under_review", reviewNote: reviewNotes[row.id] || undefined })}
+                  >
+                    Marquer en examen
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-rose-300 text-rose-800"
+                    disabled={reviewAccessMutation.isPending}
+                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "rejected", reviewNote: reviewNotes[row.id] || undefined })}
+                  >
+                    Refuser
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-indigo-700 hover:bg-indigo-800"
+                    disabled={reviewAccessMutation.isPending}
+                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: false, reviewNote: reviewNotes[row.id] || undefined })}
+                  >
+                    Approuver (org vérifiée)
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-amber-700 hover:bg-amber-800"
+                    disabled={reviewAccessMutation.isPending}
+                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: true, reviewNote: reviewNotes[row.id] || undefined })}
+                  >
+                    Approuver + générer accès
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4" data-testid="admin-post-selection-kanban">

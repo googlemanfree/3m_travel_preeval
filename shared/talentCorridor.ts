@@ -5,7 +5,10 @@
 export const CORRIDOR_ROUTES = {
   partnersHub: "/partenaires",
   agencies: "/agences-placement",
+  agenciesRegister: "/agences-placement#inscription-agence",
   employers: "/employeurs",
+  employersRegister: "/employeurs?tab=register",
+  employersLogin: "/employeurs?tab=login",
   clientSpace: "/mon-espace",
 } as const;
 

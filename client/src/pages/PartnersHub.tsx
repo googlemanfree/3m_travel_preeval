@@ -106,10 +106,10 @@ export default function PartnersHub() {
               <a href="/?project=travail#evaluation-multi">{en ? "Candidate assessment" : "Évaluation candidat"}</a>
             </Button>
             <Button asChild variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <a href={CORRIDOR_ROUTES.agencies}>{en ? "Request agency access" : "Demander un accès agence"}</a>
+              <a href={CORRIDOR_ROUTES.agenciesRegister}>{en ? "Request agency access" : "Demander un accès agence"}</a>
             </Button>
             <Button asChild variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white">
-              <a href={CORRIDOR_ROUTES.employers}>{en ? "Request employer access" : "Demander un accès employeur"}</a>
+              <a href={CORRIDOR_ROUTES.employersRegister}>{en ? "Request employer access" : "Demander un accès employeur"}</a>
             </Button>
           </div>
         </div>

@@ -1,5 +1,33 @@
 import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
+/** Demande d’accès structurée avant vérification humaine et remise d’identifiants. */
+export const placementAccessRequests = mysqlTable("placement_access_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationType: mysqlEnum("organization_type", ["placement_partner", "employer"]).notNull(),
+  legalName: varchar("legal_name", { length: 255 }).notNull(),
+  registrationNumber: varchar("registration_number", { length: 120 }),
+  country: varchar("country", { length: 120 }).notNull(),
+  city: varchar("city", { length: 120 }),
+  website: varchar("website", { length: 320 }),
+  contactFullName: varchar("contact_full_name", { length: 255 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 320 }).notNull(),
+  contactPhone: varchar("contact_phone", { length: 64 }).notNull(),
+  contactRole: varchar("contact_role", { length: 160 }).notNull(),
+  sectors: varchar("sectors", { length: 255 }),
+  targetMarkets: varchar("target_markets", { length: 255 }),
+  message: text("message").notNull(),
+  status: mysqlEnum("status", ["pending", "under_review", "approved", "rejected"]).notNull().default("pending"),
+  organizationId: int("organization_id"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedByAdminId: int("reviewed_by_admin_id"),
+  reviewNote: text("review_note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_placement_access_requests_status").on(table.status, table.organizationType, table.createdAt),
+  index("idx_placement_access_requests_email").on(table.contactEmail, table.status),
+]);
+
 /** Organismes de placement ou employeurs, créés et vérifiés exclusivement par 3M. */
 export const placementOrganizations = mysqlTable("placement_organizations", {
   id: int("id").autoincrement().primaryKey(),
