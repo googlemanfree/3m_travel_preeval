@@ -1554,14 +1554,38 @@ export const adminRouter = router({
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(sourceLimit);
         const caseRows = await db
-          .select({ legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
+          .select({ id: cases.id, legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
           .from(cases)
           .limit(input.limit * 2);
         const dueAtByLegacyReference = new Map<string, Date | null>();
+        const caseIdByLegacyReference = new Map<string, number>();
         for (const item of caseRows) {
-          if (item.legacyApplicationId) dueAtByLegacyReference.set(`online:${item.legacyApplicationId}`, item.dueAt);
-          if (item.legacyAgencyDossierId) dueAtByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.dueAt);
+          if (item.legacyApplicationId) {
+            dueAtByLegacyReference.set(`online:${item.legacyApplicationId}`, item.dueAt);
+            caseIdByLegacyReference.set(`online:${item.legacyApplicationId}`, item.id);
+          }
+          if (item.legacyAgencyDossierId) {
+            dueAtByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.dueAt);
+            caseIdByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.id);
+          }
         }
+        const requirementRows = await db
+          .select({ caseId: documentRequirements.caseId, isRequired: documentRequirements.isRequired, status: documentRequirements.status })
+          .from(documentRequirements)
+          .limit(20000);
+        const checklistByCaseId = new Map<number, { total: number; completed: number }>();
+        for (const requirement of requirementRows) {
+          if (!requirement.isRequired) continue;
+          const current = checklistByCaseId.get(requirement.caseId) ?? { total: 0, completed: 0 };
+          current.total += 1;
+          if (["received", "approved", "waived"].includes(requirement.status)) current.completed += 1;
+          checklistByCaseId.set(requirement.caseId, current);
+        }
+        const checklistPercentByLegacyReference = new Map<string, number>();
+        caseIdByLegacyReference.forEach((caseId, reference) => {
+          const progress = checklistByCaseId.get(caseId);
+          if (progress) checklistPercentByLegacyReference.set(reference, progress.total ? Math.round((progress.completed / progress.total) * 100) : 100);
+        });
 
         const candidateRows = await db
           .select({
@@ -1684,6 +1708,10 @@ export const adminRouter = router({
           evaluationScheduledAt: app.evaluationScheduledAt ?? null,
           dueAt: dueAtByLegacyReference.get(`online:${app.id}`) ?? null,
           paymentStatus: app.paymentStatus,
+          agreementSigned: Boolean(app.agreementSigned),
+          secondProtocolReady: Boolean(app.secondAgreementReadyAt),
+          secondProtocolSigned: Boolean(app.secondAgreementSigned),
+          checklistPercent: checklistPercentByLegacyReference.get(`online:${app.id}`) ?? null,
           procedureStep: mapDossierStatus(app.dossierStatus),
         }));
 
@@ -1718,6 +1746,10 @@ export const adminRouter = router({
           evaluationScheduledAt: null,
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
           paymentStatus: paymentStatusForAgency(app.initialPaymentStatus),
+          agreementSigned: null,
+          secondProtocolReady: false,
+          secondProtocolSigned: false,
+          checklistPercent: checklistPercentByLegacyReference.get(`agency:${app.id}`) ?? null,
           procedureStep: mapAgencyStatus(app.status),
         }));
 
@@ -1761,6 +1793,10 @@ export const adminRouter = router({
             evaluationScheduledAt: null,
             dueAt: null,
             paymentStatus: "NOT_PAID" as const,
+            agreementSigned: null,
+            secondProtocolReady: false,
+            secondProtocolSigned: false,
+            checklistPercent: null,
             procedureStep: mapDossierStatus(candidate.dossierStatus),
           }));
 

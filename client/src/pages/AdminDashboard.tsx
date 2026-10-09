@@ -109,6 +109,7 @@ import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
+import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminTodayDashboard";
 import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
@@ -162,6 +163,10 @@ interface Candidate {
   evaluationScheduledAt?: Date | string | null;
   dueAt?: Date | string | null;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
+  agreementSigned?: boolean | null;
+  secondProtocolReady?: boolean;
+  secondProtocolSigned?: boolean;
+  checklistPercent?: number | null;
   procedureStep?: string;
   procedureJourney?: AdminProcedureSnapshot;
   siblingCount?: number;
@@ -1984,7 +1989,8 @@ export default function AdminDashboard() {
           </div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
 
-          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+          <TabsContent value="pilotage" className="space-y-6"><AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
+            <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminDelayStats sessionToken={sessionToken} />
             <Card className="border-amber-200 bg-amber-50/70">
