@@ -3749,5 +3749,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter deux portes d’entrée publiques distinctes : agences de placement et employeurs internationaux.
 - [x] Ajouter la landing publique des agences de placement avec accès au portail dédié.
 - [x] Permettre à l’administration de générer un accès pour une agence de placement vérifiée.
-- [ ] Ajouter une demande publique d’accès partenaire sans exposer de données candidat.
+- [x] Ajouter une demande publique d’accès partenaire sans exposer de données candidat.
 - [x] Vérifier que les profils exposés restent anonymisés et soumis à un consentement actif.
