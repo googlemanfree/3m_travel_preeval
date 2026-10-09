@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BriefcaseBusiness, Building2, Check, Download, Eye, FilePlus2, IdCard, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { BriefcaseBusiness, Building2, Download, Eye, FilePlus2, IdCard, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { POST_SELECTION_LABELS, POST_SELECTION_STAGES, nextPostSelectionStage, resolvePostSelectionStage, type PostSelectionStage } from "@shared/talentCorridor";
 import { Badge } from "@/components/ui/badge";
