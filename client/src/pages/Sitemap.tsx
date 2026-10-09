@@ -58,6 +58,15 @@ const SITE_SECTIONS: SitemapSection[] = [
     ],
   },
   {
+    key: "corridor", title: { fr: "Corridor de talents international", en: "International talent corridor" }, description: { fr: "Les quatre interfaces : candidat, back-office 3M, agences et employeurs.", en: "The four interfaces: candidate, 3M back-office, agencies and employers." }, icon: ShieldCheck,
+    links: [
+      { key: "partners", label: { fr: "Hub partenaires", en: "Partners hub" }, href: "/partenaires", description: { fr: "Vue d’ensemble Afrique → Europe / Amériques / Asie.", en: "Overview Africa → Europe / Americas / Asia." } },
+      { key: "agencies", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Portail B2B pour agences partenaires vérifiées.", en: "B2B portal for verified partner agencies." } },
+      { key: "employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Portail B2B pour employeurs directs.", en: "B2B portal for direct employers." } },
+      { key: "candidate_space_corridor", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/mon-espace", description: { fr: "Profil sélectionnable, consentement et suivi.", en: "Selectable profile, consent and tracking." } },
+    ],
+  },
+  {
     key: "account", title: { fr: "Compte et informations légales", en: "Account & legal information" }, description: { fr: "Les accès à l’espace personnel et aux informations encadrant l’usage du site.", en: "Access personal areas and information governing use of the site." }, icon: ShieldCheck,
     links: [
       { key: "register", label: { fr: "Créer un compte", en: "Create an account" }, href: "/register", description: { fr: "Créer un espace candidat pour suivre vos demandes.", en: "Create a candidate space to follow your requests." } },
