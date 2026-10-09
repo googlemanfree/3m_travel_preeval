@@ -29,8 +29,26 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
 
   it("affiche le CTA de signature et le message de transmission côté espace client", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
-    expect(page).toContain("Signer et soumettre le protocole");
+    expect(page).toContain("Confirmer la signature et l’envoi");
     expect(page).toContain("Signature et envoi");
     expect(page).toContain("exemplaire PDF signé");
+  });
+
+  it("impose une prévisualisation avant la validation finale et permet le téléchargement après signature", () => {
+    const page = read("client/src/pages/EvaluationSpace.tsx");
+    expect(page).toContain("Prévisualiser le PDF signé");
+    expect(page).toContain("signed-agreement-preview");
+    expect(page).toContain("agreementPreviewConfirmed");
+    expect(page).toContain("download-signed-agreement");
+    expect(page).toContain("agreement-signature-success");
+  });
+
+  it("affiche les statuts protocole en attente et validé dans l’admin", () => {
+    const admin = read("client/src/components/AdminPaymentManagement.tsx");
+    expect(admin).toContain("agreement-status-pending");
+    expect(admin).toContain("Signature en attente");
+    expect(admin).toContain("agreement-status-signed");
+    expect(admin).toContain("Protocole validé");
+    expect(admin).toContain("preview-agreement-protocol");
   });
 });

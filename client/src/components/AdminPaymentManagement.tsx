@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet } from "lucide-react";
+import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
@@ -68,6 +68,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   const [agreementPayment, setAgreementPayment] = useState<Payment | null>(null);
   const [agreementSubject, setAgreementSubject] = useState("");
   const [agreementContent, setAgreementContent] = useState(INITIAL_AGREEMENT_PROTOCOL);
+  const [agreementPreviewOpen, setAgreementPreviewOpen] = useState(false);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -206,6 +207,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   const handleOpenAgreementProtocol = (payment: Payment) => {
     if (payment.paymentStatus !== "SUCCESS" || payment.agreementSigned) return;
     setAgreementPayment(payment);
+    setAgreementPreviewOpen(false);
     setAgreementSubject(`Protocole d’accord — Dossier ${payment.dossierNumber}`);
     setAgreementContent(INITIAL_AGREEMENT_PROTOCOL);
   };
@@ -237,6 +239,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
       });
       toast.success("Protocole envoyé", { description: `Déposé dans l’espace client et envoyé par e-mail pour ${result.dossierNumber}.` });
       setAgreementPayment(null);
+      setAgreementPreviewOpen(false);
       await refetch();
       onPaymentUpdated?.();
     } catch (error) {
@@ -629,10 +632,12 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                             {getOperationalPaymentLabel(payment)}
                           </Badge>
                           {payment.paymentStatus === "SUCCESS" && <span className="text-[11px] text-slate-500">{payment.validatedBy || "Conseiller non renseigné"} · {payment.validatedAt ? new Date(payment.validatedAt).toLocaleString("fr-FR") : "Date non renseignée"}</span>}
-                          {payment.agreementSigned ? (
-                            <span className="text-[11px] font-medium text-emerald-700">Accord signé</span>
+                          {payment.paymentStatus !== "SUCCESS" ? (
+                            <Badge variant="outline" className="border-slate-200 bg-slate-50 text-[11px] text-slate-600">Paiement requis</Badge>
+                          ) : payment.agreementSigned ? (
+                            <Badge variant="outline" className="inline-flex items-center gap-1 border-emerald-200 bg-emerald-50 text-[11px] font-bold text-emerald-800" data-testid="agreement-status-signed"><CheckCircle2 className="h-3.5 w-3.5" />Protocole validé</Badge>
                           ) : (
-                            <span className="text-[11px] font-semibold text-amber-700">Accord requis</span>
+                            <Badge variant="outline" className="inline-flex items-center gap-1 border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800" data-testid="agreement-status-pending"><Clock className="h-3.5 w-3.5" />Signature en attente</Badge>
                           )}
                         </div>
                       </td>
@@ -917,7 +922,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Préparer le protocole d’accord</DialogTitle>
-            <DialogDescription>{agreementPayment ? `Le paiement du dossier ${agreementPayment.dossierNumber} est confirmé. Le protocole sera déposé dans l’espace client et envoyé à ${agreementPayment.email}.` : ""}</DialogDescription>
+            <DialogDescription>{agreementPayment ? `Le paiement du dossier ${agreementPayment.dossierNumber} est confirmé. Le protocole sera déposé dans l’espace client et envoyé à ${agreementPayment.email} après votre contrôle et votre confirmation.` : ""}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -929,6 +934,19 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
               <textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} className="mt-2 min-h-[360px] w-full rounded-md border border-slate-300 bg-white p-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-blue-500" maxLength={12000} disabled={sendAgreementProtocolMutation.isPending} />
               <p className="mt-1 text-xs text-slate-500">Le texte par défaut est la version enrichie 2026-09-08-v2. Toute modification est enregistrée dans le protocole envoyé.</p>
             </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+              <div className="flex items-center gap-2 text-sm text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" /><span>Contrôle humain requis avant l’envoi.</span></div>
+              <Button type="button" variant="outline" onClick={() => setAgreementPreviewOpen((open) => !open)} disabled={sendAgreementProtocolMutation.isPending || agreementContent.trim().length < 50} data-testid="preview-agreement-protocol">
+                <Eye className="mr-2 h-4 w-4" />{agreementPreviewOpen ? "Masquer l’aperçu" : "Prévisualiser le PDF"}
+              </Button>
+            </div>
+            {agreementPreviewOpen && <div className="overflow-hidden rounded-xl border border-slate-300 bg-slate-100 p-3" data-testid="agreement-protocol-preview">
+              <div className="mx-auto max-w-2xl bg-white p-6 shadow-sm">
+                <div className="rounded-t-lg bg-[#0f2460] px-5 py-4 text-white"><p className="text-lg font-black tracking-wide">3M TRAVEL AGENCY</p><p className="text-xs text-blue-100">Protocole d’accord N°01 — accompagnement administratif</p></div>
+                <div className="min-h-[260px] whitespace-pre-line px-5 py-6 text-sm leading-6 text-slate-700">{agreementContent}</div>
+                <div className="border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
+              </div>
+            </div>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAgreementPayment(null)} disabled={sendAgreementProtocolMutation.isPending}>Annuler</Button>
