@@ -109,7 +109,7 @@ import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
-import { AdminCandidateKanban, type KanbanCandidate } from "@/components/AdminCandidateKanban";
+import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -123,8 +123,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
-import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
 import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/adminProcedureJourney";
+import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -163,9 +163,9 @@ interface Candidate {
   dueAt?: Date | string | null;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
   procedureStep?: string;
+  procedureJourney?: AdminProcedureSnapshot;
   siblingCount?: number;
   siblingProcedures?: SiblingProcedureSummary[];
-  procedureJourney?: AdminProcedureSnapshot;
   journeySla?: {
     label: string;
     tone: "ok" | "soon" | "overdue" | "unset";
@@ -217,7 +217,7 @@ const PAYMENT_STATUS_BADGE_CLASSES: Record<string, string> = { SUCCESS: "border-
 const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation / qualification", PUBLISHED: "Bilan & paiement d’ouverture", DOCUMENTS_CHECK: "Documents de la procédure", SUBMITTED: "Dépôt / soumission officielle", APPROVED: "Décision finale" };
 const PROCEDURE_STEP_BADGE_CLASSES: Record<string, string> = { PENDING_48H: "border-violet-200 bg-violet-50 text-violet-800", PUBLISHED: "border-amber-200 bg-amber-50 text-amber-800", DOCUMENTS_CHECK: "border-blue-200 bg-blue-50 text-blue-800", SUBMITTED: "border-indigo-200 bg-indigo-50 text-indigo-800", APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800" };
 
-function procedureStageLabel(candidate: Candidate, stage: string): string {
+function procedureStageLabel(candidate: { procedureJourney?: AdminProcedureSnapshot | null }, stage: string): string {
   const fromJourney = candidate.procedureJourney?.stageLabels?.[stage as keyof NonNullable<AdminProcedureSnapshot["stageLabels"]>];
   return fromJourney || PROCEDURE_STEP_LABELS[stage] || stage;
 }
@@ -1463,6 +1463,10 @@ export default function AdminDashboard() {
     if (!window.confirm(`Confirmer le déplacement de ${candidate.fullName} vers « ${statusLabel} » ? Le changement sera tracé et pourra déclencher une notification client.`)) return;
     updateKanbanStatusMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus, notifyClient: true });
   };
+  const handleKanbanAdvance = async (candidate: KanbanCandidate, requestedStatus: AdminStatus) => {
+    if (!sessionToken || updateKanbanStatusMutation.isPending || getNextKanbanStatus(candidate.status) !== requestedStatus) return;
+    await updateKanbanStatusMutation.mutateAsync({ sessionToken, candidateId: candidate.id, newStatus: requestedStatus, notifyClient: true });
+  };
   const availableDestinations = data?.availableDestinations || [];
   const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
   const resetCandidateFilters = () => {
@@ -2000,7 +2004,7 @@ export default function AdminDashboard() {
                 {(externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length) === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
               </CardContent>
             </Card>
-            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
+            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onAdvance={handleKanbanAdvance} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
@@ -2474,7 +2478,7 @@ export default function AdminDashboard() {
             <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
               {Object.entries(pendingInlineChanges).map(([candidateId, changes]) => {
                 const candidate = candidates.find((item) => String(item.id) === candidateId);
-                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{candidate ? procedureStageLabel(candidate as Candidate, changes.procedureStep) : (PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep)}</strong></p>}</div></div>;
+                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{candidate ? procedureStageLabel(candidate, changes.procedureStep) : (PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep)}</strong></p>}</div></div>;
               })}
             </div>
             <DialogFooter>
@@ -2754,7 +2758,7 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                               <span className={`inline-flex max-w-[200px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>
-                                {procedureStageLabel(candidate as Candidate, procedureStep)}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}
+                                {procedureStageLabel(candidate, procedureStep)}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}
                               </span>
                               <Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}>
                                 <SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold">
@@ -2762,7 +2766,7 @@ export default function AdminDashboard() {
                                 </SelectTrigger>
                                 <SelectContent className="z-[120]">
                                   {ADMIN_OPERATIONAL_STAGES.map((value) => (
-                                    <SelectItem key={value} value={value}>{procedureStageLabel(candidate as Candidate, value)}</SelectItem>
+                                    <SelectItem key={value} value={value}>{procedureStageLabel(candidate, value)}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>

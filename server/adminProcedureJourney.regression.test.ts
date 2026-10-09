@@ -10,6 +10,7 @@ describe("admin étapes dynamiques par pays", () => {
     const admin = read("server/routers/admin.ts");
     expect(admin).toContain("buildAdminProcedureSnapshot");
     expect(admin).toMatch(/procedureJourney/);
+    expect(admin).toContain("procedureJourney,");
   });
 
   it("affiche l’étape pays dans le tableau et le Kanban admin", () => {
@@ -22,6 +23,16 @@ describe("admin étapes dynamiques par pays", () => {
     expect(kanban).toContain('data-testid="kanban-country-step"');
     expect(kanban).toContain("Dépôt / soumission");
     expect(kanban).not.toContain('label: "Soumission consulaire"');
+  });
+
+  it("propose l’avancement rapide avec la mutation admin sécurisée", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    const kanban = read("client/src/components/AdminCandidateKanban.tsx");
+    expect(dashboard).toContain("handleKanbanAdvance");
+    expect(dashboard).toContain("mutateAsync({ sessionToken, candidateId: candidate.id");
+    expect(kanban).toContain('data-testid="kanban-advance-button"');
+    expect(kanban).toContain("Étape suivante");
+    expect(kanban).toContain("Étape finale atteinte");
   });
 
   it("évite les faux bouchons paiement / protocole déjà validés en 360°", () => {
