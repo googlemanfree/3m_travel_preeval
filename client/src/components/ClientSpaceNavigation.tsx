@@ -83,6 +83,32 @@ export function jinkoClientTrackingFromEnrichment(enrichmentJson: string | null)
 
 type DateFilter = "all" | "7" | "30" | "older";
 
+async function loadClientPdfLogo(): Promise<string | null> {
+  try {
+    const response = await fetch("/logo-3m.webp");
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const element = new Image();
+        element.onload = () => resolve(element);
+        element.onerror = reject;
+        element.src = objectUrl;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth || 256;
+      canvas.height = image.naturalHeight || 256;
+      canvas.getContext("2d")?.drawImage(image, 0, 0);
+      return canvas.toDataURL("image/png");
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  } catch {
+    return null;
+  }
+}
+
 export default function ClientSpaceNavigation({ compact = false }: { compact?: boolean }) {
   const [, setLocation] = useLocation();
   const { candidate } = useCandidateAuth();
@@ -118,14 +144,11 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     try {
       const { default: jsPDF } = await import("jspdf");
       const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      const logoData = await loadClientPdfLogo();
       const profile = dossierPayload?.candidate as any;
       const activeDossier = dossierPayload?.activeDossier as any;
       const documentsCount = (profile?.candidateFiles?.length ?? dossierPayload?.candidateFiles?.length ?? 0) + (dossierPayload?.agencyDocuments?.length ?? 0);
       const lines = [
-        "3M TRAVEL AGENCY",
-        "Récapitulatif de mon espace client",
-        `Généré le ${new Date().toLocaleString("fr-FR")}`,
-        "",
         `Nom : ${candidate.fullName || "—"}`,
         `E-mail : ${candidate.email || "—"}`,
         `Référence : ${dossierNumber || "Aucune référence"}`,
@@ -133,31 +156,69 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
         `Destination : ${profile?.destination || activeDossier?.destination || "—"}`,
         `Type de projet : ${profile?.visaType || activeDossier?.visaType || "—"}`,
         "",
-        "Synthèse des données disponibles",
         `Documents visibles : ${documentsCount}`,
         `Demandes de vols : ${(requestsQuery.data ?? []).length}`,
         `Demandes d’hébergement : ${(hotelRequestsQuery.data ?? []).length}`,
         `Points 3M Rewards : ${loyaltyQuery.data?.account.availablePoints ?? 0}`,
         "",
-        "Ce document est un récapitulatif informatif des données affichées dans votre espace client. Il ne remplace pas un document officiel de l’agence.",
       ];
+      pdf.setFillColor(10, 43, 96);
+      pdf.rect(0, 0, 210, 42, "F");
+      if (logoData) {
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(16, 8, 25, 25, 4, 4, "F");
+        pdf.addImage(logoData, "PNG", 18, 10, 21, 21);
+      }
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(18);
-      pdf.setTextColor(12, 42, 95);
-      pdf.text(lines[0], 20, 22);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("3M TRAVEL AGENCY", 48, 18);
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
+      pdf.text("Espace client · récapitulatif personnel", 48, 25);
+      pdf.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, 48, 32);
+      pdf.setDrawColor(218, 164, 48);
+      pdf.setLineWidth(1.2);
+      pdf.line(16, 48, 194, 48);
+
+      pdf.setFillColor(240, 246, 255);
+      pdf.roundedRect(16, 57, 178, 54, 4, 4, "F");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.setTextColor(10, 43, 96);
+      pdf.text("Votre dossier", 24, 68);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
       pdf.setTextColor(35, 45, 65);
-      let y = 34;
-      for (const line of lines.slice(1)) {
-        const wrapped = pdf.splitTextToSize(line, 170) as string[];
-        pdf.text(wrapped, 20, y);
-        y += Math.max(6, wrapped.length * 5);
-        if (y > 275) {
-          pdf.addPage();
-          y = 20;
-        }
+      let y = 77;
+      for (const line of lines.slice(0, 6)) {
+        pdf.text(pdf.splitTextToSize(line, 162) as string[], 24, y);
+        y += 6;
       }
+
+      pdf.setFillColor(255, 249, 235);
+      pdf.roundedRect(16, 119, 178, 50, 4, 4, "F");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.setTextColor(114, 73, 8);
+      pdf.text("Synthèse des données disponibles", 24, 130);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(65, 55, 35);
+      y = 140;
+      for (const line of lines.slice(6)) {
+        const wrapped = pdf.splitTextToSize(line, 170) as string[];
+        pdf.text(wrapped, 24, y);
+        y += Math.max(6, wrapped.length * 5);
+      }
+      pdf.setFontSize(9);
+      pdf.setTextColor(90, 100, 115);
+      pdf.text("Document informatif — les décisions officielles appartiennent aux autorités compétentes.", 16, 282);
+      pdf.setDrawColor(10, 43, 96);
+      pdf.setLineWidth(0.5);
+      pdf.line(16, 286, 194, 286);
+      pdf.setFontSize(8);
+      pdf.text("3M TRAVEL AGENCY · Votre projet international commence ici.", 16, 292);
       pdf.save(`recapitulatif-espace-client-${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success("Votre récapitulatif PDF est prêt au téléchargement.");
     } catch (error) {

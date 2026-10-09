@@ -9,6 +9,10 @@ describe("export espace client et filtre premium admin", () => {
   it("expose un export PDF récapitulatif côté espace client", () => {
     const source = readProjectFile("client/src/components/ClientSpaceNavigation.tsx");
     expect(source).toContain("exportClientDataPdf");
+    expect(source).toContain('fetch("/logo-3m.webp")');
+    expect(source).toContain('pdf.addImage(logoData, "PNG"');
+    expect(source).toContain('pdf.setFillColor(10, 43, 96)');
+    expect(source).toContain("Synthèse des données disponibles");
     expect(source).toContain('await import("jspdf")');
     expect(source).toContain("Exporter mes données PDF");
     expect(source).toContain("recapitulatif-espace-client-");
