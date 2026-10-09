@@ -6,14 +6,14 @@
 
 import { clientCaseStatusLabel, clientEvisaStatusLabel, clientInsuranceStatusLabel, humanizeStatus } from "../../../shared/caseStatusLabels";
 
-export const CLIENT_SPACE_POLL_MS = 30_000;
-/** Résumé dossier / docs : même rythme que le reste pour une sync admin↔client plus dynamique. */
-export const CLIENT_SPACE_SUMMARY_POLL_MS = 30_000;
+export const CLIENT_SPACE_POLL_MS = 45_000;
+/** Résumé dossier / docs : rythme allégé pour limiter la charge perçue sur mon-espace. */
+export const CLIENT_SPACE_SUMMARY_POLL_MS = 45_000;
 export const CLIENT_SPACE_MAX_ANNOUNCEMENTS = 3;
 
 /** Options react-query : rafraîchissement régulier tant que l'onglet est visible (jamais en arrière-plan). */
 export const clientSpacePolling = (intervalMs: number = CLIENT_SPACE_POLL_MS) =>
-  ({ refetchInterval: intervalMs, refetchIntervalInBackground: false, refetchOnWindowFocus: true, refetchOnReconnect: true }) as const;
+  ({ refetchInterval: intervalMs, refetchIntervalInBackground: false, refetchOnWindowFocus: false, refetchOnReconnect: true, staleTime: 20_000 }) as const;
 
 type EvaluationStage = "not_started" | "pending" | "info_requested" | "published";
 type Tracked = { status: string; label: string };

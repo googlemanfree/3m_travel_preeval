@@ -16,7 +16,7 @@ export function SelectableProfileCard() {
   const candidateToken = useMemo(() => getCandidateToken(), []);
   const statusQuery = trpc.placementPortal.getMySelectableStatus.useQuery(
     { candidateToken: candidateToken ?? "" },
-    { enabled: Boolean(candidateToken), retry: false },
+    { enabled: Boolean(candidateToken), retry: false, staleTime: 60_000, refetchOnWindowFocus: false },
   );
 
   if (!candidateToken || statusQuery.isLoading) return null;

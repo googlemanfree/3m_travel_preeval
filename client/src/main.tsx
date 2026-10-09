@@ -14,7 +14,17 @@ import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
 import { normalizeApiResponse } from "./lib/apiResponseGuard";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Évite les refetch agressifs au focus / remount qui donnent une sensation de site « lent ».
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Filet de sécurité global : un échec de chargement de "chunk" (fichier
 // JavaScript différé, ex: React.lazy) après un redéploiement du site

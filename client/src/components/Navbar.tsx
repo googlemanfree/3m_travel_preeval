@@ -8,7 +8,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
-  BriefcaseBusiness,
   Building2,
   ChevronDown,
   FileText,
@@ -45,9 +44,8 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
   { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
+  // Un seul lien B2B dans la barre : le hub évite 3 préchargements + un menu trop dense.
   { href: "/partenaires", label: { fr: "Partenaires B2B", en: "B2B partners" }, icon: Building2 },
-  { href: "/agences-placement", label: { fr: "Agences", en: "Agencies" }, icon: BriefcaseBusiness },
-  { href: "/employeurs", label: { fr: "Employeurs", en: "Employers" }, icon: Building2 },
 ];
 
 const NAV_COPY = {

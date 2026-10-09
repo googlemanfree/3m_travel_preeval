@@ -403,7 +403,7 @@ export function composePublicPrerender(template: string, url: string) {
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle;
   const isStudyArticle = Boolean(studyArticle);
   const socialType = isStudyArticle ? "article" : "website";
-  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
+  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
     title: unknown ? `Page introuvable | ${SITE}` : SITE,
