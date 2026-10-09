@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 
 type Category = "ready_to_activate" | "documents_to_review" | "stalled";
 type Item = { id: string; category: Category; openId: string; reference: string; fullName: string; title: string; detail: string; ageDays: number; severity: "high" | "medium" | "low"; count: number };
@@ -17,9 +18,12 @@ const SEVERITY_STYLE: Record<Item["severity"], string> = { high: "border-rose-30
 const SEVERITY_LABEL: Record<Item["severity"], string> = { high: "Urgent", medium: "À traiter", low: "Récent" };
 const PAGE = 12;
 
-/** File de pilotage prioritaire : ce qui attend une action de l'équipe, du plus urgent au moins urgent. Rafraîchie toutes les minutes. */
+/** File de pilotage prioritaire : ce qui attend une action de l'équipe, du plus urgent au moins urgent. Rafraîchie toutes les 30 s. */
 export default function AdminPilotageQueue({ sessionToken, onOpen }: { sessionToken: string; onOpen: (openId: string) => void }) {
-  const query = trpc.adminCandidateManagement.getPilotageQueue.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false, refetchInterval: 60_000 });
+  const query = trpc.adminCandidateManagement.getPilotageQueue.useQuery(
+    { sessionToken },
+    { enabled: Boolean(sessionToken), retry: false, ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS) },
+  );
   const [filter, setFilter] = useState<Category | "all">("all");
   const [visible, setVisible] = useState(PAGE);
   const items = ((query.data?.items ?? []) as Item[]).filter((item) => filter === "all" || item.category === filter);
@@ -32,6 +36,9 @@ export default function AdminPilotageQueue({ sessionToken, onOpen }: { sessionTo
           <div>
             <h2 className="text-base font-black text-slate-950">Priorités de l’équipe</h2>
             <p className="mt-1 text-sm text-slate-600">Ce qui attend une action, du plus urgent au moins urgent. Cliquez sur une ligne pour ouvrir le dossier.</p>
+            <p className="mt-1 text-xs text-slate-500" aria-live="polite" data-testid="pilotage-sync">
+              {query.isFetching ? "Synchronisation…" : query.dataUpdatedAt ? `Dernière sync : ${formatAdminSyncTime(new Date(query.dataUpdatedAt))}` : formatAdminSyncTime(null)}
+            </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()} disabled={query.isFetching} className="gap-1.5"><RefreshCw className={`h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Actualiser</Button>
         </div>

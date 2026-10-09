@@ -26,6 +26,7 @@ import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
+import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 
 type CandidateSummary = {
   id: string;
@@ -149,12 +150,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const { data: managedEvisaOverrides } = trpc.evisaCatalogue.getPublicOverrides.useQuery();
   const availableEvisas = mergeEvisaCatalogue(evisasDatabaseComplete, managedEvisaOverrides);
 
-  const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
+  const { data, isLoading, error, dataUpdatedAt, isFetching } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
     {
       enabled: Boolean(sessionToken && candidate.id),
       placeholderData: (previous) => previous,
       retry: 2,
+      ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS),
     },
   );
   const { data: openingPaymentHistory, isLoading: openingPaymentHistoryLoading } = trpc.adminCandidateManagement.getOpeningPaymentHistory.useQuery(
@@ -617,6 +619,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
+        <span className="font-mono text-[11px] font-semibold text-blue-800">{candidate.folderCode}</span>
+        <span>{isFetching ? "Synchronisation du dossier…" : dataUpdatedAt ? `Dernière sync : ${formatAdminSyncTime(new Date(dataUpdatedAt))}` : formatAdminSyncTime(null)}</span>
+        <Button type="button" size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs" onClick={() => void refresh()} disabled={isFetching}>
+          <TimerReset className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Actualiser
+        </Button>
+      </div>
 
       <section className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:col-span-2">

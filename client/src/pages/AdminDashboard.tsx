@@ -121,7 +121,8 @@ import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEval
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatAdminSyncTime } from "@shared/adminSync";
+import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -1228,12 +1229,13 @@ export default function AdminDashboard() {
     assignedToMe: assignedToMeFilter || undefined,
     sortBy,
   }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, assignedToMeFilter, sortBy]);
-  const { data, isLoading, error: candidateListError, refetch } = trpc.admin.listCandidates.useQuery(
+  const { data, isLoading, error: candidateListError, refetch, dataUpdatedAt, isFetching: isFetchingCandidates } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
       enabled: !!sessionToken,
       placeholderData: (previous) => previous,
       retry: 2,
+      ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS),
     }
   );
   useEffect(() => {
@@ -1289,10 +1291,10 @@ export default function AdminDashboard() {
   );
 
   useEffect(() => {
-    if (!isLoading && data !== undefined && !lastSyncedAt) {
-      setLastSyncedAt(new Date());
+    if (dataUpdatedAt) {
+      setLastSyncedAt(new Date(dataUpdatedAt));
     }
-  }, [data, isLoading, lastSyncedAt]);
+  }, [dataUpdatedAt]);
 
   const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
     onSuccess: (result) => {
@@ -1397,7 +1399,7 @@ export default function AdminDashboard() {
     const slaHours = status === "PENDING_48H" ? 48 : status === "PUBLISHED" ? 72 : 120;
     const dueAt = candidate.dueAt ?? (referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null);
     const history = [{ status, label: STATUS_CONFIG[status]?.label ?? status, at: candidate.lastStatusUpdateAt ?? candidate.updatedAt }, ...(candidate.createdAt ? [{ status: "created", label: "Dossier créé", at: candidate.createdAt }] : [])];
-    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history };
+    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history, paymentStatus: candidate.paymentStatus ?? null, activationStatus: candidate.activationStatus ?? null, procedureStep: candidate.procedureStep ?? null };
   });
   const handleKanbanMove = (candidate: KanbanCandidate, newStatus: AdminStatus) => {
     if (!sessionToken || candidate.status === newStatus || updateKanbanStatusMutation.isPending) return;
@@ -1557,9 +1559,11 @@ export default function AdminDashboard() {
                 {isRefreshing ? "Synchronisation..." : "Actualiser"}
               </Button>
               <span className="text-xs text-blue-100/90" aria-live="polite">
-                {lastSyncedAt
-                  ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
-                  : formatAdminSyncTime(null)}
+                {isFetchingCandidates && !isRefreshing
+                  ? "Synchronisation des dossiers…"
+                  : lastSyncedAt
+                    ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
+                    : formatAdminSyncTime(null)}
               </span>
               <Button
                 variant="outline"
@@ -2528,6 +2532,7 @@ export default function AdminDashboard() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Paiement</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Étape de la procédure</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Prochaine action</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</th>
@@ -2537,7 +2542,7 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 12 }).map((_, j) => (
+                      {Array.from({ length: 13 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
@@ -2546,7 +2551,7 @@ export default function AdminDashboard() {
                   ))
                 ) : candidates.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={13} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>{candidateListError ? "Impossible de synchroniser la liste. Réessayez dans quelques secondes." : isLoading ? "Chargement des dossiers…" : "Aucun candidat trouvé"}</p>
                       {hasCandidateFilters && !candidateListError && (
@@ -2571,9 +2576,19 @@ export default function AdminDashboard() {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                          {candidate.folderCode}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
+                            {candidate.folderCode}
+                          </span>
+                          <span className="text-[10px] text-slate-500 lg:hidden">
+                            {determineAdminListNextAction({
+                              paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+                              procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+                              status: candidate.status,
+                              activationStatus: candidate.activationStatus,
+                            }).label}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
@@ -2599,6 +2614,21 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        {(() => {
+                          const next = determineAdminListNextAction({
+                            paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+                            procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+                            status: candidate.status,
+                            activationStatus: candidate.activationStatus,
+                          });
+                          return (
+                            <span className={`inline-flex max-w-[180px] items-center rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`}>
+                              {next.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
                         {candidate.scoringTotal !== null ? (

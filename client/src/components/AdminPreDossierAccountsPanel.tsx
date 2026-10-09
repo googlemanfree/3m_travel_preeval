@@ -42,6 +42,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 
 type PreDossierAccount = {
   id: number;
@@ -158,7 +159,7 @@ export default function AdminPreDossierAccountsPanel({
   );
   const query = trpc.adminCandidateManagement.listPreDossierAccounts.useQuery(
     queryInput,
-    { enabled: Boolean(sessionToken), retry: false }
+    { enabled: Boolean(sessionToken), retry: false, ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS) }
   );
   // Conditions d'ouverture (évaluation validée + paiement validé) : affichées AVANT le clic, jamais découvertes par un refus muet.
   const readiness =
@@ -448,18 +449,27 @@ export default function AdminPreDossierAccountsPanel({
               dossier après réception des pièces en agence.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void query.refetch()}
-            disabled={query.isFetching}
-            className="gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
-            />{" "}
-            Actualiser
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void query.refetch()}
+              disabled={query.isFetching}
+              className="gap-2"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
+              />{" "}
+              Actualiser
+            </Button>
+            <p className="text-xs text-slate-500" aria-live="polite" data-testid="predossier-sync">
+              {query.isFetching
+                ? "Synchronisation…"
+                : query.dataUpdatedAt
+                  ? `Dernière sync : ${formatAdminSyncTime(new Date(query.dataUpdatedAt))}`
+                  : formatAdminSyncTime(null)}
+            </p>
+          </div>
         </div>
         {Boolean(query.data?.coveredByActiveDossier) && (
           <p
