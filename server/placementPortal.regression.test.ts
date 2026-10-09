@@ -35,4 +35,24 @@ describe("portail de placement protégé", () => {
     expect(adminUi).toContain("Générer l’accès vérifié");
     expect(adminUi).toContain("Identifiants à remettre maintenant");
   });
+
+  it("propose une inscription B2B structurée distincte de la connexion", () => {
+    const router = read("server/routers/placementPortal.ts");
+    const form = read("client/src/components/B2bPartnerRegistrationForm.tsx");
+    const agency = read("client/src/pages/PlacementPartnerPortal.tsx");
+    const employer = read("client/src/pages/EmployerPortal.tsx");
+    const adminUi = read("client/src/components/AdminPlacementPipeline.tsx");
+    const migration = read("drizzle/0076_placement_access_requests.sql");
+    expect(migration).toContain("placement_access_requests");
+    expect(router).toContain("requestPartnerAccess");
+    expect(router).toContain("adminReviewAccessRequest");
+    expect(form).toContain("Identification à l’inscription");
+    expect(form).toContain("contactPhone");
+    expect(form).toContain("registrationNumber");
+    expect(agency).toContain("B2bPartnerRegistrationForm");
+    expect(agency).not.toContain("sendContactEmail");
+    expect(employer).toContain('authTab === "register"');
+    expect(adminUi).toContain("Demandes d’identification partenaires");
+    expect(adminUi).toContain("Approuver + générer accès");
+  });
 });

@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, ClipboardCheck, Download, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, ClipboardCheck, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { B2bPartnerRegistrationForm, type PartnerOrganizationType } from "@/components/B2bPartnerRegistrationForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,9 +16,22 @@ const sessionKey = "3m_placement_employer_session";
 type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "documents_requested";
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
+type AuthTab = "login" | "register";
+
+function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
+  if (typeof window === "undefined") return { tab: "login", organizationType: "employer" };
+  const params = new URLSearchParams(window.location.search);
+  const portal = params.get("portal");
+  const tabParam = params.get("tab");
+  const organizationType: PartnerOrganizationType = portal === "placement_partner" ? "placement_partner" : "employer";
+  const tab: AuthTab = tabParam === "register" || tabParam === "inscription" ? "register" : tabParam === "login" ? "login" : "login";
+  return { tab, organizationType };
+}
 
 export default function EmployerPortal() {
   const { t } = useLanguage();
+  const portalDefaults = useMemo(() => readPortalDefaults(), []);
+  const [authTab, setAuthTab] = useState<AuthTab>(portalDefaults.tab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -180,16 +194,59 @@ export default function EmployerPortal() {
   };
 
   if (!sessionToken) {
-    return <main className="bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14"><div className="mx-auto max-w-lg space-y-4">
-      <Card className="premium-surface overflow-hidden border-blue-100"><CardHeader><CardTitle className="flex items-center gap-2 text-[#071b3d]"><Building2 className="h-5 w-5 text-[#1463ff]" />{t("Portail employeur vérifié", "Verified employer portal")}</CardTitle><CardDescription>{t("Accès réservé aux organisations vérifiées par 3M TRAVEL AGENCY.", "Access is reserved for organisations verified by 3M TRAVEL AGENCY.")}</CardDescription></CardHeader><CardContent className="space-y-3">
-        <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} />
-        <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} />
-        {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
-        <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}><LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}</Button>
-        <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
-      </CardContent></Card>
-      <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]"><p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p><p className="mt-1 text-slate-600">{t("Les volumes de profils vérifiés, taux de placement et délais moyens ne sont pas publiés tant qu’une série de données vérifiable, datée et méthodologiquement définie n’est pas disponible.", "Verified profile volumes, placement rates and average times are not published until a verifiable, dated and methodologically defined data series is available.")}</p></section>
-    </div></main>;
+    return (
+      <main className="bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14">
+        <div className={`mx-auto space-y-4 ${authTab === "register" ? "max-w-3xl" : "max-w-lg"}`}>
+          <div className="rounded-2xl border border-white/25 bg-white/10 p-1 text-white backdrop-blur">
+            <div className="grid grid-cols-2 gap-1" role="tablist" aria-label={t("Connexion ou inscription partenaire", "Partner sign-in or registration")}>
+              <button type="button" role="tab" aria-selected={authTab === "login"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "login" ? "bg-white text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => setAuthTab("login")}>
+                <span className="inline-flex items-center gap-2"><LockKeyhole className="h-4 w-4" />{t("Connexion", "Sign in")}</span>
+              </button>
+              <button type="button" role="tab" aria-selected={authTab === "register"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "register" ? "bg-amber-300 text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => setAuthTab("register")}>
+                <span className="inline-flex items-center gap-2"><IdCard className="h-4 w-4" />{t("Inscription", "Register")}</span>
+              </button>
+            </div>
+          </div>
+
+          {authTab === "login" ? (
+            <Card className="premium-surface overflow-hidden border-blue-100">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[#071b3d]"><Building2 className="h-5 w-5 text-[#1463ff]" />{t("Portail employeur vérifié", "Verified employer portal")}</CardTitle>
+                <CardDescription>{t("Connexion réservée aux organisations déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified organisations. Credentials are issued by 3M after your registration is reviewed.")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} autoComplete="username" />
+                <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} autoComplete="current-password" />
+                {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
+                <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}>
+                  <LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}
+                </Button>
+                <p className="text-xs leading-5 text-slate-500">{t("Pas encore d’accès ? Utilisez l’onglet Inscription pour identifier votre organisation.", "No access yet? Use the Register tab to identify your organisation.")}</p>
+                <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="premium-surface overflow-hidden border-blue-100">
+              <CardContent className="p-5 sm:p-6">
+                <B2bPartnerRegistrationForm
+                  defaultOrganizationType={portalDefaults.organizationType}
+                  onSubmitted={() => setAuthTab("login")}
+                />
+                <p className="mt-4 text-center text-xs text-slate-500">
+                  {t("Agence de placement ?", "Placement agency?")}{" "}
+                  <a href="/agences-placement#inscription-agence" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">{t("Formulaire dédié agences", "Dedicated agency form")}</a>
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]">
+            <p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p>
+            <p className="mt-1 text-slate-600">{t("Les volumes de profils vérifiés, taux de placement et délais moyens ne sont pas publiés tant qu’une série de données vérifiable, datée et méthodologiquement définie n’est pas disponible.", "Verified profile volumes, placement rates and average times are not published until a verifiable, dated and methodologically defined data series is available.")}</p>
+          </section>
+        </div>
+      </main>
+    );
   }
 
   return <main className="min-h-screen bg-slate-50 px-4 py-10"><div className="mx-auto max-w-5xl space-y-5">
