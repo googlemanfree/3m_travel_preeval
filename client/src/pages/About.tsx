@@ -11,7 +11,7 @@ const FOUNDER = {
   imageJpg: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg",
   imageHd: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg",
   imageSquare: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp",
-  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), portrait professionnel au bureau avec logo 3M TRAVEL AGENCY",
+  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), au bureau avec logo 3M et mini drapeaux Canada et Schengen sur le bureau",
   bio: "Aureol DONFACK dirige 3M Group SARL et 3M TRAVEL AGENCY. Il pilote l’accompagnement des projets de mobilité internationale : évaluation de profil, procédures, visas, eVisas et suivi documentaire, avec une validation humaine à chaque étape sensible.",
 };
 
