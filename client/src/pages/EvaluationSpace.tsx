@@ -99,6 +99,11 @@ export default function EvaluationSpace() {
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
   const [agreementPreviewOpen, setAgreementPreviewOpen] = useState(false);
   const [agreementPreviewConfirmed, setAgreementPreviewConfirmed] = useState(false);
+  const [protocolTwoAccepted, setProtocolTwoAccepted] = useState(false);
+  const [protocolTwoSignatureName, setProtocolTwoSignatureName] = useState("");
+  const [protocolTwoSignatureDataUrl, setProtocolTwoSignatureDataUrl] = useState<string | null>(null);
+  const [protocolTwoFormula, setProtocolTwoFormula] = useState<"integral" | "echelonne" | "garanti" | "">("");
+
   // Un candidat peut ouvrir plusieurs dossiers en ligne pour des projets différents (ex. Études puis
   // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
   // dossier payé, sinon le plus récent).
@@ -176,6 +181,17 @@ export default function EvaluationSpace() {
       setAgreementPreviewConfirmed(false);
     },
     onError: (signError) => toast.error(signError.message || "La signature n’a pas pu être enregistrée."),
+  });
+  const signSecondAgreementMutation = trpc.candidate.signSecondAgreementProtocol.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message || "Protocole N°02 signé.");
+      void trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      setProtocolTwoAccepted(false);
+      setProtocolTwoSignatureName("");
+      setProtocolTwoSignatureDataUrl(null);
+      setProtocolTwoFormula("");
+    },
+    onError: (signError) => toast.error(signError.message || "La signature du Protocole N°02 n’a pas pu être enregistrée."),
   });
   const clarificationMutation = trpc.candidate.requestDocumentClarification.useMutation({
     onSuccess: () => {
@@ -958,6 +974,71 @@ export default function EvaluationSpace() {
                   )}
                 </CardContent>
               </Card>
+
+              {Boolean(workflow?.showSecondAgreement) && (
+                <Card className="border-emerald-200 bg-white shadow-sm" aria-labelledby="client-protocol-two-title" data-testid="client-protocol-two">
+                  <CardHeader>
+                    <CardTitle id="client-protocol-two-title" className="flex items-center gap-2 text-emerald-950">
+                      <ShieldCheck className="h-5 w-5 text-emerald-700" /> Protocole N°02 — post-sélection
+                    </CardTitle>
+                    <p className="text-sm leading-6 text-slate-600">
+                      Votre sélection a été validée
+                      {workflow?.secondAgreementEmployer ? ` auprès de ${workflow.secondAgreementEmployer}` : ""}
+                      {workflow?.secondAgreementPosition ? ` pour le poste « ${workflow.secondAgreementPosition} »` : ""}.
+                      Lisez le second protocole, choisissez la formule si un barème est publié pour votre destination, puis signez.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 text-sm text-emerald-950">
+                      <p className="font-semibold">Employeur / partenaire : {workflow?.secondAgreementEmployer || "À confirmer"}</p>
+                      <p className="mt-1">Poste / projet : {workflow?.secondAgreementPosition || "À confirmer"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-slate-800">Formule tarifaire (si proposée pour votre destination)</p>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        {([
+                          ["integral", "Règlement intégral"],
+                          ["echelonne", "Échelonné"],
+                          ["garanti", "Sortie visa"],
+                        ] as const).map(([value, label]) => (
+                          <label key={value} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm ${protocolTwoFormula === value ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+                            <input type="radio" name="protocol-two-formula" checked={protocolTwoFormula === value} onChange={() => setProtocolTwoFormula(value)} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">Pour les destinations sans barème publié, le texte reste générique : aucun montant n’est inventé.</p>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
+                      <input type="checkbox" className="mt-1 h-4 w-4" checked={protocolTwoAccepted} onChange={(event) => setProtocolTwoAccepted(event.target.checked)} disabled={signSecondAgreementMutation.isPending} />
+                      <span>J’ai lu le Protocole N°02, compris qu’il ne garantit ni visa ni emploi, et j’accepte de poursuivre l’accompagnement post-sélection.</span>
+                    </label>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label htmlFor="client-protocol-two-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label>
+                        <input id="client-protocol-two-signature" value={protocolTwoSignatureName} onChange={(event) => setProtocolTwoSignatureName(event.target.value)} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signSecondAgreementMutation.isPending} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Signature</p>
+                        <SignatureCanvas onSignatureChange={setProtocolTwoSignatureDataUrl} />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className="w-full bg-emerald-800 text-white hover:bg-emerald-900"
+                      disabled={!protocolTwoAccepted || !protocolTwoSignatureName.trim() || !protocolTwoSignatureDataUrl || !activeDossier?.dossierNumber || signSecondAgreementMutation.isPending}
+                      onClick={() => activeDossier?.dossierNumber && protocolTwoSignatureDataUrl && signSecondAgreementMutation.mutate({
+                        dossierNumber: activeDossier.dossierNumber,
+                        signatureName: protocolTwoSignatureName.trim(),
+                        signatureDataUrl: protocolTwoSignatureDataUrl,
+                        formulaChosen: protocolTwoFormula || undefined,
+                      })}
+                    >
+                      {signSecondAgreementMutation.isPending ? "Signature du Protocole N°02…" : "Signer le Protocole N°02"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Suivi e-Visa en direct */}
               <Card className="p-6 border-blue-200 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 shadow-sm">

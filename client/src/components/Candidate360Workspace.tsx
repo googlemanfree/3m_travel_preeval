@@ -46,11 +46,22 @@ type CandidateSummary = {
   evaluationValidatedBy?: string | null;
 };
 
+type SiblingProcedureTab = {
+  id: string;
+  folderCode: string;
+  projectType?: string | null;
+  destinationCountry?: string | null;
+  status?: string | null;
+};
+
 type Props = {
   sessionToken: string;
   candidate: CandidateSummary;
   onRefresh: () => void;
   initialTab?: "overview" | "evaluation" | "documents" | "payments" | "messages" | "history";
+  /** Procédures liées (même client) pour bascule multi-dossiers dans le 360°. */
+  siblingProcedures?: SiblingProcedureTab[];
+  onSelectSibling?: (siblingId: string) => void;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -106,9 +117,12 @@ function PaymentHistoryStatusBadge({ status }: { status: string }) {
   return <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800"><CheckCircle2 className="mr-1 h-3 w-3" />Validé</Badge>;
 }
 
-export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview" }: Props) {
+export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", siblingProcedures = [], onSelectSibling }: Props) {
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
+  const [protocolTwoEmployer, setProtocolTwoEmployer] = useState("");
+  const [protocolTwoPosition, setProtocolTwoPosition] = useState("");
+
   const [workflowStatus, setWorkflowStatus] = useState("new");
   const [priority, setPriority] = useState("normal");
   const [advisorId, setAdvisorId] = useState("unassigned");
@@ -283,6 +297,20 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onSuccess: async (result) => { unlockAction("agreementProtocol"); toast.success("Protocole envoyé", { description: `Déposé dans l’espace client et envoyé par e-mail pour ${result.dossierNumber}.` }); await refresh(); },
     onError: (mutationError) => { unlockAction("agreementProtocol"); toast.error("Envoi du protocole impossible", { description: mutationError.message }); },
   });
+  const activateSecondProtocolMutation = trpc.adminCandidateManagement.activateSecondAgreementProtocol.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("protocolTwo");
+      toast.success("Protocole N°02 activé", {
+        description: result.dualOpportunityHandoff
+          ? `${result.dossierNumber} · ${result.dualOpportunityHandoff}`
+          : `Sélection validée pour ${result.dossierNumber}. Le candidat peut signer dans mon-espace.`,
+      });
+      setProtocolTwoEmployer("");
+      setProtocolTwoPosition("");
+      await refresh();
+    },
+    onError: (mutationError) => { unlockAction("protocolTwo"); toast.error("Activation Protocole N°02 impossible", { description: mutationError.message }); },
+  });
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation({
     onSuccess: async (result) => { unlockAction("approveReceipt"); toast.success("Reçu validé et signé", { description: `Validation électronique enregistrée pour ${result.dossierNumber}.` }); await refresh(); },
     onError: (mutationError) => { unlockAction("approveReceipt"); toast.error("Validation du reçu impossible", { description: mutationError.message }); },
@@ -364,11 +392,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   };
   const paymentSnapshot: any = data.payments?.[0] ?? null;
   const agreementState: any = (data as any).agreement ?? (data as any).protocol ?? null;
+  const paymentConfirmed = ["SUCCESS", "success", "completed", "paid", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const protocolSigned = Boolean(agreementState?.signed || agreementState?.agreementSigned || agreementState?.signedAt || agreementState?.agreementSignedAt);
+  // Prérequis déjà validés = verts (plus de faux bouchons paiement / protocole / évaluation).
   const coherenceChecks = [
     { label: "CV exploitable", ok: Boolean(candidateCv?.documentUrl), detail: candidateCv?.fileName || "Aucun CV rattaché" },
     { label: "Évaluation validée", ok: evaluationAlreadyValidated, detail: evaluationAlreadyValidated ? `Validée par ${evaluationValidatedBy}` : "Validation conseiller requise" },
-    { label: "Paiement confirmé", ok: paymentSnapshot?.status === "SUCCESS" || paymentSnapshot?.status === "completed" || paymentSnapshot?.status === "paid", detail: paymentSnapshot?.status ? `État : ${paymentSnapshot.status}` : "Aucun paiement confirmé" },
-    { label: "Protocole", ok: Boolean(agreementState?.signedAt || agreementState?.agreementSignedAt), detail: agreementState?.signedAt || agreementState?.agreementSignedAt ? "Signé" : "À vérifier avant la suite" },
+    { label: "Paiement confirmé", ok: paymentConfirmed, detail: paymentConfirmed ? `Confirmé (${paymentSnapshot?.status})` : (paymentSnapshot?.status ? `État : ${paymentSnapshot.status}` : "Aucun paiement confirmé") },
+    { label: "Protocole", ok: protocolSigned, detail: protocolSigned ? "Signé" : "À signer dans l’espace client après paiement" },
     { label: "Pièces requises", ok: pendingRequirements.length === 0, detail: pendingRequirements.length ? `${pendingRequirements.length} pièce(s) à compléter` : "Checklist complète" },
   ];
   const dueState = operationalCase.dueAt ? (new Date(operationalCase.dueAt).getTime() < Date.now() ? "overdue" : new Date(operationalCase.dueAt).getTime() - Date.now() <= 24 * 60 * 60 * 1000 ? "soon" : "scheduled") : "unset";
@@ -686,6 +717,76 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
+          {(() => {
+            const siblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
+              ? ((data as any).siblingProcedures as SiblingProcedureTab[])
+              : siblingProcedures;
+            if (!siblings.length && !onSelectSibling) return null;
+            return (
+              <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4" data-testid="candidate360-procedure-tabs" aria-label="Procédures liées du client">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Multi-procédures</p>
+                    <h4 className="mt-1 text-base font-bold text-slate-950">Dossiers du même client</h4>
+                  </div>
+                  <Badge className="border-indigo-200 bg-white text-indigo-800">{siblings.length + 1} procédure(s)</Badge>
+                </div>
+                {(data as any).dualOpportunityHandoff && (
+                  <p className="mt-2 text-xs leading-5 text-indigo-900">{(data as any).dualOpportunityHandoff}</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" disabled>
+                    Actuel · {candidate.folderCode} · {candidate.projectType || "Procédure"}
+                  </Button>
+                  {siblings.map((sibling) => (
+                    <Button
+                      key={sibling.id}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="border-indigo-300 text-indigo-900"
+                      onClick={() => onSelectSibling?.(sibling.id)}
+                      disabled={!onSelectSibling}
+                    >
+                      {sibling.folderCode} · {sibling.projectType || "Procédure"}
+                      {sibling.destinationCountry ? ` · ${sibling.destinationCountry}` : ""}
+                    </Button>
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
+          {((data as any).countryProcedureChecklist || (data as any).journeySla) && (
+            <section className="grid gap-3 md:grid-cols-2" data-testid="candidate360-checklist-sla">
+              {(data as any).countryProcedureChecklist && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Checklist pays / procédure</p>
+                      <h4 className="mt-1 text-sm font-bold text-slate-950">{(data as any).countryProcedureChecklist.procedure}</h4>
+                    </div>
+                    <strong className="text-xl text-blue-800">{(data as any).countryProcedureChecklist.percent}%</strong>
+                  </div>
+                  <Progress className="mt-3 h-2 bg-blue-100" value={(data as any).countryProcedureChecklist.percent} />
+                  <p className="mt-2 text-xs text-slate-600">
+                    {(data as any).countryProcedureChecklist.verified + (data as any).countryProcedureChecklist.received}/{(data as any).countryProcedureChecklist.total} reçues · {(data as any).countryProcedureChecklist.missing} manquante(s) · {(data as any).countryProcedureChecklist.replace} à corriger
+                  </p>
+                </div>
+              )}
+              {(data as any).journeySla && (
+                <div className={`rounded-xl border p-4 ${(data as any).journeySla.tone === "overdue" ? "border-rose-200 bg-rose-50" : (data as any).journeySla.tone === "soon" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">SLA étape parcours</p>
+                      <h4 className="mt-1 text-sm font-bold text-slate-950">{(data as any).journeySla.label}</h4>
+                    </div>
+                    <Badge className="border-white bg-white text-slate-800">{(data as any).journeySla.slaDays} j</Badge>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">{(data as any).journeySla.explanation}</p>
+                </div>
+              )}
+            </section>
+          )}
           {data.candidateJourney?.steps?.length > 0 && (
             <ProcedureStepper
               title={data.candidateJourney.title}
@@ -795,6 +896,55 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         <TabsContent value="evaluation" className="space-y-3 pt-4">
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div><div className="flex flex-wrap gap-2">{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}<Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50" disabled={evaluationAlreadyValidated || offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => setOfflineEvaluationOpen(true)}><UserCheck className="mr-2 h-4 w-4" />{evaluationAlreadyValidated ? "Évaluation déjà validée" : "Valider l’évaluation hors ligne"}</Button></div></div></div>
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord — préparation manuelle</h4><p className="mt-1 text-sm text-slate-700">Modifiez le texte avant envoi. Le serveur exige un paiement confirmé, puis dépose le protocole dans l’espace client et l’envoie par e-mail.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">Double diffusion</Badge></div><div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div>
+          {candidate.id.startsWith("online_") && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4" data-testid="candidate360-protocol-two">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold text-slate-950">Protocole N°02 — valider la sélection</h4>
+                  <p className="mt-1 text-sm text-slate-700">Après sélection employeur / partenaire : débloque la signature client du second protocole (barème pays si publié, sinon texte générique sans montant inventé).</p>
+                </div>
+                <Badge className={(data as any).secondProtocol?.signed ? "border-emerald-300 bg-white text-emerald-800" : (data as any).secondProtocol?.ready ? "border-amber-300 bg-white text-amber-800" : "border-slate-300 bg-white text-slate-700"}>
+                  {(data as any).secondProtocol?.signed ? "Signé" : (data as any).secondProtocol?.ready ? "Proposé au client" : "À activer"}
+                </Badge>
+              </div>
+              {(data as any).secondProtocol?.ready ? (
+                <p className="mt-3 text-sm text-slate-700">
+                  Employeur : <strong>{(data as any).secondProtocol.employerName}</strong> · Poste : <strong>{(data as any).secondProtocol.positionTitle}</strong>
+                  {(data as any).secondProtocol.signed ? " · Signature client enregistrée." : " · En attente de signature dans mon-espace."}
+                </p>
+              ) : (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="protocol-two-employer">Employeur / partenaire d’accueil</Label>
+                    <Input id="protocol-two-employer" className="mt-1 bg-white" value={protocolTwoEmployer} onChange={(event) => setProtocolTwoEmployer(event.target.value)} maxLength={255} placeholder="Ex. Entreprise partenaire Luxembourg" />
+                  </div>
+                  <div>
+                    <Label htmlFor="protocol-two-position">Poste / projet retenu</Label>
+                    <Input id="protocol-two-position" className="mt-1 bg-white" value={protocolTwoPosition} onChange={(event) => setProtocolTwoPosition(event.target.value)} maxLength={255} placeholder="Ex. Aide-soignant" />
+                  </div>
+                  <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-slate-500">Prérequis : paiement confirmé + Protocole N°01 signé. Les procédures siblings restent séparées (double opportunité).</p>
+                    <Button
+                      type="button"
+                      className="bg-emerald-700 text-white hover:bg-emerald-800"
+                      disabled={protocolTwoEmployer.trim().length < 2 || protocolTwoPosition.trim().length < 2 || activateSecondProtocolMutation.isPending || actionLocks.protocolTwo}
+                      onClick={() => {
+                        lockAction("protocolTwo");
+                        activateSecondProtocolMutation.mutate({
+                          sessionToken,
+                          candidateId: candidate.id,
+                          employerName: protocolTwoEmployer.trim(),
+                          positionTitle: protocolTwoPosition.trim(),
+                        });
+                      }}
+                    >
+                      {activateSecondProtocolMutation.isPending ? "Activation…" : "Valider la sélection et ouvrir le N°02"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {data.evaluationVersions.length ? <div className="space-y-2">{data.evaluationVersions.map((version: any) => <div key={version.id} className="flex items-center justify-between rounded-lg border p-3"><div><p className="text-sm font-medium">Version {version.versionNumber}</p><p className="text-xs text-slate-500">Créée le {formatDate(version.createdAt)}</p></div><StateBadge status={version.approvalStatus} /></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun bilan versionné. Préparez l’évaluation lorsque les informations sont complètes.</p>}
         </TabsContent>
 

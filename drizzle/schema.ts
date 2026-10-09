@@ -584,6 +584,16 @@ export const applications = mysqlTable("applications", {
   agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
   agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
   agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
+  // ─── Protocole N°02 — post-sélection (employeur / partenaire) ───
+  secondAgreementReadyAt: timestamp("secondAgreementReadyAt"),
+  secondAgreementReadyBy: varchar("secondAgreementReadyBy", { length: 320 }),
+  secondAgreementEmployer: varchar("secondAgreementEmployer", { length: 255 }),
+  secondAgreementPosition: varchar("secondAgreementPosition", { length: 255 }),
+  secondAgreementFormula: varchar("secondAgreementFormula", { length: 20 }),
+  secondAgreementSigned: boolean("secondAgreementSigned").default(false).notNull(),
+  secondAgreementSignedAt: int("secondAgreementSignedAt"),
+  secondAgreementSignatureName: varchar("secondAgreementSignatureName", { length: 255 }),
+  secondAgreementIpAddress: varchar("secondAgreementIpAddress", { length: 64 }),
   // Processus d'evaluation 48h
   evaluationStartedAt: timestamp("evaluationStartedAt"),
   evaluationCompletedAt: timestamp("evaluationCompletedAt"),

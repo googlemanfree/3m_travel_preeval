@@ -1627,6 +1627,196 @@ export const candidateRouter = router({
       };
     }),
 
+  /**
+   * Signature du Protocole N°02 après validation de sélection admin (employeur + poste).
+   * Formule tarifaire obligatoire lorsque le barème pays est publié (ex. Luxembourg).
+   */
+  signSecondAgreementProtocol: candidateProcedure
+    .input(
+      z.object({
+        dossierNumber: z.string().max(50),
+        signatureName: z.string().min(2).max(255),
+        signatureDataUrl: z.string().min(80).max(500000),
+        formulaChosen: z.enum(["integral", "echelonne", "garanti"]).optional(),
+        ipAddress: z.string().max(45).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const appRows = await db
+        .select()
+        .from(applications)
+        .where(
+          and(
+            eq(applications.dossierNumber, input.dossierNumber),
+            or(
+              eq(applications.candidateId, ctx.candidate.id),
+              sql`LOWER(${applications.email}) = LOWER(${ctx.candidate.email})`
+            )
+          )
+        )
+        .limit(1);
+      if (!appRows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
+      const application = appRows[0];
+      if (!application.agreementSigned) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Signez d’abord le Protocole N°01." });
+      }
+      if (!application.secondAgreementReadyAt) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le Protocole N°02 n’est pas encore proposé par l’agence." });
+      }
+      if (application.secondAgreementSigned) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce Protocole N°02 a déjà été signé." });
+      }
+      if (!application.secondAgreementEmployer?.trim() || !application.secondAgreementPosition?.trim()) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Employeur et poste doivent être renseignés par l’agence." });
+      }
+
+      const { describeSecondProtocolState, SECOND_PROTOCOL_FORMULA_INDEX, SECOND_AGREEMENT_PROTOCOL_VERSION } = await import("../../shared/secondAgreementProtocol");
+      const { buildProtocolTwoRichText } = await import("../../shared/agreementProtocolCountryTemplates");
+      const { createAgreementProtocolOnePdf } = await import("../agreementProtocolPdfService");
+      const { buildSignedAgreementEmail } = await import("../services/signedAgreementEmail");
+
+      const state = describeSecondProtocolState({
+        destination: application.destination,
+        paymentConfirmed: application.paymentStatus === "SUCCESS",
+        protocolOneSigned: true,
+        secondProtocolReady: true,
+        secondProtocolSigned: false,
+        employerName: application.secondAgreementEmployer,
+        positionTitle: application.secondAgreementPosition,
+        formulaChosen: input.formulaChosen ?? null,
+      });
+      if (state.formulas && input.formulaChosen == null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez une formule tarifaire avant de signer." });
+      }
+
+      const forwarded = (ctx as { req?: { headers?: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } } })?.req;
+      const headerIp = forwarded?.headers?.["x-forwarded-for"];
+      const rawIp = input.ipAddress
+        || (typeof headerIp === "string" ? headerIp : Array.isArray(headerIp) ? headerIp[0] : undefined)
+        || forwarded?.socket?.remoteAddress
+        || "unknown";
+      const ipAddress = String(rawIp).split(",")[0].trim().slice(0, 64);
+
+      const base64Data = input.signatureDataUrl.includes(",")
+        ? input.signatureDataUrl.split(",")[1]
+        : input.signatureDataUrl;
+      let signaturePngBytes: Buffer;
+      try {
+        signaturePngBytes = Buffer.from(base64Data, "base64");
+        if (signaturePngBytes.length < 40) throw new Error("signature trop courte");
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "La signature manuscrite est invalide." });
+      }
+
+      const signedAtDate = new Date();
+      const now = Math.floor(signedAtDate.getTime() / 1000);
+      const formuleIndex = input.formulaChosen ? SECOND_PROTOCOL_FORMULA_INDEX[input.formulaChosen] : undefined;
+      const protocolText = buildProtocolTwoRichText({
+        clientNomComplet: application.fullName,
+        clientTelephoneWhatsapp: application.whatsappNumber || undefined,
+        clientEmail: application.email,
+        clientEspaceId: String(ctx.candidate.id),
+        dossierRef: application.dossierNumber,
+        employeurNom: application.secondAgreementEmployer,
+        posteRetenu: application.secondAgreementPosition,
+        formuleChoisie: formuleIndex,
+        systemTimestamp: signedAtDate.toISOString(),
+        clientIpAddress: ipAddress,
+        dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      }, application.destination);
+
+      const protocolPdf = await createAgreementProtocolOnePdf({
+        dossierNumber: application.dossierNumber,
+        fullName: application.fullName,
+        destination: application.destination,
+        variables: {
+          clientNomComplet: application.fullName,
+          dossierRef: application.dossierNumber,
+          destinationProjet: application.destination || "Non spécifiée",
+          modePaiement: application.paymentMethod || "Paiement confirmé",
+          dateHeurePaiement: "Non applicable (Protocole N°02)",
+          conseillerEmail: application.secondAgreementReadyBy || "conseiller@3mtravelagency.com",
+          empreinteSha: createHash("sha256").update(`${application.dossierNumber}|02|${now}`).digest("hex").slice(0, 24),
+          clientIpAddress: ipAddress,
+          dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+        },
+        content: protocolText,
+        documentTitle: "Protocole d’accord N°02 — exemplaire signé",
+        signature: {
+          name: input.signatureName.trim(),
+          pngBytes: signaturePngBytes,
+          signedAt: signedAtDate,
+          ipAddress,
+        },
+      });
+
+      await db.update(applications).set({
+        secondAgreementSigned: true,
+        secondAgreementSignedAt: now,
+        secondAgreementSignatureName: input.signatureName.trim(),
+        secondAgreementIpAddress: ipAddress,
+        secondAgreementFormula: input.formulaChosen ?? application.secondAgreementFormula,
+        formulaChosen: input.formulaChosen ?? application.formulaChosen,
+        lastStatusUpdateAt: signedAtDate,
+      }).where(eq(applications.id, application.id));
+
+      const protocolFileName = `Protocole-accord-02-signe-${application.dossierNumber}.pdf`;
+      try {
+        await db.insert(clientDocuments).values({
+          evaluationId: application.id,
+          candidateEmail: application.email,
+          documentType: "other",
+          documentName: protocolFileName,
+          documentUrl: protocolPdf.url,
+          fileSize: protocolPdf.bytes.length,
+          source: "manual_admin",
+          uploadedByAdmin: "signature-espace-client",
+          receivedByAdmin: true,
+          status: "verified",
+          verificationStatus: "approved",
+          verifiedByAdmin: "system",
+          verifiedAt: signedAtDate,
+          adminNotes: `PDF signé du Protocole N°02 (${SECOND_AGREEMENT_PROTOCOL_VERSION}).`,
+        });
+      } catch (err) {
+        console.warn("[Agreement02] Signed PDF archive failed:", err);
+      }
+
+      const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+      const emailPayload = buildSignedAgreementEmail({
+        fullName: application.fullName,
+        dossierNumber: application.dossierNumber,
+        signatureName: input.signatureName.trim(),
+        signedAt: signedAtDate,
+        siteUrl,
+        protocolFileName,
+      });
+      let emailSent = false;
+      try {
+        await sendGenericEmail({
+          to: application.email,
+          subject: `Protocole N°02 signé — ${application.dossierNumber}`,
+          html: emailPayload.html,
+          attachments: [{ filename: protocolFileName, content: protocolPdf.bytes, contentType: "application/pdf" }],
+        });
+        emailSent = true;
+      } catch (err) {
+        console.warn("[Agreement02] Signed protocol email failed:", err);
+      }
+
+      return {
+        success: true,
+        emailSent,
+        signedPdfUrl: protocolPdf.url,
+        message: emailSent
+          ? "Protocole N°02 signé. Un exemplaire PDF vous a été envoyé par e-mail."
+          : "Protocole N°02 signé et archivé. Le PDF reste disponible dans vos documents.",
+      };
+    }),
+
   // ── Soumettre des documents après signature ────────────────────────────────
   submitDocuments: candidateProcedure
     .input(
@@ -2461,6 +2651,17 @@ export const candidateRouter = router({
         appointmentUnlocked: Boolean(activeApp?.activationRequestedAt),
         agreementSigned: Boolean(activeApp?.agreementSigned),
         showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
+        secondAgreementReady: Boolean(activeApp?.secondAgreementReadyAt),
+        secondAgreementSigned: Boolean(activeApp?.secondAgreementSigned),
+        secondAgreementEmployer: activeApp?.secondAgreementEmployer ?? null,
+        secondAgreementPosition: activeApp?.secondAgreementPosition ?? null,
+        secondAgreementFormula: activeApp?.secondAgreementFormula ?? null,
+        showSecondAgreement: Boolean(
+          activeApp
+          && activeApp.agreementSigned
+          && activeApp.secondAgreementReadyAt
+          && !activeApp.secondAgreementSigned
+        ),
         evaluationRequired: candidate.evaluationDeclarationStatus === "not_declared" || candidate.evaluationDeclarationStatus === "refused",
         requestedService: activeApp
           ? {

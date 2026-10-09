@@ -77,6 +77,8 @@ export async function createAgreementProtocolOnePdf(input: {
   destination: string | null;
   variables: ProtocolOneVariables;
   content?: string;
+  /** Titre d’en-tête PDF (ex. Protocole N°02). */
+  documentTitle?: string;
   /** Si fourni, le PDF est l’exemplaire signé (bloc signature + statut signé). */
   signature?: AgreementProtocolSignature | null;
 }): Promise<{ key: string; url: string; bytes: Buffer }> {
@@ -86,12 +88,10 @@ export async function createAgreementProtocolOnePdf(input: {
     : buildProtocolOneRichText(input.variables, destination);
   const signed = Boolean(input.signature?.name);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  drawAgencyHeader(
-    doc,
-    signed
-      ? "Protocole d’accord N°01 — exemplaire signé"
-      : "Protocole d’accord N°01 — accompagnement administratif",
-  );
+  const defaultTitle = signed
+    ? "Protocole d’accord N°01 — exemplaire signé"
+    : "Protocole d’accord N°01 — accompagnement administratif";
+  drawAgencyHeader(doc, input.documentTitle?.trim() || defaultTitle);
   doc.setTextColor(31, 41, 55);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);

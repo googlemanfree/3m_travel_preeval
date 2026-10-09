@@ -17,9 +17,10 @@ import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
-import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
+import { buildProtocolOneRichText, buildProtocolTwoRichText } from "../../shared/agreementProtocolCountryTemplates";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
+import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -1474,6 +1475,104 @@ export const adminCandidateManagementRouter = router({
       }
       return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
     }),
+
+  /**
+   * Valide la sélection candidat et débloque le Protocole N°02 dans l’espace client.
+   * Employeur + poste obligatoires ; notification e-mail avec lien mon-espace.
+   */
+  activateSecondAgreementProtocol: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^online_\d+$/),
+      employerName: z.string().trim().min(2).max(255),
+      positionTitle: z.string().trim().min(2).max(255),
+      notifyClient: z.boolean().default(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference || reference.source !== "online") throw new TRPCError({ code: "BAD_REQUEST", message: "Dossier en ligne requis." });
+      const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Paiement confirmé requis avant le Protocole N°02." });
+      if (!application.agreementSigned) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le Protocole N°01 doit être signé avant d’activer le Protocole N°02." });
+      if (application.secondAgreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Le Protocole N°02 est déjà signé." });
+
+      const readyAt = new Date();
+      await db.update(applications).set({
+        secondAgreementReadyAt: readyAt,
+        secondAgreementReadyBy: admin.email,
+        secondAgreementEmployer: input.employerName.trim(),
+        secondAgreementPosition: input.positionTitle.trim(),
+        recruitmentPartnerName: input.employerName.trim(),
+        dossierStatus: application.dossierStatus === "visa_approuve" ? application.dossierStatus : "contrat_obtenu",
+        lastStatusUpdateAt: readyAt,
+        lastStatusUpdatedBy: admin.fullName || admin.email,
+      }).where(eq(applications.id, application.id));
+
+      const protocolPreview = buildProtocolTwoRichText({
+        clientNomComplet: application.fullName,
+        clientTelephoneWhatsapp: application.whatsappNumber || undefined,
+        clientEmail: application.email,
+        dossierRef: application.dossierNumber,
+        employeurNom: input.employerName.trim(),
+        posteRetenu: input.positionTitle.trim(),
+        systemTimestamp: readyAt.toISOString(),
+        clientIpAddress: "Signature à venir dans l’espace client",
+        dateDuJour: readyAt.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      }, application.destination);
+
+      const siblingOnline = await db.select({
+        id: applications.id,
+        dossierNumber: applications.dossierNumber,
+        visaType: applications.visaType,
+        destination: applications.destination,
+      }).from(applications).where(and(eq(applications.email, application.email), isNull(applications.deletedAt))).limit(10);
+      const handoff = dualOpportunityHandoffMessage({
+        currentProcedure: application.visaType,
+        siblingProcedures: siblingOnline
+          .filter((row) => row.id !== application.id)
+          .map((row) => ({ projectType: row.visaType, folderCode: row.dossierNumber, destinationCountry: row.destination })),
+      });
+
+      if (input.notifyClient && application.email) {
+        const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+        const safeName = escapeAgreementHtml(application.fullName);
+        const safeDossier = escapeAgreementHtml(application.dossierNumber);
+        const safeEmployer = escapeAgreementHtml(input.employerName.trim());
+        const safePosition = escapeAgreementHtml(input.positionTitle.trim());
+        const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:640px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Sélection confirmée — Protocole N°02</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre dossier <strong>${safeDossier}</strong> a été retenu pour une proposition concrète :</p><ul><li>Employeur / partenaire : <strong>${safeEmployer}</strong></li><li>Poste / projet : <strong>${safePosition}</strong></li></ul><p>Connectez-vous à votre espace client pour lire et signer le Protocole d’accord N°02 (formules tarifaires selon destination, sans garantie de résultat).</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl}/mon-espace" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Signer le Protocole N°02</a></p><p style="font-size:12px;color:#64748b">Version ${SECOND_AGREEMENT_PROTOCOL_VERSION}. Les décisions finales restent celles des autorités et partenaires compétents.</p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY — Yaoundé · hello@3mtravelagency.com</div></div></body></html>`;
+        try {
+          await sendGenericEmail({ to: application.email, subject: `Sélection confirmée — Protocole N°02 · ${application.dossierNumber}`, html });
+        } catch (error) {
+          console.error("[Protocol02] Email delivery failed", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Sélection enregistrée, mais l’e-mail n’a pas pu être envoyé. Relancez la notification." });
+        }
+      }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "second_agreement_activated",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: "",
+        details: `Protocole N°02 activé pour ${application.dossierNumber} · ${input.employerName.trim()} / ${input.positionTitle.trim()}.`,
+      });
+
+      return {
+        success: true,
+        dossierNumber: application.dossierNumber,
+        employerName: input.employerName.trim(),
+        positionTitle: input.positionTitle.trim(),
+        protocolPreview,
+        dualOpportunityHandoff: handoff,
+        version: SECOND_AGREEMENT_PROTOCOL_VERSION,
+      };
+    }),
+
   resendAgreementSignatureReminder: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^online_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

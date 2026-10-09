@@ -25,6 +25,11 @@ import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDos
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
+import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
+import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
+import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
+import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
+import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -240,18 +245,12 @@ export function countryChecklistFor(destination?: string | null) {
 }
 
 export function procedureChecklistFor(procedureType?: string | null, destination?: string | null) {
-  const countryDocuments = countryChecklistFor(destination);
-  const normalizedProcedure = String(procedureType || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const procedureKey = normalizedProcedure.includes("travail") || normalizedProcedure.includes("work") || normalizedProcedure.includes("worker") ? "work_permit"
-    : normalizedProcedure.includes("etude") || normalizedProcedure.includes("study") ? "study_permit"
-      : normalizedProcedure.includes("visiteur") || normalizedProcedure.includes("visitor") || normalizedProcedure.includes("touris") ? "visitor_visa"
-        : normalizedProcedure.includes("permanent") || normalizedProcedure.includes("residence") || normalizedProcedure.includes("residence permanente") ? "permanent_residence"
-          : normalizedProcedure.includes("famille") || normalizedProcedure.includes("family") ? "family_reunification"
-            : normalizedProcedure.includes("evisa") || normalizedProcedure.includes("electronique") || normalizedProcedure.includes("electronic") ? "evisa"
-              : procedureType && procedureType in PROCEDURE_DOCUMENT_CHECKLISTS ? procedureType : undefined;
-  const template = procedureKey ? PROCEDURE_DOCUMENT_CHECKLISTS[procedureKey] : undefined;
-  const unique = new Map([...countryDocuments, ...(template?.documents ?? [])].map((item) => [item.documentType.toLowerCase(), item]));
-  return { label: template?.label ?? (procedureType?.trim() || "Procédure standard"), documents: Array.from(unique.values()) };
+  // Source unique : pays + procédure + pièces du parcours (catalogue journey).
+  const unified = buildCountryProcedureDocumentChecklist({ destination, procedureType });
+  return {
+    label: unified.label,
+    documents: unified.documents.map((item) => ({ documentType: item.documentType, comment: item.comment })),
+  };
 }
 
 export function parseCandidate360Labels(value: string | null | undefined) {
@@ -1767,7 +1766,39 @@ export const adminRouter = router({
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
         // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
-        let allCandidates = attachSiblingProcedures([...normalizedOnline, ...normalizedAgency, ...normalizedAccounts]);
+        // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
+        let allCandidates = attachSiblingProcedures([...normalizedOnline, ...normalizedAgency, ...normalizedAccounts]).map((row) => {
+          const procedureJourney = buildAdminProcedureSnapshot({
+            destination: row.destinationCountry,
+            visaType: row.projectType,
+            procedureLabel: row.projectType,
+            internalStatus: row.internalStatus,
+            paymentStatus: row.paymentStatus,
+            evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
+          });
+          const journeySla = buildJourneyStepSla({
+            destination: row.destinationCountry,
+            visaType: row.projectType,
+            procedureLabel: row.projectType,
+            internalStatus: row.internalStatus,
+            paymentConfirmed: row.paymentStatus === "SUCCESS",
+            evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
+            stepEnteredAt: row.lastStatusUpdateAt ?? row.updatedAt,
+            dueAtOverride: row.dueAt,
+          });
+          return {
+            ...row,
+            procedureJourney,
+            journeySla: {
+              label: journeySla.label,
+              tone: journeySla.tone,
+              slaDays: journeySla.slaDays,
+              stepLabel: journeySla.stepLabel,
+              explanation: journeySla.explanation,
+              dueAt: journeySla.dueAt?.toISOString() ?? null,
+            },
+          };
+        });
         const availableDestinations = Array.from(
           new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b, "fr"));
@@ -1898,6 +1929,26 @@ export const adminRouter = router({
           }
           assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
 
+          const checklistSnapshot = summarizeCountryProcedureChecklist({
+            destination: app.destination,
+            procedureType: app.visaType,
+          });
+          const transitionGuard = evaluateAdminStageTransition({
+            targetStage: input.newStatus,
+            paymentConfirmed: app.paymentStatus === "SUCCESS",
+            protocolSigned: Boolean(app.agreementSigned),
+            evaluationDelivered: app.evaluationDeliveryStatus === "sent",
+            evaluationClientConfirmed: Boolean(app.evaluationClientConfirmedAt),
+            checklistPercent: checklistSnapshot.percent,
+            pendingRequiredDocuments: 0,
+            secondProtocolReady: Boolean(app.secondAgreementReadyAt),
+            secondProtocolSigned: Boolean(app.secondAgreementSigned),
+          });
+          if (transitionGuard.ok === false) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
+          }
+
+          const nextDueAt = suggestedDueAtForAdminStage(input.newStatus);
           await db.update(applications)
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
@@ -1905,6 +1956,15 @@ export const adminRouter = router({
               lastStatusUpdatedBy: admin.fullName || "Admin",
             })
             .where(eq(applications.id, id));
+          // SLA étape : propose une échéance métier sur le dossier opérationnel si aucune n’existe.
+          try {
+            const operationalCase = await ensureOperationalCase(db, reference);
+            if (!operationalCase.dueAt) {
+              await db.update(cases).set({ dueAt: nextDueAt }).where(eq(cases.id, operationalCase.id));
+            }
+          } catch (slaError) {
+            console.warn("[updateCandidateStatus] SLA dueAt suggestion skipped", slaError);
+          }
 
           await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "online", dossierNumber: app.dossierNumber, manualValidation: true }) });
 
@@ -3540,6 +3600,86 @@ export const adminRouter = router({
         paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
       });
       const effectiveJourneyStep = Math.min(Math.max(currentJourneyStep, persistedJourneyIndex), Math.max(0, candidateJourney.steps.length - 1));
+      const documentMatches = [
+        ...operationalDocuments.map((document) => ({ documentType: document.documentType, documentName: document.fileName, verificationStatus: document.reviewStatus, status: document.reviewStatus })),
+        ...legacyDocuments.map((document) => ({ documentType: document.documentType, documentName: document.documentName, verificationStatus: document.verificationStatus, status: document.status })),
+        ...agencyDocuments.map((document) => ({ documentType: document.documentType, documentName: document.documentName, verificationStatus: document.verificationStatus, status: document.verificationStatus })),
+        ...requirements.map((requirement) => ({ documentType: requirement.documentType, documentName: requirement.documentType, verificationStatus: requirement.status, status: requirement.status })),
+      ];
+      const countryProcedureChecklist = summarizeCountryProcedureChecklist({
+        destination,
+        procedureType: procedureLabel ?? visaTypeForJourney,
+        documents: documentMatches,
+      });
+      const journeySla = buildJourneyStepSla({
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+        internalStatus: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierStatus : (sourceRecord as typeof agencyDossiers.$inferSelect).status,
+        paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+        evaluationStatus: latestEvaluation?.status ?? null,
+        stepEnteredAt: operationalCase.updatedAt ?? sourceRecord.updatedAt,
+        dueAtOverride: operationalCase.dueAt,
+      });
+      const onlineApp = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect) : null;
+      const secondProtocol = describeSecondProtocolState({
+        destination: destination ?? onlineApp?.destination,
+        paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+        protocolOneSigned: Boolean(onlineApp?.agreementSigned),
+        secondProtocolReady: Boolean(onlineApp?.secondAgreementReadyAt),
+        secondProtocolSigned: Boolean(onlineApp?.secondAgreementSigned),
+        employerName: onlineApp?.secondAgreementEmployer,
+        positionTitle: onlineApp?.secondAgreementPosition,
+        formulaChosen: (onlineApp?.secondAgreementFormula as "integral" | "echelonne" | "garanti" | null) ?? null,
+      });
+      const siblingRows = await safeCollection(
+        Promise.all([
+          db.select({
+            id: applications.id,
+            dossierNumber: applications.dossierNumber,
+            destination: applications.destination,
+            visaType: applications.visaType,
+            dossierStatus: applications.dossierStatus,
+            paymentStatus: applications.paymentStatus,
+            agreementSigned: applications.agreementSigned,
+          }).from(applications).where(and(eq(applications.email, email), isNull(applications.deletedAt))).limit(10),
+          db.select({
+            id: agencyDossiers.id,
+            destination: agencyDossiers.destination,
+            visaType: agencyDossiers.visaType,
+            status: agencyDossiers.status,
+            initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+          }).from(agencyDossiers).where(and(eq(agencyDossiers.email, email), isNull(agencyDossiers.deletedAt))).limit(10),
+        ]).then(([onlineRows, agencyRows]) => {
+          const online = onlineRows.map((row) => ({
+            id: `online_${row.id}`,
+            folderCode: row.dossierNumber,
+            projectType: row.visaType,
+            destinationCountry: row.destination,
+            status: row.dossierStatus,
+            paymentStatus: row.paymentStatus,
+            agreementSigned: row.agreementSigned,
+            source: "online" as const,
+          }));
+          const agency = agencyRows.map((row) => ({
+            id: `agency_${row.id}`,
+            folderCode: `3M-AGN-${String(row.id).padStart(4, "0")}`,
+            projectType: row.visaType,
+            destinationCountry: row.destination,
+            status: row.status,
+            paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
+            agreementSigned: null,
+            source: "agency" as const,
+          }));
+          return [...online, ...agency].filter((row) => row.id !== input.candidateId);
+        }),
+        [],
+        "siblingProcedures",
+      );
+      const dualOpportunityHandoff = dualOpportunityHandoffMessage({
+        currentProcedure: procedureLabel ?? visaTypeForJourney,
+        siblingProcedures: siblingRows,
+      });
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         evaluationDeclarationStatus: reference.source === "agency"
@@ -3674,6 +3814,15 @@ export const adminRouter = router({
           submittedAt: latestEvaluation.createdAt,
           details: projectDetails,
         } : null,
+        countryProcedureChecklist,
+        journeySla: {
+          ...journeySla,
+          dueAt: journeySla.dueAt?.toISOString() ?? null,
+          suggestedFromNow: journeySla.suggestedFromNow.toISOString(),
+        },
+        secondProtocol,
+        siblingProcedures: siblingRows,
+        dualOpportunityHandoff,
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
