@@ -22,7 +22,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
   });
   const [queryTimedOut, setQueryTimedOut] = useState(false);
   const [bootstrapTimedOut, setBootstrapTimedOut] = useState(false);
-  const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
+  const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: 3, retryDelay: 1500, refetchOnWindowFocus: true });
   const platformBootstrap = trpc.adminAuth.bootstrapPlatformSession.useQuery(undefined, {
     enabled: !sessionToken && adminSession.data?.authenticated === false,
     retry: false,
@@ -47,9 +47,16 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     const timeout = window.setTimeout(() => setBootstrapTimedOut(true), 6_000);
     return () => window.clearTimeout(timeout);
   }, [platformBootstrap.isLoading]);
+  useEffect(() => {
+    if (!sessionToken || !adminSession.isError) return;
+    const retry = window.setTimeout(() => void adminSession.refetch(), 4_000);
+    return () => window.clearTimeout(retry);
+  }, [adminSession.isError, adminSession.refetch, sessionToken]);
   const isBootstrapping = !sessionToken && adminSession.data?.authenticated === false && platformBootstrap.isLoading;
   const isChecking = (adminSession.isLoading || isBootstrapping) && !queryTimedOut && !bootstrapTimedOut;
-  const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
+  // Un jeton local présent + une panne réseau ne doivent pas masquer le tableau :
+  // les procédures restent protégées côté serveur et la garde réessaie en arrière-plan.
+  const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true || (Boolean(sessionToken) && adminSession.isError);
   const sessionTemporarilyUnavailable = adminSession.isError && !/non authentifi|expir|invalid/i.test(adminSession.error?.message ?? "");
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
 
@@ -80,7 +87,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     );
   }
 
-  if (sessionTemporarilyUnavailable) {
+  if (sessionTemporarilyUnavailable && !sessionToken) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 flex items-center justify-center">
         <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-xl">
