@@ -9,8 +9,9 @@ const FOUNDER = {
   brand: "3M TRAVEL AGENCY",
   imageWebp: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp",
   imageJpg: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg",
+  imageHd: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg",
   imageSquare: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp",
-  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), au bureau à Yaoundé",
+  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), portrait professionnel au bureau avec logo 3M TRAVEL AGENCY",
   bio: "Aureol DONFACK dirige 3M Group SARL et 3M TRAVEL AGENCY. Il pilote l’accompagnement des projets de mobilité internationale : évaluation de profil, procédures, visas, eVisas et suivi documentaire, avec une validation humaine à chaque étape sensible.",
 };
 
@@ -20,6 +21,7 @@ const founderJsonLd = {
   name: FOUNDER.name,
   jobTitle: `${FOUNDER.role} — ${FOUNDER.organization}`,
   image: [
+    `https://www.3mtravelagency.com${FOUNDER.imageHd}`,
     `https://www.3mtravelagency.com${FOUNDER.imageJpg}`,
     `https://www.3mtravelagency.com${FOUNDER.imageWebp}`,
     `https://www.3mtravelagency.com${FOUNDER.imageSquare}`,
@@ -90,8 +92,8 @@ export default function About() {
                 src={FOUNDER.imageJpg}
                 alt={FOUNDER.alt}
                 title={`${FOUNDER.name} — ${FOUNDER.role}, ${FOUNDER.organization}`}
-                width={1400}
-                height={1620}
+                width={1440}
+                height={1920}
                 loading="eager"
                 decoding="async"
                 className="aspect-[7/8] h-auto w-full object-cover object-[center_20%]"
