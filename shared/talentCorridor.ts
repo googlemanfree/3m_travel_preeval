@@ -6,6 +6,7 @@ export const CORRIDOR_ROUTES = {
   partnersHub: "/partenaires",
   agencies: "/agences-placement",
   agenciesRegister: "/agences-placement#inscription-agence",
+  agenciesLogin: "/employeurs?tab=login&portal=placement_partner",
   employers: "/employeurs",
   employersRegister: "/employeurs?tab=register",
   employersLogin: "/employeurs?tab=login",

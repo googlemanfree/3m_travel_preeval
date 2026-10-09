@@ -13,10 +13,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 
 const sessionKey = "3m_placement_employer_session";
+const orgKey = "3m_placement_employer_org";
 type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "documents_requested";
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 type AuthTab = "login" | "register";
+type WorkspaceTab = "profiles" | "team" | "security";
+type PortalOrganization = { name: string; country: string; organizationType: PartnerOrganizationType };
 
 function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
   if (typeof window === "undefined") return { tab: "login", organizationType: "employer" };
@@ -26,6 +29,23 @@ function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganiza
   const organizationType: PartnerOrganizationType = portal === "placement_partner" ? "placement_partner" : "employer";
   const tab: AuthTab = tabParam === "register" || tabParam === "inscription" ? "register" : tabParam === "login" ? "login" : "login";
   return { tab, organizationType };
+}
+
+function readStoredOrganization(): PortalOrganization | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(orgKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PortalOrganization>;
+    if (!parsed?.name) return null;
+    return {
+      name: parsed.name,
+      country: parsed.country ?? "",
+      organizationType: parsed.organizationType === "placement_partner" ? "placement_partner" : "employer",
+    };
+  } catch {
+    return null;
+  }
 }
 
 export default function EmployerPortal() {
@@ -44,7 +64,8 @@ export default function EmployerPortal() {
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => sessionStorage.getItem(sessionKey) ?? "");
-  const [organization, setOrganization] = useState<{ name: string; country: string } | null>(null);
+  const [organization, setOrganization] = useState<PortalOrganization | null>(() => readStoredOrganization());
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("profiles");
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [favoriteNotes, setFavoriteNotes] = useState<Record<number, string>>({});
   const [shareRecipient, setShareRecipient] = useState<Record<number, string>>({});
@@ -63,6 +84,13 @@ export default function EmployerPortal() {
   const [reviewingCollaborator, setReviewingCollaborator] = useState<{ id: number; fullName: string } | null>(null);
   const [loginDraftSaved, setLoginDraftSaved] = useState(false);
   const utils = trpc.useUtils();
+  const isAgencyPortal = portalDefaults.organizationType === "placement_partner" || organization?.organizationType === "placement_partner";
+  const persistOrganization = (next: PortalOrganization | null) => {
+    setOrganization(next);
+    if (typeof window === "undefined") return;
+    if (next) sessionStorage.setItem(orgKey, JSON.stringify(next));
+    else sessionStorage.removeItem(orgKey);
+  };
 
   useEffect(() => {
     try {
@@ -80,7 +108,12 @@ export default function EmployerPortal() {
     onSuccess: result => {
       sessionStorage.setItem(sessionKey, result.sessionToken);
       setSessionToken(result.sessionToken);
-      setOrganization(result.organization);
+      persistOrganization({
+        name: result.organization.name,
+        country: result.organization.country,
+        organizationType: result.organization.organizationType === "placement_partner" ? "placement_partner" : "employer",
+      });
+      setWorkspaceTab("profiles");
       setNeedsTwoFactor(false);
       setTwoFactorCode("");
       toast.success(t("Accès organisation vérifié.", "Verified organisation access."));
@@ -92,6 +125,15 @@ export default function EmployerPortal() {
       } else toast.error(t("Connexion refusée", "Login denied"), { description: error.message });
     },
   });
+  const sessionInfo = trpc.placementPortal.employerSessionInfo.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  useEffect(() => {
+    if (!sessionInfo.data?.organization) return;
+    persistOrganization({
+      name: sessionInfo.data.organization.name,
+      country: sessionInfo.data.organization.country,
+      organizationType: sessionInfo.data.organization.organizationType === "placement_partner" ? "placement_partner" : "employer",
+    });
+  }, [sessionInfo.data?.organization]);
   const profiles = trpc.placementPortal.employerProfiles.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
   const collaborators = trpc.placementPortal.employerCollaborators.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
   const notifications = trpc.placementPortal.employerNotifications.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
@@ -229,10 +271,19 @@ export default function EmployerPortal() {
           </div>
 
           {authTab === "login" ? (
-            <Card className="premium-surface overflow-hidden border-blue-100">
+            <Card className="premium-surface overflow-hidden border-blue-100" data-testid="partner-auth-login">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#071b3d]"><Building2 className="h-5 w-5 text-[#1463ff]" />{t("Portail employeur vérifié", "Verified employer portal")}</CardTitle>
-                <CardDescription>{t("Connexion réservée aux organisations déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified organisations. Credentials are issued by 3M after your registration is reviewed.")}</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-[#071b3d]">
+                  {isAgencyPortal ? <BriefcaseBusiness className="h-5 w-5 text-[#1463ff]" /> : <Building2 className="h-5 w-5 text-[#1463ff]" />}
+                  {isAgencyPortal
+                    ? t("Espace agence de placement", "Placement agency workspace")
+                    : t("Portail employeur vérifié", "Verified employer portal")}
+                </CardTitle>
+                <CardDescription>
+                  {isAgencyPortal
+                    ? t("Connexion réservée aux agences déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified agencies. Credentials are issued by 3M after your registration is reviewed.")
+                    : t("Connexion réservée aux organisations déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified organisations. Credentials are issued by 3M after your registration is reviewed.")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="relative">
@@ -286,11 +337,44 @@ export default function EmployerPortal() {
     );
   }
 
-  return <main className="min-h-screen bg-slate-50 px-4 py-10"><div className="mx-auto max-w-5xl space-y-5">
-    <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-950 p-5 text-white"><div><p className="text-xs font-bold uppercase tracking-wider text-indigo-200">{t("Organisation vérifiée", "Verified organisation")}</p><h1 className="mt-1 text-2xl font-black">{organization?.name ?? t("Portail employeur", "Employer portal")}</h1><p className="mt-1 text-sm text-slate-300">{organization?.country ?? ""} · {t("Retours soumis à validation 3M", "Feedback subject to 3M review")}</p></div><Button variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => { sessionStorage.removeItem(sessionKey); setSessionToken(""); setOrganization(null); }}><LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}</Button></header>
-    <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950"><p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p><p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p></section>
-    <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{t("Authentification à deux facteurs", "Two-factor authentication")}</p><p className="text-sm text-slate-600">{totpStatus.data?.enabled ? t("Protection 2FA active pour les nouvelles connexions.", "2FA protection is active for new sign-ins.") : t("Configurez une application d’authentification pour protéger les prochaines connexions.", "Set up an authenticator app to protect future sign-ins.")}</p></div>{!totpStatus.data?.enabled && !qrDataUrl && <Button variant="outline" onClick={() => beginTotp.mutate({ sessionToken })}>{t("Configurer 2FA", "Set up 2FA")}</Button>}</div>{qrDataUrl && <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><img src={qrDataUrl} alt={t("QR code de configuration 2FA", "2FA setup QR code")} className="h-[220px] w-[220px] border bg-white p-2" /><div className="space-y-3"><Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code à six chiffres", "Six-digit code")} maxLength={32} /><Button disabled={!twoFactorCode || confirmTotp.isPending} onClick={() => confirmTotp.mutate({ sessionToken, code: twoFactorCode })}>{t("Confirmer et générer les codes", "Confirm and generate codes")}</Button></div></div>}{recoveryCodes.length > 0 && <div className="mt-4 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">{t("Codes de récupération — conservez-les hors ligne", "Recovery codes — store offline")}</p><p className="mt-1">{recoveryCodes.join(" · ")}</p></div>}</section>
-    <section className="grid gap-4 lg:grid-cols-2">
+  return <main className="min-h-screen bg-slate-50 px-4 py-10" data-testid="partner-workspace"><div className="mx-auto max-w-5xl space-y-5">
+    <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-950 p-5 text-white">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-indigo-200">
+          {isAgencyPortal ? t("Agence de placement vérifiée", "Verified placement agency") : t("Organisation vérifiée", "Verified organisation")}
+        </p>
+        <h1 className="mt-1 text-2xl font-black">{organization?.name ?? (isAgencyPortal ? t("Espace agence", "Agency workspace") : t("Portail employeur", "Employer portal"))}</h1>
+        <p className="mt-1 text-sm text-slate-300">{organization?.country ?? ""} · {t("Retours soumis à validation 3M", "Feedback subject to 3M review")}</p>
+      </div>
+      <Button variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => { sessionStorage.removeItem(sessionKey); persistOrganization(null); setSessionToken(""); }}>
+        <LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}
+      </Button>
+    </header>
+    <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950">
+      <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p>
+      <p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p>
+    </section>
+    <nav className="grid grid-cols-3 gap-1 rounded-2xl border border-slate-200 bg-white p-1" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
+      {([
+        ["profiles", t("Profils", "Profiles"), BriefcaseBusiness],
+        ["team", t("Équipe", "Team"), UserRoundCog],
+        ["security", t("Sécurité", "Security"), LockKeyhole],
+      ] as const).map(([id, label, Icon]) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          data-testid={`partner-tab-${id}`}
+          aria-selected={workspaceTab === id}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-black transition ${workspaceTab === id ? "bg-[#0f2460] text-white" : "text-slate-600 hover:bg-slate-50"}`}
+          onClick={() => setWorkspaceTab(id)}
+        >
+          <Icon className="h-4 w-4" />{label}
+        </button>
+      ))}
+    </nav>
+    {workspaceTab === "security" && <section className="rounded-xl border border-slate-200 bg-white p-4" data-testid="partner-security-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{t("Authentification à deux facteurs", "Two-factor authentication")}</p><p className="text-sm text-slate-600">{totpStatus.data?.enabled ? t("Protection 2FA active pour les nouvelles connexions.", "2FA protection is active for new sign-ins.") : t("Configurez une application d’authentification pour protéger les prochaines connexions.", "Set up an authenticator app to protect future sign-ins.")}</p></div>{!totpStatus.data?.enabled && !qrDataUrl && <Button variant="outline" onClick={() => beginTotp.mutate({ sessionToken })}>{t("Configurer 2FA", "Set up 2FA")}</Button>}</div>{qrDataUrl && <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><img src={qrDataUrl} alt={t("QR code de configuration 2FA", "2FA setup QR code")} className="h-[220px] w-[220px] border bg-white p-2" /><div className="space-y-3"><Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code à six chiffres", "Six-digit code")} maxLength={32} /><Button disabled={!twoFactorCode || confirmTotp.isPending} onClick={() => confirmTotp.mutate({ sessionToken, code: twoFactorCode })}>{t("Confirmer et générer les codes", "Confirm and generate codes")}</Button></div></div>}{recoveryCodes.length > 0 && <div className="mt-4 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">{t("Codes de récupération — conservez-les hors ligne", "Recovery codes — store offline")}</p><p className="mt-1">{recoveryCodes.join(" · ")}</p></div>}</section>}
+    {workspaceTab === "team" && <section className="grid gap-4 lg:grid-cols-2" data-testid="partner-team-panel">
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3"><p className="flex items-center gap-2 font-bold text-slate-900"><Bell className="h-4 w-4 text-indigo-700" />{t("Notifications internes", "Internal notifications")} {unreadNotifications.length > 0 && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-800">{unreadNotifications.length}</span>}</p>{unreadNotifications.length > 0 && <Button size="sm" variant="outline" disabled={markAllNotificationsRead.isPending} onClick={() => markAllNotificationsRead.mutate({ sessionToken })}>{t("Tout marquer comme lu", "Mark all as read")}</Button>}</div>
         <p className="mt-1 text-xs text-slate-500">{t("Les notifications sont privées à leur destinataire et ne contiennent pas de données candidates sensibles.", "Notifications are private to their recipient and contain no sensitive candidate data.")}</p>
@@ -301,25 +385,25 @@ export default function EmployerPortal() {
         <p className="mt-1 text-xs text-slate-500">{isManager ? t("Les gestionnaires peuvent administrer les rôles et accès. Une suspension révoque immédiatement la session sans supprimer le compte.", "Managers can administer roles and access. A suspension immediately revokes the session without deleting the account.") : t("Les lecteurs peuvent consulter les partages reçus, sans action de gestion ni accès aux notes privées.", "Readers can view received shares, without management actions or access to private notes.")}</p>
         <div className="mt-3 space-y-2">{(collaborators.data?.collaborators ?? []).map(collaborator => <div key={collaborator.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 text-sm"><span>{collaborator.fullName} <span className={collaborator.status === "active" ? "text-emerald-700" : "text-amber-700"}>· {collaborator.status === "active" ? t("Actif", "Active") : t("Suspendu", "Suspended")}</span></span><div className="flex items-center gap-2"><Select value={collaborator.collaborationRole} disabled={!isManager || collaborator.status !== "active" || setCollaboratorRole.isPending} onValueChange={value => setCollaboratorRole.mutate({ sessionToken, collaboratorId: collaborator.id, role: value as "reader" | "manager" })}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reader">{t("Lecteur", "Reader")}</SelectItem><SelectItem value="manager">{t("Gestionnaire", "Manager")}</SelectItem></SelectContent></Select>{isManager && <Button size="sm" variant="outline" disabled={setCollaboratorAccess.isPending} onClick={() => setCollaboratorAccess.mutate({ sessionToken, collaboratorId: collaborator.id, active: collaborator.status !== "active" })}>{collaborator.status === "active" ? t("Suspendre", "Suspend") : t("Réactiver", "Reactivate")}</Button>}</div></div>)}</div>
       </div>
-    </section>
-    {isManager && <section className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      {isManager && <>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="flex items-center gap-2 font-bold text-slate-900"><ClipboardCheck className="h-4 w-4 text-indigo-700" />{t("Révision manuelle des accès suspendus", "Manual review of suspended access")}</p><p className="mt-1 text-xs text-slate-500">{t("Chaque décision est prise par un gestionnaire, enregistrée dans le journal, et ne supprime aucun compte.", "Each decision is made by a manager, recorded in the audit log, and never deletes an account.")}</p></div><span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900">{suspendedCollaborators.length} {t("à revoir", "to review")}</span></div>
         <div className="mt-3 space-y-2">{suspendedCollaborators.map(collaborator => <div key={collaborator.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><div><p className="font-medium text-amber-950">{collaborator.fullName}</p><p className="text-xs text-amber-900">{collaborator.collaborationRole === "manager" ? t("Gestionnaire suspendu", "Suspended manager") : t("Lecteur suspendu", "Suspended reader")}</p></div><Button size="sm" variant="outline" className="border-amber-300 bg-white" onClick={() => setReviewingCollaborator({ id: collaborator.id, fullName: collaborator.fullName })}>{t("Réviser l’accès", "Review access")}</Button></div>)}{suspendedCollaborators.length === 0 && <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{t("Aucun accès suspendu ne nécessite de révision.", "No suspended access requires review.")}</p>}</div>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-bold text-slate-900">{t("Journal d’activité filtrable", "Filterable activity log")}</p><p className="mt-1 text-xs text-slate-500">{t("Les filtres restent limités à votre organisation et aux métadonnées de gouvernance : aucun document, contact ou note privée n’est affiché.", "Filters remain limited to your organisation and governance metadata: no document, contact, or private note is displayed.")}</p></div><Button size="sm" variant="outline" disabled={collaborationActivity.isFetching} onClick={() => collaborationActivity.refetch()}><RefreshCw className={`mr-2 h-4 w-4 ${collaborationActivity.isFetching ? "animate-spin" : ""}`} />{t("Actualiser", "Refresh")}</Button></div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2"><Select value={auditRange} onValueChange={value => setAuditRange(value as CollaborationAuditRange)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="7d">{t("7 derniers jours", "Last 7 days")}</SelectItem><SelectItem value="30d">{t("30 derniers jours", "Last 30 days")}</SelectItem><SelectItem value="all">{t("Tout l’historique", "All history")}</SelectItem></SelectContent></Select><Select value={auditAction} onValueChange={value => setAuditAction(value as CollaborationAuditAction)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les actions", "All actions")}</SelectItem><SelectItem value="favorite_shared">{t("Favoris partagés", "Favourites shared")}</SelectItem><SelectItem value="favorite_share_revoked">{t("Partages révoqués", "Shares revoked")}</SelectItem><SelectItem value="collaborator_promoted">{t("Promotions gestionnaire", "Manager promotions")}</SelectItem><SelectItem value="collaborator_role_reader">{t("Rôles lecteur", "Reader roles")}</SelectItem><SelectItem value="collaborator_suspended">{t("Accès suspendus", "Access suspended")}</SelectItem><SelectItem value="collaborator_reactivated">{t("Accès réactivés", "Access reactivated")}</SelectItem><SelectItem value="collaborator_suspension_reviewed">{t("Suspensions revues", "Suspensions reviewed")}</SelectItem></SelectContent></Select><Select value={auditActor} onValueChange={setAuditActor}><SelectTrigger><SelectValue placeholder={t("Auteur", "Actor")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les auteurs", "All actors")}</SelectItem>{(collaborators.data?.collaborators ?? []).map(collaborator => <SelectItem key={collaborator.id} value={String(collaborator.id)}>{collaborator.fullName}</SelectItem>)}</SelectContent></Select><Select value={auditTarget} onValueChange={setAuditTarget}><SelectTrigger><SelectValue placeholder={t("Cible", "Target")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les cibles", "All targets")}</SelectItem>{(collaborators.data?.collaborators ?? []).map(collaborator => <SelectItem key={collaborator.id} value={String(collaborator.id)}>{collaborator.fullName}</SelectItem>)}</SelectContent></Select></div>
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">{collaborationActivity.isLoading ? <p className="text-sm text-slate-500">{t("Chargement du journal…", "Loading activity log…")}</p> : collaborationActivity.error ? <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-800">{t("Le journal ne peut pas être chargé pour le moment.", "The activity log cannot be loaded at this time.")}</p> : (collaborationActivity.data?.events ?? []).map(event => <div key={event.id} className="rounded-lg bg-slate-50 p-2 text-sm"><p className="font-medium text-slate-900">{collaborationActionLabel(event.action)}</p><p className="mt-1 text-xs text-slate-600">{event.actorName} {event.targetName ? `→ ${event.targetName}` : ""} · {new Date(event.createdAt).toLocaleString()}</p></div>)}{!collaborationActivity.isLoading && !collaborationActivity.error && (collaborationActivity.data?.events ?? []).length === 0 && <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{t("Aucun événement ne correspond aux filtres sélectionnés.", "No event matches the selected filters.")}</p>}</div>
       </div>
+      </>}
+      <AlertDialog open={Boolean(reviewingCollaborator)} onOpenChange={open => { if (!open && !reviewSuspendedCollaborator.isPending) setReviewingCollaborator(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t("Confirmer la révision d’accès", "Confirm access review")}</AlertDialogTitle><AlertDialogDescription>{t(`Décidez manuellement du maintien ou de la réactivation de l’accès de ${reviewingCollaborator?.fullName ?? "ce collaborateur"}. La décision sera journalisée ; aucune donnée candidate ni note privée ne sera ajoutée.`, `Manually decide whether to keep or reactivate access for ${reviewingCollaborator?.fullName ?? "this collaborator"}. The decision will be logged; no candidate data or private note will be added.`)}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={reviewSuspendedCollaborator.isPending}>{t("Annuler", "Cancel")}</AlertDialogCancel><Button variant="outline" disabled={reviewSuspendedCollaborator.isPending} onClick={() => reviewingCollaborator && reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "keep_suspended" })}>{t("Conserver la suspension", "Keep suspended")}</Button><AlertDialogAction disabled={reviewSuspendedCollaborator.isPending} onClick={event => { event.preventDefault(); if (reviewingCollaborator) reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "reactivate" }); }}>{t("Réactiver l’accès", "Reactivate access")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </section>}
-    <AlertDialog open={Boolean(reviewingCollaborator)} onOpenChange={open => { if (!open && !reviewSuspendedCollaborator.isPending) setReviewingCollaborator(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t("Confirmer la révision d’accès", "Confirm access review")}</AlertDialogTitle><AlertDialogDescription>{t(`Décidez manuellement du maintien ou de la réactivation de l’accès de ${reviewingCollaborator?.fullName ?? "ce collaborateur"}. La décision sera journalisée ; aucune donnée candidate ni note privée ne sera ajoutée.`, `Manually decide whether to keep or reactivate access for ${reviewingCollaborator?.fullName ?? "this collaborator"}. The decision will be logged; no candidate data or private note will be added.`)}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={reviewSuspendedCollaborator.isPending}>{t("Annuler", "Cancel")}</AlertDialogCancel><Button variant="outline" disabled={reviewSuspendedCollaborator.isPending} onClick={() => reviewingCollaborator && reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "keep_suspended" })}>{t("Conserver la suspension", "Keep suspended")}</Button><AlertDialogAction disabled={reviewSuspendedCollaborator.isPending} onClick={event => { event.preventDefault(); if (reviewingCollaborator) reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "reactivate" }); }}>{t("Réactiver l’accès", "Reactivate access")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-    {profiles.isLoading ? <p className="py-10 text-center text-slate-500">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</p> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <>
+    {workspaceTab === "profiles" && (profiles.isLoading ? <p className="py-10 text-center text-slate-500">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</p> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-6"><Select value={sector} onValueChange={setSector}><SelectTrigger><SelectValue placeholder={t("Métier / secteur", "Role / sector")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les secteurs", "All sectors")}</SelectItem>{sectors.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={language} onValueChange={setLanguage}><SelectTrigger><SelectValue placeholder={t("Langue", "Language")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les langues", "All languages")}</SelectItem>{languages.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder={t("Pays cible", "Target country")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les pays cibles", "All target countries")}</SelectItem>{countries.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={availability} onValueChange={setAvailability}><SelectTrigger><SelectValue placeholder={t("Disponibilité", "Availability")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes disponibilités", "All availability")}</SelectItem><SelectItem value="submitted">{t("Disponible pour examen", "Available for review")}</SelectItem></SelectContent></Select><Button variant={favoritesOnly ? "default" : "outline"} onClick={() => setFavoritesOnly(value => !value)}><Star className="mr-2 h-4 w-4" />{t("Favoris", "Favourites")}</Button><Button variant="outline" disabled={exportFavorites.isPending} onClick={() => exportFavorites.mutate({ sessionToken })}><Download className="mr-2 h-4 w-4" />{t("Exporter favoris", "Export favourites")}</Button></section>
       <p className="text-sm text-slate-600">{filteredProfiles.length} {t("profil(s) autorisé(s) selon les filtres sélectionnés.", "authorised profile(s) matching the selected filters.")}</p>
       <div className="grid gap-4 md:grid-cols-2">{filteredProfiles.map(row => <Card key={row.submissionId} className="border-slate-200"><CardHeader><div className="flex items-center justify-between gap-2"><CardTitle className="flex items-center gap-2 text-base"><BriefcaseBusiness className="h-4 w-4 text-indigo-700" />{row.profile.code}</CardTitle><Button size="icon" variant="ghost" aria-label={row.isFavorite ? t("Retirer des favoris", "Remove from favourites") : t("Ajouter aux favoris", "Add to favourites")} onClick={() => favorite.mutate({ sessionToken, submissionId: row.submissionId })}><Star className={`h-4 w-4 ${row.isFavorite ? "fill-amber-400 text-amber-500" : "text-slate-500"}`} /></Button></div><CardDescription>{row.profile.targetDestination} · {row.profile.targetProcedure}</CardDescription></CardHeader><CardContent className="space-y-3"><p className="text-sm leading-6 text-slate-700">{row.profile.summary}</p><div className="grid grid-cols-2 gap-2 text-xs"><span className="rounded bg-slate-100 p-2">{t("Secteur", "Sector")} : {row.profile.sector || t("Non précisé", "Not specified")}</span><span className="rounded bg-slate-100 p-2">{t("Expérience", "Experience")} : {row.profile.yearsExperience || t("Non précisée", "Not specified")}</span><span className="col-span-2 rounded bg-slate-100 p-2">{t("Langues", "Languages")} : {row.profile.languagesSummary || t("Non précisées", "Not specified")}</span></div>
         {row.sharedWithMe && <p className="rounded bg-indigo-50 p-2 text-xs text-indigo-800">{t(`Partagé par ${row.sharedWithMe.sharedByName}`, `Shared by ${row.sharedWithMe.sharedByName}`)}</p>}
         {row.isFavorite && <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3"><Textarea value={favoriteNotes[row.submissionId] ?? row.privateNote ?? ""} onChange={event => setFavoriteNotes({ ...favoriteNotes, [row.submissionId]: event.target.value })} placeholder={t("Note privée de votre organisation", "Private note for your organisation")} maxLength={2000} /><Button size="sm" variant="outline" disabled={saveFavoriteNote.isPending} onClick={() => saveFavoriteNote.mutate({ sessionToken, submissionId: row.submissionId, note: favoriteNotes[row.submissionId] ?? row.privateNote ?? "" })}>{t("Enregistrer la note privée", "Save private note")}</Button>{isManager && <div className="grid gap-2 sm:grid-cols-[1fr_auto]"><Select value={shareRecipient[row.submissionId] ?? "none"} onValueChange={value => setShareRecipient({ ...shareRecipient, [row.submissionId]: value })}><SelectTrigger><SelectValue placeholder={t("Partager avec un collaborateur", "Share with a collaborator")} /></SelectTrigger><SelectContent><SelectItem value="none">{t("Choisir un collaborateur", "Choose a collaborator")}</SelectItem>{(collaborators.data?.collaborators ?? []).map(collaborator => <SelectItem key={collaborator.id} value={String(collaborator.id)}>{collaborator.fullName}</SelectItem>)}</SelectContent></Select><Button size="sm" variant="outline" disabled={shareFavorite.isPending || !shareRecipient[row.submissionId] || shareRecipient[row.submissionId] === "none"} onClick={() => shareFavorite.mutate({ sessionToken, submissionId: row.submissionId, recipientEmployerAccountId: Number(shareRecipient[row.submissionId]) })}><Share2 className="mr-2 h-4 w-4" />{t("Partager", "Share")}</Button></div>}{row.outgoingShares.map(share => <div key={share.shareId} className="flex items-center justify-between rounded bg-white px-2 py-1 text-xs text-slate-700"><span>{t(`Partagé avec ${share.recipientName}`, `Shared with ${share.recipientName}`)}</span>{isManager && <Button size="sm" variant="ghost" onClick={() => revokeShare.mutate({ sessionToken, shareId: share.shareId })}><X className="mr-1 h-3 w-3" />{t("Révoquer", "Revoke")}</Button>}</div>)}</div>}
-        <Select value={decisions[row.submissionId] ?? row.status} onValueChange={value => setDecisions({ ...decisions, [row.submissionId]: value as Decision })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="under_review">{t("En revue", "Under review")}</SelectItem><SelectItem value="shortlisted">{t("Présélectionné", "Shortlisted")}</SelectItem><SelectItem value="selected">{t("Sélectionné", "Selected")}</SelectItem><SelectItem value="not_selected">{t("Non retenu", "Not selected")}</SelectItem><SelectItem value="documents_requested">{t("Pièces à demander", "Documents requested")}</SelectItem></SelectContent></Select><Textarea value={notes[row.submissionId] ?? ""} onChange={event => setNotes({ ...notes, [row.submissionId]: event.target.value })} placeholder={t("Commentaire pour l’équipe 3M (facultatif)", "Comment for the 3M team (optional)")} maxLength={2000} /><Button className="w-full bg-indigo-700 hover:bg-indigo-800" disabled={decision.isPending} onClick={() => decision.mutate({ sessionToken, submissionId: row.submissionId, decision: decisions[row.submissionId] ?? "under_review", note: notes[row.submissionId] || undefined })}>{t("Enregistrer le retour", "Save feedback")}</Button></CardContent></Card>)}{filteredProfiles.length === 0 && <p className="col-span-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-600">{t("Aucun profil autorisé ne correspond aux filtres sélectionnés.", "No authorised profile matches the selected filters.")}</p>}</div>
-    </>}</div></main>;
+        <Select value={decisions[row.submissionId] ?? row.status} onValueChange={value => setDecisions({ ...decisions, [row.submissionId]: value as Decision })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="under_review">{t("En revue", "Under review")}</SelectItem><SelectItem value="shortlisted">{t("Présélectionné", "Shortlisted")}</SelectItem><SelectItem value="selected">{t("Sélectionné", "Selected")}</SelectItem><SelectItem value="not_selected">{t("Non retenu", "Not selected")}</SelectItem><SelectItem value="documents_requested">{t("Pièces à demander", "Documents requested")}</SelectItem></SelectContent></Select><Textarea value={notes[row.submissionId] ?? ""} onChange={event => setNotes({ ...notes, [row.submissionId]: event.target.value })} placeholder={t("Commentaire pour l’équipe 3M (facultatif)", "Comment for the 3M team (optional)")} maxLength={2000} /><Button className="w-full bg-indigo-700 hover:bg-indigo-800" disabled={decision.isPending} onClick={() => decision.mutate({ sessionToken, submissionId: row.submissionId, decision: decisions[row.submissionId] ?? "under_review", note: notes[row.submissionId] || undefined })}>{t("Enregistrer le retour", "Save feedback")}</Button></CardContent></Card>)}{filteredProfiles.length === 0 && <p className="col-span-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-600">{t("Aucun profil autorisé ne correspond aux filtres sélectionnés. Les profils apparaissent après vérification et partage par 3M.", "No authorised profile matches the selected filters. Profiles appear after 3M verification and sharing.")}</p>}</div>
+    </div>)}</div></main>;
 }
