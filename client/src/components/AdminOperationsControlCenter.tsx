@@ -43,12 +43,12 @@ export function AdminOperationsControlCenter({ sessionToken, totalCandidates, pe
   const syncLabel = lastSyncedAt ? `Dernière synchronisation : ${lastSyncedAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "Synchronisation en attente";
 
   // Signaux « à faire aujourd'hui » tous domaines confondus : chacun relit une file déjà construite pour son propre écran,
-  // jamais un nouveau calcul ici. Rafraîchi toutes les 2 min ; un domaine en échec n'empêche pas d'afficher les autres.
+  // jamais un nouveau calcul ici. Actualisés à la demande ; un domaine en échec n'empêche pas d'afficher les autres.
   const enabled = Boolean(sessionToken);
-  const flightsDesk = trpc.flightFollowUp.deskOverview.useQuery({ sessionToken, days: 30 }, { enabled, retry: false, refetchInterval: 120_000 });
-  const documentsToRemind = trpc.documentFollowUp.listCandidatesToRemind.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
-  const reviewsToInvite = trpc.reviewInvites.listToInvite.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
-  const deletionRequests = trpc.candidatePrivacy.listDeletionRequests.useQuery({ sessionToken }, { enabled, retry: false, refetchInterval: 120_000 });
+  const flightsDesk = trpc.flightFollowUp.deskOverview.useQuery({ sessionToken, days: 30 }, { enabled, retry: false, refetchOnWindowFocus: false });
+  const documentsToRemind = trpc.documentFollowUp.listCandidatesToRemind.useQuery({ sessionToken }, { enabled, retry: false, refetchOnWindowFocus: false });
+  const reviewsToInvite = trpc.reviewInvites.listToInvite.useQuery({ sessionToken }, { enabled, retry: false, refetchOnWindowFocus: false });
+  const deletionRequests = trpc.candidatePrivacy.listDeletionRequests.useQuery({ sessionToken }, { enabled, retry: false, refetchOnWindowFocus: false });
   const flightsCount = flightsDesk.data ? flightsDesk.data.stale.length + flightsDesk.data.openChanges.length : undefined;
 
   return (

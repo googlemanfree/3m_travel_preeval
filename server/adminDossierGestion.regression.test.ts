@@ -24,11 +24,12 @@ describe("gestion des dossiers côté admin (sans mutation des données client)"
     expect(workspace).toContain("candidate.folderCode");
   });
 
-  it("poll le pilotage et les pré-dossiers avec horodatage", () => {
+  it("actualise le pilotage à la demande et conserve la sync des pré-dossiers", () => {
     const pilotage = read("client/src/components/AdminPilotageQueue.tsx");
-    expect(pilotage).toContain("adminDossierPolling(ADMIN_DOSSIER_POLL_MS)");
+    expect(pilotage).not.toContain("adminDossierPolling(ADMIN_DOSSIER_POLL_MS)");
+    expect(pilotage).toContain("refetchOnWindowFocus: false");
+    expect(pilotage).toContain("query.refetch()");
     expect(pilotage).toContain('data-testid="pilotage-sync"');
-    expect(pilotage).not.toContain("refetchInterval: 60_000");
 
     const predossier = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(predossier).toContain("adminDossierPolling(ADMIN_DOSSIER_POLL_MS)");

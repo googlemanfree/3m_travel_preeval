@@ -122,7 +122,7 @@ import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEval
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
 import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/adminProcedureJourney";
 import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
@@ -1278,7 +1278,7 @@ export default function AdminDashboard() {
       enabled: !!sessionToken,
       placeholderData: (previous) => previous,
       retry: 2,
-      ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS),
+      refetchOnWindowFocus: false,
     }
   );
   useEffect(() => {

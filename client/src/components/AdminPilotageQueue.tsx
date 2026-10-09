@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { formatAdminSyncTime } from "@shared/adminSync";
 
 type Category = "ready_to_activate" | "documents_to_review" | "stalled";
 type Item = { id: string; category: Category; openId: string; reference: string; fullName: string; title: string; detail: string; ageDays: number; severity: "high" | "medium" | "low"; count: number };
@@ -18,11 +18,11 @@ const SEVERITY_STYLE: Record<Item["severity"], string> = { high: "border-rose-30
 const SEVERITY_LABEL: Record<Item["severity"], string> = { high: "Urgent", medium: "À traiter", low: "Récent" };
 const PAGE = 12;
 
-/** File de pilotage prioritaire : ce qui attend une action de l'équipe, du plus urgent au moins urgent. Rafraîchie toutes les 30 s. */
+/** File de pilotage prioritaire : ce qui attend une action de l'équipe, du plus urgent au moins urgent. Actualisée à la demande. */
 export default function AdminPilotageQueue({ sessionToken, onOpen }: { sessionToken: string; onOpen: (openId: string) => void }) {
   const query = trpc.adminCandidateManagement.getPilotageQueue.useQuery(
     { sessionToken },
-    { enabled: Boolean(sessionToken), retry: false, ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS) },
+    { enabled: Boolean(sessionToken), retry: false, refetchOnWindowFocus: false },
   );
   const [filter, setFilter] = useState<Category | "all">("all");
   const [visible, setVisible] = useState(PAGE);
