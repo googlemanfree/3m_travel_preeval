@@ -31,4 +31,9 @@ describe("AdminCandidateKanban", () => {
     expect(getNextKanbanStatus("APPROVED")).toBeNull();
     expect(getNextKanbanStatus("unknown")).toBeNull();
   });
+
+  it("conserve les filtres combinés pour la recherche opérationnelle", () => {
+    expect(filterKanbanCandidates(candidates, "canada", "Paul").map((candidate) => candidate.id)).toEqual(["3"]);
+    expect(filterKanbanCandidates(candidates, "luxembourg", "ALL").map((candidate) => candidate.fullName)).toEqual(["B"]);
+  });
 });

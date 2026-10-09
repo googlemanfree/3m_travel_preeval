@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, ClipboardCheck, Download, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Download, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -180,11 +180,12 @@ export default function EmployerPortal() {
   };
 
   if (!sessionToken) {
-    return <main className="bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14"><div className="mx-auto max-w-lg space-y-4">
+    return <main className="reveal-on-scroll bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14"><div className="mx-auto max-w-lg space-y-4">
       <Card className="premium-surface overflow-hidden border-blue-100"><CardHeader><CardTitle className="flex items-center gap-2 text-[#071b3d]"><Building2 className="h-5 w-5 text-[#1463ff]" />{t("Portail employeur vérifié", "Verified employer portal")}</CardTitle><CardDescription>{t("Accès réservé aux organisations vérifiées par 3M TRAVEL AGENCY.", "Access is reserved for organisations verified by 3M TRAVEL AGENCY.")}</CardDescription></CardHeader><CardContent className="space-y-3">
-        <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} />
-        <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} />
+        <div className="relative"><Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} className="pr-10" />{email.trim() && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("E-mail renseigné", "Email entered")} />}</div>
+        <div className="relative"><Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} className="pr-10" />{password && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("Mot de passe renseigné", "Password entered")} />}</div>
         {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
+        <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" aria-live="polite"><span className={`h-2 w-2 rounded-full ${email.trim() && password ? "bg-emerald-500" : "bg-amber-400"}`} aria-hidden="true" />{email.trim() && password ? t("Formulaire prêt pour la vérification.", "Form ready for verification.") : t("Renseignez les deux champs pour continuer.", "Fill both fields to continue.")}</p>
         <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}><LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}</Button>
         <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
       </CardContent></Card>

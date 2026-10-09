@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { CheckCircle2, Circle, Sparkles, Target } from "lucide-react";
+import { CheckCircle2, Circle, Info, Sparkles, Target } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SELECTABLE_STAGE_COPY } from "@shared/talentCorridor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * Parcours « profil sélectionnable » — badge + checklist pour l’espace candidat.
@@ -60,10 +61,20 @@ export function SelectableProfileCard() {
             <Target className="h-5 w-5 text-indigo-700" />
             {lang === "en" ? "International selection readiness" : "Prêt pour la sélection internationale"}
           </CardTitle>
-          <Badge className={stage === "selectable" || stage === "shared" ? "bg-emerald-700 text-white" : "bg-slate-800 text-white"}>
-            <Sparkles className="mr-1 h-3 w-3" />
-            {copy.badge}
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge tabIndex={0} className={`cursor-help transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-indigo-600 ${stage === "selectable" || stage === "shared" ? "bg-emerald-700 text-white" : "bg-slate-800 text-white"}`}>
+                <Sparkles className="mr-1 h-3 w-3" />
+                {copy.badge}
+                <Info className="ml-1 h-3 w-3 opacity-80" aria-hidden="true" />
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-sm leading-5">
+              {lang === "en"
+                ? "This badge reflects the current readiness of your anonymised professional profile. 3M validates the assessment, destination, identity and consent before sharing a profile with a verified organisation."
+                : "Ce badge indique l’état actuel de préparation de votre profil professionnel anonymisé. 3M vérifie l’évaluation, la destination, l’identité et votre consentement avant tout partage avec une organisation vérifiée."}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <CardDescription>{copy.hint}</CardDescription>
       </CardHeader>

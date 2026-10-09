@@ -42,9 +42,13 @@ export default function PlacementPartnerPortal() {
           <Card className="border-white/20 bg-white/95"><CardHeader><CardTitle className="flex items-center gap-2 text-[#071b3d]"><ShieldCheck className="h-5 w-5 text-emerald-700" />Consentement vérifiable</CardTitle></CardHeader><CardContent className="text-sm leading-6 text-slate-600">Le candidat peut autoriser ou retirer le partage depuis son espace personnel.</CardContent></Card>
           <Card className="border-white/20 bg-white/95"><CardHeader><CardTitle className="flex items-center gap-2 text-[#071b3d]"><LockKeyhole className="h-5 w-5 text-amber-700" />Accès contrôlé</CardTitle></CardHeader><CardContent className="text-sm leading-6 text-slate-600">L’accès est créé par l’administration après vérification de l’organisation et remis par un canal approuvé.</CardContent></Card>
         </div>
-        <section className="rounded-2xl border border-white/20 bg-white p-5 text-slate-900 shadow-xl" aria-labelledby="partner-request-title">
+        <section className="reveal-on-scroll rounded-2xl border border-white/20 bg-white p-5 text-slate-900 shadow-xl" aria-labelledby="partner-request-title">
           <h2 id="partner-request-title" className="text-xl font-black text-[#071b3d]">Demander un accès partenaire</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">Votre demande est examinée manuellement. Aucun profil candidat n’est visible avant la vérification de votre organisation.</p>
+          <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3" aria-live="polite">
+            <div className="flex items-center justify-between gap-3 text-xs font-bold text-indigo-950"><span>Préparation de la demande</span><span>{[form.name, form.email, form.legalName, form.country, form.message].filter((value) => value.trim()).length}/5 champs renseignés</span></div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100"><div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${([form.name, form.email, form.legalName, form.country, form.message].filter((value) => value.trim()).length / 5) * 100}%` }} /></div>
+          </div>
           <form onSubmit={submit} className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="text-sm font-semibold">Nom du contact<Input required maxLength={200} value={form.name} onChange={(event) => update("name", event.target.value)} className="mt-1" /></label>
             <label className="text-sm font-semibold">E-mail professionnel<Input required type="email" maxLength={320} value={form.email} onChange={(event) => update("email", event.target.value)} className="mt-1" /></label>

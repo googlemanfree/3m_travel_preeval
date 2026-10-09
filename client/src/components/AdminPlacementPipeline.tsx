@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BriefcaseBusiness, Building2, Eye, FilePlus2, RefreshCw, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { BriefcaseBusiness, Building2, Eye, FilePlus2, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { POST_SELECTION_LABELS, POST_SELECTION_STAGES, nextPostSelectionStage, resolvePostSelectionStage, type PostSelectionStage } from "@shared/talentCorridor";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,9 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const [profile, setProfile] = useState({ candidateId: "", summary: "", targetDestination: "", targetProcedure: "", sector: "", yearsExperience: "", languagesSummary: "" });
   const [submission, setSubmission] = useState({ profileId: "", organizationId: "", adminNote: "" });
   const [lockedActions, setLockedActions] = useState<Record<string, boolean>>({});
+  const [postSelectionSearch, setPostSelectionSearch] = useState("");
+  const [postSelectionFilter, setPostSelectionFilter] = useState<"all" | PostSelectionStage>("all");
+  const [postSelectionSort, setPostSelectionSort] = useState<"recent" | "stage" | "organization">("recent");
   const lockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: false }));
   const listQuery = trpc.placementPortal.adminList.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
@@ -85,7 +88,8 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const orgsById = useMemo(() => new Map(organizations.map((row) => [row.id, row])), [organizations]);
 
   const postSelectionItems = useMemo(() => {
-    return submissions
+    const normalizedSearch = postSelectionSearch.trim().toLocaleLowerCase("fr-FR");
+    const items = submissions
       .map((row) => {
         const stage = resolvePostSelectionStage({
           status: row.status,
@@ -95,7 +99,18 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
         return { row, stage };
       })
       .filter((value): value is { row: (typeof submissions)[number]; stage: PostSelectionStage } => Boolean(value));
-  }, [submissions]);
+    const filtered = items.filter(({ row, stage }) => {
+      const profileRow = profilesById.get(row.profileId);
+      const orgRow = orgsById.get(row.organizationId);
+      const haystack = [profileRow?.profileCode, profileRow?.candidateId, orgRow?.legalName, stage, row.status].filter(Boolean).join(" ").toLocaleLowerCase("fr-FR");
+      return (postSelectionFilter === "all" || stage === postSelectionFilter) && (!normalizedSearch || haystack.includes(normalizedSearch));
+    });
+    return filtered.sort((a, b) => {
+      if (postSelectionSort === "stage") return POST_SELECTION_STAGES.indexOf(a.stage) - POST_SELECTION_STAGES.indexOf(b.stage);
+      if (postSelectionSort === "organization") return String(orgsById.get(a.row.organizationId)?.legalName ?? "").localeCompare(String(orgsById.get(b.row.organizationId)?.legalName ?? ""), "fr");
+      return Number(b.row.id) - Number(a.row.id);
+    });
+  }, [orgsById, postSelectionFilter, postSelectionSearch, postSelectionSort, profilesById, submissions]);
 
   const byStage = useMemo(() => {
     const map = Object.fromEntries(POST_SELECTION_STAGES.map((stage) => [stage, [] as typeof postSelectionItems])) as Record<PostSelectionStage, typeof postSelectionItems>;
@@ -149,6 +164,22 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
         <p className="mt-1 text-sm text-emerald-900">
           Après sélection partenaire : confirmer contrat + lettre d’invitation, ouvrir le Protocole N°02 sur la fiche 360°, puis engager la procédure visa.
         </p>
+        <div className="mt-4 grid gap-2 rounded-xl border border-emerald-200 bg-white/80 p-3 md:grid-cols-[minmax(0,1fr)_auto_auto]" aria-label="Recherche et tri de la file post-sélection">
+          <label className="relative block">
+            <span className="sr-only">Rechercher un profil ou une organisation</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <Input value={postSelectionSearch} onChange={(event) => setPostSelectionSearch(event.target.value)} placeholder="Rechercher profil, candidat ou organisation…" className="h-10 bg-white pl-9" />
+          </label>
+          <Select value={postSelectionFilter} onValueChange={(value) => setPostSelectionFilter(value as "all" | PostSelectionStage)}>
+            <SelectTrigger className="h-10 min-w-44 bg-white" aria-label="Filtrer par étape"><SelectValue placeholder="Toutes les étapes" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Toutes les étapes</SelectItem>{POST_SELECTION_STAGES.map((stage) => <SelectItem key={stage} value={stage}>{POST_SELECTION_LABELS[stage].fr}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={postSelectionSort} onValueChange={(value) => setPostSelectionSort(value as "recent" | "stage" | "organization")}>
+            <SelectTrigger className="h-10 min-w-44 bg-white" aria-label="Trier la file"><SelectValue placeholder="Tri" /></SelectTrigger>
+            <SelectContent><SelectItem value="recent">Plus récents</SelectItem><SelectItem value="stage">Par étape</SelectItem><SelectItem value="organization">Par organisation</SelectItem></SelectContent>
+          </Select>
+        </div>
+        <p className="mt-2 text-xs font-semibold text-emerald-900" aria-live="polite">{postSelectionItems.length} dossier(s) correspondent aux critères.</p>
         <div className="mt-4 grid gap-3 lg:grid-cols-4">
           {POST_SELECTION_STAGES.map((stage) => (
             <div key={stage} className="rounded-xl border border-emerald-100 bg-white p-3">

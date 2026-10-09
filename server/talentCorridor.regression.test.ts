@@ -61,6 +61,17 @@ describe("corridor de talents — 4 interfaces", () => {
     expect(read("drizzle/placementPortalSchema.ts")).toContain("adminPipelineStage");
   });
 
+  it("expose les contrôles UX du corridor sans divulguer de données privées", () => {
+    const kanban = read("client/src/components/AdminPlacementPipeline.tsx");
+    expect(kanban).toContain("postSelectionSearch");
+    expect(kanban).toContain("postSelectionFilter");
+    expect(kanban).toContain("postSelectionSort");
+    expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain("Préparation de la demande");
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain("Formulaire prêt pour la vérification");
+    expect(read("client/src/components/SelectableProfileCard.tsx")).toContain("TooltipContent");
+    expect(read("client/src/index.css")).toContain("reveal-on-scroll");
+  });
+
   it("indexe les landings corridor pour la découverte internationale", () => {
     const prerender = read("server/publicPrerender.ts");
     expect(prerender).toContain('"/partenaires"');
