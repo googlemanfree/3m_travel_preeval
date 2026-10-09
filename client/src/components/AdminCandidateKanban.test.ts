@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterKanbanCandidates, getDeadlineExplanation, getDeadlineLevel, type KanbanCandidate } from "./AdminCandidateKanban";
+import { filterKanbanCandidates, getDeadlineExplanation, getDeadlineLevel, getNextKanbanStatus, type KanbanCandidate } from "./AdminCandidateKanban";
 
 const candidates: KanbanCandidate[] = [
   { id: "1", fullName: "A", folderCode: "A", destinationCountry: "canada", projectType: "travail", status: "PENDING_48H", source: "WEB", advisorName: "Nadia" },
@@ -23,5 +23,12 @@ describe("AdminCandidateKanban", () => {
     expect(getDeadlineLevel("not-a-date", now)).toBe("invalid");
     expect(getDeadlineExplanation("2026-08-26T20:00:00.000Z", now)).toContain("moins de 24 heures");
     expect(getDeadlineExplanation(undefined, now)).toContain("Aucune date métier");
+  });
+
+  it("calcule l’étape suivante et bloque l’avancement à l’étape finale", () => {
+    expect(getNextKanbanStatus("PENDING_48H")).toBe("PUBLISHED");
+    expect(getNextKanbanStatus("DOCUMENTS_CHECK")).toBe("SUBMITTED");
+    expect(getNextKanbanStatus("APPROVED")).toBeNull();
+    expect(getNextKanbanStatus("unknown")).toBeNull();
   });
 });

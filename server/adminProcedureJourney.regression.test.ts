@@ -24,6 +24,16 @@ describe("admin étapes dynamiques par pays", () => {
     expect(kanban).not.toContain('label: "Soumission consulaire"');
   });
 
+  it("propose l’avancement rapide avec la mutation admin sécurisée", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    const kanban = read("client/src/components/AdminCandidateKanban.tsx");
+    expect(dashboard).toContain("handleKanbanAdvance");
+    expect(dashboard).toContain("mutateAsync({ sessionToken, candidateId: candidate.id");
+    expect(kanban).toContain('data-testid="kanban-advance-button"');
+    expect(kanban).toContain("Étape suivante");
+    expect(kanban).toContain("Étape finale atteinte");
+  });
+
   it("évite les faux bouchons paiement / protocole déjà validés en 360°", () => {
     const workspace = read("client/src/components/Candidate360Workspace.tsx");
     expect(workspace).toContain("paymentConfirmed");
