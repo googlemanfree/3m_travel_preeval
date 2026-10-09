@@ -1474,6 +1474,32 @@ export const adminCandidateManagementRouter = router({
       }
       return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
     }),
+  resendAgreementSignatureReminder: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^online_\d+$/) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference || reference.source !== "online") throw new TRPCError({ code: "BAD_REQUEST", message: "Dossier en ligne requis pour cette relance." });
+      const [application] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, destination: applications.destination, paymentStatus: applications.paymentStatus, agreementSigned: applications.agreementSigned }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+      if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
+      if (application.agreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
+      if (!application.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+      const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+      const safeName = escapeAgreementHtml(application.fullName);
+      const safeDossier = escapeAgreementHtml(application.dossierNumber);
+      const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Rappel : signature de votre protocole d’accord</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre paiement est confirmé, mais votre protocole d’accord n’est pas encore signé. Pour poursuivre votre dossier <strong>${safeDossier}</strong>, connectez-vous à votre espace client et finalisez la signature.</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl}/mon-espace" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Ouvrir mon espace client</a></p><p style="font-size:12px;color:#64748b">Ne répondez pas avec des informations bancaires. L’équipe 3M TRAVEL AGENCY reste disponible pour vous accompagner.</p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY — Yaoundé, Cameroun · hello@3mtravelagency.com</div></div></body></html>`;
+      try {
+        await sendGenericEmail({ to: application.email, subject: `Rappel — signature du protocole ${application.dossierNumber}`, html });
+      } catch (error) {
+        console.error("[Agreement reminder] Email delivery failed", { dossierNumber: application.dossierNumber, error });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La relance n’a pas pu être envoyée. Vérifiez le service e-mail et réessayez." });
+      }
+      await db.insert(paymentAuditLogs).values({ adminName: admin.email || "Administrateur", adminEmail: admin.email || "", action: "agreement_signature_reminder_sent", paymentId: application.id, candidateEmail: application.email, amount: "", details: `Relance de signature du protocole envoyée pour ${application.dossierNumber}.` });
+      return { success: true, dossierNumber: application.dossierNumber, email: application.email };
+    }),
   // Liste de rattrapage : dossiers en ligne dont le paiement est confirme mais dont le
   // Protocole d'Accord N01 n'a pas encore ete signe (bug historique corrige cote candidat.ts :
   // certains dossiers plus anciens restent a regulariser manuellement depuis le back-office).
