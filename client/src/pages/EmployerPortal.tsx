@@ -237,7 +237,7 @@ export default function EmployerPortal() {
               <CardContent className="p-5 sm:p-6">
                 <B2bPartnerRegistrationForm
                   defaultOrganizationType={portalDefaults.organizationType}
-                  onSubmitted={() => selectAuthTab("login")}
+                  onContinueToLogin={() => selectAuthTab("login")}
                 />
                 <p className="mt-4 text-center text-xs text-slate-500">
                   {t("Agence de placement ?", "Placement agency?")}{" "}

@@ -1,5 +1,6 @@
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, LockKeyhole, ShieldCheck, UsersRound } from "lucide-react";
 import { B2bPartnerRegistrationForm } from "@/components/B2bPartnerRegistrationForm";
+import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PlacementPartnerPortal() {
@@ -16,7 +17,7 @@ export default function PlacementPartnerPortal() {
             <a href="#inscription-agence" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 font-black text-[#071b3d] transition hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               S’identifier à l’inscription <ArrowRight className="h-5 w-5" />
             </a>
-            <a href="/employeurs?portal=placement_partner&tab=login" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-5 py-3 font-black text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <a href={`${CORRIDOR_ROUTES.employersLogin}&portal=placement_partner`} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-5 py-3 font-black text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               <LockKeyhole className="h-5 w-5" /> Déjà partenaire — se connecter
             </a>
           </div>

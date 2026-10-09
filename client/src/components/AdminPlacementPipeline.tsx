@@ -185,6 +185,13 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
           </div>
           <Badge className="bg-violet-100 text-violet-900">{openAccessRequests.length} ouverte(s)</Badge>
         </div>
+        {issuedAccess && (
+          <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
+            <p className="font-bold">Identifiants à remettre maintenant</p>
+            <p className="mt-1">{issuedAccess.email}</p>
+            <code className="mt-2 block select-all rounded bg-white p-2 font-mono text-sm">{issuedAccess.temporaryPassword}</code>
+          </div>
+        )}
         {openAccessRequests.length === 0 ? (
           <p className="mt-3 rounded-lg bg-white/80 p-3 text-sm text-slate-600">Aucune demande d’inscription en attente.</p>
         ) : (

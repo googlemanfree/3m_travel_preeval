@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
+  adminNotifications,
   candidatePlacementConsents,
   candidates,
   placementAccessRequests,
@@ -19,6 +20,8 @@ import {
 } from "../../drizzle/schema";
 import { computeSelectableStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
+import { sendEmail } from "../_core/email";
+import { logger } from "../_core/logger";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
@@ -189,9 +192,37 @@ export const placementPortalRouter = router({
         message: input.message,
         status: "pending",
       });
+      const requestId = Number((result as any)[0]?.insertId ?? 0);
+      const orgKind = input.organizationType === "placement_partner" ? "Agence de placement" : "Employeur international";
+      try {
+        await db.insert(adminNotifications).values({
+          type: "new_contact_message",
+          title: "Nouvelle inscription partenaire B2B",
+          message: `${orgKind} — ${input.legalName} (${input.country}) — ${input.contactFullName} <${email}>`,
+          relatedId: String(requestId || email),
+          targetAdminType: "accompagnement",
+        });
+      } catch (notifyError) {
+        logger.error("placement_portal.admin_notification_failed", { requestId, email }, notifyError);
+      }
+      const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      try {
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `Nouvelle identification B2B — ${orgKind} — ${input.legalName}`,
+          html: `<p><strong>${esc(orgKind)}</strong> : ${esc(input.legalName)} (${esc(input.country)})</p>
+<p>Contact : ${esc(input.contactFullName)} — ${esc(input.contactRole)}<br>E-mail : ${esc(email)}<br>Tél. : ${esc(input.contactPhone)}</p>
+${input.registrationNumber ? `<p>Enregistrement : ${esc(input.registrationNumber)}</p>` : ""}
+${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarkets].filter(Boolean).map(esc).join(" · ")}</p>` : ""}
+<p>${esc(input.message)}</p>
+<p>Revue dans l’admin → Pilotage de placement international.</p>`,
+        });
+      } catch (mailError) {
+        logger.error("placement_portal.team_mail_failed", { requestId, email }, mailError);
+      }
       resetLoginAttempts(`partner-access:${email}`);
       return {
-        requestId: Number((result as any)[0]?.insertId ?? 0),
+        requestId,
         message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie votre organisation avant de remettre un accès.",
       };
     } catch (error) {
