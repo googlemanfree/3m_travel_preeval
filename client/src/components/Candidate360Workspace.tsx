@@ -364,11 +364,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   };
   const paymentSnapshot: any = data.payments?.[0] ?? null;
   const agreementState: any = (data as any).agreement ?? (data as any).protocol ?? null;
+  const paymentConfirmed = ["SUCCESS", "success", "completed", "paid", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const protocolSigned = Boolean(agreementState?.signed || agreementState?.agreementSigned || agreementState?.signedAt || agreementState?.agreementSignedAt);
+  // Prérequis déjà validés = verts (plus de faux bouchons paiement / protocole / évaluation).
   const coherenceChecks = [
     { label: "CV exploitable", ok: Boolean(candidateCv?.documentUrl), detail: candidateCv?.fileName || "Aucun CV rattaché" },
     { label: "Évaluation validée", ok: evaluationAlreadyValidated, detail: evaluationAlreadyValidated ? `Validée par ${evaluationValidatedBy}` : "Validation conseiller requise" },
-    { label: "Paiement confirmé", ok: paymentSnapshot?.status === "SUCCESS" || paymentSnapshot?.status === "completed" || paymentSnapshot?.status === "paid", detail: paymentSnapshot?.status ? `État : ${paymentSnapshot.status}` : "Aucun paiement confirmé" },
-    { label: "Protocole", ok: Boolean(agreementState?.signedAt || agreementState?.agreementSignedAt), detail: agreementState?.signedAt || agreementState?.agreementSignedAt ? "Signé" : "À vérifier avant la suite" },
+    { label: "Paiement confirmé", ok: paymentConfirmed, detail: paymentConfirmed ? `Confirmé (${paymentSnapshot?.status})` : (paymentSnapshot?.status ? `État : ${paymentSnapshot.status}` : "Aucun paiement confirmé") },
+    { label: "Protocole", ok: protocolSigned, detail: protocolSigned ? "Signé" : "À signer dans l’espace client après paiement" },
     { label: "Pièces requises", ok: pendingRequirements.length === 0, detail: pendingRequirements.length ? `${pendingRequirements.length} pièce(s) à compléter` : "Checklist complète" },
   ];
   const dueState = operationalCase.dueAt ? (new Date(operationalCase.dueAt).getTime() < Date.now() ? "overdue" : new Date(operationalCase.dueAt).getTime() - Date.now() <= 24 * 60 * 60 * 1000 ? "soon" : "scheduled") : "unset";

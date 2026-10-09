@@ -24,6 +24,7 @@ import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/cand
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
+import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -1765,7 +1766,18 @@ export const adminRouter = router({
           }));
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
-        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts];
+        // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
+        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts].map((row) => ({
+          ...row,
+          procedureJourney: buildAdminProcedureSnapshot({
+            destination: row.destinationCountry,
+            visaType: row.projectType,
+            procedureLabel: row.projectType,
+            internalStatus: row.internalStatus,
+            paymentStatus: row.paymentStatus,
+            evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
+          }),
+        }));
         const availableDestinations = Array.from(
           new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b, "fr"));

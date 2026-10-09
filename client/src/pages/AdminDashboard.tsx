@@ -123,6 +123,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
+import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/adminProcedureJourney";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -161,6 +162,7 @@ interface Candidate {
   dueAt?: Date | string | null;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
   procedureStep?: string;
+  procedureJourney?: AdminProcedureSnapshot;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -201,8 +203,13 @@ const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: R
 const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
 const PAYMENT_STATUS_LABELS: Record<string, string> = { SUCCESS: "Payé", PENDING: "En attente", FAILED: "Échec", CANCELLED: "Annulé", NOT_PAID: "Non payé" };
 const PAYMENT_STATUS_BADGE_CLASSES: Record<string, string> = { SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-800", PENDING: "border-amber-200 bg-amber-50 text-amber-800", FAILED: "border-rose-200 bg-rose-50 text-rose-800", CANCELLED: "border-slate-300 bg-slate-100 text-slate-700", NOT_PAID: "border-slate-300 bg-white text-slate-700" };
-const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation à traiter", PUBLISHED: "Bilan / paiement", DOCUMENTS_CHECK: "Collecte documents", SUBMITTED: "Soumission consulaire", APPROVED: "Visa accordé" };
+const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation / qualification", PUBLISHED: "Bilan & paiement d’ouverture", DOCUMENTS_CHECK: "Documents de la procédure", SUBMITTED: "Dépôt / soumission officielle", APPROVED: "Décision finale" };
 const PROCEDURE_STEP_BADGE_CLASSES: Record<string, string> = { PENDING_48H: "border-violet-200 bg-violet-50 text-violet-800", PUBLISHED: "border-amber-200 bg-amber-50 text-amber-800", DOCUMENTS_CHECK: "border-blue-200 bg-blue-50 text-blue-800", SUBMITTED: "border-indigo-200 bg-indigo-50 text-indigo-800", APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800" };
+
+function procedureStageLabel(candidate: Candidate, stage: string): string {
+  const fromJourney = candidate.procedureJourney?.stageLabels?.[stage as keyof NonNullable<AdminProcedureSnapshot["stageLabels"]>];
+  return fromJourney || PROCEDURE_STEP_LABELS[stage] || stage;
+}
 
 function getNextAdminStatus(status?: string): AdminStatus | null {
   const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
@@ -1428,7 +1435,7 @@ export default function AdminDashboard() {
     const slaHours = status === "PENDING_48H" ? 48 : status === "PUBLISHED" ? 72 : 120;
     const dueAt = candidate.dueAt ?? (referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null);
     const history = [{ status, label: STATUS_CONFIG[status]?.label ?? status, at: candidate.lastStatusUpdateAt ?? candidate.updatedAt }, ...(candidate.createdAt ? [{ status: "created", label: "Dossier créé", at: candidate.createdAt }] : [])];
-    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history, paymentStatus: candidate.paymentStatus ?? null, activationStatus: candidate.activationStatus ?? null, procedureStep: candidate.procedureStep ?? null };
+    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history, paymentStatus: candidate.paymentStatus ?? null, activationStatus: candidate.activationStatus ?? null, procedureStep: candidate.procedureStep ?? null, procedureJourney: candidate.procedureJourney ?? null };
   });
   const handleKanbanMove = (candidate: KanbanCandidate, newStatus: AdminStatus) => {
     if (!sessionToken || candidate.status === newStatus || updateKanbanStatusMutation.isPending) return;
@@ -2447,7 +2454,7 @@ export default function AdminDashboard() {
             <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
               {Object.entries(pendingInlineChanges).map(([candidateId, changes]) => {
                 const candidate = candidates.find((item) => String(item.id) === candidateId);
-                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep}</strong></p>}</div></div>;
+                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{candidate ? procedureStageLabel(candidate, changes.procedureStep) : (PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep)}</strong></p>}</div></div>;
               })}
             </div>
             <DialogFooter>
@@ -2672,7 +2679,37 @@ export default function AdminDashboard() {
                         {(() => { const pendingPayment = pendingInlineChanges[candidate.id]?.paymentStatus; const paymentStatus = pendingPayment ?? candidate.paymentStatus ?? "NOT_PAID"; return <div className="flex min-w-[128px] flex-col items-start gap-1"><span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PAYMENT_STATUS_BADGE_CLASSES[paymentStatus] ?? PAYMENT_STATUS_BADGE_CLASSES.NOT_PAID}`}>{PAYMENT_STATUS_LABELS[paymentStatus] ?? "Non payé"}{pendingPayment && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={paymentStatus} onValueChange={(value) => queueInlineChange(candidate.id, "paymentStatus", value)}><SelectTrigger aria-label={`Modifier le statut du paiement de ${candidate.fullName}`} className="h-8 w-full min-w-[128px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        {(() => { const currentStep = candidate.procedureStep ?? candidate.status; const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep; const procedureStep = pendingStep ?? currentStep; return <div className="flex min-w-[160px] flex-col items-start gap-1"><span className={`inline-flex max-w-[180px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>{PROCEDURE_STEP_LABELS[procedureStep] ?? procedureStep}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}><SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
+                        {(() => {
+                          const currentStep = candidate.procedureStep ?? candidate.status;
+                          const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep;
+                          const procedureStep = pendingStep ?? currentStep;
+                          const journey = candidate.procedureJourney;
+                          return (
+                            <div className="flex min-w-[180px] flex-col items-start gap-1" data-testid="admin-procedure-journey">
+                              {journey?.stepLabel && (
+                                <span className="max-w-[200px] text-[10px] font-semibold leading-tight text-slate-700" title={journey.journeyTitle}>
+                                  {journey.stepNumber != null ? `${journey.stepNumber}/${journey.stepCount} · ` : ""}{journey.stepLabel}
+                                </span>
+                              )}
+                              {journey?.nextStepLabel && (
+                                <span className="max-w-[200px] text-[10px] text-slate-500">Suite : {journey.nextStepLabel}</span>
+                              )}
+                              <span className={`inline-flex max-w-[200px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>
+                                {procedureStageLabel(candidate, procedureStep)}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}
+                              </span>
+                              <Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}>
+                                <SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold">
+                                  <SelectValue placeholder="Choisir" />
+                                </SelectTrigger>
+                                <SelectContent className="z-[120]">
+                                  {ADMIN_OPERATIONAL_STAGES.map((value) => (
+                                    <SelectItem key={value} value={value}>{procedureStageLabel(candidate, value)}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
