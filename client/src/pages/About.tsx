@@ -92,11 +92,11 @@ export default function About() {
                 src={FOUNDER.imageJpg}
                 alt={FOUNDER.alt}
                 title={`${FOUNDER.name} — ${FOUNDER.role}, ${FOUNDER.organization}`}
-                width={1769}
-                height={2048}
+                width={1152}
+                height={864}
                 loading="eager"
                 decoding="async"
-                className="aspect-[7/8] h-auto w-full object-cover object-[center_18%]"
+                className="aspect-[4/3] h-auto w-full object-cover object-center"
               />
             </picture>
             <figcaption className="border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
