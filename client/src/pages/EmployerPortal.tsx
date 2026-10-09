@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, ClipboardCheck, Download, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, ClipboardCheck, Download, Globe2, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { B2B_AUDIENCE_COPY, B2B_ROUTES, type B2bAudience } from "@shared/b2bPartnerPortals";
+import { B2bPartnerAccessRequestForm } from "@/components/B2bPartnerAccessRequestForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,18 +14,30 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 
 const sessionKey = "3m_placement_employer_session";
+const audienceKey = "3m_placement_employer_audience";
 type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "documents_requested";
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 
-export default function EmployerPortal() {
-  const { t } = useLanguage();
+type Props = { audience?: B2bAudience };
+
+export default function EmployerPortal({ audience = "employer" }: Props) {
+  const { t, language: uiLanguage } = useLanguage();
+  const copy = B2B_AUDIENCE_COPY[audience][uiLanguage === "en" ? "en" : "fr"];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => sessionStorage.getItem(sessionKey) ?? "");
-  const [organization, setOrganization] = useState<{ name: string; country: string } | null>(null);
+  const [activeAudience, setActiveAudience] = useState<B2bAudience>(() => (sessionStorage.getItem(audienceKey) as B2bAudience | null) ?? audience);
+  const [organization, setOrganization] = useState<{ name: string; country: string; organizationType?: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#connexion") {
+      document.getElementById("connexion")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [favoriteNotes, setFavoriteNotes] = useState<Record<number, string>>({});
   const [shareRecipient, setShareRecipient] = useState<Record<number, string>>({});
@@ -44,9 +58,12 @@ export default function EmployerPortal() {
 
   const login = trpc.placementPortal.employerLogin.useMutation({
     onSuccess: result => {
+      const nextAudience = (result.audience as B2bAudience | undefined) ?? audience;
       sessionStorage.setItem(sessionKey, result.sessionToken);
+      sessionStorage.setItem(audienceKey, nextAudience);
       setSessionToken(result.sessionToken);
       setOrganization(result.organization);
+      setActiveAudience(nextAudience);
       setNeedsTwoFactor(false);
       setTwoFactorCode("");
       toast.success(t("Accès organisation vérifié.", "Verified organisation access."));
@@ -72,7 +89,16 @@ export default function EmployerPortal() {
   }), [auditAction, auditActor, auditRange, auditTarget, sessionToken]);
   const collaborationActivity = trpc.placementPortal.employerCollaborationActivity.useQuery(auditFilters, { enabled: Boolean(sessionToken) && collaborators.data?.currentRole === "manager", retry: false });
   const decision = trpc.placementPortal.employerRecordDecision.useMutation({
-    onSuccess: async result => { toast.success(result.message); await utils.placementPortal.employerProfiles.invalidate(); },
+    onSuccess: async result => {
+      toast.success(result.message);
+      if (result.protocolTwoSuggested) {
+        toast.info(t(
+          "Prochaine étape côté 3M : activer le Protocole N°02 (employeur + poste) sur la fiche 360° du candidat.",
+          "Next 3M step: activate Protocol No. 02 (employer + role) on the candidate’s 360° file.",
+        ));
+      }
+      await utils.placementPortal.employerProfiles.invalidate();
+    },
     onError: error => toast.error(t("Retour non enregistré", "Feedback not recorded"), { description: error.message }),
   });
   const favorite = trpc.placementPortal.employerToggleFavorite.useMutation({
@@ -179,21 +205,91 @@ export default function EmployerPortal() {
     return t(fr, en);
   };
 
+  const portalCopy = B2B_AUDIENCE_COPY[activeAudience][uiLanguage === "en" ? "en" : "fr"];
+  const alternateHref = audience === "employer" ? B2B_ROUTES.agencies : B2B_ROUTES.employers;
+  const alternateLabel = audience === "employer"
+    ? t("Espace agences de placement", "Placement agency workspace")
+    : t("Espace employeurs internationaux", "International employer workspace");
+
   if (!sessionToken) {
-    return <main className="bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14"><div className="mx-auto max-w-lg space-y-4">
-      <Card className="premium-surface overflow-hidden border-blue-100"><CardHeader><CardTitle className="flex items-center gap-2 text-[#071b3d]"><Building2 className="h-5 w-5 text-[#1463ff]" />{t("Portail employeur vérifié", "Verified employer portal")}</CardTitle><CardDescription>{t("Accès réservé aux organisations vérifiées par 3M TRAVEL AGENCY.", "Access is reserved for organisations verified by 3M TRAVEL AGENCY.")}</CardDescription></CardHeader><CardContent className="space-y-3">
-        <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} />
-        <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} />
-        {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
-        <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}><LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}</Button>
-        <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
-      </CardContent></Card>
-      <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]"><p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p><p className="mt-1 text-slate-600">{t("Les volumes de profils vérifiés, taux de placement et délais moyens ne sont pas publiés tant qu’une série de données vérifiable, datée et méthodologiquement définie n’est pas disponible.", "Verified profile volumes, placement rates and average times are not published until a verifiable, dated and methodologically defined data series is available.")}</p></section>
-    </div></main>;
+    return (
+      <main className="bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.28),_transparent_28rem),linear-gradient(145deg,_#071b3d_0%,_#0b2f6f_100%)] px-4 py-10 sm:py-14">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <header className="max-w-3xl text-white">
+            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-sky-200">
+              <Globe2 className="h-4 w-4" aria-hidden="true" />
+              {t("Partenaires vérifiés · Europe · Amériques · Asie", "Verified partners · Europe · Americas · Asia")}
+            </p>
+            <h1 className="mt-3 text-3xl font-black sm:text-4xl">{copy.portalTitle}</h1>
+            <p className="mt-3 text-base leading-7 text-sky-100">{copy.portalSubtitle}</p>
+            <p className="mt-4 text-sm leading-6 text-sky-50/90">{copy.poolHint}</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a href="#connexion" className="inline-flex h-11 items-center rounded-xl bg-white px-4 text-sm font-bold text-[#071b3d] hover:bg-sky-50">{copy.ctaLogin}</a>
+              <a href="#demande-acces" className="inline-flex h-11 items-center rounded-xl border border-white/40 px-4 text-sm font-bold text-white hover:bg-white/10">{copy.ctaRequest}</a>
+              <a href={alternateHref} className="inline-flex h-11 items-center rounded-xl px-4 text-sm font-semibold text-sky-100 underline-offset-4 hover:underline">{alternateLabel}</a>
+            </div>
+          </header>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: t("Vérification humaine", "Human verification"),
+                body: t("Aucun accès automatique. 3M valide chaque organisation avant de remettre des identifiants.", "No automatic access. 3M validates every organisation before issuing credentials."),
+              },
+              {
+                title: copy.poolLabel,
+                body: copy.poolHint,
+              },
+              {
+                title: t("Consentement + anonymisation", "Consent + anonymisation"),
+                body: t("Seuls les profils consentis et anonymisés sont présentés. Aucun CV brut ni contact candidat.", "Only consented, anonymised profiles are shown. No raw CV or candidate contact details."),
+              },
+            ].map((item) => (
+              <section key={item.title} className="rounded-2xl border border-white/20 bg-white/95 p-5 text-[#071b3d]">
+                <p className="font-black">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+              </section>
+            ))}
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div id="connexion" className="scroll-mt-24 space-y-4">
+              <Card className="premium-surface overflow-hidden border-blue-100" data-testid="b2b-partner-login">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[#071b3d]">
+                    {audience === "employer" ? <Building2 className="h-5 w-5 text-[#1463ff]" /> : <BriefcaseBusiness className="h-5 w-5 text-[#1463ff]" />}
+                    {audience === "employer" ? t("Portail employeur vérifié", "Verified employer portal") : t("Portail agence vérifié", "Verified agency portal")}
+                  </CardTitle>
+                  <CardDescription>{t("Accès réservé aux organisations vérifiées par 3M TRAVEL AGENCY.", "Access is reserved for organisations verified by 3M TRAVEL AGENCY.")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} />
+                  <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} />
+                  {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
+                  <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}>
+                    <LockKeyhole className="mr-2 h-4 w-4" />
+                    {login.isPending ? t("Vérification…", "Verifying…") : copy.ctaLogin}
+                  </Button>
+                  <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
+                </CardContent>
+              </Card>
+              <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]">
+                <p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p>
+                <p className="mt-1 text-slate-600">{t("Les volumes de profils vérifiés, taux de placement et délais moyens ne sont pas publiés tant qu’une série de données vérifiable, datée et méthodologiquement définie n’est pas disponible.", "Verified profile volumes, placement rates and average times are not published until a verifiable, dated and methodologically defined data series is available.")}</p>
+              </section>
+            </div>
+            <div id="demande-acces" className="scroll-mt-24">
+              <B2bPartnerAccessRequestForm audience={audience} />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return <main className="min-h-screen bg-slate-50 px-4 py-10"><div className="mx-auto max-w-5xl space-y-5">
-    <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-950 p-5 text-white"><div><p className="text-xs font-bold uppercase tracking-wider text-indigo-200">{t("Organisation vérifiée", "Verified organisation")}</p><h1 className="mt-1 text-2xl font-black">{organization?.name ?? t("Portail employeur", "Employer portal")}</h1><p className="mt-1 text-sm text-slate-300">{organization?.country ?? ""} · {t("Retours soumis à validation 3M", "Feedback subject to 3M review")}</p></div><Button variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => { sessionStorage.removeItem(sessionKey); setSessionToken(""); setOrganization(null); }}><LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}</Button></header>
+    <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-950 p-5 text-white"><div><p className="text-xs font-bold uppercase tracking-wider text-indigo-200">{t("Organisation vérifiée", "Verified organisation")}</p><h1 className="mt-1 text-2xl font-black">{organization?.name ?? portalCopy.portalTitle}</h1><p className="mt-1 text-sm text-slate-300">{organization?.country ?? ""} · {portalCopy.poolLabel} · {t("Retours soumis à validation 3M", "Feedback subject to 3M review")}</p></div><Button variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => { sessionStorage.removeItem(sessionKey); sessionStorage.removeItem(audienceKey); setSessionToken(""); setOrganization(null); setActiveAudience(audience); }}><LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}</Button></header>
+    <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950"><p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{portalCopy.poolLabel}</p><p className="mt-1">{portalCopy.poolHint}</p></section>
     <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950"><p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p><p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p></section>
     <section className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{t("Authentification à deux facteurs", "Two-factor authentication")}</p><p className="text-sm text-slate-600">{totpStatus.data?.enabled ? t("Protection 2FA active pour les nouvelles connexions.", "2FA protection is active for new sign-ins.") : t("Configurez une application d’authentification pour protéger les prochaines connexions.", "Set up an authenticator app to protect future sign-ins.")}</p></div>{!totpStatus.data?.enabled && !qrDataUrl && <Button variant="outline" onClick={() => beginTotp.mutate({ sessionToken })}>{t("Configurer 2FA", "Set up 2FA")}</Button>}</div>{qrDataUrl && <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><img src={qrDataUrl} alt={t("QR code de configuration 2FA", "2FA setup QR code")} className="h-[220px] w-[220px] border bg-white p-2" /><div className="space-y-3"><Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code à six chiffres", "Six-digit code")} maxLength={32} /><Button disabled={!twoFactorCode || confirmTotp.isPending} onClick={() => confirmTotp.mutate({ sessionToken, code: twoFactorCode })}>{t("Confirmer et générer les codes", "Confirm and generate codes")}</Button></div></div>}{recoveryCodes.length > 0 && <div className="mt-4 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">{t("Codes de récupération — conservez-les hors ligne", "Recovery codes — store offline")}</p><p className="mt-1">{recoveryCodes.join(" · ")}</p></div>}</section>
     <section className="grid gap-4 lg:grid-cols-2">

@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   candidatePlacementConsents,
   candidates,
+  placementAccessRequests,
   placementCandidateProfiles,
   placementEmployerAccounts,
   placementEmployerFavorites,
@@ -16,6 +17,7 @@ import {
   placementProfileSubmissions,
   placementSubmissionEvents,
 } from "../../drizzle/schema";
+import { defaultPoolForAudience, audienceFromOrganizationType } from "../../shared/b2bPartnerPortals";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
@@ -128,7 +130,17 @@ export const placementPortalRouter = router({
     return { temporaryPassword, message: "Accès créé. Remettez les identifiants par un canal approuvé après vérification humaine." };
   }),
 
-  adminCreateProfile: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), summary: z.string().trim().min(30).max(4000), targetDestination: z.string().trim().min(2).max(120), targetProcedure: z.string().trim().min(2).max(160), sector: z.string().trim().max(160).optional(), yearsExperience: z.string().trim().max(32).optional(), languagesSummary: z.string().trim().max(255).optional() })).mutation(async ({ input }) => {
+  adminCreateProfile: publicProcedure.input(z.object({
+    sessionToken: z.string().min(20),
+    candidateId: z.number().int().positive(),
+    summary: z.string().trim().min(30).max(4000),
+    targetDestination: z.string().trim().min(2).max(120),
+    targetProcedure: z.string().trim().min(2).max(160),
+    sector: z.string().trim().max(160).optional(),
+    yearsExperience: z.string().trim().max(32).optional(),
+    languagesSummary: z.string().trim().max(255).optional(),
+    profilePool: z.enum(["eligible_evaluation", "top_talent"]).default("eligible_evaluation"),
+  })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -138,7 +150,18 @@ export const placementPortalRouter = router({
     ]);
     if (!candidate[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
     if (consent[0]?.status !== "granted") throw new TRPCError({ code: "FORBIDDEN", message: "Le candidat doit d’abord consentir au partage d’un profil anonymisé." });
-    const result = await db.insert(placementCandidateProfiles).values({ candidateId: input.candidateId, profileCode: makeProfileCode(), summary: input.summary, targetDestination: input.targetDestination, targetProcedure: input.targetProcedure, sector: input.sector ?? null, yearsExperience: input.yearsExperience ?? null, languagesSummary: input.languagesSummary ?? null, createdByAdminId: admin.id });
+    const result = await db.insert(placementCandidateProfiles).values({
+      candidateId: input.candidateId,
+      profileCode: makeProfileCode(),
+      summary: input.summary,
+      targetDestination: input.targetDestination,
+      targetProcedure: input.targetProcedure,
+      sector: input.sector ?? null,
+      yearsExperience: input.yearsExperience ?? null,
+      languagesSummary: input.languagesSummary ?? null,
+      profilePool: input.profilePool,
+      createdByAdminId: admin.id,
+    });
     return { profileId: Number((result as any)[0]?.insertId ?? 0) };
   }),
 
@@ -183,8 +206,119 @@ export const placementPortalRouter = router({
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));
-    return { sessionToken: rawToken, expiresAt, organization: { name: organization.legalName, country: organization.country }, collaborationRole: account.collaborationRole };
+    return {
+      sessionToken: rawToken,
+      expiresAt,
+      organization: {
+        name: organization.legalName,
+        country: organization.country,
+        organizationType: organization.organizationType,
+      },
+      collaborationRole: account.collaborationRole,
+      audience: audienceFromOrganizationType(organization.organizationType),
+      profilePool: defaultPoolForAudience(audienceFromOrganizationType(organization.organizationType)),
+    };
   }),
+
+  /** Demande publique d’accès partenaire (agence ou employeur) — aucune connexion automatique. */
+  requestPartnerAccess: publicProcedure
+    .input(z.object({
+      organizationType: z.enum(["placement_partner", "employer"]),
+      legalName: z.string().trim().min(2).max(255),
+      country: z.string().trim().min(2).max(120),
+      contactName: z.string().trim().min(2).max(255),
+      contactEmail: z.string().email().max(320),
+      contactPhone: z.string().trim().max(64).optional(),
+      website: z.string().trim().url().max(320).optional().or(z.literal("")),
+      message: z.string().trim().max(2000).optional(),
+      humanConfirm: z.literal(true),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+      await db.insert(placementAccessRequests).values({
+        organizationType: input.organizationType,
+        legalName: input.legalName,
+        country: input.country,
+        contactName: input.contactName,
+        contactEmail: input.contactEmail.toLowerCase(),
+        contactPhone: input.contactPhone?.trim() || null,
+        website: input.website?.trim() || null,
+        message: input.message?.trim() || null,
+        status: "pending",
+      });
+      return {
+        success: true,
+        message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie l’organisation avant tout accès. Aucun identifiant n’est créé automatiquement.",
+      };
+    }),
+
+  adminListAccessRequests: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(20), status: z.enum(["pending", "approved", "rejected", "all"]).default("pending") }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+      const rows = input.status === "all"
+        ? await db.select().from(placementAccessRequests).orderBy(desc(placementAccessRequests.createdAt)).limit(200)
+        : await db.select().from(placementAccessRequests).where(eq(placementAccessRequests.status, input.status)).orderBy(desc(placementAccessRequests.createdAt)).limit(200);
+      return { requests: rows };
+    }),
+
+  adminReviewAccessRequest: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(20),
+      requestId: z.number().int().positive(),
+      decision: z.enum(["approved", "rejected"]),
+      reviewNote: z.string().trim().max(1000).optional(),
+      createOrganization: z.boolean().default(true),
+      createAccess: z.boolean().default(false),
+      contactFullName: z.string().trim().min(2).max(255).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+      const [request] = await db.select().from(placementAccessRequests).where(eq(placementAccessRequests.id, input.requestId)).limit(1);
+      if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande introuvable." });
+      if (request.status !== "pending") throw new TRPCError({ code: "CONFLICT", message: "Cette demande a déjà été traitée." });
+      const now = new Date();
+      await db.update(placementAccessRequests).set({
+        status: input.decision,
+        reviewedAt: now,
+        reviewedByAdminId: admin.id,
+        reviewNote: input.reviewNote?.trim() || null,
+      }).where(eq(placementAccessRequests.id, request.id));
+
+      let organizationId: number | null = null;
+      let temporaryPassword: string | null = null;
+      if (input.decision === "approved" && input.createOrganization) {
+        const inserted = await db.insert(placementOrganizations).values({
+          organizationType: request.organizationType,
+          legalName: request.legalName,
+          country: request.country,
+          contactEmail: request.contactEmail,
+          verificationStatus: "verified",
+          verifiedAt: now,
+          verifiedByAdminId: admin.id,
+        });
+        organizationId = Number((inserted as any)[0]?.insertId ?? 0);
+        if (input.createAccess && organizationId) {
+          temporaryPassword = randomBytes(12).toString("base64url");
+          const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+          await db.insert(placementEmployerAccounts).values({
+            organizationId,
+            fullName: input.contactFullName?.trim() || request.contactName,
+            email: request.contactEmail,
+            passwordHash,
+            status: "active",
+            collaborationRole: "manager",
+            createdByAdminId: admin.id,
+          });
+        }
+      }
+      return { success: true, organizationId, temporaryPassword };
+    }),
 
   employerTwoFactorStatus: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { account } = await getEmployerSession(input.sessionToken);
@@ -226,11 +360,32 @@ export const placementPortalRouter = router({
       collection.push({ shareId: share.id, recipientName: recipient.fullName, recipientAccountId: recipient.id, sharedAt: share.createdAt });
       outgoingBySubmission.set(submissionId, collection);
     }
+    const preferredPool = defaultPoolForAudience(audienceFromOrganizationType(organization.organizationType));
     return submissions.map(({ submission, profile }) => {
       const favorite = favoritesBySubmission.get(submission.id);
       const shared = shareBySubmission.get(submission.id);
-      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { shareId: shared.id, sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, outgoingShares: outgoingBySubmission.get(submission.id) ?? [], profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
-    });
+      return {
+        submissionId: submission.id,
+        status: submission.status,
+        submittedAt: submission.submittedAt,
+        lastResponseAt: submission.lastResponseAt,
+        isFavorite: Boolean(favorite),
+        privateNote: favorite?.privateNote ?? null,
+        sharedWithMe: shared ? { shareId: shared.id, sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null,
+        outgoingShares: outgoingBySubmission.get(submission.id) ?? [],
+        matchesPreferredPool: (profile.profilePool ?? "eligible_evaluation") === preferredPool,
+        profile: {
+          code: profile.profileCode,
+          summary: profile.summary,
+          targetDestination: profile.targetDestination,
+          targetProcedure: profile.targetProcedure,
+          sector: profile.sector,
+          yearsExperience: profile.yearsExperience,
+          languagesSummary: profile.languagesSummary,
+          profilePool: profile.profilePool ?? "eligible_evaluation",
+        },
+      };
+    }).sort((left, right) => Number(right.matchesPreferredPool) - Number(left.matchesPreferredPool));
   }),
 
   employerCollaborators: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
@@ -419,14 +574,34 @@ export const placementPortalRouter = router({
     return { filename: `favoris-profils-${new Date().toISOString().slice(0, 10)}.csv`, csv, count: rows.length };
   }),
 
-  employerRecordDecision: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), decision: z.enum(["under_review", "shortlisted", "selected", "not_selected", "documents_requested"]), note: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {
+  employerRecordDecision: publicProcedure.input(z.object({
+    sessionToken: z.string().min(32),
+    submissionId: z.number().int().positive(),
+    decision: z.enum(["under_review", "shortlisted", "selected", "not_selected", "documents_requested"]),
+    note: z.string().trim().max(1000).optional(),
+  })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     const submission = (await db.select().from(placementProfileSubmissions).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0];
     if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Profil non accessible." });
     const now = new Date();
-    await db.update(placementProfileSubmissions).set({ status: input.decision, lastResponseAt: now }).where(eq(placementProfileSubmissions.id, submission.id));
-    await db.insert(placementSubmissionEvents).values({ submissionId: submission.id, actorType: "employer", actorId: account.id, action: input.decision, note: input.note ?? null });
-    return { message: "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat." };
+    const nextStatus = input.decision === "selected" ? "selected" : input.decision;
+    await db.update(placementProfileSubmissions).set({ status: nextStatus, lastResponseAt: now }).where(eq(placementProfileSubmissions.id, submission.id));
+    await db.insert(placementSubmissionEvents).values({
+      submissionId: submission.id,
+      actorType: "employer",
+      actorId: account.id,
+      action: input.decision,
+      note: input.note ?? (input.decision === "selected"
+        ? `Sélection confirmée par ${organization.legalName}. Action admin suggérée : activer le Protocole N°02 (employeur + poste) sur le dossier candidat.`
+        : null),
+    });
+    return {
+      message: input.decision === "selected"
+        ? "Sélection enregistrée. 3M TRAVEL AGENCY vérifiera le retour puis pourra activer le Protocole N°02 côté candidat."
+        : "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat.",
+      protocolTwoSuggested: input.decision === "selected",
+      organizationName: organization.legalName,
+    };
   }),
 });
 

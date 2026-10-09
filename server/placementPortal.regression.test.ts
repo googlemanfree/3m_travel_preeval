@@ -23,8 +23,10 @@ describe("portail de placement protégé", () => {
 
   it("documente une interface candidat révocable et une interface employeur vérifiée", () => {
     expect(read("client/src/components/PlacementConsentCard.tsx")).toContain("Retirer mon accord");
+    expect(read("client/src/pages/EvaluationSpace.tsx")).toContain("PlacementConsentCard");
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain("Portail employeur vérifié");
     expect(read("client/src/App.tsx")).toContain('path={"/employeurs"}');
+    expect(read("client/src/App.tsx")).toContain('path={"/agences-placement"}');
   });
 
   it("génère côté serveur les accès employeurs remis après vérification", () => {

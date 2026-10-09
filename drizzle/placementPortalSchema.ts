@@ -52,11 +52,31 @@ export const placementCandidateProfiles = mysqlTable("placement_candidate_profil
   sector: varchar("sector", { length: 160 }),
   yearsExperience: varchar("years_experience", { length: 32 }),
   languagesSummary: varchar("languages_summary", { length: 255 }),
+  /** eligible_evaluation = file agences ; top_talent = file employeurs internationaux. */
+  profilePool: mysqlEnum("profile_pool", ["eligible_evaluation", "top_talent"]).notNull().default("eligible_evaluation"),
   createdByAdminId: int("created_by_admin_id").notNull(),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => [index("idx_placement_profiles_candidate").on(table.candidateId, table.archivedAt)]);
+
+/** Demandes d’accès publiques (agences / employeurs) — validation humaine obligatoire. */
+export const placementAccessRequests = mysqlTable("placement_access_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationType: mysqlEnum("organization_type", ["placement_partner", "employer"]).notNull(),
+  legalName: varchar("legal_name", { length: 255 }).notNull(),
+  country: varchar("country", { length: 120 }).notNull(),
+  contactName: varchar("contact_name", { length: 255 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 320 }).notNull(),
+  contactPhone: varchar("contact_phone", { length: 64 }),
+  website: varchar("website", { length: 320 }),
+  message: text("message"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedByAdminId: int("reviewed_by_admin_id"),
+  reviewNote: text("review_note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_placement_access_requests_status").on(table.status, table.createdAt)]);
 
 /** Soumission d’un profil déjà consenti vers un organisme vérifié, jamais publique. */
 export const placementProfileSubmissions = mysqlTable("placement_profile_submissions", {

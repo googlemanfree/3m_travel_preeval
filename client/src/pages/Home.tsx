@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Plane,
+  BriefcaseBusiness,
+  Building2,
   CheckCircle, ArrowRight,
   Clock, Shield, ChevronUp, Info, MapPin, FileCheck, BookOpen, LayoutDashboard
 } from "lucide-react";
@@ -185,6 +187,33 @@ export default function Home() {
 
       {/* ─── NOS DESTINATIONS : grille des 23 pays de formation/emploi qualifie ── */}
       <DestinationsShowcaseSection />
+
+      {/* ─── PARTENAIRES B2B : employeurs & agences internationales ─────────── */}
+      <section aria-labelledby="b2b-partners-title" className="border-y border-slate-200 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-14 md:py-16" data-testid="home-b2b-partners">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-8 max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Europe · Amériques · Asie</p>
+            <h2 id="b2b-partners-title" className="mt-2 text-3xl font-black text-white md:text-4xl">Recruteurs et agences : sélectionnez des profils prêts</h2>
+            <p className="mt-3 text-base leading-7 text-sky-100">
+              Portails vérifiés pour employeurs internationaux et agences de placement. Profils anonymisés, consentement candidat obligatoire, validation humaine 3M avant toute mise en relation.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <a href="/employeurs" className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-xl">
+              <Building2 className="h-8 w-8 text-[#0f2460]" aria-hidden="true" />
+              <p className="mt-4 text-lg font-black text-slate-950">Employeurs internationaux</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Examinez les meilleurs profils préparés pour l’Europe, l’Amérique et l’Asie. Accès remis uniquement après vérification de votre organisation.</p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1463ff]">Demander un accès employeur <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+            </a>
+            <a href="/agences-placement" className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-xl">
+              <BriefcaseBusiness className="h-8 w-8 text-[#0f2460]" aria-hidden="true" />
+              <p className="mt-4 text-lg font-black text-slate-950">Agences de placement</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Sélectionnez des candidats éligibles issus de l’évaluation 3M TRAVEL AGENCY. Aucun accès automatique — contrôle humain avant identifiants.</p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1463ff]">Demander un accès partenaire <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
       <section id="evaluation-multi" className="scroll-mt-24 bg-gradient-to-b from-white to-blue-50 py-14 md:py-20">

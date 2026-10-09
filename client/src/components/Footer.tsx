@@ -65,6 +65,8 @@ const MINI_SITE_MAP: FooterLink[] = [
   { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/flights", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
   { key: "mini_procedures", label: { fr: "Procédures", en: "Procedures" }, href: "/procedures", description: { fr: "Comparer les démarches et destinations proposées.", en: "Compare available procedures and destinations." } },
   { key: "mini_evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique adaptée.", en: "Prepare a suitable electronic visa application." } },
+  { key: "mini_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Sélectionner des profils anonymisés après vérification humaine.", en: "Select anonymised profiles after human verification." } },
+  { key: "mini_agencies", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Accéder aux candidats éligibles issus de l’évaluation 3M.", en: "Access eligible candidates from the 3M evaluation pipeline." } },
   { key: "mini_pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand fees, third-party costs and terms." } },
   { key: "mini_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les ressources gouvernementales par destination.", en: "Check government resources by destination." } },
 ];
@@ -73,6 +75,8 @@ const NAVIGATION_LINKS: FooterLink[] = [
   { key: "nav_home", label: { fr: "Accueil", en: "Home" }, href: "/", description: { fr: "Revenir à la page principale et à l’évaluation gratuite.", en: "Return to the main page and free assessment." } },
   { key: "nav_flights", label: { fr: "Recherche de vols", en: "Flight search" }, href: "/flights", description: { fr: "Rechercher des vols selon votre itinéraire et vos dates.", en: "Search flights by route and travel dates." } },
   { key: "nav_procedures", label: { fr: "Procédures & destinations", en: "Procedures & destinations" }, href: "/procedures", description: { fr: "Comparer les démarches de mobilité internationale.", en: "Compare international mobility procedures." } },
+  { key: "nav_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Portail B2B pour employeurs Europe, Amériques et Asie.", en: "B2B portal for employers in Europe, the Americas and Asia." } },
+  { key: "nav_agencies", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Portail B2B pour agences partenaires vérifiées.", en: "B2B portal for verified partner agencies." } },
   { key: "nav_register", label: { fr: "Inscription", en: "Sign up" }, href: "/register", description: { fr: "Créer un espace personnel pour suivre vos demandes.", en: "Create a personal space to follow your requests." } },
   { key: "nav_login", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/login", description: { fr: "Accéder à votre espace et à vos dossiers existants.", en: "Access your space and existing cases." } },
 ];

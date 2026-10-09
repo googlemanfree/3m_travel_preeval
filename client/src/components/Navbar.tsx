@@ -8,6 +8,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
+  BriefcaseBusiness,
+  Building2,
   ChevronDown,
   FileText,
   FolderKanban,
@@ -42,6 +44,8 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/guide-procedures", label: { fr: "Guide PDF", en: "PDF guide" }, icon: FileText },
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
+  { href: "/employeurs", label: { fr: "Employeurs", en: "Employers" }, icon: Building2 },
+  { href: "/agences-placement", label: { fr: "Agences", en: "Agencies" }, icon: BriefcaseBusiness },
   { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
 ];
 

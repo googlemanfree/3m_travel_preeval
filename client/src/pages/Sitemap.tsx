@@ -58,6 +58,13 @@ const SITE_SECTIONS: SitemapSection[] = [
     ],
   },
   {
+    key: "partners", title: { fr: "Partenaires B2B internationaux", en: "International B2B partners" }, description: { fr: "Accès vérifiés pour employeurs et agences de placement en Europe, Amériques et Asie.", en: "Verified access for employers and placement agencies in Europe, the Americas and Asia." }, icon: ShieldCheck,
+    links: [
+      { key: "employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Consulter les meilleurs profils anonymisés après vérification humaine.", en: "Review top anonymised profiles after human verification." } },
+      { key: "agencies", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Sélectionner des candidats éligibles issus de l’évaluation 3M.", en: "Select eligible candidates from the 3M evaluation pipeline." } },
+    ],
+  },
+  {
     key: "account", title: { fr: "Compte et informations légales", en: "Account & legal information" }, description: { fr: "Les accès à l’espace personnel et aux informations encadrant l’usage du site.", en: "Access personal areas and information governing use of the site." }, icon: ShieldCheck,
     links: [
       { key: "register", label: { fr: "Créer un compte", en: "Create an account" }, href: "/register", description: { fr: "Créer un espace candidat pour suivre vos demandes.", en: "Create a candidate space to follow your requests." } },
@@ -85,6 +92,8 @@ const SITEMAP_SYNONYMS: Record<string, string[]> = {
   register: ["inscription", "register", "signup", "sign up", "compte", "account"],
   login: ["connexion", "login", "sign in", "connecter", "connect"],
   candidate_space: ["espace", "dashboard", "dossier", "case", "suivi", "tracking"],
+  employers: ["employeur", "employeurs", "employer", "employers", "b2b", "recruteur", "hiring"],
+  agencies: ["agence", "agences", "placement", "partner", "partenaire", "recruitment agency"],
 };
 
 function linkMatchesQuery(link: SitemapLink, section: SitemapSection, query: string) {
