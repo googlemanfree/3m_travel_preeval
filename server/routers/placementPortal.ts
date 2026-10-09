@@ -408,7 +408,28 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));
-    return { sessionToken: rawToken, expiresAt, organization: { name: organization.legalName, country: organization.country }, collaborationRole: account.collaborationRole };
+    return {
+      sessionToken: rawToken,
+      expiresAt,
+      organization: {
+        name: organization.legalName,
+        country: organization.country,
+        organizationType: organization.organizationType as "placement_partner" | "employer",
+      },
+      collaborationRole: account.collaborationRole,
+    };
+  }),
+
+  employerSessionInfo: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
+    const { account, organization } = await getEmployerSession(input.sessionToken);
+    return {
+      collaborationRole: account.collaborationRole,
+      organization: {
+        name: organization.legalName,
+        country: organization.country,
+        organizationType: organization.organizationType as "placement_partner" | "employer",
+      },
+    };
   }),
 
   employerTwoFactorStatus: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {

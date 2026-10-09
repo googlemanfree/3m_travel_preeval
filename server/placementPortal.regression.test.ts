@@ -24,6 +24,9 @@ describe("portail de placement protégé", () => {
   it("documente une interface candidat révocable et une interface employeur vérifiée", () => {
     expect(read("client/src/components/PlacementConsentCard.tsx")).toContain("Retirer mon accord");
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain("Portail employeur vérifié");
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain("Espace agence de placement");
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain("partner-tab-");
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain("employerSessionInfo");
     expect(read("client/src/App.tsx")).toContain('path={"/employeurs"}');
   });
 
@@ -60,8 +63,14 @@ describe("portail de placement protégé", () => {
     expect(employer).toContain('authTab === "register"');
     expect(employer).toContain("onContinueToLogin");
     expect(corridor).toContain('employersRegister: "/employeurs?tab=register"');
+    expect(corridor).toContain('agenciesLogin: "/employeurs?tab=login&portal=placement_partner"');
     expect(hub).toContain("CORRIDOR_ROUTES.employersRegister");
     expect(hub).toContain("CORRIDOR_ROUTES.agenciesRegister");
+    expect(hub).toContain("CORRIDOR_ROUTES.agenciesLogin");
+    expect(agency).toContain("useLanguage");
+    expect(agency).toContain("CORRIDOR_ROUTES.agenciesLogin");
+    expect(router).toContain("employerSessionInfo");
+    expect(router).toContain("organizationType: organization.organizationType");
     expect(adminUi).toContain("Demandes d’identification partenaires");
     expect(adminUi).toContain("Approuver + générer accès");
   });
