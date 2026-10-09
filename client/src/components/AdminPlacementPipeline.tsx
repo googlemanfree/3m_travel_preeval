@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BriefcaseBusiness, Building2, Eye, FilePlus2, IdCard, RefreshCw, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { BriefcaseBusiness, Building2, Check, Download, Eye, FilePlus2, IdCard, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { POST_SELECTION_LABELS, POST_SELECTION_STAGES, nextPostSelectionStage, resolvePostSelectionStage, type PostSelectionStage } from "@shared/talentCorridor";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,10 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const [submission, setSubmission] = useState({ profileId: "", organizationId: "", adminNote: "" });
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const [lockedActions, setLockedActions] = useState<Record<string, boolean>>({});
+  const [postSelectionSearch, setPostSelectionSearch] = useState("");
+  const [postSelectionFilter, setPostSelectionFilter] = useState<"all" | PostSelectionStage>("all");
+  const [postSelectionSort, setPostSelectionSort] = useState<"recent" | "stage" | "organization">("recent");
+  const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<Set<number>>(new Set());
   const lockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: false }));
   const listQuery = trpc.placementPortal.adminList.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
@@ -113,7 +117,8 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const orgsById = useMemo(() => new Map(organizations.map((row) => [row.id, row])), [organizations]);
 
   const postSelectionItems = useMemo(() => {
-    return submissions
+    const normalizedSearch = postSelectionSearch.trim().toLocaleLowerCase("fr-FR");
+    const items = submissions
       .map((row) => {
         const stage = resolvePostSelectionStage({
           status: row.status,
@@ -123,13 +128,61 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
         return { row, stage };
       })
       .filter((value): value is { row: (typeof submissions)[number]; stage: PostSelectionStage } => Boolean(value));
-  }, [submissions]);
+    const filtered = items.filter(({ row, stage }) => {
+      const profileRow = profilesById.get(row.profileId);
+      const orgRow = orgsById.get(row.organizationId);
+      const haystack = [profileRow?.profileCode, profileRow?.candidateId, orgRow?.legalName, stage, row.status].filter(Boolean).join(" ").toLocaleLowerCase("fr-FR");
+      return (postSelectionFilter === "all" || stage === postSelectionFilter) && (!normalizedSearch || haystack.includes(normalizedSearch));
+    });
+    return filtered.sort((a, b) => {
+      if (postSelectionSort === "stage") return POST_SELECTION_STAGES.indexOf(a.stage) - POST_SELECTION_STAGES.indexOf(b.stage);
+      if (postSelectionSort === "organization") return String(orgsById.get(a.row.organizationId)?.legalName ?? "").localeCompare(String(orgsById.get(b.row.organizationId)?.legalName ?? ""), "fr");
+      return Number(b.row.id) - Number(a.row.id);
+    });
+  }, [orgsById, postSelectionFilter, postSelectionSearch, postSelectionSort, profilesById, submissions]);
 
   const byStage = useMemo(() => {
     const map = Object.fromEntries(POST_SELECTION_STAGES.map((stage) => [stage, [] as typeof postSelectionItems])) as Record<PostSelectionStage, typeof postSelectionItems>;
     for (const item of postSelectionItems) map[item.stage].push(item);
     return map;
   }, [postSelectionItems]);
+
+  const filteredSubmissionIds = postSelectionItems.map(({ row }) => row.id);
+  const allFilteredSelected = filteredSubmissionIds.length > 0 && filteredSubmissionIds.every((id) => selectedSubmissionIds.has(id));
+  const toggleSubmission = (id: number) => setSelectedSubmissionIds((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const toggleAllFiltered = () => setSelectedSubmissionIds((current) => {
+    const next = new Set(current);
+    if (allFilteredSelected) filteredSubmissionIds.forEach((id) => next.delete(id));
+    else filteredSubmissionIds.forEach((id) => next.add(id));
+    return next;
+  });
+  const exportSelectedCsv = () => {
+    const safe = (value: unknown) => {
+      const text = String(value ?? "").replace(/\r?\n/g, " ").trim();
+      return /^[=+\-@]/.test(text) ? `'${text}` : text;
+    };
+    const selected = postSelectionItems.filter(({ row }) => selectedSubmissionIds.has(row.id));
+    const lines = [
+      ["Profil", "Organisation", "Étape", "Statut", "Destination", "Procédure"],
+      ...selected.map(({ row, stage }) => {
+        const profileRow = profilesById.get(row.profileId);
+        const orgRow = orgsById.get(row.organizationId);
+        return [profileRow?.profileCode ?? `Profil #${row.profileId}`, orgRow?.legalName ?? `Organisation #${row.organizationId}`, POST_SELECTION_LABELS[stage].fr, row.status, profileRow?.targetDestination, profileRow?.targetProcedure].map(safe);
+      }),
+    ].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";"));
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `3m-profils-post-selection-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${selected.length} profil(s) exporté(s)`, { description: "Export limité aux champs opérationnels et aux profils déjà filtrés." });
+  };
 
   return (
     <section className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm" aria-label="Pilotage de placement international">
@@ -270,6 +323,27 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
         <p className="mt-1 text-sm text-emerald-900">
           Après sélection partenaire : confirmer contrat + lettre d’invitation, ouvrir le Protocole N°02 sur la fiche 360°, puis engager la procédure visa.
         </p>
+        <div className="mt-4 grid gap-2 rounded-xl border border-emerald-200 bg-white/80 p-3 md:grid-cols-[minmax(0,1fr)_auto_auto]" aria-label="Recherche et tri de la file post-sélection">
+          <label className="relative block">
+            <span className="sr-only">Rechercher un profil ou une organisation</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <Input value={postSelectionSearch} onChange={(event) => setPostSelectionSearch(event.target.value)} placeholder="Rechercher profil, candidat ou organisation…" className="h-10 bg-white pl-9" />
+          </label>
+          <Select value={postSelectionFilter} onValueChange={(value) => setPostSelectionFilter(value as "all" | PostSelectionStage)}>
+            <SelectTrigger className="h-10 min-w-44 bg-white" aria-label="Filtrer par étape"><SelectValue placeholder="Toutes les étapes" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Toutes les étapes</SelectItem>{POST_SELECTION_STAGES.map((stage) => <SelectItem key={stage} value={stage}>{POST_SELECTION_LABELS[stage].fr}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={postSelectionSort} onValueChange={(value) => setPostSelectionSort(value as "recent" | "stage" | "organization")}>
+            <SelectTrigger className="h-10 min-w-44 bg-white" aria-label="Trier la file"><SelectValue placeholder="Tri" /></SelectTrigger>
+            <SelectContent><SelectItem value="recent">Plus récents</SelectItem><SelectItem value="stage">Par étape</SelectItem><SelectItem value="organization">Par organisation</SelectItem></SelectContent>
+          </Select>
+        </div>
+        <p className="mt-2 text-xs font-semibold text-emerald-900" aria-live="polite">{postSelectionItems.length} dossier(s) correspondent aux critères.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-100 bg-white p-2">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-700"><input type="checkbox" checked={allFilteredSelected} onChange={toggleAllFiltered} disabled={!filteredSubmissionIds.length} /> Sélectionner les résultats filtrés</label>
+          <span className="text-xs text-slate-500">{selectedSubmissionIds.size} sélectionné(s)</span>
+          <Button type="button" size="sm" variant="outline" className="ml-auto gap-2" disabled={!selectedSubmissionIds.size} onClick={exportSelectedCsv}><Download className="h-4 w-4" /> Exporter CSV</Button>
+        </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-4">
           {POST_SELECTION_STAGES.map((stage) => (
             <div key={stage} className="rounded-xl border border-emerald-100 bg-white p-3">
@@ -283,9 +357,9 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
                   const next = nextPostSelectionStage(currentStage);
                   return (
                     <li key={row.id} className="rounded-lg border border-slate-200 p-2 text-xs">
-                      <p className="font-semibold text-slate-900">{profileRow?.profileCode ?? `Profil #${row.profileId}`}</p>
+                      <label className="flex items-start gap-2"><input type="checkbox" checked={selectedSubmissionIds.has(row.id)} onChange={() => toggleSubmission(row.id)} aria-label={`Sélectionner ${profileRow?.profileCode ?? `profil ${row.id}`}`} /><span><p className="font-semibold text-slate-900">{profileRow?.profileCode ?? `Profil #${row.profileId}`}</p>
                       <p className="text-slate-600">{orgRow?.legalName ?? `Org #${row.organizationId}`}</p>
-                      {profileRow?.candidateId && <p className="text-slate-500">Candidat #{profileRow.candidateId}</p>}
+                      {profileRow?.candidateId && <p className="text-slate-500">Candidat #{profileRow.candidateId}</p>}</span></label>
                       {next && (
                         <Button
                           size="sm"

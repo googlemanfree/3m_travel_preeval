@@ -3751,3 +3751,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre à l’administration de générer un accès pour une agence de placement vérifiée.
 - [x] Ajouter une demande publique d’accès partenaire sans exposer de données candidat.
 - [x] Vérifier que les profils exposés restent anonymisés et soumis à un consentement actif.
+
+## UX Kanban et portails B2B — 2026-10-09
+- [x] Ajouter une recherche et des filtres de tri au Kanban post-sélection admin.
+- [x] Ajouter des animations de défilement et des indicateurs d’état aux formulaires des landings agences et employeurs.
+- [x] Ajouter une infobulle détaillée et une animation au badge de profil sélectionnable côté candidat.
+
+## Sélection multiple, brouillons B2B et détail candidat — 2026-10-09
+- [x] Ajouter la sélection multiple au Kanban post-sélection et l’export CSV sécurisé des profils filtrés.
+- [x] Ajouter la sauvegarde automatique en brouillon et la validation en temps réel aux formulaires agences/employeurs.
+- [x] Rendre le badge candidat cliquable avec une modale des prochaines étapes et conseils de préparation.

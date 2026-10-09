@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Building2, CheckCircle2, IdCard, LockKeyhole, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -18,6 +18,8 @@ type Props = {
   onContinueToLogin?: () => void;
 };
 
+const draftKey = "3m-placement-partner-request-draft";
+
 const emptyForm = (organizationType: PartnerOrganizationType) => ({
   organizationType,
   legalName: "",
@@ -35,6 +37,24 @@ const emptyForm = (organizationType: PartnerOrganizationType) => ({
   acknowledgeReview: false,
 });
 
+type FormState = ReturnType<typeof emptyForm>;
+
+function readDraft(organizationType: PartnerOrganizationType): FormState {
+  const base = emptyForm(organizationType);
+  try {
+    const raw = JSON.parse(localStorage.getItem(draftKey) || "null") as Partial<FormState> | null;
+    if (!raw || typeof raw !== "object") return base;
+    return {
+      ...base,
+      ...raw,
+      organizationType: organizationType,
+      acknowledgeReview: false,
+    };
+  } catch {
+    return base;
+  }
+}
+
 export function B2bPartnerRegistrationForm({
   defaultOrganizationType = "employer",
   lockOrganizationType = false,
@@ -42,12 +62,31 @@ export function B2bPartnerRegistrationForm({
   onContinueToLogin,
 }: Props) {
   const { t } = useLanguage();
-  const [form, setForm] = useState(() => emptyForm(defaultOrganizationType));
+  const [form, setForm] = useState(() => readDraft(defaultOrganizationType));
   const [submittedId, setSubmittedId] = useState<number | null>(null);
+  const filledCount = useMemo(
+    () => [form.legalName, form.country, form.contactFullName, form.contactEmail, form.contactPhone, form.contactRole, form.message].filter((value) => value.trim()).length,
+    [form],
+  );
+  const hasErrors = useMemo(() => (
+    form.legalName.trim().length < 2
+    || form.country.trim().length < 2
+    || form.contactFullName.trim().length < 2
+    || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail)
+    || form.contactPhone.trim().length < 6
+    || form.contactRole.trim().length < 2
+    || form.message.trim().length < 20
+    || !form.acknowledgeReview
+  ), [form]);
+  useEffect(() => {
+    const { acknowledgeReview: _ack, ...draft } = form;
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+  }, [form]);
   const requestAccess = trpc.placementPortal.requestPartnerAccess.useMutation({
     onSuccess: (result) => {
       setSubmittedId(result.requestId || 1);
       setForm(emptyForm(defaultOrganizationType));
+      localStorage.removeItem(draftKey);
       toast.success(t("Demande d’accès enregistrée", "Access request recorded"), { description: result.message });
     },
     onError: (error) => toast.error(t("Inscription non enregistrée", "Registration not saved"), { description: error.message }),
@@ -125,6 +164,17 @@ export function B2bPartnerRegistrationForm({
             "Provide your organisation’s legal identity and the responsible contact. Portal access is created only after human verification.",
           )}
         </p>
+      </div>
+
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3" aria-live="polite">
+        <div className="flex items-center justify-between gap-3 text-xs font-bold text-indigo-950">
+          <span>{t("Préparation de la demande", "Request preparation")}</span>
+          <span>{filledCount}/7 {t("champs renseignés", "fields completed")}</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100">
+          <div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${(filledCount / 7) * 100}%` }} />
+        </div>
+        <p className="mt-2 text-[11px] font-medium text-indigo-900/80">{t("Brouillon sauvegardé automatiquement sur cet appareil (sans mot de passe).", "Draft saved automatically on this device (no password).")}</p>
       </div>
 
       <fieldset className="space-y-3">
@@ -236,7 +286,7 @@ export function B2bPartnerRegistrationForm({
         </span>
       </label>
 
-      <Button type="submit" disabled={requestAccess.isPending || !form.acknowledgeReview} className="min-h-11 w-full bg-indigo-700 text-white hover:bg-indigo-800">
+      <Button type="submit" disabled={requestAccess.isPending || hasErrors} className="min-h-11 w-full bg-indigo-700 text-white hover:bg-indigo-800">
         <Send className="mr-2 h-4 w-4" />
         {requestAccess.isPending ? t("Enregistrement…", "Saving…") : t("Soumettre mon identification", "Submit my identification")}
       </Button>

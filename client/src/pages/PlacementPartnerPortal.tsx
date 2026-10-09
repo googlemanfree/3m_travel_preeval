@@ -44,7 +44,7 @@ export default function PlacementPartnerPortal() {
           </Card>
         </div>
 
-        <section id="inscription-agence" className="rounded-2xl border border-white/20 bg-white p-5 text-slate-900 shadow-xl sm:p-7">
+        <section id="inscription-agence" className="reveal-on-scroll rounded-2xl border border-white/20 bg-white p-5 text-slate-900 shadow-xl sm:p-7">
           <B2bPartnerRegistrationForm defaultOrganizationType="placement_partner" lockOrganizationType />
         </section>
 
