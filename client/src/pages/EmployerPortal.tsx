@@ -32,6 +32,13 @@ export default function EmployerPortal() {
   const { t } = useLanguage();
   const portalDefaults = useMemo(() => readPortalDefaults(), []);
   const [authTab, setAuthTab] = useState<AuthTab>(portalDefaults.tab);
+  const selectAuthTab = (tab: AuthTab) => {
+    setAuthTab(tab);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -199,10 +206,10 @@ export default function EmployerPortal() {
         <div className={`mx-auto space-y-4 ${authTab === "register" ? "max-w-3xl" : "max-w-lg"}`}>
           <div className="rounded-2xl border border-white/25 bg-white/10 p-1 text-white backdrop-blur">
             <div className="grid grid-cols-2 gap-1" role="tablist" aria-label={t("Connexion ou inscription partenaire", "Partner sign-in or registration")}>
-              <button type="button" role="tab" aria-selected={authTab === "login"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "login" ? "bg-white text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => setAuthTab("login")}>
+              <button type="button" role="tab" data-testid="employer-auth-tab-login" aria-selected={authTab === "login"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "login" ? "bg-white text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => selectAuthTab("login")}>
                 <span className="inline-flex items-center gap-2"><LockKeyhole className="h-4 w-4" />{t("Connexion", "Sign in")}</span>
               </button>
-              <button type="button" role="tab" aria-selected={authTab === "register"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "register" ? "bg-amber-300 text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => setAuthTab("register")}>
+              <button type="button" role="tab" data-testid="employer-auth-tab-register" aria-selected={authTab === "register"} className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${authTab === "register" ? "bg-amber-300 text-[#071b3d]" : "text-blue-100 hover:bg-white/10"}`} onClick={() => selectAuthTab("register")}>
                 <span className="inline-flex items-center gap-2"><IdCard className="h-4 w-4" />{t("Inscription", "Register")}</span>
               </button>
             </div>
@@ -230,7 +237,7 @@ export default function EmployerPortal() {
               <CardContent className="p-5 sm:p-6">
                 <B2bPartnerRegistrationForm
                   defaultOrganizationType={portalDefaults.organizationType}
-                  onSubmitted={() => setAuthTab("login")}
+                  onSubmitted={() => selectAuthTab("login")}
                 />
                 <p className="mt-4 text-center text-xs text-slate-500">
                   {t("Agence de placement ?", "Placement agency?")}{" "}

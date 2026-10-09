@@ -147,41 +147,57 @@ export const placementPortalRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const email = input.contactEmail.toLowerCase();
-    const pending = (await db.select({ id: placementAccessRequests.id }).from(placementAccessRequests)
-      .where(and(eq(placementAccessRequests.contactEmail, email), inArray(placementAccessRequests.status, ["pending", "under_review"])))
-      .limit(1))[0];
-    if (pending) {
-      recordFailedAttempt(`partner-access:${email}`);
-      throw new TRPCError({ code: "CONFLICT", message: "Une demande est déjà en cours d’examen pour cet e-mail professionnel." });
-    }
-    const existingAccount = (await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, email)).limit(1))[0];
-    if (existingAccount) {
-      throw new TRPCError({ code: "CONFLICT", message: "Un accès existe déjà pour cet e-mail. Utilisez le formulaire de connexion." });
-    }
     const website = input.website?.trim()
       ? (input.website.startsWith("http://") || input.website.startsWith("https://") ? input.website.trim() : `https://${input.website.trim()}`)
       : null;
-    const result = await db.insert(placementAccessRequests).values({
-      organizationType: input.organizationType,
-      legalName: input.legalName,
-      registrationNumber: input.registrationNumber?.trim() || null,
-      country: input.country,
-      city: input.city?.trim() || null,
-      website,
-      contactFullName: input.contactFullName,
-      contactEmail: email,
-      contactPhone: input.contactPhone,
-      contactRole: input.contactRole,
-      sectors: input.sectors?.trim() || null,
-      targetMarkets: input.targetMarkets?.trim() || null,
-      message: input.message,
-      status: "pending",
-    });
-    resetLoginAttempts(`partner-access:${email}`);
-    return {
-      requestId: Number((result as any)[0]?.insertId ?? 0),
-      message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie votre organisation avant de remettre un accès.",
+    const mapAccessError = (error: unknown): never => {
+      const detail = error instanceof Error ? error.message : String(error);
+      if (/placement_access_requests|ER_NO_SUCH_TABLE|doesn't exist/i.test(detail)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Le registre d’inscription partenaire n’est pas encore activé. Appliquez la migration 0076 puis réessayez.",
+        });
+      }
+      console.error("[placementPortal.requestPartnerAccess]", error);
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible d’enregistrer la demande pour le moment." });
     };
+    try {
+      const pending = (await db.select({ id: placementAccessRequests.id }).from(placementAccessRequests)
+        .where(and(eq(placementAccessRequests.contactEmail, email), inArray(placementAccessRequests.status, ["pending", "under_review"])))
+        .limit(1))[0];
+      if (pending) {
+        recordFailedAttempt(`partner-access:${email}`);
+        throw new TRPCError({ code: "CONFLICT", message: "Une demande est déjà en cours d’examen pour cet e-mail professionnel." });
+      }
+      const existingAccount = (await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, email)).limit(1))[0];
+      if (existingAccount) {
+        throw new TRPCError({ code: "CONFLICT", message: "Un accès existe déjà pour cet e-mail. Utilisez le formulaire de connexion." });
+      }
+      const result = await db.insert(placementAccessRequests).values({
+        organizationType: input.organizationType,
+        legalName: input.legalName,
+        registrationNumber: input.registrationNumber?.trim() || null,
+        country: input.country,
+        city: input.city?.trim() || null,
+        website,
+        contactFullName: input.contactFullName,
+        contactEmail: email,
+        contactPhone: input.contactPhone,
+        contactRole: input.contactRole,
+        sectors: input.sectors?.trim() || null,
+        targetMarkets: input.targetMarkets?.trim() || null,
+        message: input.message,
+        status: "pending",
+      });
+      resetLoginAttempts(`partner-access:${email}`);
+      return {
+        requestId: Number((result as any)[0]?.insertId ?? 0),
+        message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie votre organisation avant de remettre un accès.",
+      };
+    } catch (error) {
+      if (error instanceof TRPCError) throw error;
+      return mapAccessError(error);
+    }
   }),
 
   adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(20) })).query(async ({ input }) => {
