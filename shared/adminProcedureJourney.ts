@@ -25,7 +25,7 @@ export const ADMIN_OPERATIONAL_STAGES: AdminOperationalStage[] = [
 const fold = (value: string) =>
   value
     .normalize("NFD")
-    .replace(/\p{M}/gu, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
 function pickStepLabel(

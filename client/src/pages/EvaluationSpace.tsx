@@ -55,6 +55,7 @@ import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
+import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
 export type ClientDossierStatusSummary = {
   label: string;
@@ -102,6 +103,9 @@ export default function EvaluationSpace() {
   // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
   // dossier payé, sinon le plus récent).
   const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);
+  const [secondaryDossierOpen, setSecondaryDossierOpen] = useState(false);
+  const [secondaryProject, setSecondaryProject] = useState<SecondaryProjectType>("etudes");
+  const [secondaryDestination, setSecondaryDestination] = useState("");
 
   // Requête unique pour le résumé complet du tableau de bord client
   // Les données que l'administrateur fait évoluer se rafraîchissent seules (onglet visible) : voir clientSpaceSync.
@@ -339,8 +343,8 @@ export default function EvaluationSpace() {
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
   const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""}`));
-  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null }) =>
-    dossier.visaType || dossier.destination || dossier.dossierNumber || "";
+  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
+    procedureLabelForDossier(dossier);
   const cProfile = {
     ...rawCProfile,
     dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
@@ -572,12 +576,18 @@ export default function EvaluationSpace() {
               );
             })}
             {onlineDossiers.length < 5 ? (
-              <a
-                href="/evaluation"
+              <button
+                type="button"
+                onClick={() => {
+                  const hasWork = onlineDossiers.some((dossier) => /travail|work/i.test(`${dossier.visaType || ""}`));
+                  setSecondaryProject(hasWork ? "etudes" : "travail");
+                  setSecondaryDestination(String(primaryDestination || activeDossier?.destination || "").trim());
+                  setSecondaryDossierOpen(true);
+                }}
                 className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
               >
-                + Ouvrir un dossier pour un autre projet
-              </a>
+                + Ajouter une seconde opportunité (Travail / Études)
+              </button>
             ) : (
               <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
                 Limite de 5 dossiers atteinte
@@ -597,7 +607,7 @@ export default function EvaluationSpace() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
-              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY, avec la prochaine action à effectuer pour chacun.</p>
+              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " (double opportunité possible : travail + études)" : ""}, avec la prochaine action à effectuer pour chacun.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
@@ -932,7 +942,7 @@ export default function EvaluationSpace() {
                       <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
                       <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
                       <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
-                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Confirmer la signature et l’envoi"}</Button>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
                       {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !activeDossier?.dossierNumber) && (
                         <p className="text-xs text-slate-500" role="status">
                           Bouton inactif tant que : {[
@@ -1171,6 +1181,56 @@ export default function EvaluationSpace() {
           <DialogFooter>
             <Button type="button" variant="outline" disabled={clarificationMutation.isPending} onClick={() => setClarificationDocument(null)}>Annuler</Button>
             <Button type="button" disabled={clarificationMutation.isPending} onClick={submitDocumentClarification}>{clarificationMutation.isPending ? "Envoi…" : "Envoyer ma demande"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={secondaryDossierOpen} onOpenChange={setSecondaryDossierOpen}>
+        <DialogContent data-testid="secondary-dossier-dialog">
+          <DialogHeader>
+            <DialogTitle>Ajouter une seconde opportunité</DialogTitle>
+            <DialogDescription>
+              Ouvrez un dossier distinct (visa travail et visa études) pour maximiser vos chances. Chaque procédure a son propre suivi, son paiement d’ouverture et son numéro de dossier.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3" role="radiogroup" aria-label="Type de seconde procédure">
+            {SECONDARY_PROJECT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={secondaryProject === option.value}
+                onClick={() => setSecondaryProject(option.value)}
+                className={`rounded-xl border p-3 text-left transition ${secondaryProject === option.value ? "border-blue-700 bg-blue-50 ring-2 ring-blue-700" : "border-slate-200 bg-white hover:border-blue-300"}`}
+              >
+                <p className="text-sm font-bold text-slate-950">{option.label}</p>
+                <p className="mt-1 text-xs text-slate-600">{option.description}</p>
+              </button>
+            ))}
+          </div>
+          <label className="grid gap-2 text-sm font-medium text-slate-800" htmlFor="secondary-dossier-destination">
+            Destination souhaitée
+            <input
+              id="secondary-dossier-destination"
+              value={secondaryDestination}
+              onChange={(event) => setSecondaryDestination(event.target.value.slice(0, 100))}
+              maxLength={100}
+              placeholder="Ex. Canada, Luxembourg, France…"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <p className="text-xs text-slate-500">Vous serez redirigé vers le formulaire d’évaluation prérempli pour cette seconde procédure. L’équipe verra ensuite les deux dossiers côté administration.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSecondaryDossierOpen(false)}>Annuler</Button>
+            <Button
+              type="button"
+              className="bg-blue-800 text-white hover:bg-blue-900"
+              onClick={() => {
+                setSecondaryDossierOpen(false);
+                setLocation(secondaryDossierEvaluationPath({ project: secondaryProject, destination: secondaryDestination || primaryDestination }));
+              }}
+            >
+              Continuer vers l’évaluation
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

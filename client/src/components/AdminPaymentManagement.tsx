@@ -662,7 +662,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                           ) : payment.agreementSigned ? (
                             <Badge variant="outline" className="inline-flex items-center gap-1 border-emerald-200 bg-emerald-50 text-[11px] font-bold text-emerald-800" data-testid="agreement-status-signed"><CheckCircle2 className="h-3.5 w-3.5" />Protocole validé</Badge>
                           ) : (
-                            <Badge variant="outline" className="inline-flex items-center gap-1 border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800" data-testid="agreement-status-pending"><Clock className="h-3.5 w-3.5" />Signature en attente</Badge>
+                            <Badge variant="outline" className="inline-flex items-center gap-1 border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800" data-testid="agreement-status-pending" title="Accord requis avant le traitement"><Clock className="h-3.5 w-3.5" />Accord requis · Signature en attente</Badge>
                           )}
                         </div>
                       </td>

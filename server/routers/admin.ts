@@ -25,6 +25,7 @@ import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDos
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
+import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -1766,8 +1767,8 @@ export const adminRouter = router({
           }));
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
-        // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
-        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts].map((row) => ({
+        // Combiner le parcours dynamique et les procédures liées du même client.
+        let allCandidates = attachSiblingProcedures([...normalizedOnline, ...normalizedAgency, ...normalizedAccounts]).map((row) => ({
           ...row,
           procedureJourney: buildAdminProcedureSnapshot({
             destination: row.destinationCountry,
