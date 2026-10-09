@@ -57,7 +57,9 @@ const USEFUL_LINKS: FooterLink[] = [
   { key: "useful_accessibility", label: { fr: "Accessibilité", en: "Accessibility" }, href: "/accessibilite", description: { fr: "Adapter l’affichage et les préférences d’interaction.", en: "Adjust display and interaction preferences." } },
   { key: "useful_status", label: { fr: "État du service", en: "Service status" }, href: "/etat-du-service", description: { fr: "Consulter la disponibilité publique et les maintenances annoncées.", en: "Check public availability and announced maintenance." } },
   { key: "useful_digital", label: { fr: "Service 3M Solutions", en: "3M Solutions service" }, href: "/3m-solutions", description: { fr: "Découvrir les services numériques complémentaires de 3M.", en: "Discover 3M’s complementary digital services." } },
-  { key: "useful_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Consulter les liens institutionnels par destination.", en: "View institutional links by destination." } },
+  { key: "useful_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Consulter les liens institutionnels par destination.", en: "View institutional links for each destination." } },
+  { key: "useful_placement", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Découvrir le portail B2B des agences partenaires.", en: "Discover the B2B portal for placement partners." } },
+  { key: "useful_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Accéder au portail réservé aux employeurs vérifiés.", en: "Access the portal reserved for verified employers." } },
 ];
 
 const MINI_SITE_MAP: FooterLink[] = [
@@ -67,6 +69,8 @@ const MINI_SITE_MAP: FooterLink[] = [
   { key: "mini_evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique adaptée.", en: "Prepare a suitable electronic visa application." } },
   { key: "mini_pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand fees, third-party costs and terms." } },
   { key: "mini_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les ressources gouvernementales par destination.", en: "Check government resources by destination." } },
+  { key: "mini_placement", label: { fr: "Portail agences", en: "Agency portal" }, href: "/agences-placement", description: { fr: "Accéder à l’espace B2B des agences de placement.", en: "Access the placement agency B2B space." } },
+  { key: "mini_employers", label: { fr: "Portail employeurs", en: "Employer portal" }, href: "/employeurs", description: { fr: "Accéder à l’espace B2B des employeurs vérifiés.", en: "Access the verified employer B2B space." } },
 ];
 
 const NAVIGATION_LINKS: FooterLink[] = [
@@ -75,6 +79,8 @@ const NAVIGATION_LINKS: FooterLink[] = [
   { key: "nav_procedures", label: { fr: "Procédures & destinations", en: "Procedures & destinations" }, href: "/procedures", description: { fr: "Comparer les démarches de mobilité internationale.", en: "Compare international mobility procedures." } },
   { key: "nav_register", label: { fr: "Inscription", en: "Sign up" }, href: "/register", description: { fr: "Créer un espace personnel pour suivre vos demandes.", en: "Create a personal space to follow your requests." } },
   { key: "nav_login", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/login", description: { fr: "Accéder à votre espace et à vos dossiers existants.", en: "Access your space and existing cases." } },
+  { key: "nav_placement", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Accéder à la porte d’entrée des agences partenaires.", en: "Open the placement agency entry point." } },
+  { key: "nav_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Accéder au portail des employeurs vérifiés.", en: "Open the verified employer portal." } },
 ];
 
 const DESTINATION_LINKS: FooterLink[] = [

@@ -120,7 +120,7 @@ export const placementPortalRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const organization = (await db.select().from(placementOrganizations).where(and(eq(placementOrganizations.id, input.organizationId), eq(placementOrganizations.verificationStatus, "verified"))).limit(1))[0];
-    if (!organization) throw new TRPCError({ code: "BAD_REQUEST", message: "Vérifiez l’organisation avant de créer son accès." });
+    if (!organization || !["employer", "placement_partner"].includes(organization.organizationType)) throw new TRPCError({ code: "BAD_REQUEST", message: "Vérifiez l’organisation partenaire avant de créer son accès." });
     const temporaryPassword = randomBytes(12).toString("base64url");
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
     const existingAccounts = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.organizationId, organization.id)).limit(2);
@@ -429,4 +429,3 @@ export const placementPortalRouter = router({
     return { message: "Retour enregistré. L’équipe 3M le vérifiera avant toute communication au candidat." };
   }),
 });
-
