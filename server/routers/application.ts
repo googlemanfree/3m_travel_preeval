@@ -28,6 +28,7 @@ const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 6
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,16 @@ export const applicationRouter = router({
       if (input.email.trim().toLowerCase() !== ctx.candidate.email.trim().toLowerCase()) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Le dossier doit être créé avec l’adresse e-mail de votre compte." });
       }
+
+      // Plafond opérationnel : jusqu’à 5 procédures actives par compte (chacune avec activation + numéro).
+      const openDossiers = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(and(eq(applications.candidateId, ctx.candidate.id), isNull(applications.deletedAt)));
+      if (openDossiers.length >= MAX_CLIENT_DOSSIERS) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: MAX_CLIENT_DOSSIERS_MESSAGE });
+      }
+
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
       const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";

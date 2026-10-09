@@ -7,7 +7,8 @@
 import { clientCaseStatusLabel, clientEvisaStatusLabel, clientInsuranceStatusLabel, humanizeStatus } from "../../../shared/caseStatusLabels";
 
 export const CLIENT_SPACE_POLL_MS = 30_000;
-export const CLIENT_SPACE_SUMMARY_POLL_MS = 60_000;
+/** Résumé dossier / docs : même rythme que le reste pour une sync admin↔client plus dynamique. */
+export const CLIENT_SPACE_SUMMARY_POLL_MS = 30_000;
 export const CLIENT_SPACE_MAX_ANNOUNCEMENTS = 3;
 
 /** Options react-query : rafraîchissement régulier tant que l'onglet est visible (jamais en arrière-plan). */
@@ -20,6 +21,8 @@ type Tracked = { status: string; label: string };
 /** Une facette absente (`undefined`) n'est pas encore chargée : elle n'est jamais comparée. */
 export type ClientSpaceSnapshot = {
   evaluationStage?: EvaluationStage;
+  /** Statut de procédure du dossier actif (applications / espace client), hors caseTracking. */
+  procedure?: Tracked & { number: string | null };
   cases?: Record<string, Tracked>;
   requirements?: Record<string, Tracked & { caseId: string }>;
   insurance?: Record<string, Tracked & { coupon: boolean; attestation: boolean }>;
@@ -40,11 +43,29 @@ const idOf = (value: unknown): string | null => (typeof value === "number" || ty
 export { humanizeStatus };
 
 /** Instantané des données que l'administrateur peut faire évoluer ; chaque entrée est lue avec prudence (données serveur). */
-export function buildClientSpaceSnapshot(input: { evaluation?: unknown; cases?: unknown; insurance?: unknown; evisa?: unknown }): ClientSpaceSnapshot {
+export function buildClientSpaceSnapshot(input: {
+  evaluation?: unknown;
+  cases?: unknown;
+  insurance?: unknown;
+  evisa?: unknown;
+  /** Dossier actif côté espace client (statut applications / candidat). */
+  procedure?: { status?: unknown; label?: unknown; number?: unknown } | null;
+}): ClientSpaceSnapshot {
   const snapshot: ClientSpaceSnapshot = {};
 
   const stage = (input.evaluation as { view?: { stage?: unknown } } | undefined)?.view?.stage;
   if (typeof stage === "string" && STAGES.includes(stage)) snapshot.evaluationStage = stage as EvaluationStage;
+
+  if (input.procedure && typeof input.procedure === "object") {
+    const status = text(input.procedure.status, 80);
+    if (status) {
+      snapshot.procedure = {
+        status,
+        label: text(input.procedure.label, 80) || "Dossier",
+        number: text(input.procedure.number, 40) || null,
+      };
+    }
+  }
 
   if (input.cases && typeof input.cases === "object") {
     const source = input.cases as { cases?: unknown; notifications?: unknown };
@@ -115,6 +136,16 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
   if (previous.evaluationStage && next.evaluationStage && previous.evaluationStage !== next.evaluationStage) {
     if (next.evaluationStage === "published") changes.push({ id: "evaluation-published", tone: "success", title: "Votre évaluation est disponible", description: "Ouvrez la section Évaluation pour consulter votre rapport." });
     else if (next.evaluationStage === "info_requested") changes.push({ id: "evaluation-info", tone: "warning", title: "L’équipe 3M vous demande des informations complémentaires", description: "Répondez depuis la section Évaluation pour que votre analyse avance." });
+  }
+
+  if (previous.procedure && next.procedure && previous.procedure.status !== next.procedure.status && next.procedure.status) {
+    const ref = next.procedure.number ? ` N° ${next.procedure.number}` : "";
+    changes.push({
+      id: `procedure-${next.procedure.number ?? "active"}-${next.procedure.status}`,
+      tone: "info",
+      title: `Votre procédure${ref} a évolué`,
+      description: `Nouvel état : ${humanizeStatus(next.procedure.status) || next.procedure.label}.`,
+    });
   }
 
   if (previous.cases && next.cases) {

@@ -207,7 +207,17 @@ export default function EvaluationSpace() {
   // e-Visa, assurance, message) est annoncé au candidat ; la première lecture sert de référence, sans annonce.
   const previousSpaceSnapshot = useRef<ClientSpaceSnapshot | null>(null);
   useEffect(() => {
-    const next = buildClientSpaceSnapshot({ evaluation: structuredEvaluation, cases: caseTrackingData, insurance: insuranceRequests, evisa: evisaReqs });
+    const activeStatus = dashboardData?.candidate?.dossierStatus ?? dashboardData?.activeDossier?.dossierStatus;
+    const activeNumber = dashboardData?.activeDossier?.dossierNumber ?? (dashboardData?.candidate as { dossierNumber?: string | null } | undefined)?.dossierNumber ?? null;
+    const next = buildClientSpaceSnapshot({
+      evaluation: structuredEvaluation,
+      cases: caseTrackingData,
+      insurance: insuranceRequests,
+      evisa: evisaReqs,
+      procedure: activeStatus
+        ? { status: String(activeStatus), label: clientStatusLabel(String(activeStatus)), number: activeNumber ? String(activeNumber) : null }
+        : undefined,
+    });
     const changes = diffClientSpace(previousSpaceSnapshot.current, next);
     previousSpaceSnapshot.current = mergeClientSpaceSnapshots(previousSpaceSnapshot.current, next);
     for (const change of limitAnnouncements(changes)) {
@@ -216,7 +226,7 @@ export default function EvaluationSpace() {
       else if (change.tone === "warning") toast.warning(change.title, options);
       else toast.info(change.title, options);
     }
-  }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs]);
+  }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs, dashboardData]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -530,10 +540,10 @@ export default function EvaluationSpace() {
       {/* Sélecteur de dossier : les onglets n'apparaissent qu'à partir de 2 dossiers en ligne (ex. Études + Travail),
           mais le lien pour en ouvrir un second reste visible dès le premier dossier. */}
       {onlineDossiers.length >= 1 && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-2">
-            {onlineDossiers.length > 1 && <span className="text-xs font-semibold text-gray-500 mr-1">Mes dossiers :</span>}
-            {onlineDossiers.length > 1 && onlineDossiers.map((dossier) => {
+        <div className="border-b border-slate-200 bg-white/95">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
+            <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
+            {onlineDossiers.map((dossier) => {
               const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
@@ -544,23 +554,30 @@ export default function EvaluationSpace() {
                   aria-pressed={isSelected}
                   aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
-                    isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
                   {dossierSwitcherLabel(dossier)}
-                  <span className="ml-1.5 opacity-75">{dossier.dossierNumber}</span>
+                  <span className="ml-1.5 font-mono opacity-75">{dossier.dossierNumber}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isSelected ? "bg-white/20 text-white" : status.tone}`}>
                     {status.label}
                   </span>
+                  <span className={`text-[10px] font-black ${isSelected ? "text-white/90" : "text-blue-800"}`}>{status.progress}%</span>
                 </button>
               );
             })}
-            <a
-              href="/evaluation"
-              className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-            >
-              + Ouvrir un dossier pour un autre projet
-            </a>
+            {onlineDossiers.length < 5 ? (
+              <a
+                href="/evaluation"
+                className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+              >
+                + Ouvrir un dossier pour un autre projet
+              </a>
+            ) : (
+              <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                Limite de 5 dossiers atteinte
+              </span>
+            )}
             {isFetching && selectedDossierNumber && (
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700" role="status" aria-live="polite">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Chargement du dossier sélectionné…
@@ -761,15 +778,22 @@ export default function EvaluationSpace() {
                 </Card>
               </div>
 
-              {/* Timeline de progression du dossier */}
-              <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-blue-600" />
-                  Avancement de votre procédure
-                </h3>
+              {/* Résumé d’avancement — le parcours détaillé reste dans l’onglet Dossier */}
+              <Card className="border-blue-100 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-slate-950">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                    Avancement de votre procédure
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-600" aria-live="polite">
+                    Sync agence {lastSyncedAt ? `· ${new Date(lastSyncedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "· en cours"}
+                  </p>
+                </div>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
+                <Button type="button" variant="outline" className="mt-4" onClick={() => switchToSection("dossier")}>
+                  Voir le parcours détaillé<ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
               </Card>
-              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
 
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priority.tone}`}>

@@ -122,6 +122,16 @@ describe("ce qui est annoncé au candidat", () => {
     expect(diffClientSpace(before, snap({ evisa: item({ status: "processing" }) }))[0].description).toBe("Nouvel état : En cours de traitement.");
   });
 
+  it("annonce l’évolution du statut de procédure du dossier actif (admin → client)", () => {
+    const before = snap({ procedure: { status: "nouveau", label: "Nouveau dossier", number: "3M-2026-0042" } });
+    const after = snap({ procedure: { status: "documents", label: "Documents requis", number: "3M-2026-0042" } });
+    const changes = diffClientSpace(before, after);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].title).toContain("3M-2026-0042");
+    expect(changes[0].description).toMatch(/Documents/i);
+    expect(diffClientSpace(null, after)).toEqual([]);
+  });
+
   it("une facette pas encore chargée n'est pas comparée, et la fusion garde ce qui est déjà connu", () => {
     const partial: ClientSpaceSnapshot = snap({ evaluation: evaluation("pending") });
     const merged = mergeClientSpaceSnapshots(partial, snap({ cases: caseData() }));

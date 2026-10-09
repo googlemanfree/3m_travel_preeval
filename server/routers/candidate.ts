@@ -573,9 +573,14 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      const rows = await db.select().from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) {
+        // Compte en corbeille ou inexistant : même message (pas d’énumération), sans ouvrir de session.
+        const archived = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, input.email), isNotNull(candidates.deletedAt))).limit(1);
         recordFailedAttempt(input.email);
+        if (archived.length) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte n’est plus accessible. Contactez l’agence 3M TRAVEL AGENCY pour assistance." });
+        }
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 

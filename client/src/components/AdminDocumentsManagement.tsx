@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle, RefreshCw } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
 import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
@@ -85,7 +85,7 @@ export function AdminDocumentsManagement() {
   const suggestDroppedDocumentMetadataMutation = trpc.admin.suggestDroppedDocumentMetadata.useMutation();
 
   // Récupérer les documents via tRPC
-  const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
+  const { data: documentsData, isLoading: isLoadingDocs, dataUpdatedAt: documentsUpdatedAt, isFetching: isFetchingDocs, refetch } = trpc.admin.listDocuments.useQuery(
     { 
       sessionToken,
       search: searchTerm, 
@@ -96,7 +96,14 @@ export function AdminDocumentsManagement() {
       limit: 100,
       offset: 0
     },
-    { enabled: !!sessionToken }
+    {
+      enabled: !!sessionToken,
+      // Sync live avec les dépôts client : onglet visible uniquement, pour éviter de saturer le serveur.
+      refetchInterval: 30_000,
+      refetchIntervalInBackground: false,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    }
   );
 
   const { data: candidateDirectory } = trpc.admin.listCandidates.useQuery(
@@ -749,18 +756,30 @@ export function AdminDocumentsManagement() {
             documentUrl={previewingDoc?.documentUrl || ""}
           />
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-blue-600" />
                   Gestion des Documents
                 </CardTitle>
-                <CardDescription>Vérification et validation des pièces justificatives</CardDescription>
+                <CardDescription>
+                  Vérification et validation des pièces justificatives — sync auto avec l’espace client (30 s).
+                  {pendingDocuments > 0 ? ` ${pendingDocuments} pièce${pendingDocuments > 1 ? "s" : ""} en attente.` : ""}
+                </CardDescription>
+                <p className="mt-1 text-xs font-semibold text-slate-600" aria-live="polite">
+                  {isFetchingDocs ? "Synchronisation…" : documentsUpdatedAt ? `Dernière sync : ${new Date(documentsUpdatedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "En attente de sync"}
+                </p>
               </div>
-              <Button onClick={handleExportDocuments} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Exporter
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => void refetch()} variant="outline" size="sm" disabled={isFetchingDocs}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingDocs ? "animate-spin" : ""}`} />
+                  Actualiser
+                </Button>
+                <Button onClick={handleExportDocuments} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
