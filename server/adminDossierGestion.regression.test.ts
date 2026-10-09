@@ -41,4 +41,20 @@ describe("gestion des dossiers côté admin (sans mutation des données client)"
     expect(kanban).toContain('data-testid="kanban-next-action"');
     expect(kanban).not.toContain("mutate(");
   });
+
+  it("propose un filtre rapide, un tri et un code couleur pour les actions prioritaires", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("nextActionFilter");
+    expect(dashboard).toContain("nextActionSort");
+    expect(dashboard).toContain("Critiques / en retard");
+    expect(dashboard).toContain("Urgents d’abord");
+    expect(dashboard).toContain("ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]");
+  });
+
+  it("affiche un skeleton accessible pendant l’ouverture de la fiche 360°", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain('data-testid="candidate360-loading-skeleton"');
+    expect(dashboard).toContain("Synchronisation de la fiche 360°");
+    expect(dashboard).toContain("transition-opacity duration-200");
+  });
 });

@@ -511,7 +511,7 @@ export function CandidateDetailModal({
   return (
     <>
       <Dialog open={!evaluationEditorOpen} onOpenChange={onClose}>
-      <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
+      <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl transition-opacity duration-200 sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
         <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
           <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
             <Users className="h-5 w-5" />
@@ -521,11 +521,20 @@ export function CandidateDetailModal({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7" data-testid="candidate360-loading-skeleton" aria-busy="true" aria-live="polite">
+            <div className="space-y-5">
+              <div className="flex items-center gap-4 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-5">
+                <div className="h-16 w-16 animate-pulse rounded-full bg-blue-200" />
+                <div className="flex-1 space-y-3"><div className="h-5 w-56 animate-pulse rounded bg-blue-200" /><div className="h-3 w-32 animate-pulse rounded bg-blue-100" /><div className="h-8 w-44 animate-pulse rounded bg-blue-100" /></div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2"><div className="h-36 animate-pulse rounded-xl bg-white" /><div className="h-36 animate-pulse rounded-xl bg-white" /></div>
+              <div className="h-64 animate-pulse rounded-xl bg-white" />
+            </div>
+            <aside className="space-y-4"><div className="h-52 animate-pulse rounded-xl bg-white" /><div className="h-36 animate-pulse rounded-xl bg-white" /></aside>
+            <div className="col-span-full flex items-center justify-center gap-2 text-sm font-semibold text-blue-800"><RefreshCw className="h-4 w-4 animate-spin" />Synchronisation de la fiche 360°…</div>
           </div>
         ) : candidate ? (
-          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7">
+          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 transition-opacity duration-200 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7">
             <div className="min-w-0 space-y-5">
             {/* En-tête candidat avec avatar et actions */}
             <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
@@ -1040,6 +1049,8 @@ export default function AdminDashboard() {
   const [destinationFilter, setDestinationFilter] = useState("ALL");
   const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
+  const [nextActionFilter, setNextActionFilter] = useState<"ALL" | "high" | "medium" | "low">("ALL");
+  const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
@@ -1393,6 +1404,24 @@ export default function AdminDashboard() {
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
+  const displayCandidates = useMemo(() => {
+    const ranked = candidates.map((candidate) => {
+      const next = determineAdminListNextAction({
+        paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+        procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+        status: candidate.status,
+        activationStatus: candidate.activationStatus,
+      });
+      return { candidate, next };
+    }).filter(({ next }) => nextActionFilter === "ALL" || next.urgency === nextActionFilter);
+    if (nextActionSort === "urgency_desc") {
+      const rank = { high: 0, medium: 1, low: 2 } as const;
+      ranked.sort((a, b) => rank[a.next.urgency] - rank[b.next.urgency] || a.next.label.localeCompare(b.next.label, "fr"));
+    } else if (nextActionSort === "label") {
+      ranked.sort((a, b) => a.next.label.localeCompare(b.next.label, "fr"));
+    }
+    return ranked.map(({ candidate }) => candidate);
+  }, [candidates, nextActionFilter, nextActionSort, pendingInlineChanges]);
   const kanbanCandidates: KanbanCandidate[] = candidates.filter((candidate) => Boolean(candidate.id)).map((candidate) => {
     const status = (candidate.status ?? "PENDING_48H") as AdminStatus;
     const referenceDate = candidate.evaluationScheduledAt ?? candidate.lastStatusUpdateAt ?? candidate.updatedAt ?? candidate.createdAt;
@@ -1408,7 +1437,7 @@ export default function AdminDashboard() {
     updateKanbanStatusMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus, notifyClient: true });
   };
   const availableDestinations = data?.availableDestinations || [];
-  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority");
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
   const resetCandidateFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
@@ -1417,6 +1446,8 @@ export default function AdminDashboard() {
     setDestinationFilter("ALL");
     setAssignedToMeFilter(false);
     setSortBy("priority");
+    setNextActionFilter("ALL");
+    setNextActionSort("default");
   };
 
   // Statistiques rapides
@@ -2366,6 +2397,37 @@ export default function AdminDashboard() {
                 <SelectItem value="score_desc">Score décroissant</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={nextActionFilter} onValueChange={(value) => setNextActionFilter(value as typeof nextActionFilter)}>
+              <SelectTrigger className="w-full lg:w-56" aria-label="Filtrer par prochaine action"><Filter className="mr-2 h-4 w-4" /><SelectValue placeholder="Toutes les prochaines actions" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Toutes les prochaines actions</SelectItem>
+                <SelectItem value="high">Critiques / en retard</SelectItem>
+                <SelectItem value="medium">À surveiller</SelectItem>
+                <SelectItem value="low">Faible priorité</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={nextActionSort} onValueChange={(value) => setNextActionSort(value as typeof nextActionSort)}>
+              <SelectTrigger className="w-full lg:w-56" aria-label="Trier par prochaine action"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Ordre des actions" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Ordre des dossiers</SelectItem>
+                <SelectItem value="urgency_desc">Urgence décroissante</SelectItem>
+                <SelectItem value="label">Action par ordre alphabétique</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="sm"
+              variant={nextActionFilter === "high" && nextActionSort === "urgency_desc" ? "default" : "outline"}
+              className={`h-10 gap-2 ${nextActionFilter === "high" && nextActionSort === "urgency_desc" ? "bg-rose-700 hover:bg-rose-800" : "border-rose-200 text-rose-800 hover:bg-rose-50"}`}
+              aria-pressed={nextActionFilter === "high" && nextActionSort === "urgency_desc"}
+              onClick={() => {
+                const active = nextActionFilter === "high" && nextActionSort === "urgency_desc";
+                setNextActionFilter(active ? "ALL" : "high");
+                setNextActionSort(active ? "default" : "urgency_desc");
+              }}
+            >
+              <AlertCircle className="h-4 w-4" /> Urgents d’abord
+            </Button>
             {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
             <Button type="button" variant="outline" onClick={() => setShowArchiveView(true)} className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="h-4 w-4" />Corbeille / doublons</Button>
           </div>
@@ -2520,8 +2582,8 @@ export default function AdminDashboard() {
                       type="checkbox"
                       className="h-4 w-4 rounded border-gray-300"
                       aria-label="Sélectionner tous les dossiers affichés"
-                      checked={candidates.length > 0 && candidates.every((candidate) => selectedCandidateIds.has(candidate.id))}
-                      onChange={(event) => setSelectedCandidateIds(event.target.checked ? new Set(candidates.map((candidate) => candidate.id)) : new Set())}
+                      checked={displayCandidates.length > 0 && displayCandidates.every((candidate) => selectedCandidateIds.has(candidate.id))}
+                      onChange={(event) => setSelectedCandidateIds(event.target.checked ? new Set(displayCandidates.map((candidate) => candidate.id)) : new Set())}
                     />
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
@@ -2549,7 +2611,7 @@ export default function AdminDashboard() {
                       ))}
                     </tr>
                   ))
-                ) : candidates.length === 0 ? (
+                ) : displayCandidates.length === 0 ? (
                   <tr>
                     <td colSpan={13} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -2560,7 +2622,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  candidates.map((candidate) => (
+                  displayCandidates.map((candidate) => (
                     <tr
                       key={candidate.id}
                       className={`transition-colors cursor-pointer ${pendingInlineChanges[candidate.id] ? "bg-amber-50/90 hover:bg-amber-100/90 ring-1 ring-inset ring-amber-200" : "hover:bg-blue-50/40"}`}
@@ -2624,7 +2686,8 @@ export default function AdminDashboard() {
                             activationStatus: candidate.activationStatus,
                           });
                           return (
-                            <span className={`inline-flex max-w-[180px] items-center rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`}>
+                            <span className={`inline-flex max-w-[190px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight transition-colors duration-200 ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`} title={`Priorité ${next.urgency === "high" ? "critique / en retard" : next.urgency === "medium" ? "à surveiller" : "faible"}`}>
+                              {next.urgency === "high" ? <AlertCircle className="h-3.5 w-3.5 shrink-0" /> : next.urgency === "medium" ? <Clock className="h-3.5 w-3.5 shrink-0" /> : <CheckCircle className="h-3.5 w-3.5 shrink-0" />}
                               {next.label}
                             </span>
                           );
