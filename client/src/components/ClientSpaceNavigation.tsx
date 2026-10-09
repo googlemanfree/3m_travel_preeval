@@ -93,6 +93,7 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [comparisonRequestId, setComparisonRequestId] = useState<number | null>(null);
+  const [isExportingClientData, setIsExportingClientData] = useState(false);
   const partnerQuotesQuery = trpc.flightBooking.getMyPartnerQuotes.useQuery(
     { requestId: comparisonRequestId ?? 0 },
     { enabled: Boolean(candidate) && Boolean(comparisonRequestId), retry: false },
@@ -110,6 +111,62 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
     },
     onError: () => toast.error("Le relevé n’a pas pu être généré. Veuillez réessayer."),
   });
+
+  const exportClientDataPdf = async () => {
+    if (!candidate || isExportingClientData) return;
+    setIsExportingClientData(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      const profile = dossierPayload?.candidate as any;
+      const activeDossier = dossierPayload?.activeDossier as any;
+      const documentsCount = (profile?.candidateFiles?.length ?? dossierPayload?.candidateFiles?.length ?? 0) + (dossierPayload?.agencyDocuments?.length ?? 0);
+      const lines = [
+        "3M TRAVEL AGENCY",
+        "Récapitulatif de mon espace client",
+        `Généré le ${new Date().toLocaleString("fr-FR")}`,
+        "",
+        `Nom : ${candidate.fullName || "—"}`,
+        `E-mail : ${candidate.email || "—"}`,
+        `Référence : ${dossierNumber || "Aucune référence"}`,
+        `Statut : ${profile?.dossierStatus || activeDossier?.status || "—"}`,
+        `Destination : ${profile?.destination || activeDossier?.destination || "—"}`,
+        `Type de projet : ${profile?.visaType || activeDossier?.visaType || "—"}`,
+        "",
+        "Synthèse des données disponibles",
+        `Documents visibles : ${documentsCount}`,
+        `Demandes de vols : ${(requestsQuery.data ?? []).length}`,
+        `Demandes d’hébergement : ${(hotelRequestsQuery.data ?? []).length}`,
+        `Points 3M Rewards : ${loyaltyQuery.data?.account.availablePoints ?? 0}`,
+        "",
+        "Ce document est un récapitulatif informatif des données affichées dans votre espace client. Il ne remplace pas un document officiel de l’agence.",
+      ];
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(18);
+      pdf.setTextColor(12, 42, 95);
+      pdf.text(lines[0], 20, 22);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(35, 45, 65);
+      let y = 34;
+      for (const line of lines.slice(1)) {
+        const wrapped = pdf.splitTextToSize(line, 170) as string[];
+        pdf.text(wrapped, 20, y);
+        y += Math.max(6, wrapped.length * 5);
+        if (y > 275) {
+          pdf.addPage();
+          y = 20;
+        }
+      }
+      pdf.save(`recapitulatif-espace-client-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("Votre récapitulatif PDF est prêt au téléchargement.");
+    } catch (error) {
+      console.error("Erreur lors de l’export du récapitulatif client", error);
+      toast.error("Le récapitulatif PDF n’a pas pu être généré.");
+    } finally {
+      setIsExportingClientData(false);
+    }
+  };
 
   const dossierPayload = dossierQuery.data;
   // Référence lue par le candidat : « COMPTE-… » avant l'activation, numéro de dossier « 3M-… » après.
@@ -173,9 +230,15 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
               {isAgencyDossierNumber && <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">Dossier Agence</Badge>}
             </div>
           </div>
-          <a href="/mon-espace?section=dossier" className="premium-action inline-flex h-12 items-center justify-center rounded-xl px-5 font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-            <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <a href="/mon-espace?section=dossier" className="premium-action inline-flex h-12 items-center justify-center rounded-xl px-5 font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+              <FolderOpen className="mr-2 h-4 w-4" /> Suivre mon dossier
+            </a>
+            <Button type="button" variant="outline" onClick={() => void exportClientDataPdf()} disabled={isExportingClientData || !candidate} className="h-12 rounded-xl border-blue-200 bg-white font-bold text-blue-900 hover:bg-blue-50">
+              <Download className={`mr-2 h-4 w-4 ${isExportingClientData ? "animate-pulse" : ""}`} />
+              {isExportingClientData ? "Génération…" : "Exporter mes données PDF"}
+            </Button>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

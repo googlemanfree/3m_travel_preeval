@@ -282,11 +282,23 @@ export default function EvaluationSpace() {
 
   if (isLoading && !loadingTimeoutReached) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
-        <Card className="max-w-md w-full p-8 text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
-          <p className="text-gray-500 text-sm">Vérification de votre espace en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center" aria-busy="true" aria-live="polite">
+        <Card className="w-full max-w-md p-8 text-center shadow-xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+            <Loader2 className="h-9 w-9 animate-spin" aria-hidden="true" />
+          </div>
+          <h2 className="mb-1 text-xl font-bold text-gray-900">Chargement de votre tableau de bord...</h2>
+          <p className="text-sm text-gray-500">Récupération sécurisée de vos dossiers, documents et messages.</p>
+          <div className="mt-6 space-y-3" aria-hidden="true">
+            <div className="h-3 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-3 w-5/6 animate-pulse rounded-full bg-slate-200" />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+            </div>
+          </div>
+          <p className="mt-5 text-xs text-slate-500">Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
         </Card>
       </main>
     );

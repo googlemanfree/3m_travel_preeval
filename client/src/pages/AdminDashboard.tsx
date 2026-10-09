@@ -2341,6 +2341,17 @@ export default function AdminDashboard() {
               <UserCheck className="h-4 w-4" />
               Mes dossiers
             </Button>
+            <Button
+              type="button"
+              variant={activationFilter === "active" ? "default" : "outline"}
+              className={`w-full gap-2 lg:w-auto ${activationFilter === "active" ? "bg-emerald-700 hover:bg-emerald-800" : "border-emerald-200 text-emerald-800 hover:bg-emerald-50"}`}
+              aria-pressed={activationFilter === "active"}
+              onClick={() => setActivationFilter((value) => value === "active" ? "ALL" : "active")}
+              title="Afficher uniquement les comptes activés, considérés comme comptes premium opérationnels"
+            >
+              <Sparkles className="h-4 w-4" />
+              Comptes premium / activés
+            </Button>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
               <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>
               <SelectContent>
