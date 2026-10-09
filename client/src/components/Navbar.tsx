@@ -72,8 +72,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-11 w-auto justify-start px-2.5 py-2.5 text-sm font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
-    : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-sm font-bold text-slate-900 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
+    ? "min-h-11 w-auto justify-start px-2 py-2.5 text-[13px] font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
+    : "min-h-11 w-auto justify-start px-2 py-2.5 text-[13px] font-bold text-slate-900 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
 const authButtonClass = "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -147,18 +147,18 @@ export default function Navbar() {
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="order-1 flex min-w-0 shrink items-center gap-2 group hover:opacity-80 transition-opacity sm:gap-3"
+            className="order-1 flex w-16 shrink-0 items-center justify-start gap-2 group hover:opacity-80 transition-opacity sm:w-16 sm:gap-3 lg:w-20"
           >
             <img
               src="/logo-3m.webp"
               alt="Logo 3M TRAVEL AGENCY"
-              className="h-10 w-auto object-contain sm:h-12"
+              className="h-10 w-auto max-w-full object-contain sm:h-12"
             />
           </a>
 
           <nav
             aria-label={copy(NAV_COPY.mainNav)}
-            className="order-2 hidden min-w-0 flex-1 items-center justify-center space-x-0.5 rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 lg:flex"
+            className="order-2 hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex"
           >
             {menuItems.map((item) => {
               const Icon = item.icon;
