@@ -23,4 +23,9 @@ describe("espace client multi-dossiers", () => {
     expect(source).toContain("Chargement du dossier sélectionné");
     expect(source).toContain('role="status" aria-live="polite"');
   });
+
+  it("propose d’ouvrir une seconde opportunité travail / études", () => {
+    expect(source).toContain("Ajouter une seconde opportunité (Travail / Études)");
+    expect(source).toContain("secondary-dossier-dialog");
+  });
 });

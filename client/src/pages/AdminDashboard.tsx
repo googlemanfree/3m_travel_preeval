@@ -123,6 +123,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
+import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -161,6 +162,8 @@ interface Candidate {
   dueAt?: Date | string | null;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
   procedureStep?: string;
+  siblingCount?: number;
+  siblingProcedures?: SiblingProcedureSummary[];
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -2642,6 +2645,30 @@ export default function AdminDashboard() {
                           <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
                             {candidate.folderCode}
                           </span>
+                          <span className="text-[10px] font-semibold text-slate-700">
+                            {procedureLabelForDossier({ visaType: candidate.projectType, destination: candidate.destinationCountry, dossierNumber: candidate.folderCode })}
+                          </span>
+                          {(candidate.siblingProcedures?.length ?? 0) > 0 && (
+                            <div className="mt-1 space-y-0.5" data-testid="admin-sibling-dossiers">
+                              <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-800">
+                                {candidate.siblingCount ?? (candidate.siblingProcedures!.length + 1)} procédures · même client
+                              </span>
+                              {candidate.siblingProcedures!.slice(0, 3).map((sibling) => (
+                                <button
+                                  key={sibling.id}
+                                  type="button"
+                                  className="block max-w-[220px] truncate text-left text-[10px] font-semibold text-blue-800 underline-offset-2 hover:underline"
+                                  title={`Ouvrir ${sibling.folderCode}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setSelectedCandidateId(sibling.id);
+                                  }}
+                                >
+                                  Aussi : {procedureLabelForDossier({ visaType: sibling.projectType, destination: sibling.destinationCountry, dossierNumber: sibling.folderCode })} · {sibling.folderCode}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           <span className="text-[10px] text-slate-500 lg:hidden">
                             {determineAdminListNextAction({
                               paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,

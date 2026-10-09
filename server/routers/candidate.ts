@@ -2236,24 +2236,43 @@ export const candidateRouter = router({
     // autre projet (ex. Études puis Travail) : selectedDossierNumber permet au client de
     // choisir explicitement lequel afficher ; sans sélection, le comportement par défaut
     // ci-dessus (le payé, sinon le plus récent) est inchangé.
+    const agencyDossierRows = await db
+      .select()
+      .from(agencyDossiers)
+      .where(and(eq(agencyDossiers.email, candidate.email), isNull(agencyDossiers.deletedAt)))
+      .orderBy(desc(agencyDossiers.createdAt))
+      .limit(10);
     const selectedApp = input?.selectedDossierNumber
       ? appRows.find((app) => app.dossierNumber === input.selectedDossierNumber) ?? null
       : null;
-    const activeApp = selectedApp || appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null;
-    const onlineDossiers = appRows.map((app) => ({
-      dossierNumber: app.dossierNumber,
-      visaType: app.visaType,
-      destination: app.destination,
-      dossierStatus: app.dossierStatus,
-      paymentStatus: app.paymentStatus,
-      createdAt: app.createdAt,
-    }));
-    const [activeAgencyDossier] = await db
-      .select()
-      .from(agencyDossiers)
-      .where(eq(agencyDossiers.email, candidate.email))
-      .orderBy(desc(agencyDossiers.createdAt))
-      .limit(1);
+    const selectedAgency = input?.selectedDossierNumber
+      ? agencyDossierRows.find((dossier) => `3M-AGN-${dossier.id.toString().padStart(4, "0")}` === input.selectedDossierNumber) ?? null
+      : null;
+    // Si le candidat choisit explicitement une procédure agence (ex. 2ᵉ opportunité études),
+    // on ne retombe pas sur une candidature en ligne d’un autre projet.
+    const activeApp = selectedApp
+      || (selectedAgency ? null : (appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null));
+    const activeAgencyDossier = selectedAgency || (!selectedApp ? agencyDossierRows[0] : null) || null;
+    const onlineDossiers = [
+      ...appRows.map((app) => ({
+        dossierNumber: app.dossierNumber,
+        visaType: app.visaType,
+        destination: app.destination,
+        dossierStatus: app.dossierStatus,
+        paymentStatus: app.paymentStatus,
+        createdAt: app.createdAt,
+        source: "online" as const,
+      })),
+      ...agencyDossierRows.map((dossier) => ({
+        dossierNumber: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
+        visaType: dossier.visaType,
+        destination: dossier.destination,
+        dossierStatus: dossier.status,
+        paymentStatus: dossier.initialPaymentStatus === "paid" ? "SUCCESS" : dossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+        createdAt: dossier.createdAt,
+        source: "agency" as const,
+      })),
+    ];
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
       : null;
