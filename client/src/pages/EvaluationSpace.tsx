@@ -97,6 +97,8 @@ export default function EvaluationSpace() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [agreementSignatureName, setAgreementSignatureName] = useState("");
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
+  const [agreementPreviewOpen, setAgreementPreviewOpen] = useState(false);
+  const [agreementPreviewConfirmed, setAgreementPreviewConfirmed] = useState(false);
   // Un candidat peut ouvrir plusieurs dossiers en ligne pour des projets différents (ex. Études puis
   // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
   // dossier payé, sinon le plus récent).
@@ -164,12 +166,14 @@ export default function EvaluationSpace() {
     ...clientSpacePolling(),
   });
   const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
-    onSuccess: () => {
-      toast.success("Protocole d’accord signé et enregistré.");
+    onSuccess: (result) => {
+      toast.success(result.message || "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail.");
       void trpcUtils.candidate.getClientDashboardSummary.invalidate();
       setAgreementAccepted(false);
       setAgreementSignatureName("");
       setAgreementSignatureDataUrl(null);
+      setAgreementPreviewOpen(false);
+      setAgreementPreviewConfirmed(false);
     },
     onError: (signError) => toast.error(signError.message || "La signature n’a pas pu être enregistrée."),
   });
@@ -338,6 +342,7 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""}`));
   const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
     procedureLabelForDossier(dossier);
   const cProfile = {
@@ -929,20 +934,22 @@ export default function EvaluationSpace() {
                   {!activeDossier ? (
                     <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
                   ) : activeDossier?.agreementSigned ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4" role="status"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700" /><div><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">La signature est enregistrée dans votre dossier. Vous pouvez poursuivre les étapes autorisées.</p></div></div>
+                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
                   ) : (
                     <div className="space-y-4">
                       <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
                       <div className="flex items-start gap-3 rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-sm text-rose-950" role="alert"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" /><p><strong>Important :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire. Lisez le protocole ci-dessus avant de signer.</p></div>
                       <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
-                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div></div>
-                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>{signAgreementMutation.isPending ? "Enregistrement…" : "Signer le protocole d’accord"}</Button>
-                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber) && (
+                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
+                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Confirmer la signature et l’envoi"}</Button>
+                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !activeDossier?.dossierNumber) && (
                         <p className="text-xs text-slate-500" role="status">
                           Bouton inactif tant que : {[
                             !agreementAccepted && "la case à cocher n’est pas validée",
                             !agreementSignatureName.trim() && "le nom du signataire n’est pas renseigné",
                             !agreementSignatureDataUrl && "aucune signature n’a été dessinée ci-dessus",
+                            !agreementPreviewConfirmed && "la prévisualisation du PDF signé n’est pas confirmée",
                             !activeDossier?.dossierNumber && "aucun dossier actif n’est associé à ce compte",
                           ].filter(Boolean).join(" · ")}.
                         </p>
@@ -1136,7 +1143,29 @@ export default function EvaluationSpace() {
           )}
 	        </div>
 	      </div>
-	      <Dialog open={Boolean(clarificationDocument)} onOpenChange={(open) => { if (!open && !clarificationMutation.isPending) setClarificationDocument(null); }}>
+      <Dialog open={agreementPreviewOpen} onOpenChange={(open) => { if (!open) setAgreementPreviewOpen(false); }}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-950"><FileText className="h-5 w-5 text-indigo-700" />Aperçu du PDF signé</DialogTitle>
+            <DialogDescription>Vérifiez le contenu, votre nom et votre signature avant la validation finale et l’envoi par e-mail.</DialogDescription>
+          </DialogHeader>
+          <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-slate-300 bg-slate-100 p-3" data-testid="signed-agreement-preview">
+            <div className="bg-white p-6 shadow-sm">
+              <div className="rounded-t-lg bg-[#0f2460] px-5 py-4 text-white"><p className="text-lg font-black tracking-wide">3M TRAVEL AGENCY</p><p className="text-xs text-blue-100">Protocole d’accord N°01 — exemplaire signé</p></div>
+              <div className="border-b border-amber-500 px-5 py-4 text-xs text-slate-600"><p>Dossier : <strong>{activeDossier?.dossierNumber ?? "—"}</strong></p><p>Candidat : <strong>{cProfile.fullName}</strong></p></div>
+              <div className="max-h-64 overflow-y-auto whitespace-pre-line px-5 py-5 text-sm leading-6 text-slate-700">{INITIAL_AGREEMENT_PROTOCOL}</div>
+              <div className="mt-3 border-t border-slate-200 px-5 pt-4"><p className="font-bold text-blue-950">Signature électronique du candidat</p><p className="mt-2 text-sm text-slate-700">Signataire : <strong>{agreementSignatureName || "—"}</strong></p>{agreementSignatureDataUrl && <img src={agreementSignatureDataUrl} alt="Aperçu de votre signature" className="mt-3 h-20 max-w-[220px] rounded border border-slate-200 bg-white object-contain p-2" />}<p className="mt-3 text-xs text-slate-500">La date et l’adresse IP seront ajoutées automatiquement lors de la validation sécurisée.</p></div>
+              <div className="mt-5 border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAgreementPreviewOpen(false)}>Modifier</Button>
+            <Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" onClick={() => { setAgreementPreviewConfirmed(true); setAgreementPreviewOpen(false); }}>J’ai vérifié, poursuivre la signature</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(clarificationDocument)} onOpenChange={(open) => { if (!open && !clarificationMutation.isPending) setClarificationDocument(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Demander une clarification</DialogTitle>

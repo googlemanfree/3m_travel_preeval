@@ -34,4 +34,14 @@ describe("admin payment agreement recovery action", () => {
     expect(dashboard).toContain('<AdminPaymentManagement');
     expect(dashboard).toContain('sessionToken={sessionToken || ""}');
   });
+
+  it("expose une relance sécurisée et le filtre de statut de signature", () => {
+    expect(router).toContain("resendAgreementSignatureReminder");
+    expect(router).toContain("agreement_signature_reminder_sent");
+    expect(router).toContain("application.agreementSigned");
+    expect(component).toContain("agreement-signature-filter");
+    expect(component).toContain("resend-agreement-reminder");
+    expect(component).toContain("Signature en attente");
+    expect(component).toContain("Protocole validé");
+  });
 });

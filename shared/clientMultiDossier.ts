@@ -31,7 +31,7 @@ export function procedureLabelForDossier(input: {
 }): string {
   const raw = `${input.visaType || ""} ${input.projectType || ""}`
     .normalize("NFD")
-    .replace(/\p{M}/gu, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
   if (/etud|study|student|academ/.test(raw)) return "Visa études";
   if (/travail|work|emploi|job|recrut/.test(raw)) return "Visa travail";

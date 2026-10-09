@@ -24,7 +24,8 @@ describe("sélection d'un dossier parmi plusieurs (espace client)", () => {
     // qui doit rester le secours quand aucune sélection n'est fournie.
     expect(block).toContain("const selectedApp = input?.selectedDossierNumber");
     expect(block).toContain('appRows.find((app) => app.dossierNumber === input.selectedDossierNumber) ?? null');
-    expect(block).toContain('const activeApp = selectedApp || appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null;');
+    expect(block).toContain("const activeApp = selectedApp");
+    expect(block).toContain('appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null');
   });
 
   it("expose la liste des dossiers en ligne du candidat pour alimenter le sélecteur", () => {
@@ -32,19 +33,21 @@ describe("sélection d'un dossier parmi plusieurs (espace client)", () => {
       summarySource.indexOf("getClientDashboardSummary:"),
       summarySource.indexOf("saveDestinationComparison:")
     );
-    expect(block).toContain("const onlineDossiers = appRows.map((app) => ({");
+    expect(block).toContain("const onlineDossiers = [");
+    expect(block).toContain("...appRows.map((app) => ({");
     expect(block).toContain("dossierNumber: app.dossierNumber,");
     expect(block).toContain("onlineDossiers,");
   });
 
-  it("espace client : le sélecteur n'affiche des onglets qu'à partir de 2 dossiers, mais le lien d'ouverture reste visible dès le premier", () => {
+  it("espace client : le sélecteur reste disponible et le dialogue de seconde opportunité est visible dès le premier dossier", () => {
     const dashboardSource = read("client/src/pages/EvaluationSpace.tsx");
     expect(dashboardSource).toContain("const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);");
     expect(dashboardSource).toContain("selectedDossierNumber ? { selectedDossierNumber } : undefined");
     expect(dashboardSource).toContain("onlineDossiers.length >= 1");
-    expect(dashboardSource).toContain("onlineDossiers.length > 1 && onlineDossiers.map((dossier)");
-    expect(dashboardSource).toContain('href="/evaluation"');
-    expect(dashboardSource).toContain("+ Ouvrir un dossier pour un autre projet");
+    expect(dashboardSource).toContain("onlineDossiers.map((dossier)");
+    expect(dashboardSource).toContain('data-testid="secondary-dossier-dialog"');
+    expect(dashboardSource).toContain("+ Ajouter une seconde opportunité (Travail / Études)");
+    expect(dashboardSource).toContain("secondaryDossierEvaluationPath");
   });
 
   it("le parcours agence (pré-dossier admin) n'est pas touché par ce changement : le blocage à un seul dossier actif reste en place", () => {
