@@ -99,10 +99,11 @@ export function AdminDocumentsManagement() {
     {
       enabled: !!sessionToken,
       // Sync live avec les dépôts client : onglet visible uniquement, pour éviter de saturer le serveur.
-      refetchInterval: 30_000,
+      refetchInterval: 45_000,
       refetchIntervalInBackground: false,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       refetchOnReconnect: true,
+      staleTime: 20_000,
     }
   );
 

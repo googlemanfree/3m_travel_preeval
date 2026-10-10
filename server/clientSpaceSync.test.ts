@@ -22,9 +22,9 @@ const snap = (input: Parameters<typeof buildClientSpaceSnapshot>[0]) => buildCli
 
 describe("rafraîchissement automatique", () => {
   it("interroge le serveur régulièrement, seulement onglet visible, et au retour sur l'onglet", () => {
-    expect(clientSpacePolling()).toEqual({ refetchInterval: CLIENT_SPACE_POLL_MS, refetchIntervalInBackground: false, refetchOnWindowFocus: true, refetchOnReconnect: true });
+    expect(clientSpacePolling()).toEqual({ refetchInterval: CLIENT_SPACE_POLL_MS, refetchIntervalInBackground: false, refetchOnWindowFocus: false, refetchOnReconnect: true, staleTime: 20_000 });
     expect(clientSpacePolling(60_000).refetchInterval).toBe(60_000);
-    expect(CLIENT_SPACE_POLL_MS).toBeGreaterThanOrEqual(15_000); // borne la charge serveur
+    expect(CLIENT_SPACE_POLL_MS).toBe(45_000); // borne la charge serveur
   });
 });
 

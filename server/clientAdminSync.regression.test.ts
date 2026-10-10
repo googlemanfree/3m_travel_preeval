@@ -26,13 +26,15 @@ describe("sync admin ↔ client — garde-fous dynamiques", () => {
 
   it("rafraîchit les documents admin pour voir les dépôts client sans F5", () => {
     const adminDocs = read("client/src/components/AdminDocumentsManagement.tsx");
-    expect(adminDocs).toContain("refetchInterval: 30_000");
+    expect(adminDocs).toContain("refetchInterval: 45_000");
     expect(adminDocs).toContain("refetchIntervalInBackground: false");
+    expect(adminDocs).toContain("refetchOnWindowFocus: false");
+    expect(adminDocs).toContain("staleTime: 20_000");
     expect(adminDocs).toContain("Dernière sync");
   });
 
   it("synchronise le résumé espace client au même rythme que le reste", () => {
-    expect(CLIENT_SPACE_SUMMARY_POLL_MS).toBe(30_000);
+    expect(CLIENT_SPACE_SUMMARY_POLL_MS).toBe(45_000);
     const page = read("client/src/pages/EvaluationSpace.tsx");
     expect(page).toContain("procedure:");
     expect(page).toContain("Mes dossiers (");
