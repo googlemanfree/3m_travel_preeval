@@ -724,6 +724,9 @@ export function CandidateDetailModal({
                   folderCode: sibling.folderCode,
                   projectType: sibling.projectType,
                   destinationCountry: sibling.destinationCountry,
+                  paymentStatus: sibling.paymentStatus,
+                  status: sibling.status,
+                  procedureLabel: sibling.procedureLabel,
                 }))}
                 onSelectSibling={(siblingId) => {
                   onNavigateToCandidate?.(siblingId);
