@@ -17,14 +17,15 @@ const thumbnails = () => screen.getAllByRole("button").filter((button) => button
 const chip = (name: RegExp) => screen.getByRole("button", { name });
 
 describe("données de la galerie", () => {
-  it("classe chaque photo dans une catégorie et les effectifs se recoupent", () => {
-    const counts = proofFilterCounts(PROOF_PHOTOS);
+  it("classe chaque photo par type de procédure et les effectifs se recoupent", () => {
+    const counts = proofFilterCounts(PROOF_PHOTOS, "fr");
     expect(counts[0]).toEqual({ filter: "all", label: "Tous", count: PROOF_PHOTOS.length });
     expect(counts.slice(1).reduce((total, entry) => total + entry.count, 0)).toBe(PROOF_PHOTOS.length);
-    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Canada", "Chine", "Schengen"]);
-    expect(filterProofPhotos(PROOF_PHOTOS, "schengen").every((photo) => /schengen/i.test(photo.alt))).toBe(true);
-    expect(filterProofPhotos(PROOF_PHOTOS, "canada").every((photo) => /canada|IRCC|résidence permanente/i.test(photo.alt))).toBe(true);
-    expect(filterProofPhotos(PROOF_PHOTOS, "chine").every((photo) => /chine/i.test(photo.alt))).toBe(true);
+    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Visas", "Immigration"]);
+    expect(filterProofPhotos(PROOF_PHOTOS, "visas").length).toBeGreaterThan(0);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").length).toBeGreaterThan(0);
+    expect(filterProofPhotos(PROOF_PHOTOS, "visas").every((photo) => photo.category === "visas")).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => /IRCC|résidence permanente|Entrée express/i.test(photo.alt))).toBe(true);
   });
 
   it("chaque image existe sur le disque et se déclare masquée", () => {
@@ -60,28 +61,28 @@ describe("galerie des preuves", () => {
     expect(thumbnails()).toHaveLength(PROOF_COLLAPSED_COUNT);
   });
 
-  it("filtre par destination, marque le filtre actif, et n'affiche plus le bouton « voir plus » quand il n'y a rien à replier", async () => {
+  it("filtre par type de procédure, marque le filtre actif, et replie la galerie au besoin", async () => {
     const user = userEvent.setup();
     render(<ProofGallerySection />);
-    const chine = filterProofPhotos(PROOF_PHOTOS, "chine");
-    await user.click(chip(/^Chine/));
-    expect(chip(/^Chine/).getAttribute("aria-pressed")).toBe("true");
+    const immigration = filterProofPhotos(PROOF_PHOTOS, "immigration");
+    await user.click(chip(/^Immigration/));
+    expect(chip(/^Immigration/).getAttribute("aria-pressed")).toBe("true");
     expect(chip(/^Tous/).getAttribute("aria-pressed")).toBe("false");
-    expect(thumbnails()).toHaveLength(chine.length);
-    expect(screen.queryByRole("button", { name: /autres preuves|Réduire/ })).toBeNull(); // 4 photos : moins que le seuil
-    for (const photo of chine) expect(screen.getByText(photo.caption)).toBeTruthy(); // les textes alternatifs sont identiques d'une photo à l'autre : on vérifie les légendes
-    await user.click(chip(/^Schengen/));
-    expect(thumbnails()).toHaveLength(PROOF_COLLAPSED_COUNT); // 9 : replié à 6
-    expect(screen.getByRole("button", { name: `Voir les ${filterProofPhotos(PROOF_PHOTOS, "schengen").length - PROOF_COLLAPSED_COUNT} autres preuves` })).toBeTruthy();
+    expect(thumbnails()).toHaveLength(immigration.length);
+    expect(screen.queryByRole("button", { name: /autres preuves|Réduire/ })).toBeNull();
+    for (const photo of immigration) expect(screen.getByText(photo.caption)).toBeTruthy();
+    await user.click(chip(/^Visas/));
+    expect(thumbnails()).toHaveLength(PROOF_COLLAPSED_COUNT);
+    expect(screen.getByRole("button", { name: `Voir les ${filterProofPhotos(PROOF_PHOTOS, "visas").length - PROOF_COLLAPSED_COUNT} autres preuves` })).toBeTruthy();
   });
 
   it("le compteur global ne change pas avec le filtre, et changer de filtre replie la galerie", async () => {
     const user = userEvent.setup();
     render(<ProofGallerySection />);
     await user.click(screen.getByRole("button", { name: /Voir les \d+ autres preuves/ }));
-    await user.click(chip(/^Schengen/));
+    await user.click(chip(/^Immigration/));
     expect(screen.getByTestId("proof-count").textContent).toBe(`${PROOF_PHOTOS.length} preuves publiées`);
-    expect(thumbnails()).toHaveLength(PROOF_COLLAPSED_COUNT);
+    expect(thumbnails()).toHaveLength(filterProofPhotos(PROOF_PHOTOS, "immigration").length);
   });
 
   it("ouvre une photo en grand, avec sa légende et sa position, et se ferme avec Échap en rendant le focus", async () => {
@@ -114,11 +115,11 @@ describe("galerie des preuves", () => {
   it("ne parcourt que les photos du filtre courant", async () => {
     const user = userEvent.setup();
     render(<ProofGallerySection />);
-    await user.click(chip(/^Chine/));
+    await user.click(chip(/^Immigration/));
     await user.click(thumbnails()[0]);
-    const chine = filterProofPhotos(PROOF_PHOTOS, "chine");
+    const immigration = filterProofPhotos(PROOF_PHOTOS, "immigration");
     fireEvent.keyDown(window, { key: "ArrowLeft" });
-    expect(screen.getByRole("dialog").getAttribute("aria-label")).toBe(chine[chine.length - 1].caption);
-    expect(screen.getByText(`(${chine.length}/${chine.length})`)).toBeTruthy();
+    expect(screen.getByRole("dialog").getAttribute("aria-label")).toBe(immigration[immigration.length - 1].caption);
+    expect(screen.getByText(`(${immigration.length}/${immigration.length})`)).toBeTruthy();
   });
 });

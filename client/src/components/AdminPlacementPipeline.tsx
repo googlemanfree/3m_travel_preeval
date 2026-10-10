@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BriefcaseBusiness, Building2, Download, Eye, FilePlus2, IdCard, RefreshCw, Search, Send, ShieldCheck, UserRoundCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { POST_SELECTION_LABELS, POST_SELECTION_STAGES, nextPostSelectionStage, resolvePostSelectionStage, type PostSelectionStage } from "@shared/talentCorridor";
+import { PRESENTATION_JOURNEY_STEPS } from "@shared/presentationJourney";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +47,7 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
   const [postSelectionFilter, setPostSelectionFilter] = useState<"all" | PostSelectionStage>("all");
   const [postSelectionSort, setPostSelectionSort] = useState<"recent" | "stage" | "organization">("recent");
   const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<Set<number>>(new Set());
+  const [accessRequestFilter, setAccessRequestFilter] = useState<"open" | "all" | "employer">("open");
   const lockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: false }));
   const listQuery = trpc.placementPortal.adminList.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
@@ -137,6 +139,15 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
     () => accessRequests.filter((row) => row.status === "pending" || row.status === "under_review"),
     [accessRequests],
   );
+  const employerNeedRequests = useMemo(
+    () => openAccessRequests.filter((row) => row.organizationType === "employer"),
+    [openAccessRequests],
+  );
+  const visibleAccessRequests = useMemo(() => {
+    if (accessRequestFilter === "all") return accessRequests;
+    if (accessRequestFilter === "employer") return employerNeedRequests;
+    return openAccessRequests;
+  }, [accessRequestFilter, accessRequests, employerNeedRequests, openAccessRequests]);
   const verifiedOrganizations = useMemo(() => organizations.filter((row) => row.verificationStatus === "verified"), [organizations]);
   const profilesById = useMemo(() => new Map(profiles.map((row) => [row.id, row])), [profiles]);
   const orgsById = useMemo(() => new Map(organizations.map((row) => [row.id, row])), [organizations]);
@@ -228,25 +239,19 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
       </div>
 
       <ol className="mt-4 grid gap-2 rounded-xl border border-indigo-100 bg-white/90 p-3 text-xs sm:grid-cols-5" data-testid="placement-traceability-steps" aria-label="Chaîne de traçabilité des candidatures">
-        {[
-          { n: "1", t: "Consentement + CV" },
-          { n: "2", t: "Profil anonymisé" },
-          { n: "3", t: "Envoi partenaire" },
-          { n: "4", t: "Retour / décision" },
-          { n: "5", t: "Procédure 3M" },
-        ].map((step) => (
-          <li key={step.n} className="flex items-center gap-2 rounded-lg bg-indigo-50/80 px-2.5 py-2 font-semibold text-indigo-950">
+        {PRESENTATION_JOURNEY_STEPS.map((step) => (
+          <li key={step.id} className="flex items-center gap-2 rounded-lg bg-indigo-50/80 px-2.5 py-2 font-semibold text-indigo-950">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-700 text-[11px] text-white">{step.n}</span>
-            {step.t}
+            {step.short.fr}
           </li>
         ))}
       </ol>
 
       <div className="mt-4 grid gap-3 md:grid-cols-5">
         <div className="rounded-xl border border-violet-100 bg-white p-3">
-          <p className="text-xs font-bold uppercase text-violet-700">Inscriptions</p>
+          <p className="text-xs font-bold uppercase text-violet-700">Besoins / inscriptions</p>
           <p className="mt-1 text-2xl font-black text-violet-950">{openAccessRequests.length}</p>
-          <p className="text-xs text-slate-500">À examiner</p>
+          <p className="text-xs text-slate-500">{employerNeedRequests.length} besoin(s) employeur</p>
         </div>
         <div className="rounded-xl border border-indigo-100 bg-white p-3">
           <p className="text-xs font-bold uppercase text-indigo-700">Organisations</p>
@@ -273,10 +278,27 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
       <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="admin-partner-access-requests">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="flex items-center gap-2 font-bold text-violet-950"><IdCard className="h-4 w-4" />Demandes d’identification partenaires</p>
-            <p className="mt-1 text-sm text-violet-900">Examinez l’identité légale, puis approuvez avec vérification et génération d’accès si l’organisation est confirmée.</p>
+            <p className="flex items-center gap-2 font-bold text-violet-950"><IdCard className="h-4 w-4" />Besoins de recrutement &amp; inscriptions partenaires</p>
+            <p className="mt-1 text-sm text-violet-900">File issue du CTA public « Transmettre un besoin » et des inscriptions agence/employeur. Examinez l’identité, le besoin, puis générez l’accès si l’organisation est confirmée.</p>
           </div>
           <Badge className="bg-violet-100 text-violet-900">{openAccessRequests.length} ouverte(s)</Badge>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filtrer les besoins et inscriptions" data-testid="admin-recruitment-needs-filters">
+          {([
+            ["open", `Ouverts (${openAccessRequests.length})`],
+            ["employer", `Besoins employeur (${employerNeedRequests.length})`],
+            ["all", `Tout l’historique (${accessRequests.length})`],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={accessRequestFilter === id}
+              onClick={() => setAccessRequestFilter(id)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${accessRequestFilter === id ? "border-violet-700 bg-violet-700 text-white" : "border-violet-200 bg-white text-violet-900 hover:bg-violet-100"}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         {issuedAccess && (
           <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
@@ -285,11 +307,11 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
             <code className="mt-2 block select-all rounded bg-white p-2 font-mono text-sm">{issuedAccess.temporaryPassword}</code>
           </div>
         )}
-        {openAccessRequests.length === 0 ? (
-          <p className="mt-3 rounded-lg bg-white/80 p-3 text-sm text-slate-600">Aucune demande d’inscription en attente.</p>
+        {visibleAccessRequests.length === 0 ? (
+          <p className="mt-3 rounded-lg bg-white/80 p-3 text-sm text-slate-600">Aucun besoin ni inscription pour ce filtre.</p>
         ) : (
-          <ul className="mt-3 space-y-3">
-            {openAccessRequests.slice(0, 12).map((row) => (
+          <ul className="mt-3 space-y-3" data-testid="admin-recruitment-needs-list">
+            {visibleAccessRequests.slice(0, 12).map((row) => (
               <li key={row.id} className="rounded-xl border border-violet-100 bg-white p-3 text-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -301,57 +323,62 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
                     <p className="mt-1 text-slate-700">{row.contactFullName} · {row.contactRole}</p>
                     <p className="text-slate-600">{row.contactEmail} · {row.contactPhone}</p>
                     {row.registrationNumber && <p className="text-xs text-slate-500">Enregistrement : {row.registrationNumber}</p>}
-                    {(row.sectors || row.targetMarkets) && (
-                      <p className="mt-1 text-xs text-slate-500">
-                        {[row.sectors, row.targetMarkets].filter(Boolean).join(" · ")}
+                    <div className="mt-2 rounded-lg border border-amber-100 bg-amber-50/80 p-2.5" data-testid="admin-recruitment-need-card">
+                      <p className="text-xs font-black uppercase tracking-wide text-amber-800">Besoin de recrutement</p>
+                      <p className="mt-1 text-xs text-amber-950">
+                        {[row.sectors || "Secteur non précisé", row.targetMarkets || "Marché non précisé"].join(" · ")}
                       </p>
-                    )}
-                    <p className="mt-2 whitespace-pre-wrap text-slate-700">{row.message}</p>
+                      <p className="mt-1.5 whitespace-pre-wrap text-sm text-slate-800">{row.message}</p>
+                    </div>
                   </div>
                   <Badge variant="outline">{accessRequestLabels[row.status] ?? row.status}</Badge>
                 </div>
-                <Textarea
-                  className="mt-3"
-                  value={reviewNotes[row.id] ?? ""}
-                  onChange={(event) => setReviewNotes((current) => ({ ...current, [row.id]: event.target.value }))}
-                  placeholder="Note de revue interne (facultatif)"
-                  maxLength={2000}
-                />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={reviewAccessMutation.isPending}
-                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "under_review", reviewNote: reviewNotes[row.id] || undefined })}
-                  >
-                    Marquer en examen
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-rose-300 text-rose-800"
-                    disabled={reviewAccessMutation.isPending}
-                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "rejected", reviewNote: reviewNotes[row.id] || undefined })}
-                  >
-                    Refuser
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-indigo-700 hover:bg-indigo-800"
-                    disabled={reviewAccessMutation.isPending}
-                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: false, reviewNote: reviewNotes[row.id] || undefined })}
-                  >
-                    Approuver (org vérifiée)
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-amber-700 hover:bg-amber-800"
-                    disabled={reviewAccessMutation.isPending}
-                    onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: true, reviewNote: reviewNotes[row.id] || undefined })}
-                  >
-                    Approuver + générer accès
-                  </Button>
-                </div>
+                {(row.status === "pending" || row.status === "under_review") && (
+                  <>
+                    <Textarea
+                      className="mt-3"
+                      value={reviewNotes[row.id] ?? ""}
+                      onChange={(event) => setReviewNotes((current) => ({ ...current, [row.id]: event.target.value }))}
+                      placeholder="Note de revue interne (facultatif)"
+                      maxLength={2000}
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={reviewAccessMutation.isPending}
+                        onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "under_review", reviewNote: reviewNotes[row.id] || undefined })}
+                      >
+                        Marquer en examen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-rose-300 text-rose-800"
+                        disabled={reviewAccessMutation.isPending}
+                        onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "rejected", reviewNote: reviewNotes[row.id] || undefined })}
+                      >
+                        Refuser
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-indigo-700 hover:bg-indigo-800"
+                        disabled={reviewAccessMutation.isPending}
+                        onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: false, reviewNote: reviewNotes[row.id] || undefined })}
+                      >
+                        Approuver (org vérifiée)
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-amber-700 hover:bg-amber-800"
+                        disabled={reviewAccessMutation.isPending}
+                        onClick={() => reviewAccessMutation.mutate({ sessionToken, requestId: row.id, decision: "approved", markVerified: true, createAccess: true, reviewNote: reviewNotes[row.id] || undefined })}
+                      >
+                        Approuver + générer accès
+                      </Button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>

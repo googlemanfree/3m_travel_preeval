@@ -569,6 +569,53 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
     });
   }),
 
+  /** Historique traçable : présentation (envoi) + retours de décision pour l’organisation. */
+  employerSubmissionHistory: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
+    const { db, organization } = await getEmployerSession(input.sessionToken);
+    const rows = await db
+      .select({
+        eventId: placementSubmissionEvents.id,
+        action: placementSubmissionEvents.action,
+        note: placementSubmissionEvents.note,
+        actorType: placementSubmissionEvents.actorType,
+        createdAt: placementSubmissionEvents.createdAt,
+        submissionId: placementProfileSubmissions.id,
+        status: placementProfileSubmissions.status,
+        profileCode: placementCandidateProfiles.profileCode,
+        targetDestination: placementCandidateProfiles.targetDestination,
+        targetProcedure: placementCandidateProfiles.targetProcedure,
+      })
+      .from(placementSubmissionEvents)
+      .innerJoin(placementProfileSubmissions, eq(placementSubmissionEvents.submissionId, placementProfileSubmissions.id))
+      .innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id))
+      .where(eq(placementProfileSubmissions.organizationId, organization.id))
+      .orderBy(desc(placementSubmissionEvents.createdAt))
+      .limit(200);
+    const relevant = new Set([
+      "profile_submitted",
+      "under_review",
+      "shortlisted",
+      "selected",
+      "not_selected",
+      "documents_requested",
+    ]);
+    return rows
+      .filter((row) => relevant.has(row.action))
+      .map((row) => ({
+        eventId: row.eventId,
+        action: row.action,
+        note: row.note,
+        actorType: row.actorType,
+        createdAt: row.createdAt,
+        submissionId: row.submissionId,
+        status: row.status,
+        profileCode: row.profileCode,
+        targetDestination: row.targetDestination,
+        targetProcedure: row.targetProcedure,
+        kind: row.action === "profile_submitted" ? "presented" as const : "feedback" as const,
+      }));
+  }),
+
   employerCollaborators: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName, collaborationRole: placementEmployerAccounts.collaborationRole, status: placementEmployerAccounts.status }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), inArray(placementEmployerAccounts.status, ["active", "suspended"])));

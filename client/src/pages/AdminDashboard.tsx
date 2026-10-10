@@ -2084,7 +2084,7 @@ export default function AdminDashboard() {
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    Gestion Documentaire RAG (107 Destinations)
+                    Gestion Documentaire RAG (catalogue documenté)
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Téléchargez et mettez à jour les guides PDF officiels de chaque pays pour enrichir instantanément les connaissances d’Aureol.
@@ -2175,7 +2175,7 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500 text-sm border border-dashed rounded-xl bg-white">
-                    📚 107 guides pays indexés par défaut dans le moteur RAG d’Aureol.
+                    📚 Guides pays du catalogue documenté, indexés par défaut dans le moteur RAG d’Aureol.
                   </div>
                 )}
               </div>

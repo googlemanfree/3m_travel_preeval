@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Clock3, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { B2bPartnerRegistrationForm, type PartnerOrganizationType } from "@/components/B2bPartnerRegistrationForm";
@@ -18,7 +18,7 @@ type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 type AuthTab = "login" | "register";
-type WorkspaceTab = "profiles" | "team" | "security";
+type WorkspaceTab = "profiles" | "history" | "team" | "security";
 type PortalOrganization = { name: string; country: string; organizationType: PartnerOrganizationType };
 
 function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
@@ -135,6 +135,10 @@ export default function EmployerPortal() {
     });
   }, [sessionInfo.data?.organization]);
   const profiles = trpc.placementPortal.employerProfiles.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  const submissionHistory = trpc.placementPortal.employerSubmissionHistory.useQuery(
+    { sessionToken },
+    { enabled: Boolean(sessionToken) && workspaceTab === "history", retry: false },
+  );
   const collaborators = trpc.placementPortal.employerCollaborators.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
   const notifications = trpc.placementPortal.employerNotifications.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
   const totpStatus = trpc.placementPortal.employerTwoFactorStatus.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
@@ -363,9 +367,10 @@ export default function EmployerPortal() {
       <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p>
       <p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p>
     </section>
-    <nav className="grid grid-cols-3 gap-1 rounded-2xl border border-slate-200 bg-white p-1" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
+    <nav className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 sm:grid-cols-4" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
       {([
         ["profiles", t("Profils", "Profiles"), BriefcaseBusiness],
+        ["history", t("Historique", "History"), Clock3],
         ["team", t("Équipe", "Team"), UserRoundCog],
         ["security", t("Sécurité", "Security"), LockKeyhole],
       ] as const).map(([id, label, Icon]) => (
@@ -407,6 +412,54 @@ export default function EmployerPortal() {
       </>}
       <AlertDialog open={Boolean(reviewingCollaborator)} onOpenChange={open => { if (!open && !reviewSuspendedCollaborator.isPending) setReviewingCollaborator(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t("Confirmer la révision d’accès", "Confirm access review")}</AlertDialogTitle><AlertDialogDescription>{t(`Décidez manuellement du maintien ou de la réactivation de l’accès de ${reviewingCollaborator?.fullName ?? "ce collaborateur"}. La décision sera journalisée ; aucune donnée candidate ni note privée ne sera ajoutée.`, `Manually decide whether to keep or reactivate access for ${reviewingCollaborator?.fullName ?? "this collaborator"}. The decision will be logged; no candidate data or private note will be added.`)}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={reviewSuspendedCollaborator.isPending}>{t("Annuler", "Cancel")}</AlertDialogCancel><Button variant="outline" disabled={reviewSuspendedCollaborator.isPending} onClick={() => reviewingCollaborator && reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "keep_suspended" })}>{t("Conserver la suspension", "Keep suspended")}</Button><AlertDialogAction disabled={reviewSuspendedCollaborator.isPending} onClick={event => { event.preventDefault(); if (reviewingCollaborator) reviewSuspendedCollaborator.mutate({ sessionToken, collaboratorId: reviewingCollaborator.id, decision: "reactivate" }); }}>{t("Réactiver l’accès", "Reactivate access")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </section>}
+    {workspaceTab === "history" && (
+      <section className="rounded-xl border border-slate-200 bg-white p-4" data-testid="partner-submission-history">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 font-bold text-slate-900"><Clock3 className="h-4 w-4 text-indigo-700" />{t("Preuves d’envoi et retours", "Proof of send and feedback")}</p>
+            <p className="mt-1 text-sm text-slate-600">{t("Même chaîne que l’admin 3M : profil présenté, puis décision enregistrée dans le bon dossier.", "Same chain as 3M admin: profile presented, then decision logged in the correct file.")}</p>
+          </div>
+          <Button size="sm" variant="outline" disabled={submissionHistory.isFetching} onClick={() => void submissionHistory.refetch()}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${submissionHistory.isFetching ? "animate-spin" : ""}`} />
+            {t("Actualiser", "Refresh")}
+          </Button>
+        </div>
+        {submissionHistory.isLoading ? (
+          <p className="mt-4 text-sm text-slate-500">{t("Chargement de l’historique…", "Loading history…")}</p>
+        ) : submissionHistory.error ? (
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{t("Historique indisponible. Reconnectez-vous.", "History unavailable. Please sign in again.")}</p>
+        ) : (submissionHistory.data ?? []).length === 0 ? (
+          <p className="mt-4 rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">{t("Aucun envoi ni retour pour le moment. Les événements apparaissent dès qu’un profil est présenté par 3M.", "No send or feedback yet. Events appear once 3M presents a profile.")}</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {(submissionHistory.data ?? []).map((event) => {
+              const isPresented = event.kind === "presented";
+              const actionLabel = isPresented
+                ? t("Profil présenté", "Profile presented")
+                : event.action === "selected"
+                  ? t("Sélection enregistrée", "Selection recorded")
+                  : event.action === "shortlisted"
+                    ? t("Présélection enregistrée", "Shortlist recorded")
+                    : event.action === "not_selected"
+                      ? t("Non-retenu enregistré", "Decline recorded")
+                      : event.action === "documents_requested"
+                        ? t("Pièces demandées", "Documents requested")
+                        : t("Retour enregistré", "Feedback recorded");
+              return (
+                <li key={event.eventId} className={`rounded-lg border p-3 text-sm ${isPresented ? "border-indigo-200 bg-indigo-50/70" : "border-emerald-200 bg-emerald-50/70"}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-bold text-slate-950">{actionLabel}</p>
+                    <time className="text-xs text-slate-500" dateTime={new Date(event.createdAt).toISOString()}>{new Date(event.createdAt).toLocaleString()}</time>
+                  </div>
+                  <p className="mt-1 text-slate-700">{event.profileCode} · {event.targetDestination} · {event.targetProcedure}</p>
+                  {event.note && <p className="mt-1 text-xs text-slate-600">{event.note}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    )}
     {workspaceTab === "profiles" && (profiles.isLoading ? <p className="py-10 text-center text-slate-500">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</p> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
       <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-6"><Select value={sector} onValueChange={setSector}><SelectTrigger><SelectValue placeholder={t("Métier / secteur", "Role / sector")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les secteurs", "All sectors")}</SelectItem>{sectors.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={language} onValueChange={setLanguage}><SelectTrigger><SelectValue placeholder={t("Langue", "Language")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les langues", "All languages")}</SelectItem>{languages.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder={t("Pays cible", "Target country")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les pays cibles", "All target countries")}</SelectItem>{countries.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={availability} onValueChange={setAvailability}><SelectTrigger><SelectValue placeholder={t("Disponibilité", "Availability")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes disponibilités", "All availability")}</SelectItem><SelectItem value="submitted">{t("Disponible pour examen", "Available for review")}</SelectItem></SelectContent></Select><Button variant={favoritesOnly ? "default" : "outline"} onClick={() => setFavoritesOnly(value => !value)}><Star className="mr-2 h-4 w-4" />{t("Favoris", "Favourites")}</Button><Button variant="outline" disabled={exportFavorites.isPending} onClick={() => exportFavorites.mutate({ sessionToken })}><Download className="mr-2 h-4 w-4" />{t("Exporter favoris", "Export favourites")}</Button></section>
       <p className="text-sm text-slate-600">{filteredProfiles.length} {t("profil(s) autorisé(s) selon les filtres sélectionnés.", "authorised profile(s) matching the selected filters.")}</p>

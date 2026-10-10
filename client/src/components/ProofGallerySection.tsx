@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PROOF_COLLAPSED_COUNT, PROOF_PHOTOS, filterProofPhotos, neighbourIndex, proofFilterCounts, type ProofFilter } from "@/data/proofPhotos";
 
 export default function ProofGallerySection() {
+  const { language, t } = useLanguage();
   const [filter, setFilter] = useState<ProofFilter>("all");
   const [expanded, setExpanded] = useState(false);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
 
-  const filters = proofFilterCounts(PROOF_PHOTOS);
+  const filters = proofFilterCounts(PROOF_PHOTOS, language);
   const filtered = filterProofPhotos(PROOF_PHOTOS, filter);
   const visible = expanded ? filtered : filtered.slice(0, PROOF_COLLAPSED_COUNT);
   const hiddenCount = filtered.length - visible.length;
@@ -43,18 +45,21 @@ export default function ProofGallerySection() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Preuves réelles · données masquées
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> {t("Preuves réelles · données masquées", "Real proofs · redacted data")}
           </p>
-          <h2 id="proof-gallery-title" className="premium-section-title mt-4 text-2xl md:text-3xl">Ils ont avancé avec 3M — voici les preuves</h2>
+          <h2 id="proof-gallery-title" className="premium-section-title mt-4 text-2xl md:text-3xl">{t("Ils ont avancé avec 3M — voici les preuves", "They moved forward with 3M — here is the evidence")}</h2>
           <p className="premium-section-lead mx-auto text-center">
-            Extraits de dossiers réellement traités par 3M TRAVEL AGENCY. Identités et données sensibles masquées, avec l’accord des candidats concernés — pour juger sur du concret, pas sur des slogans.
+            {t(
+              "Extraits de dossiers réellement traités par 3M TRAVEL AGENCY, classés par type de procédure (visas, études, immigration, placements). Identités masquées, avec l’accord des candidats.",
+              "Excerpts from files actually handled by 3M TRAVEL AGENCY, sorted by procedure type (visas, studies, immigration, placements). Identities redacted, with candidate consent.",
+            )}
           </p>
           <p className="mt-3 text-sm font-bold text-blue-800" data-testid="proof-count" aria-live="polite">
-            {PROOF_PHOTOS.length} preuves publiées
+            {PROOF_PHOTOS.length} {t("preuves publiées", "published proofs")}
           </p>
         </div>
 
-        <div role="group" aria-label="Filtrer les preuves par destination" className="mb-6 flex flex-wrap justify-center gap-2">
+        <div role="group" aria-label={t("Filtrer les preuves par type de procédure", "Filter proofs by procedure type")} className="mb-6 flex flex-wrap justify-center gap-2">
           {filters.map((entry) => (
             <button
               key={entry.filter}

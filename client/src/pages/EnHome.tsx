@@ -66,7 +66,7 @@ export default function EnHome() {
           ))}
         </div>
         <p className="mt-6 text-center text-sm text-slate-500">
-          More destinations are being translated. For the full 107-destination catalogue, see the{" "}
+          More destinations are being translated. For the full documented procedures catalogue, see the{" "}
           <a href="/procedures" className="font-bold text-blue-700 hover:text-blue-900">French procedures directory</a>.
         </p>
       </section>

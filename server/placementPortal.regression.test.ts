@@ -82,8 +82,12 @@ describe("portail de placement protégé", () => {
     expect(agency).toContain("CORRIDOR_ROUTES.agenciesLogin");
     expect(router).toContain("employerSessionInfo");
     expect(router).toContain("organizationType: organization.organizationType");
-    expect(adminUi).toContain("Demandes d’identification partenaires");
+    expect(adminUi).toContain("Besoins de recrutement");
+    expect(adminUi).toContain("admin-recruitment-needs");
     expect(adminUi).toContain("Approuver + générer accès");
+    expect(router).toContain("employerSubmissionHistory");
+    expect(employer).toContain('workspaceTab === "history"');
+    expect(employer).toContain("partner-submission-history");
   });
 
   it("guide les erreurs de connexion et conserve des liens partenaires accessibles", () => {

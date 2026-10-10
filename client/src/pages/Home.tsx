@@ -21,16 +21,18 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
+import { PRESENTATION_JOURNEY_INTRO, PRESENTATION_JOURNEY_STEPS } from "@shared/presentationJourney";
 
 const EMPLOYER_PROFILE_DELIVERABLES = [
-  "Un CV actualisé.",
-  "Une synthèse de l’expérience pertinente pour votre poste.",
-  "Les qualifications et justificatifs disponibles.",
-  "L’état des vérifications effectuées.",
-  "Les points restant à confirmer.",
-  "La disponibilité du candidat.",
-  "Un interlocuteur 3M pour organiser les échanges et les entretiens.",
+  { fr: "Un CV actualisé.", en: "An updated CV." },
+  { fr: "Une synthèse de l’expérience pertinente pour votre poste.", en: "A summary of experience relevant to your role." },
+  { fr: "Les qualifications et justificatifs disponibles.", en: "Available qualifications and supporting documents." },
+  { fr: "L’état des vérifications effectuées.", en: "The status of checks already completed." },
+  { fr: "Les points restant à confirmer.", en: "Points still to be confirmed." },
+  { fr: "La disponibilité du candidat.", en: "The candidate’s availability." },
+  { fr: "Un interlocuteur 3M pour organiser les échanges et les entretiens.", en: "A 3M contact to organise exchanges and interviews." },
 ] as const;
 
 const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
@@ -49,10 +51,12 @@ const fadeUp = {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
+  const { t, language } = useLanguage();
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const lang = language === "en" ? "en" : "fr";
 
   useEffect(() => {
     document.title = "3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale";
@@ -147,26 +151,29 @@ export default function Home() {
       {/* Corridor recrutement autorisé AVANT les services annexes (vols, assurance, e-Visa). */}
       <section aria-labelledby="home-b2b-title" className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-12" data-testid="home-talent-corridor">
         <div className="mx-auto max-w-6xl px-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Préparation de dossier · canaux autorisés</p>
-          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">3M prépare et suit — les partenaires recrutent</h2>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">{t("Préparation de dossier · canaux autorisés", "File preparation · authorised channels")}</p>
+          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">
-            3M est le centre de préparation et de suivi des dossiers. Agences et employeurs vérifiés sont les canaux de recrutement autorisés. Chaque candidature reste traçable : consentement, envoi contrôlé, retour partenaire, puis procédure.
+            {t(
+              "3M est le centre de préparation et de suivi des dossiers. Agences et employeurs vérifiés sont les canaux de recrutement autorisés. Chaque candidature reste traçable : consentement, envoi contrôlé, retour partenaire, puis procédure.",
+              "3M is the hub for file preparation and follow-up. Verified agencies and employers are the authorised recruitment channels. Every application stays traceable: consent, controlled send, partner feedback, then procedure.",
+            )}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">Hub partenaires</p>
-              <p className="mt-1 text-sm text-slate-600">Candidat, admin 3M, agences et employeurs — un corridor traçable.</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Voir le corridor →</span>
+              <p className="text-base font-black text-slate-950">{t("Hub partenaires", "Partners hub")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
             </a>
             <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">Agences de placement</p>
-              <p className="mt-1 text-sm text-slate-600">Canal autorisé : recevoir des profils consentants et documentés.</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Portail agence →</span>
+              <p className="text-base font-black text-slate-950">{t("Agences de placement", "Placement agencies")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Canal autorisé : recevoir des profils consentants et documentés.", "Authorised channel: receive consenting, documented profiles.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Portail agence →", "Agency portal →")}</span>
             </a>
             <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">Employeurs internationaux</p>
-              <p className="mt-1 text-sm text-slate-600">Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">Portail employeur →</span>
+              <p className="text-base font-black text-slate-950">{t("Employeurs internationaux", "International employers")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.", "Select, decide, return feedback into the correct 3M file.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
             </a>
           </div>
 
@@ -176,23 +183,29 @@ export default function Home() {
             data-testid="home-employer-deliverables"
             aria-labelledby="home-employer-deliverables-title"
           >
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Pour les employeurs</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{t("Pour les employeurs", "For employers")}</p>
             <h3 id="home-employer-deliverables-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
-              Ce que vous recevez pour chaque profil
+              {t("Ce que vous recevez pour chaque profil", "What you receive for each profile")}
             </h3>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Avant toute présentation, un administrateur 3M examine le dossier. Vous ne recevez que des profils préparés, consentants et alignés sur vos critères.
+              {t(
+                "Avant toute présentation, un administrateur 3M examine le dossier. Vous ne recevez que des profils préparés, consentants et alignés sur vos critères.",
+                "Before any presentation, a 3M administrator reviews the file. You only receive prepared, consenting profiles aligned with your criteria.",
+              )}
             </p>
             <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {EMPLOYER_PROFILE_DELIVERABLES.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm font-medium leading-6 text-slate-800">
+                <li key={item.fr} className="flex items-start gap-2.5 text-sm font-medium leading-6 text-slate-800">
                   <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-                  <span>{item}</span>
+                  <span>{item[lang]}</span>
                 </li>
               ))}
             </ul>
             <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-700">
-              Transmettez-nous vos critères : notre équipe examine les profils correspondants avant toute présentation.
+              {t(
+                "Transmettez-nous vos critères : notre équipe examine les profils correspondants avant toute présentation.",
+                "Send us your criteria: our team reviews matching profiles before any presentation.",
+              )}
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <a
@@ -200,16 +213,38 @@ export default function Home() {
                 data-testid="home-employer-need-cta"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-black text-[#071b3d] transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2"
               >
-                Transmettre un besoin de recrutement
+                {t("Transmettre un besoin de recrutement", "Submit a recruitment need")}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <a
                 href={CORRIDOR_ROUTES.employersLogin}
                 className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-indigo-300 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
               >
-                Déjà vérifié ? Accéder au portail
+                {t("Déjà vérifié ? Accéder au portail", "Already verified? Open the portal")}
               </a>
             </div>
+          </div>
+
+          {/* Parcours 5 étapes — même chaîne que le stepper admin. */}
+          <div
+            className="mt-8 rounded-2xl border border-white/25 bg-white/10 p-6 backdrop-blur-sm md:p-8"
+            data-testid="home-presentation-journey"
+            aria-labelledby="home-presentation-journey-title"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-200">{PRESENTATION_JOURNEY_INTRO.badge[lang]}</p>
+            <h3 id="home-presentation-journey-title" className="mt-2 text-xl font-black text-white md:text-2xl">
+              {PRESENTATION_JOURNEY_INTRO.title[lang]}
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
+            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {PRESENTATION_JOURNEY_STEPS.map((step) => (
+                <li key={step.id} className="rounded-xl border border-white/20 bg-white/95 p-4">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-700 text-xs font-black text-white">{step.n}</span>
+                  <p className="mt-3 text-sm font-black text-slate-950">{step.title[lang]}</p>
+                  <p className="mt-1.5 text-xs leading-5 text-slate-600">{step.body[lang]}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
