@@ -166,19 +166,31 @@ function countryPhotoSlugSet(): Record<string, true> {
   };
 }
 
+/** Secours local pour destinations manus-only (Autriche, Suisse, Luxembourg…). */
+const REGIONAL_LOCAL_FALLBACK: Record<string, string> = {
+  autriche: "allemagne",
+  suisse: "allemagne",
+  luxembourg: "belgique",
+};
+
 export function getDestinationVisual(slugOrId: string): VisualSources | null {
   const slug = normalizeDestinationSlug(slugOrId);
   if (!slug) return null;
 
   const manus = DESTINATION_MANUS[slug];
   const local = getCountryPhotos(slug)[0]?.src;
-  const desktop = manus ?? local;
+  const regionalSlug = REGIONAL_LOCAL_FALLBACK[slug];
+  const regionalLocal = regionalSlug ? getCountryPhotos(regionalSlug)[0]?.src : undefined;
+  const desktop = manus ?? local ?? regionalLocal;
   if (!desktop) return null;
+
+  const localFallback = (local && local !== desktop ? local : undefined)
+    ?? (regionalLocal && regionalLocal !== desktop ? regionalLocal : undefined);
 
   return {
     desktop,
-    mobile: manus ?? local ?? desktop,
-    localFallback: local && local !== desktop ? local : undefined,
+    mobile: manus ?? local ?? regionalLocal ?? desktop,
+    localFallback,
     alt: DESTINATION_ALT[slug] ?? `Destination ${slug}`,
   };
 }
