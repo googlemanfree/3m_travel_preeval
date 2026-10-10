@@ -106,10 +106,10 @@ export default function EvaluationSpace() {
   const [protocolTwoSignatureDataUrl, setProtocolTwoSignatureDataUrl] = useState<string | null>(null);
   const [protocolTwoFormula, setProtocolTwoFormula] = useState<"integral" | "echelonne" | "garanti" | "">("");
 
-  // Un candidat peut ouvrir plusieurs dossiers en ligne pour des projets différents (ex. Études puis
-  // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
-  // dossier payé, sinon le plus récent).
-  const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);
+  // Un candidat peut ouvrir plusieurs dossiers pour des projets différents (ex. Études puis Travail).
+  // Persistance dans l’URL (?dossier=) pour que la sync et le partage de lien restent transparents.
+  const dossierFromUrl = searchParams.get("dossier");
+  const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(dossierFromUrl);
   const [secondaryDossierOpen, setSecondaryDossierOpen] = useState(false);
   const [secondaryProject, setSecondaryProject] = useState<SecondaryProjectType>("etudes");
   const [secondaryDestination, setSecondaryDestination] = useState("");
@@ -245,11 +245,16 @@ export default function EvaluationSpace() {
   }, [documentClarifications]);
 
   // Ce que l'équipe change côté back-office (état d'un dossier, pièce validée ou à corriger, évaluation publiée,
-  // e-Visa, assurance, message) est annoncé au candidat ; la première lecture sert de référence, sans annonce.
+  // e-Visa, assurance, message, nouvelle procédure parallèle) est annoncé au candidat ; la première lecture sert de référence.
   const previousSpaceSnapshot = useRef<ClientSpaceSnapshot | null>(null);
   useEffect(() => {
-    const activeStatus = dashboardData?.candidate?.dossierStatus ?? dashboardData?.activeDossier?.dossierStatus;
-    const activeNumber = dashboardData?.activeDossier?.dossierNumber ?? (dashboardData?.candidate as { dossierNumber?: string | null } | undefined)?.dossierNumber ?? null;
+    const activeStatus = dashboardData?.candidate?.dossierStatus
+      ?? dashboardData?.activeDossier?.dossierStatus
+      ?? (dashboardData as { activeAgencyDossier?: { status?: string | null } } | undefined)?.activeAgencyDossier?.status;
+    const activeNumber = dashboardData?.activeDossier?.dossierNumber
+      ?? (dashboardData as { activeAgencyDossier?: { dossierNumber?: string | null } } | undefined)?.activeAgencyDossier?.dossierNumber
+      ?? (dashboardData?.candidate as { dossierNumber?: string | null } | undefined)?.dossierNumber
+      ?? null;
     const next = buildClientSpaceSnapshot({
       evaluation: structuredEvaluation,
       cases: caseTrackingData,
@@ -258,6 +263,7 @@ export default function EvaluationSpace() {
       procedure: activeStatus
         ? { status: String(activeStatus), label: clientStatusLabel(String(activeStatus)), number: activeNumber ? String(activeNumber) : null }
         : undefined,
+      dossiers: dashboardData?.onlineDossiers ?? null,
     });
     const changes = diffClientSpace(previousSpaceSnapshot.current, next);
     previousSpaceSnapshot.current = mergeClientSpaceSnapshots(previousSpaceSnapshot.current, next);
@@ -268,6 +274,21 @@ export default function EvaluationSpace() {
       else toast.info(change.title, options);
     }
   }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs, dashboardData]);
+
+  const selectClientDossier = (dossierNumber: string | null) => {
+    setSelectedDossierNumber(dossierNumber);
+    const params = new URLSearchParams(location.split("?")[1] || "");
+    if (dossierNumber) params.set("dossier", dossierNumber);
+    else params.delete("dossier");
+    if (!params.get("section")) params.set("section", activeTab);
+    const query = params.toString();
+    setLocation(query ? `/mon-espace?${query}` : "/mon-espace");
+  };
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("dossier");
+    if (fromUrl && fromUrl !== selectedDossierNumber) setSelectedDossierNumber(fromUrl);
+  }, [location]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -376,8 +397,10 @@ export default function EvaluationSpace() {
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
   const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""}`));
-  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
-    procedureLabelForDossier(dossier);
+  const parallelProcedures = (dashboardData as { parallelProcedures?: { count: number; active: boolean; message: string | null } }).parallelProcedures;
+  const activeAgencyDossier = (dashboardData as { activeAgencyDossier?: { dossierNumber?: string | null; procedureLabel?: string | null; destination?: string | null; visaType?: string | null; status?: string | null; paymentStatus?: string | null } | null }).activeAgencyDossier;
+  const dossierSwitcherLabel = (dossier: { procedureLabel?: string | null; visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
+    dossier.procedureLabel || procedureLabelForDossier(dossier);
   const cProfile = {
     ...rawCProfile,
     dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
@@ -586,13 +609,13 @@ export default function EvaluationSpace() {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
             <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
             {onlineDossiers.map((dossier) => {
-              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
+              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
                   type="button"
-                  onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)}
+                  onClick={() => selectClientDossier(dossier.dossierNumber ?? null)}
                   aria-pressed={isSelected}
                   aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
@@ -612,9 +635,9 @@ export default function EvaluationSpace() {
               <button
                 type="button"
                 onClick={() => {
-                  const hasWork = onlineDossiers.some((dossier) => /travail|work/i.test(`${dossier.visaType || ""}`));
+                  const hasWork = onlineDossiers.some((dossier) => /travail|work/i.test(`${dossier.visaType || ""} ${dossier.procedureLabel || ""}`));
                   setSecondaryProject(hasWork ? "etudes" : "travail");
-                  setSecondaryDestination(String(primaryDestination || activeDossier?.destination || "").trim());
+                  setSecondaryDestination(String(primaryDestination || activeDossier?.destination || activeAgencyDossier?.destination || "").trim());
                   setSecondaryDossierOpen(true);
                 }}
                 className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
@@ -628,30 +651,77 @@ export default function EvaluationSpace() {
             )}
             {isFetching && selectedDossierNumber && (
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700" role="status" aria-live="polite">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Chargement du dossier sélectionné…
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Synchronisation du dossier sélectionné…
               </span>
             )}
+            {lastSyncedAt ? (
+              <span className="ml-auto text-[11px] font-medium text-slate-500" data-testid="client-dossiers-last-sync" aria-live="polite">
+                Sync agence · {new Date(lastSyncedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            ) : null}
           </div>
         </div>
       )}
+      {parallelProcedures?.active && parallelProcedures.message ? (
+        <div className="border-b border-indigo-100 bg-indigo-50/90" data-testid="parallel-procedures-banner" role="status">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3 text-sm text-indigo-950 sm:px-6 lg:px-8">
+            <p className="font-bold text-indigo-900">Procédures en parallèle — transparence</p>
+            <p className="leading-6 text-indigo-900/90">{parallelProcedures.message}</p>
+          </div>
+        </div>
+      ) : null}
       {onlineDossiers.length > 0 && (
-        <Card className="premium-surface mt-4 border-blue-100/80 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5" aria-labelledby="global-dossiers-summary-title">
+        <Card className="premium-surface mt-4 border-blue-100/80 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5" aria-labelledby="global-dossiers-summary-title" data-testid="global-dossiers-summary">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale synchronisée</p>
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
-              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " (double opportunité possible : travail + études)" : ""}, avec la prochaine action à effectuer pour chacun.</p>
+              <p className="premium-copy mt-1 text-sm">
+                {onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY
+                {onlineDossiers.length > 1 ? " — chaque procédure (travail, études…) a son propre paiement et ses propres étapes" : ""}
+                . Les mises à jour de l’agence apparaissent ici automatiquement.
+              </p>
             </div>
-            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
+            <div className="flex flex-col items-end gap-2">
+              <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
+              <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => void handleManualRefresh()} disabled={isRefreshing || isFetching}>
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing || isFetching ? "animate-spin" : ""}`} />
+                {isRefreshing || isFetching ? "Sync…" : "Actualiser"}
+              </Button>
+            </div>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
-              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
-                <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
-                <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
-              </button>;
+              const agreement = (dossier as { agreementSigned?: boolean | null }).agreementSigned;
+              return (
+                <button
+                  key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`}
+                  type="button"
+                  onClick={() => selectClientDossier(dossier.dossierNumber ?? null)}
+                  className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p>
+                      <p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p>
+                      {dossier.destination ? <p className="mt-1 text-xs text-slate-600">{dossier.destination}{dossier.visaType ? ` · ${dossier.visaType}` : ""}</p> : null}
+                    </div>
+                    <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} />
+                    </div>
+                    <span className="text-xs font-black text-blue-800">{status.progress}%</span>
+                  </div>
+                  <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Paiement : {String(dossier.paymentStatus).toUpperCase() === "SUCCESS" ? "confirmé" : "à confirmer"}
+                    {agreement === true ? " · Protocole N°01 signé" : agreement === false ? " · Protocole N°01 à signer" : ""}
+                  </p>
+                </button>
+              );
             })}
           </div>
         </Card>

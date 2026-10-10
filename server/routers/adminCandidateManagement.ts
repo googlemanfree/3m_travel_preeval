@@ -1334,11 +1334,16 @@ export const adminCandidateManagementRouter = router({
         console.error("[activatePreDossierAccount] Seed checklist pays/procédure non effectué:", err);
       }
       try {
+        const dualBody = additionalDossierReference && additionalProcedure
+          ? `${referenceChangeSentence(previousAccountReference, dossierReference)} Une seconde procédure a aussi été ouverte en parallèle : ${additionalDossierReference} (${additionalProcedure.destination} · ${additionalProcedure.visaType}). Suivez les deux dossiers dans Mon espace — paiements et étapes restent distincts.`
+          : referenceChangeSentence(previousAccountReference, dossierReference);
         await db.insert(clientNotifications).values({
           candidateId: candidate.id,
           type: "admin_status_update",
-          title: "Votre dossier est activé",
-          body: referenceChangeSentence(previousAccountReference, dossierReference),
+          title: additionalDossierReference
+            ? "Deux procédures activées en parallèle"
+            : "Votre dossier est activé",
+          body: dualBody,
           actionUrl: "/mon-espace",
           isRead: false,
         });
