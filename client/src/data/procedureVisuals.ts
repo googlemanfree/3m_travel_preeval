@@ -1,3 +1,5 @@
+import { getDestinationVisual, normalizeDestinationSlug } from "@/data/premiumVisuals";
+
 export const PROCEDURE_VISUALS = {
   home: "/manus-storage/3m-home-mobility-hero_f9957244.webp",
   homeMobile: "/manus-storage/3m-home-mobility-hero-mobile_70899b52.webp",
@@ -7,6 +9,7 @@ export const PROCEDURE_VISUALS = {
   schengenMobile: "/manus-storage/3m-procedure-schengen-mobile_eb73c9f2.webp",
 } as const;
 
+/** Lot 1 historique — conservé pour les tests de non-régression et l’ordre de priorité. */
 const LOT_1_DESTINATION_VISUALS: Record<string, { desktop: string; mobile: string }> = {
   "canada-travail": {
     desktop: "/manus-storage/destination-canada_5e7dfbae.jpg",
@@ -57,6 +60,12 @@ export function getProcedureVisual(country: { id: string; name: string; region: 
 export function getProcedureVisualSources(country: { id: string; name: string; region: string }) {
   const lot1Visual = LOT_1_DESTINATION_VISUALS[country.id];
   if (lot1Visual) return lot1Visual;
+
+  // Index partagé : japon-travail, espagne-etudes, emirats-formation, etc.
+  const fromIndex = getDestinationVisual(country.id) ?? getDestinationVisual(normalizeDestinationSlug(country.name));
+  if (fromIndex) {
+    return { desktop: fromIndex.desktop, mobile: fromIndex.mobile };
+  }
 
   const haystack = `${country.id} ${country.name} ${country.region}`.toLowerCase();
   if (haystack.includes("canada")) {

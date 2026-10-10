@@ -1,7 +1,9 @@
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import { QuickActionsGrid } from "@/components/QuickActionsSection";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { HOW_IT_WORKS, SERVICE_POLES } from "@/data/serviceCatalog";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const WHATSAPP_URL = `https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, j’aimerais des informations sur vos services.")}`;
 
@@ -14,6 +16,7 @@ export default function Services() {
       primaryHref="/consultation"
       primaryLabel="Parler à un conseiller"
       notice="Les décisions de visa, de délivrance de documents et de tarification appartiennent aux autorités et prestataires concernés : 3M prépare, oriente et suit votre dossier sans garantir de résultat."
+      heroVisual={getServiceVisual("mobilite")}
     >
       <ServiceSection title="Que voulez-vous accomplir ?" introduction="Partez de votre intention : chaque carte mène directement à la bonne démarche, avec un accompagnement jusqu’au dépôt." tone="slate">
         <QuickActionsGrid />
@@ -22,23 +25,34 @@ export default function Services() {
       {SERVICE_POLES.map((pole, index) => (
         <ServiceSection key={pole.id} title={pole.title} introduction={pole.tagline} tone={index % 2 === 0 ? "white" : "blue"}>
           <ul id={pole.id} className="grid scroll-mt-24 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid={`pole-${pole.id}`}>
-            {pole.services.map((service) => (
-              <li key={service.id}>
-                <a
-                  href={service.href}
-                  className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                >
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${pole.accent}`} aria-hidden="true">
-                    <service.icon className="h-5 w-5" />
-                  </span>
-                  <span className="mt-4 text-base font-black text-slate-950">{service.title}</span>
-                  <span className="mt-1.5 flex-1 text-sm leading-6 text-slate-600">{service.description}</span>
-                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
-                    En savoir plus <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </span>
-                </a>
-              </li>
-            ))}
+            {pole.services.map((service) => {
+              const visual = getServiceVisual(service.id);
+              return (
+                <li key={service.id}>
+                  <a
+                    href={service.href}
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                    data-testid={`service-card-${service.id}`}
+                  >
+                    <PremiumCoverImage
+                      visual={visual}
+                      className="aspect-[16/9]"
+                      imgClassName="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <span className="flex flex-1 flex-col p-5">
+                      <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${pole.accent}`} aria-hidden="true">
+                        <service.icon className="h-5 w-5" />
+                      </span>
+                      <span className="mt-4 text-base font-black text-slate-950">{service.title}</span>
+                      <span className="mt-1.5 flex-1 text-sm leading-6 text-slate-600">{service.description}</span>
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
+                        En savoir plus <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </ServiceSection>
       ))}
