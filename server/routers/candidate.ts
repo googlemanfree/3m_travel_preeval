@@ -32,6 +32,7 @@ import {
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
+import { procedureLabelForDossier } from "../../shared/clientMultiDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyAdmins } from "./adminNotifications";
 import { buildCandidateMessageAlert } from "../services/candidateMessageAlert";
@@ -2563,16 +2564,35 @@ export const candidateRouter = router({
         paymentStatus: app.paymentStatus,
         createdAt: app.createdAt,
         source: "online" as const,
+        procedureLabel: procedureLabelForDossier({
+          visaType: app.visaType,
+          destination: app.destination,
+          dossierNumber: app.dossierNumber,
+        }),
+        agreementSigned: Boolean(app.agreementSigned),
+        secondAgreementReady: Boolean(app.secondAgreementReadyAt),
+        secondAgreementSigned: Boolean(app.secondAgreementSigned),
       })),
-      ...agencyDossierRows.map((dossier) => ({
-        dossierNumber: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
-        visaType: dossier.visaType,
-        destination: dossier.destination,
-        dossierStatus: dossier.status,
-        paymentStatus: dossier.initialPaymentStatus === "paid" ? "SUCCESS" : dossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
-        createdAt: dossier.createdAt,
-        source: "agency" as const,
-      })),
+      ...agencyDossierRows.map((dossier) => {
+        const dossierNumber = `3M-AGN-${dossier.id.toString().padStart(4, "0")}`;
+        return {
+          dossierNumber,
+          visaType: dossier.visaType,
+          destination: dossier.destination,
+          dossierStatus: dossier.status,
+          paymentStatus: dossier.initialPaymentStatus === "paid" ? "SUCCESS" : dossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+          createdAt: dossier.createdAt,
+          source: "agency" as const,
+          procedureLabel: procedureLabelForDossier({
+            visaType: dossier.visaType,
+            destination: dossier.destination,
+            dossierNumber,
+          }),
+          agreementSigned: null as boolean | null,
+          secondAgreementReady: false,
+          secondAgreementSigned: false,
+        };
+      }),
     ];
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
@@ -2643,12 +2663,27 @@ export const candidateRouter = router({
         createdAt: candidate.createdAt,
       },
       activeDossier: activeApp,
+      activeAgencyDossier: activeAgencyDossier
+        ? {
+          id: activeAgencyDossier.id,
+          dossierNumber: activeAgencyDossierNumber,
+          destination: activeAgencyDossier.destination,
+          visaType: activeAgencyDossier.visaType,
+          status: activeAgencyDossier.status,
+          paymentStatus: activeAgencyDossier.initialPaymentStatus === "paid" ? "SUCCESS" : activeAgencyDossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+          procedureLabel: procedureLabelForDossier({
+            visaType: activeAgencyDossier.visaType,
+            destination: activeAgencyDossier.destination,
+            dossierNumber: activeAgencyDossierNumber,
+          }),
+        }
+        : null,
       workflow: {
-        paymentConfirmed: activeApp?.paymentStatus === "SUCCESS",
+        paymentConfirmed: activeApp?.paymentStatus === "SUCCESS" || activeAgencyDossier?.initialPaymentStatus === "paid",
         paymentOpeningRequested: Boolean(activeApp?.paymentOpeningRequestedAt),
         evaluationClientConfirmed: Boolean(activeApp?.evaluationClientConfirmedAt),
-        activationRequested: Boolean(activeApp?.activationRequestedAt),
-        appointmentUnlocked: Boolean(activeApp?.activationRequestedAt),
+        activationRequested: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier),
+        appointmentUnlocked: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier),
         agreementSigned: Boolean(activeApp?.agreementSigned),
         showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
         secondAgreementReady: Boolean(activeApp?.secondAgreementReadyAt),
@@ -2669,6 +2704,19 @@ export const candidateRouter = router({
               projectType: (activeApp as any).projectType || clientEvaluations[0]?.projectType || null,
               dossierNumber: activeApp.dossierNumber,
             }
+          : activeAgencyDossier
+            ? {
+              destination: activeAgencyDossier.destination || candidate.destination || null,
+              projectType: activeAgencyDossier.visaType || clientEvaluations[0]?.projectType || null,
+              dossierNumber: activeAgencyDossierNumber,
+            }
+            : null,
+      },
+      parallelProcedures: {
+        count: onlineDossiers.length,
+        active: onlineDossiers.length > 1,
+        message: onlineDossiers.length > 1
+          ? "Vous avez plusieurs procédures en cours (ex. visa travail et visa études). Chacune avance séparément : paiement, signature et documents restent propres à chaque dossier."
           : null,
       },
       applications: appRows,

@@ -20,7 +20,7 @@ describe("espace client multi-dossiers", () => {
 
   it("signale le chargement lors du changement de dossier", () => {
     expect(source).toContain("isFetching");
-    expect(source).toContain("Chargement du dossier sélectionné");
+    expect(source).toContain("Synchronisation du dossier sélectionné");
     expect(source).toContain('role="status" aria-live="polite"');
   });
 

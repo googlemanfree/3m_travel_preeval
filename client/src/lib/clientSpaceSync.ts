@@ -29,6 +29,8 @@ export type ClientSpaceSnapshot = {
   evisa?: Record<string, Tracked & { issued: boolean }>;
   /** Toutes les notifications connues : un identifiant déjà vu (même remis « non lu » par le candidat) n'est jamais réannoncé. */
   notifications?: Record<string, { title: string; body: string; caseId: string | null; unread: boolean }>;
+  /** Procédures suivies (travail + études…) : apparition / changement de statut annoncés. */
+  dossiers?: Record<string, { label: string; status: string; payment: string; destination: string }>;
 };
 
 export type ClientSpaceChange = { id: string; tone: "info" | "success" | "warning"; title: string; description?: string };
@@ -50,6 +52,15 @@ export function buildClientSpaceSnapshot(input: {
   evisa?: unknown;
   /** Dossier actif côté espace client (statut applications / candidat). */
   procedure?: { status?: unknown; label?: unknown; number?: unknown } | null;
+  /** Liste des procédures ouvertes (transparence multi-dossiers). */
+  dossiers?: Array<{
+    dossierNumber?: unknown;
+    procedureLabel?: unknown;
+    visaType?: unknown;
+    destination?: unknown;
+    dossierStatus?: unknown;
+    paymentStatus?: unknown;
+  }> | null;
 }): ClientSpaceSnapshot {
   const snapshot: ClientSpaceSnapshot = {};
 
@@ -65,6 +76,21 @@ export function buildClientSpaceSnapshot(input: {
         number: text(input.procedure.number, 40) || null,
       };
     }
+  }
+
+  if (Array.isArray(input.dossiers)) {
+    const dossiers: NonNullable<ClientSpaceSnapshot["dossiers"]> = {};
+    for (const item of input.dossiers) {
+      const number = text(item.dossierNumber, 50);
+      if (!number) continue;
+      dossiers[number] = {
+        label: text(item.procedureLabel, 80) || text(item.visaType, 80) || number,
+        status: text(item.dossierStatus, 80),
+        payment: text(item.paymentStatus, 40),
+        destination: text(item.destination, 80),
+      };
+    }
+    snapshot.dossiers = dossiers;
   }
 
   if (input.cases && typeof input.cases === "object") {
@@ -146,6 +172,40 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
       title: `Votre procédure${ref} a évolué`,
       description: `Nouvel état : ${humanizeStatus(next.procedure.status) || next.procedure.label}.`,
     });
+  }
+
+  if (previous.dossiers && next.dossiers) {
+    for (const [number, current] of Object.entries(next.dossiers)) {
+      const before = previous.dossiers[number];
+      if (!before) {
+        changes.push({
+          id: `dossier-new-${number}`,
+          tone: "success",
+          title: `Nouvelle procédure ouverte : ${current.label}`,
+          description: [
+            number,
+            current.destination,
+            "Elle avance en parallèle de vos autres dossiers.",
+          ].filter(Boolean).join(" · "),
+        });
+        continue;
+      }
+      if (before.status !== current.status && current.status) {
+        changes.push({
+          id: `dossier-status-${number}-${current.status}`,
+          tone: "info",
+          title: `${current.label} (${number}) a évolué`,
+          description: `Nouvel état : ${humanizeStatus(current.status)}.`,
+        });
+      } else if (before.payment !== current.payment && current.payment) {
+        changes.push({
+          id: `dossier-payment-${number}-${current.payment}`,
+          tone: current.payment.toUpperCase() === "SUCCESS" ? "success" : "info",
+          title: `Paiement mis à jour — ${current.label}`,
+          description: `Dossier ${number} · ${humanizeStatus(current.payment)}.`,
+        });
+      }
+    }
   }
 
   if (previous.cases && next.cases) {
