@@ -70,6 +70,7 @@
 - [x] Ajouter les tests ciblés, vérifier TypeScript/build et sauvegarder un checkpoint — 3 fichiers de tests, 27 tests réussis ; TypeScript et build Vite verts ; checkpoint WebDev `7f1ef474`.
 
 ## Réparation suite complète avant publication
-- [ ] Corriger les causes communes d’échec de l’environnement Vitest et les contrats obsolètes identifiés.
-- [ ] Restaurer les assets manquants sans déplacer de média dans `client/public` si un chemin de stockage est requis.
-- [ ] Relancer `pnpm run check` et `pnpm test`, puis publier uniquement si tout est vert.
+- [x] Corriger les causes communes d’échec de l’environnement Vitest et les contrats obsolètes identifiés — setup DOM global Radix Select, garde Candidate360 et contrats alignés sur les composants/libellés actuels.
+- [x] Restaurer les assets manquants sans déplacer de média dans `client/public` si un chemin de stockage est requis — aucun asset n’était à restaurer dans cette itération ; les chemins de stockage existants sont conservés.
+- [x] Relancer `pnpm run check` et `pnpm test` — check vert ; 576 fichiers réussis/1 ignoré ; 3 113 tests réussis/26 ignorés ; checkpoint prêt `ce1c2fbd`.
+- [ ] Publier le checkpoint `ce1c2fbd` sur la production et relever un marqueur live correspondant — aucune action de publication WebDev distincte n’est exposée dans cette session ; le domaine public sert encore `nogit.202610102302`, antérieur aux corrections.
