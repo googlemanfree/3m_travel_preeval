@@ -14,6 +14,20 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     expect(home).not.toContain("Voir les 107 procédures");
   });
 
+  it("explique aux employeurs ce qu’ils reçoivent et propose de transmettre un besoin", () => {
+    const home = readFileSync(path.resolve(import.meta.dirname, "../client/src/pages/Home.tsx"), "utf8");
+    expect(home).toContain('data-testid="home-employer-deliverables"');
+    expect(home).toContain("Ce que vous recevez pour chaque profil");
+    expect(home).toContain("Un CV actualisé.");
+    expect(home).toContain("Une synthèse de l’expérience pertinente pour votre poste.");
+    expect(home).toContain("Un interlocuteur 3M pour organiser les échanges et les entretiens.");
+    expect(home).toContain("Transmettez-nous vos critères");
+    expect(home).toContain('data-testid="home-employer-need-cta"');
+    expect(home).toContain("Transmettre un besoin de recrutement");
+    expect(home).toContain("CORRIDOR_ROUTES.employersRegister");
+    expect(home).toContain("examine les profils correspondants avant toute présentation");
+  });
+
   it("priorise dossier / recrutement dans QuickActions", () => {
     const catalog = readFileSync(path.resolve(import.meta.dirname, "../client/src/data/serviceCatalog.ts"), "utf8");
     const dossier = catalog.indexOf('id: "dossier"');
@@ -34,6 +48,8 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     expect(pipeline).toContain("Envoi partenaire");
     expect(pipeline).toContain("Retour / décision");
     expect(pipeline).toContain("Test décisif : sélectionner un CV consentant");
+    expect(pipeline).toContain("Gestion admin des candidatures");
+    expect(pipeline).toContain("Aucun profil n’est présenté sans examen préalable");
   });
 
   it("affirme le hub dossier dans le hero, sans gonfler le volume de destinations", () => {

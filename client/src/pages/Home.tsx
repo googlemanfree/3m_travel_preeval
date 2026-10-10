@@ -21,6 +21,17 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
+
+const EMPLOYER_PROFILE_DELIVERABLES = [
+  "Un CV actualisé.",
+  "Une synthèse de l’expérience pertinente pour votre poste.",
+  "Les qualifications et justificatifs disponibles.",
+  "L’état des vérifications effectuées.",
+  "Les points restant à confirmer.",
+  "La disponibilité du candidat.",
+  "Un interlocuteur 3M pour organiser les échanges et les entretiens.",
+] as const;
 
 const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
 const yaoundeOffice = COMPANY_PROFILE.offices.cameroon;
@@ -142,21 +153,63 @@ export default function Home() {
             3M est le centre de préparation et de suivi des dossiers. Agences et employeurs vérifiés sont les canaux de recrutement autorisés. Chaque candidature reste traçable : consentement, envoi contrôlé, retour partenaire, puis procédure.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <a href="/partenaires" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Hub partenaires</p>
               <p className="mt-1 text-sm text-slate-600">Candidat, admin 3M, agences et employeurs — un corridor traçable.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Voir le corridor →</span>
             </a>
-            <a href="/agences-placement" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Agences de placement</p>
               <p className="mt-1 text-sm text-slate-600">Canal autorisé : recevoir des profils consentants et documentés.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Portail agence →</span>
             </a>
-            <a href="/employeurs" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Employeurs internationaux</p>
               <p className="mt-1 text-sm text-slate-600">Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">Portail employeur →</span>
             </a>
+          </div>
+
+          {/* Livrables concrets pour recruteurs — sans second système : CTA → formulaire employeur existant. */}
+          <div
+            className="mt-8 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-lg md:p-8"
+            data-testid="home-employer-deliverables"
+            aria-labelledby="home-employer-deliverables-title"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Pour les employeurs</p>
+            <h3 id="home-employer-deliverables-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
+              Ce que vous recevez pour chaque profil
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Avant toute présentation, un administrateur 3M examine le dossier. Vous ne recevez que des profils préparés, consentants et alignés sur vos critères.
+            </p>
+            <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+              {EMPLOYER_PROFILE_DELIVERABLES.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm font-medium leading-6 text-slate-800">
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-700">
+              Transmettez-nous vos critères : notre équipe examine les profils correspondants avant toute présentation.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <a
+                href={CORRIDOR_ROUTES.employersRegister}
+                data-testid="home-employer-need-cta"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-black text-[#071b3d] transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2"
+              >
+                Transmettre un besoin de recrutement
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <a
+                href={CORRIDOR_ROUTES.employersLogin}
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-indigo-300 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+              >
+                Déjà vérifié ? Accéder au portail
+              </a>
+            </div>
           </div>
         </div>
       </section>

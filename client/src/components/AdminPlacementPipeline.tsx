@@ -218,7 +218,7 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
             Pilotage de placement international
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-600">
-            Test décisif : sélectionner un CV consentant → préparer le profil → soumettre à un partenaire vérifié → enregistrer la preuve d’envoi → recevoir le retour dans le bon dossier → ouvrir la procédure.
+            Gestion admin des candidatures — Test décisif : sélectionner un CV consentant → préparer le profil → soumettre à un partenaire vérifié → enregistrer la preuve d’envoi → recevoir le retour dans le bon dossier → ouvrir la procédure. Aucun profil n’est présenté sans examen préalable par 3M.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={listQuery.isFetching} className="gap-2">
