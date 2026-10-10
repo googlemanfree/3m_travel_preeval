@@ -243,7 +243,8 @@ export function SimpleMultiProjectForm() {
     const evaluationReturnPath = `/?project=${initialProject}#evaluation-multi`;
     return (
       <Card className="border border-blue-100 bg-white p-6 text-center shadow-xl sm:p-8">
-        <ShieldCheck className="mx-auto h-12 w-12 text-[#0B2A52]" />
+        <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="mx-auto h-14 w-auto object-contain" />
+        <ShieldCheck className="mx-auto mt-4 h-10 w-10 text-[#0B2A52]" aria-hidden="true" />
         <h3 className="mt-4 text-xl font-black text-slate-950">Créez votre compte avant l’évaluation</h3>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">Votre évaluation et votre CV seront associés à un espace candidat sécurisé. Les autres pièces pourront être ajoutées ensuite, selon les besoins de votre dossier.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">

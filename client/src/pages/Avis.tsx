@@ -6,12 +6,15 @@ import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import { trpc } from "@/lib/trpc";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const AGGREGATE_RATING_SCRIPT_ID = "avis-aggregate-rating-jsonld";
 
 export default function Avis() {
   const { data: stats } = trpc.customerReview.getStats.useQuery();
   const { data: ratingBreakdown } = trpc.customerReview.getRatingBreakdown.useQuery();
+  const visual = getServiceVisual("recrutement");
 
   useEffect(() => {
     const existing = document.getElementById(AGGREGATE_RATING_SCRIPT_ID);
@@ -47,6 +50,15 @@ export default function Avis() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white px-4 py-14 sm:px-6 lg:px-8">
+      <section className="relative mx-auto mb-4 max-w-4xl overflow-hidden rounded-3xl px-8 py-10 text-white shadow-xl sm:px-12">
+        <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/90 via-[#0a3264]/78 to-[#0e5b9f]/50" />
+        <div className="relative z-10">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">Preuve sociale responsable</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Des retours vérifiés, pas des promesses</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50">Chaque témoignage est soumis, vérifié et approuvé avant publication.</p>
+        </div>
+      </section>
       <section className="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
         <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence 3M TRAVEL AGENCY</p>
         <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
