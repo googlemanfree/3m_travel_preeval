@@ -438,6 +438,18 @@ export default function Canada() {
         </Accordion>
       </ServiceSection>
 
+      <ProofGallerySection
+        initialFilter="immigration"
+        lockFilter
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        titleFr="Preuves liées à l’immigration"
+        titleEn="Immigration-related proofs"
+        leadFr="Extraits anonymisés de dossiers et autorisations obtenus avec l’accompagnement 3M pour des projets Canada."
+        leadEn="Redacted excerpts of cases and authorisations obtained with 3M support for Canada projects."
+      />
+
       <ServiceSection
         title="Préparer votre prochaine action"
         introduction="Une évaluation permet d’ordonner les informations avant de choisir une procédure. Vous pouvez aussi consulter notre centre de ressources ou contacter l’agence."
