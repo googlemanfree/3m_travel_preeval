@@ -893,14 +893,17 @@ html.text-size-xlarge {
   .secondary-page-surface h2,
   .secondary-page-surface h3 {
     font-family: "Sora", "Manrope", sans-serif;
-    color: #0f1f36;
+    color: inherit;
     letter-spacing: -0.025em;
     line-height: 1.2;
   }
 
+  /* La couleur du texte est héritée du conteneur : un bandeau sombre qui pose text-white (ou text-sky-50…) sur son conteneur
+     doit être respecté par ses titres, paragraphes et listes sans classe. Forcer ici une couleur sombre rendait ces textes
+     illisibles (gris foncé sur fond bleu). Le défaut sombre est posé sur .secondary-page-surface ci-dessus. */
   .secondary-page-surface p,
   .secondary-page-surface li {
-    color: #334155;
+    color: inherit;
     line-height: 1.7;
   }
 
