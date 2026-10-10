@@ -57,11 +57,16 @@ export const AFRICA_DIGITAL_PRICING_JSON = JSON.stringify(AFRICA_DIGITAL_PRICING
 /** Détecte les anciennes grilles hors fourchette Afrique (> 600 000 FCFA). */
 export function isUnreasonableDigitalPricing(pricingJson: string | null | undefined): boolean {
   if (!pricingJson?.trim()) return true;
-  const amounts = [...pricingJson.matchAll(/(\d[\d\s]*)\s*(?:FCFA|XAF)?/gi)]
-    .map((match) => Number(String(match[1]).replace(/\s+/g, "")))
+  const amountPattern = /(\d[\d\s]*)\s*(?:FCFA|XAF)?/gi;
+  const amounts: number[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = amountPattern.exec(pricingJson)) !== null) {
+    amounts.push(Number(String(match[1]).replace(/\s+/g, "")));
+  }
+  const validAmounts = amounts
     .filter((value) => Number.isFinite(value) && value >= 1_000);
-  if (!amounts.length) return true;
-  return Math.max(...amounts) > 600_000;
+  if (!validAmounts.length) return true;
+  return Math.max(...validAmounts) > 600_000;
 }
 
 export function sanitizeDigitalPricingJson(pricingJson: string | null | undefined): string {
