@@ -46,10 +46,11 @@ function readStoredLanguage(): { language: Language | null; explicit: boolean } 
   return { language: language ?? readCookieLanguage(), explicit };
 }
 
-function detectBrowserLanguage(): Language {
-  if (typeof navigator === "undefined") return "fr";
-  const values = [navigator.language, ...(navigator.languages ?? [])];
-  return values.some((value) => value?.toLowerCase().startsWith("en")) ? "en" : "fr";
+// Public cible : Afrique francophone, où beaucoup d'appareils sont réglés en anglais. Détecter la langue du navigateur donnait une
+// page mélangée (sections françaises + composants anglais) et un <html lang="en"> sur des pages françaises. Le français est donc
+// la langue par défaut ; l'anglais n'est servi que sur choix explicite (bouton FR/EN, cookie, profil).
+function defaultLanguage(stored: { language: Language | null; explicit: boolean }): Language {
+  return stored.explicit && stored.language ? stored.language : "fr";
 }
 
 function hasCandidateSession(): boolean {
@@ -84,7 +85,7 @@ function persistClientLanguage(language: Language, explicit = false) {
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const initialStored = useMemo(() => readStoredLanguage(), []);
-  const [language, setLanguageState] = useState<Language>(initialStored.language ?? detectBrowserLanguage());
+  const [language, setLanguageState] = useState<Language>(defaultLanguage(initialStored));
   const [hasExplicitPreference, setHasExplicitPreference] = useState(initialStored.explicit);
   const { user, loading: authLoading } = useAuth();
   const canSyncProfile = Boolean(user) || hasCandidateSession();
