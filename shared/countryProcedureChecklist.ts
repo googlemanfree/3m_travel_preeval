@@ -47,9 +47,10 @@ const fold = (value: string) =>
 
 const COUNTRY_BASE: Record<string, ChecklistDocumentLine[]> = {
   canada: [
-    { documentType: "Passeport valide", comment: "Passeport en cours de validité pour toute la durée prévue du séjour.", source: "country" },
-    { documentType: "Photo d’identité", comment: "Photo récente conforme aux exigences du portail officiel.", source: "country" },
-    { documentType: "Justificatifs de ressources", comment: "Relevés ou preuves de fonds adaptés au projet.", source: "country" },
+    { documentType: "Passeport valide", comment: "Passeport en cours de validité pour toute la durée prévue du séjour (guide IRCC / PDF Canada).", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo récente conforme aux exigences du portail IRCC.", source: "country" },
+    { documentType: "Justificatifs de ressources", comment: "Relevés ou preuves de fonds adaptés au projet (travail, études ou visite).", source: "country" },
+    { documentType: "Certificat médical / biométrie", comment: "À fournir uniquement lorsque IRCC le demande pour le type de demande.", source: "country" },
   ],
   luxembourg: [
     { documentType: "Passeport valide", comment: "Passeport valide pour la durée du séjour et des démarches.", source: "country" },
@@ -95,14 +96,16 @@ const PROCEDURE_EXTRA: Record<string, { label: string; documents: ChecklistDocum
       { documentType: "CV actualisé", comment: "CV lisible, daté et cohérent avec le projet.", source: "procedure" },
       { documentType: "Diplômes et attestations", comment: "Diplômes et preuves d’expérience utiles au métier visé.", source: "procedure" },
       { documentType: "Offre ou projet d’emploi", comment: "Offre, lettre d’intention ou projet professionnel documenté.", source: "procedure" },
+      { documentType: "Référence EIMT / LMIA ou exemption", comment: "Pour le Canada : volet employeur (EIMT) ou exemption selon IRCC / EDSC.", source: "procedure" },
     ],
   },
   study_permit: {
     label: "Études / permis d’études",
     documents: [
-      { documentType: "Lettre d’admission", comment: "Admission ou pré-admission de l’établissement.", source: "procedure" },
+      { documentType: "Lettre d’admission", comment: "Admission ou pré-admission de l’établissement (DLI au Canada).", source: "procedure" },
       { documentType: "Relevés de notes", comment: "Parcours scolaire ou universitaire à jour.", source: "procedure" },
       { documentType: "Plan de financement études", comment: "Preuves de ressources pour scolarité et séjour.", source: "procedure" },
+      { documentType: "CAQ si Québec", comment: "Certificat d’acceptation du Québec lorsque le programme d’études est au Québec.", source: "procedure" },
     ],
   },
   visitor_visa: {

@@ -1,6 +1,10 @@
-import { procedures107Complete } from "../client/src/data/procedures107Complete";
 import { PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "./officialSourceCatalog";
+import {
+  publishedProcedureKindLabel,
+  resolvePublishedProcedureTreatment,
+  type PublishedProcedureTreatment,
+} from "./publishedProcedureTreatment";
 
 export type JourneyDocument = {
   id: string;
@@ -18,6 +22,19 @@ export type JourneyStep = {
   sourceUrl: string;
 };
 
+export type PublishedGuideRef = {
+  procedureId: string;
+  title: string;
+  pdfUrl: string;
+  relatedGuideUrls: string[];
+  programLabel: string;
+  visaKind: string;
+  /** Résumé dynamique du PDF publié (pays + visa). */
+  summaryHeadline?: string;
+  summaryOverview?: string;
+  summaryStepHighlights?: string[];
+};
+
 export type CandidateJourney = {
   country: string;
   visaType: string;
@@ -25,11 +42,13 @@ export type CandidateJourney = {
   disclaimer: string;
   steps: JourneyStep[];
   officialSources: string[];
+  /** Guide PDF publié sur le site — même référence admin / client. */
+  publishedGuide?: PublishedGuideRef | null;
 };
 
 const CANADA = "https://www.canada.ca/fr/services/immigration-citoyennete.html";
 const CANADA_WORK = "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html";
-const ADEM = "https://adem.public.lu/en/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html";
+const ADEM = "https://adem.public.lu/fr/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html";
 const QUEBEC = "https://www.quebec.ca/immigration";
 const LUXEMBOURG = "https://guichet.public.lu/fr/citoyens/immigration.html";
 const FRANCE = "https://france-visas.gouv.fr/";
@@ -104,11 +123,11 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
     step("federal", "Demande fédérale", "Après le document provincial requis, préparer la demande auprès du gouvernement du Canada.", ["Certificat provincial", "Formulaires fédéraux"], CANADA),
     step("decision", "Décision officielle", "Suivre les instructions des deux autorités et respecter les conditions délivrées.", ["Numéro de dossier", "Lettre de décision"], CANADA),
   ]),
-  common("Luxembourg", "Visiteur", LUXEMBOURG, [
-    step("evaluation", "Évaluation du séjour", "Définir le motif, les dates, les attaches et les ressources.", ["Motif", "Dates", "Attaches"], LUXEMBOURG),
-    step("documents", "Dossier Schengen", "Préparer formulaire, assurance, hébergement, transport et justificatifs financiers selon le poste compétent.", ["Formulaire", "Assurance", "Hébergement", "Ressources"], LUXEMBOURG),
-    step("appointment", "Dépôt et biométrie", "Suivre les instructions du centre ou poste compétent pour le dépôt et la biométrie.", ["Rendez-vous", "Passeport"], LUXEMBOURG),
-    step("decision", "Décision officielle", "Répondre aux demandes du poste et attendre la décision compétente.", ["Récépissé", "Notifications"], LUXEMBOURG),
+  common("Luxembourg", "Visiteur", "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html", [
+    step("evaluation", "Évaluation du séjour", "Définir le motif, les dates, les attaches et les ressources.", ["Motif", "Dates", "Attaches"], "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html"),
+    step("documents", "Dossier Schengen", "Préparer formulaire, assurance, hébergement, transport et justificatifs financiers selon le poste compétent.", ["Formulaire", "Assurance", "Hébergement", "Ressources"], "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html"),
+    step("appointment", "Dépôt et biométrie", "Suivre les instructions du centre ou poste compétent pour le dépôt et la biométrie.", ["Rendez-vous", "Passeport"], "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html"),
+    step("decision", "Décision officielle", "Répondre aux demandes du poste et attendre la décision compétente.", ["Récépissé", "Notifications"], "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html"),
   ]),
   common("Luxembourg", "Travailleur", ADEM, [
     step("evaluation", "Évaluation professionnelle", "Vérifier diplôme, expérience et adéquation au métier visé.", ["CV", "Diplômes", "Expérience"], LUXEMBOURG),
@@ -117,11 +136,11 @@ export const CANDIDATE_JOURNEYS: CandidateJourney[] = [
     step("residence", "Autorisation de séjour", "Préparer la demande selon les instructions officielles et les délais applicables.", ["Passeport", "Casier judiciaire", "Assurance"], LUXEMBOURG),
     step("decision", "Décision et installation", "Respecter les conditions et formalités suivant la décision officielle.", ["Décision", "Formalités d’arrivée"], LUXEMBOURG),
   ]),
-  common("Luxembourg", "Études", LUXEMBOURG, [
-    step("evaluation", "Évaluation du projet d’études", "Vérifier admission, budget, logement et cohérence académique.", ["Parcours", "Budget", "Projet"], LUXEMBOURG),
-    step("admission", "Admission et inscription", "Obtenir l’admission et les justificatifs de l’établissement.", ["Admission", "Inscription"], LUXEMBOURG),
-    step("residence", "Autorisation de séjour étudiant", "Déposer la demande selon les exigences officielles avant l’arrivée si applicable.", ["Passeport", "Ressources", "Logement"], LUXEMBOURG),
-    step("arrival", "Arrivée et formalités", "Effectuer les démarches locales exigées après l’arrivée.", ["Adresse", "Assurance", "Formalités locales"], LUXEMBOURG),
+  common("Luxembourg", "Études", "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html", [
+    step("evaluation", "Évaluation du projet d’études", "Vérifier admission, budget, logement et cohérence académique.", ["Parcours", "Budget", "Projet"], "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html"),
+    step("admission", "Admission et inscription", "Obtenir l’admission et les justificatifs de l’établissement.", ["Admission", "Inscription"], "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html"),
+    step("residence", "Autorisation de séjour étudiant", "Déposer la demande selon les exigences officielles avant l’arrivée si applicable.", ["Passeport", "Ressources", "Logement"], "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html"),
+    step("arrival", "Arrivée et formalités", "Effectuer les démarches locales exigées après l’arrivée.", ["Adresse", "Assurance", "Formalités locales"], "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html"),
   ]),
 ];
 
@@ -1113,9 +1132,10 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     return CANDIDATE_JOURNEYS[3];
   }
   if (is(country, "luxembourg")) {
-    if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[6];
+    // Ordre dans CANDIDATE_JOURNEYS : [5] Visiteur, [6] Travailleur, [7] Études
+    if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[7];
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[5];
-    return CANDIDATE_JOURNEYS[7];
+    return CANDIDATE_JOURNEYS[6];
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
   const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "rwanda", "rouanda", "ethiopie", "ethiopia", "maurice", "mauritius", "algerie", "algeria", "tunisie", "tunisia", "ouganda", "uganda", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
@@ -1139,35 +1159,80 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
 const destinationCatalogKey = (value: string | null | undefined): string =>
   normalize(value).replace(/[^a-z0-9]+/g, " ").trim();
 
+function publishedGuideFromTreatment(treatment: PublishedProcedureTreatment): PublishedGuideRef {
+  return {
+    procedureId: treatment.procedureId,
+    title: treatment.guideTitle,
+    pdfUrl: treatment.pdfUrl,
+    relatedGuideUrls: treatment.relatedGuideUrls,
+    programLabel: treatment.programLabel,
+    visaKind: treatment.visaKind,
+    summaryHeadline: treatment.summaryHeadline,
+    summaryOverview: treatment.summaryOverview,
+    summaryStepHighlights: treatment.summaryStepHighlights,
+  };
+}
+
+function countryStepsFromTreatment(treatment: PublishedProcedureTreatment): JourneyStep[] {
+  return treatment.countrySteps.map((item) => ({
+    id: item.id,
+    label: item.label,
+    description: item.description,
+    requiredInputs: item.requiredInputs,
+    documents: item.requiredInputs.map((input, documentIndex) => ({
+      id: `${item.id}-document-${documentIndex + 1}`,
+      label: input,
+      kind: "to_prepare" as const,
+      sourceUrl: item.sourceUrl || treatment.pdfUrl || undefined,
+    })),
+    sourceUrl: item.sourceUrl || treatment.pdfUrl || "",
+  }));
+}
+
 /**
- * Same journey as getCandidateJourney, but overridden with the curated 107-procedure
- * catalogue's own step list whenever a verified official source exists for that
- * country + procedure type. This is what both the candidate space and the admin
- * "Parcours synchronisé" panel must call so the two stay identical for every
- * country and every procedure type.
+ * Parcours admin + client identique : 13 étapes agence internes, puis les étapes
+ * du guide PDF publié pour le pays / type de visa (Canada détaillé en premier ;
+ * autres destinations via le catalogue 107 + URL PDF du site).
  */
 export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
   const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
+  // Les 13 premières étapes du parcours de base sont le traitement interne d’une
+  // agence de mobilité internationale ; journeyStepIndex() suppose ces 13 positions.
+  const internalAgencySteps = baseJourney.steps.slice(0, 13);
+
+  const published = resolvePublishedProcedureTreatment(destination, visaType, procedureLabel);
+  if (published && published.countrySteps.length > 0) {
+    const visaLabel = publishedProcedureKindLabel(published.visaKind);
+    const sources = [
+      ...baseJourney.officialSources,
+      published.officialSourceUrl,
+      published.pdfUrl,
+      ...published.relatedGuideUrls,
+    ].filter((value, index, list) => Boolean(value) && list.indexOf(value) === index);
+    return {
+      ...baseJourney,
+      country: published.country || baseJourney.country,
+      visaType: visaLabel,
+      title: `${published.country} · ${visaLabel}`,
+      steps: [...internalAgencySteps, ...countryStepsFromTreatment(published)],
+      officialSources: sources,
+      publishedGuide: publishedGuideFromTreatment(published),
+      disclaimer: published.pdfUrl
+        ? `Les étapes pays/visa suivent le guide publié « ${published.guideTitle} » (même PDF que sur le site public). Vérifiez toujours le portail institutionnel avant dépôt ; aucune obtention n’est garantie par 3M TRAVEL AGENCY.`
+        : baseJourney.disclaimer,
+    };
+  }
+
+  // Repli catalogue public (fiches 107) si aucun PDF / traitement publié n’est résolu.
   const destinationKey = destinationCatalogKey(destination);
   const visaKey = destinationCatalogKey(`${visaType || ""} ${procedureLabel || ""}`);
   const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") || visaKey.includes("formation") || visaKey.includes("ausbildung") || visaKey.includes("apprentissage") ? "etudes" : "visiteur";
-  // Le catalogue canonique contient les 91 procédures documentées et les 16
-  // fiches e‑Visa (107 fiches publiques). Le parcours doit utiliser la fiche
-  // exacte, même lorsque la vérification consulaire d’un pays est encore
-  // partielle ; l’avertissement de source reste porté par le parcours.
   const catalogueProcedure = PUBLIC_DESTINATION_DETAILS.find(
     (detail) => destinationCatalogKey(detail.procedure.name) === destinationKey && detail.procedure.visaType === procedureKind,
   )?.procedure;
-  if (!catalogueProcedure) return baseJourney;
+  if (!catalogueProcedure) return { ...baseJourney, publishedGuide: null };
   const documentPool = catalogueProcedure.requiredDocuments.flatMap((group) => group.documents);
-  const sourceUrl = baseJourney.officialSources[0] ?? "";
-  // Les 13 premières étapes du parcours de base sont le traitement interne d’une
-  // agence de mobilité internationale (réception du CV jusqu’au suivi de décision) ;
-  // elles doivent toujours précéder les étapes officielles propres au pays/visa,
-  // sans quoi le client ne voit plus que la procédure externe et perd la
-  // traçabilité du traitement de son dossier par l’agence. journeyStepIndex()
-  // suppose ces 13 positions fixes : elles ne doivent pas être réordonnées ici.
-  const internalAgencySteps = baseJourney.steps.slice(0, 13);
+  const sourceUrl = baseJourney.officialSources[0] ?? catalogueProcedure.pdfUrl ?? "";
   return {
     ...baseJourney,
     title: `${catalogueProcedure.name} · ${catalogueProcedure.visaType === "travail" ? "Travail" : catalogueProcedure.visaType === "etudes" ? "Études" : "Visiteur"}`,
@@ -1185,6 +1250,16 @@ export function getEnrichedCandidateJourney(destination?: string | null, visaTyp
         };
       }),
     ],
+    publishedGuide: catalogueProcedure.pdfUrl
+      ? {
+          procedureId: catalogueProcedure.id,
+          title: catalogueProcedure.description,
+          pdfUrl: catalogueProcedure.pdfUrl,
+          relatedGuideUrls: [],
+          programLabel: catalogueProcedure.description,
+          visaKind: catalogueProcedure.visaType,
+        }
+      : null,
   };
 }
 

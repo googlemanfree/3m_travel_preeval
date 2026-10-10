@@ -5,6 +5,7 @@
  */
 
 import { getEnrichedCandidateJourney } from "./candidateJourneyCatalog";
+import { buildDossierPhaseTransparency } from "./dossierPhaseTransparency";
 import { describeDossierProgress } from "./dossierProgress";
 
 export type AdminOperationalStage =
@@ -99,7 +100,23 @@ export type AdminProcedureSnapshot = {
   stepLabel: string | null;
   nextStepLabel: string | null;
   percent: number;
+  /** Phase courante : agence 3M vs pays/visa. */
+  phaseLabel: string | null;
+  agencyDone: number;
+  agencyTotal: number;
+  countryDone: number;
+  countryTotal: number;
   stageLabels: Record<AdminOperationalStage, string>;
+  /** Guide PDF publié (même référence que l’espace client). */
+  publishedGuide: {
+    procedureId: string;
+    title: string;
+    pdfUrl: string;
+    programLabel: string;
+    summaryHeadline?: string;
+    summaryOverview?: string;
+    summaryStepHighlights?: string[];
+  } | null;
 };
 
 const PAID = new Set(["SUCCESS", "success", "completed", "paye", "paid"]);
@@ -145,6 +162,16 @@ export function buildAdminProcedureSnapshot(input: {
     },
   });
 
+  // stepNumber est 1-based pour l’étape en cours ; les étapes faites = stepNumber - 1
+  // sauf parcours terminé (percent 100) où tout est fait.
+  const doneCount = progress.percent >= 100
+    ? progress.stepCount
+    : Math.max(0, (progress.stepNumber ?? 1) - 1);
+  const phase = buildDossierPhaseTransparency({
+    journey,
+    completedStepCount: doneCount,
+  });
+
   return {
     journeyTitle: journey.title,
     country: journey.country,
@@ -154,10 +181,26 @@ export function buildAdminProcedureSnapshot(input: {
     stepLabel: progress.stepLabel,
     nextStepLabel: progress.nextStepLabel,
     percent: progress.percent,
+    phaseLabel: phase.phaseLabel,
+    agencyDone: phase.agencyDone,
+    agencyTotal: phase.agencyTotal,
+    countryDone: phase.countryDone,
+    countryTotal: phase.countryTotal,
     stageLabels: adminOperationalStageLabels(
       input.destination,
       input.visaType,
       input.procedureLabel ?? input.visaType,
     ),
+    publishedGuide: journey.publishedGuide
+      ? {
+          procedureId: journey.publishedGuide.procedureId,
+          title: journey.publishedGuide.title,
+          pdfUrl: journey.publishedGuide.pdfUrl,
+          programLabel: journey.publishedGuide.programLabel,
+          summaryHeadline: journey.publishedGuide.summaryHeadline,
+          summaryOverview: journey.publishedGuide.summaryOverview,
+          summaryStepHighlights: journey.publishedGuide.summaryStepHighlights,
+        }
+      : null,
   };
 }

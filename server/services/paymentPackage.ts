@@ -146,7 +146,7 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
     fullName: dossier.fullName,
     destination: dossier.destination,
     variables: protocolVariables,
-    content: buildProtocolOneRichText(protocolVariables, dossier.destination || ""),
+    content: buildProtocolOneRichText(protocolVariables, dossier.destination || "", dossier.visaType || null),
   });
 
   const receiptFileName = `Recu-paiement-${dossier.dossierNumber}.pdf`;

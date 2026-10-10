@@ -1533,7 +1533,7 @@ export const candidateRouter = router({
         clientIpAddress: ipAddress,
         dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
       };
-      const protocolText = buildProtocolOneRichText(protocolVariables, application.destination);
+      const protocolText = buildProtocolOneRichText(protocolVariables, application.destination, application.visaType);
       const protocolPdf = await createAgreementProtocolOnePdf({
         dossierNumber: application.dossierNumber,
         fullName: application.fullName,
@@ -1726,7 +1726,7 @@ export const candidateRouter = router({
         systemTimestamp: signedAtDate.toISOString(),
         clientIpAddress: ipAddress,
         dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
-      }, application.destination);
+      }, application.destination, application.visaType);
 
       const protocolPdf = await createAgreementProtocolOnePdf({
         dossierNumber: application.dossierNumber,
