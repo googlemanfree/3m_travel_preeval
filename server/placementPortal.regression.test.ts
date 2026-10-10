@@ -11,6 +11,10 @@ describe("portail de placement protégé", () => {
     expect(router).toContain("Le candidat doit d’abord consentir");
     expect(router).toContain("Le consentement du candidat n’est plus actif");
     expect(router).toContain("requireValidAdminSession");
+    expect(router).toContain("adminListConsentedCandidates");
+    expect(router).toContain("adminCandidateRef");
+    expect(router).toContain("placement_pipeline");
+    expect(router).toContain("opportunity:");
   });
 
   it("n’expose au portail employeur que des champs anonymisés", () => {
@@ -28,6 +32,13 @@ describe("portail de placement protégé", () => {
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain("partner-tab-");
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain("employerSessionInfo");
     expect(read("client/src/App.tsx")).toContain('path={"/employeurs"}');
+    expect(read("client/src/components/AdminPlacementPipeline.tsx")).toContain("onOpenCandidate");
+    expect(read("client/src/components/AdminPlacementPipeline.tsx")).toContain("adminListConsentedCandidates");
+    expect(read("client/src/components/AdminPlacementPipeline.tsx")).toContain("placement-consented-candidate");
+    expect(read("client/src/pages/AdminDashboard.tsx")).toContain("onOpenCandidate={(adminCandidateRef)");
+    expect(read("client/src/components/SelectableProfileCard.tsx")).toContain("selectable-opportunity-live");
+    expect(read("client/src/components/SelectableProfileCard.tsx")).toContain("clientSpacePolling");
+    expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("candidate360-placement-summary");
   });
 
   it("génère côté serveur les accès employeurs remis après vérification", () => {

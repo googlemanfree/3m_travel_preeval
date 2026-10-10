@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals, placementCandidateProfiles, placementProfileSubmissions, placementOrganizations, candidatePlacementConsents } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -3859,6 +3859,45 @@ export const adminRouter = router({
         secondProtocol,
         siblingProcedures: siblingRows,
         dualOpportunityHandoff,
+        placementSummary: candidateRecord ? await safeCollection((async () => {
+          const profile = (await db.select({
+            id: placementCandidateProfiles.id,
+            profileCode: placementCandidateProfiles.profileCode,
+            targetDestination: placementCandidateProfiles.targetDestination,
+            targetProcedure: placementCandidateProfiles.targetProcedure,
+          }).from(placementCandidateProfiles)
+            .where(and(eq(placementCandidateProfiles.candidateId, candidateRecord.id), isNull(placementCandidateProfiles.archivedAt)))
+            .orderBy(desc(placementCandidateProfiles.updatedAt))
+            .limit(1))[0];
+          if (!profile) return null;
+          const submission = (await db.select({
+            id: placementProfileSubmissions.id,
+            status: placementProfileSubmissions.status,
+            adminPipelineStage: placementProfileSubmissions.adminPipelineStage,
+            organizationId: placementProfileSubmissions.organizationId,
+            lastResponseAt: placementProfileSubmissions.lastResponseAt,
+          }).from(placementProfileSubmissions)
+            .where(eq(placementProfileSubmissions.profileId, profile.id))
+            .orderBy(desc(placementProfileSubmissions.lastResponseAt), desc(placementProfileSubmissions.id))
+            .limit(1))[0];
+          const organization = submission
+            ? (await db.select({ legalName: placementOrganizations.legalName, organizationType: placementOrganizations.organizationType }).from(placementOrganizations).where(eq(placementOrganizations.id, submission.organizationId)).limit(1))[0]
+            : null;
+          const consent = (await db.select({ status: candidatePlacementConsents.status }).from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateRecord.id)).limit(1))[0];
+          return {
+            consentStatus: consent?.status ?? "withdrawn",
+            profileCode: profile.profileCode,
+            targetDestination: profile.targetDestination,
+            targetProcedure: profile.targetProcedure,
+            submissionStatus: submission?.status ?? null,
+            postSelectionStage: submission
+              ? (submission.adminPipelineStage ?? (submission.status === "selected" || submission.status === "procedure_ready" ? submission.status : null))
+              : null,
+            organizationName: organization?.legalName ?? null,
+            organizationType: organization?.organizationType ?? null,
+            updatedAt: submission?.lastResponseAt ?? null,
+          };
+        })(), null, "placementSummary") : null,
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
