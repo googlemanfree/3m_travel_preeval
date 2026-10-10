@@ -3875,6 +3875,7 @@ export const adminRouter = router({
           title: candidateJourney.title,
           disclaimer: candidateJourney.disclaimer,
           officialSources: candidateJourney.officialSources,
+          publishedGuide: candidateJourney.publishedGuide ?? null,
           currentStepIndex: effectiveJourneyStep,
           completedStepIds: Array.from(persistedJourneyStepIds),
           steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < effectiveJourneyStep || persistedJourneyStepIds.has(`checklist-${index}`) ? "completed" : index === effectiveJourneyStep ? "current" : "locked" })),

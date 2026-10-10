@@ -155,7 +155,16 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
           <div>
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-200"><MapPinned className="h-4 w-4" aria-hidden="true" />Parcours synchronisé</p>
             <CardTitle id="candidate-country-journey-title" className="mt-2 text-xl text-white">{journey.title}</CardTitle>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Les étapes affichées correspondent à la destination et au type de visa enregistrés dans votre dossier.</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Les étapes affichées correspondent à la destination et au type de visa enregistrés dans votre dossier — même parcours que celui suivi par l’administration.</p>
+            {journey.publishedGuide?.pdfUrl ? (
+              <p className="mt-2 text-sm text-blue-100" data-testid="client-published-guide">
+                Guide de procédure : <strong className="text-white">{journey.publishedGuide.programLabel || journey.publishedGuide.title}</strong>
+                {" — "}
+                <a href={journey.publishedGuide.pdfUrl} target="_blank" rel="noreferrer" className="font-semibold text-amber-200 underline underline-offset-2 hover:text-white">
+                  Télécharger le PDF publié
+                </a>
+              </p>
+            ) : null}
           </div>
           <Badge className="bg-white/15 text-white hover:bg-white/15">{progress}% préparé</Badge>
         </div>

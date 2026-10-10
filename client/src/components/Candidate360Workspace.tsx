@@ -1021,6 +1021,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               currentStepIndex={data.candidateJourney.currentStepIndex}
               internalCount={13}
               officialSources={data.candidateJourney.officialSources}
+              publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string } | null }).publishedGuide}
               busy={journeyStepMutation.isPending || actionLocks.journeyStep}
               onValidate={(step) => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}
               onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}

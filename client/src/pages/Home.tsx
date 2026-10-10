@@ -376,10 +376,10 @@ export default function Home() {
               <p className="premium-copy mt-1.5 text-sm">Comparer les pays, visas et sources officielles.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
-              <p className="text-sm font-black text-slate-950">Ressources et actualités</p>
-              <p className="premium-copy mt-1.5 text-sm">Guides, informations pratiques et mises à jour.</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Consulter les ressources <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            <a href="/guide-procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg" data-testid="home-guide-procedures">
+              <p className="text-sm font-black text-slate-950">Guide PDF des procédures</p>
+              <p className="premium-copy mt-1.5 text-sm">Bibliothèque travail / études / visiteur — même source que le traitement admin.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le guide des procédures <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Services et accompagnement</p>

@@ -100,6 +100,13 @@ export type AdminProcedureSnapshot = {
   nextStepLabel: string | null;
   percent: number;
   stageLabels: Record<AdminOperationalStage, string>;
+  /** Guide PDF publié (même référence que l’espace client). */
+  publishedGuide: {
+    procedureId: string;
+    title: string;
+    pdfUrl: string;
+    programLabel: string;
+  } | null;
 };
 
 const PAID = new Set(["SUCCESS", "success", "completed", "paye", "paid"]);
@@ -159,5 +166,13 @@ export function buildAdminProcedureSnapshot(input: {
       input.visaType,
       input.procedureLabel ?? input.visaType,
     ),
+    publishedGuide: journey.publishedGuide
+      ? {
+          procedureId: journey.publishedGuide.procedureId,
+          title: journey.publishedGuide.title,
+          pdfUrl: journey.publishedGuide.pdfUrl,
+          programLabel: journey.publishedGuide.programLabel,
+        }
+      : null,
   };
 }

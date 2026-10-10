@@ -2791,6 +2791,19 @@ export default function AdminDashboard() {
                                   {journey.stepNumber != null ? `${journey.stepNumber}/${journey.stepCount} · ` : ""}{journey.stepLabel}
                                 </span>
                               )}
+                              {journey?.publishedGuide?.pdfUrl && (
+                                <a
+                                  href={journey.publishedGuide.pdfUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="max-w-[200px] truncate text-[10px] font-semibold text-blue-800 underline underline-offset-2"
+                                  title={journey.publishedGuide.title}
+                                  data-testid="admin-published-guide-link"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  Guide PDF · {journey.publishedGuide.programLabel || journey.publishedGuide.title}
+                                </a>
+                              )}
                               {journey?.nextStepLabel && (
                                 <span className="max-w-[200px] text-[10px] text-slate-500">Suite : {journey.nextStepLabel}</span>
                               )}

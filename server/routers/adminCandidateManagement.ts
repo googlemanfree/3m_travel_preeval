@@ -1946,6 +1946,7 @@ export const adminCandidateManagementRouter = router({
       let agencyDossierId: number | null = null;
       let applicationId: number | null = null;
       let destination = "";
+      let visaType = "";
       let whatsapp = "";
       let paymentMethodLabel = "";
       let paymentTimestamp: Date | null = null;
@@ -1958,6 +1959,7 @@ export const adminCandidateManagementRouter = router({
         paymentConfirmed = dossier.initialPaymentStatus === "paid";
         agencyDossierId = dossier.id;
         destination = dossier.destination || "";
+        visaType = dossier.visaType || "";
         whatsapp = dossier.phone || "";
       } else {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
@@ -1968,13 +1970,13 @@ export const adminCandidateManagementRouter = router({
         paymentConfirmed = application.paymentStatus === "SUCCESS";
         applicationId = application.id;
         destination = application.destination || "";
+        visaType = application.visaType || "";
         whatsapp = application.whatsappNumber || "";
         paymentMethodLabel = application.paymentMethod || "";
         paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
-      // Le protocole est genere automatiquement selon le pays de destination du candidat
-      // (COUNTRY_PROTOCOL_PROFILES) sauf si l'administrateur a fourni un texte personnalise.
+      // Protocole généré selon pays + type de visa (guides PDF publiés / COUNTRY_PROTOCOL_PROFILES).
       const empreinteSha = crypto.createHash("sha256").update(`${dossierNumber}|${email}|${destination}|${Date.now()}`).digest("hex").slice(0, 24);
       const protocolVariables = {
         clientNomComplet: fullName,
@@ -1989,7 +1991,7 @@ export const adminCandidateManagementRouter = router({
         clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
         dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
       };
-      const autoProtocolText = buildProtocolOneRichText(protocolVariables, destination);
+      const autoProtocolText = buildProtocolOneRichText(protocolVariables, destination, visaType);
       const protocolText = input.content.trim().length >= 50 ? input.content : autoProtocolText;
       const protocolPdf = await createAgreementProtocolOnePdf({
         dossierNumber,

@@ -4,12 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { buildStepperView, lockedReason, type ProcedureStep, type StepGroup } from "@/lib/procedureStepper";
 
+type PublishedGuideProp = {
+  title?: string | null;
+  pdfUrl?: string | null;
+  programLabel?: string | null;
+};
+
 type Props = {
   title: string;
   steps: ProcedureStep[];
   currentStepIndex: number;
   internalCount: number;
   officialSources?: string[];
+  publishedGuide?: PublishedGuideProp | null;
   busy?: boolean;
   onValidate: (step: ProcedureStep) => void;
   onUnlock: (step: ProcedureStep) => void;
@@ -42,7 +49,7 @@ function Group({ group, currentStepIndex, busy, onUnlock, onUndo }: { group: Ste
 }
 
 /** Parcours du dossier : l'étape en cours en grand, les suivantes en une ligne, la liste complète repliée. */
-export default function ProcedureStepper({ title, steps, currentStepIndex, internalCount, officialSources, busy, onValidate, onUnlock, onUndo }: Props) {
+export default function ProcedureStepper({ title, steps, currentStepIndex, internalCount, officialSources, publishedGuide, busy, onValidate, onUnlock, onUndo }: Props) {
   const view = buildStepperView({ steps, currentStepIndex, internalCount });
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-5" aria-labelledby="stepper-title" data-testid="procedure-stepper">
@@ -50,7 +57,16 @@ export default function ProcedureStepper({ title, steps, currentStepIndex, inter
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Parcours du dossier</p>
           <h4 id="stepper-title" className="mt-0.5 text-lg font-bold text-slate-950">{title}</h4>
-          <p className="mt-0.5 text-xs text-slate-500">Même séquence que dans l’espace candidat : chaque validation y est synchronisée.</p>
+          <p className="mt-0.5 text-xs text-slate-500">Même séquence que dans l’espace candidat : chaque validation y est synchronisée. Les étapes pays/visa suivent le guide PDF publié sur le site.</p>
+          {publishedGuide?.pdfUrl ? (
+            <p className="mt-2 text-xs text-slate-700" data-testid="stepper-published-guide">
+              Programme : <strong>{publishedGuide.programLabel || publishedGuide.title}</strong>
+              {" · "}
+              <a href={publishedGuide.pdfUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline underline-offset-2">
+                Ouvrir le guide PDF publié
+              </a>
+            </p>
+          ) : null}
         </div>
         <div className="w-full sm:w-56">
           <p className="flex items-baseline justify-between text-sm font-semibold text-slate-900" data-testid="stepper-position"><span>{view.finished ? "Parcours terminé" : `Étape ${view.position} sur ${view.total}`}</span><span className="text-blue-700">{view.percent}%</span></p>
