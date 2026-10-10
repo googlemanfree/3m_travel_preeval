@@ -149,6 +149,16 @@ export default function EvaluationSpace() {
     ...clientSpacePolling(),
     retry: false,
   });
+  const { data: consultationRequests } = trpc.consultationRequest.getMyConsultations.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
+  const { data: translationRequests } = trpc.translation.getMyRequests.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
   const downloadCaseDocument = async (documentId: number) => {
     try {
       const result = await trpcUtils.caseTracking.downloadMyDocument.fetch({ documentId });
@@ -694,6 +704,72 @@ export default function EvaluationSpace() {
               <DossierPaymentCard dossierNumber={activeDossier?.dossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={Boolean(workflow?.paymentConfirmed)} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
+              <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Services en ligne</p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-950">Suivi synchronisé avec le back-office</h3>
+                    <p className="mt-1 text-sm text-slate-600">Chaque demande ouverte sur le site apparaît ici dès qu’elle est traitée ou mise à jour par l’équipe.</p>
+                  </div>
+                  <a href="/services" className="text-sm font-semibold text-blue-800 underline underline-offset-2">Voir tous les services</a>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { label: "Consultations", count: consultationRequests?.length ?? 0, href: "/consultation", empty: "Réserver" },
+                    { label: "Traductions", count: translationRequests?.length ?? 0, href: "/traduction/order", empty: "Commander" },
+                    { label: "3M Solutions", count: digitalRequests?.length ?? 0, href: "/3m-solutions", empty: "Demander" },
+                    { label: "Assurances", count: insuranceRequests?.length ?? 0, href: "/assurance", empty: "Souscrire" },
+                    { label: "e-Visa", count: Array.isArray(evisaReqs?.data) ? evisaReqs.data.length : 0, href: "/evisas", empty: "Explorer" },
+                  ].map((item) => (
+                    <a key={item.label} href={item.href} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-300 hover:bg-blue-50/50">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {item.count > 0 ? `${item.count} demande(s) en cours` : `Aucune demande — ${item.empty}`}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              </Card>
+              {(consultationRequests?.length || translationRequests?.length) ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {consultationRequests && consultationRequests.length > 0 && (
+                    <Card className="border-indigo-100 bg-white p-5 shadow-sm" data-testid="client-consultation-requests">
+                      <h3 className="text-base font-bold text-slate-950">Mes consultations</h3>
+                      <div className="mt-3 space-y-2">
+                        {consultationRequests.slice(0, 5).map((item) => (
+                          <div key={item.id} className="rounded-lg border border-slate-200 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-slate-900">{item.targetCountry || "Consultation"}</p>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{item.status}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("fr-FR") : ""}</p>
+                            {item.finalReportContent ? <p className="mt-2 line-clamp-3 text-xs text-emerald-800">Rapport conseiller disponible</p> : null}
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                  {translationRequests && translationRequests.length > 0 && (
+                    <Card className="border-violet-100 bg-white p-5 shadow-sm" data-testid="client-translation-requests">
+                      <h3 className="text-base font-bold text-slate-950">Mes traductions</h3>
+                      <div className="mt-3 space-y-2">
+                        {translationRequests.slice(0, 5).map((item) => (
+                          <div key={item.id} className="rounded-lg border border-slate-200 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-slate-900">{item.sourceDocumentName || item.documentType}</p>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{item.status}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">{item.sourceLanguageCode} → {item.targetLanguageCode}</p>
+                            {item.translatedDocumentUrl ? (
+                              <a href={item.translatedDocumentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-800 underline">Télécharger</a>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              ) : null}
               <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
               <SelectableProfileCard />
               <PlacementConsentCard />

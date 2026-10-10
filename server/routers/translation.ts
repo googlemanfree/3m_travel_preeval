@@ -1,9 +1,11 @@
 ﻿import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-import { eq, and, SQL } from "drizzle-orm";
+import { eq, and, desc, SQL } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import * as drizzleSchema from "../../drizzle/schema";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
+import { candidateProcedure } from "./candidate";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -189,4 +191,28 @@ export const translationRouter = router({
       const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing).limit(200);
       return documentTypes.map(dt => dt.documentType);
     }),
+
+  /** Espace client : suivi des traductions liées à l’e-mail du candidat. */
+  getMyRequests: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    return db
+      .select({
+        id: drizzleSchema.translationRequests.id,
+        documentType: drizzleSchema.translationRequests.documentType,
+        sourceLanguageCode: drizzleSchema.translationRequests.sourceLanguageCode,
+        targetLanguageCode: drizzleSchema.translationRequests.targetLanguageCode,
+        sourceDocumentName: drizzleSchema.translationRequests.sourceDocumentName,
+        status: drizzleSchema.translationRequests.status,
+        totalPrice: drizzleSchema.translationRequests.totalPrice,
+        currency: drizzleSchema.translationRequests.currency,
+        translatedDocumentUrl: drizzleSchema.translationRequests.translatedDocumentUrl,
+        createdAt: drizzleSchema.translationRequests.createdAt,
+        updatedAt: drizzleSchema.translationRequests.updatedAt,
+      })
+      .from(drizzleSchema.translationRequests)
+      .where(eq(drizzleSchema.translationRequests.candidateEmail, ctx.candidate.email))
+      .orderBy(desc(drizzleSchema.translationRequests.createdAt))
+      .limit(50);
+  }),
 });
