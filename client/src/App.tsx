@@ -136,7 +136,6 @@ import PwaStatusNotice from "./components/PwaStatusNotice";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
 const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAIEvaluationDashboard"));
-const CVGenerator = lazyWithTimeout(() => import("./pages/CVGenerator"));
 const Admin = lazyWithTimeout(() => import("./pages/Admin"));
 const ProceduresAdvanced = lazyWithTimeout(() => import("./pages/ProceduresAdvanced"));
 const CountryComparisonPage = lazyWithTimeout(() => import("./pages/CountryComparisonPage"));
@@ -247,7 +246,7 @@ function Router() {
       <Route path={"/ambassador-program"} component={AmbassadorProgram} />
 
       {/* Générateur de CV */}
-      <Route path={"/cv-generator"} component={CVGenerator} />
+      <Route path={"/cv-generator"}>{() => <Redirect to="/services" />}</Route>
 
       {/* Résultat d'évaluation */}
       <Route path={"/evaluation-result"} component={EvaluationResult} />
