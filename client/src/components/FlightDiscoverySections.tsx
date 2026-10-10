@@ -621,7 +621,7 @@ export function FlightMobilityProofBridge() {
                 />
               </div>
               <figcaption className="p-4">
-                <p className="text-[11px] font-black uppercase tracking-wide text-blue-700">{PROOF_CATEGORY_LABELS[photo.category]}</p>
+                <p className="text-[11px] font-black uppercase tracking-wide text-blue-700">{PROOF_CATEGORY_LABELS[photo.category].fr}</p>
                 <p className="mt-1 text-sm font-semibold leading-5 text-slate-800">{photo.caption}</p>
               </figcaption>
             </motion.figure>

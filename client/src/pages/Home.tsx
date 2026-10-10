@@ -21,6 +21,7 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { PRESENTATION_JOURNEY_INTRO, PRESENTATION_JOURNEY_STEPS } from "@shared/presentationJourney";
@@ -179,7 +180,7 @@ export default function Home() {
 
           {/* Livrables concrets pour recruteurs — sans second système : CTA → formulaire employeur existant. */}
           <div
-            className="mt-8 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-lg md:p-8"
+            className="mx-1 mt-6 min-w-0 rounded-2xl border border-amber-200/60 bg-white p-4 shadow-lg sm:mx-0 sm:mt-8 sm:p-6 md:p-8"
             data-testid="home-employer-deliverables"
             aria-labelledby="home-employer-deliverables-title"
           >
@@ -193,7 +194,7 @@ export default function Home() {
                 "Before any presentation, a 3M administrator reviews the file. You only receive prepared, consenting profiles aligned with your criteria.",
               )}
             </p>
-            <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+            <ul className="mt-4 grid min-w-0 gap-2.5 sm:mt-5 sm:grid-cols-2">
               {EMPLOYER_PROFILE_DELIVERABLES.map((item) => (
                 <li key={item.fr} className="flex items-start gap-2.5 text-sm font-medium leading-6 text-slate-800">
                   <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
@@ -207,18 +208,18 @@ export default function Home() {
                 "Send us your criteria: our team reviews matching profiles before any presentation.",
               )}
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="mt-5 flex min-w-0 flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
               <a
                 href={CORRIDOR_ROUTES.employersRegister}
                 data-testid="home-employer-need-cta"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-black text-[#071b3d] transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-center text-sm font-black text-[#071b3d] transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 sm:w-auto sm:px-5"
               >
                 {t("Transmettre un besoin de recrutement", "Submit a recruitment need")}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <a
                 href={CORRIDOR_ROUTES.employersLogin}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-indigo-300 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold text-slate-800 transition hover:border-indigo-300 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 sm:w-auto sm:px-5"
               >
                 {t("Déjà vérifié ? Accéder au portail", "Already verified? Open the portal")}
               </a>
@@ -227,7 +228,7 @@ export default function Home() {
 
           {/* Parcours 5 étapes — même chaîne que le stepper admin. */}
           <div
-            className="mt-8 rounded-2xl border border-white/25 bg-white/10 p-6 backdrop-blur-sm md:p-8"
+            className="mx-1 mt-6 min-w-0 rounded-2xl border border-white/25 bg-white/10 p-4 backdrop-blur-sm sm:mx-0 sm:mt-8 sm:p-6 md:p-8"
             data-testid="home-presentation-journey"
             aria-labelledby="home-presentation-journey-title"
           >
@@ -236,10 +237,27 @@ export default function Home() {
               {PRESENTATION_JOURNEY_INTRO.title[lang]}
             </h3>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
-            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <ol className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5">
               {PRESENTATION_JOURNEY_STEPS.map((step) => (
-                <li key={step.id} className="rounded-xl border border-white/20 bg-white/95 p-4">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-700 text-xs font-black text-white">{step.n}</span>
+                <li key={step.id} className="min-w-0 rounded-xl border border-white/20 bg-white/95 p-3.5 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-700 text-xs font-black text-white">{step.n}</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                          aria-label={lang === "fr" ? `Explication : ${step.short.fr}` : `Explanation: ${step.short.en}`}
+                        >
+                          <Info className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" sideOffset={8} className="max-w-[min(18rem,calc(100vw-2rem))]">
+                        <span className="font-bold">{step.short[lang]}</span>
+                        <span className="mt-1 block">{step.body[lang]}</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <p className="mt-3 text-sm font-black text-slate-950">{step.title[lang]}</p>
                   <p className="mt-1.5 text-xs leading-5 text-slate-600">{step.body[lang]}</p>
                 </li>
