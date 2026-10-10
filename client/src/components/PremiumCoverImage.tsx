@@ -20,6 +20,11 @@ export function PremiumCoverImage({
   priority = false,
 }: PremiumCoverImageProps) {
   const [src, setSrc] = useState(visual.desktop);
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <div className={`bg-gradient-to-br from-blue-900 via-blue-950 to-slate-950 ${className}`} aria-hidden="true" />;
+  }
 
   return (
     <div className={`overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 ${className}`}>
@@ -33,7 +38,9 @@ export function PremiumCoverImage({
         onError={() => {
           if (visual.localFallback && src !== visual.localFallback) {
             setSrc(visual.localFallback);
+            return;
           }
+          setFailed(true);
         }}
       />
     </div>
