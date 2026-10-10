@@ -17,7 +17,7 @@ export default function HeroSectionVIP({
   logoUrl = "/logo-3m.webp",
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -90,6 +90,7 @@ export default function HeroSectionVIP({
 
   return (
     <section
+      key={language}
       ref={heroRef}
       className="relative flex min-h-[72vh] items-center overflow-hidden py-12 text-center text-white sm:min-h-[78vh] sm:py-16 md:min-h-[88vh] md:py-24"
       style={{
