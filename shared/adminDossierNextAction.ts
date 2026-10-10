@@ -18,12 +18,18 @@ export function determineAdminListNextAction(input: {
   procedureStep?: string | null;
   status?: string | null;
   activationStatus?: string | null;
+  /** Pays du dossier — contextualise le libellé sans changer la priorisation. */
+  destination?: string | null;
+  visaType?: string | null;
 }): AdminDossierNextAction {
+  const place = [input.destination?.trim(), input.visaType?.trim()].filter(Boolean).join(" · ");
+  const withPlace = (label: string) => (place ? `${label} — ${place}` : label);
+
   const activation = (input.activationStatus ?? "").toLowerCase();
   if (activation === "pending" || activation === "expired" || activation === "failed") {
     return {
       key: "activation",
-      label: activation === "failed" ? "Relancer l’activation" : activation === "expired" ? "Renouveler le lien d’activation" : "Suivre l’activation compte",
+      label: withPlace(activation === "failed" ? "Relancer l’activation" : activation === "expired" ? "Renouveler le lien d’activation" : "Suivre l’activation compte"),
       urgency: activation === "failed" || activation === "expired" ? "high" : "medium",
     };
   }
@@ -32,29 +38,34 @@ export function determineAdminListNextAction(input: {
   if (!PAID.has(payment)) {
     return {
       key: "payment",
-      label: payment === "PENDING" ? "Contrôler le justificatif" : "Vérifier le paiement",
+      label: withPlace(payment === "PENDING" ? "Contrôler le justificatif" : "Vérifier le paiement"),
       urgency: "high",
     };
   }
 
   const step = (input.procedureStep || input.status || "").toUpperCase();
   if (step === "PENDING_48H") {
-    return { key: "evaluation", label: "Traiter l’évaluation 48h", urgency: "high" };
+    return { key: "evaluation", label: withPlace("Traiter l’évaluation 48h"), urgency: "high" };
   }
   if (step === "PUBLISHED") {
-    return { key: "bilan", label: "Suivre bilan / ouverture", urgency: "medium" };
+    return { key: "bilan", label: withPlace("Suivre bilan / ouverture"), urgency: "medium" };
   }
   if (step === "DOCUMENTS_CHECK") {
-    return { key: "documents", label: "Contrôler les documents", urgency: "high" };
+    return { key: "documents", label: withPlace("Contrôler les documents"), urgency: "high" };
   }
   if (step === "SUBMITTED") {
-    return { key: "submission", label: "Suivre la soumission", urgency: "medium" };
+    const evisa = /(e[\s-]?visa|electronique|eta)/i.test(`${input.visaType || ""}`);
+    return {
+      key: "submission",
+      label: withPlace(evisa ? "Suivre le portail e‑Visa" : "Suivre la soumission"),
+      urgency: "medium",
+    };
   }
   if (step === "APPROVED") {
-    return { key: "departure", label: "Préparer la suite / départ", urgency: "low" };
+    return { key: "departure", label: withPlace("Préparer la suite / départ"), urgency: "low" };
   }
 
-  return { key: "open", label: "Ouvrir la fiche 360°", urgency: "low" };
+  return { key: "open", label: withPlace("Ouvrir la fiche 360°"), urgency: "low" };
 }
 
 export const ADMIN_NEXT_ACTION_URGENCY_CLASS: Record<AdminDossierNextActionUrgency, string> = {

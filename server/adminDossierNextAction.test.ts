@@ -22,4 +22,23 @@ describe("determineAdminListNextAction", () => {
     expect(determineAdminListNextAction({ paymentStatus: "SUCCESS", status: "SUBMITTED" }).key).toBe("submission");
     expect(determineAdminListNextAction({ paymentStatus: "SUCCESS", status: "APPROVED" }).urgency).toBe("low");
   });
+
+  it("contextualise le libellé avec le pays et distingue l’e‑Visa", () => {
+    expect(
+      determineAdminListNextAction({
+        paymentStatus: "SUCCESS",
+        status: "DOCUMENTS_CHECK",
+        destination: "Italie",
+        visaType: "Visiteur",
+      }).label,
+    ).toContain("Italie");
+    expect(
+      determineAdminListNextAction({
+        paymentStatus: "SUCCESS",
+        status: "SUBMITTED",
+        destination: "Australie",
+        visaType: "e-Visa",
+      }).label,
+    ).toMatch(/e[‑-]Visa|Australie/i);
+  });
 });

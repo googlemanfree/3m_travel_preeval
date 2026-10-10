@@ -138,13 +138,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [comment, setComment] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDueAt, setTaskDueAt] = useState("");
-  const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "Canada");
+  const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "");
   const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [visaTypeDraft, setVisaTypeDraft] = useState(candidate.projectType || "");
   const [isFetchingCv, setIsFetchingCv] = useState(false);
   const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string } | null>(null);
   const [forceStepReason, setForceStepReason] = useState("");
-  const [checklistProcedure, setChecklistProcedure] = useState("permanent_residence");
+  const [checklistProcedure, setChecklistProcedure] = useState(() => procedureFromEvaluationContext({ projectType: candidate.projectType }));
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
   const [outboundMessage, setOutboundMessage] = useState("");
   const [quickMessageOpen, setQuickMessageOpen] = useState(false);
@@ -212,10 +212,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
   useEffect(() => {
     const context = data?.evaluationContext;
-    if (!context) return;
-    if (context.destinationCountry?.trim()) setChecklistCountry(context.destinationCountry.trim());
-    setChecklistProcedure(procedureFromEvaluationContext(context));
-  }, [data?.evaluationContext]);
+    const pilotage = (data as any)?.dynamicPilotage as { country?: string; checklistKey?: string | null } | undefined;
+    if (pilotage?.country?.trim()) setChecklistCountry(pilotage.country.trim());
+    else if (context?.destinationCountry?.trim()) setChecklistCountry(context.destinationCountry.trim());
+    else if (candidate.destinationCountry?.trim()) setChecklistCountry(candidate.destinationCountry.trim());
+    if (pilotage?.checklistKey) setChecklistProcedure(pilotage.checklistKey);
+    else if (context) setChecklistProcedure(procedureFromEvaluationContext(context));
+  }, [data?.evaluationContext, (data as any)?.dynamicPilotage, candidate.destinationCountry]);
 
   const evaluationAlreadyValidated = data?.evaluationDeclarationStatus === "validated" || Boolean(data?.evaluationReviewedAt || data?.evaluationValidatedAt) || candidate.evaluationDeclarationStatus === "validated" || Boolean(candidate.evaluationReviewedAt || candidate.evaluationValidatedAt);
   const evaluationValidatedBy = data?.evaluationReviewedBy || data?.evaluationValidatedBy || candidate.evaluationReviewedBy || candidate.evaluationValidatedBy || "un conseiller";
@@ -766,6 +769,52 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               </section>
             );
           })()}
+          {(data as any).dynamicPilotage && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-5" data-testid="dynamic-pilotage-panel" aria-label="Pilotage dynamique pays et procédure">
+              <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className="border-blue-200 bg-blue-50 text-blue-800">Pilotage dynamique</Badge>
+                    <Badge className="border-slate-200 bg-slate-50 text-slate-700">{(data as any).dynamicPilotage.procedureKindLabel}</Badge>
+                  </div>
+                  <h4 className="mt-2 text-lg font-bold text-slate-950">
+                    {(data as any).dynamicPilotage.country} · {(data as any).dynamicPilotage.visaType}
+                  </h4>
+                  <p className="mt-1 max-w-3xl text-sm text-slate-600">{(data as any).dynamicPilotage.reassurance}</p>
+                </div>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Étape parcours</p>
+                  <p className="mt-1 font-semibold text-slate-900">{(data as any).dynamicPilotage.currentStepLabel || "À démarrer"}</p>
+                  {(data as any).dynamicPilotage.nextStepLabel && (
+                    <p className="mt-1 text-xs text-slate-600">Ensuite : {(data as any).dynamicPilotage.nextStepLabel}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Action recommandée pour ce pays</p>
+                  <p className="mt-1 font-semibold text-slate-950">{(data as any).dynamicPilotage.nextAction?.label || nextAction.label}</p>
+                  <p className="mt-1 text-sm text-slate-700">{(data as any).dynamicPilotage.nextAction?.description || nextAction.description}</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Sources officielles à vérifier</p>
+                  {((data as any).dynamicPilotage.officialSources as Array<{ label: string; url: string }> | undefined)?.length ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {((data as any).dynamicPilotage.officialSources as Array<{ label: string; url: string }>).slice(0, 4).map((source) => (
+                        <li key={source.url}>
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-blue-800 underline underline-offset-2 hover:text-blue-950">
+                            {source.label} <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-500">Aucune source catalogue pour cette destination — précisez le pays sur le dossier.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
           {isLuxembourgDestination(destinationDraft || data.evaluationContext?.destinationCountry || candidate.destinationCountry) && (
             <section className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-sm lg:p-5" data-testid="luxembourg-job-desk" aria-label="Bureau candidatures Luxembourg">
               <div className="flex flex-col gap-3 border-b border-emerald-100 pb-4 sm:flex-row sm:items-start sm:justify-between">

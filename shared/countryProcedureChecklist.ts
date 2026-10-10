@@ -56,6 +56,31 @@ const COUNTRY_BASE: Record<string, ChecklistDocumentLine[]> = {
     { documentType: "Acte de naissance", comment: "Acte d’état civil exploitable, traduit si exigé.", source: "country" },
     { documentType: "Casier judiciaire", comment: "Extrait récent lorsque la procédure le demande.", source: "country" },
   ],
+  france: [
+    { documentType: "Passeport valide", comment: "Passeport valide couvrant le séjour et les délais consulaires.", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo aux normes France-Visas / consulat compétent.", source: "country" },
+    { documentType: "Justificatifs de ressources", comment: "Preuves de moyens adaptés au motif (visite, études ou travail).", source: "country" },
+  ],
+  italie: [
+    { documentType: "Passeport valide", comment: "Passeport valide pour la durée du séjour en Italie.", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo récente conforme aux exigences consulaires italiennes.", source: "country" },
+    { documentType: "Assurance voyage", comment: "Couverture médicale Schengen lorsque exigée.", source: "country" },
+  ],
+  australie: [
+    { documentType: "Passeport valide", comment: "Passeport valide pour toute la durée du séjour en Australie.", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo conforme au portail Home Affairs / ImmiAccount.", source: "country" },
+    { documentType: "Justificatifs de ressources", comment: "Preuves de fonds et confiance du voyageur selon le stream.", source: "country" },
+  ],
+  allemagne: [
+    { documentType: "Passeport valide", comment: "Passeport valide pour le séjour et les démarches allemandes.", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo biométrique aux normes allemandes.", source: "country" },
+    { documentType: "Justificatifs de ressources", comment: "Preuves de financement ou de contrat selon la procédure.", source: "country" },
+  ],
+  belgique: [
+    { documentType: "Passeport valide", comment: "Passeport valide pour le séjour en Belgique.", source: "country" },
+    { documentType: "Photo d’identité", comment: "Photo conforme aux exigences de l’Office des étrangers.", source: "country" },
+    { documentType: "Justificatifs de ressources", comment: "Preuves de moyens adaptés au motif de séjour.", source: "country" },
+  ],
   default: [
     { documentType: "Passeport valide", comment: "Passeport en cours de validité.", source: "country" },
     { documentType: "Photo d’identité", comment: "Photo récente aux normes du pays de destination.", source: "country" },
@@ -125,8 +150,13 @@ export function resolveProcedureChecklistKey(procedureType?: string | null): key
 
 function countryLines(destination?: string | null): ChecklistDocumentLine[] {
   const key = fold(String(destination || ""));
-  if (key.includes("canada")) return COUNTRY_BASE.canada;
+  if (key.includes("canada") || key.includes("quebec")) return COUNTRY_BASE.canada;
   if (key.includes("luxembourg")) return COUNTRY_BASE.luxembourg;
+  if (key.includes("france")) return COUNTRY_BASE.france;
+  if (key.includes("italie") || key.includes("italy")) return COUNTRY_BASE.italie;
+  if (key.includes("australie") || key.includes("australia")) return COUNTRY_BASE.australie;
+  if (key.includes("allemagne") || key.includes("germany")) return COUNTRY_BASE.allemagne;
+  if (key.includes("belgique") || key.includes("belgium")) return COUNTRY_BASE.belgique;
   return COUNTRY_BASE.default;
 }
 
