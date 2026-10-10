@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals, placementCandidateProfiles, placementProfileSubmissions, placementOrganizations, candidatePlacementConsents } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, agencySettings, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals, placementCandidateProfiles, placementProfileSubmissions, placementOrganizations, candidatePlacementConsents } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -25,6 +25,7 @@ import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDos
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
+import { buildCandidateCockpit } from "../../shared/candidateCockpit";
 import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -2521,6 +2522,15 @@ export const adminRouter = router({
               ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
               : null,
           });
+          const [evaluationRow] = await db.select({ id: evaluations.id }).from(evaluations)
+            .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+            .limit(1);
+          const [openingPaymentRow] = await db.select({ id: agencySettings.id }).from(agencySettings)
+            .where(eq(agencySettings.settingKey, `opening_payment:${account.id}`))
+            .limit(1);
+          const pendingDocuments = docs.filter((doc) => doc.status === "uploaded").length;
+          const dossierActivated = account.dossierStatus !== "nouveau" || Boolean(linkedAgencyDossierId);
+          const paymentConfirmed = dossierActivated || Boolean(openingPaymentRow);
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
@@ -2566,6 +2576,19 @@ export const adminRouter = router({
               updatedAt: account.updatedAt,
             },
             documents: docs,
+            cockpit: buildCandidateCockpit({
+              emailVerified: account.emailVerified,
+              evaluationStatus: account.evaluationDeclarationStatus,
+              hasEvaluationRecord: Boolean(evaluationRow),
+              paymentConfirmed,
+              receiptApproved: false,
+              protocolSigned: false,
+              dossierActivated,
+              pendingDocuments,
+              workflowStatus: account.dossierStatus,
+              destination: account.destination,
+              visaType: account.visaType,
+            }),
           });
         }
         const reference = parseAdminCandidateReference(input.candidateId);
@@ -3764,6 +3787,21 @@ export const adminRouter = router({
           : (candidateRecord?.evaluationReviewedBy ?? null),
         nextAction,
         dynamicPilotage,
+        cockpit: buildCandidateCockpit({
+          emailVerified: candidateRecord?.emailVerified ?? true,
+          evaluationStatus: reference.source === "agency"
+            ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedAt ? "validated" : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"))
+            : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"),
+          hasEvaluationRecord: Boolean(latestEvaluation),
+          paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
+          receiptApproved: Boolean(paymentSnapshot?.receiptApproval),
+          protocolSigned: Boolean(onlineApp?.agreementSigned),
+          dossierActivated: true,
+          pendingDocuments,
+          workflowStatus: operationalCase.currentStatus,
+          destination: destination ?? undefined,
+          visaType: visaTypeForJourney ?? undefined,
+        }),
         candidateJourney: {
           country: candidateJourney.country,
           visaType: candidateJourney.visaType,
