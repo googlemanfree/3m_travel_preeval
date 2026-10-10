@@ -1443,6 +1443,8 @@ export default function AdminDashboard() {
         procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
         status: candidate.status,
         activationStatus: candidate.activationStatus,
+        destination: candidate.destinationCountry,
+        visaType: candidate.projectType,
       });
       return { candidate, next };
     }).filter(({ next }) => nextActionFilter === "ALL" || next.urgency === nextActionFilter);
@@ -2709,6 +2711,8 @@ export default function AdminDashboard() {
                               procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
                               status: candidate.status,
                               activationStatus: candidate.activationStatus,
+                              destination: candidate.destinationCountry,
+                              visaType: candidate.projectType,
                             }).label}
                           </span>
                         </div>
@@ -2790,9 +2794,11 @@ export default function AdminDashboard() {
                             procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
                             status: candidate.status,
                             activationStatus: candidate.activationStatus,
+                            destination: candidate.destinationCountry,
+                            visaType: candidate.projectType,
                           });
                           return (
-                            <span className={`inline-flex max-w-[190px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight transition-colors duration-200 ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`} title={`Priorité ${next.urgency === "high" ? "critique / en retard" : next.urgency === "medium" ? "à surveiller" : "faible"}`}>
+                            <span className={`inline-flex max-w-[220px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight transition-colors duration-200 ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`} title={`Priorité ${next.urgency === "high" ? "critique / en retard" : next.urgency === "medium" ? "à surveiller" : "faible"}`}>
                               {next.urgency === "high" ? <AlertCircle className="h-3.5 w-3.5 shrink-0" /> : next.urgency === "medium" ? <Clock className="h-3.5 w-3.5 shrink-0" /> : <CheckCircle className="h-3.5 w-3.5 shrink-0" />}
                               {next.label}
                             </span>

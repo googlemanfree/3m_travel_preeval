@@ -26,6 +26,7 @@ import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
+import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
 import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
 import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
@@ -327,23 +328,17 @@ export function buildCandidate360Timeline(input: {
   ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 100);
 }
 
-export function determineCandidate360NextAction(input: { workflowStatus: string; paymentStatus?: string | null; pendingDocuments: number; openTasks: number; dueAt?: Date | null }) {
-  if (input.paymentStatus && !["SUCCESS", "success", "completed", "paye"].includes(input.paymentStatus)) {
-    return { key: "payment", label: "Vérifier le paiement", description: "Le paiement ou son justificatif doit être contrôlé avant la suite du dossier.", urgency: "high" as const };
-  }
-  if (input.pendingDocuments > 0) {
-    return { key: "documents", label: "Contrôler les documents", description: `${input.pendingDocuments} pièce(s) requise(s) restent à recevoir ou valider.`, urgency: "high" as const };
-  }
-  if (input.workflowStatus === "new" || input.workflowStatus === "qualifying") {
-    return { key: "evaluation", label: "Préparer l’évaluation", description: "Qualifier le projet, compléter le bilan puis choisir l’envoi immédiat ou programmé.", urgency: "normal" as const };
-  }
-  if (input.openTasks > 0) {
-    return { key: "task", label: "Terminer les actions ouvertes", description: `${input.openTasks} action(s) opérationnelle(s) restent à traiter.`, urgency: "normal" as const };
-  }
-  if (input.workflowStatus === "submitted") {
-    return { key: "partner", label: "Suivre la soumission", description: "Relancer le partenaire ou consigner la décision reçue.", urgency: "normal" as const };
-  }
-  return { key: "follow_up", label: "Planifier le suivi", description: "Le dossier est à jour. Programmez la prochaine relance ou clôturez le traitement.", urgency: "low" as const };
+export function determineCandidate360NextAction(input: {
+  workflowStatus: string;
+  paymentStatus?: string | null;
+  pendingDocuments: number;
+  openTasks: number;
+  dueAt?: Date | null;
+  destination?: string | null;
+  visaType?: string | null;
+  procedureLabel?: string | null;
+}) {
+  return determineDynamicCandidate360NextAction(input);
 }
 
 export async function ensureOperationalCase(db: any, reference: { source: "online" | "agency"; id: number }) {
@@ -3622,7 +3617,6 @@ export const adminRouter = router({
       const evaluationVersions = reference.source === "online"
         ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50)
         : [];
-      const nextAction = determineCandidate360NextAction({ workflowStatus: operationalCase.currentStatus, paymentStatus: paymentSnapshot?.status, pendingDocuments, openTasks, dueAt: operationalCase.dueAt });
       const latestEvaluation = latestEvaluations[0];
       const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
@@ -3636,6 +3630,27 @@ export const adminRouter = router({
         paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
       });
       const effectiveJourneyStep = Math.min(Math.max(currentJourneyStep, persistedJourneyIndex), Math.max(0, candidateJourney.steps.length - 1));
+      const nextAction = determineCandidate360NextAction({
+        workflowStatus: operationalCase.currentStatus,
+        paymentStatus: paymentSnapshot?.status,
+        pendingDocuments,
+        openTasks,
+        dueAt: operationalCase.dueAt,
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+      });
+      const dynamicPilotage = buildAdminDynamicPilotageContext({
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+        workflowStatus: operationalCase.currentStatus,
+        paymentStatus: paymentSnapshot?.status,
+        pendingDocuments,
+        openTasks,
+        dueAt: operationalCase.dueAt,
+        currentStepIndex: effectiveJourneyStep,
+      });
       const documentMatches = [
         ...operationalDocuments.map((document) => ({ documentType: document.documentType, documentName: document.fileName, verificationStatus: document.reviewStatus, status: document.reviewStatus })),
         ...legacyDocuments.map((document) => ({ documentType: document.documentType, documentName: document.documentName, verificationStatus: document.verificationStatus, status: document.status })),
@@ -3735,6 +3750,7 @@ export const adminRouter = router({
           ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedBy ?? null)
           : (candidateRecord?.evaluationReviewedBy ?? null),
         nextAction,
+        dynamicPilotage,
         candidateJourney: {
           country: candidateJourney.country,
           visaType: candidateJourney.visaType,
