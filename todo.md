@@ -17,9 +17,30 @@
 - [x] Contrôler individuellement Pré-dossiers, Activations et Paiements après migration — endpoint sans évaluation HTTP 200 ; Activations affiche 50 comptes, « Renvoyer le lien » et « Confirmer ici » ; Paiements affiche « Bureau reçus & protocoles », 2 protocoles en attente, 1 reçu à préparer, 1 protocole à signer et 4 chaînes complètes.
 - [x] Sauvegarder les preuves d’onglets et créer le checkpoint post-merge.
 - [x] Mise en ligne production confirmée par le statut WebDev ; domaine public HTTP 200 et marqueur de build `nogit.202610102106` servis.
-- [ ] Cockpit PR47 : protection admin production confirmée, mais cockpit absent du DOM preview après deux contrôles (avant/après redémarrage) ; blocage runtime à investiguer avec une nouvelle hypothèse.
+- [x] Cockpit PR47 : protection admin production confirmée ; le diagnostic a identifié l’onglet initial `candidates`, corrigé dans la PR corrective ci-dessous.
 
 ## PR #47 — cockpit admin contrôle total
 - [x] Vérifier le diff, le test ciblé, TypeScript et le build
 - [x] Vérifier les contrôles cockpit sur la preview authentifiée
 - [x] Marquer prête, fusionner et publier si tout est vert
+
+## PR corrective — cockpit monté au chargement initial
+- [x] Correctif committé sur `4b2200cb`
+- [x] Branche poussée : `cursor/fix-cockpit-mount-eda6`
+- [x] Pull request créée : PR #49 (le numéro #48 était déjà réservé)
+- [x] Tests ciblés 3/3, TypeScript et build production verts
+- [x] Checkpoint WebDev `4b2200cb` sauvegardé
+
+## PR #48 — dossiers dynamiques pays + visa
+- [x] Vérifier le diff, le test ciblé, TypeScript et le build — test dédié 3/3, TypeScript et build verts
+- [x] Sortir du draft, fusionner et publier si les contrôles sont verts — merge `c63bde15`, déploiement WebDev confirmé
+- [x] Vérifier les quatre scénarios de dossiers dynamiques — normalisation/refus/activation-import couverts par le test dédié ; production sert le build `nogit.202610102153`
+
+## PR #49 — cockpit correctif
+- [x] Fusion déjà confirmée sur GitHub ; déploiement à vérifier sur le checkpoint main
+
+## Preuves fonctionnelles PR48 à compléter
+- [ ] Vérifier le badge « Sans CV » sur un pré-dossier admin
+- [ ] Vérifier une activation exacte pays + procédure, numéro 3M et checklist 360°
+- [ ] Vérifier le refus runtime de `europe` / `golfe`
+- [ ] Vérifier l’import agence avec normalisation et checklist
