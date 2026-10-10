@@ -3,6 +3,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { adminNotifications, digitalServiceContent, digitalServiceRequests } from "../../drizzle/schema";
+import { AFRICA_DIGITAL_PRICING_JSON, sanitizeDigitalPricingJson } from "../../shared/digitalServicePricing";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendEmail } from "../_core/email";
@@ -33,24 +34,7 @@ const defaultContent = {
     { title: "Infrastructure & support IT", description: "Un environnement de travail connecté, maintenu et mieux protégé au quotidien.", points: ["Maintenance et assistance utilisateurs", "Réseaux, Wi-Fi et télécoms", "Cybersécurité et sauvegarde", "Audit digital et accompagnement"] },
     { title: "Formation professionnelle", description: "Des sessions pratiques autour du digital, de la mobilité et des opérations de voyage.", points: ["Marketing digital et création de contenu", "Mobilité internationale et orientation", "Galileo Smartpoint et billetterie", "Relation client et gestion des dossiers"] },
   ]),
-  pricingJson: JSON.stringify([
-    {
-      title: "Vitrine évolutive",
-      subtitle: "Présenter l’offre, recevoir les demandes et garder la validation humaine.",
-      launchRange: "3 600 000 – 14 500 000 XAF",
-      annualRange: "1 150 000 – 7 200 000 XAF / an",
-      delivery: "6 à 12 semaines",
-      points: ["Cadrage, identité visuelle et contenus", "Formulaires intelligents et suivi des demandes", "Administration légère et accompagnement au lancement"],
-    },
-    {
-      title: "Plateforme transactionnelle",
-      subtitle: "Standardiser certains parcours de recherche, réservation et paiement.",
-      launchRange: "17 500 000 – 66 000 000 XAF",
-      annualRange: "8 100 000 – 47 000 000 XAF / an",
-      delivery: "4 à 9 mois",
-      points: ["Catalogue, comptes, paiements et notifications", "Intégrations fournisseurs et règles opérationnelles", "Gestion des exceptions, annulations et rapprochements"],
-    },
-  ]),
+  pricingJson: AFRICA_DIGITAL_PRICING_JSON,
 };
 
 async function resolveDigitalAdminSession(cookieHeader: string | undefined, sessionToken: string) {
@@ -92,7 +76,8 @@ function withDefaultContent(row: typeof digitalServiceContent.$inferSelect | und
     ...defaultContent,
     ...(row || {}),
     serviceDefinitionsJson: row?.serviceDefinitionsJson || defaultContent.serviceDefinitionsJson,
-    pricingJson: row?.pricingJson || defaultContent.pricingJson,
+    // Remplace automatiquement les anciennes grilles multi-millions par les packs Afrique 50–600k.
+    pricingJson: sanitizeDigitalPricingJson(row?.pricingJson || defaultContent.pricingJson),
   };
 }
 
@@ -178,7 +163,12 @@ export const digitalServicesRouter = router({
     const admin = await resolveDigitalAdminSession(ctx.req.headers.cookie, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    await db.insert(digitalServiceContent).values({ id: 1, ...input.content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M" }).onDuplicateKeyUpdate({ set: { ...input.content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M", updatedAt: new Date() } });
+    const content = {
+      ...input.content,
+      pricingJson: sanitizeDigitalPricingJson(input.content.pricingJson),
+    };
+    await db.insert(digitalServiceContent).values({ id: 1, ...content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M" }).onDuplicateKeyUpdate({ set: { ...content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M", updatedAt: new Date() } });
     return { success: true };
   }),
+
 });

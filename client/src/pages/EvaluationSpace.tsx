@@ -144,6 +144,11 @@ export default function EvaluationSpace() {
     ...clientSpacePolling(),
     retry: false,
   });
+  const { data: digitalRequests } = trpc.caseTracking.getMyDigitalRequests.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
   const downloadCaseDocument = async (documentId: number) => {
     try {
       const result = await trpcUtils.caseTracking.downloadMyDocument.fetch({ documentId });
@@ -1149,6 +1154,28 @@ export default function EvaluationSpace() {
                           {item.couponFileName && <Button type="button" variant="outline" size="sm" onClick={() => downloadInsuranceCoupon(item.id)}><Download className="mr-2 h-3.5 w-3.5" />Coupon</Button>}
                           {item.attestationFileName ? <Button type="button" size="sm" onClick={() => downloadInsuranceAttestation(item.id)}><Download className="mr-2 h-3.5 w-3.5" />Attestation</Button> : <span className="text-xs text-slate-500">Attestation en attente</span>}
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+              {digitalRequests && digitalRequests.length > 0 && (
+                <Card className="p-6 border-slate-200 bg-white shadow-sm" data-testid="client-digital-requests">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">Mes demandes 3M Solutions</h3>
+                    <a href="/3m-solutions" className="text-sm font-semibold text-blue-800 underline underline-offset-2">Nouvelle demande</a>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {digitalRequests.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{item.reference}</p>
+                            <p className="text-xs text-slate-500">{item.service}{item.organization ? ` · ${item.organization}` : ""}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-700">{item.status}</span>
+                        </div>
+                        <p className="mt-2 line-clamp-3 text-xs text-slate-600">{item.message}</p>
                       </div>
                     ))}
                   </div>

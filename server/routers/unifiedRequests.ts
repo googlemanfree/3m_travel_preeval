@@ -16,6 +16,7 @@ import {
   evaluations,
   flightBookingRequests,
   insuranceRequests,
+  digitalServiceRequests,
   profileEvaluations,
   translationRequests,
   tourismServiceRequests,
@@ -34,7 +35,7 @@ import { normalizeAdminMessage, richTextToPlainText, sanitizeRichTextHtml } from
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 
-const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
+const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism", "digital"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 const priorities = ["low", "normal", "high", "urgent"] as const;
 const evaluationDraftSchema = z.object({
@@ -394,7 +395,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism] = await Promise.all([
+  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism, digitals] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
     loadLegacyProfileEvaluations(db),
     loadOptionalSource("consultation_requests", () => db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200), []),
@@ -404,6 +405,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     loadOptionalSource("contact_messages", () => db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200), []),
     loadOptionalSource("agency_dossiers", () => db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200), []),
     loadOptionalSource("tourism_service_requests", () => db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(200), []),
+    loadOptionalSource("digital_service_requests", () => db.select().from(digitalServiceRequests).orderBy(desc(digitalServiceRequests.createdAt)).limit(200), []),
   ]);
 
   const firstContactBySession = new Set<string>();
@@ -429,6 +431,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     ...contactSnapshots,
     ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...tourism.map((row) => ({ sourceType: "tourism" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Tourisme & Devis", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...digitals.map((row) => ({ sourceType: "digital" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: null, requestTypeLabel: "3M Solutions / digital", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
   ];
 }
 

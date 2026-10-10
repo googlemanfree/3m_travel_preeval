@@ -155,8 +155,9 @@ const serviceLabels = {
 type PricingPlan = { title: string; subtitle: string; launchRange: string; annualRange: string; delivery: string; points: string[] };
 
 const fallbackPricingPlans: PricingPlan[] = [
-  { title: "Présence digitale", subtitle: "Pour cadrer une vitrine, une landing page ou une refonte légère.", launchRange: "150 000–450 000 FCFA", annualRange: "À confirmer", delivery: "2–4 semaines", points: ["Structure et contenus de base", "Design responsive", "Mise en ligne et prise en main"] },
-  { title: "Plateforme métier", subtitle: "Pour un espace client, un workflow interne ou une plateforme connectée.", launchRange: "À partir de 650 000 FCFA", annualRange: "À confirmer", delivery: "6–12 semaines", points: ["Cadrage fonctionnel", "Développement et tests", "Accompagnement au lancement"] },
+  { title: "Essentiel", subtitle: "Landing page ou mini-vitrine pour présenter l’offre et recevoir des contacts.", launchRange: "50 000 – 150 000 FCFA", annualRange: "Maintenance légère sur devis", delivery: "1 à 2 semaines", points: ["1 à 3 pages claires (accueil, services, contact)", "Design responsive mobile", "Formulaire de contact et mise en ligne"] },
+  { title: "Présence digitale", subtitle: "Site vitrine complet pour rassurer les clients et générer des demandes.", launchRange: "150 000 – 350 000 FCFA", annualRange: "80 000 – 150 000 FCFA / an (optionnel)", delivery: "2 à 4 semaines", points: ["Jusqu’à 6–8 pages structurées", "Galerie, FAQ, appels à l’action", "Prise en main + petits ajustements au lancement"] },
+  { title: "Business+", subtitle: "Site + espace simple (devis, suivi de demandes) pour professions et agences.", launchRange: "350 000 – 600 000 FCFA", annualRange: "150 000 – 250 000 FCFA / an (optionnel)", delivery: "4 à 8 semaines", points: ["Parcours demande / devis ou mini-espace client", "Notifications e-mail et suivi basique", "Accompagnement au lancement et formation courte"] },
 ];
 
 const deliveryExamples = [
