@@ -83,10 +83,15 @@ function withDefaultContent(row: typeof digitalServiceContent.$inferSelect | und
 
 export const digitalServicesRouter = router({
   getContent: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return defaultContent;
-    const rows = await db.select().from(digitalServiceContent).where(eq(digitalServiceContent.id, 1)).limit(1);
-    return withDefaultContent(rows[0]);
+    try {
+      const db = await getDb();
+      if (!db) return defaultContent;
+      const rows = await db.select().from(digitalServiceContent).where(eq(digitalServiceContent.id, 1)).limit(1);
+      return withDefaultContent(rows[0]);
+    } catch (err) {
+      logger.error("digital_services.get_content_failed", {}, err);
+      return defaultContent;
+    }
   }),
   createRequest: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
     const db = await getDb();
