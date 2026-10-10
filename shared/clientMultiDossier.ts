@@ -64,6 +64,9 @@ export type SiblingProcedureSummary = {
   paymentStatus: string;
   source: string;
   id: string;
+  /** Libellé court (Visa travail / Visa études…) pour le pilotage simultané. */
+  procedureLabel?: string;
+  status?: string | null;
 };
 
 /** Regroupe les dossiers d’un même e-mail (hors comptes seuls non encore ouverts). */
@@ -75,6 +78,7 @@ export function attachSiblingProcedures<T extends {
   destinationCountry: string;
   paymentStatus?: string | null;
   source: string;
+  status?: string | null;
 }>(rows: T[]): Array<T & { siblingCount: number; siblingProcedures: SiblingProcedureSummary[] }> {
   const byEmail = new Map<string, T[]>();
   for (const row of rows) {
@@ -102,7 +106,58 @@ export function attachSiblingProcedures<T extends {
         paymentStatus: item.paymentStatus ?? "NOT_PAID",
         source: item.source,
         id: item.id,
+        procedureLabel: procedureLabelForDossier({
+          visaType: item.projectType,
+          destination: item.destinationCountry,
+          dossierNumber: item.folderCode,
+        }),
+        status: item.status ?? null,
       })),
     };
   });
+}
+
+/**
+ * Après un filtre (destination, statut…), rattache les procédures sœurs du même client
+ * pour que le back-office traite travail + études ensemble, pas une seule ligne isolée.
+ */
+export function retainSiblingGroupsInFilteredList<T extends {
+  id: string;
+  email: string;
+  source: string;
+}>(filtered: T[], universe: T[]): T[] {
+  if (filtered.length === 0 || filtered.length === universe.length) return filtered;
+  const emails = new Set(
+    filtered
+      .filter((row) => row.source !== "ACCOUNT_ONLY")
+      .map((row) => row.email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  if (emails.size === 0) return filtered;
+  const keepIds = new Set(filtered.map((row) => row.id));
+  for (const row of universe) {
+    if (row.source === "ACCOUNT_ONLY") continue;
+    if (emails.has(row.email.trim().toLowerCase())) keepIds.add(row.id);
+  }
+  const byId = new Map(universe.map((row) => [row.id, row]));
+  const ordered: T[] = [];
+  const seen = new Set<string>();
+  for (const row of filtered) {
+    if (seen.has(row.id)) continue;
+    ordered.push(row);
+    seen.add(row.id);
+    for (const sibling of universe) {
+      if (seen.has(sibling.id) || !keepIds.has(sibling.id)) continue;
+      if (sibling.source === "ACCOUNT_ONLY") continue;
+      if (sibling.email.trim().toLowerCase() !== row.email.trim().toLowerCase()) continue;
+      ordered.push(sibling);
+      seen.add(sibling.id);
+    }
+  }
+  Array.from(keepIds).forEach((id) => {
+    if (seen.has(id)) return;
+    const row = byId.get(id);
+    if (row) ordered.push(row);
+  });
+  return ordered;
 }
