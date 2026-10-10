@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SELECTABLE_STAGE_COPY } from "@shared/talentCorridor";
+import { clientSpacePolling } from "@/lib/clientSpaceSync";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -19,14 +20,17 @@ export function SelectableProfileCard() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const statusQuery = trpc.placementPortal.getMySelectableStatus.useQuery(
     { candidateToken: candidateToken ?? "" },
-    { enabled: Boolean(candidateToken), retry: false, staleTime: 60_000, refetchOnWindowFocus: false },
+    { enabled: Boolean(candidateToken), retry: false, ...clientSpacePolling() },
   );
 
   if (!candidateToken || statusQuery.isLoading) return null;
   if (statusQuery.error || !statusQuery.data) return null;
 
-  const { stage, checklist } = statusQuery.data;
+  const { stage, checklist, opportunity } = statusQuery.data;
   const copy = SELECTABLE_STAGE_COPY[stage][lang];
+  const opportunityLabel = opportunity?.postSelectionLabel
+    ? (lang === "en" ? opportunity.postSelectionLabel.en : opportunity.postSelectionLabel.fr)
+    : null;
   const items = [
     {
       ok: checklist.evaluationValidated,
@@ -100,6 +104,24 @@ export function SelectableProfileCard() {
               : "Les agences et employeurs ne voient que des profils anonymisés préparés par 3M après vérification. Aucun contact direct n’est partagé."}
           </p>
         )}
+        {opportunity && (
+          <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3" data-testid="selectable-opportunity-live">
+            <p className="text-xs font-black uppercase tracking-wide text-indigo-800">
+              {lang === "en" ? "Live opportunity status" : "Statut opportunité (temps réel)"}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {opportunityLabel || opportunity.status}
+              {opportunity.profileCode ? ` · ${opportunity.profileCode}` : ""}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-600">
+              {[opportunity.organizationName, opportunity.targetDestination, opportunity.targetProcedure].filter(Boolean).join(" · ")
+                || (lang === "en" ? "Updated by the 3M team." : "Mis à jour par l’équipe 3M.")}
+            </p>
+            {opportunity.postSelectionLabel?.hint && (
+              <p className="mt-2 text-xs leading-5 text-indigo-900">{opportunity.postSelectionLabel.hint}</p>
+            )}
+          </div>
+        )}
       </CardContent>
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-lg">
@@ -109,12 +131,17 @@ export function SelectableProfileCard() {
           </DialogHeader>
           <div className="space-y-3 text-sm text-slate-700">
             <ol className="list-decimal space-y-2 pl-5">
-              <li className={checklist.evaluationValidated ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.evaluationValidated ? "Évaluation validée par 3M." : "Terminer ou transmettre les informations d’évaluation pour vérification."}</li>
-              <li className={checklist.destinationSet ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.destinationSet ? "Destination et projet enregistrés." : "Préciser la destination et le projet professionnel visé."}</li>
-              <li className={checklist.identityComplete ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.identityComplete ? "Informations d’identité de base complètes." : "Compléter les informations d’identité demandées dans votre espace."}</li>
-              <li className={checklist.consentGranted ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.consentGranted ? "Consentement au partage anonymisé actif." : "Lire et confirmer le consentement avant tout partage."}</li>
+              <li className={checklist.evaluationValidated ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.evaluationValidated ? (lang === "en" ? "Assessment validated by 3M." : "Évaluation validée par 3M.") : (lang === "en" ? "Finish or submit assessment details for verification." : "Terminer ou transmettre les informations d’évaluation pour vérification.")}</li>
+              <li className={checklist.destinationSet ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.destinationSet ? (lang === "en" ? "Destination and project recorded." : "Destination et projet enregistrés.") : (lang === "en" ? "Specify the target destination and professional project." : "Préciser la destination et le projet professionnel visé.")}</li>
+              <li className={checklist.identityComplete ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.identityComplete ? (lang === "en" ? "Basic identity details complete." : "Informations d’identité de base complètes.") : (lang === "en" ? "Complete the identity details requested in your space." : "Compléter les informations d’identité demandées dans votre espace.")}</li>
+              <li className={checklist.consentGranted ? "text-emerald-700" : "font-semibold text-amber-800"}>{checklist.consentGranted ? (lang === "en" ? "Anonymised sharing consent is active." : "Consentement au partage anonymisé actif.") : (lang === "en" ? "Read and confirm consent before any sharing." : "Lire et confirmer le consentement avant tout partage.")}</li>
             </ol>
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 leading-6"><strong>Conseil de préparation :</strong> gardez vos informations professionnelles cohérentes, vérifiez les dates et ne transmettez jamais de document sensible par un canal non approuvé. Les organisations partenaires ne reçoivent qu’un profil anonymisé après contrôle humain.</div>
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 leading-6">
+              <strong>{lang === "en" ? "Preparation tip:" : "Conseil de préparation :"}</strong>{" "}
+              {lang === "en"
+                ? "Keep your professional information consistent, check dates, and never send sensitive documents through an unapproved channel. Partner organisations only receive an anonymised profile after human review."
+                : "gardez vos informations professionnelles cohérentes, vérifiez les dates et ne transmettez jamais de document sensible par un canal non approuvé. Les organisations partenaires ne reçoivent qu’un profil anonymisé après contrôle humain."}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

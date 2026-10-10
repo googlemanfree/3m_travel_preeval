@@ -10,7 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-type Props = { sessionToken: string };
+type Props = {
+  sessionToken: string;
+  /** Ouvre la fiche 360° admin (référence online_* / agency_*). */
+  onOpenCandidate?: (adminCandidateRef: string) => void;
+};
 const submissionLabels: Record<string, string> = {
   submitted: "Soumis",
   under_review: "En revue",
@@ -28,12 +32,13 @@ const accessRequestLabels: Record<string, string> = {
   rejected: "Refusée",
 };
 
-export function AdminPlacementPipeline({ sessionToken }: Props) {
+export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props) {
   const utils = trpc.useUtils();
   const [org, setOrg] = useState({ legalName: "", country: "", contactEmail: "", organizationType: "employer" as "employer" | "placement_partner", verified: false });
   const [employerAccess, setEmployerAccess] = useState({ organizationId: "", fullName: "", email: "" });
   const [issuedAccess, setIssuedAccess] = useState<{ email: string; temporaryPassword: string } | null>(null);
   const [profile, setProfile] = useState({ candidateId: "", summary: "", targetDestination: "", targetProcedure: "", sector: "", yearsExperience: "", languagesSummary: "" });
+  const [candidatePickerSearch, setCandidatePickerSearch] = useState("");
   const [submission, setSubmission] = useState({ profileId: "", organizationId: "", adminNote: "" });
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const [lockedActions, setLockedActions] = useState<Record<string, boolean>>({});
@@ -44,7 +49,11 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const lockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setLockedActions((current) => ({ ...current, [key]: false }));
   const listQuery = trpc.placementPortal.adminList.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
-  const refresh = () => void utils.placementPortal.adminList.invalidate({ sessionToken });
+  const consentedQuery = trpc.placementPortal.adminListConsentedCandidates.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
+  const refresh = () => {
+    void utils.placementPortal.adminList.invalidate({ sessionToken });
+    void utils.placementPortal.adminListConsentedCandidates.invalidate({ sessionToken });
+  };
   const organizationMutation = trpc.placementPortal.adminCreateOrganization.useMutation({
     onSuccess: () => {
       toast.success("Organisation enregistrée", { description: "Elle ne reçoit aucun profil tant qu’elle n’est pas vérifiée." });
@@ -96,8 +105,13 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const advanceMutation = trpc.placementPortal.adminAdvancePostSelection.useMutation({
     onSuccess: (result) => {
       toast.success(result.message);
-      if (result.openProtocolTwo && result.candidateId) {
-        toast.info(`Ouvrir la fiche 360° du candidat #${result.candidateId} pour activer le Protocole N°02.`);
+      if (result.openProtocolTwo) {
+        if (result.adminCandidateRef && onOpenCandidate) {
+          onOpenCandidate(result.adminCandidateRef);
+          toast.info("Fiche 360° ouverte — activez le Protocole N°02 (employeur + poste).");
+        } else if (result.candidateId) {
+          toast.info(`Ouvrez la fiche 360° du candidat #${result.candidateId} pour activer le Protocole N°02.`);
+        }
       }
       refresh();
     },
@@ -108,6 +122,17 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
   const profiles = listQuery.data?.profiles ?? [];
   const submissions = listQuery.data?.submissions ?? [];
   const accessRequests = listQuery.data?.accessRequests ?? [];
+  const consentedCandidates = consentedQuery.data?.candidates ?? [];
+  const filteredConsentedCandidates = useMemo(() => {
+    const q = candidatePickerSearch.trim().toLocaleLowerCase("fr-FR");
+    if (!q) return consentedCandidates;
+    return consentedCandidates.filter((row) =>
+      [row.fullName, row.email, row.destination, String(row.candidateId), row.adminCandidateRef ?? ""]
+        .filter(Boolean)
+        .some((value) => String(value).toLocaleLowerCase("fr-FR").includes(q)),
+    );
+  }, [candidatePickerSearch, consentedCandidates]);
+  const selectedConsented = consentedCandidates.find((row) => String(row.candidateId) === profile.candidateId);
   const openAccessRequests = useMemo(
     () => accessRequests.filter((row) => row.status === "pending" || row.status === "under_review"),
     [accessRequests],
@@ -351,28 +376,39 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
               <p className="mt-1 text-[11px] leading-4 text-slate-500">{POST_SELECTION_LABELS[stage].hint}</p>
               <ul className="mt-3 space-y-2">
                 {byStage[stage].length === 0 && <li className="text-xs text-slate-500">Aucun dossier</li>}
-                {byStage[stage].slice(0, 6).map(({ row, stage: currentStage }) => {
+                {(byStage[stage].length > 6 ? byStage[stage].slice(0, 6) : byStage[stage]).map(({ row, stage: currentStage }) => {
                   const profileRow = profilesById.get(row.profileId);
                   const orgRow = orgsById.get(row.organizationId);
                   const next = nextPostSelectionStage(currentStage);
+                  const consented = consentedCandidates.find((item) => item.candidateId === profileRow?.candidateId);
                   return (
                     <li key={row.id} className="rounded-lg border border-slate-200 p-2 text-xs">
                       <label className="flex items-start gap-2"><input type="checkbox" checked={selectedSubmissionIds.has(row.id)} onChange={() => toggleSubmission(row.id)} aria-label={`Sélectionner ${profileRow?.profileCode ?? `profil ${row.id}`}`} /><span><p className="font-semibold text-slate-900">{profileRow?.profileCode ?? `Profil #${row.profileId}`}</p>
                       <p className="text-slate-600">{orgRow?.legalName ?? `Org #${row.organizationId}`}</p>
-                      {profileRow?.candidateId && <p className="text-slate-500">Candidat #{profileRow.candidateId}</p>}</span></label>
-                      {next && (
-                        <Button
-                          size="sm"
-                          className="mt-2 h-8 w-full bg-emerald-700 text-[11px] hover:bg-emerald-800"
-                          disabled={advanceMutation.isPending}
-                          onClick={() => advanceMutation.mutate({ sessionToken, submissionId: row.id })}
-                        >
-                          → {POST_SELECTION_LABELS[next].fr}
-                        </Button>
-                      )}
+                      {consented ? <p className="text-slate-500">{consented.fullName}</p> : profileRow?.candidateId ? <p className="text-slate-500">Candidat #{profileRow.candidateId}</p> : null}</span></label>
+                      <div className="mt-2 grid gap-1">
+                        {consented?.adminCandidateRef && onOpenCandidate && (
+                          <Button size="sm" variant="outline" className="h-8 w-full text-[11px]" onClick={() => onOpenCandidate(consented.adminCandidateRef!)}>
+                            <Eye className="mr-1 h-3 w-3" /> Fiche 360°
+                          </Button>
+                        )}
+                        {next && (
+                          <Button
+                            size="sm"
+                            className="h-8 w-full bg-emerald-700 text-[11px] hover:bg-emerald-800"
+                            disabled={advanceMutation.isPending}
+                            onClick={() => advanceMutation.mutate({ sessionToken, submissionId: row.id })}
+                          >
+                            → {POST_SELECTION_LABELS[next].fr}
+                          </Button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
+                {byStage[stage].length > 6 && (
+                  <li className="text-[11px] font-semibold text-emerald-800">+ {byStage[stage].length - 6} autre(s)</li>
+                )}
               </ul>
             </div>
           ))}
@@ -412,7 +448,30 @@ export function AdminPlacementPipeline({ sessionToken }: Props) {
             <CardDescription>Le candidat doit avoir accordé son consentement dans son espace.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Input value={profile.candidateId} onChange={(event) => setProfile({ ...profile, candidateId: event.target.value })} placeholder="Identifiant candidat" inputMode="numeric" maxLength={20} />
+            <Input value={candidatePickerSearch} onChange={(event) => setCandidatePickerSearch(event.target.value)} placeholder="Rechercher un candidat consentant…" maxLength={120} aria-label="Filtrer les candidats consentants" />
+            <Select value={profile.candidateId || undefined} onValueChange={(value) => setProfile({ ...profile, candidateId: value })}>
+              <SelectTrigger data-testid="placement-consented-candidate"><SelectValue placeholder={consentedQuery.isLoading ? "Chargement…" : "Choisir un candidat consentant"} /></SelectTrigger>
+              <SelectContent>
+                {filteredConsentedCandidates.map((row) => (
+                  <SelectItem key={row.candidateId} value={String(row.candidateId)}>
+                    {row.fullName} · {row.email}{row.destination ? ` · ${row.destination}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedConsented && (
+              <p className="rounded-lg bg-sky-50 px-2 py-1.5 text-[11px] text-sky-900">
+                Consentement actif{selectedConsented.consentGrantedAt ? ` · ${new Date(selectedConsented.consentGrantedAt).toLocaleDateString("fr-FR")}` : ""}.
+                {selectedConsented.adminCandidateRef && onOpenCandidate && (
+                  <>
+                    {" "}
+                    <button type="button" className="font-semibold underline-offset-2 hover:underline" onClick={() => onOpenCandidate(selectedConsented.adminCandidateRef!)}>
+                      Ouvrir la fiche 360°
+                    </button>
+                  </>
+                )}
+              </p>
+            )}
             <Textarea value={profile.summary} onChange={(event) => setProfile({ ...profile, summary: event.target.value })} placeholder="Résumé professionnel anonymisé" maxLength={2000} />
             <Input value={profile.targetDestination} onChange={(event) => setProfile({ ...profile, targetDestination: event.target.value })} placeholder="Destination ciblée" maxLength={100} />
             <Input value={profile.targetProcedure} onChange={(event) => setProfile({ ...profile, targetProcedure: event.target.value })} placeholder="Procédure" maxLength={100} />

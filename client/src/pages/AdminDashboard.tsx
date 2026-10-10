@@ -1869,7 +1869,7 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} /></div>
+        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (

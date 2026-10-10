@@ -5,8 +5,11 @@ import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   adminNotifications,
+  agencyDossiers,
+  applications,
   candidatePlacementConsents,
   candidates,
+  clientNotifications,
   placementAccessRequests,
   placementCandidateProfiles,
   placementEmployerAccounts,
@@ -18,7 +21,7 @@ import {
   placementProfileSubmissions,
   placementSubmissionEvents,
 } from "../../drizzle/schema";
-import { computeSelectableStage } from "../../shared/talentCorridor";
+import { computeSelectableStage, POST_SELECTION_LABELS, resolvePostSelectionStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
@@ -32,6 +35,28 @@ import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/ta
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const makeProfileCode = () => `PRF-${randomBytes(4).toString("hex").toUpperCase()}`;
+
+/** Résout candidates.id → référence fiche 360° (online_* / agency_*). */
+async function resolveAdminCandidateRef(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  candidateId: number,
+): Promise<string | null> {
+  const byCandidate = (await db.select({ id: applications.id }).from(applications)
+    .where(and(eq(applications.candidateId, candidateId), isNull(applications.deletedAt)))
+    .orderBy(desc(applications.createdAt)).limit(1))[0];
+  if (byCandidate) return `online_${byCandidate.id}`;
+  const candidate = (await db.select({ email: candidates.email }).from(candidates).where(eq(candidates.id, candidateId)).limit(1))[0];
+  if (!candidate?.email) return null;
+  const byEmail = (await db.select({ id: applications.id }).from(applications)
+    .where(and(eq(applications.email, candidate.email), isNull(applications.deletedAt)))
+    .orderBy(desc(applications.createdAt)).limit(1))[0];
+  if (byEmail) return `online_${byEmail.id}`;
+  const agency = (await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
+    .where(and(eq(agencyDossiers.email, candidate.email), isNull(agencyDossiers.deletedAt)))
+    .orderBy(desc(agencyDossiers.createdAt)).limit(1))[0];
+  if (agency) return `agency_${agency.id}`;
+  return null;
+}
 const partnerAccessRequestSchema = z.object({
   organizationType: z.enum(["placement_partner", "employer"]),
   legalName: z.string().trim().min(2).max(255),
@@ -123,7 +148,12 @@ export const placementPortalRouter = router({
     const [candidate, consent, profiles] = await Promise.all([
       db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1),
       db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1),
-      db.select({ id: placementCandidateProfiles.id }).from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).limit(1),
+      db.select({
+        id: placementCandidateProfiles.id,
+        profileCode: placementCandidateProfiles.profileCode,
+        targetDestination: placementCandidateProfiles.targetDestination,
+        targetProcedure: placementCandidateProfiles.targetProcedure,
+      }).from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).limit(5),
     ]);
     const row = candidate[0];
     if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
@@ -136,11 +166,46 @@ export const placementPortalRouter = router({
     };
     const hasSharedProfile = profiles.length > 0;
     const stage = computeSelectableStage(checklist, hasSharedProfile);
+    const profileIds = profiles.map((profile) => profile.id);
+    const latestSubmission = profileIds.length
+      ? (await db.select({
+        id: placementProfileSubmissions.id,
+        status: placementProfileSubmissions.status,
+        adminPipelineStage: placementProfileSubmissions.adminPipelineStage,
+        organizationId: placementProfileSubmissions.organizationId,
+        profileId: placementProfileSubmissions.profileId,
+        lastResponseAt: placementProfileSubmissions.lastResponseAt,
+      }).from(placementProfileSubmissions)
+        .where(inArray(placementProfileSubmissions.profileId, profileIds))
+        .orderBy(desc(placementProfileSubmissions.lastResponseAt), desc(placementProfileSubmissions.id))
+        .limit(1))[0]
+      : null;
+    const opportunityStage = latestSubmission
+      ? resolvePostSelectionStage({ status: latestSubmission.status, adminPipelineStage: latestSubmission.adminPipelineStage })
+      : null;
+    const organization = latestSubmission
+      ? (await db.select({ legalName: placementOrganizations.legalName, organizationType: placementOrganizations.organizationType }).from(placementOrganizations).where(eq(placementOrganizations.id, latestSubmission.organizationId)).limit(1))[0]
+      : null;
+    const profile = latestSubmission
+      ? profiles.find((item) => item.id === latestSubmission.profileId) ?? profiles[0]
+      : profiles[0] ?? null;
     return {
       stage,
       checklist,
       hasSharedProfile,
       consentStatus: consent[0]?.status ?? "withdrawn",
+      opportunity: latestSubmission ? {
+        submissionId: latestSubmission.id,
+        status: latestSubmission.status,
+        postSelectionStage: opportunityStage,
+        postSelectionLabel: opportunityStage ? POST_SELECTION_LABELS[opportunityStage] : null,
+        profileCode: profile?.profileCode ?? null,
+        targetDestination: profile?.targetDestination ?? null,
+        targetProcedure: profile?.targetProcedure ?? null,
+        organizationName: organization?.legalName ?? null,
+        organizationType: organization?.organizationType ?? null,
+        updatedAt: latestSubmission.lastResponseAt ?? null,
+      } : null,
     };
   }),
 
@@ -242,6 +307,31 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
       db.select().from(placementAccessRequests).orderBy(desc(placementAccessRequests.createdAt)).limit(200),
     ]);
     return { organizations, profiles, submissions, accessRequests };
+  }),
+
+  /** Candidats ayant un consentement actif — pour préparer un profil sans saisir d’ID brut. */
+  adminListConsentedCandidates: publicProcedure.input(z.object({ sessionToken: z.string().min(20) })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const rows = await db.select({
+      candidateId: candidates.id,
+      fullName: candidates.fullName,
+      email: candidates.email,
+      destination: candidates.destination,
+      dossierStatus: candidates.dossierStatus,
+      consentGrantedAt: candidatePlacementConsents.consentedAt,
+    }).from(candidatePlacementConsents)
+      .innerJoin(candidates, eq(candidates.id, candidatePlacementConsents.candidateId))
+      .where(and(eq(candidatePlacementConsents.status, "granted"), isNull(candidates.deletedAt)))
+      .orderBy(desc(candidatePlacementConsents.consentedAt))
+      .limit(200);
+    const withRefs = await Promise.all(rows.map(async (row) => ({
+      ...row,
+      adminCandidateRef: await resolveAdminCandidateRef(db, row.candidateId),
+      folderHint: row.dossierStatus || null,
+    })));
+    return { candidates: withRefs };
   }),
 
   adminReviewAccessRequest: publicProcedure.input(z.object({
@@ -737,6 +827,31 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
       action: `post_selection_${next}`,
       note: input.note?.trim() || `Avancé vers ${next}`,
     });
+    const profile = (await db.select({
+      candidateId: placementCandidateProfiles.candidateId,
+      profileCode: placementCandidateProfiles.profileCode,
+    }).from(placementCandidateProfiles).where(eq(placementCandidateProfiles.id, submission.profileId)).limit(1))[0];
+    const candidateId = profile?.candidateId ?? null;
+    const adminCandidateRef = candidateId ? await resolveAdminCandidateRef(db, candidateId) : null;
+    const stageLabel = POST_SELECTION_LABELS[next]?.fr ?? next;
+    if (candidateId) {
+      try {
+        await db.insert(clientNotifications).values({
+          candidateId,
+          type: "placement_pipeline",
+          title: `Opportunité internationale — ${stageLabel}`,
+          body: next === "protocol_two"
+            ? "Votre dossier avance vers le Protocole N°02. L’équipe 3M prépare l’activation employeur et poste."
+            : next === "procedure_ready"
+              ? "La procédure administrative de mobilité est engagée. Suivez les prochaines actions dans votre espace."
+              : "Contrat et lettre d’invitation confirmés par 3M. Votre dossier continue dans le corridor international.",
+          actionUrl: "/mon-espace",
+          isRead: false,
+        });
+      } catch (notifyError) {
+        logger.error("placement_portal.client_notification_failed", { candidateId, stage: next }, notifyError);
+      }
+    }
     return {
       stage: next,
       message: next === "protocol_two"
@@ -745,7 +860,9 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
           ? "Procédure administrative engagée."
           : "Contrat et lettre d’invitation confirmés.",
       openProtocolTwo: next === "protocol_two",
-      candidateId: (await db.select({ candidateId: placementCandidateProfiles.candidateId }).from(placementCandidateProfiles).where(eq(placementCandidateProfiles.id, submission.profileId)).limit(1))[0]?.candidateId ?? null,
+      candidateId,
+      adminCandidateRef,
+      profileCode: profile?.profileCode ?? null,
     };
   }),
 });
