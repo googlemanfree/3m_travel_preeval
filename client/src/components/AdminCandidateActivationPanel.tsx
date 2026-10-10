@@ -3,10 +3,13 @@ import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertTriangle, CheckCircle2, Clock3, Download, Mail, RefreshCw, Search, Send, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Download, Mail, RefreshCw, Search, Send, ShieldAlert, ShieldCheck } from "lucide-react";
 
 const STATUS_LABELS = {
   pending: { label: "En attente", className: "bg-amber-50 text-amber-800 border-amber-200" },
@@ -27,6 +30,8 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
   const [pageSize, setPageSize] = useState(25);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [forceConfirmId, setForceConfirmId] = useState<number | null>(null);
+  const [forceConfirmReason, setForceConfirmReason] = useState("");
 
   const input = useMemo(() => ({
     sessionToken,
@@ -48,7 +53,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
   const utils = trpc.useUtils();
   const resendMutation = trpc.adminActivation.resend.useMutation({
     onSuccess: () => {
-      toast({ title: "Lien renvoyé", description: "Le nouveau lien d’activation a été envoyé avec succès." });
+      toast({ title: "Lien de confirmation e-mail renvoyé", description: "Le nouveau lien de vérification a été envoyé avec succès." });
       void utils.adminActivation.list.invalidate();
       void utils.adminActivation.checkAlerts.invalidate();
     },
@@ -56,6 +61,24 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
       toast({ title: "Renvoi impossible", description: error.message, variant: "destructive" });
     },
   });
+
+  const forceConfirmMutation = trpc.adminActivation.forceConfirmEmail.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: "E-mail confirmé manuellement",
+        description: `${result.email} est maintenant marqué comme vérifié (${result.confirmedBy}).`,
+      });
+      setForceConfirmId(null);
+      setForceConfirmReason("");
+      void utils.adminActivation.list.invalidate();
+      void utils.adminActivation.checkAlerts.invalidate();
+    },
+    onError: (error) => {
+      toast({ title: "Confirmation impossible", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const forceConfirmRow = query.data?.rows.find((row) => row.id === forceConfirmId) ?? null;
 
   const exportMutation = trpc.adminActivation.exportCsv.useMutation({
     onSuccess: (res) => {
@@ -87,7 +110,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
               <Mail className="w-5 h-5 text-blue-600" /> Activations de comptes candidats
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Suivi, alertes d’échecs répétés et relances anti-spam des comptes non confirmés.
+              Suivi des confirmations d’e-mail, renvoi de lien, et confirmation manuelle quand le candidat n’arrive pas à valider sa boîte.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -183,7 +206,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
                   <th className="px-4 py-3">Statut</th>
                   <th className="px-4 py-3">Expiration</th>
                   <th className="px-4 py-3">Dernier e-mail</th>
-                  <th className="px-4 py-3 text-right">Action (Cooldown 60s)</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y bg-white">
@@ -208,15 +231,26 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
                         <p className="text-[11px] text-slate-400">{formatDate(row.lastEmailAt)}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1.5"
-                          disabled={resendMutation.isPending}
-                          onClick={() => resendMutation.mutate({ sessionToken, candidateId: row.id })}
-                        >
-                          <Send className="w-3.5 h-3.5" /> Renvoyer (anti-spam)
-                        </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5"
+                            disabled={resendMutation.isPending}
+                            onClick={() => resendMutation.mutate({ sessionToken, candidateId: row.id })}
+                          >
+                            <Send className="w-3.5 h-3.5" /> Renvoyer le lien
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                            disabled={forceConfirmMutation.isPending}
+                            onClick={() => { setForceConfirmId(row.id); setForceConfirmReason(""); }}
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" /> Confirmer ici
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -233,6 +267,51 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
             <Button variant="outline" size="sm" disabled={page >= totalPages || query.isFetching} onClick={() => setPage((value) => value + 1)}>Suivant</Button>
           </div>
         </div>
+
+        <Dialog open={Boolean(forceConfirmRow)} onOpenChange={(open) => { if (!open) { setForceConfirmId(null); setForceConfirmReason(""); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer l’e-mail manuellement</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 text-sm">
+              <p className="text-slate-600">
+                Compte : <strong>{forceConfirmRow?.fullName}</strong> · {forceConfirmRow?.email}
+              </p>
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                À utiliser uniquement si le candidat ne peut pas ouvrir le lien (boîte inaccessible, spam bloqué, erreur OTP). L’action est journalisée.
+              </p>
+              <div>
+                <Label htmlFor="force-confirm-reason">Motif (obligatoire)</Label>
+                <Textarea
+                  id="force-confirm-reason"
+                  value={forceConfirmReason}
+                  onChange={(event) => setForceConfirmReason(event.target.value)}
+                  placeholder="Ex. : identité vérifiée par appel WhatsApp le 10/10 ; boîte Yahoo inaccessible."
+                  rows={4}
+                  maxLength={500}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setForceConfirmId(null); setForceConfirmReason(""); }}>Annuler</Button>
+              <Button
+                className="bg-emerald-700 hover:bg-emerald-800"
+                disabled={forceConfirmMutation.isPending || forceConfirmReason.trim().length < 8 || !forceConfirmRow}
+                onClick={() => {
+                  if (!forceConfirmRow) return;
+                  forceConfirmMutation.mutate({
+                    sessionToken,
+                    candidateId: forceConfirmRow.id,
+                    reason: forceConfirmReason.trim(),
+                    confirmed: true,
+                  });
+                }}
+              >
+                {forceConfirmMutation.isPending ? "Confirmation…" : "Confirmer l’e-mail"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
