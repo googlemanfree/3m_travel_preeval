@@ -40,7 +40,7 @@ export default function PartnersHub() {
           {en ? "Four interfaces · one corridor" : "Quatre interfaces · un corridor"}
         </h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <a href="/register" className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition hover:-translate-y-0.5 hover:shadow-xl" data-testid="partners-hub-client">
+          <a href="/register" className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#071b3d]" data-testid="partners-hub-client">
             <UsersRound className="h-8 w-8 text-[#0f2460]" aria-hidden="true" />
             <p className="mt-4 text-lg font-black text-slate-950">{en ? "1. Candidate space" : "1. Espace candidat"}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -53,7 +53,7 @@ export default function PartnersHub() {
             </span>
           </a>
 
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-6 text-white" data-testid="partners-hub-admin">
+          <div className="rounded-2xl border border-white/20 bg-white/10 p-6 text-white transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-1 hover:bg-white/15 hover:shadow-2xl" data-testid="partners-hub-admin">
             <ShieldCheck className="h-8 w-8 text-amber-300" aria-hidden="true" />
             <p className="mt-4 text-lg font-black">{en ? "2. 3M back-office" : "2. Back-office 3M"}</p>
             <p className="mt-2 text-sm leading-6 text-sky-100">
@@ -66,7 +66,7 @@ export default function PartnersHub() {
             </p>
           </div>
 
-          <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition hover:-translate-y-0.5 hover:shadow-xl" data-testid="partners-hub-agencies">
+          <div className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl" data-testid="partners-hub-agencies">
             <BriefcaseBusiness className="h-8 w-8 text-[#0f2460]" aria-hidden="true" />
             <p className="mt-4 text-lg font-black text-slate-950">{en ? "3. Placement agencies" : "3. Agences de placement"}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -74,17 +74,17 @@ export default function PartnersHub() {
                 ? "Access eligible candidates from the 3M evaluation pipeline. Human verification before any credentials."
                 : "Accéder aux candidats éligibles issus de l’évaluation 3M. Vérification humaine avant tout identifiant."}
             </p>
-            <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1463ff]">
-              {en ? "Agency portal" : "Portail agences"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            </span>
+            <a href={CORRIDOR_ROUTES.agencies} className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1463ff] underline-offset-4 transition-[color,transform] duration-200 hover:text-[#0f2460] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1463ff] focus-visible:ring-offset-2">
+              {en ? "Agency portal" : "Portail agences"} <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </a>
             <p className="mt-3 text-xs text-slate-500">
-              <a href={CORRIDOR_ROUTES.agenciesLogin} className="font-semibold text-indigo-700 underline-offset-2 hover:underline">
+              <a href={CORRIDOR_ROUTES.agenciesLogin} className="font-semibold text-indigo-700 underline-offset-2 transition-colors duration-200 hover:text-[#0f2460] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700 focus-visible:ring-offset-2">
                 {en ? "Already verified? Sign in to the agency workspace" : "Déjà vérifié ? Ouvrir l’espace agence"}
               </a>
             </p>
-          </a>
+          </div>
 
-          <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition hover:-translate-y-0.5 hover:shadow-xl" data-testid="partners-hub-employers">
+          <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-6 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#071b3d]" data-testid="partners-hub-employers">
             <Building2 className="h-8 w-8 text-[#0f2460]" aria-hidden="true" />
             <p className="mt-4 text-lg font-black text-slate-950">{en ? "4. Direct employers" : "4. Employeurs directs"}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">

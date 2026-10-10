@@ -74,4 +74,16 @@ describe("portail de placement protégé", () => {
     expect(adminUi).toContain("Demandes d’identification partenaires");
     expect(adminUi).toContain("Approuver + générer accès");
   });
+
+  it("guide les erreurs de connexion et conserve des liens partenaires accessibles", () => {
+    const employer = read("client/src/pages/EmployerPortal.tsx");
+    const hub = read("client/src/pages/PartnersHub.tsx");
+    expect(employer).toContain('data-testid="partner-login-loading"');
+    expect(employer).toContain('data-testid="partner-login-help"');
+    expect(employer).toContain("aria-busy={login.isPending}");
+    expect(employer).toContain("motion-reduce:animate-none");
+    expect(hub).toContain("focus-visible:ring-2");
+    expect(hub).toContain("hover:-translate-y-1");
+    expect(hub).not.toContain('<a href={CORRIDOR_ROUTES.agencies} className="group');
+  });
 });

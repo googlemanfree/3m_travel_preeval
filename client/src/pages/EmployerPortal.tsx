@@ -306,8 +306,17 @@ export default function EmployerPortal() {
                         : t("Formulaire prêt pour la vérification.", "Form ready for verification.")}
                 </p>
                 {loginDraftSaved && <p className="text-[11px] text-slate-500">{t("Brouillon de connexion sauvegardé sur cet appareil.", "Login draft saved on this device.")}</p>}
-                <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })}>
-                  <LockKeyhole className="mr-2 h-4 w-4" />{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}
+                {login.error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-950" role="alert" data-testid="partner-login-help">
+                  <p className="font-black">{t("Connexion non aboutie — vérifiez vos identifiants ou contactez 3M.", "Sign-in was not completed — check your credentials or contact 3M.")}</p>
+                  <p className="mt-1">{isAgencyPortal ? t("Pour une agence, l’accès doit d’abord être approuvé par notre équipe. Si votre organisation est déjà vérifiée, utilisez les identifiants remis par 3M.", "For an agency, access must first be approved by our team. If your organisation is already verified, use the credentials issued by 3M.") : t("Pour un employeur, l’accès doit d’abord être approuvé par notre équipe. Si votre organisation est déjà vérifiée, utilisez les identifiants remis par 3M.", "For an employer, access must first be approved by our team. If your organisation is already verified, use the credentials issued by 3M.")}</p>
+                  <a href={isAgencyPortal ? "/agences-placement#inscription-agence" : "/employeurs?tab=register"} className="mt-2 inline-flex font-bold text-rose-900 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 focus-visible:ring-offset-2">{t("Demander ou vérifier un accès", "Request or verify access")}</a>
+                </div>}
+                {login.isPending && <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs font-bold text-blue-950" role="status" aria-live="polite" data-testid="partner-login-loading">
+                  <RefreshCw className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  {isAgencyPortal ? t("Vérification de l’accès agence en cours…", "Verifying agency access…") : t("Vérification de l’organisation en cours…", "Verifying organisation…")}
+                </div>}
+                <Button className="premium-action w-full text-white hover:text-white" disabled={login.isPending || !email || !password || (needsTwoFactor && !twoFactorCode)} onClick={() => login.mutate({ email, password, twoFactorCode: twoFactorCode || undefined })} aria-busy={login.isPending}>
+                  {login.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <LockKeyhole className="mr-2 h-4 w-4" aria-hidden="true" />}{login.isPending ? t("Vérification…", "Verifying…") : t("Se connecter", "Sign in")}
                 </Button>
                 <p className="text-xs leading-5 text-slate-500">{t("Pas encore d’accès ? Utilisez l’onglet Inscription pour identifier votre organisation.", "No access yet? Use the Register tab to identify your organisation.")}</p>
                 <p className="text-xs leading-5 text-slate-500">{t("Ce portail ne présente que des profils anonymisés dont le partage a été autorisé. Aucun document personnel ni contact candidat n’est affiché.", "This portal displays only anonymised profiles whose sharing was authorised. No personal document or candidate contact is displayed.")}</p>
