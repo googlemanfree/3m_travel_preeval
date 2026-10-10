@@ -1,3 +1,4 @@
+import { LUXEMBOURG_JOB_PLATFORMS } from "@shared/luxembourgJobPlatforms";
 import type { CountryProcedure } from "./types";
 
 export const luxembourgProcedure: CountryProcedure = {
@@ -150,6 +151,7 @@ export const luxembourgProcedure: CountryProcedure = {
     { question: "Qui signe le contrat de travail ?", answer: "Vous, le candidat, directement avec l'employeur. 3M TRAVEL AGENCY ne signe jamais à votre place." },
     { question: "Quelle est l'ambassade compétente pour le visa ?", answer: "L'Ambassade de Belgique à Yaoundé (Rue Mvolyé), qui assure la représentation consulaire du Luxembourg." },
     { question: "Que faire face à une offre suspecte reçue en ligne ?", answer: "Ne transmettez rien, et contactez 3M TRAVEL AGENCY ou l'ADEM directement avant toute démarche." },
+    { question: "Sur quelles plateformes puis-je candidater en tant que non-UE ?", answer: "Priorisez Work in Luxembourg et les offres publiques ADEM. Moovijob et Jobs.lu restent utiles, mais vérifiez avec chaque employeur s’il recrute hors UE. Aucun site ne garantit un emploi ni un visa." },
   ],
   contact: {
     phones: ["+237 698 104 832", "+237 620 996 045"],
@@ -164,4 +166,12 @@ export const luxembourgProcedure: CountryProcedure = {
     { label: "Guichet.lu — Salarié ressortissant d’un pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/salarie.html", description: "Portail administratif officiel pour vérifier les conditions et formalités applicables." },
     { label: "MAE Luxembourg — Visas", url: "https://mae.gouvernement.lu/fr/services-aux-citoyens/visa-immigration.html", description: "Informations officielles sur les visas et la représentation consulaire à vérifier avant dépôt." },
   ],
+  jobPlatforms: LUXEMBOURG_JOB_PLATFORMS.map((platform) => ({
+    id: platform.id,
+    name: platform.name,
+    url: platform.url,
+    nonEuUtility: platform.nonEuUtility,
+    priorityForNonEu: platform.priorityForNonEu,
+    officialChannel: platform.officialChannel,
+  })),
 };

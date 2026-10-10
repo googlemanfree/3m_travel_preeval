@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
-  Bell, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, FileText,
+  Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
   FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
   ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet,
 } from "lucide-react";
@@ -27,6 +27,13 @@ import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessage
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import {
+  LUXEMBOURG_JOB_PLATFORMS,
+  isLuxembourgDestination,
+  luxembourgApplicationTaskDescription,
+  luxembourgApplicationTaskTitle,
+  luxembourgProgressTaskPresets,
+} from "@shared/luxembourgJobPlatforms";
 
 type CandidateSummary = {
   id: string;
@@ -271,7 +278,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       unlockAction("addTask");
       await refresh();
     },
-    onError: (mutationError) => toast.error("Création impossible", { description: mutationError.message }),
+    onError: (mutationError) => {
+      unlockAction("addTask");
+      toast.error("Création impossible", { description: mutationError.message });
+    },
   });
   const completeTaskMutation = trpc.admin.completeCandidate360Task.useMutation({
     onSuccess: async () => { setLockedTaskId(null); await refresh(); },
@@ -756,6 +766,106 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               </section>
             );
           })()}
+          {isLuxembourgDestination(destinationDraft || data.evaluationContext?.destinationCountry || candidate.destinationCountry) && (
+            <section className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-sm lg:p-5" data-testid="luxembourg-job-desk" aria-label="Bureau candidatures Luxembourg">
+              <div className="flex flex-col gap-3 border-b border-emerald-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-emerald-700 p-2.5 text-white"><Briefcase className="h-5 w-5" /></div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-lg font-bold text-slate-950">Candidatures Luxembourg</h4>
+                      <Badge className="border-emerald-200 bg-white text-emerald-800">Non-UE</Badge>
+                    </div>
+                    <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                      Ouvrez les plateformes prioritaires, créez une action « postuler » pour ce dossier, puis faites avancer la recherche employeur / ADEM sans quitter le 360°.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/procedures/luxembourg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950"
+                >
+                  Fiche procédure <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {LUXEMBOURG_JOB_PLATFORMS.map((platform) => (
+                  <div key={platform.id} className="rounded-xl border border-emerald-100 bg-white p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-slate-900">{platform.name}</p>
+                        {platform.priorityForNonEu === "high" ? (
+                          <p className="mt-0.5 text-xs font-semibold text-emerald-700">Prioritaire hors UE</p>
+                        ) : (
+                          <p className="mt-0.5 text-xs text-slate-500">Vérifier recrutement international</p>
+                        )}
+                      </div>
+                      <a
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-md border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+                      >
+                        Ouvrir <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-slate-600">{platform.nonEuUtility}</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 w-full border-emerald-300 text-emerald-900 hover:bg-emerald-50"
+                      disabled={createTaskMutation.isPending || actionLocks.addTask}
+                      onClick={() => {
+                        lockAction("addTask");
+                        createTaskMutation.mutate({
+                          sessionToken,
+                          candidateId: candidate.id,
+                          title: luxembourgApplicationTaskTitle(platform.name, candidate.folderCode || candidate.fullName),
+                          description: luxembourgApplicationTaskDescription(platform),
+                          assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId),
+                          dueAt: null,
+                        });
+                      }}
+                    >
+                      <Plus className="mr-1 h-4 w-4" /> Créer l’action « postuler »
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-xl border border-emerald-100 bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Faire avancer la procédure</p>
+                <p className="mt-1 text-sm text-slate-600">Raccourcis de suivi métier — chaque clic ajoute une action ouverte assignée au conseiller.</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  {luxembourgProgressTaskPresets(candidate.folderCode || candidate.fullName).map((preset) => (
+                    <Button
+                      key={preset.id}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="justify-start border-slate-200"
+                      disabled={createTaskMutation.isPending || actionLocks.addTask}
+                      onClick={() => {
+                        lockAction("addTask");
+                        createTaskMutation.mutate({
+                          sessionToken,
+                          candidateId: candidate.id,
+                          title: preset.title,
+                          description: preset.description,
+                          assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId),
+                          dueAt: null,
+                        });
+                      }}
+                    >
+                      <ClipboardCheck className="mr-1 h-4 w-4" /> {preset.title.split(" — ")[0]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
           {((data as any).countryProcedureChecklist || (data as any).journeySla) && (
             <section className="grid gap-3 md:grid-cols-2" data-testid="candidate360-checklist-sla">
               {(data as any).countryProcedureChecklist && (

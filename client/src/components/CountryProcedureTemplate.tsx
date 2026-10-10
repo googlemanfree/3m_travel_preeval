@@ -69,6 +69,51 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </section>
         ) : null}
 
+        {data.jobPlatforms?.length ? (
+          <section aria-labelledby="job-platforms-title" data-testid="country-job-platforms">
+            <h2 id="job-platforms-title" className="text-xl font-bold text-blue-900 mb-4">Plateformes pour candidater (hors UE)</h2>
+            <Card className="p-6 border-slate-200 overflow-hidden">
+              <p className="text-sm text-gray-600 mb-4">
+                Canaux utiles pour identifier un employeur au {data.country}. Aucune plateforme ne garantit un emploi ni un visa — vérifiez toujours l’employeur et les conditions officielles.
+              </p>
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full min-w-[36rem] text-sm">
+                  <thead className="bg-blue-900 text-white">
+                    <tr>
+                      <th className="text-left p-3 font-semibold">Plateforme</th>
+                      <th className="text-left p-3 font-semibold">Lien</th>
+                      <th className="text-left p-3 font-semibold">Utilité pour un candidat non-UE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.jobPlatforms.map((platform, index) => (
+                      <tr key={platform.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                        <td className="p-3 align-top font-medium text-gray-900">
+                          {platform.name}
+                          {platform.priorityForNonEu === "high" ? (
+                            <span className="mt-1 block text-xs font-semibold text-emerald-700">Prioritaire non-UE</span>
+                          ) : null}
+                        </td>
+                        <td className="p-3 align-top">
+                          <a
+                            href={platform.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="break-all text-blue-800 underline underline-offset-2 hover:text-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                          >
+                            {platform.url.replace(/^https?:\/\//, "")}
+                          </a>
+                        </td>
+                        <td className="p-3 align-top text-gray-700">{platform.nonEuUtility}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </section>
+        ) : null}
+
         {/* 02 — Alerte anti-arnaque */}
         <section>
           <h2 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
