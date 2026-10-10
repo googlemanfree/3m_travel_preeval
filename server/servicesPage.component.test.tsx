@@ -7,6 +7,19 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 
 (globalThis as any).React = React;
 
+if (!("IntersectionObserver" in globalThis)) {
+  class MockIntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Object.defineProperty(globalThis, "IntersectionObserver", {
+    configurable: true,
+    writable: true,
+    value: MockIntersectionObserver,
+  });
+}
+
 vi.mock("@/components/SocialShareButtons", () => ({ SocialShareButtons: () => null }));
 
 import Services from "@/pages/Services";
@@ -30,8 +43,8 @@ describe("catalogue des services", () => {
     }
     const ids = SERVICE_POLES.flatMap((pole) => pole.services.map((service) => service.id));
     expect(new Set(ids).size).toBe(ids.length);
-    expect(QUICK_ACTIONS).toHaveLength(8);
-    expect(new Set(QUICK_ACTIONS.map((action) => action.id)).size).toBe(8);
+    expect(QUICK_ACTIONS).toHaveLength(10);
+    expect(new Set(QUICK_ACTIONS.map((action) => action.id)).size).toBe(10);
   });
 
   it("chaque lien du catalogue mène à une route déclarée (jamais une page inexistante)", () => {
@@ -73,7 +86,7 @@ describe("page /services", () => {
   it("propose « Que voulez-vous accomplir ? », la méthode en 3 étapes et un contact direct", () => {
     render(<Services />);
     expect(screen.getAllByText("Que voulez-vous accomplir ?").length).toBeGreaterThan(0);
-    expect(within(screen.getByTestId("quick-actions")).getAllByRole("link")).toHaveLength(8);
+    expect(within(screen.getByTestId("quick-actions")).getAllByRole("link")).toHaveLength(10);
     HOW_IT_WORKS.forEach((step) => expect(screen.getByText(step.title)).toBeTruthy());
     expect(screen.getAllByRole("link", { name: /Prendre rendez-vous|Parler à un conseiller/ }).length).toBeGreaterThan(0);
     const whatsapp = screen.getByRole("link", { name: /WhatsApp/ });
@@ -88,22 +101,26 @@ describe("page /services", () => {
 });
 
 describe("accueil : « Que voulez-vous accomplir ? »", () => {
-  it("affiche les huit actions, dont l'évaluation gratuite sans compte pour les études et le travail", () => {
+  it("affiche les dix actions, dont l'évaluation gratuite sans compte pour les études et le travail", () => {
     render(<QuickActionsSection />);
     const links = within(screen.getByTestId("quick-actions")).getAllByRole("link");
-    expect(links).toHaveLength(8);
-    expect(links[0].getAttribute("href")).toBe("/?project=etudes#evaluation-multi");
-    expect(links[1].getAttribute("href")).toBe("/?project=travail#evaluation-multi");
+    expect(links).toHaveLength(10);
+    const hrefs = links.map((link) => link.getAttribute("href"));
+    expect(hrefs).toContain("/?project=travail#evaluation-multi");
+    expect(hrefs).toContain("/?project=etudes#evaluation-multi");
     expect(screen.getByRole("link", { name: "Voir tous nos services" }).getAttribute("href")).toBe("/services");
   });
 
-  it("est placé juste après le hero, avant le reste de l'accueil ; le hero reste allégé", () => {
+  it("est placé après le corridor léger, avant les preuves et le B2B ; le hero reste allégé", () => {
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain("<QuickActionsSection />");
-    expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf("<QuickActionsSection />"));
+    expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf('id="home-talent-corridor"'));
+    expect(home.indexOf('id="home-talent-corridor"')).toBeLessThan(home.indexOf("<QuickActionsSection />"));
+    expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ProofGallerySection />"));
+    expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf('id="home-employer-b2b"'));
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");
-    expect(hero).toContain("Études, travail, voyage et visas : votre projet international commence ici.");
+    expect(hero).toContain("3M prépare et suit votre dossier — études, travail, visas.");
     expect(hero).not.toContain("expertise reconnue");
     for (const pole of SERVICE_POLES) expect(hero).not.toContain(`href="/services#${pole.id}"`);
   });

@@ -9,8 +9,12 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     const home = readFileSync(path.resolve(import.meta.dirname, "../client/src/pages/Home.tsx"), "utf8");
     const corridorIdx = home.indexOf('data-testid="home-talent-corridor"');
     const quickIdx = home.indexOf("<QuickActionsSection");
+    const proofsIdx = home.indexOf("<ProofGallerySection");
+    const employerB2bIdx = home.indexOf('data-testid="home-employer-b2b"');
     expect(corridorIdx).toBeGreaterThan(0);
     expect(quickIdx).toBeGreaterThan(corridorIdx);
+    expect(proofsIdx).toBeGreaterThan(quickIdx);
+    expect(employerB2bIdx).toBeGreaterThan(proofsIdx);
     expect(home).toContain("3M prépare et suit — les partenaires recrutent");
     expect(home).not.toContain("Voir les 107 procédures");
   });
@@ -74,8 +78,9 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
       path.resolve(import.meta.dirname, "../client/src/components/DestinationsShowcaseSection.tsx"),
       "utf8",
     );
-    expect(hero).toContain("Centre de préparation et de suivi de dossiers");
-    expect(hero).toContain("canaux de recrutement autorisés");
+    expect(hero).toContain("3M prépare et suit votre dossier — études, travail, visas.");
+    expect(hero).toContain("3M prepares and follows your file — studies, work, visas.");
+    expect(hero).toContain("Évaluer mon projet — gratuit");
     expect(showcase).toContain("pas au nombre de pays affichés");
     expect(showcase).not.toContain("23 destinations");
   });

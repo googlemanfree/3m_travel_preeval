@@ -132,32 +132,34 @@ export default function Home() {
 
       <nav
         id="mobile-home-nav"
-        aria-label="Accès rapides mobile"
+        aria-label={t("Accès rapides mobile", "Mobile quick links")}
         className="sticky top-0 z-30 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur sm:hidden"
       >
         <a href="#quick-actions-title" className="touch-target inline-flex shrink-0 items-center rounded-full bg-blue-900 px-4 text-xs font-bold text-white transition-transform active:scale-[0.97]">
-          Démarrer
+          {t("Démarrer", "Start")}
         </a>
         <a href="#approved-reviews-title" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
-          Avis clients
-        </a>
-        <a href="#evaluation-multi" className="touch-target inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-4 text-xs font-bold text-blue-800 transition-colors hover:bg-blue-100">
-          Évaluer mon projet
+          {t("Avis clients", "Reviews")}
         </a>
         <a href="/procedures" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
-          Procédures
+          {t("Procédures", "Procedures")}
         </a>
       </nav>
 
-      {/* Corridor recrutement autorisé AVANT les services annexes (vols, assurance, e-Visa). */}
-      <section aria-labelledby="home-b2b-title" className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-12" data-testid="home-talent-corridor">
+      {/* Corridor léger — détails B2B plus bas, après preuves/avis. */}
+      <section
+        id="home-talent-corridor"
+        aria-labelledby="home-b2b-title"
+        className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-10 md:py-12"
+        data-testid="home-talent-corridor"
+      >
         <div className="mx-auto max-w-6xl px-4">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">{t("Préparation de dossier · canaux autorisés", "File preparation · authorised channels")}</p>
           <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100">
             {t(
-              "3M est le centre de préparation et de suivi des dossiers. Agences et employeurs vérifiés sont les canaux de recrutement autorisés. Chaque candidature reste traçable : consentement, envoi contrôlé, retour partenaire, puis procédure.",
-              "3M is the hub for file preparation and follow-up. Verified agencies and employers are the authorised recruitment channels. Every application stays traceable: consent, controlled send, partner feedback, then procedure.",
+              "Dossiers préparés et suivis par 3M. Agences et employeurs vérifiés : canaux de recrutement autorisés.",
+              "Files prepared and followed by 3M. Verified agencies and employers: authorised recruitment channels.",
             )}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -177,17 +179,46 @@ export default function Home() {
               <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
             </a>
           </div>
+          <p className="mt-5 text-center sm:text-left">
+            <a href="#home-employer-b2b" className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-200 underline-offset-4 hover:text-white hover:underline">
+              {t("Ce que les employeurs reçoivent →", "What employers receive →")}
+            </a>
+          </p>
+        </div>
+      </section>
 
-          {/* Livrables concrets pour recruteurs — sans second système : CTA → formulaire employeur existant. */}
+      {/* Intentions dossier / mobilité — vols & annexes en second rang. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <QuickActionsSection />
+      </motion.div>
+
+      {/* Preuves + avis tôt : confiance avant le détail B2B. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ProofGallerySection />
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ReviewsErrorBoundary>
+          <ApprovedReviewsSection />
+        </ReviewsErrorBoundary>
+      </motion.div>
+
+      {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
+      <section
+        id="home-employer-b2b"
+        className="border-y border-amber-100 bg-gradient-to-b from-slate-50 to-white py-12 md:py-14"
+        data-testid="home-employer-b2b"
+        aria-labelledby="home-employer-deliverables-title"
+      >
+        <div className="mx-auto max-w-6xl px-4">
           <div
-            className="mx-1 mt-6 min-w-0 rounded-2xl border border-amber-200/60 bg-white p-4 shadow-lg sm:mx-0 sm:mt-8 sm:p-6 md:p-8"
+            className="min-w-0 rounded-2xl border border-amber-200/70 bg-white p-4 shadow-sm sm:p-6 md:p-8"
             data-testid="home-employer-deliverables"
-            aria-labelledby="home-employer-deliverables-title"
           >
             <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{t("Pour les employeurs", "For employers")}</p>
-            <h3 id="home-employer-deliverables-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
+            <h2 id="home-employer-deliverables-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
               {t("Ce que vous recevez pour chaque profil", "What you receive for each profile")}
-            </h3>
+            </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               {t(
                 "Avant toute présentation, un administrateur 3M examine le dossier. Vous ne recevez que des profils préparés, consentants et alignés sur vos critères.",
@@ -226,20 +257,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Parcours 5 étapes — même chaîne que le stepper admin. */}
           <div
-            className="mx-1 mt-6 min-w-0 rounded-2xl border border-white/25 bg-white/10 p-4 backdrop-blur-sm sm:mx-0 sm:mt-8 sm:p-6 md:p-8"
+            className="mt-6 min-w-0 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 sm:mt-8 sm:p-6 md:p-8"
             data-testid="home-presentation-journey"
             aria-labelledby="home-presentation-journey-title"
           >
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-200">{PRESENTATION_JOURNEY_INTRO.badge[lang]}</p>
-            <h3 id="home-presentation-journey-title" className="mt-2 text-xl font-black text-white md:text-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">{PRESENTATION_JOURNEY_INTRO.badge[lang]}</p>
+            <h3 id="home-presentation-journey-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
               {PRESENTATION_JOURNEY_INTRO.title[lang]}
             </h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
             <ol className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5">
               {PRESENTATION_JOURNEY_STEPS.map((step) => (
-                <li key={step.id} className="min-w-0 rounded-xl border border-white/20 bg-white/95 p-3.5 sm:p-4">
+                <li key={step.id} className="min-w-0 rounded-xl border border-white bg-white p-3.5 shadow-sm sm:p-4">
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-700 text-xs font-black text-white">{step.n}</span>
                     <Tooltip>
@@ -266,22 +296,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Intentions dossier / mobilité — vols & annexes en second rang. */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
-        <QuickActionsSection />
-      </motion.div>
-
-      {/* ─── PREUVES + AVIS : réassurance tôt pour convaincre avant le catalogue de services ── */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
-        <ProofGallerySection />
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
-        <ReviewsErrorBoundary>
-          <ApprovedReviewsSection />
-        </ReviewsErrorBoundary>
-      </motion.div>
 
       <ProfileVerificationModule />
 
@@ -503,22 +517,14 @@ export default function Home() {
           className="safe-bottom-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-blue-100 bg-white/95 px-3 pt-2 shadow-[0_-8px_30px_-12px_rgba(15,47,111,0.28)] backdrop-blur md:hidden"
           data-testid="home-sticky-cta"
           role="region"
-          aria-label="Actions rapides d’évaluation"
+          aria-label={t("Action rapide d’évaluation", "Quick evaluation action")}
         >
           <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <a
               href="#evaluation-multi"
               className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-3 text-center text-sm font-black text-white shadow-md shadow-orange-900/20 transition active:scale-[0.98]"
             >
-              Évaluer — gratuit
-            </a>
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-center text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 active:scale-[0.98]"
-            >
-              WhatsApp
+              {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
             </a>
           </div>
         </div>

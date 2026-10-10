@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -16,6 +17,7 @@ export default function HeroSectionVIP({
   logoUrl = "/logo-3m.webp",
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
+  const { t } = useLanguage();
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -59,7 +61,6 @@ export default function HeroSectionVIP({
     };
   }, []);
 
-  // Apparition en fondu au chargement : titre puis boutons, respect de prefers-reduced-motion.
   const fadeIn = {
     hidden: {
       opacity: prefersReducedMotion ? 1 : 0,
@@ -79,6 +80,13 @@ export default function HeroSectionVIP({
           },
     }),
   };
+
+  const advisorWhatsApp = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    t(
+      "Bonjour 3M TRAVEL AGENCY, je souhaite échanger avec un conseiller au sujet de mon projet.",
+      "Hello 3M TRAVEL AGENCY, I would like to speak with an advisor about my project.",
+    ),
+  )}`;
 
   return (
     <section
@@ -102,17 +110,22 @@ export default function HeroSectionVIP({
           />
           <img
             src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-            alt="Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY"
+            alt={t(
+              "Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY",
+              "Travellers preparing an international mobility project with 3M TRAVEL AGENCY",
+            )}
             ref={backgroundRef}
             loading="eager"
             decoding="async"
             fetchPriority="high"
-            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-85 filter brightness-105 saturate-105 will-change-transform"
+            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-95 brightness-110 saturate-110 will-change-transform"
             style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
+            data-testid="hero-background-image"
           />
         </picture>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/75 via-[#0a1d3a]/62 to-[#07162c]/88" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.55)_0%,transparent_70%)]" />
+        {/* Voile allégé : l’image reste visible, le texte reste lisible. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/45 via-[#0a1d3a]/35 to-[#07162c]/72" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.28)_0%,transparent_72%)]" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-14 sm:pb-16 md:pb-20">
@@ -138,7 +151,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
+          className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
           data-testid="hero-title"
         >
           3M TRAVEL AGENCY
@@ -149,9 +162,13 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl rounded-2xl bg-[#020C3B]/45 px-4 py-3 text-base font-medium !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ring-1 ring-white/10 backdrop-blur-[2px] sm:mb-10 sm:text-xl md:text-2xl"
+          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-base font-medium !text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)] sm:mb-10 sm:text-xl md:text-2xl"
+          data-testid="hero-tagline"
         >
-          Centre de préparation et de suivi de dossiers — études, travail, visas — avec des canaux de recrutement autorisés.
+          {t(
+            "3M prépare et suit votre dossier — études, travail, visas.",
+            "3M prepares and follows your file — studies, work, visas.",
+          )}
         </motion.p>
 
         <motion.div
@@ -164,7 +181,7 @@ export default function HeroSectionVIP({
         >
           <PublicEvaluationCTA
             project="travail"
-            aria-label="Évaluer mon projet gratuitement"
+            aria-label={t("Évaluer mon projet gratuitement", "Evaluate my project for free")}
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_18px_40px_-8px_rgba(249,115,22,0.55)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
             <span
@@ -176,25 +193,21 @@ export default function HeroSectionVIP({
               aria-hidden="true"
             />
             <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
-              ÉVALUER MON PROJET — GRATUIT
+              {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
             </span>
           </PublicEvaluationCTA>
           <Button
             asChild
             variant="outline"
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white/5 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/15 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/40 bg-white/10 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-[1px] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/20 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
           >
-            <a
-              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite échanger avec un conseiller au sujet de mon projet.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={advisorWhatsApp} target="_blank" rel="noopener noreferrer">
               <span
                 className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
                 aria-hidden="true"
               />
               <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
-                PARLER À UN CONSEILLER
+                {t("Parler à un conseiller", "Talk to an advisor")}
               </span>
             </a>
           </Button>
@@ -202,16 +215,16 @@ export default function HeroSectionVIP({
       </div>
 
       <motion.a
-        href="#quick-actions-title"
+        href="#home-talent-corridor"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
         custom={4}
-        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:bottom-10"
-        aria-label="Défiler vers la suite de la page"
+        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:bottom-10"
+        aria-label={t("Défiler vers la suite de la page", "Scroll to the rest of the page")}
         data-testid="hero-scroll-cue"
       >
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">Découvrir</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">{t("Découvrir", "Discover")}</span>
         <ChevronDown
           className="h-5 w-5 animate-bounce motion-reduce:animate-none"
           aria-hidden="true"

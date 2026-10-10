@@ -48,13 +48,21 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain("min-h-12 w-full");
   });
 
-  it("affiche une barre CTA sticky mobile (Évaluer + WhatsApp) hors du formulaire", () => {
+  it("affiche une barre CTA sticky mobile (Évaluer seul) hors du formulaire ; WhatsApp reste en pastille", () => {
     expect(home).toContain('data-testid="home-sticky-cta"');
     expect(home).toContain("showStickyCta");
-    expect(home).toContain("Évaluer — gratuit");
+    expect(home).toContain("Évaluer mon projet — gratuit");
     expect(home).toContain("md:hidden");
-    expect(home).toContain('aria-label="Actions rapides d’évaluation"');
+    expect(home).toContain("Action rapide d’évaluation");
+    expect(home).not.toContain('home-sticky-cta"\n          role="region"\n          aria-label="Actions rapides');
     expect(styles).toContain('body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp');
+  });
+
+  it("n’empile pas Aureol / vols sur l’accueil (WhatsApp seul + sticky)", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain("isHomeRoute");
+    expect(app).toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
+    expect(app).toContain("{!isHomeRoute && <SmartFlightAssistant />}");
   });
 
   it("affiche une progression de défilement et des transitions accessibles", () => {
@@ -65,13 +73,14 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(styles).toContain("opacity: 1 !important");
   });
 
-  it("rend les ressources prioritaires directement visibles sur mobile", () => {
+  it("rend les ressources prioritaires directement visibles sur mobile sans doublon Évaluer", () => {
     expect(home).toContain('id="mobile-home-nav"');
-    expect(home).toContain('aria-label="Accès rapides mobile"');
-    expect(home).toContain('href="#evaluation-multi"');
+    expect(home).toContain("Accès rapides mobile");
     expect(home).toContain('href="/procedures"');
     expect(home).toContain("sm:hidden");
     expect(home).toContain("touch-target inline-flex");
+    const navBlock = home.slice(home.indexOf('id="mobile-home-nav"'), home.indexOf("home-talent-corridor"));
+    expect(navBlock).not.toContain('href="#evaluation-multi"');
   });
 
   it("précharge l’image hero adaptée au viewport", () => {
