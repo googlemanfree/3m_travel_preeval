@@ -56,3 +56,9 @@
 - [x] Ajouter un indicateur explicite « activation parallèle prête » dans la modale — état vert lorsque l’évaluation, le premier paiement et le second paiement sont validés ; état ambre sinon.
 - [x] Ajouter des badges de couleur accessibles pour distinguer les procédures sœurs dans le board 360° — courant indigo, sœurs ambre/émeraude/rose, avec `data-testid` dédiés.
 - [x] Tester, vérifier TypeScript/build et sauvegarder un checkpoint — scénario ciblé : 5 tests réussis ; TypeScript et build Vite verts, avec avertissement existant de taille de chunks uniquement.
+
+## PR #52 — un dossier, un paiement
+- [x] Auditer le diff, les checks, TypeScript et le build de `cursor/un-dossier-un-paiement-eda6` — conflit unique de test résolu avec `main`, branche poussée au commit `92325996`, 4 tests dédiés réussis, TypeScript et build Vite verts ; 2 tests historiques génériques échouent hors périmètre PR52.
+- [x] Vérifier les quatre scénarios de séparation paiement/dossier, sans transaction réelle — règle et import couvertes par `unDossierUnPaiement.regression.test.ts`, activation duale couverte par `preDossierActivationReadiness.test.ts`; les écrans client/admin affichent le rappel « 1 dossier = 1 paiement ». Aucun paiement réel exécuté.
+- [x] Fusionner et publier uniquement si les contrôles sont verts — PR52 fusionnée en squash sur `main` au commit `a1b01554`; preview synchronisée sur ce commit.
+- [ ] Vérifier les parcours client/admin et sauvegarder le checkpoint final — `/mon-espace` et `/admin` exigent une session authentifiée ; sans session candidate/admin active, seuls les contrôles de contrat et la garde d’accès ont été vérifiés, pas une mutation réelle.
