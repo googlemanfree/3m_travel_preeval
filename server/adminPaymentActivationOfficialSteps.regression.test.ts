@@ -16,7 +16,7 @@ describe("pilotage paiement, activation et étapes officielles", () => {
     expect(journeyComponent).toContain("Progression du parcours");
     expect(source).toContain("evaluationClientConfirmedAt");
     expect(source).toContain("activationRequestedAt");
-    expect(source).toContain('paymentStatus ?? "").toUpperCase() === "SUCCESS"');
+    expect(source).toContain("const procedurePaymentConfirmed = Boolean(workflow?.paymentConfirmed);");
     expect(journeyComponent).toContain('role="progressbar"');
   });
 

@@ -68,6 +68,8 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     const sources = Array.from(gallery.matchAll(/src: "\/proof-photos\/([^"]+)"/g)).map((match) => match[1]);
     expect(sources.length).toBeGreaterThanOrEqual(19);
     for (const fichier of sources) expect(existsSync(resolve(root, "client/public/proof-photos", fichier)), fichier).toBe(true);
-    for (const alt of Array.from(gallery.matchAll(/alt: "([^"]+)"/g)).map((match) => match[1])) expect(alt).toMatch(/masquées/);
+    for (const alt of Array.from(gallery.matchAll(/alt: "([^"]+)"/g)).map((match) => match[1])) {
+      expect(alt).toMatch(/masquées|sans donnée personnelle identifiable|sans promesse de placement/);
+    }
   });
 });

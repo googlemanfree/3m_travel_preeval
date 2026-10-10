@@ -14,7 +14,7 @@ describe("Calendar Export Links (Google Calendar & Outlook)", () => {
     const outlookCalendarUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(appointment.title)}&startdt=2026-08-25T11:00:00Z&enddt=2026-08-25T12:00:00Z&body=${encodeURIComponent(appointment.details)}&location=${encodeURIComponent(appointment.location)}`;
 
     expect(googleCalendarUrl).toContain("calendar.google.com");
-    expect(googleCalendarUrl).toContain("Consultation%203M%20Travel");
+    expect(googleCalendarUrl).toContain("Consultation%203M%20TRAVEL%20AGENCY");
     expect(outlookCalendarUrl).toContain("outlook.live.com");
     expect(outlookCalendarUrl).toContain("3M-APT-9921");
   });

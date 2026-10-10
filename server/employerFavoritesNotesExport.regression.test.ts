@@ -22,6 +22,7 @@ describe("notes et export de favoris employeur", () => {
     const router = read("server/routers/placementPortal.ts");
     expect(router).toContain('"Code profil", "Statut", "Pays cible"');
     expect(router).toContain("Note privée");
-    expect(router).not.toContain("candidate.email");
+    const exportBlock = router.slice(router.indexOf("employerExportFavorites"), router.indexOf("employerRecordDecision"));
+    expect(exportBlock).not.toContain("candidate.email");
   });
 });

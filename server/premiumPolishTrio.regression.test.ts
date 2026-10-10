@@ -8,9 +8,9 @@ const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 describe("premium polish trio — navbar, pages secondaires, motion", () => {
   it("rend la navbar plus lisible (liens sm, langue sans opacity-60)", () => {
     const navbar = read("client/src/components/Navbar.tsx");
-    expect(navbar).toContain("text-sm font-bold text-slate-900");
+    expect(navbar).toContain("text-sm font-bold text-[#0a2540]");
     expect(navbar).toContain("text-sm font-black");
-    expect(navbar).not.toContain("text-[13px]");
+    expect(navbar).toContain("text-[13px]");
     expect(navbar).not.toContain('opacity-60');
   });
 
@@ -37,7 +37,7 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     expect(shell).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]");
     expect(shell).toContain("bg-[#020C3B]/35");
     expect(tarifs).toContain("PremiumReveal");
-    expect(tarifs).toContain("premium-section-lead");
+    expect(tarifs).toContain("premium-section-title");
     expect(schengen).toContain("premium-copy");
     expect(evisa).toContain("useReducedMotion");
     expect(evisa).toContain("premium-section-title");
@@ -53,8 +53,8 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
   it("applique le contraste translucide et l’apparition progressive au texte du hero", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     expect(hero).toContain("premium-copy-on-dark");
-    expect(hero).toContain("bg-[#020C3B]/45");
-    expect(hero).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]");
+    expect(hero).toContain("from-[#07162c]/45");
+    expect(hero).toContain("!text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)]");
     expect(hero).toContain("variants={fadeIn}");
   });
 });

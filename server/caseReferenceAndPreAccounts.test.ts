@@ -143,7 +143,7 @@ describe("activation : la référence de compte devient le numéro de dossier ac
     expect(activate).toContain("oldValue: previousAccountReference");
     expect(activate).toContain("newValue: dossierReference");
     expect(activate).toContain("referenceChangeSentence(previousAccountReference, dossierReference)");
-    expect(activate).toContain("sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, input.destination, 0, previousAccountReference)");
+    expect(activate).toContain("sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, primaryProcedure.destination, 0, previousAccountReference)");
     expect(activate).toContain("accountReference(candidate.id)");
   });
 

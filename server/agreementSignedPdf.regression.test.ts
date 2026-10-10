@@ -29,8 +29,8 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
 
   it("affiche le CTA de signature et le message de transmission côté espace client", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
-    expect(page).toContain("Confirmer la signature et l’envoi");
-    expect(page).toContain("Signature et envoi");
+    expect(page).toContain("Signer le protocole d’accord");
+    expect(page).toContain("Protocole signé et transmis");
     expect(page).toContain("exemplaire PDF signé");
   });
 

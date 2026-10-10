@@ -29,6 +29,9 @@ vi.mock("./emailService", () => ({
   sendDossierConfirmationEmail: async (...args: any[]) => { state.emails.push(args); return true; },
 }));
 vi.mock("./storage", () => ({ storagePut: async () => ({ url: "/manus-storage/x", key: "x" }) }));
+vi.mock("./services/seedCountryProcedureCase", () => ({
+  seedCountryProcedureChecklist: async () => ({ added: 0, label: "Checklist QA" }),
+}));
 
 import { adminCandidateManagementRouter } from "./routers/adminCandidateManagement";
 
@@ -295,6 +298,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
     state.reads = [
       [account(1, "a@example.com"), account(2, "B@Example.com"), account(3, "c@example.com"), account(4, "d@example.com")],
       [{ candidateId: 4 }, { candidateId: 4 }],
+      [],
       [{ email: "A@example.com" }],
       [{ email: "b@example.com" }],
     ];
@@ -308,7 +312,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
   });
 
   it("aucune personne couverte : rien n'est masqué", async () => {
-    state.reads = [[account(1, "a@example.com")], [], [], []];
+    state.reads = [[account(1, "a@example.com")], [], [], [], []];
     const result = await caller().listPreDossierAccounts({ ...base });
     expect(result).toMatchObject({ total: 1, coveredByActiveDossier: 0 });
   });

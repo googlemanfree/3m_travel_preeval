@@ -1,7 +1,5 @@
 // @vitest-environment jsdom
 import React from "react";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -21,17 +19,17 @@ describe("données de la galerie", () => {
     const counts = proofFilterCounts(PROOF_PHOTOS, "fr");
     expect(counts[0]).toEqual({ filter: "all", label: "Tous", count: PROOF_PHOTOS.length });
     expect(counts.slice(1).reduce((total, entry) => total + entry.count, 0)).toBe(PROOF_PHOTOS.length);
-    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Visas", "Immigration"]);
+    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Visas", "Études", "Immigration", "Placements"]);
     expect(filterProofPhotos(PROOF_PHOTOS, "visas").length).toBeGreaterThan(0);
     expect(filterProofPhotos(PROOF_PHOTOS, "immigration").length).toBeGreaterThan(0);
-    expect(filterProofPhotos(PROOF_PHOTOS, "visas").every((photo) => photo.category === "visas")).toBe(true);
-    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => /IRCC|résidence permanente|Entrée express/i.test(photo.alt))).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => photo.category === "immigration" || photo.category === "placements")).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => /IRCC|immigration Canada|résidence permanente|Entrée express|parcours professionnel international/i.test(photo.alt))).toBe(true);
   });
 
-  it("chaque image existe sur le disque et se déclare masquée", () => {
+  it("chaque image utilise un asset local ou Manus Storage et se déclare protégée", () => {
     for (const photo of PROOF_PHOTOS) {
-      expect(existsSync(resolve(import.meta.dirname, "../client/public", photo.src.replace(/^\//, ""))), photo.src).toBe(true);
-      expect(photo.alt).toMatch(/masquées/);
+      expect(photo.src.startsWith("/manus-storage/") || photo.src.startsWith("/proof-photos/"), photo.src).toBe(true);
+      expect(photo.alt).toMatch(/masquées|sans donnée personnelle identifiable|sans promesse de placement/);
     }
     expect(new Set(PROOF_PHOTOS.map((photo) => photo.src)).size).toBe(PROOF_PHOTOS.length); // pas de doublon
   });

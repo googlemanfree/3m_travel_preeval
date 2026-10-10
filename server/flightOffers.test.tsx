@@ -330,7 +330,7 @@ describe("page de vols", () => {
   const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").replace(/\r\n/g, "\n");
 
   it("titre, villes lisibles ; les offres ne s'affichent que si le relevé est réel", () => {
-    expect(page).toContain("billets d’avion</span> pas chers et des bons plans voyages");
+    expect(page).toContain("Billets d’avion internationaux");
     expect(page).toContain("airportLabel(origin)");
     expect(page).not.toContain("`${origin} — ${origin}`");
     expect(page).toContain('offersQuery.data?.status === "live"');
@@ -353,8 +353,9 @@ describe("page de vols unique : reprises de l'ancienne page Billets", () => {
   const source = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Flights.tsx"), "utf8").split(String.fromCharCode(13)).join("");
 
   it("aucun résultat ou moteur en panne : un conseiller peut chercher (WhatsApp prérempli avec l'itinéraire)", () => {
-    expect(source).toContain('data-testid="search-whatsapp-no_results"');
-    expect(source).toContain('data-testid="search-whatsapp-search_error"');
+    expect(source).toContain("<FlightSearchEmptyState");
+    expect(source).toContain('whatsappTestId="search-whatsapp-no_results"');
+    expect(source).toContain('whatsappTestId="search-whatsapp-search_error"');
     expect(source).toContain("Bonjour 3M TRAVEL AGENCY, je souhaite une recherche personnalisée de vol.");
     expect(source).toContain("digitalWhatsAppUrl(searchWhatsAppMessage)");
   });

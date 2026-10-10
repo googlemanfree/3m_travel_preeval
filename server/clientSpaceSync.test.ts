@@ -155,7 +155,7 @@ describe("page « espace client » : branchement", () => {
   const page = readFileSync(resolve(import.meta.dirname, "../client/src/pages/EvaluationSpace.tsx"), "utf8").replace(/\r\n/g, "\n");
 
   it("toutes les requêtes que l'administrateur fait évoluer utilisent le rafraîchissement automatique", () => {
-    expect(page.match(/\.\.\.clientSpacePolling\(/g)?.length).toBe(6); // résumé, évaluation, e-Visa, dossiers, assurances, précisions
+    expect(page.match(/\.\.\.clientSpacePolling\(/g)?.length).toBe(9); // résumé, évaluation, e-Visa, dossiers, assurances, services, paiements et précisions
     expect(page).not.toMatch(/refetchOnWindowFocus: false/);
     expect(page).not.toContain("refetchInterval: 30_000");
   });

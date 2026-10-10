@@ -9,7 +9,8 @@ describe("badge de dossier actif côté client", () => {
     const source = read("server/routers/candidate.ts");
     expect(source).toContain("dossierNumber: `3M-AGN-${historicalAgencyDossier.id.toString().padStart(4, \"0\")}`");
     expect(source).toContain("const activeAgencyDossierNumber = activeAgencyDossier");
-    expect(source).toContain("const dashboardDossierNumber = activeAgencyDossierNumber");
+    expect(source).toContain("const dashboardDossierNumber = selectedApp");
+    expect(source).toContain("(activeAgencyDossierNumber");
     expect(source).toContain("dossierNumber: dashboardDossierNumber");
     expect(source).toContain("const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)");
     expect(source).toContain("dossierNumber: (ctx.candidate as any).dossierNumber || accountReference(ctx.candidate.id)");

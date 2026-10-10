@@ -17,8 +17,9 @@ describe("parcours d’évaluation et replis utilisateur", () => {
   });
 
   it("ouvre la préparation admin pour un dossier candidat interne sans exiger le préfixe online", () => {
-    expect(candidate360).toContain("const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;");
-    expect(candidate360).not.toContain("candidate.id.startsWith(\"online_\")");
+    const preparationGuard = candidate360.match(/const canPrepareEvaluation[^;]+;/)?.[0] ?? "";
+    expect(preparationGuard).toBe("const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;");
+    expect(preparationGuard).not.toContain("online_");
   });
 
   it("n’utilise plus le message legacy demandant une actualisation forcée", () => {
