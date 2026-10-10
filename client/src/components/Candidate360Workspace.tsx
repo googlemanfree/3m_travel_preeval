@@ -40,6 +40,8 @@ type CandidateSummary = {
   internalId: number;
   fullName: string;
   folderCode: string;
+  formerAccountReference?: string | null;
+  referenceKind?: "account" | "active_dossier" | "unknown";
   email: string;
   destinationCountry: string;
   projectType: string;
@@ -56,6 +58,8 @@ type CandidateSummary = {
 type SiblingProcedureTab = {
   id: string;
   folderCode: string;
+  formerAccountReference?: string | null;
+  referenceKind?: "account" | "active_dossier" | "unknown";
   projectType?: string | null;
   destinationCountry?: string | null;
   status?: string | null;

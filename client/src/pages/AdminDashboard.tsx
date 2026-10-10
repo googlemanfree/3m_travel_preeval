@@ -91,6 +91,8 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
+import AdminContractsReceiptsDesk from "@/components/AdminContractsReceiptsDesk";
+import AdminNoEvaluationOutreachPanel from "@/components/AdminNoEvaluationOutreachPanel";
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
@@ -2875,6 +2877,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="pre-dossiers" className="space-y-6">
             <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
+            <AdminNoEvaluationOutreachPanel sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
@@ -2891,6 +2894,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
+            <AdminContractsReceiptsDesk sessionToken={sessionToken || ""} />
             <AdminPaymentInstructions sessionToken={sessionToken || ""} />
             <AdminPaymentManagement
               sessionToken={sessionToken || ""}

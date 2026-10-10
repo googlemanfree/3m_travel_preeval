@@ -24,6 +24,7 @@ import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/cand
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
+import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
 import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -1759,7 +1760,9 @@ export const adminRouter = router({
           .map((candidate) => ({
             id: `account_${candidate.id}`,
             internalId: candidate.id,
-            folderCode: `COMPTE-${String(candidate.id).padStart(5, "0")}`,
+            folderCode: accountReference(candidate.id),
+            formerAccountReference: null as string | null,
+            referenceKind: "account" as const,
             fullName: candidate.fullName,
             email: candidate.email,
             whatsapp: candidate.phone || "",
@@ -2499,23 +2502,33 @@ export const adminRouter = router({
           let linkedAgencyDossierReference: string | null = null;
           let linkedAgencyDossierDestination: string | null = null;
           let linkedAgencyDossierId: number | null = null;
+          let linkedAgencyDossierStatus: string | null = null;
           if (account.dossierStatus !== "nouveau") {
-            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination }).from(agencyDossiers)
+            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status }).from(agencyDossiers)
               .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
               .orderBy(desc(agencyDossiers.createdAt))
               .limit(1);
             if (linkedDossier) {
-              linkedAgencyDossierReference = `3M-AGN-${String(linkedDossier.id).padStart(4, "0")}`;
+              linkedAgencyDossierReference = agencyDossierReference(linkedDossier.id);
               linkedAgencyDossierDestination = linkedDossier.destination;
               linkedAgencyDossierId = linkedDossier.id;
+              linkedAgencyDossierStatus = linkedDossier.status ?? null;
             }
           }
+          const referenceStage = resolveClientReference({
+            candidateId: account.id,
+            agencyDossier: linkedAgencyDossierId
+              ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
+              : null,
+          });
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
               id: `account_${account.id}`,
               internalId: account.id,
-              folderCode: `COMPTE-${String(account.id).padStart(5, "0")}`,
+              folderCode: referenceStage.reference,
+              formerAccountReference: referenceStage.formerAccountReference,
+              referenceKind: referenceStage.kind,
               fullName: account.fullName,
               email: account.email,
               whatsapp: account.phone || "",

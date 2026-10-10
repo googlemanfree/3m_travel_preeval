@@ -61,6 +61,10 @@ type PreDossierAccount = {
   paymentProofUrl?: string | null;
   paymentReference?: string | null;
   paymentValidatedAt?: string | null;
+  accountReference?: string;
+  referenceView?: { label: string; secondaryLabel: string | null; activated: boolean };
+  preferredDestinations?: string[];
+  visaType?: string | null;
 };
 
 function formatDate(value: string | Date | null) {
@@ -566,6 +570,16 @@ export default function AdminPreDossierAccountsPanel({
                           {account.email}
                           {account.phone ? ` · ${account.phone}` : ""}
                         </p>
+                        {(account.accountReference || account.referenceView?.label) && (
+                          <p className="mt-1 font-mono text-[11px] text-blue-800">
+                            {account.referenceView?.label || account.accountReference}
+                            {account.referenceView?.secondaryLabel ? (
+                              <span className="ml-1 text-slate-500">· {account.referenceView.secondaryLabel}</span>
+                            ) : (
+                              <span className="ml-1 text-slate-500">· Compte (dossier non activé)</span>
+                            )}
+                          </p>
+                        )}
                         {account.emailVerified ? (
                           <Badge
                             variant="outline"
