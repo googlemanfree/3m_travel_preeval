@@ -139,7 +139,7 @@ export default function Navbar() {
   }, [isMenuOpen, isProfileOpen]);
 
   return (
-    <header className="glass-nav tablet-compact-header sticky top-0 z-50 transition-all duration-200">
+    <header data-testid="site-header" className="glass-nav premium-header tablet-compact-header sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 flex-nowrap items-center gap-x-2 py-2.5 sm:gap-x-3 sm:py-3 lg:flex-wrap lg:gap-x-4 lg:gap-y-2">
           <a
@@ -326,7 +326,7 @@ export default function Navbar() {
               className="touch-target rounded-2xl bg-gray-50 p-2.5 text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               animate={isMenuOpen ? "open" : "closed"}
               variants={hamburgerVariants}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             >
               {isMenuOpen ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
             </motion.button>
@@ -343,7 +343,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
           >
             {candidate && (
               <motion.a
