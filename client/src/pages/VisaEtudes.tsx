@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, CheckCircle, FileText, Users, Award, ArrowRight, AlertCircle, Globe, Clock, MessageCircle, Landmark } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -7,7 +7,9 @@ import { Link } from 'wouter';
 
 import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
 import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import ProofGallerySection from '@/components/ProofGallerySection';
 import { getDestinationVisual, getServiceVisual } from '@/data/premiumVisuals';
+import { setPageSeo } from '@/lib/pageSeo';
 import { trpc } from '@/lib/trpc';
 import { SimulatorRetryBoundary } from '@/components/SimulatorRetryBoundary';
 
@@ -35,6 +37,16 @@ export default function VisaEtudes() {
     { flag: '🇲🇦', country: 'Maroc', slug: 'maroc', note: 'Plusieurs options d’enseignement supérieur francophone et international.', platform: 'Candidature auprès de l’établissement selon la filière' },
   ];
   const heroVisual = getServiceVisual('visa-etudes');
+
+  useEffect(() => {
+    setPageSeo({
+      title: "Visa études à l’international | 3M TRAVEL AGENCY",
+      description:
+        "Évaluation, admission et préparation du visa étudiant : Campus France, IRCC, uni-assist et autres procédures, accompagnées depuis Yaoundé.",
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
 
   const steps = [
     { number: '1', title: 'Évaluation gratuite de votre profil', description: 'Nous étudions votre parcours académique, votre budget et vos objectifs pour identifier les destinations et filières les plus réalistes pour vous.', icon: FileText },
@@ -245,6 +257,18 @@ export default function VisaEtudes() {
           </div>
         </div>
       </section>
+
+      <ProofGallerySection
+        initialFilter="etudes"
+        lockFilter
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-slate-50 px-4 py-16 sm:px-6"
+        titleFr="Preuves de dossiers de mobilité"
+        titleEn="Mobility file proofs"
+        leadFr="Visas et autorisations obtenus par des candidats accompagnés — pour illustrer le sérieux du suivi, sans garantir un résultat scolaire ou consulaire."
+        leadEn="Visas and authorisations obtained by accompanied candidates — to illustrate serious follow-up, without guaranteeing an academic or consular outcome."
+      />
     </main>
   );
 }

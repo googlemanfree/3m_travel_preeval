@@ -1,6 +1,7 @@
 import { BriefcaseBusiness, HeartHandshake, Landmark, Plane, Stethoscope, TicketCheck, UsersRound } from "lucide-react";
 import { Link } from "wouter";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const purposes = [
@@ -88,6 +89,18 @@ export default function Schengen() {
           </Link>
         </div>
       </ServiceSection>
+
+      <ProofGallerySection
+        initialFilter="visas"
+        lockFilter
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        titleFr="Preuves de visas obtenus"
+        titleEn="Proofs of visas obtained"
+        leadFr="Extraits anonymisés de visas Schengen et autres autorisations obtenus par des candidats accompagnés depuis Yaoundé."
+        leadEn="Redacted excerpts of Schengen visas and other authorisations obtained by candidates supported from Yaoundé."
+      />
     </ServicePageShell>
   );
 }

@@ -571,13 +571,13 @@ export function FlightAfricaCarriersBand() {
         <div className="mx-auto mb-6 max-w-2xl text-center">
           <p className="text-xs font-black uppercase tracking-widest text-blue-700">Billets internationaux · 3M TRAVEL AGENCY</p>
           <h2 id="flight-africa-carriers-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
-            Compagnies fréquemment relevées
+            Compagnies & corridors fréquents
           </h2>
           <p className="premium-copy mt-2 text-sm">
-            Camair-Co, Ethiopian, ASKY, Air France, Turkish et d’autres compagnies pour vos vols internationaux. Les tarifs n’apparaissent qu’après une recherche live — aucun prix de vitrine.
+            Camair-Co, Ethiopian, ASKY, Air France, Turkish et d’autres compagnies pour vos vols depuis Yaoundé et Douala. Les tarifs n’apparaissent qu’après une recherche live — aucun prix de vitrine.
           </p>
         </div>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {FEATURED_AFRICA_CARRIERS.map((carrier, index) => (
             <motion.li
               key={carrier.code}
@@ -585,13 +585,14 @@ export function FlightAfricaCarriersBand() {
               whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.35, delay: reduceMotion ? 0 : Math.min(index, 9) * 0.04, ease: [0.22, 1, 0.36, 1] }}
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 px-3 py-3 shadow-sm"
               data-testid={`flight-carrier-${carrier.code}`}
             >
               <CarrierLogo name={carrier.name} logo={carrier.logo} />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-black text-slate-900">{carrier.name}</span>
                 <span className="block truncate text-[11px] font-semibold text-slate-500">{carrier.code} · {carrier.hub}</span>
+                <span className="mt-0.5 block truncate text-[10px] font-bold uppercase tracking-wide text-blue-700">{carrier.corridor}</span>
               </span>
             </motion.li>
           ))}

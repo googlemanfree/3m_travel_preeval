@@ -8,6 +8,8 @@ import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPo
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
+import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
+import { getServiceVisual } from "../client/src/data/premiumVisuals";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
@@ -431,9 +433,48 @@ export function composePublicPrerender(template: string, url: string) {
   // Le chemin vient de l’URL demandée : le JSON-LD l’échappe déjà, pas les attributs HTML.
   const canonicalAttr = esc(canonical);
   const isAboutPage = path === "/about";
-  const socialImage = isAboutPage ? FOUNDER.imageHd : socialImageFor(current.title, path);
-  const socialImageAlt = isAboutPage ? FOUNDER.imageAlt : SOCIAL_IMAGE_ALT;
-  const socialImageType = isAboutPage ? "image/jpeg" : "image/png";
+  const procedureMatch = path.match(/^\/(?:en\/)?(?:procedures|destinations)\/([^/]+)$/);
+  let procedureImage: string | undefined;
+  let procedureImageAlt = SOCIAL_IMAGE_ALT;
+  if (procedureMatch) {
+    let requestedId = procedureMatch[1];
+    try {
+      requestedId = decodeURIComponent(requestedId);
+    } catch {
+      // ignore
+    }
+    const procedure = getPublicDestinationDetail(requestedId)?.procedure
+      ?? getPublicDestinationDetail(getEnglishContentByEnSlug(requestedId)?.frId ?? "")?.procedure;
+    const catalogued = procedure ? getCataloguedDestinationImage(procedure.id) : getCataloguedDestinationImage(requestedId);
+    if (catalogued) {
+      procedureImage = catalogued.startsWith("http") ? catalogued : `${ORIGIN}${catalogued}`;
+      procedureImageAlt = procedure
+        ? `Illustration mobilité internationale pour ${procedure.name}`
+        : SOCIAL_IMAGE_ALT;
+    }
+  }
+  const serviceHeroPaths: Record<string, string> = {
+    "/services": "mobilite",
+    "/visa-etudes": "visa-etudes",
+    "/schengen": "schengen",
+    "/tourisme": "hotels",
+    "/cni-passeport": "cni",
+    "/formation": "formations",
+    "/canada": "immigration",
+  };
+  const serviceThemeId = serviceHeroPaths[path];
+  const serviceVisual = serviceThemeId ? getServiceVisual(serviceThemeId) : null;
+  const serviceImage = serviceVisual ? `${ORIGIN}${serviceVisual.desktop}` : undefined;
+
+  const socialImage = isAboutPage
+    ? FOUNDER.imageHd
+    : procedureImage ?? serviceImage ?? socialImageFor(current.title, path);
+  const socialImageAlt = isAboutPage
+    ? FOUNDER.imageAlt
+    : procedureImage
+      ? procedureImageAlt
+      : serviceVisual?.alt ?? SOCIAL_IMAGE_ALT;
+  const socialImageType = isAboutPage || procedureImage || serviceImage ? "image/jpeg" : "image/png";
   const socialImageWidth = isAboutPage ? "1152" : "1200";
   const socialImageHeight = isAboutPage ? "864" : "630";
   const robot = current.noindex ? `<meta name="robots" content="noindex,follow" />` : `<meta name="robots" content="index,follow" />`;

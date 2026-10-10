@@ -114,17 +114,17 @@ export const FLIGHT_COMPANION_SERVICES: Array<{ title: string; text: string; hre
  * Compagnies fréquemment relevées depuis le Cameroun / l’Afrique centrale.
  * Logos via domaine officiel (Clearbit) — repli icône côté UI si le CDN échoue. Aucun tarif ici.
  */
-export const FEATURED_AFRICA_CARRIERS: Array<{ code: string; name: string; logo: string; hub: string }> = [
-  { code: "QC", name: "Camair-Co", logo: "https://logo.clearbit.com/camair-co.cm", hub: "Yaoundé · Douala" },
-  { code: "ET", name: "Ethiopian Airlines", logo: "https://logo.clearbit.com/ethiopianairlines.com", hub: "Addis-Abeba" },
-  { code: "KP", name: "ASKY Airlines", logo: "https://logo.clearbit.com/flyasky.com", hub: "Lomé" },
-  { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", hub: "Casablanca" },
-  { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", hub: "Nairobi" },
-  { code: "AF", name: "Air France", logo: "https://logo.clearbit.com/airfrance.com", hub: "Paris" },
-  { code: "TK", name: "Turkish Airlines", logo: "https://logo.clearbit.com/turkishairlines.com", hub: "Istanbul" },
-  { code: "HF", name: "Air Côte d’Ivoire", logo: "https://logo.clearbit.com/aircotedivoire.com", hub: "Abidjan" },
-  { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", hub: "Kigali" },
-  { code: "MS", name: "EgyptAir", logo: "https://logo.clearbit.com/egyptair.com", hub: "Le Caire" },
+export const FEATURED_AFRICA_CARRIERS: Array<{ code: string; name: string; logo: string; hub: string; corridor: string }> = [
+  { code: "QC", name: "Camair-Co", logo: "https://logo.clearbit.com/camair-co.cm", hub: "Yaoundé · Douala", corridor: "Afrique centrale" },
+  { code: "ET", name: "Ethiopian Airlines", logo: "https://logo.clearbit.com/ethiopianairlines.com", hub: "Addis-Abeba", corridor: "Afrique → monde" },
+  { code: "KP", name: "ASKY Airlines", logo: "https://logo.clearbit.com/flyasky.com", hub: "Lomé", corridor: "Afrique de l’Ouest" },
+  { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", hub: "Casablanca", corridor: "Afrique → Europe" },
+  { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", hub: "Nairobi", corridor: "Afrique de l’Est" },
+  { code: "AF", name: "Air France", logo: "https://logo.clearbit.com/airfrance.com", hub: "Paris", corridor: "Cameroun → Europe" },
+  { code: "TK", name: "Turkish Airlines", logo: "https://logo.clearbit.com/turkishairlines.com", hub: "Istanbul", corridor: "Correspondances Asie" },
+  { code: "HF", name: "Air Côte d’Ivoire", logo: "https://logo.clearbit.com/aircotedivoire.com", hub: "Abidjan", corridor: "Afrique de l’Ouest" },
+  { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", hub: "Kigali", corridor: "Afrique → Europe" },
+  { code: "MS", name: "EgyptAir", logo: "https://logo.clearbit.com/egyptair.com", hub: "Le Caire", corridor: "Afrique → Moyen-Orient" },
 ];
 
 /** Options d'escales proposées avant la recherche ; null = pas de limite. */

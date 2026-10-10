@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { DESTINATIONS_20, REGION_ORDER, type Destination20 } from "@/data/destinations20";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { setPageSeo } from "@/lib/pageSeo";
 
 const FEATURED = [
   { slug: "allemagne-formation", name: "Allemagne", flag: "🇩🇪", label: "Cours de langue & Ausbildung", visualSlug: "allemagne" },
@@ -53,15 +54,17 @@ function DestinationVisualCard({
 }
 
 export default function DestinationsHub() {
-  useEffect(() => {
-    document.title = "Destinations d’accompagnement | 3M TRAVEL AGENCY";
-    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
-      "content",
-      "Formation professionnelle et emploi qualifié : 3M TRAVEL AGENCY prépare votre dossier et vous oriente vers la destination la plus réaliste — Allemagne, Autriche, Suisse et d’autres destinations ciblées.",
-    );
-  }, []);
-
   const heroVisual = getServiceVisual("mobilite");
+
+  useEffect(() => {
+    setPageSeo({
+      title: "Destinations d’accompagnement | 3M TRAVEL AGENCY",
+      description:
+        "Formation professionnelle et emploi qualifié : 3M TRAVEL AGENCY prépare votre dossier et vous oriente vers la destination la plus réaliste — Allemagne, Autriche, Suisse et d’autres destinations ciblées.",
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">

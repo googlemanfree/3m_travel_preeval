@@ -22,6 +22,14 @@ if (!("IntersectionObserver" in globalThis)) {
 
 vi.mock("@/components/SocialShareButtons", () => ({ SocialShareButtons: () => null }));
 
+vi.mock("@/lib/trpc", () => ({
+  trpc: {
+    destinationMedia: {
+      listPublic: { useQuery: () => ({ data: [], isLoading: false }) },
+    },
+  },
+}));
+
 import Services from "@/pages/Services";
 import QuickActionsSection from "@/components/QuickActionsSection";
 import { ALL_CATALOG_HREFS, HOW_IT_WORKS, QUICK_ACTIONS, SERVICE_POLES } from "@/data/serviceCatalog";
