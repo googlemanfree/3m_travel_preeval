@@ -46,7 +46,7 @@
 - [x] Vérifier l’import agence avec normalisation et checklist — import QA `Canada` + `Études` créé en `3M-AGN-540001`, avec suite `Canada · Études` et checklist `7/18`.
 
 ## PR #50 — traitement simultané des doubles dossiers
-- [ ] Vérifier le diff, les checks, TypeScript et le build de la branche `cursor/dossiers-simultanes-eda6`.
-- [ ] Sortir du draft, fusionner et publier si les contrôles sont verts.
-- [ ] Vérifier activation double, board 360° simultané, filtre conservant la procédure sœur et compteur Aujourd’hui.
-- [ ] Vérifier l’absence de régression PR47/PR48 et sauvegarder le checkpoint final.
+- [x] Vérifier le diff, les checks, TypeScript et le build de la branche `cursor/dossiers-simultanes-eda6` — 2 fichiers de tests, 5 tests réussis, TypeScript vert et build Vite vert sur `114e747f`.
+- [x] Sortir du draft, fusionner et publier si les contrôles sont verts — PR50 fusionnée au commit `dbc58713`, preview WebDev synchronisée et checkpoint final en cours.
+- [x] Vérifier activation double, board 360° simultané, filtre conservant la procédure sœur et compteur Aujourd’hui — activation QA non soumise faute d’évaluation/paiement validés ; garde de prérequis vérifiée. Board 360° affiche 2 dossiers, filtre Luxembourg conserve les 2 lignes sœurs et compteur « Multi-procédures » = 6.
+- [x] Vérifier l’absence de régression PR47/PR48 et sauvegarder le checkpoint final — `adminCockpitDossiers.regression.test.ts` + `dossierDynamiquePaysVisa.regression.test.ts` : 2 fichiers, 6 tests réussis ; aucune mutation QA non autorisée.
