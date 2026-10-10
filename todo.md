@@ -44,3 +44,9 @@
 - [x] Vérifier une activation exacte pays + procédure, numéro 3M et checklist 360° — modale exacte observée ; le dossier QA importé `3M-AGN-540001` confirme le numéro 3M et affiche la checklist `7/18`.
 - [x] Vérifier le refus runtime de `europe` / `golfe` — appels tRPC authentifiés refusés en HTTP 400 avec le message catalogue, sans insertion.
 - [x] Vérifier l’import agence avec normalisation et checklist — import QA `Canada` + `Études` créé en `3M-AGN-540001`, avec suite `Canada · Études` et checklist `7/18`.
+
+## PR #50 — traitement simultané des doubles dossiers
+- [ ] Vérifier le diff, les checks, TypeScript et le build de la branche `cursor/dossiers-simultanes-eda6`.
+- [ ] Sortir du draft, fusionner et publier si les contrôles sont verts.
+- [ ] Vérifier activation double, board 360° simultané, filtre conservant la procédure sœur et compteur Aujourd’hui.
+- [ ] Vérifier l’absence de régression PR47/PR48 et sauvegarder le checkpoint final.
