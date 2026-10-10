@@ -17,6 +17,12 @@ export const PROOF_CATEGORY_LABELS: Record<ProofCategory, { fr: string; en: stri
 /** Toutes les informations personnelles de ces images (noms, numéros, MRZ, dates, codes-barres, signataire) sont masquées avant publication. */
 export const PROOF_PHOTOS: ProofPhoto[] = [
   {
+    src: "/manus-storage/proof-studies-france-pr44_f1acad06.jpg",
+    alt: "Parcours d’études en France présenté sans donnée personnelle identifiable",
+    caption: "Parcours études — préparation et suivi du dossier académique",
+    category: "etudes",
+  },
+  {
     src: "/proof-photos/proof-letter-1.jpg",
     alt: "Lettre de confirmation IRCC — résidence permanente Canada, informations personnelles masquées",
     caption: "Confirmation officielle IRCC — traitement de résidence permanente",
