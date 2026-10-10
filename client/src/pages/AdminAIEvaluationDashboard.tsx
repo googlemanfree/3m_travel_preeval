@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
+import CvDraftPanel from "@/components/CvDraftPanel";
 import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
 import { computeWorkQueue, evaluationIdOf, type WorkQueueKey, type WorkQueueStatus } from "@/lib/adminWorkQueue";
 import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
@@ -486,6 +487,7 @@ export default function AdminAIEvaluationDashboard() {
   const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
 
   const [validationOpenId, setValidationOpenId] = useState<string | null>(null);
+  const [cvDraftOpenId, setCvDraftOpenId] = useState<string | null>(null);
 
   const requestSecondValidation = (item: DashboardItem) => {
     const note = window.prompt("Note de seconde validation (8 caractères minimum) :")?.trim();
@@ -687,8 +689,12 @@ export default function AdminAIEvaluationDashboard() {
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-violet-300 text-violet-900 hover:bg-violet-50" aria-expanded={validationOpenId === item.id} onClick={() => setValidationOpenId(validationOpenId === item.id ? null : item.id)}>
                       <Sparkles className="h-3.5 w-3.5" /> {validationOpenId === item.id ? "Masquer la validation" : "Validation structurée"}
                     </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1 border-sky-300 text-sky-900 hover:bg-sky-50" aria-expanded={cvDraftOpenId === item.id} onClick={() => setCvDraftOpenId(cvDraftOpenId === item.id ? null : item.id)}>
+                      <FileText className="h-3.5 w-3.5" /> {cvDraftOpenId === item.id ? "Masquer le CV assisté" : "CV assisté"}
+                    </Button>
                   </div>
                   {validationOpenId === item.id && <EvaluationValidationPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} />}
+                  {cvDraftOpenId === item.id && <CvDraftPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} defaultCountry={item.destinationCountry} />}
                 </div>
               )}
               {item.type === "evaluation" && !validationStatusById.has(evaluationNumericId(item)) && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
