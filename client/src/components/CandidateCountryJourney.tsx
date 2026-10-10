@@ -3,7 +3,9 @@ import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, FileDown
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
+import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
 import { getEnrichedCandidateJourney, journeyStepIndex, type JourneyDocument } from "@shared/candidateJourneyCatalog";
+import { buildDossierPhaseTransparency } from "@shared/dossierPhaseTransparency";
 import { OFFICIAL_SOURCE_CATALOG } from "@shared/officialSourceCatalog";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,6 +54,7 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
   const officialCompletedCount = Math.max(0, currentIndex);
   const completedStepCount = Math.min(journey.steps.length, Math.max(officialCompletedCount, checklistCompletedCount));
   const progress = journey.steps.length ? Math.round((completedStepCount / journey.steps.length) * 100) : 0;
+  const phase = buildDossierPhaseTransparency({ journey, completedStepCount });
 
   const downloadChecklistPdf = async () => {
     setIsPdfExporting(true);
@@ -155,27 +158,48 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
           <div>
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-200"><MapPinned className="h-4 w-4" aria-hidden="true" />Parcours synchronisé</p>
             <CardTitle id="candidate-country-journey-title" className="mt-2 text-xl text-white">{journey.title}</CardTitle>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Les étapes affichées correspondent à la destination et au type de visa enregistrés dans votre dossier — même parcours que celui suivi par l’administration.</p>
-            {journey.publishedGuide?.pdfUrl ? (
-              <p className="mt-2 text-sm text-blue-100" data-testid="client-published-guide">
-                Guide de procédure : <strong className="text-white">{journey.publishedGuide.programLabel || journey.publishedGuide.title}</strong>
-                {" — "}
-                <a href={journey.publishedGuide.pdfUrl} target="_blank" rel="noreferrer" className="font-semibold text-amber-200 underline underline-offset-2 hover:text-white">
-                  Télécharger le PDF publié
-                </a>
-              </p>
-            ) : null}
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">
+              Affichage propre à <strong className="text-white">{phase.country}</strong> ·{" "}
+              <strong className="text-white">{phase.visaLabel}</strong> — même parcours que celui suivi par l’administration, avec transparence sur l’étape en cours.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2" data-testid="client-phase-badges">
+              <Badge className="bg-amber-400 text-slate-950 hover:bg-amber-400">{phase.phaseLabel}</Badge>
+              {phase.currentStepLabel ? (
+                <Badge className="bg-white/15 text-white hover:bg-white/15">En cours : {phase.currentStepLabel}</Badge>
+              ) : null}
+            </div>
           </div>
           <Badge className="bg-white/15 text-white hover:bg-white/15">{progress}% préparé</Badge>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Avancement du parcours" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full rounded-full bg-amber-300" style={{ width: `${progress}%` }} /></div>
+        {(journey.publishedGuide?.summaryOverview || journey.publishedGuide?.pdfUrl) ? (
+          <div className="mt-4" data-testid="client-published-guide">
+            <PublishedGuideSummaryPanel
+              tone="client"
+              headline={journey.publishedGuide.summaryHeadline || journey.publishedGuide.programLabel}
+              overview={journey.publishedGuide.summaryOverview}
+              stepHighlights={journey.publishedGuide.summaryStepHighlights}
+              programLabel={journey.publishedGuide.programLabel}
+              pdfUrl={journey.publishedGuide.pdfUrl}
+              pdfTitle={journey.publishedGuide.title}
+            />
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4 p-5">
         <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4" aria-labelledby="procedure-checklist-title">
-          <div className="mb-4 rounded-lg border border-blue-200 bg-white/80 p-3" aria-labelledby="checklist-progress-title">
+          <div className="mb-4 rounded-lg border border-blue-200 bg-white/80 p-3" aria-labelledby="checklist-progress-title" data-testid="client-phase-meters">
             <div className="flex flex-wrap items-center justify-between gap-2"><p id="checklist-progress-title" className="text-xs font-black uppercase tracking-[0.12em] text-blue-950">Progression du parcours</p><p className="text-sm font-black text-blue-900">{progress}% <span className="font-medium text-slate-600">({completedStepCount}/{journey.steps.length} étapes)</span></p></div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-blue-100" role="progressbar" aria-label={`Pourcentage d’accomplissement du parcours : ${progress}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full rounded-full bg-blue-700 transition-[width] duration-300" style={{ width: `${progress}%` }} /></div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">Le pourcentage combine l’avancement officiel du dossier et les étapes que vous avez cochées dans votre checklist.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">Phase agence 3M : {phase.agencyDone}/{phase.agencyTotal}</p>
+              <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">Phase {phase.country} / {phase.visaLabel} : {phase.countryDone}/{phase.countryTotal}</p>
+            </div>
+            {phase.nextStepLabel ? (
+              <p className="mt-2 text-xs leading-5 text-slate-600">Prochaine étape : <strong className="text-slate-900">{phase.nextStepLabel}</strong>. Le pourcentage combine l’avancement officiel et votre checklist.</p>
+            ) : (
+              <p className="mt-2 text-xs leading-5 text-slate-600">Le pourcentage combine l’avancement officiel du dossier et les étapes que vous avez cochées dans votre checklist.</p>
+            )}
           </div>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-2"><ListChecks className="mt-0.5 h-5 w-5 shrink-0 text-blue-800" aria-hidden="true" /><div><h3 id="procedure-checklist-title" className="font-bold text-blue-950">Ma checklist de procédure</h3><p className="mt-1 text-sm leading-5 text-blue-900">Cochez uniquement les actions que vous avez personnellement vérifiées. Les étapes à venir restent verrouillées jusqu’à la validation du dossier.</p></div></div>

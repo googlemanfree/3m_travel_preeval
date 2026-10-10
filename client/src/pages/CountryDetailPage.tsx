@@ -19,9 +19,11 @@ import { getEnglishContentByEnSlug } from '@/data/procedures107English';
 import { getCountryDetailLabels } from './CountryDetailPage.i18n';
 import { trpc } from '@/lib/trpc';
 import { DestinationVisualSheet } from '@/components/DestinationVisualSheet';
+import { PublishedGuideSummaryPanel } from '@/components/PublishedGuideSummaryPanel';
 import ProofGallerySection from '@/components/ProofGallerySection';
 import { proofFilterForProcedure } from '@/data/destinationGallery';
 import { setPageSeo } from '@/lib/pageSeo';
+import { resolvePublishedGuideSummary } from '@shared/publishedGuideSummaries';
 
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
@@ -40,6 +42,9 @@ export default function CountryDetailPage() {
 
   const destinationDetail = getPublicDestinationDetail(countryId);
   const baseCountry = destinationDetail?.procedure;
+  const publishedSummary = baseCountry
+    ? resolvePublishedGuideSummary(baseCountry.name, baseCountry.visaType)
+    : null;
   const country = baseCountry && englishContent
     ? {
         ...baseCountry,
@@ -362,6 +367,21 @@ export default function CountryDetailPage() {
                 ))}
               </div>
             </Card>
+
+            {locale === 'fr' && publishedSummary ? (
+              <PublishedGuideSummaryPanel
+                tone="public"
+                testId="country-published-guide-summary"
+                headline={publishedSummary.headline}
+                overview={publishedSummary.overview}
+                stepHighlights={publishedSummary.stepHighlights}
+                programLabel={publishedSummary.visaLabel}
+                pdfUrl={publishedSummary.pdfUrl || country.pdfUrl}
+                pdfTitle={publishedSummary.pdfTitle}
+                officialPortalUrl={publishedSummary.officialPortalUrl}
+                officialPortalLabel={publishedSummary.officialPortalLabel}
+              />
+            ) : null}
 
             {/* Procédure étape par étape */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-6">

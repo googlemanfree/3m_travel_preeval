@@ -2786,6 +2786,19 @@ export default function AdminDashboard() {
                           const journey = candidate.procedureJourney;
                           return (
                             <div className="flex min-w-[180px] flex-col items-start gap-1" data-testid="admin-procedure-journey">
+                              {(journey?.country || journey?.visaType) && (
+                                <span className="max-w-[200px] text-[10px] font-bold leading-tight text-slate-900" data-testid="admin-journey-country-visa">
+                                  {[journey.country, journey.visaType].filter(Boolean).join(" · ")}
+                                </span>
+                              )}
+                              {journey?.phaseLabel && (
+                                <span className="max-w-[200px] text-[10px] font-semibold text-amber-800" data-testid="admin-journey-phase">
+                                  {journey.phaseLabel}
+                                  {typeof journey.agencyDone === "number"
+                                    ? ` · Agence ${journey.agencyDone}/${journey.agencyTotal} · Pays ${journey.countryDone}/${journey.countryTotal}`
+                                    : ""}
+                                </span>
+                              )}
                               {journey?.stepLabel && (
                                 <span className="max-w-[200px] text-[10px] font-semibold leading-tight text-slate-700" title={journey.journeyTitle}>
                                   {journey.stepNumber != null ? `${journey.stepNumber}/${journey.stepCount} · ` : ""}{journey.stepLabel}
@@ -2797,12 +2810,17 @@ export default function AdminDashboard() {
                                   target="_blank"
                                   rel="noreferrer"
                                   className="max-w-[200px] truncate text-[10px] font-semibold text-blue-800 underline underline-offset-2"
-                                  title={journey.publishedGuide.title}
+                                  title={journey.publishedGuide.summaryOverview || journey.publishedGuide.title}
                                   data-testid="admin-published-guide-link"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   Guide PDF · {journey.publishedGuide.programLabel || journey.publishedGuide.title}
                                 </a>
+                              )}
+                              {journey?.publishedGuide?.summaryOverview && (
+                                <span className="max-w-[220px] line-clamp-2 text-[9px] leading-snug text-slate-500" data-testid="admin-guide-summary">
+                                  {journey.publishedGuide.summaryOverview}
+                                </span>
                               )}
                               {journey?.nextStepLabel && (
                                 <span className="max-w-[200px] text-[10px] text-slate-500">Suite : {journey.nextStepLabel}</span>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
+import HomeSearchBar from "@/components/HomeSearchBar";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
@@ -130,6 +131,8 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
+      <HomeSearchBar />
+
       <nav
         id="mobile-home-nav"
         aria-label={t("Accès rapides mobile", "Mobile quick links")}
@@ -140,6 +143,9 @@ export default function Home() {
         </a>
         <a href="#approved-reviews-title" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
           {t("Avis clients", "Reviews")}
+        </a>
+        <a href="#home-search" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          {t("Rechercher", "Search")}
         </a>
         <a href="/procedures" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
           {t("Procédures", "Procedures")}

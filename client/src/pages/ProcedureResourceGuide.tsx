@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   Check,
@@ -25,6 +25,8 @@ import {
   getEnrichedProcedureResources,
   type EnrichedProcedureResource,
 } from "@shared/procedureGuideEnrichment";
+import { summarizePdfResource } from "@shared/publishedGuideSummaries";
+import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
 
 const CATEGORY_FILTERS = [
   { id: "all", label: "Tout" },
@@ -38,10 +40,18 @@ const CATEGORY_FILTERS = [
 function ResourceCard({
   resource,
   language,
+  expanded = false,
 }: {
   resource: EnrichedProcedureResource;
   language: "fr" | "en";
+  expanded?: boolean;
 }) {
+  const summary = summarizePdfResource({
+    country: resource.country,
+    category: resource.category,
+    title: resource.title,
+    url: getLocalizedPdfUrl(resource, language),
+  });
   return (
     <article
       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-blue-50/40"
@@ -70,6 +80,24 @@ function ResourceCard({
           PDF
         </a>
       </div>
+      {expanded && summary ? (
+        <PublishedGuideSummaryPanel
+          tone="public"
+          testId={`guide-summary-${resource.id}`}
+          headline={summary.headline}
+          overview={summary.overview}
+          stepHighlights={summary.stepHighlights}
+          programLabel={summary.visaLabel}
+          pdfUrl={summary.pdfUrl}
+          pdfTitle={summary.pdfTitle}
+          officialPortalUrl={summary.officialPortalUrl}
+          officialPortalLabel={summary.officialPortalLabel}
+        />
+      ) : summary?.overview ? (
+        <p className="line-clamp-2 text-xs leading-5 text-slate-600" data-testid={`guide-summary-teaser-${resource.id}`}>
+          {summary.overview}
+        </p>
+      ) : null}
       {(resource.procedurePath || resource.officialSources.length > 0) && (
         <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3 text-[11px] font-semibold">
           {resource.procedurePath ? (
@@ -111,6 +139,13 @@ export default function ProcedureResourceGuide() {
   const [copied, setCopied] = useState(false);
   const query = searchQuery.trim().toLowerCase();
   const shareUrl = typeof window !== "undefined" ? getProcedureGuideUrl(window.location.origin) : "/guide-procedures";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("q")?.trim();
+    if (fromUrl) setSearchQuery(fromUrl);
+  }, []);
 
   const enriched = useMemo(() => getEnrichedProcedureResources(), []);
   const categoryCounts = useMemo(() => countResourcesByCategory(), []);
@@ -254,7 +289,7 @@ export default function ProcedureResourceGuide() {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {canadaFeatured.map((resource) => (
-              <ResourceCard key={`featured-${resource.id}`} resource={resource} language={language} />
+              <ResourceCard key={`featured-${resource.id}`} resource={resource} language={language} expanded />
             ))}
           </div>
         </section>
@@ -284,7 +319,7 @@ export default function ProcedureResourceGuide() {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {luxembourgFeatured.map((resource) => (
-              <ResourceCard key={`featured-lux-${resource.id}`} resource={resource} language={language} />
+              <ResourceCard key={`featured-lux-${resource.id}`} resource={resource} language={language} expanded />
             ))}
           </div>
         </section>

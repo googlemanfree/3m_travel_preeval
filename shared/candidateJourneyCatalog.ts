@@ -29,6 +29,10 @@ export type PublishedGuideRef = {
   relatedGuideUrls: string[];
   programLabel: string;
   visaKind: string;
+  /** Résumé dynamique du PDF publié (pays + visa). */
+  summaryHeadline?: string;
+  summaryOverview?: string;
+  summaryStepHighlights?: string[];
 };
 
 export type CandidateJourney = {
@@ -1163,6 +1167,9 @@ function publishedGuideFromTreatment(treatment: PublishedProcedureTreatment): Pu
     relatedGuideUrls: treatment.relatedGuideUrls,
     programLabel: treatment.programLabel,
     visaKind: treatment.visaKind,
+    summaryHeadline: treatment.summaryHeadline,
+    summaryOverview: treatment.summaryOverview,
+    summaryStepHighlights: treatment.summaryStepHighlights,
   };
 }
 

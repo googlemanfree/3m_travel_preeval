@@ -29,6 +29,10 @@ export type PublishedProcedureTreatment = {
   officialSourceUrl: string;
   countrySteps: PublishedCountryStep[];
   documents: string[];
+  /** Résumé dynamique du contenu du guide (étapes + pièces + portail). */
+  summaryHeadline: string;
+  summaryOverview: string;
+  summaryStepHighlights: string[];
 };
 
 const fold = (value: string | null | undefined) =>
@@ -412,6 +416,25 @@ function catalogueStepsAsPublished(
   });
 }
 
+function withSummaryFields(
+  base: Omit<PublishedProcedureTreatment, "summaryHeadline" | "summaryOverview" | "summaryStepHighlights">,
+): PublishedProcedureTreatment {
+  const visa = publishedProcedureKindLabel(base.visaKind).toLowerCase();
+  const highlights = base.countrySteps.slice(0, 6).map((step) => step.label);
+  const overview =
+    `Résumé du guide « ${base.guideTitle} » pour ${base.country} (${visa}) : `
+    + `${base.countrySteps.length} étape(s) pays/visa. `
+    + (highlights.length
+      ? `Enchaînement : ${highlights.join(" → ")}.`
+      : "Vérifiez le portail institutionnel avant dépôt.");
+  return {
+    ...base,
+    summaryHeadline: `${base.country} · ${publishedProcedureKindLabel(base.visaKind)}`,
+    summaryOverview: overview,
+    summaryStepHighlights: highlights,
+  };
+}
+
 /**
  * Résout le programme publié (PDF + étapes) pour un pays et un type de visa.
  * Canada : étapes détaillées calquées sur les PDF du site.
@@ -448,7 +471,7 @@ export function resolvePublishedProcedureTreatment(
     const related = pdfResources.map((resource) => resource.url).filter((url) => url && url !== primaryPdf);
     const docs = catalogue?.requiredDocuments.flatMap((group) => group.documents)
       ?? canadaSteps.flatMap((item) => item.requiredInputs);
-    return {
+    return withSummaryFields({
       procedureId: catalogue?.id ?? `canada-${kind}`,
       country: "Canada",
       visaKind: kind,
@@ -459,7 +482,7 @@ export function resolvePublishedProcedureTreatment(
       officialSourceUrl: kind === "etudes" ? CANADA_STUDY : kind === "travail" ? CANADA_WORK : CANADA_VISIT,
       countrySteps: canadaSteps,
       documents: Array.from(new Set(docs)),
-    };
+    });
   }
 
   if (countryKey.includes("luxembourg")) {
@@ -474,7 +497,7 @@ export function resolvePublishedProcedureTreatment(
     const related = pdfResources.map((resource) => resource.url).filter((url) => url && url !== primaryPdf);
     const docs = catalogue?.requiredDocuments.flatMap((group) => group.documents)
       ?? luxSteps.flatMap((item) => item.requiredInputs);
-    return {
+    return withSummaryFields({
       procedureId: catalogue?.id ?? `luxembourg-${kind}`,
       country: "Luxembourg",
       visaKind: kind,
@@ -485,12 +508,12 @@ export function resolvePublishedProcedureTreatment(
       officialSourceUrl: kind === "etudes" ? LUX_STUDY : kind === "travail" ? LUX_WORK : LUX_VISIT,
       countrySteps: luxSteps,
       documents: Array.from(new Set(docs)),
-    };
+    });
   }
 
   if (!catalogue) return null;
   const officialSourceUrl = officialCatalogUrl(catalogue.name, kind) || catalogue.pdfUrl || "";
-  return {
+  return withSummaryFields({
     procedureId: catalogue.id,
     country: catalogue.name,
     visaKind: kind,
@@ -501,7 +524,7 @@ export function resolvePublishedProcedureTreatment(
     officialSourceUrl,
     countrySteps: catalogueStepsAsPublished(catalogue, officialSourceUrl),
     documents: catalogue.requiredDocuments.flatMap((group) => group.documents),
-  };
+  });
 }
 
 export function publishedProcedureKindLabel(kind: PublishedProcedureKind): string {
