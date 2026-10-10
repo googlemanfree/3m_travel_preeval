@@ -20,7 +20,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
         animate={{ opacity: 1, y: 0 }}
         exit={motionDisabled ? undefined : { opacity: 0, y: -8 }}
         transition={motionDisabled ? { duration: 0 } : { duration, ease: [0.23, 1, 0.32, 1] }}
-        className="min-h-[calc(100vh-5rem)] will-change-[opacity,transform]"
+        className="min-h-[calc(100vh-5rem)]"
       >
         {children}
       </motion.div>

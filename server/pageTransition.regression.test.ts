@@ -16,8 +16,11 @@ describe("premium page transitions", () => {
     // Entrée : translation seule (jamais opacity:0) pour éviter une page blanche si l’anim ne démarre pas.
     expect(source).toContain("initial={motionDisabled ? false : { y: 8 }}");
     expect(source).toContain("opacity: 0, y: -8");
-    expect(source).toContain("will-change-[opacity,transform]");
     expect(source).not.toContain("opacity: 0, y: 8");
+  });
+
+  it("ne crée pas de containing block transformé pour les sticky/fixed enfants", () => {
+    expect(source).not.toContain("will-change-[opacity,transform]");
   });
 });
 
