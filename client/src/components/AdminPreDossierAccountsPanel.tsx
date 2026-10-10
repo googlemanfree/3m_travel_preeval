@@ -43,6 +43,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { ADMIN_PROCEDURE_TYPES } from "@shared/dossierProcedureSelection";
+import { CountrySelect } from "@/components/CountryPicker";
 
 type PreDossierAccount = {
   id: number;
@@ -55,6 +58,8 @@ type PreDossierAccount = {
   createdAt: string | Date;
   lastLoginAt: string | Date | null;
   documentsCount: number;
+  hasCv?: boolean;
+  evaluationWithoutCv?: boolean;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
   paymentValidated?: boolean;
@@ -374,20 +379,21 @@ export default function AdminPreDossierAccountsPanel({
     if (activationSuccessTimer.current !== null)
       window.clearTimeout(activationSuccessTimer.current);
     setSelected(account);
-    setDestination(
-      account.destinationPreference && account.destinationPreference !== "autre"
-        ? account.destinationPreference
-        : "canada"
-    );
-    setVisaType("Études");
+    const preferred = account.preferredDestinations?.[0];
+    const fromPreferred = preferred ? getCandidateDestinationOption(preferred)?.name : undefined;
+    const fromCoarse = account.destinationPreference
+      ? getCandidateDestinationOption(account.destinationPreference)?.name
+      : undefined;
+    setDestination(fromPreferred || fromCoarse || "Canada");
+    setVisaType(account.visaType?.trim() || "Études");
     setAdminNotes("");
     setOfflineNote("");
     setOfflineChannel("agence");
     setPaymentReference("");
     setPaymentAmount("");
     setAdditionalProcedureEnabled(false);
-    setAdditionalDestination("europe");
-    setAdditionalVisaType("Études");
+    setAdditionalDestination("France");
+    setAdditionalVisaType("Travail");
     setAdditionalPaymentReference("");
     setAdditionalPaymentAmount("");
     setProofFile(null);
@@ -607,6 +613,15 @@ export default function AdminPreDossierAccountsPanel({
                             · {account.pendingEvaluationReference}
                             </Badge>
                         )}
+                        {account.evaluationWithoutCv ? (
+                          <Badge
+                            variant="outline"
+                            className="ml-1 mt-1 border-rose-200 bg-rose-50 text-rose-800"
+                            title="Déclaration ou validation hors ligne sans CV déposé — le dossier s’ouvrira selon le pays et le type de visa choisis"
+                          >
+                            Sans CV
+                          </Badge>
+                        ) : null}
                         {account.paymentValidated && (
                           <button
                             type="button"
@@ -619,8 +634,14 @@ export default function AdminPreDossierAccountsPanel({
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 capitalize text-slate-700">
-                        {account.destinationPreference || "À préciser"}
+                      <td className="px-4 py-3 text-slate-700">
+                        {account.preferredDestinations?.[0]
+                          || getCandidateDestinationOption(account.destinationPreference || "")?.name
+                          || account.destinationPreference
+                          || "À préciser"}
+                        {account.visaType ? (
+                          <span className="mt-0.5 block text-xs text-slate-500">{account.visaType}</span>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3">
                         <p className="flex items-center gap-1 text-slate-700">
@@ -1048,33 +1069,35 @@ export default function AdminPreDossierAccountsPanel({
                     </Button>
                   </div>
                 )}
+              {selected?.evaluationWithoutCv ? (
+                <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900">
+                  Évaluation sans CV : le parcours et la checklist du dossier seront créés à partir du <strong>pays</strong> et du <strong>type de visa</strong> choisis ci-dessous (pas d’un modèle générique).
+                </p>
+              ) : null}
               <div>
-                <Label>Destination confirmée</Label>
-                <Select value={destination} onValueChange={setDestination}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="canada">Canada</SelectItem>
-                    <SelectItem value="luxembourg">Luxembourg</SelectItem>
-                    <SelectItem value="europe">Europe / Schengen</SelectItem>
-                    <SelectItem value="pologne">Pologne</SelectItem>
-                    <SelectItem value="golfe">Golfe</SelectItem>
-                    <SelectItem value="France">France</SelectItem>
-                    <SelectItem value="Allemagne">Allemagne</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="predossier-destination">Pays de destination confirmé</Label>
+                <div className="mt-1">
+                  <CountrySelect
+                    id="predossier-destination"
+                    value={destination}
+                    onChange={setDestination}
+                    placeholder="Choisir le pays exact…"
+                    ariaLabel="Pays de destination confirmé"
+                  />
+                </div>
               </div>
               <div>
-                <Label htmlFor="predossier-visa">Procédure</Label>
-                <Input
-                  id="predossier-visa"
-                  value={visaType}
-                  onChange={event => setVisaType(event.target.value)}
-                  className="mt-1"
-                  placeholder="Études, travail, tourisme…"
-                  maxLength={100}
-                />
+                <Label htmlFor="predossier-visa">Type de visa / procédure</Label>
+                <Select value={visaType} onValueChange={setVisaType}>
+                  <SelectTrigger id="predossier-visa" className="mt-1">
+                    <SelectValue placeholder="Choisir la procédure…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ADMIN_PROCEDURE_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
                 <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
@@ -1097,23 +1120,27 @@ export default function AdminPreDossierAccountsPanel({
                 {additionalProcedureEnabled && (
                   <div data-testid="additional-procedure-fields" className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
-                      <Label>Seconde destination</Label>
-                      <Select value={additionalDestination} onValueChange={setAdditionalDestination}>
-                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="canada">Canada</SelectItem>
-                          <SelectItem value="luxembourg">Luxembourg</SelectItem>
-                          <SelectItem value="europe">Europe / Schengen</SelectItem>
-                          <SelectItem value="pologne">Pologne</SelectItem>
-                          <SelectItem value="golfe">Golfe</SelectItem>
-                          <SelectItem value="France">France</SelectItem>
-                          <SelectItem value="Allemagne">Allemagne</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="predossier-additional-destination">Seconde destination</Label>
+                      <div className="mt-1">
+                        <CountrySelect
+                          id="predossier-additional-destination"
+                          value={additionalDestination}
+                          onChange={setAdditionalDestination}
+                          placeholder="Choisir le second pays…"
+                          ariaLabel="Seconde destination"
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="predossier-additional-visa">Seconde procédure</Label>
-                      <Input id="predossier-additional-visa" value={additionalVisaType} onChange={event => setAdditionalVisaType(event.target.value)} className="mt-1" placeholder="Travail, études…" maxLength={100} />
+                      <Select value={additionalVisaType} onValueChange={setAdditionalVisaType}>
+                        <SelectTrigger id="predossier-additional-visa" className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ADMIN_PROCEDURE_TYPES.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="predossier-additional-payment-reference">Référence du second paiement</Label>

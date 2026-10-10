@@ -130,6 +130,9 @@ import { formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
 import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/adminProcedureJourney";
 import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
+import { ADMIN_PROCEDURE_TYPES, normalizeAdminProcedureType } from "@shared/dossierProcedureSelection";
+import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { CountrySelect } from "@/components/CountryPicker";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -267,16 +270,9 @@ const SCORING_BADGE_CONFIG: Record<string, { label: string; color: string }> = {
   faible: { label: "Faible", color: "text-red-700 bg-red-50 border-red-200" },
 };
 
-const DESTINATION_OPTIONS = [
-  "Canada", "France", "Belgique", "Suisse", "Allemagne", "Royaume-Uni",
-  "États-Unis", "Portugal", "Espagne", "Italie", "Pays-Bas", "Maroc",
-  "Sénégal", "Côte d'Ivoire", "Autre",
-];
+const DESTINATION_OPTIONS = POPULAR_DESTINATION_NAMES;
 
-const PROJECT_TYPE_OPTIONS = [
-  "Visa Étudiant", "Visa Travail", "Visa Tourisme", "Visa Famille",
-  "Résidence Permanente", "Visa Affaires", "Autre",
-];
+const PROJECT_TYPE_OPTIONS = [...ADMIN_PROCEDURE_TYPES];
 
 const ADMIN_GLOBAL_SEARCH_ITEMS = [
   { label: "Dossiers candidats", hint: "Rechercher et traiter les dossiers", tab: "candidates" },
@@ -515,8 +511,13 @@ export function CandidateDetailModal({
 
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
-    setPreDossierDestination(candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry);
-    setPreDossierVisaType(candidate.projectType === "À qualifier" ? "" : candidate.projectType);
+    const rawDestination = candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry;
+    setPreDossierDestination(rawDestination ? (getCandidateDestinationOption(rawDestination)?.name ?? rawDestination) : "");
+    setPreDossierVisaType(
+      !candidate.projectType || candidate.projectType === "À qualifier"
+        ? ""
+        : normalizeAdminProcedureType(candidate.projectType),
+    );
     setPreDossierNotes("");
   }, [candidate?.id, candidate?.destinationCountry, candidate?.projectType, isPreDossierAccount]);
 
@@ -641,8 +642,31 @@ export function CandidateDetailModal({
                       <Badge className="w-fit bg-amber-100 text-amber-800">Pré-dossier</Badge>
                     </div>
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
-                      <div><Label htmlFor="predossier-destination-modal">Destination confirmée</Label><Input id="predossier-destination-modal" className="mt-2" value={preDossierDestination} onChange={(event) => setPreDossierDestination(event.target.value)} placeholder="Ex. Canada" maxLength={100} /></div>
-                      <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" maxLength={50} /></div>
+                      <div>
+                        <Label htmlFor="predossier-destination-modal">Pays de destination confirmé</Label>
+                        <div className="mt-2">
+                          <CountrySelect
+                            id="predossier-destination-modal"
+                            value={preDossierDestination}
+                            onChange={setPreDossierDestination}
+                            placeholder="Choisir le pays exact…"
+                            ariaLabel="Pays de destination confirmé"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="predossier-procedure-modal">Type de visa / procédure</Label>
+                        <Select value={preDossierVisaType} onValueChange={setPreDossierVisaType}>
+                          <SelectTrigger id="predossier-procedure-modal" className="mt-2">
+                            <SelectValue placeholder="Choisir la procédure…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROJECT_TYPE_OPTIONS.map((option) => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" maxLength={2000} className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
                     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p></div>
@@ -985,20 +1009,20 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="destination">Pays de destination *</Label>
-              <Select value={form.destinationCountry} onValueChange={(v) => setField("destinationCountry", v)}>
-                <SelectTrigger id="destination">
-                  <SelectValue placeholder="Choisir un pays..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {DESTINATION_OPTIONS.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <CountrySelect
+                  id="destination"
+                  value={form.destinationCountry}
+                  onChange={(v) => setField("destinationCountry", v)}
+                  placeholder="Choisir le pays exact…"
+                  ariaLabel="Pays de destination"
+                  priority={DESTINATION_OPTIONS}
+                />
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="projectType">Type de projet *</Label>
+              <Label htmlFor="projectType">Type de visa / procédure *</Label>
               <Select value={form.projectType} onValueChange={(v) => setField("projectType", v)}>
                 <SelectTrigger id="projectType">
                   <SelectValue placeholder="Choisir un type..." />
