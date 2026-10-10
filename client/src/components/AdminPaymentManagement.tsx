@@ -370,7 +370,11 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
       toast.error("Aucun paiement à exporter");
       return;
     }
-    const quote = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const quote = (value: unknown) => {
+      const text = String(value ?? "");
+      const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+      return `"${safeText.replace(/"/g, '""')}"`;
+    };
     const headers = ["Dossier", "Candidat", "E-mail", "Mode de paiement", "Référence", "Montant", "Statut paiement", "État reçu", "Dernière remise SMTP", "Date paiement"];
     const rows = filteredPayments.map((p) => [
       p.dossierNumber,
@@ -539,8 +543,8 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
               <CardDescription>Suivi des paiements des frais d'ouverture de dossier</CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleExportPayments} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" /> CSV filtré
+              <Button onClick={handleExportPayments} variant="outline" size="sm" data-testid="export-payments-csv" aria-label="Exporter la liste détaillée des paiements en CSV">
+                <Download className="w-4 h-4 mr-2" /> Exporter paiements CSV
               </Button>
               <Button onClick={handleExportExcel} variant="outline" size="sm">
                 <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel filtré

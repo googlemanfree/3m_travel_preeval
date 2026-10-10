@@ -47,6 +47,7 @@ import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
+import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
@@ -669,6 +670,14 @@ export default function EvaluationSpace() {
                 <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
               </button>;
             })}
+          </div>
+          <div className="mt-5">
+            <ClientPaymentStatusTable
+              dossiers={onlineDossiers}
+              selectedDossierNumber={selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber ?? null}
+              onSelect={(dossierNumber) => setSelectedDossierNumber(dossierNumber)}
+              dossierLabel={dossierSwitcherLabel}
+            />
           </div>
         </Card>
       )}

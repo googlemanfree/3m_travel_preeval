@@ -8,9 +8,10 @@ import { cleanup, render, screen } from "@testing-library/react";
 (globalThis as any).React = React;
 
 const state = vi.hoisted(() => ({ requests: undefined as any }));
-vi.mock("@/lib/trpc", () => ({ trpc: { useUtils: () => ({ flightFollowUp: { myOverview: { invalidate: () => undefined } } }), flightBooking: { getMyRequests: { useQuery: () => ({ data: state.requests }) } }, flightFollowUp: { myOverview: { useQuery: () => ({ data: [] }) }, submitTravelers: { useMutation: () => ({ mutate: () => undefined, isPending: false }) }, requestChange: { useMutation: () => ({ mutate: () => undefined, isPending: false }) } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { useUtils: () => ({ flightFollowUp: { myOverview: { invalidate: () => undefined } }, flightBooking: { getMyRequests: { invalidate: () => undefined } } }), flightBooking: { getMyRequests: { useQuery: () => ({ data: state.requests }) }, clientValidate: { useMutation: () => ({ mutate: () => undefined, isPending: false }) } }, flightFollowUp: { myOverview: { useQuery: () => ({ data: [] }) }, submitTravelers: { useMutation: () => ({ mutate: () => undefined, isPending: false }) }, requestChange: { useMutation: () => ({ mutate: () => undefined, isPending: false }) } } } }));
 
 import DossierPaymentCard from "@/components/DossierPaymentCard";
+import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import { FLIGHT_STATUS_LABELS, flightPaymentExpected, flightStatusLabel, flightStatusTone } from "@shared/flightRequestStatus";
 
@@ -51,6 +52,18 @@ describe("régler mon dossier depuis l'espace client", () => {
   it("sans numéro de dossier : rien", () => {
     render(<DossierPaymentCard dossierNumber={null} confirmed={false} requested />);
     expect(screen.queryByTestId("dossier-payment")).toBeNull();
+  });
+
+  it("affiche la référence unique et le statut de chaque dossier actif", () => {
+    render(<ClientPaymentStatusTable dossiers={[
+      { dossierNumber: "3M-TRAVAIL-01", dossierStatus: "processing", paymentStatus: "SUCCESS", projectType: "Travail" },
+      { dossierNumber: "3M-ETUDES-02", dossierStatus: "nouveau", paymentStatus: "PENDING", projectType: "Études" },
+    ]} selectedDossierNumber="3M-ETUDES-02" onSelect={() => undefined} dossierLabel={(dossier) => dossier.projectType || "Dossier"} />);
+    const table = screen.getByTestId("client-payment-status-table");
+    expect(table.textContent).toContain("3M-TRAVAIL-01");
+    expect(table.textContent).toContain("3M-ETUDES-02");
+    expect(table.textContent).toContain("Paiement confirmé");
+    expect(table.textContent).toContain("Paiement à confirmer");
   });
 });
 
@@ -104,10 +117,16 @@ describe("statuts de réservation partagés", () => {
     expect(flightStatusTone("cancelled")).toContain("slate");
   });
 
-  it("l'aperçu d'ensemble de l'espace client affiche le règlement du dossier et les réservations de vol", () => {
+  it("l’aperçu d’ensemble de l’espace client affiche le règlement du dossier et les réservations de vol", () => {
     const space = read("client/src/pages/EvaluationSpace.tsx");
     expect(space).toContain("<DossierPaymentCard");
+    expect(space).toContain("<ClientPaymentStatusTable");
     expect(space).toContain("<MyFlightRequestsCard />");
     expect(space.indexOf("<NextStepCard")).toBeLessThan(space.indexOf("<DossierPaymentCard"));
+    const paymentCard = read("client/src/components/DossierPaymentCard.tsx");
+    expect(paymentCard).toContain('data-testid="payment-dossier-reference"');
+    const adminPayments = read("client/src/components/AdminPaymentManagement.tsx");
+    expect(adminPayments).toContain('data-testid="export-payments-csv"');
+    expect(adminPayments).toContain("safeText");
   });
 });

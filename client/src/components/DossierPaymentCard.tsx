@@ -22,7 +22,11 @@ export default function DossierPaymentCard({ dossierNumber, amount, currency, co
   if (confirmed) {
     return (
       <Card className="border-emerald-200 bg-emerald-50 p-4" data-testid="dossier-payment" data-state="confirmed" role="status">
-        <p className="flex items-center gap-2 text-sm font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Paiement confirmé par l’agence pour le dossier {dossierNumber}. Ce règlement ne couvre que ce dossier. Votre reçu vous est envoyé par e-mail.</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2 text-sm font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Paiement confirmé par l’agence. Ce règlement ne couvre que ce dossier.</p>
+          <span className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-black text-emerald-900" data-testid="payment-dossier-reference">Référence : <span className="font-mono">{dossierNumber}</span></span>
+        </div>
+        <p className="mt-2 text-xs text-emerald-800">Votre reçu vous est envoyé par e-mail.</p>
       </Card>
     );
   }
@@ -34,7 +38,8 @@ export default function DossierPaymentCard({ dossierNumber, amount, currency, co
           <span className="rounded-2xl bg-blue-700 p-3 text-white"><CreditCard className="h-5 w-5" aria-hidden="true" /></span>
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Frais d’ouverture de dossier</p>
-            <h2 id="dossier-payment-title" className="mt-1 text-lg font-black text-slate-950">Régler mon dossier {dossierNumber}</h2>
+            <h2 id="dossier-payment-title" className="mt-1 text-lg font-black text-slate-950">Régler mon dossier</h2>
+            <p className="mt-2 inline-flex w-fit items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-black text-blue-950" data-testid="payment-dossier-reference">Référence unique à utiliser : <span className="ml-2 font-mono tracking-wide">{dossierNumber}</span></p>
             <p className="mt-1 text-sm text-slate-700">Montant : <strong>{formatAmount(amount ?? null, currency || "XAF")}</strong>. Virement, dépôt Mobile Money ou paiement en agence : le paiement est pris en compte quand l’agence confirme sa réception. Un second dossier (ex. travail + études) exige un second paiement distinct.</p>
           </div>
         </div>

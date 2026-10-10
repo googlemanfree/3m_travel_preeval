@@ -62,3 +62,9 @@
 - [x] Vérifier les quatre scénarios de séparation paiement/dossier, sans transaction réelle — règle et import couvertes par `unDossierUnPaiement.regression.test.ts`, activation duale couverte par `preDossierActivationReadiness.test.ts`; les écrans client/admin affichent le rappel « 1 dossier = 1 paiement ». Aucun paiement réel exécuté.
 - [x] Fusionner et publier uniquement si les contrôles sont verts — PR52 fusionnée en squash sur `main` au commit `a1b01554`; preview synchronisée sur ce commit.
 - [x] Vérifier les parcours client/admin et sauvegarder le checkpoint final — action `/mon-espace?pr52=payment-isolation&fresh=1` : garde d’accès « Accès Réservé aux Membres » observée ; action `/admin?pr52=payment-isolation&fresh=2` : tableau admin authentifié chargé, onglet Dossiers ouvert en lecture seule, cartes `admin-sibling-dossiers` visibles avec « 2 procédures · même client » et références sœurs. Aucun clic d’activation, paiement ou changement de statut effectué.
+
+## Paiements — synthèse client et export admin
+- [x] Ajouter un tableau récapitulatif des paiements par dossier actif dans l’espace client — nouveau tableau responsive avec dossier, référence unique, statut paiement et progression ; chaque ligne sélectionne le dossier concerné.
+- [x] Rendre la référence unique du dossier très visible dans l’interface de règlement — bloc « Référence unique à utiliser » dans la carte de paiement, également visible après confirmation.
+- [x] Ajouter ou clarifier l’export détaillé des paiements côté admin, avec échappement CSV sûr — bouton `export-payments-csv` explicite, export filtré détaillé et préfixe anti-formule pour `=`, `+`, `-`, `@`.
+- [x] Ajouter les tests ciblés, vérifier TypeScript/build et sauvegarder un checkpoint — 3 fichiers de tests, 27 tests réussis ; TypeScript et build Vite verts.
