@@ -21,6 +21,8 @@ import {
   COCKPIT_QUEUE_LABELS,
   type CockpitQueueCategory,
 } from "../../shared/candidateCockpit";
+import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
+import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
@@ -532,15 +534,25 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
-      const [allAccounts, files, activeEmails] = await Promise.all([
+      const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
         db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
-        db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).limit(5000),
+        db.select({ candidateId: candidateFiles.candidateId, fileType: candidateFiles.fileType }).from(candidateFiles).limit(5000),
+        db.select({ email: evaluations.email, cvFileUrl: evaluations.cvFileUrl }).from(evaluations).limit(10000),
         loadEmailsWithActiveDossier(db),
       ]);
       const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
       const coveredByActiveDossier = allAccounts.length - accounts.length;
       const documentsByCandidate = new Map<number, number>();
-      files.forEach((file) => documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1));
+      const cvByCandidate = new Set<number>();
+      files.forEach((file) => {
+        documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1);
+        if (file.fileType === "cv") cvByCandidate.add(file.candidateId);
+      });
+      const cvByEmail = new Set(
+        evaluationRows
+          .filter((row) => Boolean(row.cvFileUrl?.trim()))
+          .map((row) => row.email.trim().toLowerCase()),
+      );
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
       const openingPaymentByCandidate = new Map<number, OpeningPaymentRecord | null>();
@@ -550,39 +562,48 @@ export const adminCandidateManagementRouter = router({
       return {
         total: filtered.length,
         coveredByActiveDossier,
-        accounts: filtered.map((account) => ({
-          id: account.id,
-          fullName: account.fullName,
-          email: account.email,
-          phone: account.phone,
-          destinationPreference: account.destination,
-          dossierStatus: account.dossierStatus,
-          emailVerified: account.emailVerified,
-          createdAt: account.createdAt,
-          lastLoginAt: account.lastLoginAt,
-          documentsCount: documentsByCandidate.get(account.id) ?? 0,
-          pendingEvaluationReference: account.evaluationDeclarationStatus === "pending_validation" ? "Évaluation externe à valider" : null,
-          evaluationDeclarationStatus: account.evaluationDeclarationStatus,
-          evaluationReviewedAt: account.evaluationReviewedAt,
-          evaluationReviewedBy: account.evaluationReviewedBy,
-          evaluationReviewNote: account.evaluationReviewNote,
-          evaluationValidated: account.evaluationDeclarationStatus === "validated",
-          paymentValidated: Boolean(openingPaymentByCandidate.get(account.id)),
-          paymentProofUrl: openingPaymentByCandidate.get(account.id)?.proofFileUrl ?? null,
-          paymentReference: openingPaymentByCandidate.get(account.id)?.reference ?? null,
-          paymentValidatedAt: openingPaymentByCandidate.get(account.id)?.validatedAt ?? null,
-          accountReference: accountReference(account.id),
-          referenceView: buildAdminReferenceView({ candidateId: account.id }),
-          preferredDestinations: (() => {
-            try {
-              const parsed = JSON.parse(account.preferredDestinations || "[]");
-              return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-            } catch {
-              return [] as string[];
-            }
-          })(),
-          visaType: account.visaType,
-        })),
+        accounts: filtered.map((account) => {
+          const emailKey = account.email.trim().toLowerCase();
+          const hasCv = cvByCandidate.has(account.id) || cvByEmail.has(emailKey);
+          const evaluationValidated = account.evaluationDeclarationStatus === "validated";
+          const evaluationPending = account.evaluationDeclarationStatus === "pending_validation";
+          return {
+            id: account.id,
+            fullName: account.fullName,
+            email: account.email,
+            phone: account.phone,
+            destinationPreference: account.destination,
+            dossierStatus: account.dossierStatus,
+            emailVerified: account.emailVerified,
+            createdAt: account.createdAt,
+            lastLoginAt: account.lastLoginAt,
+            documentsCount: documentsByCandidate.get(account.id) ?? 0,
+            hasCv,
+            /** Déclaration / validation hors ligne sans CV en fichier — dossier à ouvrir ensuite selon pays + visa. */
+            evaluationWithoutCv: (evaluationValidated || evaluationPending) && !hasCv,
+            pendingEvaluationReference: evaluationPending ? (hasCv ? "Évaluation externe à valider" : "Évaluation sans CV à valider") : null,
+            evaluationDeclarationStatus: account.evaluationDeclarationStatus,
+            evaluationReviewedAt: account.evaluationReviewedAt,
+            evaluationReviewedBy: account.evaluationReviewedBy,
+            evaluationReviewNote: account.evaluationReviewNote,
+            evaluationValidated,
+            paymentValidated: Boolean(openingPaymentByCandidate.get(account.id)),
+            paymentProofUrl: openingPaymentByCandidate.get(account.id)?.proofFileUrl ?? null,
+            paymentReference: openingPaymentByCandidate.get(account.id)?.reference ?? null,
+            paymentValidatedAt: openingPaymentByCandidate.get(account.id)?.validatedAt ?? null,
+            accountReference: accountReference(account.id),
+            referenceView: buildAdminReferenceView({ candidateId: account.id }),
+            preferredDestinations: (() => {
+              try {
+                const parsed = JSON.parse(account.preferredDestinations || "[]");
+                return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+              } catch {
+                return [] as string[];
+              }
+            })(),
+            visaType: account.visaType,
+          };
+        }),
       };
     }),
 
@@ -1180,6 +1201,28 @@ export const adminCandidateManagementRouter = router({
       if (input.additionalProcedure && !openingPayment?.additionalPayment) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le second paiement d'ouverture doit être validé avant d'ajouter la seconde procédure." });
       }
+      const primaryProcedure = resolveDossierProcedureSelection({
+        destination: input.destination,
+        visaType: input.visaType,
+      });
+      if (!primaryProcedure.recognized || !primaryProcedure.destination) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choisissez un pays de destination reconnu (ex. Canada, France, Luxembourg). Les catégories larges (europe, golfe…) ne suffisent plus pour créer un dossier dynamique.",
+        });
+      }
+      const additionalProcedure = input.additionalProcedure
+        ? resolveDossierProcedureSelection({
+          destination: input.additionalProcedure.destination,
+          visaType: input.additionalProcedure.visaType,
+        })
+        : null;
+      if (additionalProcedure && !additionalProcedure.recognized) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "La seconde destination doit aussi être un pays reconnu du catalogue.",
+        });
+      }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
       const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
@@ -1191,17 +1234,36 @@ export const adminCandidateManagementRouter = router({
       if (linkedExistingDossier) {
         agencyDossierId = existing[0].id;
         await db.update(agencyDossiers).set({
-          destination: input.destination,
-          visaType: input.visaType,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
           status: "en_cours",
           assignedToAdmin: admin.email,
           ...(input.adminNotes ? { adminNotes: input.adminNotes } : {}),
         }).where(eq(agencyDossiers.id, agencyDossierId));
       } else {
-        const inserted = await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+        const inserted = await db.insert(agencyDossiers).values({
+          fullName: candidate.fullName,
+          email: candidate.email,
+          phone: candidate.phone ?? "Non renseigné",
+          dateOfBirth: candidate.dateOfBirth,
+          nationality: candidate.nationality,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          status: "nouveau",
+          createdByAdmin: admin.email,
+          assignedToAdmin: admin.email,
+          adminNotes: input.adminNotes ?? null,
+          source: "manual_admin",
+        });
         agencyDossierId = Number((inserted as any)[0]?.insertId || 0);
       }
-      await db.update(candidates).set({ dossierStatus: "documents", destination: input.destination as any, visaType: input.visaType, dossierNote: input.adminNotes ?? null }).where(eq(candidates.id, candidate.id));
+      await db.update(candidates).set({
+        dossierStatus: "documents",
+        destination: primaryProcedure.coarseCategory,
+        visaType: primaryProcedure.visaType,
+        preferredDestinations: JSON.stringify(primaryProcedure.preferredDestinations),
+        dossierNote: input.adminNotes ?? null,
+      }).where(eq(candidates.id, candidate.id));
       await db.insert(agencyDossierHistory).values({
         dossierId: agencyDossierId,
         action: "account_linked",
@@ -1223,15 +1285,15 @@ export const adminCandidateManagementRouter = router({
       });
       let additionalAgencyDossierId: number | null = null;
       let additionalDossierReference: string | null = null;
-      if (input.additionalProcedure) {
+      if (additionalProcedure) {
         const additionalInserted = await db.insert(agencyDossiers).values({
           fullName: candidate.fullName,
           email: candidate.email,
           phone: candidate.phone ?? "Non renseigné",
           dateOfBirth: candidate.dateOfBirth,
           nationality: candidate.nationality,
-          destination: input.additionalProcedure.destination,
-          visaType: input.additionalProcedure.visaType,
+          destination: additionalProcedure.destination,
+          visaType: additionalProcedure.visaType,
           status: "nouveau",
           createdByAdmin: admin.email,
           assignedToAdmin: admin.email,
@@ -1249,6 +1311,28 @@ export const adminCandidateManagementRouter = router({
           details: "Seconde procédure rattachée au compte candidat après validation de son second frais d’ouverture",
         });
       }
+      // Case opérationnel + checklist pays/procédure dès l’activation (pilotage dynamique immédiat).
+      let checklistSeed: { caseId: number; added: number; label: string } | null = null;
+      try {
+        checklistSeed = await seedCountryProcedureChecklist(db, {
+          source: "agency",
+          id: agencyDossierId,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          actorAdminId: admin.id ?? null,
+        });
+        if (additionalAgencyDossierId && additionalProcedure) {
+          await seedCountryProcedureChecklist(db, {
+            source: "agency",
+            id: additionalAgencyDossierId,
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+            actorAdminId: admin.id ?? null,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Seed checklist pays/procédure non effectué:", err);
+      }
       try {
         await db.insert(clientNotifications).values({
           candidateId: candidate.id,
@@ -1263,7 +1347,7 @@ export const adminCandidateManagementRouter = router({
       }
       let emailSent = false;
       try {
-        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, input.destination, 0, previousAccountReference);
+        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, primaryProcedure.destination, 0, previousAccountReference);
       } catch (err) {
         console.error("[activatePreDossierAccount] Échec de l'e-mail de confirmation d'activation:", err);
         emailSent = false;
@@ -1281,7 +1365,24 @@ export const adminCandidateManagementRouter = router({
       } catch (err) {
         console.error("[activatePreDossierAccount] Nettoyage des doublons non effectué:", err);
       }
-      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference, archivedDuplicates, additionalAgencyDossierId, additionalDossierReference };
+      return {
+        success: true,
+        emailSent,
+        linkedExistingDossier,
+        agencyDossierId,
+        dossierReference,
+        previousAccountReference,
+        archivedDuplicates,
+        additionalAgencyDossierId,
+        additionalDossierReference,
+        procedure: {
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          checklistKey: primaryProcedure.checklistKey,
+          checklistAdded: checklistSeed?.added ?? 0,
+          checklistLabel: checklistSeed?.label ?? null,
+        },
+      };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

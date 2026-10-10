@@ -26,6 +26,8 @@ import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
 import { buildCandidateCockpit } from "../../shared/candidateCockpit";
+import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
+import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
 import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -2406,20 +2408,61 @@ export const adminRouter = router({
           "APPROVED": "approuve",
         };
 
+        const procedure = resolveDossierProcedureSelection({
+          destination: input.destinationCountry,
+          visaType: input.projectType,
+        });
+        if (!procedure.recognized || !procedure.destination) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Choisissez un pays de destination reconnu du catalogue pour créer un dossier dynamique.",
+          });
+        }
+
         const result = await db.insert(agencyDossiers).values({
           fullName: input.fullName,
           email: input.email,
           phone: input.whatsapp,
-          destination: input.destinationCountry,
-          visaType: input.projectType,
+          destination: procedure.destination,
+          visaType: procedure.visaType,
           status: internalStatusMap[input.initialStatus] as any,
           createdByAdmin: admin.email || "admin",
           source: "manual_admin" as any,
-          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")}`,
+          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType}`,
         });
 
         const dossierId = (result as any)[0]?.insertId || 0;
         const folderCode = `3M-AGN-${dossierId.toString().padStart(4, "0")}`;
+
+        // Aligner le compte candidat s’il existe déjà (pays précis + procédure).
+        try {
+          const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates)
+            .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${input.email}))`)
+            .limit(1);
+          if (linkedCandidate) {
+            await db.update(candidates).set({
+              destination: procedure.coarseCategory,
+              visaType: procedure.visaType,
+              preferredDestinations: JSON.stringify(procedure.preferredDestinations),
+            }).where(eq(candidates.id, linkedCandidate.id));
+          }
+        } catch (linkErr) {
+          console.error("[Import Agency Dossier] Sync compte candidat:", linkErr);
+        }
+
+        let checklistAdded = 0;
+        try {
+          const seeded = await seedCountryProcedureChecklist(db, {
+            source: "agency",
+            id: dossierId,
+            destination: procedure.destination,
+            visaType: procedure.visaType,
+            actorAdminId: admin.id ?? null,
+          });
+          checklistAdded = seeded.added;
+        } catch (seedErr) {
+          console.error("[Import Agency Dossier] Seed checklist:", seedErr);
+        }
 
         // Envoyer un email de bienvenue
         try {
@@ -2434,8 +2477,8 @@ export const adminRouter = router({
                 <p style="color: #374151;">Votre dossier a été créé avec succès dans notre système.</p>
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <p style="margin: 4px 0;"><strong>N° de dossier :</strong> ${esc(folderCode)}</p>
-                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(input.destinationCountry)}</p>
-                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(input.projectType)}</p>
+                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(procedure.destination)}</p>
+                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(procedure.visaType)}</p>
                 </div>
                 <p style="color: #374151;">Notre équipe vous contactera sous peu pour les prochaines étapes.</p>
                 <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
@@ -2459,6 +2502,12 @@ export const adminRouter = router({
           folderCode,
           dossierId,
           message: `Dossier agence créé avec succès : ${folderCode}`,
+          procedure: {
+            destination: procedure.destination,
+            visaType: procedure.visaType,
+            checklistKey: procedure.checklistKey,
+            checklistAdded,
+          },
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
