@@ -21,6 +21,7 @@ import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistory
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
+import AdminSimultaneousProceduresBoard from "@/components/AdminSimultaneousProceduresBoard";
 import ProcedureStepper from "@/components/ProcedureStepper";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
@@ -64,6 +65,8 @@ type SiblingProcedureTab = {
   projectType?: string | null;
   destinationCountry?: string | null;
   status?: string | null;
+  paymentStatus?: string | null;
+  procedureLabel?: string | null;
 };
 
 type Props = {
@@ -683,6 +686,54 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           <TimerReset className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Actualiser
         </Button>
       </div>
+
+      {(() => {
+        const siblings = ((data as any).siblingProcedures as Array<{
+          id: string;
+          folderCode: string;
+          projectType?: string | null;
+          destinationCountry?: string | null;
+          paymentStatus?: string | null;
+          status?: string | null;
+          procedureLabel?: string | null;
+        }> | undefined)?.length
+          ? ((data as any).siblingProcedures as Array<{
+            id: string;
+            folderCode: string;
+            projectType?: string | null;
+            destinationCountry?: string | null;
+            paymentStatus?: string | null;
+            status?: string | null;
+            procedureLabel?: string | null;
+          }>)
+          : siblingProcedures;
+        if (!siblings.length) return null;
+        return (
+          <AdminSimultaneousProceduresBoard
+            current={{
+              id: candidate.id,
+              folderCode: candidate.folderCode,
+              projectType: candidate.projectType,
+              destinationCountry: candidate.destinationCountry,
+              paymentStatus: (data as any).payments?.[0]?.status ?? null,
+              status: operationalCase.currentStatus,
+              nextActionLabel: (data as any).cockpit?.nextAction?.label ?? nextAction.label,
+              progressPercent: (data as any).cockpit?.progressPercent ?? null,
+            }}
+            siblings={siblings.map((sibling) => ({
+              id: sibling.id,
+              folderCode: sibling.folderCode,
+              projectType: sibling.projectType,
+              destinationCountry: sibling.destinationCountry,
+              paymentStatus: sibling.paymentStatus,
+              status: sibling.status,
+              procedureLabel: sibling.procedureLabel,
+            }))}
+            onOpen={onSelectSibling}
+            handoffMessage={(data as any).dualOpportunityHandoff ?? null}
+          />
+        );
+      })()}
 
       {(data as any).cockpit ? (
         <AdminCandidateCockpitStrip

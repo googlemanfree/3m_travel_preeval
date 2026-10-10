@@ -1286,6 +1286,8 @@ export const adminCandidateManagementRouter = router({
       let additionalAgencyDossierId: number | null = null;
       let additionalDossierReference: string | null = null;
       if (additionalProcedure) {
+        // Statut « en_cours » (pas « nouveau ») : procédure parallèle intentionnelle,
+        // jamais traitée comme pré-dossier redondant à mettre en corbeille.
         const additionalInserted = await db.insert(agencyDossiers).values({
           fullName: candidate.fullName,
           email: candidate.email,
@@ -1294,10 +1296,12 @@ export const adminCandidateManagementRouter = router({
           nationality: candidate.nationality,
           destination: additionalProcedure.destination,
           visaType: additionalProcedure.visaType,
-          status: "nouveau",
+          status: "en_cours",
           createdByAdmin: admin.email,
           assignedToAdmin: admin.email,
-          adminNotes: input.adminNotes ?? null,
+          adminNotes: input.adminNotes
+            ? `${input.adminNotes}\n[Procédure parallèle intentionnelle]`
+            : "Procédure parallèle intentionnelle (traitement simultané avec le dossier principal).",
           source: "manual_admin",
         });
         additionalAgencyDossierId = Number((additionalInserted as any)[0]?.insertId || 0);
@@ -1307,8 +1311,15 @@ export const adminCandidateManagementRouter = router({
           action: "account_linked",
           changedBy: admin.email || "unknown",
           oldValue: null,
-          newValue: JSON.stringify({ candidateId: candidate.id, email: candidate.email, procedure: 2 }),
-          details: "Seconde procédure rattachée au compte candidat après validation de son second frais d’ouverture",
+          newValue: JSON.stringify({
+            candidateId: candidate.id,
+            email: candidate.email,
+            procedure: 2,
+            parallelWith: dossierReference,
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+          }),
+          details: `Seconde procédure parallèle (${additionalProcedure.destination} · ${additionalProcedure.visaType}) — traitement simultané avec ${dossierReference}`,
         });
       }
       // Case opérationnel + checklist pays/procédure dès l’activation (pilotage dynamique immédiat).
@@ -1357,7 +1368,15 @@ export const adminCandidateManagementRouter = router({
       // Jamais bloquant : l'activation est déjà faite, un échec ici est seulement consigné.
       let archivedDuplicates: string[] = [];
       try {
-        const duplicates = (await loadRedundantPreAccounts(db)).filter((item) => item.kind === "agency_pre_dossier" && item.confidence === "certain" && item.activeDossierReference === dossierReference && item.id !== agencyDossierId);
+        const protectedIds = new Set(
+          [agencyDossierId, additionalAgencyDossierId].filter((id): id is number => typeof id === "number" && id > 0),
+        );
+        const duplicates = (await loadRedundantPreAccounts(db)).filter((item) => (
+          item.kind === "agency_pre_dossier"
+          && item.confidence === "certain"
+          && item.activeDossierReference === dossierReference
+          && !protectedIds.has(item.id)
+        ));
         if (duplicates.length > 0) {
           const archivedResult = await archiveRedundantPreAccounts(db, { items: duplicates.map((item) => ({ kind: item.kind, id: item.id })), adminEmail: admin.email || "unknown" });
           archivedDuplicates = archivedResult.archived.map((item) => item.reference);
@@ -1375,6 +1394,7 @@ export const adminCandidateManagementRouter = router({
         archivedDuplicates,
         additionalAgencyDossierId,
         additionalDossierReference,
+        simultaneousProcedures: Boolean(additionalAgencyDossierId),
         procedure: {
           destination: primaryProcedure.destination,
           visaType: primaryProcedure.visaType,
@@ -1382,6 +1402,14 @@ export const adminCandidateManagementRouter = router({
           checklistAdded: checklistSeed?.added ?? 0,
           checklistLabel: checklistSeed?.label ?? null,
         },
+        additionalProcedure: additionalProcedure && additionalDossierReference
+          ? {
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+            dossierReference: additionalDossierReference,
+            agencyDossierId: additionalAgencyDossierId,
+          }
+          : null,
       };
     }),
 

@@ -125,6 +125,13 @@ export default function AdminPreDossierAccountsPanel({
     previousAccountReference: string;
     dossierReference: string;
     linkedExistingDossier?: boolean;
+    additionalDossierReference?: string | null;
+    simultaneousProcedures?: boolean;
+    additionalProcedure?: {
+      destination: string;
+      visaType: string;
+      dossierReference: string;
+    } | null;
   } | null>(null);
   const [copiedDossierReference, setCopiedDossierReference] = useState(false);
   const activationSuccessTimer = useRef<number | null>(null);
@@ -328,10 +335,14 @@ export default function AdminPreDossierAccountsPanel({
       onSuccess: result => {
         setActivationSuccess(result);
         toast({
-          title: result.linkedExistingDossier
-            ? "Dossier rattaché et activé"
-            : "Dossier activé",
-          description: `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
+          title: result.additionalDossierReference
+            ? "Deux procédures activées en parallèle"
+            : result.linkedExistingDossier
+              ? "Dossier rattaché et activé"
+              : "Dossier activé",
+          description: result.additionalDossierReference
+            ? `${result.dossierReference} et ${result.additionalDossierReference} sont actifs — traitez-les simultanément dans le back-office.`
+            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
         });
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
@@ -747,10 +758,14 @@ export default function AdminPreDossierAccountsPanel({
                 <Check className="h-9 w-9" strokeWidth={3} />
               </div>
               <h3 className="mt-4 text-xl font-black text-emerald-950">
-                Dossier activé avec succès
+                {activationSuccess.simultaneousProcedures || activationSuccess.additionalDossierReference
+                  ? "Deux procédures activées en parallèle"
+                  : "Dossier activé avec succès"}
               </h3>
               <p className="mt-2 text-sm text-emerald-800">
-                L’espace client est maintenant opérationnel.
+                {activationSuccess.simultaneousProcedures || activationSuccess.additionalDossierReference
+                  ? "Les deux dossiers sont actifs et doivent être traités simultanément dans le back-office."
+                  : "L’espace client est maintenant opérationnel."}
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm font-bold">
                 <span className="rounded-lg bg-slate-100 px-3 py-2 font-mono text-slate-600 line-through">
@@ -781,10 +796,31 @@ export default function AdminPreDossierAccountsPanel({
                     <Copy className="h-4 w-4" aria-hidden="true" />
                   )}
                 </button>
+                {activationSuccess.additionalDossierReference ? (
+                  <button
+                    type="button"
+                    data-testid="copy-additional-dossier-reference"
+                    onClick={() =>
+                      void copyDossierReference(
+                        activationSuccess.additionalDossierReference!
+                      )
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 font-mono text-white shadow-sm transition hover:bg-indigo-700"
+                  >
+                    <span>{activationSuccess.additionalDossierReference}</span>
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
               </div>
+              {activationSuccess.additionalProcedure ? (
+                <p className="mt-3 text-xs text-indigo-900" data-testid="dual-activation-summary">
+                  {activationSuccess.dossierReference} + {activationSuccess.additionalProcedure.dossierReference}
+                  {" · "}
+                  {activationSuccess.additionalProcedure.destination} / {activationSuccess.additionalProcedure.visaType}
+                </p>
+              ) : null}
               <p className="mt-4 text-xs text-slate-500">
-                Cliquez sur la nouvelle référence pour la copier dans le
-                presse-papiers.
+                Cliquez sur une référence pour la copier dans le presse-papiers.
               </p>
               <p data-testid="copy-dossier-reference-status" role="status" aria-live="polite" className="sr-only">
                 {copiedDossierReference

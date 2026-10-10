@@ -28,7 +28,7 @@ import { accountReference, agencyDossierReference, resolveClientReference } from
 import { buildCandidateCockpit } from "../../shared/candidateCockpit";
 import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
 import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
-import { attachSiblingProcedures } from "../../shared/clientMultiDossier";
+import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
 import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
@@ -1840,7 +1840,8 @@ export const adminRouter = router({
           new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b, "fr"));
 
-        // Filtrer par statut
+        // Filtrer par statut — on conserve les procédures sœurs (travail + études) du même client.
+        const universeBeforeNarrowFilters = allCandidates;
         if (input.status && input.status !== "ALL") {
           allCandidates = allCandidates.filter(c => c.status === input.status);
         }
@@ -1858,6 +1859,7 @@ export const adminRouter = router({
           const adminEmail = admin.email.toLowerCase();
           allCandidates = allCandidates.filter(c => c.adminAssignedTo?.toLowerCase() === adminEmail);
         }
+        allCandidates = retainSiblingGroupsInFilteredList(allCandidates, universeBeforeNarrowFilters);
 
         // Filtrer par recherche
         if (input.search && input.search.trim()) {
@@ -3778,14 +3780,14 @@ export const adminRouter = router({
             dossierStatus: applications.dossierStatus,
             paymentStatus: applications.paymentStatus,
             agreementSigned: applications.agreementSigned,
-          }).from(applications).where(and(eq(applications.email, email), isNull(applications.deletedAt))).limit(10),
+          }).from(applications).where(and(sql`LOWER(TRIM(${applications.email})) = LOWER(TRIM(${email}))`, isNull(applications.deletedAt))).limit(10),
           db.select({
             id: agencyDossiers.id,
             destination: agencyDossiers.destination,
             visaType: agencyDossiers.visaType,
             status: agencyDossiers.status,
             initialPaymentStatus: agencyDossiers.initialPaymentStatus,
-          }).from(agencyDossiers).where(and(eq(agencyDossiers.email, email), isNull(agencyDossiers.deletedAt))).limit(10),
+          }).from(agencyDossiers).where(and(sql`LOWER(TRIM(${agencyDossiers.email})) = LOWER(TRIM(${email}))`, isNull(agencyDossiers.deletedAt))).limit(10),
         ]).then(([onlineRows, agencyRows]) => {
           const online = onlineRows.map((row) => ({
             id: `online_${row.id}`,
@@ -3796,17 +3798,30 @@ export const adminRouter = router({
             paymentStatus: row.paymentStatus,
             agreementSigned: row.agreementSigned,
             source: "online" as const,
+            procedureLabel: procedureLabelForDossier({
+              visaType: row.visaType,
+              destination: row.destination,
+              dossierNumber: row.dossierNumber,
+            }),
           }));
-          const agency = agencyRows.map((row) => ({
-            id: `agency_${row.id}`,
-            folderCode: `3M-AGN-${String(row.id).padStart(4, "0")}`,
-            projectType: row.visaType,
-            destinationCountry: row.destination,
-            status: row.status,
-            paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
-            agreementSigned: null,
-            source: "agency" as const,
-          }));
+          const agency = agencyRows.map((row) => {
+            const folderCode = `3M-AGN-${String(row.id).padStart(4, "0")}`;
+            return {
+              id: `agency_${row.id}`,
+              folderCode,
+              projectType: row.visaType,
+              destinationCountry: row.destination,
+              status: row.status,
+              paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
+              agreementSigned: null,
+              source: "agency" as const,
+              procedureLabel: procedureLabelForDossier({
+                visaType: row.visaType,
+                destination: row.destination,
+                dossierNumber: folderCode,
+              }),
+            };
+          });
           return [...online, ...agency].filter((row) => row.id !== input.candidateId);
         }),
         [],

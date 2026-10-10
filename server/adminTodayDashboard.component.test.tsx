@@ -7,14 +7,14 @@ import AdminTodayDashboard, { buildTodayItems, type TodayCandidate } from "@/com
 
 afterEach(cleanup);
 const candidates: TodayCandidate[] = [
-  { id: "online_1", fullName: "Aïcha Nkolo", folderCode: "3M-001", destinationCountry: "Canada", journeySla: { tone: "overdue", label: "SLA dépassé · Documents" }, paymentStatus: "SUCCESS", agreementSigned: false, checklistPercent: 60, siblingCount: 1 },
+  { id: "online_1", fullName: "Aïcha Nkolo", folderCode: "3M-001", destinationCountry: "Canada", journeySla: { tone: "overdue", label: "SLA dépassé · Documents" }, paymentStatus: "SUCCESS", agreementSigned: false, checklistPercent: 60, siblingCount: 2 },
   { id: "online_2", fullName: "Jean Mvondo", folderCode: "3M-002", destinationCountry: "France", journeySla: { tone: "soon" }, secondProtocolReady: true, secondProtocolSigned: false },
 ];
 
 describe("tableau admin Aujourd’hui", () => {
   it("agrège SLA, protocoles, checklist et procédures liées", () => {
     const items = buildTodayItems(candidates);
-    expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(["SLA dépassé", "Protocole N°01 à signer", "Checklist sous 80 %", "Arbitrage multi-procédures", "SLA sous 24 h", "Protocole N°02 à signer"]));
+    expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(["SLA dépassé", "Protocole N°01 à signer", "Checklist sous 80 %", "Traitement simultané multi-procédures", "SLA sous 24 h", "Protocole N°02 à signer"]));
   });
   it("expose une actualisation manuelle et ouvre la fiche concernée", () => {
     const refresh = vi.fn();
