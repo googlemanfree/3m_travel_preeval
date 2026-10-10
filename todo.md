@@ -16,4 +16,10 @@
 
 - [x] Contrôler individuellement Pré-dossiers, Activations et Paiements après migration — endpoint sans évaluation HTTP 200 ; Activations affiche 50 comptes, « Renvoyer le lien » et « Confirmer ici » ; Paiements affiche « Bureau reçus & protocoles », 2 protocoles en attente, 1 reçu à préparer, 1 protocole à signer et 4 chaînes complètes.
 - [x] Sauvegarder les preuves d’onglets et créer le checkpoint post-merge.
-- [ ] Confirmer la mise en ligne production : checkpoint prêt, mais aucun outil de publication directe disponible dans cette session ; `/admin` production demande une authentification séparée.
+- [x] Mise en ligne production confirmée par le statut WebDev ; domaine public HTTP 200 et marqueur de build `nogit.202610102106` servis.
+- [ ] Cockpit PR47 : protection admin production confirmée, mais cockpit absent du DOM preview après deux contrôles (avant/après redémarrage) ; blocage runtime à investiguer avec une nouvelle hypothèse.
+
+## PR #47 — cockpit admin contrôle total
+- [x] Vérifier le diff, le test ciblé, TypeScript et le build
+- [x] Vérifier les contrôles cockpit sur la preview authentifiée
+- [x] Marquer prête, fusionner et publier si tout est vert
