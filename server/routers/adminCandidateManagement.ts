@@ -2,7 +2,7 @@
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
-import { and, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -15,6 +15,12 @@ import { loadPilotageQueue } from "../services/pilotageQueueStore";
 import { accountReference, agencyDossierReference, referenceChangeSentence, resolveClientReference } from "../../shared/caseReference";
 import { buildAdminReferenceView } from "../../shared/adminReferenceDisplay";
 import { buildNoEvaluationOutreachDraft } from "../../shared/noEvaluationOutreach";
+import {
+  buildCandidateCockpit,
+  cockpitQueueCategory,
+  COCKPIT_QUEUE_LABELS,
+  type CockpitQueueCategory,
+} from "../../shared/candidateCockpit";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
@@ -316,6 +322,178 @@ export const adminCandidateManagementRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       return loadPilotageQueue(db);
+    }),
+
+  /**
+   * Tableau de contrôle total : files actionnables dérivées du cockpit
+   * (e-mail, évaluation, paiement, activation, protocole, documents).
+   */
+  listCockpitControlBoard: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const [accountRows, evaluationRows, paidApps, receiptRows, pendingDocs, openingPaymentRows] = await Promise.all([
+        db.select({
+          id: candidates.id,
+          fullName: candidates.fullName,
+          email: candidates.email,
+          emailVerified: candidates.emailVerified,
+          evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+          destination: candidates.destination,
+          visaType: candidates.visaType,
+          preferredDestinations: candidates.preferredDestinations,
+          dossierStatus: candidates.dossierStatus,
+          createdAt: candidates.createdAt,
+          updatedAt: candidates.updatedAt,
+        }).from(candidates).where(isNull(candidates.deletedAt)).orderBy(desc(candidates.updatedAt)).limit(1500),
+        db.select({ email: evaluations.email }).from(evaluations).limit(10000),
+        db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          visaType: applications.visaType,
+          agreementSigned: applications.agreementSigned,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          candidateId: applications.candidateId,
+          dossierStatus: applications.dossierStatus,
+        }).from(applications).where(and(eq(applications.paymentStatus, "SUCCESS"), isNull(applications.deletedAt))).orderBy(desc(applications.paymentValidatedAt)).limit(800),
+        db.select({
+          dossierNumber: paymentReceiptApprovals.dossierNumber,
+          candidateEmail: paymentReceiptApprovals.candidateEmail,
+        }).from(paymentReceiptApprovals).limit(3000),
+        db.select({
+          candidateId: candidateFiles.candidateId,
+          uploadedAt: candidateFiles.uploadedAt,
+        }).from(candidateFiles).where(eq(candidateFiles.status, "uploaded")).limit(5000),
+        // Batch unique des paiements d'ouverture — évite N× getOpeningPaymentRecord.
+        db.select({
+          settingKey: agencySettings.settingKey,
+        }).from(agencySettings).where(like(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}%`)).limit(5000),
+      ]);
+
+      const evaluatedEmails = new Set(evaluationRows.map((row) => row.email.trim().toLowerCase()));
+      const receiptByDossier = new Set(receiptRows.map((row) => row.dossierNumber.trim().toUpperCase()));
+      const receiptByEmail = new Set(receiptRows.map((row) => row.candidateEmail.trim().toLowerCase()));
+      const openingPaidIds = new Set<number>();
+      for (const row of openingPaymentRows) {
+        const id = Number(String(row.settingKey).slice(OPENING_PAYMENT_KEY_PREFIX.length));
+        if (Number.isFinite(id) && id > 0) openingPaidIds.add(id);
+      }
+      const pendingDocCount = new Map<number, number>();
+      const oldestPendingDoc = new Map<number, Date>();
+      for (const doc of pendingDocs) {
+        pendingDocCount.set(doc.candidateId, (pendingDocCount.get(doc.candidateId) ?? 0) + 1);
+        const prev = oldestPendingDoc.get(doc.candidateId);
+        if (!prev || new Date(doc.uploadedAt).getTime() < prev.getTime()) {
+          oldestPendingDoc.set(doc.candidateId, new Date(doc.uploadedAt));
+        }
+      }
+
+      const activeEmails = await loadEmailsWithActiveDossier(db);
+      const items: Array<{
+        id: string;
+        openId: string;
+        reference: string;
+        fullName: string;
+        email: string;
+        category: CockpitQueueCategory;
+        categoryLabel: string;
+        stageLabel: string;
+        nextActionLabel: string;
+        urgency: "high" | "normal" | "low";
+        blockers: string[];
+        progressPercent: number;
+      }> = [];
+
+      for (const account of accountRows) {
+        const emailKey = account.email.trim().toLowerCase();
+        const paymentConfirmed = account.dossierStatus !== "nouveau" || openingPaidIds.has(account.id);
+        const cockpit = buildCandidateCockpit({
+          emailVerified: account.emailVerified,
+          evaluationStatus: account.evaluationDeclarationStatus,
+          hasEvaluationRecord: evaluatedEmails.has(emailKey),
+          paymentConfirmed,
+          receiptApproved: receiptByEmail.has(emailKey),
+          protocolSigned: false,
+          dossierActivated: account.dossierStatus !== "nouveau" || activeEmails.has(emailKey),
+          pendingDocuments: pendingDocCount.get(account.id) ?? 0,
+          destination: account.destination,
+          visaType: account.visaType,
+          workflowStatus: account.dossierStatus,
+        });
+        const category = cockpitQueueCategory(cockpit.stage);
+        if (!category) continue;
+        items.push({
+          id: `account:${account.id}:${category}`,
+          openId: `account_${account.id}`,
+          reference: accountReference(account.id),
+          fullName: account.fullName,
+          email: account.email,
+          category,
+          categoryLabel: COCKPIT_QUEUE_LABELS[category],
+          stageLabel: cockpit.stageLabel,
+          nextActionLabel: cockpit.nextAction.label,
+          urgency: cockpit.nextAction.urgency,
+          blockers: cockpit.blockers.map((item) => item.message),
+          progressPercent: cockpit.progressPercent,
+        });
+      }
+
+      for (const app of paidApps) {
+        const emailKey = app.email.trim().toLowerCase();
+        const receiptApproved = receiptByDossier.has(app.dossierNumber.trim().toUpperCase()) || receiptByEmail.has(emailKey);
+        const cockpit = buildCandidateCockpit({
+          emailVerified: true,
+          evaluationStatus: "validated",
+          hasEvaluationRecord: true,
+          paymentConfirmed: true,
+          receiptApproved,
+          protocolSigned: Boolean(app.agreementSigned),
+          dossierActivated: true,
+          pendingDocuments: app.candidateId ? (pendingDocCount.get(app.candidateId) ?? 0) : 0,
+          destination: app.destination,
+          visaType: app.visaType,
+          workflowStatus: app.dossierStatus,
+        });
+        const category = cockpitQueueCategory(cockpit.stage);
+        if (!category || category === "no_evaluation" || category === "email_unverified") continue;
+        items.push({
+          id: `online:${app.id}:${category}`,
+          openId: `online_${app.id}`,
+          reference: app.dossierNumber,
+          fullName: app.fullName,
+          email: app.email,
+          category,
+          categoryLabel: COCKPIT_QUEUE_LABELS[category],
+          stageLabel: cockpit.stageLabel,
+          nextActionLabel: cockpit.nextAction.label,
+          urgency: cockpit.nextAction.urgency,
+          blockers: cockpit.blockers.map((item) => item.message),
+          progressPercent: cockpit.progressPercent,
+        });
+      }
+
+      const urgencyRank = { high: 0, normal: 1, low: 2 } as const;
+      items.sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency] || left.fullName.localeCompare(right.fullName, "fr"));
+
+      const counts = {
+        email_unverified: 0,
+        no_evaluation: 0,
+        payment_pending: 0,
+        ready_to_activate: 0,
+        protocol_pending: 0,
+        documents_pending: 0,
+        high: items.filter((item) => item.urgency === "high").length,
+        total: items.length,
+      } as Record<CockpitQueueCategory | "high" | "total", number>;
+      for (const item of items) counts[item.category] += 1;
+
+      return { counts, items: items.slice(0, 200), labels: COCKPIT_QUEUE_LABELS };
     }),
 
   /**

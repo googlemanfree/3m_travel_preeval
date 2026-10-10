@@ -20,6 +20,7 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
+import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import ProcedureStepper from "@/components/ProcedureStepper";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
@@ -683,23 +684,35 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </Button>
       </div>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:col-span-2">
-          <div className="flex items-start gap-3">
-            <FolderKanban className="mt-0.5 h-5 w-5 text-blue-700" />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Prochaine action</p>
-              <p className="mt-1 font-semibold text-slate-900">{nextAction.label}</p>
-              <p className="mt-1 text-sm text-slate-600">{nextAction.description}</p>
+      {(data as any).cockpit ? (
+        <AdminCandidateCockpitStrip
+          cockpit={(data as any).cockpit}
+          onOpenTab={(tab) => setActiveTab(tab)}
+        />
+      ) : (
+        <section className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:col-span-2">
+            <div className="flex items-start gap-3">
+              <FolderKanban className="mt-0.5 h-5 w-5 text-blue-700" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Prochaine action</p>
+                <p className="mt-1 font-semibold text-slate-900">{nextAction.label}</p>
+                <p className="mt-1 text-sm text-slate-600">{nextAction.description}</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Échéance</p>
-          <p className="mt-2 text-sm font-medium text-slate-800">{formatDate(operationalCase.dueAt)}</p>
-          <p className="mt-1 text-xs text-slate-500">{PRIORITY_LABELS[operationalCase.priority] ?? operationalCase.priority}</p>
-        </div>
-      </section>
+          <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Échéance</p>
+            <p className="mt-2 text-sm font-medium text-slate-800">{formatDate(operationalCase.dueAt)}</p>
+            <p className="mt-1 text-xs text-slate-500">{PRIORITY_LABELS[operationalCase.priority] ?? operationalCase.priority}</p>
+          </div>
+        </section>
+      )}
+      <div className="rounded-xl border border-amber-100 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
+        Échéance dossier : <strong>{formatDate(operationalCase.dueAt)}</strong>
+        {" · "}
+        Priorité : {PRIORITY_LABELS[operationalCase.priority] ?? operationalCase.priority}
+      </div>
 
       <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[

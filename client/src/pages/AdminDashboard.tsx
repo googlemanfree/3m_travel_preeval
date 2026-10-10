@@ -95,6 +95,8 @@ import AdminContractsReceiptsDesk from "@/components/AdminContractsReceiptsDesk"
 import AdminNoEvaluationOutreachPanel from "@/components/AdminNoEvaluationOutreachPanel";
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
+import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
+import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -606,6 +608,15 @@ export function CandidateDetailModal({
 
             {isPreDossierAccount ? (
               <>
+                {(data as any)?.cockpit ? (
+                  <AdminCandidateCockpitStrip
+                    cockpit={(data as any).cockpit}
+                    onOpenTab={(tab) => {
+                      if (tab === "evaluation") setEvaluationEditorOpen(true);
+                      else setCandidate360Tab(tab);
+                    }}
+                  />
+                ) : null}
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
@@ -1995,6 +2006,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="pilotage" className="space-y-6"><AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
             <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+            <AdminCockpitControlBoard sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminDelayStats sessionToken={sessionToken} />
             <Card className="border-amber-200 bg-amber-50/70">
