@@ -1143,7 +1143,7 @@ export default function AdminPreDossierAccountsPanel({
                 <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                   <div>
                     <p className="text-sm font-semibold text-blue-950">Deux procédures en parallèle</p>
-                    <p className="text-xs leading-5 text-blue-800">Chaque procédure doit avoir son propre frais d’ouverture et sa propre référence de transaction.</p>
+                    <p className="text-xs leading-5 text-blue-800">Règle : 1 dossier = 1 paiement. Le second dossier exige un second frais d’ouverture et une seconde référence de transaction — le premier paiement ne débloque pas la seconde procédure.</p>
                   </div>
                   <Button
                     type="button"

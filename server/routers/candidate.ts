@@ -2577,6 +2577,14 @@ export const candidateRouter = router({
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
       : null;
+    // 1 dossier = 1 paiement : le jalon « payé » suit STRICTEMENT la procédure
+    // sélectionnée (en ligne ou agence), jamais un OR sur les autres dossiers du compte.
+    const selectedProcedurePaymentConfirmed = activeApp
+      ? activeApp.paymentStatus === "SUCCESS"
+      : Boolean(activeAgencyDossier && activeAgencyDossier.initialPaymentStatus === "paid");
+    const selectedProcedurePaymentRequested = activeApp
+      ? Boolean(activeApp.paymentOpeningRequestedAt || activeApp.activationRequestedAt)
+      : Boolean(activeAgencyDossier);
     const candidateHasTrackedDossier = Boolean((candidate as any).dossierNumber)
       || candidate.dossierStatus !== "nouveau"
       || candidate.evaluationDeclarationStatus === "validated";
@@ -2585,16 +2593,21 @@ export const candidateRouter = router({
     // dossier agence, quand il existe, est celui réellement traité par
     // l'administration : il doit primer, sinon l'espace client continue
     // d'afficher l'ancienne référence même après l'activation.
-    const dashboardDossierNumber = activeAgencyDossierNumber
-      || activeApp?.dossierNumber
-      || (candidate as any).dossierNumber
-      || (candidateHasTrackedDossier ? accountReference(candidate.id) : null)
-      || "N/A";
+    // Exception : si le candidat a explicitement choisi une candidature en ligne
+    // (selectedApp), on conserve sa référence pour ne pas masquer le paiement
+    // de cette procédure derrière le dossier agence d’un autre projet.
+    const dashboardDossierNumber = selectedApp
+      ? (activeApp?.dossierNumber || "N/A")
+      : (activeAgencyDossierNumber
+        || activeApp?.dossierNumber
+        || (candidate as any).dossierNumber
+        || (candidateHasTrackedDossier ? accountReference(candidate.id) : null)
+        || "N/A");
     // Référence lue par le client : numéro de dossier actif « 3M-… » dès l'activation, référence de compte avant.
     // `dossierNumber` reste la clé technique (paiement, pièces) ; l'affichage passe par `reference`.
     const clientReference = resolveClientReference({
       candidateId: candidate.id,
-      agencyDossier: activeAgencyDossier ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
+      agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
       onlineApplication: activeApp ? { dossierNumber: activeApp.dossierNumber, paymentStatus: activeApp.paymentStatus, paymentValidatedAt: (activeApp as any).paymentValidatedAt ?? null } : null,
     });
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
@@ -2643,12 +2656,25 @@ export const candidateRouter = router({
         createdAt: candidate.createdAt,
       },
       activeDossier: activeApp,
+      activeAgencyDossier: activeAgencyDossier
+        ? {
+            id: activeAgencyDossier.id,
+            dossierNumber: activeAgencyDossierNumber,
+            destination: activeAgencyDossier.destination,
+            visaType: activeAgencyDossier.visaType,
+            status: activeAgencyDossier.status,
+            paymentStatus: activeAgencyDossier.initialPaymentStatus === "paid" ? "SUCCESS" : activeAgencyDossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+            initialPaymentStatus: activeAgencyDossier.initialPaymentStatus,
+            createdAt: activeAgencyDossier.createdAt,
+          }
+        : null,
       workflow: {
-        paymentConfirmed: activeApp?.paymentStatus === "SUCCESS",
-        paymentOpeningRequested: Boolean(activeApp?.paymentOpeningRequestedAt),
+        // Paiement de LA procédure affichée uniquement (jamais un OR sur les sœurs).
+        paymentConfirmed: selectedProcedurePaymentConfirmed,
+        paymentOpeningRequested: selectedProcedurePaymentRequested,
         evaluationClientConfirmed: Boolean(activeApp?.evaluationClientConfirmedAt),
-        activationRequested: Boolean(activeApp?.activationRequestedAt),
-        appointmentUnlocked: Boolean(activeApp?.activationRequestedAt),
+        activationRequested: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
+        appointmentUnlocked: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
         agreementSigned: Boolean(activeApp?.agreementSigned),
         showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
         secondAgreementReady: Boolean(activeApp?.secondAgreementReadyAt),
@@ -2669,7 +2695,13 @@ export const candidateRouter = router({
               projectType: (activeApp as any).projectType || clientEvaluations[0]?.projectType || null,
               dossierNumber: activeApp.dossierNumber,
             }
-          : null,
+          : activeAgencyDossier
+            ? {
+                destination: activeAgencyDossier.destination || candidate.destination || null,
+                projectType: activeAgencyDossier.visaType || clientEvaluations[0]?.projectType || null,
+                dossierNumber: activeAgencyDossierNumber,
+              }
+            : null,
       },
       applications: appRows,
       onlineDossiers,

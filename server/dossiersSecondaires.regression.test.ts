@@ -28,4 +28,10 @@ describe("dossiers secondaires travail + études", () => {
     expect(dashboard).toContain("siblingProcedures");
     expect(dashboard).toContain("procédures · même client");
   });
+
+  it("rappelle qu’un second dossier exige un second paiement", () => {
+    const page = read("client/src/pages/EvaluationSpace.tsx");
+    expect(page).toContain("1 dossier = 1 paiement");
+    expect(page).toContain("second dossier exige un second règlement");
+  });
 });

@@ -60,4 +60,13 @@ describe("sélection d'un dossier parmi plusieurs (espace client)", () => {
     expect(paymentSource).toContain(".input(z.object({ dossierNumber: z.string().min(3).max(50) }))");
     expect(paymentSource).toContain("ensureApplicationOwnership(application, ctx.user.id)");
   });
+
+  it("le résumé client n’OR pas le paiement des dossiers sœurs (1 dossier = 1 paiement)", () => {
+    const block = summarySource.slice(
+      summarySource.indexOf("getClientDashboardSummary:"),
+      summarySource.indexOf("saveDestinationComparison:"),
+    );
+    expect(block).toContain("selectedProcedurePaymentConfirmed");
+    expect(block).toContain("paymentConfirmed: selectedProcedurePaymentConfirmed");
+  });
 });

@@ -1044,7 +1044,7 @@ function ImportAgencyModal({
             </div>
 
             <div>
-              <Label htmlFor="initialPaymentStatus">Statut de paiement initial</Label>
+              <Label htmlFor="initialPaymentStatus">Statut de paiement initial (ce dossier uniquement)</Label>
               <Select value={form.initialPaymentStatus} onValueChange={(v) => setField("initialPaymentStatus", v)}>
                 <SelectTrigger id="initialPaymentStatus"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -1053,6 +1053,7 @@ function ImportAgencyModal({
                   <SelectItem value="paid">Payé en agence</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-xs text-slate-500">1 dossier = 1 paiement : un second dossier pour le même client reste non payé tant que vous ne validez pas son propre règlement.</p>
             </div>
 
             <div>

@@ -375,6 +375,7 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const activeAgencyDossier = (dashboardData as { activeAgencyDossier?: { dossierNumber?: string | null; paymentStatus?: string | null; initialPaymentStatus?: string | null; destination?: string | null; visaType?: string | null; status?: string | null } | null }).activeAgencyDossier ?? null;
   const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""}`));
   const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
     procedureLabelForDossier(dossier);
@@ -383,6 +384,7 @@ export default function EvaluationSpace() {
     dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
       ? rawCProfile.dossierNumber
       : activeDossier?.dossierNumber
+        || activeAgencyDossier?.dossierNumber
         || ((rawCProfile.dossierStatus !== "nouveau" || rawCProfile.evaluationDeclarationStatus === "validated")
           ? accountReference(rawCProfile.id)
           : "N/A"),
@@ -391,6 +393,15 @@ export default function EvaluationSpace() {
   const displayReference: string = (rawCProfile as any).reference?.reference ?? cProfile.dossierNumber;
   const formerAccountReference: string | null = (rawCProfile as any).reference?.formerAccountReference ?? null;
   const workflow = dashboardData.workflow;
+  // Paiement / carte : toujours la procédure sélectionnée (en ligne ou agence), jamais un OR sur les sœurs.
+  const paymentDossierNumber = activeDossier?.dossierNumber
+    || activeAgencyDossier?.dossierNumber
+    || (selectedDossierNumber ?? null)
+    || cProfile.dossierNumber;
+  const procedurePaymentConfirmed = Boolean(workflow?.paymentConfirmed);
+  const hasSiblingUnpaidProcedure = onlineDossiers.length > 1
+    && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() === "SUCCESS")
+    && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() !== "SUCCESS");
   const portraitIsMissing = !cProfile.avatarUrl;
   // Pays précis déclarés à l'inscription (jusqu'à 3). Prioritaire sur cProfile.destination, qui ne
   // reste qu'une catégorie large ("europe", "golfe"...) insuffisante pour la checklist et le score.
@@ -498,8 +509,8 @@ export default function EvaluationSpace() {
     evaluationStatus: cProfile.evaluationDeclarationStatus,
     milestones: {
       evaluationClientConfirmed: Boolean((cProfile as any).evaluationClientConfirmedAt),
-      activationRequested: Boolean((cProfile as any).activationRequestedAt),
-      paymentConfirmed: String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid",
+      activationRequested: Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested),
+      paymentConfirmed: procedurePaymentConfirmed,
     },
   });
   const nextStep = computeNextStep({
@@ -586,7 +597,7 @@ export default function EvaluationSpace() {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
             <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
             {onlineDossiers.map((dossier) => {
-              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
+              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
                 <button
@@ -640,10 +651,15 @@ export default function EvaluationSpace() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
-              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " (double opportunité possible : travail + études)" : ""}, avec la prochaine action à effectuer pour chacun.</p>
+              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " (double opportunité possible : travail + études — 1 dossier = 1 paiement)" : ""}, avec la prochaine action à effectuer pour chacun.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
+          {hasSiblingUnpaidProcedure && (
+            <p className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-950" data-testid="per-dossier-payment-reminder" role="status">
+              Chaque dossier a son propre frais d’ouverture. Le paiement d’un dossier ne règle pas les autres : sélectionnez le dossier encore « Paiement à confirmer » pour le régler.
+            </p>
+          )}
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
@@ -700,8 +716,8 @@ export default function EvaluationSpace() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               <NextStepCard step={nextStep} onAct={actOnNextStep} />
-              <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={Boolean(workflow?.paymentConfirmed)} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
-              <DossierPaymentCard dossierNumber={activeDossier?.dossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={Boolean(workflow?.paymentConfirmed)} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
+              <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={procedurePaymentConfirmed} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
+              <DossierPaymentCard dossierNumber={paymentDossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={procedurePaymentConfirmed} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
               <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
@@ -1017,7 +1033,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
+              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested)} paymentConfirmed={procedurePaymentConfirmed} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1377,7 +1393,7 @@ export default function EvaluationSpace() {
           <DialogHeader>
             <DialogTitle>Ajouter une seconde opportunité</DialogTitle>
             <DialogDescription>
-              Ouvrez un dossier distinct (visa travail et visa études) pour maximiser vos chances. Chaque procédure a son propre suivi, son paiement d’ouverture et son numéro de dossier.
+              Ouvrez un dossier distinct (visa travail et visa études) pour maximiser vos chances. Règle : 1 dossier = 1 paiement d’ouverture — le second dossier exige un second règlement, avec son propre numéro et son propre suivi.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3" role="radiogroup" aria-label="Type de seconde procédure">
