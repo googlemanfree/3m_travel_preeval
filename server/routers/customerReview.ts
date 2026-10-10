@@ -164,7 +164,7 @@ export const customerReviewRouter = router({
       .from(customerReviews)
       .where(and(eq(customerReviews.status, "approved"), eq(customerReviews.consentToPublish, true)))
       .orderBy(desc(customerReviews.createdAt), asc(customerReviews.id))
-      .limit(30);
+      .limit(40);
 
     return rows.map(toPublicApprovedReview);
   }),

@@ -18,7 +18,7 @@ interface Review {
   createdAt?: string | Date;
 }
 
-type DestinationFilter = "all" | "canada" | "schengen" | "other";
+type DestinationFilter = "all" | "canada" | "schengen" | "chine" | "other";
 type SortOption = "rating-desc" | "rating-asc" | "date-desc" | "date-asc";
 
 async function shareReview(review: Review) {
@@ -98,6 +98,11 @@ function isSchengenReview(review: Review) {
   return SCHENGEN_DESTINATIONS.some((country) => destination.includes(country));
 }
 
+function isChineReview(review: Review) {
+  const destination = (review.destinationCountry ?? "").toLocaleLowerCase("fr-FR");
+  return destination.includes("chine") || destination.includes("china") || destination.includes("中国");
+}
+
 function formatReviewDate(value: Review["createdAt"], language: "fr" | "en") {
   if (!value) return "";
   const date = new Date(value);
@@ -133,7 +138,8 @@ export default function ApprovedReviewsSection() {
         destinationFilter === "all" ||
         (destinationFilter === "canada" && isCanadaReview(review)) ||
         (destinationFilter === "schengen" && isSchengenReview(review)) ||
-        (destinationFilter === "other" && !isCanadaReview(review) && !isSchengenReview(review));
+        (destinationFilter === "chine" && isChineReview(review)) ||
+        (destinationFilter === "other" && !isCanadaReview(review) && !isSchengenReview(review) && !isChineReview(review));
 
       if (!matchesDestination) return false;
       if (!normalizedQuery) return true;
@@ -213,6 +219,7 @@ export default function ApprovedReviewsSection() {
         all: "All destinations",
         canada: "Canada",
         schengen: "Schengen Area",
+        chine: "China",
         other: "Other destinations",
         searchPlaceholder: "Search a country, service or keyword...",
         searchLabel: "Search testimonials",
@@ -245,6 +252,7 @@ export default function ApprovedReviewsSection() {
         all: "Toutes les destinations",
         canada: "Canada",
         schengen: "Espace Schengen",
+        chine: "Chine",
         other: "Autres destinations",
         searchPlaceholder: "Rechercher un pays, un service ou un mot-clé...",
         searchLabel: "Rechercher dans les témoignages",
@@ -323,6 +331,7 @@ export default function ApprovedReviewsSection() {
     { value: "all", label: labels.all },
     { value: "canada", label: labels.canada, flag: "🇨🇦" },
     { value: "schengen", label: labels.schengen, flag: "🇪🇺" },
+    { value: "chine", label: labels.chine, flag: "🇨🇳" },
     { value: "other", label: labels.other, flag: "🌍" },
   ];
 
@@ -406,7 +415,9 @@ export default function ApprovedReviewsSection() {
                         ? "bg-red-600 text-white shadow-md shadow-red-500/25"
                         : option.value === "schengen"
                           ? "bg-blue-800 text-white shadow-md shadow-blue-900/25"
-                          : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                          : option.value === "chine"
+                            ? "bg-amber-700 text-white shadow-md shadow-amber-800/25"
+                            : "bg-blue-600 text-white shadow-md shadow-blue-500/25"
                       : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >

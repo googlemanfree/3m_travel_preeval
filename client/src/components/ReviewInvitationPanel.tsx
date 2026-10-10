@@ -9,6 +9,7 @@ import {
   buildReviewInviteUrl,
   buildReviewInviteWhatsAppUrl,
 } from "@/lib/reviewInvitation";
+import { REVIEW_INVITE_CAMPAIGN_CM_CI, type ReviewInviteCampaignSlot } from "@/data/reviewInviteCampaignCmCi";
 
 /**
  * Prépare l'invitation d'un client à donner son avis. Rien n'est envoyé d'ici : l'équipe ouvre WhatsApp ou copie le
@@ -19,6 +20,13 @@ export default function ReviewInvitationPanel() {
   const [phone, setPhone] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [destination, setDestination] = useState("");
+  const [campaignSlotId, setCampaignSlotId] = useState("");
+
+  const applyCampaignSlot = (slot: ReviewInviteCampaignSlot) => {
+    setCampaignSlotId(slot.id);
+    setServiceType(slot.serviceType);
+    setDestination(slot.destinationCountry);
+  };
 
   const url = useMemo(() => buildReviewInviteUrl({ serviceType, destinationCountry: destination }), [serviceType, destination]);
   const message = useMemo(() => buildReviewInviteMessage({ firstName, url }), [firstName, url]);
@@ -37,7 +45,24 @@ export default function ReviewInvitationPanel() {
   return (
     <Card className="mb-6 p-5" aria-labelledby="review-invite-title" data-testid="review-invitation-panel">
       <h2 id="review-invite-title" className="flex items-center gap-2 text-lg font-black text-slate-950"><Send className="h-5 w-5 text-blue-700" aria-hidden="true" /> Inviter un client à donner son avis</h2>
-      <p className="mt-1 text-sm text-slate-600">Le client dépose son avis lui-même, avec son accord de publication ; il apparaît ici pour modération. Invitez les clients de façon neutre, y compris ceux dont le dossier s’est mal passé : ne triez pas.</p>
+      <p className="mt-1 text-sm text-slate-600">Le client dépose son avis lui-même, avec son accord de publication ; il apparaît ici pour modération. Invitez les clients de façon neutre, y compris ceux dont le dossier s’est mal passé : ne triez pas. Les 40 créneaux CM/CI ci-dessous préremplissent destination et service — jamais un faux témoignage.</p>
+      <label className="mt-4 block text-xs font-medium text-slate-700">Campagne CM / CI · Canada · Schengen · Chine (40 créneaux)
+        <select
+          value={campaignSlotId}
+          onChange={(event) => {
+            const slot = REVIEW_INVITE_CAMPAIGN_CM_CI.find((item) => item.id === event.target.value);
+            if (slot) applyCampaignSlot(slot);
+            else setCampaignSlotId("");
+          }}
+          className={fieldClass}
+          data-testid="review-invite-campaign-slot"
+        >
+          <option value="">Choisir un créneau d’invitation…</option>
+          {REVIEW_INVITE_CAMPAIGN_CM_CI.map((slot) => (
+            <option key={slot.id} value={slot.id}>{slot.label} · {slot.origin}</option>
+          ))}
+        </select>
+      </label>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="text-xs font-medium text-slate-700">Prénom du client<input value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={40} className={fieldClass} placeholder="Ex. Aïcha" /></label>
         <label className="text-xs font-medium text-slate-700">Numéro WhatsApp (facultatif)<input value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" maxLength={20} className={fieldClass} placeholder="Ex. 237 6 98 10 48 32" /></label>
