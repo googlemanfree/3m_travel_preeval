@@ -74,3 +74,10 @@
 - [x] Restaurer les assets manquants sans déplacer de média dans `client/public` si un chemin de stockage est requis — aucun asset n’était à restaurer dans cette itération ; les chemins de stockage existants sont conservés.
 - [x] Relancer `pnpm run check` et `pnpm test` — check vert ; 576 fichiers réussis/1 ignoré ; 3 113 tests réussis/26 ignorés ; checkpoint prêt `ce1c2fbd`.
 - [ ] Publier le checkpoint `ce1c2fbd` sur la production et relever un marqueur live correspondant — aucune action de publication WebDev distincte n’est exposée dans cette session ; le domaine public sert encore `nogit.202610102302`, antérieur aux corrections.
+
+## PR #53 — traitement aligné sur les guides PDF
+- [x] Auditer le statut GitHub, le diff et les checks de `cursor/traitement-procedure-pdf-eda6` — PR53 `MERGEABLE/CLEAN`, 2 commits, 32 fichiers, aucun check GitHub bloquant.
+- [x] Fusionner PR53 et synchroniser le projet WebDev sur `main` — squash merge `4a7e5e02`; checkout local et preview synchronisés sur ce commit.
+- [ ] Vérifier recherche accueil, résumés `/guide-procedures` et affichage dossier pays/visa/phase/résumé PDF — la republication du main fusionné doit d’abord actualiser le bundle accueil ; les sections vedettes/résumés sont absentes du DOM live actuel ; admin et espace client restent protégés, aucun dossier réel modifié.
+- [ ] Publier le main fusionné après synchronisation et confirmer le marqueur live — le déploiement précédent sert `nogit.202610102342`, mais le bundle live ne reflète pas encore les composants PR53 ; aucun clic d’activation, paiement ou changement de statut.
+- [ ] Valider sur une session authentifiée admin et espace client l’affichage pays/visa, phase en cours/suivante et résumé PDF, sans mutation métier.
