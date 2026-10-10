@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ShieldCheck, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, ShieldCheck, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   PROOF_COLLAPSED_COUNT,
@@ -24,6 +24,43 @@ export type ProofGallerySectionProps = {
   /** N’affiche rien si aucune preuve pour le filtre (après repli). */
   hideWhenEmpty?: boolean;
 };
+
+function ProofImage({ photo }: { photo: (typeof PROOF_PHOTOS)[number] }) {
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="relative aspect-[4/3] overflow-hidden bg-slate-100" data-testid="proof-image-frame">
+      {loading && !failed && (
+        <span
+          className="absolute inset-0 z-10 flex items-center justify-center bg-slate-100/90 text-blue-700"
+          data-testid="proof-image-loading"
+          aria-label="Chargement de l’image"
+        >
+          <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+        </span>
+      )}
+      {failed ? (
+        <div className="flex h-full items-center justify-center px-4 text-center text-xs font-semibold text-slate-500" role="img" aria-label={photo.alt}>
+          Image temporairement indisponible
+        </div>
+      ) : (
+        <img
+          src={photo.src}
+          alt={photo.alt}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoading(false)}
+          onError={() => {
+            setLoading(false);
+            setFailed(true);
+          }}
+          className={`h-full w-full object-cover transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:scale-105 ${loading ? "opacity-0" : "opacity-100"}`}
+        />
+      )}
+    </div>
+  );
+}
 
 /** Si études/placements sont vides, on montre les visas (preuves de mobilité). */
 function resolveFilter(filter: ProofFilter): ProofFilter {
@@ -90,8 +127,8 @@ export default function ProofGallerySection({
     <section aria-labelledby="proof-gallery-title" className={className} data-testid="proof-gallery-section">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 text-center">
-          <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> {t("Preuves réelles · données masquées", "Real proofs · redacted data")}
+            <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> {t("Preuves et contextes documentaires", "Documentary proofs and context")}
           </p>
           <h2 id="proof-gallery-title" className="premium-section-title mt-4 text-2xl md:text-3xl">
             {t(
@@ -102,9 +139,9 @@ export default function ProofGallerySection({
           <p className="premium-section-lead mx-auto text-center">
             {t(
               leadFr ??
-                "Extraits de dossiers réellement traités par 3M TRAVEL AGENCY, classés par type de procédure (visas, études, immigration, placements). Identités masquées, avec l’accord des candidats.",
-              leadEn ??
-                "Excerpts from files actually handled by 3M TRAVEL AGENCY, sorted by procedure type (visas, studies, immigration, placements). Identities redacted, with candidate consent.",
+                "Extraits de dossiers traités par 3M TRAVEL AGENCY et illustrations de parcours, classés par procédure. Les documents sont masqués et les illustrations ne constituent pas une promesse de placement.",
+                leadEn ??
+                "Excerpts from files handled by 3M TRAVEL AGENCY and journey illustrations, sorted by procedure. Documents are redacted; illustrations are not a promise of placement.",
             )}
           </p>
           {!lockFilter && (
@@ -141,18 +178,17 @@ export default function ProofGallerySection({
                 lastFocused.current = event.currentTarget;
                 setOpenIndex(index);
               }}
-              className="group overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="group overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-                <img
-                  src={photo.src}
-                  alt={photo.alt}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <p className="p-3 text-xs font-semibold text-slate-700">{photo.caption}</p>
+              <ProofImage photo={photo} />
+              <p className="p-3 text-xs font-semibold text-slate-700">
+                {photo.kind === "context" && (
+                  <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-amber-700">
+                    {t("Illustration contextuelle", "Context illustration")}
+                  </span>
+                )}
+                {photo.caption}
+              </p>
             </button>
           ))}
         </div>

@@ -13,3 +13,9 @@
 - [x] Lancer le déploiement en production (Fait : via checkpoint main)
 - [x] Vérifier le rendu visuel et l'ordre des sections en production (Fait : OK)
 - [x] Générer un résumé sous forme de slides pour l'équipe (Fait : Deck HTML livré)
+
+## Galerie contextuelle et sûreté des assets — 2026-10-10
+- [x] Ajouter une preuve contextuelle Immigration
+- [x] Ajouter une preuve contextuelle Placements
+- [x] Ajouter un test qui bloque les placeholders SVG dans les mappings
+- [x] Ajouter hover fluide et indicateur de chargement aux galeries

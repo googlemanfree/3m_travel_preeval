@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getDestinationGallerySheet, proofFilterForProcedure } from "../client/src/data/destinationGallery";
 import { FEATURED_AFRICA_CARRIERS } from "../client/src/data/flightDiscovery";
+import { filterProofPhotos, PROOF_PHOTOS, proofFilterCounts } from "../client/src/data/proofPhotos";
+import { isVisualAssetPathAllowed } from "../client/src/data/premiumVisuals";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
@@ -21,6 +23,22 @@ describe("enrichissement visuel complet", () => {
     expect(proofFilterForProcedure("visiteur")).toBe("visas");
   });
 
+  it("publie des preuves dédiées pour immigration et placements", () => {
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").length).toBeGreaterThan(0);
+    expect(filterProofPhotos(PROOF_PHOTOS, "placements").length).toBeGreaterThan(0);
+    expect(filterProofPhotos(PROOF_PHOTOS, "placements").every((photo) => photo.kind === "context")).toBe(true);
+    expect(proofFilterCounts(PROOF_PHOTOS).map((entry) => entry.filter)).toEqual(
+      expect.arrayContaining(["immigration", "placements"]),
+    );
+  });
+
+  it("refuse les placeholders SVG dans les mappings visuels", () => {
+    const visuals = read("client/src/data/premiumVisuals.ts");
+    expect(visuals).not.toMatch(/\/manus-storage\/[^"']+\.svg(?:["'?])/i);
+    expect(isVisualAssetPathAllowed("/manus-storage/real-photo.jpg")).toBe(true);
+    expect(isVisualAssetPathAllowed("/manus-storage/placeholder.svg")).toBe(false);
+  });
+
   it("enrichit les compagnies aériennes avec hub et corridor", () => {
     expect(FEATURED_AFRICA_CARRIERS.length).toBeGreaterThanOrEqual(8);
     for (const carrier of FEATURED_AFRICA_CARRIERS) {
@@ -37,6 +55,7 @@ describe("enrichissement visuel complet", () => {
     const admin = read("client/src/pages/AdminDestinationMedia.tsx");
     const seo = read("client/src/lib/pageSeo.ts");
     const prerender = read("server/publicPrerender.ts");
+    const gallery = read("client/src/components/ProofGallerySection.tsx");
     expect(country).toContain("DestinationVisualSheet");
     expect(country).toContain("ProofGallerySection");
     expect(country).toContain("setPageSeo");
@@ -48,5 +67,8 @@ describe("enrichissement visuel complet", () => {
     expect(seo).toContain("og:image");
     expect(prerender).toContain("getCataloguedDestinationImage");
     expect(prerender).toContain("getServiceVisual");
+    expect(gallery).toContain("proof-image-loading");
+    expect(gallery).toContain("group-hover:scale-105");
+    expect(gallery).toContain("Illustration contextuelle");
   });
 });

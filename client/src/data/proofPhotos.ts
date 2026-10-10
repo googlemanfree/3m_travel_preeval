@@ -5,6 +5,7 @@ export type ProofPhoto = {
   alt: string;
   caption: string;
   category: ProofCategory;
+  kind?: "proof" | "context";
 };
 
 export const PROOF_CATEGORY_LABELS: Record<ProofCategory, { fr: string; en: string }> = {
@@ -21,6 +22,19 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     alt: "Parcours d’études en France présenté sans donnée personnelle identifiable",
     caption: "Parcours études — préparation et suivi du dossier académique",
     category: "etudes",
+  },
+  {
+    src: "/manus-storage/proof-immigration-canada_661463c1.jpg",
+    alt: "Document de parcours d’immigration Canada avec les informations personnelles masquées",
+    caption: "Immigration — exemple de document de parcours traité avec données masquées",
+    category: "immigration",
+  },
+  {
+    src: "/manus-storage/proof-placement-context_b6484919.jpg",
+    alt: "Illustration contextuelle d’un parcours professionnel international, sans promesse de placement",
+    caption: "Placements — illustration du parcours professionnel international, sans promesse de résultat",
+    category: "placements",
+    kind: "context",
   },
   {
     src: "/proof-photos/proof-letter-1.jpg",

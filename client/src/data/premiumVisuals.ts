@@ -173,6 +173,10 @@ const REGIONAL_LOCAL_FALLBACK: Record<string, string> = {
   luxembourg: "belgique",
 };
 
+export function isVisualAssetPathAllowed(path: string | undefined): path is string {
+  return Boolean(path && /^(\/manus-storage|\/photos-pays|\/photos-canada)\//.test(path) && !/\.svg(?:$|\?)/i.test(path));
+}
+
 export function getDestinationVisual(slugOrId: string): VisualSources | null {
   const slug = normalizeDestinationSlug(slugOrId);
   if (!slug) return null;
@@ -181,7 +185,8 @@ export function getDestinationVisual(slugOrId: string): VisualSources | null {
   const local = getCountryPhotos(slug)[0]?.src;
   const regionalSlug = REGIONAL_LOCAL_FALLBACK[slug];
   const regionalLocal = regionalSlug ? getCountryPhotos(regionalSlug)[0]?.src : undefined;
-  const desktop = manus ?? local ?? regionalLocal;
+  const safeManus = isVisualAssetPathAllowed(manus) ? manus : undefined;
+  const desktop = safeManus ?? local ?? regionalLocal;
   if (!desktop) return null;
 
   const localFallback = (local && local !== desktop ? local : undefined)
@@ -189,7 +194,7 @@ export function getDestinationVisual(slugOrId: string): VisualSources | null {
 
   return {
     desktop,
-    mobile: manus ?? local ?? regionalLocal ?? desktop,
+    mobile: safeManus ?? local ?? regionalLocal ?? desktop,
     localFallback,
     alt: DESTINATION_ALT[slug] ?? `Destination ${slug}`,
   };
