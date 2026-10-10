@@ -2,15 +2,54 @@ import { useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { DESTINATIONS_20, REGION_ORDER, type Destination20 } from "@/data/destinations20";
+import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 
 const FEATURED = [
-  { slug: "allemagne-formation", name: "Allemagne", flag: "🇩🇪", label: "Cours de langue & Ausbildung" },
-  { slug: "autriche-formation", name: "Autriche", flag: "🇦🇹", label: "Lehre & Red-White-Red Card" },
-  { slug: "suisse-formation", name: "Suisse", flag: "🇨🇭", label: "Formation professionnelle initiale" },
+  { slug: "allemagne-formation", name: "Allemagne", flag: "🇩🇪", label: "Cours de langue & Ausbildung", visualSlug: "allemagne" },
+  { slug: "autriche-formation", name: "Autriche", flag: "🇦🇹", label: "Lehre & Red-White-Red Card", visualSlug: "autriche" },
+  { slug: "suisse-formation", name: "Suisse", flag: "🇨🇭", label: "Formation professionnelle initiale", visualSlug: "suisse" },
 ];
 
 function destinationHref(destination: Destination20) {
   return destination.existingPageUrl ?? `/procedures/${destination.slug}`;
+}
+
+function DestinationVisualCard({
+  href,
+  flag,
+  name,
+  label,
+  visualSlug,
+}: {
+  href: string;
+  flag: string;
+  name: string;
+  label: string;
+  visualSlug: string;
+}) {
+  const visual = getDestinationVisual(visualSlug) ?? getServiceVisual("mobilite");
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden">
+        <PremiumCoverImage
+          visual={visual}
+          className="h-full w-full"
+          imgClassName="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-lg leading-none shadow-sm" aria-hidden="true">
+          {flag}
+        </span>
+      </div>
+      <div className="p-5">
+        <p className="font-black text-slate-950">{name}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-slate-600">{label}</p>
+      </div>
+    </Link>
+  );
 }
 
 export default function DestinationsHub() {
@@ -22,10 +61,19 @@ export default function DestinationsHub() {
     );
   }, []);
 
+  const heroVisual = getServiceVisual("mobilite");
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)] px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
+      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-5xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">Accompagnement documentaire</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">Destinations d’accompagnement, un suivi traçable</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-50">
@@ -42,15 +90,14 @@ export default function DestinationsHub() {
           <h2 className="text-xl font-black text-slate-950">Formation en alternance rémunérée</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {FEATURED.map((item) => (
-              <Link
+              <DestinationVisualCard
                 key={item.slug}
                 href={`/procedures/${item.slug}`}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <span className="text-3xl" aria-hidden="true">{item.flag}</span>
-                <p className="mt-3 font-black text-slate-950">{item.name}</p>
-                <p className="mt-1 text-sm text-slate-600">{item.label}</p>
-              </Link>
+                flag={item.flag}
+                name={item.name}
+                label={item.label}
+                visualSlug={item.visualSlug}
+              />
             ))}
           </div>
         </section>
@@ -63,15 +110,14 @@ export default function DestinationsHub() {
               <h2 className="text-xl font-black text-slate-950">{region}</h2>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {items.map((destination) => (
-                  <Link
+                  <DestinationVisualCard
                     key={destination.slug}
                     href={destinationHref(destination)}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <span className="text-3xl" aria-hidden="true">{destination.flag}</span>
-                    <p className="mt-3 font-black text-slate-950">{destination.name}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-600">{destination.dispositif}</p>
-                  </Link>
+                    flag={destination.flag}
+                    name={destination.name}
+                    label={destination.dispositif}
+                    visualSlug={destination.slug}
+                  />
                 ))}
               </div>
             </section>

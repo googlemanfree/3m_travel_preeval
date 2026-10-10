@@ -1,6 +1,7 @@
 import { BriefcaseBusiness, HeartHandshake, Landmark, Plane, Stethoscope, TicketCheck, UsersRound } from "lucide-react";
 import { Link } from "wouter";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const purposes = [
   { title: "Tourisme", icon: Plane, text: "Pour un séjour temporaire de découverte, de vacances ou de visite privée, sous réserve des conditions applicables." },
@@ -22,6 +23,7 @@ export default function Schengen() {
       officialHref="https://home-affairs.ec.europa.eu/policies/schengen/visa-policy/applying-schengen-visa_en"
       officialLabel="Consulter les règles UE"
       notice="Un visa Schengen de court séjour couvre généralement jusqu’à 90 jours sur une période de 180 jours. Les études, le travail ou les séjours longs relèvent de procédures nationales distinctes."
+      heroVisual={getServiceVisual("schengen")}
     >
       <ServiceSection
         title="Six motifs de voyage à distinguer"

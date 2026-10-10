@@ -3,6 +3,8 @@ import { ArrowRight, CheckCircle2, ExternalLink, ShieldCheck } from "lucide-reac
 import { Link } from "wouter";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { PremiumReveal } from "@/components/PremiumReveal";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import type { VisualSources } from "@/data/premiumVisuals";
 
 type ServicePageShellProps = {
   eyebrow: string;
@@ -15,14 +17,43 @@ type ServicePageShellProps = {
   officialHref?: string;
   officialLabel?: string;
   notice?: string;
+  /** Image premium thématique (visa, destination, service). */
+  heroVisual?: VisualSources | null;
   children: ReactNode;
 };
 
-export function ServicePageShell({ eyebrow, title, introduction, primaryHref, primaryLabel, secondaryHref, secondaryLabel = "Calculatrice CRS Canada", officialHref, officialLabel = "Consulter la source officielle", notice, children }: ServicePageShellProps) {
+export function ServicePageShell({
+  eyebrow,
+  title,
+  introduction,
+  primaryHref,
+  primaryLabel,
+  secondaryHref,
+  secondaryLabel = "Calculatrice CRS Canada",
+  officialHref,
+  officialLabel = "Consulter la source officielle",
+  notice,
+  heroVisual,
+  children,
+}: ServicePageShellProps) {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="border-b border-blue-900/30 bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)] px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-14">
+      <section className="relative overflow-hidden border-b border-blue-900/30 px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+        {heroVisual ? (
+          <>
+            <PremiumCoverImage
+              visual={heroVisual}
+              priority
+              className="absolute inset-0"
+              imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/78 to-[#0e5b9f]/55" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/35" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)]" />
+        )}
+        <div className="relative z-10 mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-14">
           <div>
             <p className="inline-flex items-center rounded-full border border-blue-200/40 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-amber-100">{eyebrow}</p>
             <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight !text-white sm:text-5xl lg:text-6xl">{title}</h1>
@@ -53,7 +84,7 @@ export function ServicePageShell({ eyebrow, title, introduction, primaryHref, pr
               )}
             </div>
           </div>
-          <aside className="rounded-2xl border border-white/25 bg-slate-950/35 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
+          <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
             <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
             <h2 className="mt-4 text-lg font-black !text-white">Une orientation, pas une promesse</h2>
             <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
