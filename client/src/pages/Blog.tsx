@@ -10,6 +10,8 @@ import {
 import { Link } from "wouter";
 import { studyDestinationArticles } from "@/data/studyDestinationArticles";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const resources = [
   {
@@ -56,20 +58,25 @@ const cardClassName =
   "rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md";
 
 export default function Blog() {
+  const visual = getServiceVisual("services");
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="max-w-3xl">
-          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">
+        <header className="relative overflow-hidden rounded-3xl px-6 py-10 text-white shadow-xl sm:px-10">
+          <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/90 via-[#0a3264]/75 to-[#0e5b9f]/45" />
+          <div className="relative z-10 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">
             Ressources et actualités à vérifier
           </p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
             Le centre d’information 3M TRAVEL AGENCY
           </h1>
-          <p className="mt-5 text-base leading-7 text-slate-600">
+          <p className="mt-5 text-base leading-7 text-blue-50">
             Des repères utiles pour préparer un projet de mobilité internationale. Les règles et disponibilités peuvent évoluer : les liens officiels restent la référence avant toute démarche.
           </p>
           <SocialShareButtons title="Le centre d’information 3M TRAVEL AGENCY" className="mt-6" />
+          </div>
         </header>
 
         <section className="mt-12 grid gap-5 md:grid-cols-2">

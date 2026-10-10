@@ -12,6 +12,8 @@ import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
 import { getDestinationDetailForProcedure, isDestinationRecentlyUpdated } from "@/lib/publicDestinationCatalog";
 import { useLocation } from "wouter";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   "Travail": {
@@ -217,6 +219,7 @@ export default function Fiches() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState<string>("Tous");
   const [activeCountry, setActiveCountry] = useState<string>("Tous");
+  const visual = getServiceVisual("dossier");
 
   // Dédupliquer : garder la fiche la plus complète par pays+type
   const dedupedData = useMemo(() => {
@@ -298,7 +301,9 @@ export default function Fiches() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
 
       {/* Hero */}
-      <section className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-14">
+      <section className="relative overflow-hidden py-14 text-white">
+        <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/90 via-[#0a3264]/80 to-[#312e81]/60" />
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-4">
             <FileText className="w-8 h-8 text-blue-200" />

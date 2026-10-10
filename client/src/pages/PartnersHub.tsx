@@ -2,6 +2,8 @@ import { ArrowRight, BriefcaseBusiness, Building2, Globe2, ShieldCheck, UsersRou
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_REGIONS, CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Button } from "@/components/ui/button";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 /**
  * Hub public des 4 interfaces — porte d’entrée internationale pour recruteurs
@@ -10,10 +12,14 @@ import { Button } from "@/components/ui/button";
 export default function PartnersHub() {
   const { language } = useLanguage();
   const en = language === "en";
+  const visual = getServiceVisual("recrutement");
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.25),_transparent_28rem),linear-gradient(160deg,_#071b3d_0%,_#0b2f6f_55%,_#1463ff_120%)]">
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-14 sm:pt-20" data-testid="partners-hub-hero">
+      <section className="relative mx-auto max-w-6xl overflow-hidden px-4 pb-10 pt-14 sm:pt-20" data-testid="partners-hub-hero">
+        <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover opacity-45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071b3d]/70 via-[#0b2f6f]/80 to-[#0b2f6f]/95" />
+        <div className="relative z-10">
         <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-sky-200">
           <Globe2 className="h-4 w-4" aria-hidden="true" />
           {en ? "Africa → Europe · Americas · Asia" : "Afrique → Europe · Amériques · Asie"}
@@ -32,6 +38,7 @@ export default function PartnersHub() {
               {en ? region.en : region.fr}
             </span>
           ))}
+        </div>
         </div>
       </section>
 
