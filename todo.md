@@ -16,10 +16,18 @@
 - [ ] Identifier le bon compte/zone Cloudflare et purger les URLs ciblées si la zone est accessible
 
 ## PR #39 — positionnement vivier + traçabilité dossiers
-- [ ] Sortir la PR39 du brouillon et synchroniser la branche côté Git — PR toujours `OPEN`, `isDraft: true`, commit `786a6994`.
+- [x] Sortir la PR39 du brouillon et synchroniser la branche côté Git — fusion `MERGED`, commit `abeeaf43`.
 - [x] Vérifier le diff exact du stepper : 5 étapes présentes et couvertes par les assertions de régression.
-- [ ] Vérifier le diff, tests, TypeScript et build sur le checkout PR39
-- [ ] Sauvegarder le checkpoint puis publier
-- [ ] Vérifier accueil, QuickActions, pilotage placement et `/procedures`
+- [x] Vérifier le diff, tests, TypeScript et build sur le checkout PR39 — tests ciblés, `pnpm run check` et build production verts.
+- [x] Sauvegarder le checkpoint — version WebDev `06c8baa4`.
+- [ ] Publier la version WebDev : aucun outil de publication direct n’est disponible dans cette session ; la production sert encore l’ancien bundle.
+- [ ] Vérifier accueil, QuickActions, pilotage placement et `/procedures` en production après publication ; l’aperçu checkpoint est validé, l’admin reste protégé sans session.
 - [x] Vérifier la migration : `unified_client_requests.sourceType` contient déjà `digital` ; PR39 n’ajoute aucune migration SQL.
-- [ ] Purger le CDN ou documenter l’absence de zone Cloudflare après fusion/publication
+- [x] Vérifier Cloudflare : la requête de zone `3mtravelagency.com` retourne zéro zone active ; purge impossible avec le compte actuellement connecté.
+
+## PR #40 — livrables employeur + CTA recrutement
+- [ ] Sortir la PR40 du brouillon et fusionner sur `main`
+- [ ] Vérifier le diff, tests, TypeScript et build
+- [ ] Sauvegarder le checkpoint puis publier
+- [ ] Vérifier le bloc livrables, le CTA employeur et le wording admin placement
+- [ ] Purger le CDN ou documenter l’absence de zone Cloudflare
