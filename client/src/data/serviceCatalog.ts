@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Car, Cpu, GraduationCap, Globe2, HeartHandshake, IdCard, MessageCircle, Plane, ShieldCheck, Stamp, Users2, type LucideIcon } from "lucide-react";
+import { Briefcase, Building2, Car, Cpu, FileCheck2, GraduationCap, Globe2, HeartHandshake, IdCard, MessageCircle, Plane, ShieldCheck, Stamp, Users2, type LucideIcon } from "lucide-react";
 import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 
 /**
@@ -59,16 +59,21 @@ export const SERVICE_POLES: ServicePole[] = [
 
 export type QuickAction = { id: string; title: string; hint: string; href: string; icon: LucideIcon };
 
-/** « Que voulez-vous accomplir ? » : l'intention du visiteur d'abord, le nom du service ensuite. */
+/**
+ * Intentions d’accueil — le dossier et le recrutement autorisé passent avant
+ * les services annexes (vols, assurance, e-Visa).
+ */
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "etudier", title: "Étudier à l’étranger", hint: "Orientation gratuite de votre dossier", href: buildFreeEvaluationHref("etudes"), icon: GraduationCap },
-  { id: "travailler", title: "Travailler à l’étranger", hint: "Orientation gratuite de votre profil", href: buildFreeEvaluationHref("travail"), icon: Briefcase },
+  { id: "dossier", title: "Préparer mon dossier", hint: "Évaluation, pièces et suivi traçable", href: buildFreeEvaluationHref("travail"), icon: FileCheck2 },
+  { id: "travailler", title: "Travailler à l’étranger", hint: "Profil, employeur et autorisations", href: buildFreeEvaluationHref("travail"), icon: Briefcase },
+  { id: "etudier", title: "Étudier à l’étranger", hint: "Admission et visa d’études", href: buildFreeEvaluationHref("etudes"), icon: GraduationCap },
   { id: "visa", title: "Demander un visa", hint: "Checklist et dépôt guidés", href: "/procedures", icon: Stamp },
-  { id: "vol", title: "Réserver un vol", hint: "Devis et billetterie 3M Booking", href: "/flights", icon: Plane },
-  { id: "assurance", title: "M’assurer pour voyager", hint: "Couverture adaptée à votre séjour", href: "/assurance", icon: HeartHandshake },
-  { id: "evisa", title: "Obtenir un e-Visa", hint: "Préparation documentaire sécurisée", href: "/evisas", icon: Globe2 },
-  { id: "cni", title: "Refaire ma CNI ou mon passeport", hint: "Dossier prêt pour Yaoundé", href: "/cni-passeport", icon: IdCard },
+  { id: "recrutement", title: "Recrutement partenaires", hint: "Agences et employeurs vérifiés", href: "/partenaires", icon: Building2 },
   { id: "conseiller", title: "Parler à un conseiller", hint: "Échange direct, sans engagement", href: "/consultation", icon: MessageCircle },
+  { id: "vol", title: "Réserver un vol", hint: "Après validation du dossier", href: "/flights", icon: Plane },
+  { id: "assurance", title: "M’assurer pour voyager", hint: "Couverture adaptée au séjour", href: "/assurance", icon: HeartHandshake },
+  { id: "evisa", title: "Obtenir un e-Visa", hint: "Autorisation électronique", href: "/evisas", icon: Globe2 },
+  { id: "cni", title: "Refaire ma CNI ou mon passeport", hint: "Dossier prêt pour Yaoundé", href: "/cni-passeport", icon: IdCard },
 ];
 
 /** Étapes communes à toutes les demandes ; le délai de réponse n'est pas promis ici, il figure sur la page de rendez-vous. */

@@ -87,7 +87,7 @@ describe("SEO dynamique", () => {
     expect(contact).toContain("hello@3mtravelagency.com");
     expect(sources).toContain("Immigration, Réfugiés et Citoyenneté Canada");
     expect(sources).toContain("Ouvrir la source officielle");
-    expect(procedures).toContain("107 procédures par destination");
+    expect(procedures).toContain("Catalogue des procédures documentées");
     expect(procedures).toContain("/procedures/allemagne-visiteur");
     expect((procedures.match(/href="\/procedures\//g) ?? []).length).toBeLessThan(30);
     expect(procedures).toContain("Ouvrir l’annuaire interactif complet");

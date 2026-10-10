@@ -151,7 +151,7 @@ export default function HeroSectionVIP({
           custom={2}
           className="premium-copy-on-dark mx-auto mb-7 max-w-2xl rounded-2xl bg-[#020C3B]/45 px-4 py-3 text-base font-medium !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ring-1 ring-white/10 backdrop-blur-[2px] sm:mb-10 sm:text-xl md:text-2xl"
         >
-          Études, travail, voyage et visas : votre projet international commence ici.
+          Centre de préparation et de suivi de dossiers — études, travail, visas — avec des canaux de recrutement autorisés.
         </motion.p>
 
         <motion.div

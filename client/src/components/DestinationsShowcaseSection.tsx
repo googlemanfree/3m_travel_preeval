@@ -95,11 +95,11 @@ export default function DestinationsShowcaseSection() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 text-center">
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
-            <Globe2 className="h-4 w-4" aria-hidden="true" /> 23 destinations, un seul accompagnement
+            <Globe2 className="h-4 w-4" aria-hidden="true" /> Un accompagnement, des destinations ciblées
           </p>
-          <h2 id="destinations-showcase-title" className="mt-4 text-2xl font-black text-slate-950 md:text-3xl">Nos destinations</h2>
+          <h2 id="destinations-showcase-title" className="mt-4 text-2xl font-black text-slate-950 md:text-3xl">Destinations d’accompagnement</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600">
-            Formation professionnelle rémunérée et emploi qualifié : chaque profil est différent, nous vous orientons vers la destination la plus réaliste selon votre secteur, votre niveau de langue et votre budget.
+            Formation et emploi qualifié : nous préparons votre dossier et vous orientons vers la destination la plus réaliste — la qualité se mesure au suivi traçable, pas au nombre de pays affichés.
           </p>
         </div>
 
