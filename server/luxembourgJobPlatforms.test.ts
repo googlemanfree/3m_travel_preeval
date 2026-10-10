@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   LUXEMBOURG_JOB_PLATFORMS,
@@ -10,7 +12,7 @@ import {
 import { luxembourgProcedure } from "../client/src/data/countryProcedures/luxembourg";
 
 describe("luxembourgJobPlatforms", () => {
-  it("expose les quatre plateformes curated pour candidats non-UE", () => {
+  it("expose les quatre plateformes curated pour usage admin uniquement", () => {
     expect(LUXEMBOURG_JOB_PLATFORMS).toHaveLength(4);
     expect(LUXEMBOURG_JOB_PLATFORMS.map((p) => p.id)).toEqual([
       "work-in-luxembourg",
@@ -44,10 +46,16 @@ describe("luxembourgJobPlatforms", () => {
     expect(isLuxembourgDestination("Canada")).toBe(false);
   });
 
-  it("branche les plateformes sur la fiche procédure publique", () => {
-    expect(luxembourgProcedure.jobPlatforms?.map((p) => p.id)).toEqual(
-      LUXEMBOURG_JOB_PLATFORMS.map((p) => p.id),
+  it("ne publie pas les liens job boards sur la fiche client", () => {
+    expect((luxembourgProcedure as { jobPlatforms?: unknown }).jobPlatforms).toBeUndefined();
+    expect(JSON.stringify(luxembourgProcedure)).not.toContain("work-in-luxembourg.lu");
+    expect(JSON.stringify(luxembourgProcedure)).not.toContain("moovijob.com");
+    expect(JSON.stringify(luxembourgProcedure)).not.toContain("jobs.lu");
+    const templateSource = readFileSync(
+      path.resolve(import.meta.dirname, "../client/src/components/CountryProcedureTemplate.tsx"),
+      "utf8",
     );
-    expect(luxembourgProcedure.jobPlatforms?.[0]?.url).toBe("https://work-in-luxembourg.lu/");
+    expect(templateSource).not.toContain("job-platforms-title");
+    expect(luxembourgProcedure.faq.some((item) => /candidater moi-même/i.test(item.question))).toBe(true);
   });
 });

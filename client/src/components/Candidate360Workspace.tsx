@@ -777,18 +777,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                       <Badge className="border-emerald-200 bg-white text-emerald-800">Non-UE</Badge>
                     </div>
                     <p className="mt-1 max-w-2xl text-sm text-slate-600">
-                      Ouvrez les plateformes prioritaires, créez une action « postuler » pour ce dossier, puis faites avancer la recherche employeur / ADEM sans quitter le 360°.
+                      Outils internes uniquement — les liens ne sont pas publiés côté client. Postulez via l’agence, créez une action de suivi, puis faites avancer la recherche employeur / ADEM.
                     </p>
                   </div>
                 </div>
-                <a
-                  href="/procedures/luxembourg"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950"
-                >
-                  Fiche procédure <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                <Badge className="border-amber-200 bg-amber-50 text-amber-900">Réservé admin</Badge>
               </div>
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {LUXEMBOURG_JOB_PLATFORMS.map((platform) => (

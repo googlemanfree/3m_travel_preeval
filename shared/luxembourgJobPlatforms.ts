@@ -1,7 +1,8 @@
 /**
- * Plateformes d’emploi Luxembourg utiles aux candidats non-UE.
- * Source métier : curation interne 3M (Work in Luxembourg, ADEM, Moovijob, Jobs.lu).
- * Pas de scraping — liens publics + actions de suivi admin uniquement.
+ * Plateformes d’emploi Luxembourg — usage ADMIN uniquement.
+ * Ne pas exposer ces URLs sur les pages publiques : les candidatures passent
+ * par l’accompagnement 3M (bureau Candidate360), pas en libre-service client.
+ * Source métier : curation interne (Work in Luxembourg, ADEM, Moovijob, Jobs.lu).
  */
 
 export type LuxembourgJobPlatformPriority = "high" | "medium" | "general";

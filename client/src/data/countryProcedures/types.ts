@@ -70,13 +70,4 @@ export interface CountryProcedure {
   };
   documentNote: string;
   officialSources?: { label: string; url: string; description: string }[];
-  /** Plateformes d’emploi utiles (ex. Luxembourg non-UE) — distinctes des sources institutionnelles. */
-  jobPlatforms?: {
-    id: string;
-    name: string;
-    url: string;
-    nonEuUtility: string;
-    priorityForNonEu?: "high" | "medium" | "general";
-    officialChannel?: boolean;
-  }[];
 }
