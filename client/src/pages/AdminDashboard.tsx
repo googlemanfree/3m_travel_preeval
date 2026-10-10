@@ -1098,7 +1098,7 @@ export default function AdminDashboard() {
   const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState("candidates");
+  const [activeAdminTab, setActiveAdminTab] = useState("pilotage");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);

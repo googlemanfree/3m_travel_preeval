@@ -58,7 +58,9 @@ describe("admin cockpit dossiers", () => {
     expect(management).toContain("OPENING_PAYMENT_KEY_PREFIX");
     expect(management).toContain("like(agencySettings.settingKey");
     expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("AdminCandidateCockpitStrip");
-    expect(read("client/src/pages/AdminDashboard.tsx")).toContain("AdminCockpitControlBoard");
-    expect(read("client/src/pages/AdminDashboard.tsx")).toContain("AdminCandidateCockpitStrip");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("AdminCockpitControlBoard");
+    expect(dashboard).toContain("AdminCandidateCockpitStrip");
+    expect(dashboard).toContain('useState("pilotage")');
   });
 });
