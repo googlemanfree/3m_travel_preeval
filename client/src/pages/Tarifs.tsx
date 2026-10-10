@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -5,6 +6,10 @@ import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PremiumReveal } from "@/components/PremiumReveal";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import ProofGallerySection from "@/components/ProofGallerySection";
+import { getServiceVisual } from "@/data/premiumVisuals";
+import { setPageSeo } from "@/lib/pageSeo";
 
 const SERVICE_OPTIONS = [
   {
@@ -41,21 +46,41 @@ function TechnicalTerm({ label, explanation }: { label: string; explanation: str
 }
 
 export default function Tarifs() {
+  const heroVisual = getServiceVisual("dossier");
+
+  useEffect(() => {
+    setPageSeo({
+      title: "Tarifs et honoraires | 3M TRAVEL AGENCY",
+      description:
+        "Comprendre les tarifs 3M TRAVEL AGENCY : honoraires d’agence, frais tiers et confirmation écrite avant tout règlement.",
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
+
   return (
     <TooltipProvider delayDuration={180}>
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <PremiumReveal>
-          <header className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[.16em] text-blue-700">Information tarifaire</p>
-            <h1 className="premium-section-title mt-3 text-4xl sm:text-5xl">Comprendre les tarifs avant de vous engager</h1>
-            <p className="premium-section-lead mx-auto mt-5 text-center text-lg">
-              Les prestations, frais tiers et modalités applicables dépendent du service choisi et de votre situation. Une confirmation écrite est donnée avant tout règlement.
-            </p>
-          </header>
-        </PremiumReveal>
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
+      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-3xl text-center">
+          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY · Information tarifaire</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Comprendre les tarifs avant de vous engager</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
+            Les prestations, frais tiers et modalités applicables dépendent du service choisi et de votre situation. Une confirmation écrite est donnée avant tout règlement.
+          </p>
+        </div>
+      </section>
 
-        <section className="mt-14 grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+
+        <section className="grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">
           {SERVICE_OPTIONS.map((option, index) => (
             <PremiumReveal key={option.name} delay={index * 0.06}>
               <Card className={`flex h-full flex-col border p-7 shadow-sm sm:p-8 ${option.accent}`}>
@@ -73,6 +98,17 @@ export default function Tarifs() {
             </PremiumReveal>
           ))}
         </section>
+
+        <ProofGallerySection
+          initialFilter="all"
+          collapsedCount={3}
+          hideWhenEmpty
+          className="mt-14 bg-transparent px-0 py-4"
+          titleFr="Des résultats concrets, pas seulement des prix"
+          titleEn="Concrete results, not just prices"
+          leadFr="Extraits anonymisés de visas et autorisations obtenus avec l’accompagnement 3M."
+          leadEn="Redacted excerpts of visas and authorisations obtained with 3M support."
+        />
 
         <PremiumReveal className="mt-14">
           <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 sm:p-8" aria-labelledby="tarifs-transparence">

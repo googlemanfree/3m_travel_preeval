@@ -71,4 +71,24 @@ describe("enrichissement visuel complet", () => {
     expect(gallery).toContain("group-hover:scale-105");
     expect(gallery).toContain("Illustration contextuelle");
   });
+
+  it("enrichit les pages publiques encore pauvres (hero + preuves + SEO)", () => {
+    const pages = [
+      "client/src/pages/HowItWorks.tsx",
+      "client/src/pages/Contact.tsx",
+      "client/src/pages/Tarifs.tsx",
+      "client/src/pages/About.tsx",
+      "client/src/pages/Evisa.tsx",
+      "client/src/pages/Evaluation.tsx",
+    ];
+    for (const path of pages) {
+      const source = read(path);
+      expect(source, path).toContain("PremiumCoverImage");
+      expect(source, path).toContain("getServiceVisual");
+      expect(source, path).toContain("setPageSeo");
+    }
+    for (const path of pages.filter((p) => !p.includes("Evaluation"))) {
+      expect(read(path), path).toContain("ProofGallerySection");
+    }
+  });
 });
