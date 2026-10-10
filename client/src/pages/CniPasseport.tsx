@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 export const CNI_PASSPORT_REQUEST_TYPES = [
   "Carte nationale d’identité — première demande",
@@ -132,6 +133,7 @@ export default function CniPasseport() {
       primaryHref="/cni-passeport#demande"
       primaryLabel="Faire ma demande"
       notice="Les frais officiels, les délais et la décision de délivrance relèvent de l’administration. 3M prépare et suit votre dossier, sans garantir un résultat."
+      heroVisual={getServiceVisual("cni")}
     >
       <ServiceSection title="Comment ça se passe" introduction="Trois étapes simples, sans déplacement inutile.">
         <ol className="mt-8 grid gap-5 md:grid-cols-3">

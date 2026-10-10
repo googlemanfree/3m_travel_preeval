@@ -14,6 +14,8 @@ import {
   type FlightRoute,
 } from "@/data/flightDiscovery";
 import { PROOF_CATEGORY_LABELS, PROOF_PHOTOS } from "@/data/proofPhotos";
+import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 
 type PickRoute = (route: FlightRoute) => void;
 
@@ -418,19 +420,29 @@ export function FlightPopularRoutes({ onPick }: { onPick: PickRoute }) {
         <p className="premium-copy mt-2 text-sm">Choisissez un trajet : nous lançons la recherche avec des dates dans deux semaines, que vous pouvez modifier ensuite. Le prix affiché est toujours celui de la recherche, jamais un tarif de vitrine.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        {FLIGHT_ROUTE_GROUPS.map((group) => (
-          <div key={group.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-5">
-            <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
-              <Plane className="h-5 w-5 text-blue-700" aria-hidden="true" /> {group.title}
-            </h3>
-            <p className="mb-4 mt-1 text-xs text-slate-500">{group.intro}</p>
-            <div className="grid gap-3">
-              {group.routes.map((route) => (
-                <RouteButton key={route.id} route={route} onPick={onPick} />
-              ))}
+        {FLIGHT_ROUTE_GROUPS.map((group) => {
+          const visual = getDestinationVisual(group.visualSlug) ?? getServiceVisual("vols");
+          return (
+            <div key={group.id} className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/70">
+              <PremiumCoverImage
+                visual={visual}
+                className="aspect-[21/9]"
+                imgClassName="h-full w-full object-cover"
+              />
+              <div className="p-5">
+                <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
+                  <Plane className="h-5 w-5 text-blue-700" aria-hidden="true" /> {group.title}
+                </h3>
+                <p className="mb-4 mt-1 text-xs text-slate-500">{group.intro}</p>
+                <div className="grid gap-3">
+                  {group.routes.map((route) => (
+                    <RouteButton key={route.id} route={route} onPick={onPick} />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -490,10 +502,17 @@ function CompanionServices() {
       <p className="premium-section-lead mx-auto mb-8 text-center">Le billet n’est qu’une étape : préparez aussi votre visa, votre assurance et votre hébergement au même endroit.</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {FLIGHT_COMPANION_SERVICES.map((item) => (
-          <a key={item.title} href={item.href} className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-            <h3 className="text-base font-black text-slate-900">{item.title}</h3>
-            <p className="premium-copy mt-1.5 flex-1 text-[0.95rem]">{item.text}</p>
-            <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-blue-700">{item.cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+          <a key={item.title} href={item.href} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+            <PremiumCoverImage
+              visual={getServiceVisual(item.visualId)}
+              className="aspect-[16/10]"
+              imgClassName="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <span className="flex flex-1 flex-col p-5">
+              <h3 className="text-base font-black text-slate-900">{item.title}</h3>
+              <p className="premium-copy mt-1.5 flex-1 text-[0.95rem]">{item.text}</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-blue-700">{item.cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+            </span>
           </a>
         ))}
       </div>

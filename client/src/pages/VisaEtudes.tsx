@@ -6,6 +6,8 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Link } from 'wouter';
 
 import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
+import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import { getDestinationVisual, getServiceVisual } from '@/data/premiumVisuals';
 import { trpc } from '@/lib/trpc';
 import { SimulatorRetryBoundary } from '@/components/SimulatorRetryBoundary';
 
@@ -21,17 +23,18 @@ export default function VisaEtudes() {
   // gérées par les autorités de chaque pays — 3M TRAVEL AGENCY n'en est pas
   // partenaire, mais vous accompagne dans ces démarches.
   const destinations = [
-    { flag: '🇨🇦', country: 'Canada', gradient: 'from-red-500 to-red-700', note: 'Permis d\'études via IRCC. Large choix de programmes collégiaux et universitaires.', platform: 'Demande via le portail IRCC' },
-    { flag: '🇫🇷', country: 'France', gradient: 'from-blue-600 to-blue-800', note: 'Visa étudiant Schengen, campus francophones reconnus.', platform: 'Passage obligatoire par Campus France pour la majorité des candidats' },
-    { flag: '🇧🇪', country: 'Belgique', gradient: 'from-yellow-500 to-red-600', note: 'Visa étudiant Schengen, frais de scolarité souvent abordables.', platform: 'Candidature directe auprès des établissements' },
-    { flag: '🇩🇪', country: 'Allemagne', gradient: 'from-gray-700 to-red-600', note: 'Visa étudiant Schengen, nombreux programmes en anglais.', platform: 'Candidature via uni-assist pour de nombreux établissements' },
-    { flag: '🇵🇱', country: 'Pologne', gradient: 'from-red-500 to-white', note: 'Visa étudiant Schengen, coût de la vie compétitif.', platform: 'Candidature directe, certains programmes via NAWA' },
-    { flag: '🇦🇺', country: 'Australie', gradient: 'from-blue-700 to-amber-400', note: 'Études dans des établissements australiens, sous réserve des règles de visa en vigueur.', platform: 'Candidature auprès de l’établissement puis procédure nationale' },
-    { flag: '🇬🇧', country: 'Royaume-Uni', gradient: 'from-blue-700 to-red-600', note: 'Programmes universitaires et professionnels en anglais.', platform: 'Candidature auprès de l’établissement puis Student visa' },
-    { flag: '🇺🇸', country: 'États-Unis', gradient: 'from-blue-700 to-red-600', note: 'Études universitaires et spécialisées avec procédures propres aux établissements.', platform: 'Admission, documents de l’établissement et procédure de visa applicable' },
-    { flag: '🇮🇪', country: 'Irlande', gradient: 'from-emerald-600 to-orange-500', note: 'Programmes anglophones et filières internationales.', platform: 'Candidature directe selon l’établissement choisi' },
-    { flag: '🇲🇦', country: 'Maroc', gradient: 'from-red-600 to-emerald-700', note: 'Plusieurs options d’enseignement supérieur francophone et international.', platform: 'Candidature auprès de l’établissement selon la filière' },
+    { flag: '🇨🇦', country: 'Canada', slug: 'canada', note: 'Permis d\'études via IRCC. Large choix de programmes collégiaux et universitaires.', platform: 'Demande via le portail IRCC' },
+    { flag: '🇫🇷', country: 'France', slug: 'france', note: 'Visa étudiant Schengen, campus francophones reconnus.', platform: 'Passage obligatoire par Campus France pour la majorité des candidats' },
+    { flag: '🇧🇪', country: 'Belgique', slug: 'belgique', note: 'Visa étudiant Schengen, frais de scolarité souvent abordables.', platform: 'Candidature directe auprès des établissements' },
+    { flag: '🇩🇪', country: 'Allemagne', slug: 'allemagne', note: 'Visa étudiant Schengen, nombreux programmes en anglais.', platform: 'Candidature via uni-assist pour de nombreux établissements' },
+    { flag: '🇵🇱', country: 'Pologne', slug: 'pologne', note: 'Visa étudiant Schengen, coût de la vie compétitif.', platform: 'Candidature directe, certains programmes via NAWA' },
+    { flag: '🇦🇺', country: 'Australie', slug: 'australie', note: 'Études dans des établissements australiens, sous réserve des règles de visa en vigueur.', platform: 'Candidature auprès de l’établissement puis procédure nationale' },
+    { flag: '🇬🇧', country: 'Royaume-Uni', slug: 'royaume-uni', note: 'Programmes universitaires et professionnels en anglais.', platform: 'Candidature auprès de l’établissement puis Student visa' },
+    { flag: '🇺🇸', country: 'États-Unis', slug: 'etats-unis', note: 'Études universitaires et spécialisées avec procédures propres aux établissements.', platform: 'Admission, documents de l’établissement et procédure de visa applicable' },
+    { flag: '🇮🇪', country: 'Irlande', slug: 'irlande', note: 'Programmes anglophones et filières internationales.', platform: 'Candidature directe selon l’établissement choisi' },
+    { flag: '🇲🇦', country: 'Maroc', slug: 'maroc', note: 'Plusieurs options d’enseignement supérieur francophone et international.', platform: 'Candidature auprès de l’établissement selon la filière' },
   ];
+  const heroVisual = getServiceVisual('visa-etudes');
 
   const steps = [
     { number: '1', title: 'Évaluation gratuite de votre profil', description: 'Nous étudions votre parcours académique, votre budget et vos objectifs pour identifier les destinations et filières les plus réalistes pour vous.', icon: FileText },
@@ -61,31 +64,36 @@ export default function VisaEtudes() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Hero */}
-      <section className="relative pt-20 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+      <section className="relative overflow-hidden px-4 pb-24 pt-20 text-white sm:px-6 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-95"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#061a36]/88 via-[#0a3264]/75 to-[#061a36]/92" />
+        <div className="relative z-10 mx-auto max-w-5xl text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="px-4 py-2 rounded-full bg-blue-100 border border-blue-300 text-blue-700 text-sm font-semibold">
-              🎓 Visa Études
+            <span className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-amber-100">
+              Visa Études
             </span>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mt-6 mb-6">
+            <h1 className="mt-6 mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Étudiez à l'étranger, accompagné à chaque étape
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            <p className="mx-auto mb-8 max-w-3xl text-lg text-blue-50 sm:text-xl">
               De l'évaluation de votre profil à la préparation de votre dossier, 3M TRAVEL AGENCY vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
             </p>
             <Link href="/evaluation?destination=etudes">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center gap-2">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl">
                 Évaluer mon profil gratuitement
                 <ArrowRight size={20} />
               </motion.button>
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="max-w-xl mx-auto mt-12">
-            <StudyAbroadIllustration className="w-full h-auto" />
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="mx-auto mt-12 max-w-xl rounded-2xl border border-white/20 bg-white/95 p-4 shadow-xl">
+            <StudyAbroadIllustration className="h-auto w-full" />
           </motion.div>
         </div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
       </section>
 
       {/* Destinations */}
@@ -95,22 +103,32 @@ export default function VisaEtudes() {
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
             Chaque destination a ses propres démarches officielles et délais — notre équipe vous guide à travers la bonne procédure selon le pays choisi.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {destinations.map((d) => (
-              <Card key={d.country} className="overflow-hidden hover:shadow-lg transition-shadow p-0">
-                <div className={`h-24 bg-gradient-to-br ${d.gradient} flex items-center justify-center text-5xl`}>
-                  {d.flag}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{d.country}</h3>
-                  <p className="text-sm text-gray-600 mb-3">{d.note}</p>
-                  <div className="flex items-start gap-2 bg-blue-50 rounded-lg p-2">
-                    <Landmark className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700">{d.platform}</p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {destinations.map((d) => {
+              const visual = getDestinationVisual(d.slug) ?? getServiceVisual('visa-etudes');
+              return (
+                <Card key={d.country} className="overflow-hidden p-0 transition-shadow hover:shadow-lg">
+                  <div className="relative aspect-[16/9]">
+                    <PremiumCoverImage
+                      visual={visual}
+                      className="h-full w-full"
+                      imgClassName="h-full w-full object-cover"
+                    />
+                    <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-1 text-2xl leading-none shadow-sm" aria-hidden="true">
+                      {d.flag}
+                    </span>
                   </div>
-                </div>
-              </Card>
-            ))}
+                  <div className="p-6">
+                    <h3 className="mb-1 text-lg font-bold text-gray-900">{d.country}</h3>
+                    <p className="mb-3 text-sm text-gray-600">{d.note}</p>
+                    <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-2">
+                      <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                      <p className="text-xs text-blue-700">{d.platform}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

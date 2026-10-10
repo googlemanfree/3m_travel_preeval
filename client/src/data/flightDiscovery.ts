@@ -16,6 +16,8 @@ export type FlightRouteGroup = {
   id: string;
   title: string;
   intro: string;
+  /** Slug visuel premium (canada, france, emirats, maroc…). */
+  visualSlug: string;
   routes: FlightRoute[];
 };
 
@@ -34,24 +36,28 @@ export const FLIGHT_ROUTE_GROUPS: FlightRouteGroup[] = [
     id: "canada",
     title: "Vers le Canada",
     intro: "Études, travail, immigration ou visite de proches.",
+    visualSlug: "canada",
     routes: [route(YAOUNDE, ["YUL", "Montréal"]), route(DOUALA, ["YUL", "Montréal"]), route(DOUALA, ["YYZ", "Toronto"])],
   },
   {
     id: "europe",
     title: "Vers l’Europe",
     intro: "Espace Schengen, Royaume-Uni et correspondances.",
+    visualSlug: "france",
     routes: [route(YAOUNDE, ["CDG", "Paris"]), route(DOUALA, ["CDG", "Paris"]), route(DOUALA, ["BRU", "Bruxelles"]), route(DOUALA, ["IST", "Istanbul"])],
   },
   {
     id: "asie",
     title: "Vers la Chine et le Golfe",
     intro: "Affaires, études et escales vers l’Asie.",
+    visualSlug: "emirats",
     routes: [route(DOUALA, ["CAN", "Canton"]), route(DOUALA, ["PEK", "Pékin"]), route(YAOUNDE, ["DXB", "Dubaï"])],
   },
   {
     id: "afrique",
     title: "Au Cameroun et en Afrique",
     intro: "Vols intérieurs et liaisons régionales.",
+    visualSlug: "maroc",
     routes: [route(YAOUNDE, DOUALA, "ONE_WAY"), route(DOUALA, ["ABJ", "Abidjan"]), route(DOUALA, ["CMN", "Casablanca"]), route(DOUALA, ["ADD", "Addis-Abeba"])],
   },
 ];
@@ -97,11 +103,11 @@ export const FLIGHT_ADVANTAGES: Array<{ title: string; text: string }> = [
   { title: "Un seul interlocuteur pour tout le voyage", text: "Visa, assurance, hôtel et billet : votre dossier reste au même endroit." },
 ];
 
-export const FLIGHT_COMPANION_SERVICES: Array<{ title: string; text: string; href: string; cta: string }> = [
-  { title: "Assurance voyage", text: "Une assurance voyage est exigée pour un visa Schengen : demandez-la en même temps que votre billet.", href: "/assurance", cta: "Demander une assurance" },
-  { title: "e-Visa", text: "Pour les pays qui délivrent un e-Visa, préparez votre demande en ligne avant de partir.", href: "/evisas", cta: "Voir les e-Visa" },
-  { title: "Hôtels et séjours", text: "Réservez votre hébergement avec 3M Booking et gardez un seul interlocuteur.", href: "#3m-booking", cta: "Voir 3M Booking" },
-  { title: "Procédures de visa", text: "Études, travail, tourisme : les étapes et les sources officielles, par destination.", href: "/procedures", cta: "Consulter les procédures" },
+export const FLIGHT_COMPANION_SERVICES: Array<{ title: string; text: string; href: string; cta: string; visualId: string }> = [
+  { title: "Assurance voyage", text: "Une assurance voyage est exigée pour un visa Schengen : demandez-la en même temps que votre billet.", href: "/assurance", cta: "Demander une assurance", visualId: "assurance" },
+  { title: "e-Visa", text: "Pour les pays qui délivrent un e-Visa, préparez votre demande en ligne avant de partir.", href: "/evisas", cta: "Voir les e-Visa", visualId: "evisa" },
+  { title: "Hôtels et séjours", text: "Réservez votre hébergement avec 3M Booking et gardez un seul interlocuteur.", href: "#3m-booking", cta: "Voir 3M Booking", visualId: "hotels" },
+  { title: "Procédures de visa", text: "Études, travail, tourisme : les étapes et les sources officielles, par destination.", href: "/procedures", cta: "Consulter les procédures", visualId: "visas" },
 ];
 
 /**

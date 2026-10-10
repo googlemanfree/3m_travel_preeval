@@ -14,9 +14,15 @@ describe("procedure visuals", () => {
     expect(getProcedureRegionBadges(country)).toEqual(["🇪🇺", "Espace Schengen"]);
   });
 
-  it("keeps an international fallback for destinations without a catalogued visual", () => {
+  it("résout le Japon via l’index premium partagé (plus le fallback générique)", () => {
     const country = { id: "japon-travail", name: "Japon", region: "Asie" };
-    expect(getProcedureVisual(country)).toBe(PROCEDURE_VISUALS.home);
+    expect(getProcedureVisual(country)).toBe("/manus-storage/destination-japan_e2e870c6.jpg");
     expect(getProcedureRegionBadges(country)).toEqual(["🌍", "Mobilité internationale"]);
+  });
+
+  it("garde le fallback international pour une destination sans visuel catalogue", () => {
+    const country = { id: "chine-affaires", name: "Chine", region: "Asie" };
+    expect(getProcedureVisual(country)).toBe(PROCEDURE_VISUALS.home);
+    expect(getProcedureRegionBadges(country)).toEqual(["🇨🇳", "Chine — Affaires & Études"]);
   });
 });

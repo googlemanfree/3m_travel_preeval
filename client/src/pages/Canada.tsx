@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import { getServiceVisual } from "@/data/premiumVisuals";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -110,6 +111,7 @@ export default function Canada() {
       officialHref="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html"
       officialLabel="Vérifier les programmes IRCC"
       notice="Les programmes, critères, quotas et délais peuvent évoluer. Aucun emploi, contrat de travail, invitation ou résidence permanente n’est garanti par 3M TRAVEL AGENCY."
+      heroVisual={getServiceVisual("immigration")}
     >
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-xl">
         <div className="grid items-stretch lg:grid-cols-[1.05fr_.95fr]">
