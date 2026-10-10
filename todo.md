@@ -1,8 +1,25 @@
 
-## PR #38 — tarifs digitaux Afrique + synchronisation services
-- [ ] Synchroniser la branche `cursor/site-services-sync-prix-eda6` et vérifier le commit PR38
-- [ ] Vérifier la migration SQL 0077 et l’appliquer en base de production
-- [ ] Lancer tests ciblés, TypeScript et build production
-- [ ] Sauvegarder le checkpoint, fusionner et publier PR38
-- [ ] Vérifier `/3m-solutions`, la file admin et la visibilité côté espace client
-- [ ] Purger `/3m-solutions`, `/admin` et `/mon-espace`, ou documenter le blocage Cloudflare
+## PR #38 — tarifs digitaux Afrique + synchronisation services — 2026-10-10
+- [x] Branche PR38 synchronisée puis fusionnée dans `main` — merge commit `0b6bed51`.
+- [x] Correctif TypeScript ciblé poussé sur la branche PR avant fusion — HEAD PR `2e6e6516`.
+- [x] 19 tests ciblés verts, `pnpm run check` vert et build production vert.
+- [x] `/3m-solutions` vérifiée en production : Essentiel 50 000–150 000 FCFA, Présence digitale 150 000–350 000 FCFA et Business+ 350 000–600 000 FCFA ; Business+ confirmé dans le HTML public sauvegardé.
+- [x] Migration `drizzle/migrations/0077_unified_digital_source_type.sql` appliquée puis vérifiée en base : enum `sourceType` contient `digital`.
+- [x] Demande digitale QA synthétique `DGT-2026-454168` créée, visible dans l’admin, traitée en `contacted`, note et horodatage persistés.
+- [ ] Synchronisation UI côté client à confirmer avec une session candidat QA : le même e-mail, le statut `contacted` et la note sont confirmés côté base/admin ; `/mon-espace` protège correctement l’accès en l’absence de session.
+- [ ] Contrôle utilisateur complet du hub Services en ligne et des flux consultation, traduction, assurance, e‑Visa et vols non revendiqué comme test E2E dans cette session ; les tests/build PR couvrent le code et la file unifiée, pas chaque parcours connecté.
+- [x] Purge CDN diagnostiquée : connecteur Cloudflare activé mais aucune zone active n’est exposée pour `3mtravelagency.com` ni dans le compte connecté ; purge réelle impossible sans rattacher le bon compte/zone. Cache-busters et redémarrage WebDev effectués.
+
+## Contrôle QA session candidat et zone Cloudflare — 2026-10-10
+- [ ] Créer un compte candidat QA synthétique avec confirmation par lien e-mail
+- [ ] Se connecter au compte QA et vérifier DGT-2026-454168 dans `/mon-espace`
+- [ ] Identifier le bon compte/zone Cloudflare et purger les URLs ciblées si la zone est accessible
+
+## PR #39 — positionnement vivier + traçabilité dossiers
+- [ ] Sortir la PR39 du brouillon et synchroniser la branche côté Git — PR toujours `OPEN`, `isDraft: true`, commit `786a6994`.
+- [x] Vérifier le diff exact du stepper : 5 étapes présentes et couvertes par les assertions de régression.
+- [ ] Vérifier le diff, tests, TypeScript et build sur le checkout PR39
+- [ ] Sauvegarder le checkpoint puis publier
+- [ ] Vérifier accueil, QuickActions, pilotage placement et `/procedures`
+- [x] Vérifier la migration : `unified_client_requests.sourceType` contient déjà `digital` ; PR39 n’ajoute aucune migration SQL.
+- [ ] Purger le CDN ou documenter l’absence de zone Cloudflare après fusion/publication
