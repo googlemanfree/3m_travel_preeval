@@ -133,37 +133,38 @@ export default function Home() {
         </a>
       </nav>
 
-      {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
-        <QuickActionsSection />
-      </motion.div>
-
+      {/* Corridor recrutement autorisé AVANT les services annexes (vols, assurance, e-Visa). */}
       <section aria-labelledby="home-b2b-title" className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-12" data-testid="home-talent-corridor">
         <div className="mx-auto max-w-6xl px-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Afrique → Europe · Amériques · Asie</p>
-          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">Corridor de talents international</h2>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Préparation de dossier · canaux autorisés</p>
+          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">3M prépare et suit — les partenaires recrutent</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-sky-100">
-            Quatre interfaces : espace candidat, back-office 3M, agences de placement et employeurs directs. Profils anonymisés, organisations vérifiées, consentement obligatoire — 3M gère la procédure admin après sélection.
+            3M est le centre de préparation et de suivi des dossiers. Agences et employeurs vérifiés sont les canaux de recrutement autorisés. Chaque candidature reste traçable : consentement, envoi contrôlé, retour partenaire, puis procédure.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <a href="/partenaires" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Hub partenaires</p>
-              <p className="mt-1 text-sm text-slate-600">Comprendre les 4 espaces et les règles de crédibilité internationale.</p>
+              <p className="mt-1 text-sm text-slate-600">Candidat, admin 3M, agences et employeurs — un corridor traçable.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Voir le corridor →</span>
             </a>
             <a href="/agences-placement" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Agences de placement</p>
-              <p className="mt-1 text-sm text-slate-600">Accéder aux profils éligibles pour des missions ciblées.</p>
+              <p className="mt-1 text-sm text-slate-600">Canal autorisé : recevoir des profils consentants et documentés.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">Portail agence →</span>
             </a>
             <a href="/employeurs" className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
               <p className="text-base font-black text-slate-950">Employeurs internationaux</p>
-              <p className="mt-1 text-sm text-slate-600">Sélectionner les meilleurs profils autorisés.</p>
+              <p className="mt-1 text-sm text-slate-600">Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">Portail employeur →</span>
             </a>
           </div>
         </div>
       </section>
+
+      {/* Intentions dossier / mobilité — vols & annexes en second rang. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <QuickActionsSection />
+      </motion.div>
 
       {/* ─── PREUVES + AVIS : réassurance tôt pour convaincre avant le catalogue de services ── */}
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
@@ -205,7 +206,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-4 text-center">
-            <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Voir les 107 procédures par destination →</a>
+            <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Consulter le catalogue des procédures documentées →</a>
           </p>
         </div>
       </section>

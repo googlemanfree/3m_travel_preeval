@@ -218,7 +218,7 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
             Pilotage de placement international
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-600">
-            Préparez des profils anonymisés après consentement, soumettez-les à des organisations vérifiées, puis avancez la file post-sélection (contrat, invitation, Protocole N°02, procédure).
+            Test décisif : sélectionner un CV consentant → préparer le profil → soumettre à un partenaire vérifié → enregistrer la preuve d’envoi → recevoir le retour dans le bon dossier → ouvrir la procédure.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={listQuery.isFetching} className="gap-2">
@@ -226,6 +226,21 @@ export function AdminPlacementPipeline({ sessionToken, onOpenCandidate }: Props)
           Actualiser
         </Button>
       </div>
+
+      <ol className="mt-4 grid gap-2 rounded-xl border border-indigo-100 bg-white/90 p-3 text-xs sm:grid-cols-5" data-testid="placement-traceability-steps" aria-label="Chaîne de traçabilité des candidatures">
+        {[
+          { n: "1", t: "Consentement + CV" },
+          { n: "2", t: "Profil anonymisé" },
+          { n: "3", t: "Envoi partenaire" },
+          { n: "4", t: "Retour / décision" },
+          { n: "5", t: "Procédure 3M" },
+        ].map((step) => (
+          <li key={step.n} className="flex items-center gap-2 rounded-lg bg-indigo-50/80 px-2.5 py-2 font-semibold text-indigo-950">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-700 text-[11px] text-white">{step.n}</span>
+            {step.t}
+          </li>
+        ))}
+      </ol>
 
       <div className="mt-4 grid gap-3 md:grid-cols-5">
         <div className="rounded-xl border border-violet-100 bg-white p-3">

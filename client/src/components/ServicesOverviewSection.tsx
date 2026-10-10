@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Briefcase, Car, GraduationCap, Hotel, IdCard, Plane, ShieldCheck, Sparkles, Stamp, Users2, Globe2 } from "lucide-react";
 import { procedures107Complete } from "@/data/procedures107Complete";
+import { countUniqueDestinations } from "@shared/procedureCatalogStats";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -11,8 +12,9 @@ const fadeUp = {
   }),
 };
 
-// Nombre réel de destinations couvertes : compté depuis le catalogue de procédures publié, jamais tapé à la main.
-const DESTINATION_COUNT = new Set(procedures107Complete.map((country) => country.id.replace(/-(travail|etudes|visiteur)$/, ""))).size;
+/** Couverture documentaire réelle du catalogue — affichée sans gonfler le volume. */
+const DESTINATION_COUNT = countUniqueDestinations(procedures107Complete.map((country) => country.id));
+const PROCEDURE_COUNT = procedures107Complete.length;
 
 type ServiceItem = { label: string; href?: string };
 
@@ -157,7 +159,7 @@ export default function ServicesOverviewSection() {
         <div className="mt-12 max-w-4xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <h3 className="text-xl font-black text-slate-950">Nos services</h3>
           <p className="mt-3 text-sm leading-7 text-slate-700 md:text-base">
-            3M TRAVEL AGENCY vous accompagne dans vos projets d'<a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">études</a>, de <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">travail</a>, d'<a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">immigration</a> et de <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">regroupement familial</a>, ainsi que dans vos <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">demandes de visa</a> pour {DESTINATION_COUNT} destinations. Nous organisons aussi votre voyage : <a href="/flights" className="font-semibold text-blue-700 underline-offset-2 hover:underline">billets d'avion</a>, <a href="/tourisme?service=hotel" className="font-semibold text-blue-700 underline-offset-2 hover:underline">réservation d'hôtels</a>, <a href="/tourisme?service=vehicle" className="font-semibold text-blue-700 underline-offset-2 hover:underline">location de véhicules</a> et <a href="/assurance" className="font-semibold text-blue-700 underline-offset-2 hover:underline">assurance voyage</a>. Pour vos démarches administratives, nous assurons le <a href="/cni-passeport" className="font-semibold text-blue-700 underline-offset-2 hover:underline">pré-enrôlement CNI et passeport</a> ainsi que l'<a href="/evisas" className="font-semibold text-blue-700 underline-offset-2 hover:underline">e-Visa Cameroun</a>. Enfin, à travers <a href="/3m-solutions" className="font-semibold text-blue-700 underline-offset-2 hover:underline">3M Solutions</a>, nous proposons des services en informatique, logiciels, formation, réseaux et sécurité.
+            3M TRAVEL AGENCY est d’abord un <strong>centre de préparation et de suivi de dossiers</strong> : <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">études</a>, <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">travail</a>, <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">immigration</a>, <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">regroupement familial</a> et <a href="/procedures" className="font-semibold text-blue-700 underline-offset-2 hover:underline">visas</a> — avec un catalogue documenté de {PROCEDURE_COUNT} procédures sur {DESTINATION_COUNT} destinations. Le recrutement passe par des <a href="/partenaires" className="font-semibold text-blue-700 underline-offset-2 hover:underline">canaux autorisés</a> (agences et employeurs vérifiés). Les services de voyage (<a href="/flights" className="font-semibold text-blue-700 underline-offset-2 hover:underline">vols</a>, <a href="/tourisme?service=hotel" className="font-semibold text-blue-700 underline-offset-2 hover:underline">hôtels</a>, <a href="/tourisme?service=vehicle" className="font-semibold text-blue-700 underline-offset-2 hover:underline">véhicules</a>, <a href="/assurance" className="font-semibold text-blue-700 underline-offset-2 hover:underline">assurance</a>), le <a href="/cni-passeport" className="font-semibold text-blue-700 underline-offset-2 hover:underline">pré-enrôlement CNI/passeport</a>, l’<a href="/evisas" className="font-semibold text-blue-700 underline-offset-2 hover:underline">e-Visa</a> et <a href="/3m-solutions" className="font-semibold text-blue-700 underline-offset-2 hover:underline">3M Solutions</a> complètent le parcours sans remplacer la traçabilité du dossier.
           </p>
         </div>
 

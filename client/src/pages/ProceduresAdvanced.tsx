@@ -290,7 +290,7 @@ export default function ProceduresAdvanced() {
             {/* Search Bar */}
             <div role="search" className="relative">
               <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
-              <label htmlFor="procedure-country-search" className="sr-only">Rechercher parmi les 107 procédures pays</label>
+              <label htmlFor="procedure-country-search" className="sr-only">Rechercher parmi les procédures du catalogue</label>
               <Input
                 id="procedure-country-search"
                 type="search"

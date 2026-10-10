@@ -36,9 +36,12 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
 
   it("le paragraphe « Nos services » cite chaque activité avec un lien réel, et le nombre de destinations est compté depuis le catalogue réel", () => {
     const section = read("client/src/components/ServicesOverviewSection.tsx");
+    expect(section).toContain("countUniqueDestinations");
     expect(section).toContain("DESTINATION_COUNT");
-    expect(section).toContain("procedures107Complete.map((country) => country.id.replace(");
-    expect(section).toContain("{DESTINATION_COUNT} destinations");
+    expect(section).toContain("PROCEDURE_COUNT");
+    expect(section).toContain("centre de préparation et de suivi de dossiers");
+    expect(section).toContain("{PROCEDURE_COUNT} procédures sur {DESTINATION_COUNT} destinations");
+    expect(section).toContain("canaux autorisés");
     expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et crédible.");
   });
 

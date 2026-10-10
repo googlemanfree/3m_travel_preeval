@@ -32,7 +32,7 @@ export default function QuickActionsSection() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-6 text-center md:mb-8">
           <h2 id="quick-actions-title" className="text-2xl font-black text-slate-950 md:text-3xl">Que voulez-vous accomplir ?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 md:text-base">Choisissez votre intention : on vous place immédiatement sur la bonne démarche, avec un conseiller 3M pour vous accompagner jusqu’au dépôt.</p>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 md:text-base">Commencez par le dossier ou le recrutement autorisé ; les services de voyage viennent ensuite, avec un conseiller 3M jusqu’au dépôt.</p>
         </div>
         <QuickActionsGrid />
         <p className="mt-5 text-center text-sm text-slate-600">
