@@ -67,4 +67,4 @@
 - [x] Ajouter un tableau récapitulatif des paiements par dossier actif dans l’espace client — nouveau tableau responsive avec dossier, référence unique, statut paiement et progression ; chaque ligne sélectionne le dossier concerné.
 - [x] Rendre la référence unique du dossier très visible dans l’interface de règlement — bloc « Référence unique à utiliser » dans la carte de paiement, également visible après confirmation.
 - [x] Ajouter ou clarifier l’export détaillé des paiements côté admin, avec échappement CSV sûr — bouton `export-payments-csv` explicite, export filtré détaillé et préfixe anti-formule pour `=`, `+`, `-`, `@`.
-- [x] Ajouter les tests ciblés, vérifier TypeScript/build et sauvegarder un checkpoint — 3 fichiers de tests, 27 tests réussis ; TypeScript et build Vite verts.
+- [x] Ajouter les tests ciblés, vérifier TypeScript/build et sauvegarder un checkpoint — 3 fichiers de tests, 27 tests réussis ; TypeScript et build Vite verts ; checkpoint WebDev `7f1ef474`.
