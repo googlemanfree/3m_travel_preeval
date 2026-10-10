@@ -159,6 +159,49 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.getByText("Deux procédures en parallèle")).toBeTruthy();
   });
 
+  it("affiche que l’activation parallèle est prête après validation des deux paiements", () => {
+    h.readiness = {
+      data: readiness({
+        evaluationValidated: true,
+        paymentValidated: true,
+        canActivate: true,
+        blockers: [],
+        openingPayment: {
+          reference: "OM-PRINCIPAL-QA",
+          additionalPayment: { reference: "OM-SECONDE-QA", confirmedAmount: 91000 },
+        },
+      }),
+      isLoading: false,
+    };
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une seconde" }));
+    expect(screen.getByTestId("parallel-activation-readiness").textContent).toContain("Activation parallèle prête");
+  });
+
+  it("prépare l’appel d’activation avec la seconde procédure dans le scénario QA", () => {
+    h.readiness = {
+      data: readiness({
+        evaluationValidated: true,
+        paymentValidated: true,
+        canActivate: true,
+        blockers: [],
+        openingPayment: { additionalPayment: { reference: "OM-SECONDE-QA" } },
+      }),
+      isLoading: false,
+    };
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une seconde" }));
+    fireEvent.click(confirmButton());
+    expect(h.activate).toHaveBeenCalledWith({
+      sessionToken: "jeton",
+      candidateId: 42,
+      destination: "Luxembourg",
+      visaType: "Études",
+      adminNotes: undefined,
+      additionalProcedure: { destination: "France", visaType: "Travail" },
+    });
+  });
+
   it("filtre les comptes dont le paiement d’ouverture est encore en attente", () => {
     h.account = account({ paymentValidated: false });
     render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
@@ -214,7 +257,7 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(confirmButton().disabled).toBe(false);
     expect(screen.queryByTestId("activation-disabled-reason")).toBeNull();
     fireEvent.click(confirmButton());
-    expect(h.activate).toHaveBeenCalledWith({ sessionToken: "jeton", candidateId: 42, destination: "luxembourg", visaType: "Études", adminNotes: undefined });
+    expect(h.activate).toHaveBeenCalledWith({ sessionToken: "jeton", candidateId: 42, destination: "Luxembourg", visaType: "Études", adminNotes: undefined });
   });
 
   it("pendant la vérification des conditions : bouton inactif avec « Vérification… »", () => {

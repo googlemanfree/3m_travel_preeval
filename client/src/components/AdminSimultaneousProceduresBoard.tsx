@@ -26,9 +26,11 @@ function paymentLabel(status?: string | null): string {
 
 function ProcedureCard({
   card,
+  accentIndex,
   onOpen,
 }: {
   card: SimultaneousProcedureCard;
+  accentIndex: number;
   onOpen?: (id: string) => void;
 }) {
   const label = card.procedureLabel
@@ -47,7 +49,16 @@ function ProcedureCard({
       data-testid={card.isCurrent ? "simultaneous-procedure-current" : "simultaneous-procedure-sibling"}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <Badge className={card.isCurrent ? "border-indigo-200 bg-white text-indigo-900" : "border-slate-200 bg-slate-50 text-slate-800"}>
+        <Badge
+          data-testid={card.isCurrent ? "simultaneous-current-badge" : `simultaneous-sibling-badge-${accentIndex}`}
+          className={card.isCurrent
+            ? "border-indigo-300 bg-indigo-100 text-indigo-950"
+            : [
+              "border-amber-300 bg-amber-100 text-amber-950",
+              "border-emerald-300 bg-emerald-100 text-emerald-950",
+              "border-rose-300 bg-rose-100 text-rose-950",
+            ][(accentIndex - 1) % 3]}
+        >
           {card.isCurrent ? "En cours de traitement" : "Procédure parallèle"}
         </Badge>
         <Badge variant="outline" className="border-slate-200 bg-white">{label}</Badge>
@@ -134,9 +145,9 @@ export default function AdminSimultaneousProceduresBoard({
         </p>
       ) : null}
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <ProcedureCard card={{ ...current, isCurrent: true }} />
-        {siblings.map((sibling) => (
-          <ProcedureCard key={sibling.id} card={sibling} onOpen={onOpen} />
+        <ProcedureCard card={{ ...current, isCurrent: true }} accentIndex={0} />
+        {siblings.map((sibling, index) => (
+          <ProcedureCard key={sibling.id} card={sibling} accentIndex={index + 1} onOpen={onOpen} />
         ))}
       </div>
     </section>

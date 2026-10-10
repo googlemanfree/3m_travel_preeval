@@ -64,7 +64,11 @@ describe("dossiers simultanés travail + études", () => {
     expect(read("server/routers/admin.ts")).toContain("LOWER(TRIM(${applications.email}))");
 
     expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("AdminSimultaneousProceduresBoard");
-    expect(read("client/src/components/AdminSimultaneousProceduresBoard.tsx")).toContain("Traitement simultané");
+    const board = read("client/src/components/AdminSimultaneousProceduresBoard.tsx");
+    expect(board).toContain("Traitement simultané");
+    expect(board).toContain("simultaneous-current-badge");
+    expect(board).toContain("simultaneous-sibling-badge");
+    expect(read("client/src/components/AdminPreDossierAccountsPanel.tsx")).toContain("Activation parallèle prête");
     expect(read("client/src/components/AdminTodayDashboard.tsx")).toContain("siblingCount ?? 0) > 1");
   });
 });

@@ -50,3 +50,9 @@
 - [x] Sortir du draft, fusionner et publier si les contrôles sont verts — PR50 fusionnée au commit `dbc58713`, preview WebDev synchronisée et checkpoint final en cours.
 - [x] Vérifier activation double, board 360° simultané, filtre conservant la procédure sœur et compteur Aujourd’hui — activation QA non soumise faute d’évaluation/paiement validés ; garde de prérequis vérifiée. Board 360° affiche 2 dossiers, filtre Luxembourg conserve les 2 lignes sœurs et compteur « Multi-procédures » = 6.
 - [x] Vérifier l’absence de régression PR47/PR48 et sauvegarder le checkpoint final — `adminCockpitDossiers.regression.test.ts` + `dossierDynamiquePaysVisa.regression.test.ts` : 2 fichiers, 6 tests réussis ; aucune mutation QA non autorisée.
+
+## QA et UX — préparation activation parallèle
+- [x] Préparer un scénario QA synthétique aligné sur le compte de test autorisé DomFac Sumo, avec évaluation et paiements simulés validés — références `OM-PRINCIPAL-QA` et `OM-SECONDE-QA`, couvertes par le test serveur et le test UI ; aucun compte réel utilisé, aucune transaction réelle ni mutation production.
+- [x] Ajouter un indicateur explicite « activation parallèle prête » dans la modale — état vert lorsque l’évaluation, le premier paiement et le second paiement sont validés ; état ambre sinon.
+- [x] Ajouter des badges de couleur accessibles pour distinguer les procédures sœurs dans le board 360° — courant indigo, sœurs ambre/émeraude/rose, avec `data-testid` dédiés.
+- [x] Tester, vérifier TypeScript/build et sauvegarder un checkpoint — scénario ciblé : 5 tests réussis ; TypeScript et build Vite verts, avec avertissement existant de taille de chunks uniquement.
