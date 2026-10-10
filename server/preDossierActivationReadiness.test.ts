@@ -226,7 +226,8 @@ describe("confirmOpeningPaymentForAccount : valider le paiement directement sur 
     expect(result).toMatchObject({ success: true, additionalAgencyDossierId: 34, additionalDossierReference: "3M-AGN-0034" });
     const dossierInserts = state.inserts.filter(row => row.source === "manual_admin");
     expect(dossierInserts).toHaveLength(2);
-    expect(dossierInserts[1]).toMatchObject({ destination: "canada", visaType: "Travail" });
+    expect(dossierInserts[0]).toMatchObject({ initialPaymentStatus: "paid" });
+    expect(dossierInserts[1]).toMatchObject({ destination: "Canada", visaType: "Travail", initialPaymentStatus: "paid" });
   });
 
   it("refuse si ni référence ni preuve ne sont fournies, avant toute lecture", async () => {

@@ -117,7 +117,7 @@ export default function AdminSimultaneousProceduresBoard({
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
             <GitBranch className="h-3.5 w-3.5" />
-            Traitement simultané
+            Traitement simultané · 1 dossier = 1 paiement
           </p>
           <h3 className="mt-1 text-base font-bold text-slate-950">
             {siblings.length + 1} procédures actives pour le même client

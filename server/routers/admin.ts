@@ -2392,6 +2392,8 @@ export const adminRouter = router({
       city: z.string().max(100).default("Yaoundé"),
       destinationCountry: z.string().min(2).max(100),
       projectType: z.string().min(2).max(100),
+      // Paiement de CE dossier uniquement — ne jamais hériter du statut d’un dossier frère du même e-mail.
+      initialPaymentStatus: z.enum(["unknown", "pending", "paid"]).default("unknown"),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
     }))
     .mutation(async ({ input }) => {
@@ -2428,9 +2430,10 @@ export const adminRouter = router({
           destination: procedure.destination,
           visaType: procedure.visaType,
           status: internalStatusMap[input.initialStatus] as any,
+          initialPaymentStatus: input.initialPaymentStatus,
           createdByAdmin: admin.email || "admin",
           source: "manual_admin" as any,
-          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType}`,
+          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType} · paiement initial : ${input.initialPaymentStatus}`,
         });
 
         const dossierId = (result as any)[0]?.insertId || 0;

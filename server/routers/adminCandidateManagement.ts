@@ -1231,12 +1231,15 @@ export const adminCandidateManagementRouter = router({
         .limit(1);
       const linkedExistingDossier = existing.length > 0;
       let agencyDossierId: number;
+      // 1 dossier = 1 paiement : le frais d’ouverture déjà validé est reporté
+      // sur la ligne agence créée/liée (jamais hérité « par compte » côté client).
       if (linkedExistingDossier) {
         agencyDossierId = existing[0].id;
         await db.update(agencyDossiers).set({
           destination: primaryProcedure.destination,
           visaType: primaryProcedure.visaType,
           status: "en_cours",
+          initialPaymentStatus: "paid",
           assignedToAdmin: admin.email,
           ...(input.adminNotes ? { adminNotes: input.adminNotes } : {}),
         }).where(eq(agencyDossiers.id, agencyDossierId));
@@ -1250,6 +1253,7 @@ export const adminCandidateManagementRouter = router({
           destination: primaryProcedure.destination,
           visaType: primaryProcedure.visaType,
           status: "nouveau",
+          initialPaymentStatus: "paid",
           createdByAdmin: admin.email,
           assignedToAdmin: admin.email,
           adminNotes: input.adminNotes ?? null,
@@ -1288,6 +1292,7 @@ export const adminCandidateManagementRouter = router({
       if (additionalProcedure) {
         // Statut « en_cours » (pas « nouveau ») : procédure parallèle intentionnelle,
         // jamais traitée comme pré-dossier redondant à mettre en corbeille.
+        // Second dossier = second paiement déjà exigé plus haut (additionalPayment).
         const additionalInserted = await db.insert(agencyDossiers).values({
           fullName: candidate.fullName,
           email: candidate.email,
@@ -1297,11 +1302,12 @@ export const adminCandidateManagementRouter = router({
           destination: additionalProcedure.destination,
           visaType: additionalProcedure.visaType,
           status: "en_cours",
+          initialPaymentStatus: "paid",
           createdByAdmin: admin.email,
           assignedToAdmin: admin.email,
           adminNotes: input.adminNotes
-            ? `${input.adminNotes}\n[Procédure parallèle intentionnelle]`
-            : "Procédure parallèle intentionnelle (traitement simultané avec le dossier principal).",
+            ? `${input.adminNotes}\n[Procédure parallèle intentionnelle · second frais d’ouverture validé]`
+            : "Procédure parallèle intentionnelle (traitement simultané avec le dossier principal) · second frais d’ouverture validé.",
           source: "manual_admin",
         });
         additionalAgencyDossierId = Number((additionalInserted as any)[0]?.insertId || 0);
