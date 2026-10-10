@@ -490,8 +490,8 @@ export default function FlightBookingCheckout() {
               </p>
 
               <ol className="my-6 space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left text-xs leading-5 text-slate-700" data-testid="flight-booking-pipeline">
-                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-black text-white">1</span><span><strong>Demande reçue</strong> — un conseiller vérifie disponibilité et tarif relevé (aucun prix inventé).</span></li>
-                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-white">2</span><span><strong>Paiement en attente</strong> — après revalidation, réglez en ligne (CinetPay) ou via Mobile Money / agence.</span></li>
+                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-[10px] font-black text-white">1</span><span><strong>Demande reçue</strong> — un conseiller vérifie disponibilité et tarif relevé (aucun prix inventé).</span></li>
+                <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-700 text-[10px] font-black text-white">2</span><span><strong>Paiement en attente</strong> — après revalidation, réglez en ligne (CinetPay) ou via Mobile Money / agence.</span></li>
                 <li className="flex gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[10px] font-black text-slate-700">3</span><span><strong>Émission du billet</strong> — uniquement après confirmation du paiement par l’agence (jamais automatique).</span></li>
               </ol>
 

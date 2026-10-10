@@ -110,7 +110,7 @@ export default function AdminPreDossierAccountsPanel({
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [additionalProcedureEnabled, setAdditionalProcedureEnabled] = useState(false);
-  const [additionalDestination, setAdditionalDestination] = useState("europe");
+  const [additionalDestination, setAdditionalDestination] = useState("france");
   const [additionalVisaType, setAdditionalVisaType] = useState("Études");
   const [additionalPaymentReference, setAdditionalPaymentReference] = useState("");
   const [additionalPaymentAmount, setAdditionalPaymentAmount] = useState("");
@@ -434,8 +434,12 @@ export default function AdminPreDossierAccountsPanel({
     readiness.data && (!readiness.data.paymentValidated || (additionalProcedureEnabled && !readiness.data.openingPayment?.additionalPayment))
   );
   const additionalPaymentBlocked = additionalProcedureEnabled && Boolean(
-    readiness.data?.paymentValidated && !readiness.data.openingPayment?.additionalPayment
+    readiness.data?.paymentValidated && !readiness.data?.openingPayment?.additionalPayment
   );
+  const parallelActivationReady = additionalProcedureEnabled
+    && evaluationOk
+    && Boolean(readiness.data?.paymentValidated)
+    && Boolean(readiness.data?.openingPayment?.additionalPayment);
   const busy =
     activateMutation.isPending ||
     reviewMutation.isPending ||
@@ -1153,6 +1157,34 @@ export default function AdminPreDossierAccountsPanel({
                     {additionalProcedureEnabled ? "Retirer la seconde" : "Ajouter une seconde"}
                   </Button>
                 </div>
+                {additionalProcedureEnabled && (
+                  <div
+                    data-testid="parallel-activation-readiness"
+                    role="status"
+                    aria-live="polite"
+                    className={`mt-3 flex items-start gap-2 rounded-lg border p-3 text-xs leading-5 ${
+                      parallelActivationReady
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                        : "border-amber-300 bg-amber-50 text-amber-900"
+                    }`}
+                  >
+                    <span aria-hidden="true" className="mt-0.5 text-sm font-black">
+                      {parallelActivationReady ? "✓" : "!"}
+                    </span>
+                    <span>
+                      <strong>
+                        {parallelActivationReady
+                          ? "Activation parallèle prête"
+                          : "Activation parallèle en attente"}
+                      </strong>
+                      <span className="block">
+                        {parallelActivationReady
+                          ? "Évaluation et deux paiements validés : les deux dossiers seront créés et suivis séparément."
+                          : "Validez l’évaluation, le premier paiement et le second frais d’ouverture avant de confirmer. Aucun dossier ne sera créé avant ces validations."}
+                      </span>
+                    </span>
+                  </div>
+                )}
                 {additionalProcedureEnabled && (
                   <div data-testid="additional-procedure-fields" className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
