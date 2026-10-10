@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";

@@ -1,12 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { PremiumReveal } from '@/components/PremiumReveal';
 import { CheckCircle, Globe, FileText, Clock, Shield, Zap, ArrowRight, AlertCircle, CreditCard, Camera, Plane, MessageCircle, Search, XCircle } from 'lucide-react';
-import GlobalMobilityIllustration from '@/components/illustrations/GlobalMobilityIllustration';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Link } from 'wouter';
+import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import ProofGallerySection from '@/components/ProofGallerySection';
+import { getServiceVisual } from '@/data/premiumVisuals';
+import { setPageSeo } from '@/lib/pageSeo';
 
 type Continent = 'tous' | 'afrique' | 'asie' | 'ameriques' | 'europe';
 type Status = 'evisa' | 'arrivee' | 'consulaire' | 'sans_visa' | 'conditionnel';
@@ -91,6 +94,17 @@ export default function Evisa() {
   const [search, setSearch] = useState('');
   const [continent, setContinent] = useState<Continent>('tous');
   const reduceMotion = useReducedMotion();
+  const heroVisual = getServiceVisual('evisa');
+
+  useEffect(() => {
+    setPageSeo({
+      title: 'Annuaire e-Visa | 3M TRAVEL AGENCY',
+      description:
+        'Vérifiez eVisa, visa à l’arrivée ou visa consulaire pour un passeport camerounais, et lancez votre démarche avec 3M TRAVEL AGENCY.',
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
 
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -206,45 +220,44 @@ export default function Evisa() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Hero + Search */}
-      <section className="relative px-4 pb-16 pt-20 sm:px-6 sm:pb-20 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-6xl">
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="text-center"
           >
-            <div className="mb-6 inline-block">
-              <span className="rounded-full border border-blue-300 bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-800">
-                Annuaire e-Visa · 3M TRAVEL AGENCY
-              </span>
-            </div>
+            <p className="mb-4 text-sm font-black uppercase tracking-[0.16em] text-blue-100">
+              Annuaire e-Visa · 3M TRAVEL AGENCY
+            </p>
 
-            <h1 className="premium-section-title mb-6 text-4xl sm:text-5xl lg:text-6xl">
+            <h1 className="mb-6 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
               Annuaire des e-Visas & autorisations de voyage
             </h1>
 
-            <p className="premium-section-lead mx-auto mb-4 text-center text-lg sm:text-xl">
+            <p className="mx-auto mb-4 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
               Vérifiez ce qu’il vous faut réellement pour voyager avec un passeport camerounais — eVisa, visa à l’arrivée ou visa consulaire classique — et lancez votre démarche avec notre accompagnement.
             </p>
-            <p className="premium-copy mx-auto mb-10 max-w-2xl text-center text-base">
+            <p className="mx-auto mb-10 max-w-2xl text-center text-base leading-7 text-blue-100/90">
               Informations vérifiées pour les titulaires d’un passeport camerounais. Les règles évoluent : nous confirmons toujours votre cas exact avant toute soumission.
             </p>
 
-            <div className="max-w-md mx-auto mb-10">
-              <GlobalMobilityIllustration className="w-full h-auto" />
-            </div>
-
-            {/* Search bar */}
             <div className="relative max-w-xl mx-auto mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tapez le nom d'un pays (ex: Dubaï, Inde, Kenya, Canada...)"
                 maxLength={200}
-                className="pl-12 py-6 text-base rounded-full shadow-md"
+                className="pl-12 py-6 text-base rounded-full border-0 bg-white shadow-md text-slate-900"
                 aria-label="Rechercher un pays"
               />
               {search && (
@@ -252,14 +265,13 @@ export default function Evisa() {
                   onClick={() => setSearch('')}
                   type="button"
                   aria-label="Effacer la recherche"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <XCircle size={20} />
                 </button>
               )}
             </div>
 
-            {/* Continent filters */}
             <div className="flex flex-wrap justify-center gap-2">
               {(Object.keys(continentLabels) as Continent[]).map((c) => (
                 <button
@@ -267,8 +279,8 @@ export default function Evisa() {
                   onClick={() => setContinent(c)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                     continent === c
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                      ? 'bg-white text-blue-950'
+                      : 'bg-white/15 text-blue-50 ring-1 ring-white/25 hover:bg-white/25'
                   }`}
                   aria-pressed={continent === c}
                 >
@@ -278,9 +290,6 @@ export default function Evisa() {
             </div>
           </motion.div>
         </div>
-
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
       </section>
 
       {/* Legend */}
@@ -424,6 +433,18 @@ export default function Evisa() {
           </Accordion>
         </div>
       </section>
+
+      <ProofGallerySection
+        initialFilter="visas"
+        lockFilter
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        titleFr="Preuves de visas et autorisations"
+        titleEn="Proofs of visas and authorisations"
+        leadFr="Extraits anonymisés obtenus avec l’accompagnement 3M pour des projets de voyage."
+        leadEn="Redacted excerpts obtained with 3M support for travel projects."
+      />
 
       {/* CTA Section */}
       <section className="bg-blue-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">

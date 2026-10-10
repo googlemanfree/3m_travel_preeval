@@ -1,6 +1,11 @@
+import { useEffect } from "react";
 import { CheckCircle2, FileSearch, Globe2, ShieldCheck, UsersRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import ProofGallerySection from "@/components/ProofGallerySection";
+import { getServiceVisual } from "@/data/premiumVisuals";
+import { setPageSeo } from "@/lib/pageSeo";
 
 const FOUNDER = {
   name: "Aureol DONFACK",
@@ -67,17 +72,36 @@ const PROCESS = [
 ];
 
 export default function About() {
+  const heroVisual = getServiceVisual("mobilite");
+
+  useEffect(() => {
+    setPageSeo({
+      title: "À propos | 3M TRAVEL AGENCY",
+      description:
+        "3M TRAVEL AGENCY accompagne particuliers et entreprises dans la préparation de projets de mobilité internationale : procédures, visas, eVisas et suivi documentaire.",
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(founderJsonLd) }} />
-      <section className="px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-700">3M TRAVEL AGENCY</p>
-          <h1 className="premium-section-title mt-4 text-4xl sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
-          <p className="premium-section-lead mx-auto mt-6 text-center text-lg">
+      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-5xl text-center">
+          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY</p>
+          <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-blue-50">
             3M TRAVEL AGENCY accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
           </p>
-          <p className="premium-copy mx-auto mt-4 max-w-3xl text-center text-base">
+          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-blue-100/90">
             Nous présentons ici notre mode d’accompagnement, et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
           </p>
         </div>
@@ -168,6 +192,17 @@ export default function About() {
           </Card>
         </div>
       </section>
+
+      <ProofGallerySection
+        initialFilter="all"
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        titleFr="Des accompagnements concrets"
+        titleEn="Concrete support outcomes"
+        leadFr="Extraits anonymisés de visas et autorisations obtenus par des candidats suivis par 3M TRAVEL AGENCY."
+        leadEn="Redacted excerpts of visas and authorisations obtained by candidates supported by 3M TRAVEL AGENCY."
+      />
 
       <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8">
         <h2 className="text-3xl font-black text-white">Parlons de votre projet</h2>

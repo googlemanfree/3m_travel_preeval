@@ -8,11 +8,14 @@ import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X, Exter
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
 import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
+import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
+import { getServiceVisual } from '@/data/premiumVisuals';
+import { setPageSeo } from '@/lib/pageSeo';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { toast } from 'sonner';
 
@@ -73,9 +76,20 @@ function ProjectDetailsSection({ projectType, values, onChange, countryFields, p
 
 export default function Evaluation() {
   const { candidate } = useCandidateAuth();
+  const heroVisual = getServiceVisual('dossier');
   const projectFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('project');
   const onboardingFromRegistration = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('onboarding') === 'registration';
   const initialProject = isEvaluationProjectType(projectFromUrl) ? projectFromUrl : initialForm.projectType;
+
+  useEffect(() => {
+    setPageSeo({
+      title: 'Évaluation gratuite | 3M TRAVEL AGENCY',
+      description:
+        'Évaluez gratuitement votre profil pour un projet de mobilité internationale avec 3M TRAVEL AGENCY à Yaoundé.',
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
   // Pré-remplit avec le premier pays de préférence déclaré à l'inscription plutôt que de faire
   // ressaisir une information déjà connue — le candidat reste libre de le changer.
   const preferredDestination = candidate?.preferredDestinations?.[0];
@@ -521,20 +535,31 @@ export default function Evaluation() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
-              <Sparkles className="w-3 h-3" /> Évaluation structurée du profil
-            </span>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4 mb-2">Évaluation complète de votre profil</h1>
-          <p className="text-gray-600">Ces informations nous permettent d'évaluer votre éligibilité pour n'importe quelle destination — Canada RP, Europe, et bien d'autres.</p>
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <section className="relative overflow-hidden px-4 pb-12 pt-16 text-white sm:px-6">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-2xl text-center">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">3M TRAVEL AGENCY</p>
+          <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-50 ring-1 ring-white/25">
+            <Sparkles className="w-3 h-3" /> Évaluation structurée du profil
+          </span>
+          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">Évaluation complète de votre profil</h1>
+          <p className="mt-3 text-base leading-7 text-blue-50">Ces informations nous permettent d&apos;évaluer votre éligibilité pour n&apos;importe quelle destination — Canada RP, Europe, et bien d&apos;autres.</p>
           {acquisitionSource !== "direct" && (
-            <div className="mx-auto mt-4 max-w-xl rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-left text-sm text-cyan-950" role="status" aria-live="polite">
+            <div className="mx-auto mt-4 max-w-xl rounded-xl border border-cyan-200/40 bg-cyan-950/40 px-4 py-3 text-left text-sm text-cyan-50" role="status" aria-live="polite">
               <strong>Parcours identifié :</strong> {acquisitionSource === "whatsapp" ? "WhatsApp Business" : "Facebook"}{acquisitionCampaign ? ` — campagne « ${acquisitionCampaign} »` : ""}. Votre demande sera rattachée à ce contexte pour faciliter le suivi par notre équipe.
             </div>
           )}
         </div>
+      </section>
+
+      <div className="max-w-2xl mx-auto px-4 py-12">
 
         {/* Barre de progression multi-étapes */}
         <div className="mb-6">

@@ -1,18 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle, Facebook } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatModal } from '@/components/ChatModal';
 import OfficeContactPanel from '@/components/OfficeContactPanel';
+import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import ProofGallerySection from '@/components/ProofGallerySection';
+import { getServiceVisual } from '@/data/premiumVisuals';
+import { setPageSeo } from '@/lib/pageSeo';
 import { trpc } from '@/lib/trpc';
 import { COMPANY_PROFILE } from '@/lib/companyContacts';
 import { officeMapEmbedUrl, officeMapsUrl } from '@/lib/officeContacts';
 
 export default function Contact() {
+  const heroVisual = getServiceVisual('services');
   const cameroon = COMPANY_PROFILE.offices.cameroon;
   const ottawa = COMPANY_PROFILE.offices.ottawa;
+
+  useEffect(() => {
+    setPageSeo({
+      title: 'Nous contacter | 3M TRAVEL AGENCY',
+      description:
+        'Contactez 3M TRAVEL AGENCY à Yaoundé et Ottawa pour vos projets de visas, eVisas, légalisations, traductions et assurances voyage.',
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -105,36 +119,38 @@ export default function Contact() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="relative z-10 mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-blue-700">3M TRAVEL AGENCY</p>
-            <h1 className="premium-section-title mb-6 text-4xl sm:text-5xl lg:text-6xl">
+            <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-blue-100">3M TRAVEL AGENCY</p>
+            <h1 className="premium-section-title mb-6 text-4xl text-white sm:text-5xl lg:text-6xl">
               Nous contacter
             </h1>
 
-            <p className="premium-section-lead mx-auto mb-8 text-center text-lg sm:text-xl">
+            <p className="mx-auto mb-8 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
               Notre équipe est à votre disposition pour répondre à vos questions et vous accompagner dans vos démarches de visas, eVisas, légalisations, traductions et assurances voyage.
             </p>
 
             <a
               href="/consultation"
-              className="inline-flex items-center justify-center rounded-xl bg-blue-700 px-6 py-3 font-bold text-white transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 font-bold text-blue-950 transition-colors hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               Prendre rendez-vous
             </a>
           </motion.div>
         </div>
-
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
       </section>
 
       <section className="px-4 pb-12 sm:px-6 lg:px-8">
@@ -497,6 +513,18 @@ export default function Contact() {
           </div>
         </div>
       </section>
+
+      <ProofGallerySection
+        initialFilter="visas"
+        lockFilter
+        collapsedCount={3}
+        hideWhenEmpty
+        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        titleFr="Des dossiers déjà accompagnés"
+        titleEn="Cases already supported"
+        leadFr="Extraits anonymisés de visas obtenus avec l’accompagnement 3M depuis Yaoundé."
+        leadEn="Redacted excerpts of visas obtained with 3M support from Yaoundé."
+      />
 
       {/* FAQ Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
