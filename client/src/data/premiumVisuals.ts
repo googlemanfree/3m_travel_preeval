@@ -37,7 +37,7 @@ const DESTINATION_MANUS: Record<string, string> = {
   portugal: "/manus-storage/destination-portugal-pr44_6b6ec5c3.jpg",
   espagne: "/manus-storage/destination-spain-pr44_6779444c.jpg",
   italie: "/manus-storage/destination-italy_3756968a.jpg",
-  pologne: "/manus-storage/destination-poland-pr44_0429c2fa.jpg" (fix: repair PR44 destination images and add studies proof)
+  pologne: "/manus-storage/destination-poland-pr44_0429c2fa.jpg",
   malte: "/manus-storage/destination-malta_41841e72.jpg",
   norvege: "/manus-storage/destination-norway_69f4a76c.jpg",
   canada: "/manus-storage/destination-canada_5e7dfbae.jpg",
