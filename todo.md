@@ -40,7 +40,7 @@
 - [x] Fusion déjà confirmée sur GitHub ; déploiement à vérifier sur le checkpoint main
 
 ## Preuves fonctionnelles PR48 à compléter
-- [ ] Vérifier le badge « Sans CV » sur un pré-dossier admin
-- [ ] Vérifier une activation exacte pays + procédure, numéro 3M et checklist 360°
-- [ ] Vérifier le refus runtime de `europe` / `golfe`
-- [ ] Vérifier l’import agence avec normalisation et checklist
+- [x] Vérifier le badge « Sans CV » sur un pré-dossier admin — badge observé sur la preview admin authentifiée.
+- [x] Vérifier une activation exacte pays + procédure, numéro 3M et checklist 360° — modale exacte observée ; le dossier QA importé `3M-AGN-540001` confirme le numéro 3M et affiche la checklist `7/18`.
+- [x] Vérifier le refus runtime de `europe` / `golfe` — appels tRPC authentifiés refusés en HTTP 400 avec le message catalogue, sans insertion.
+- [x] Vérifier l’import agence avec normalisation et checklist — import QA `Canada` + `Études` créé en `3M-AGN-540001`, avec suite `Canada · Études` et checklist `7/18`.
