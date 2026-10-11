@@ -2,6 +2,9 @@ import { AlertTriangle, CheckCircle2, ChevronRight, Gauge } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { cockpitTabLabel, cockpitTreatFocusId } from "@shared/candidateCockpit";
+
+type CockpitTab = "evaluation" | "payments" | "documents" | "overview" | "messages";
 
 type Cockpit = {
   stage: string;
@@ -11,7 +14,7 @@ type Cockpit = {
     label: string;
     description: string;
     urgency: "high" | "normal" | "low";
-    tab?: "evaluation" | "payments" | "documents" | "overview" | "messages";
+    tab?: CockpitTab;
   };
   blockers: Array<{ code: string; message: string; tab?: string }>;
   checklist: Array<{ key: string; label: string; done: boolean }>;
@@ -25,11 +28,29 @@ const URGENCY_STYLE = {
   low: "border-slate-200 bg-slate-50 text-slate-900",
 } as const;
 
+const VALID_TABS = new Set<CockpitTab>(["evaluation", "payments", "documents", "overview", "messages"]);
+
+function asTab(value: string | undefined | null, fallback: CockpitTab = "overview"): CockpitTab {
+  if (value && VALID_TABS.has(value as CockpitTab)) return value as CockpitTab;
+  return fallback;
+}
+
 export type CockpitTreatTarget = {
   key: string;
-  tab: NonNullable<Cockpit["nextAction"]["tab"]>;
+  tab: CockpitTab;
   label: string;
+  focusId: string;
 };
+
+function buildTreatTarget(key: string, tab: CockpitTab | undefined, label: string): CockpitTreatTarget {
+  const resolvedTab = asTab(tab);
+  return {
+    key,
+    tab: resolvedTab,
+    label,
+    focusId: cockpitTreatFocusId(key),
+  };
+}
 
 export default function AdminCandidateCockpitStrip({
   cockpit,
@@ -38,15 +59,15 @@ export default function AdminCandidateCockpitStrip({
 }: {
   cockpit: Cockpit;
   /** @deprecated Préférez onTreatNow — conservé pour les écrans déjà branchés. */
-  onOpenTab?: (tab: NonNullable<Cockpit["nextAction"]["tab"]>) => void;
+  onOpenTab?: (tab: CockpitTab) => void;
   /** Action réelle « Traiter maintenant » (ne doit jamais être un no-op). */
   onTreatNow?: (target: CockpitTreatTarget) => void;
 }) {
-  const treatTarget: CockpitTreatTarget = {
-    key: cockpit.nextAction.key,
-    tab: (cockpit.nextAction.tab || cockpit.blockers[0]?.tab || "overview") as CockpitTreatTarget["tab"],
-    label: cockpit.nextAction.label,
-  };
+  const treatTarget = buildTreatTarget(
+    cockpit.nextAction.key,
+    cockpit.nextAction.tab || asTab(cockpit.blockers[0]?.tab),
+    cockpit.nextAction.label,
+  );
 
   const handleTreat = (target: CockpitTreatTarget = treatTarget) => {
     if (onTreatNow) {
@@ -109,24 +130,20 @@ export default function AdminCandidateCockpitStrip({
           ) : (
             <ul className="mt-2 space-y-2">
               {cockpit.blockers.slice(0, 4).map((blocker) => {
-                const blockerTab = (blocker.tab || treatTarget.tab) as CockpitTreatTarget["tab"];
+                const target = buildTreatTarget(blocker.code, asTab(blocker.tab, treatTarget.tab), blocker.message);
                 return (
                   <li key={blocker.code}>
                     {canTreat ? (
                       <button
                         type="button"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
-                        onClick={() =>
-                          handleTreat({
-                            key: blocker.code,
-                            tab: blockerTab,
-                            label: blocker.message,
-                          })
-                        }
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-800 transition hover:border-blue-400 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        onClick={() => handleTreat(target)}
                         data-testid={`cockpit-blocker-${blocker.code}`}
                       >
                         <span className="font-medium">{blocker.message}</span>
-                        <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Cliquer pour traiter →</span>
+                        <span className="mt-0.5 block text-[11px] font-semibold text-blue-700">
+                          Cliquer pour traiter → {cockpitTabLabel(target.tab)}
+                        </span>
                       </button>
                     ) : (
                       <span className="text-sm font-medium text-slate-800">{blocker.message}</span>
@@ -140,9 +157,10 @@ export default function AdminCandidateCockpitStrip({
             <Button
               type="button"
               size="sm"
-              className="mt-3 gap-1.5 bg-slate-900 hover:bg-slate-800"
+              className="mt-3 w-full gap-1.5 bg-slate-900 text-white hover:bg-slate-800 sm:w-auto"
               onClick={() => handleTreat()}
               data-testid="cockpit-treat-now"
+              aria-label={`Traiter maintenant : ${treatTarget.label} (${cockpitTabLabel(treatTarget.tab)})`}
             >
               Traiter maintenant <ChevronRight className="h-3.5 w-3.5" />
             </Button>
@@ -151,6 +169,11 @@ export default function AdminCandidateCockpitStrip({
               Action de traitement indisponible sur cet écran.
             </p>
           )}
+          {canTreat ? (
+            <p className="mt-2 text-[11px] leading-4 text-slate-500">
+              Ouvre l’onglet <strong className="text-slate-700">{cockpitTabLabel(treatTarget.tab)}</strong> et positionne le panneau à traiter.
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

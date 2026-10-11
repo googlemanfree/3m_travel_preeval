@@ -88,6 +88,34 @@ function parseAdminChecklistStepIds(value: string | null | undefined): string[] 
   }
 }
 
+/**
+ * Clés de progression checklist pour un dossier.
+ * Historiquement l’admin écrivait `3M-AG-0001` (espace client) alors que la fiche 360°
+ * relisait `operationalCase.caseNumber` (`3M-AGN-0001`) — le déverrouillage semblait
+ * réussi puis le bouton « Déverrouiller » restait actif. On lit/écrit toutes les clés.
+ */
+export function checklistProgressKeysForDossier(input: {
+  caseNumber?: string | null;
+  source: "online" | "agency";
+  sourceId: number;
+  onlineDossierNumber?: string | null;
+}): string[] {
+  const keys: string[] = [];
+  const push = (value?: string | null) => {
+    const trimmed = String(value ?? "").trim();
+    if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+  };
+  push(input.caseNumber);
+  if (input.source === "agency") {
+    push(`3M-AG-${input.sourceId.toString().padStart(4, "0")}`);
+    push(`3M-AGN-${input.sourceId.toString().padStart(4, "0")}`);
+  } else {
+    push(input.onlineDossierNumber);
+    push(`online-${input.sourceId}`);
+  }
+  return keys;
+}
+
 /** Masque les coordonnées dans les aperçus de remise consultés au back-office. */
 export function redactEmailPreviewHtml(contentPreviewHtml: string | null | undefined) {
   return (contentPreviewHtml ?? "")
@@ -3852,13 +3880,26 @@ export const adminRouter = router({
           )
         : [];
       const progressCandidateId = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).candidateId : agencyCandidateId;
-      const checklistProgressRows = progressCandidateId ? await safeCollection(
-        db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, operationalCase.caseNumber), eq(procedureChecklistProgress.candidateId, progressCandidateId))).limit(1),
-        [],
-        "procedureChecklistProgress",
-      ) : [];
-      const checklistProgress = checklistProgressRows[0] ?? null;
-      const persistedJourneyStepIds = new Set(parseAdminChecklistStepIds(checklistProgress?.completedStepIds));
+      const checklistKeys = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: reference.source,
+        sourceId: reference.id,
+        onlineDossierNumber: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierNumber : null,
+      });
+      const checklistProgressRows = progressCandidateId && checklistKeys.length
+        ? await safeCollection(
+            db.select().from(procedureChecklistProgress).where(and(
+              inArray(procedureChecklistProgress.dossierKey, checklistKeys),
+              eq(procedureChecklistProgress.candidateId, progressCandidateId),
+            )).limit(10),
+            [],
+            "procedureChecklistProgress",
+          )
+        : [];
+      const persistedJourneyStepIds = new Set<string>();
+      for (const row of checklistProgressRows) {
+        for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) persistedJourneyStepIds.add(stepId);
+      }
       let persistedJourneyIndex = 0;
       while (persistedJourneyStepIds.has(`checklist-${persistedJourneyIndex}`)) persistedJourneyIndex += 1;
       const agencyCvDocument = agencyDocuments.find((document) => normalizeAdminDocumentType(document.documentType, document.documentName) === "cv") ?? null;
@@ -4541,9 +4582,23 @@ export const adminRouter = router({
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });
-      const dossierKey = reference.source === "online" ? (source.dossierNumber || `online-${reference.id}`) : `3M-AG-${reference.id.toString().padStart(4, "0")}`;
-      const [existing] = await db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, dossierKey), eq(procedureChecklistProgress.candidateId, candidateId))).limit(1);
-      const completed = new Set(parseAdminChecklistStepIds(existing?.completedStepIds));
+      const checklistKeys = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: reference.source,
+        sourceId: reference.id,
+        onlineDossierNumber: reference.source === "online" ? source.dossierNumber : null,
+      });
+      const primaryDossierKey = checklistKeys[0] || operationalCase.caseNumber;
+      const existingRows = checklistKeys.length
+        ? await db.select().from(procedureChecklistProgress).where(and(
+          inArray(procedureChecklistProgress.dossierKey, checklistKeys),
+          eq(procedureChecklistProgress.candidateId, candidateId),
+        )).limit(10)
+        : [];
+      const completed = new Set<string>();
+      for (const row of existingRows) {
+        for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) completed.add(stepId);
+      }
       const baseIndex = journeyStepIndex(journey, source.dossierStatus || source.status || "nouveau", null, {
         evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
         activationRequested: Boolean(source.activationRequestedAt),
@@ -4567,12 +4622,227 @@ export const adminRouter = router({
         completed.delete(`checklist-${stepIndex}`);
       }
       const completedStepIds = JSON.stringify(Array.from(completed).sort((left, right) => Number(left.replace("checklist-", "")) - Number(right.replace("checklist-", ""))));
-      if (existing) await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
-      else await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+      // Écriture sur toutes les clés connues (caseNumber + legacy 3M-AG / online) pour que
+      // la fiche 360° et l’espace client voient immédiatement l’étape déverrouillée.
+      for (const dossierKey of checklistKeys.length ? checklistKeys : [primaryDossierKey]) {
+        const existing = existingRows.find((row) => row.dossierKey === dossierKey);
+        if (existing) {
+          await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
+        } else {
+          await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+        }
+      }
       const actionType = input.forceUnlock ? (input.checked ? "journey_step_force_completed" : "journey_step_force_reopened") : (input.checked ? "journey_step_completed" : "journey_step_reopened");
       const actionLabel = input.forceUnlock ? (input.checked ? "Étape déverrouillée et validée manuellement" : "Étape annulée manuellement") : (input.checked ? "Étape validée" : "Étape rouverte");
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType, entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${actionLabel} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` Motif : ${input.comment}` : ""}` });
       return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? (input.forceUnlock ? "Étape déverrouillée et validée manuellement." : "Étape validée et prochaine étape débloquée.") : "Étape annulée." };
+    }),
+
+  /**
+   * Prévisualisation lecture seule de l’espace client — ce que le candidat voit réellement
+   * (statut, étape, documents, messages, paiement, protocole, réponse d’évaluation).
+   */
+  previewClientSpace: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+    }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
+      const source = sourceRecord as any;
+      const email = String(source.email ?? "").trim().toLowerCase();
+      const [candidateRow] = email
+        ? await db.select().from(candidates).where(eq(candidates.email, email)).limit(1)
+        : [];
+      const candidateId = reference.source === "online"
+        ? (source.candidateId ?? candidateRow?.id ?? null)
+        : (candidateRow?.id ?? null);
+      const dossierNumber = reference.source === "online"
+        ? (source.dossierNumber || operationalCase.caseNumber)
+        : (operationalCase.caseNumber || `3M-AGN-${reference.id.toString().padStart(4, "0")}`);
+      const destination = source.destination || candidateRow?.destination || null;
+      const visaType = source.visaType || candidateRow?.visaType || null;
+      const dossierStatus = reference.source === "online"
+        ? (source.dossierStatus || candidateRow?.dossierStatus || "nouveau")
+        : (source.status || candidateRow?.dossierStatus || "nouveau");
+      const paymentConfirmed = reference.source === "online"
+        ? source.paymentStatus === "SUCCESS"
+        : source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid";
+      const agreementSigned = Boolean(source.agreementSigned || source.agreementSignedAt);
+      const progress = describeDossierProgress({
+        destination,
+        visaType,
+        procedureLabel: visaType,
+        dossierStatus,
+        evaluationStatus: candidateRow?.evaluationDeclarationStatus === "validated" ? "validated" : "pending",
+        milestones: {
+          evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
+          activationRequested: Boolean(source.activationRequestedAt),
+          paymentConfirmed,
+        },
+      });
+      const [requirements, notifications, messages, files, latestEvals, receiptApprovals] = await Promise.all([
+        db.select({
+          id: documentRequirements.id,
+          documentType: documentRequirements.documentType,
+          status: documentRequirements.status,
+          adminComment: documentRequirements.adminComment,
+          dueAt: documentRequirements.dueAt,
+        }).from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt)).limit(40),
+        candidateId
+          ? db.select({
+            id: clientNotifications.id,
+            title: clientNotifications.title,
+            body: clientNotifications.body,
+            isRead: clientNotifications.isRead,
+            createdAt: clientNotifications.createdAt,
+            actionUrl: clientNotifications.actionUrl,
+          }).from(clientNotifications).where(eq(clientNotifications.candidateId, candidateId)).orderBy(desc(clientNotifications.createdAt)).limit(8)
+          : Promise.resolve([]),
+        candidateId
+          ? db.select({
+            id: candidateMessages.id,
+            senderRole: candidateMessages.senderRole,
+            content: candidateMessages.content,
+            isRead: candidateMessages.isRead,
+            createdAt: candidateMessages.createdAt,
+          }).from(candidateMessages).where(eq(candidateMessages.candidateId, candidateId)).orderBy(desc(candidateMessages.createdAt)).limit(8)
+          : Promise.resolve([]),
+        candidateId
+          ? db.select({
+            id: candidateFiles.id,
+            fileType: candidateFiles.fileType,
+            fileName: candidateFiles.fileName,
+            status: candidateFiles.status,
+            uploadedAt: candidateFiles.uploadedAt,
+          }).from(candidateFiles).where(eq(candidateFiles.candidateId, candidateId)).orderBy(desc(candidateFiles.uploadedAt)).limit(20)
+          : Promise.resolve([]),
+        db.select({
+          id: evaluations.id,
+          referenceCode: evaluations.referenceCode,
+          projectType: evaluations.projectType,
+          destinationCountry: evaluations.destinationCountry,
+          reviewDraft: evaluations.reviewDraft,
+          finalResponseSentAt: evaluations.finalResponseSentAt,
+          secondReviewRequired: evaluations.secondReviewRequired,
+          secondReviewedAt: evaluations.secondReviewedAt,
+          status: evaluations.status,
+        }).from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(3),
+        db.select({
+          id: paymentReceiptApprovals.id,
+          approvedAt: paymentReceiptApprovals.approvedAt,
+        }).from(paymentReceiptApprovals).where(and(
+          eq(paymentReceiptApprovals.source, reference.source),
+          eq(paymentReceiptApprovals.paymentId, reference.id),
+          eq(paymentReceiptApprovals.candidateEmail, email),
+        )).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1),
+      ]);
+      const pendingRequirements = requirements.filter((item) => ["pending", "rejected"].includes(String(item.status)));
+      const latestEval = latestEvals[0] ?? null;
+      const evaluationResponseVisible = Boolean(
+        latestEval?.finalResponseSentAt
+        && latestEval.reviewDraft
+        && (!latestEval.secondReviewRequired || latestEval.secondReviewedAt),
+      );
+      const unreadMessages = messages.filter((item) => !item.isRead && item.senderRole !== "candidate").length;
+      const unreadNotifications = notifications.filter((item) => !item.isRead).length;
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "client_space_previewed",
+        entityType: "case",
+        entityId: String(operationalCase.id),
+        description: `Prévisualisation espace client · ${dossierNumber} · ${source.fullName || candidateRow?.fullName || email}`,
+      }).catch(() => undefined);
+      return {
+        previewMode: true as const,
+        previewedAt: new Date().toISOString(),
+        previewedBy: admin.email,
+        candidate: {
+          fullName: source.fullName || candidateRow?.fullName || "Candidat",
+          email,
+          phone: source.whatsappNumber || source.phone || candidateRow?.phone || null,
+          dossierNumber,
+          destination,
+          visaType,
+          dossierStatus,
+          statusLabel: progress.statusLabel,
+          evaluationDeclarationStatus: candidateRow?.evaluationDeclarationStatus ?? null,
+          emailVerified: candidateRow?.emailVerified !== false,
+        },
+        progress: {
+          percent: progress.percent,
+          stepNumber: progress.stepNumber,
+          stepCount: progress.stepCount,
+          stepLabel: progress.stepLabel,
+          nextStepLabel: progress.nextStepLabel,
+          refused: progress.refused,
+        },
+        payment: {
+          confirmed: paymentConfirmed,
+          receiptApproved: Boolean(receiptApprovals[0]?.approvedAt),
+          protocolSigned: agreementSigned,
+        },
+        documents: {
+          total: requirements.length,
+          pending: pendingRequirements.length,
+          checklist: requirements.slice(0, 12).map((item) => ({
+            label: item.documentType,
+            status: item.status,
+            comment: item.adminComment,
+            dueAt: item.dueAt,
+          })),
+          uploadedFiles: files.slice(0, 10).map((file) => ({
+            name: file.fileName,
+            type: file.fileType,
+            status: file.status,
+            uploadedAt: file.uploadedAt,
+          })),
+        },
+        evaluation: latestEval ? {
+          referenceCode: latestEval.referenceCode,
+          projectType: latestEval.projectType,
+          destinationCountry: latestEval.destinationCountry,
+          responsePublished: evaluationResponseVisible,
+          responseHtml: evaluationResponseVisible ? sanitizeRichTextHtml(String(latestEval.reviewDraft)) : null,
+          status: latestEval.status,
+        } : null,
+        communications: {
+          unreadMessages,
+          unreadNotifications,
+          recentNotifications: notifications.slice(0, 5).map((item) => ({
+            title: item.title,
+            body: item.body,
+            isRead: item.isRead,
+            createdAt: item.createdAt,
+          })),
+          recentMessages: messages.slice(0, 5).map((item) => ({
+            senderRole: item.senderRole,
+            content: richTextToPlainText(sanitizeRichTextHtml(String(item.content ?? ""))).slice(0, 400),
+            isRead: item.isRead,
+            createdAt: item.createdAt,
+          })),
+        },
+        nextClientAction: unreadMessages > 0
+          ? { label: "Lire les messages du conseiller", detail: `${unreadMessages} message(s) non lu(s).`, section: "messages" }
+          : pendingRequirements.length > 0
+            ? { label: "Compléter les documents demandés", detail: `${pendingRequirements.length} pièce(s) encore en attente.`, section: "documents" }
+            : paymentConfirmed && !agreementSigned
+              ? { label: "Signer le protocole d’accord", detail: "Le paiement est confirmé ; la signature est la prochaine étape visible.", section: "signatures" }
+              : evaluationResponseVisible
+                ? { label: "Consulter la réponse d’évaluation", detail: "Une réponse validée est publiée dans l’espace.", section: "dossier" }
+                : { label: "Suivre l’avancement du dossier", detail: progress.nextStepLabel ? `Prochaine étape : ${progress.nextStepLabel}` : "Aucune action bloquante côté client.", section: "dossier" },
+      };
     }),
 
   updateCandidate360Workflow: publicProcedure

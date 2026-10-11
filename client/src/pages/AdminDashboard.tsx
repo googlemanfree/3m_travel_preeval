@@ -97,6 +97,7 @@ import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPa
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
 import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
+import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -758,12 +759,40 @@ export function CandidateDetailModal({
                 {(data as any)?.cockpit ? (
                   <AdminCandidateCockpitStrip
                     cockpit={(data as any).cockpit}
-                    onOpenTab={(tab) => {
-                      if (tab === "evaluation") setEvaluationEditorOpen(true);
-                      else setCandidate360Tab(tab);
+                    onTreatNow={(target) => {
+                      if (target.tab === "evaluation" || target.key === "evaluation_missing" || target.key === "evaluation_pending" || target.key === "request_evaluation" || target.key === "review_evaluation" || target.key === "validate_evaluation") {
+                        setEvaluationEditorOpen(true);
+                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        toast({ title: "Évaluation", description: "Ouvrez ou validez l’évaluation pour lever ce bloqueur." });
+                        return;
+                      }
+                      if (target.tab === "payments" || target.key === "payment_missing" || target.key === "confirm_payment" || target.key === "receipt_missing") {
+                        onOpenOperations("payments", candidate.folderCode);
+                        toast({ title: "Paiements", description: `Module paiements ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "documents" || target.key === "documents_pending") {
+                        onOpenOperations("documents", candidate.folderCode);
+                        toast({ title: "Documents", description: `Module documents ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "messages") {
+                        onOpenOperations("emails", candidate.folderCode);
+                        toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      toast({
+                        title: "Traitement pré-dossier",
+                        description:
+                          target.key === "confirm_email" || target.key === "email_unverified"
+                            ? "Confirmez l’e-mail puis poursuivez l’ouverture du dossier."
+                            : "Complétez destination et procédure, puis ouvrez le dossier pour activer le suivi.",
+                      });
                     }}
                   />
                 ) : null}
+                <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
@@ -776,8 +805,9 @@ export function CandidateDetailModal({
                   onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel, note })}
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
+                </div>
                 {candidate?.internalStatus === "nouveau" ? (
-                  <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
+                  <section id="predossier-treatment-panel" className="scroll-mt-24 rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
@@ -966,6 +996,13 @@ export function CandidateDetailModal({
                     <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes.</p>
                   </div>
                   <div className="grid gap-2">
+                    <AdminClientSpacePreview
+                      sessionToken={sessionToken}
+                      candidateId={candidate.id}
+                      candidateName={candidate.fullName}
+                      compact
+                      triggerClassName="justify-start border-indigo-300 bg-indigo-50 text-indigo-950 hover:bg-indigo-100"
+                    />
                     <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
                       <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
                     </Button>
