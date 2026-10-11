@@ -4,6 +4,7 @@
 
 import {
   buildAgencyDocumentsPublishedWhatsApp,
+  buildClientAccessLinkWhatsApp,
   buildDossierCreatedWhatsApp,
   buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
@@ -109,6 +110,22 @@ export async function notifyPaymentReceiptApprovedWhatsApp(input: {
       dossierNumber: input.dossierNumber,
       amount: input.amount,
       currency: input.currency,
+    }),
+  );
+}
+
+export async function notifyClientAccessLinkWhatsApp(input: {
+  phone?: string | null;
+  candidateName: string;
+  dossierNumber: string;
+  accessUrl: string;
+}): Promise<WhatsAppNotifyResult> {
+  return safeSend(
+    input.phone,
+    buildClientAccessLinkWhatsApp({
+      candidateName: input.candidateName,
+      dossierNumber: input.dossierNumber,
+      accessUrl: input.accessUrl,
     }),
   );
 }

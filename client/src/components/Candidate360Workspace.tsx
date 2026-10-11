@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
-  FolderKanban, History, ImagePlus, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
+  FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
   ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -403,6 +403,19 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const documentReminderMutation = trpc.admin.sendCandidate360DocumentReminder.useMutation({
     onSuccess: async (result) => { unlockAction("documentReminder"); toast.success("Relance envoyée", { description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
     onError: (mutationError) => { unlockAction("documentReminder"); toast.error("Relance impossible", { description: mutationError.message }); },
+  });
+  const resendAccessMutation = trpc.adminCandidateManagement.resendClientAccessLink.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("resendAccess");
+      const wa = result.whatsappSent
+        ? " WhatsApp envoyé."
+        : result.whatsappSkippedReason
+          ? ` WhatsApp non envoyé (${result.whatsappSkippedReason}).`
+          : "";
+      toast.success("Lien d’accès renvoyé", { description: `Envoyé à ${result.email}.${wa}` });
+      await refresh();
+    },
+    onError: (mutationError) => { unlockAction("resendAccess"); toast.error("Renvoi d’accès impossible", { description: mutationError.message }); },
   });
   const clarificationDeadlineMutation = trpc.admin.updateDocumentClarificationDeadline.useMutation({
     onSuccess: async () => { unlockAction("clarificationDeadline"); toast.success("Échéance interne enregistrée"); await refresh(); },
@@ -1199,7 +1212,22 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-700 p-2.5 text-white"><Gauge className="h-5 w-5" /></div><div><div className="flex flex-wrap items-center gap-2"><h4 className="text-lg font-bold text-slate-950">Pilotage du dossier</h4><StateBadge status={workflowStatus} /><Badge className={priority === "urgent" ? "border-rose-200 bg-rose-50 text-rose-800" : priority === "high" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-700"}>{PRIORITY_LABELS[priority]}</Badge></div><p className="mt-1 max-w-2xl text-sm text-slate-600">Modifiez les paramètres, préparez les relances et enregistrez une seule mise à jour synchronisée pour l’espace candidat.</p></div></div>
-              <div className="grid grid-cols-2 gap-2 sm:flex"><Button type="button" variant="outline" onClick={() => setQuickMessageOpen(true)} className="gap-2"><Mail className="h-4 w-4" />Message</Button><Button type="button" variant="outline" disabled={!pendingRequirements.length || documentReminderMutation.isPending || actionLocks.documentReminder} onClick={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }} className="gap-2"><Bell className="h-4 w-4" />Relancer pièces</Button></div>
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <Button type="button" variant="outline" onClick={() => setQuickMessageOpen(true)} className="gap-2"><Mail className="h-4 w-4" />Message</Button>
+                <Button type="button" variant="outline" disabled={!pendingRequirements.length || documentReminderMutation.isPending || actionLocks.documentReminder} onClick={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }} className="gap-2"><Bell className="h-4 w-4" />Relancer pièces</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 border-slate-300 text-slate-800"
+                  disabled={!sessionToken || resendAccessMutation.isPending || actionLocks.resendAccess || !/^(account|online|agency)_\d+$/.test(candidate.id)}
+                  onClick={() => { lockAction("resendAccess"); resendAccessMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
+                  data-testid="resend-client-access-link"
+                  title="Renvoyer le lien d’accès espace client (e-mail + WhatsApp)"
+                >
+                  {resendAccessMutation.isPending || actionLocks.resendAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                  Renvoyer l’accès
+                </Button>
+              </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-label="Conseiller référent">
               <UserRoundCheck className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />

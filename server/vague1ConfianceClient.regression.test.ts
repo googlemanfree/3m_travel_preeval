@@ -42,8 +42,9 @@ describe("vague 1 — confiance client", () => {
     expect(admin).toContain("buildCandidateSpaceAccessUrl");
 
     const ensure = read("server/services/ensureAgencyClientAccess.ts");
-    expect(ensure).toContain("Activer mon espace client");
+    expect(ensure).toContain("sendClientAccessInviteEmail");
     expect(ensure).toContain("issuePasswordResetToken");
+    expect(read("server/services/clientAccessInviteEmail.ts")).toContain("Activer mon espace client");
 
     const management = read("server/routers/adminCandidateManagement.ts");
     expect(management).toContain("getPaymentReceiptA5Html");
