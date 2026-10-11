@@ -14,7 +14,7 @@ const candidates: TodayCandidate[] = [
 describe("tableau admin Aujourd’hui", () => {
   it("agrège SLA, protocoles, checklist et procédures liées", () => {
     const items = buildTodayItems(candidates);
-    expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(["SLA dépassé", "Protocole N°01 à signer", "Checklist sous 80 %", "Traitement simultané multi-procédures", "SLA sous 24 h", "Protocole N°02 à signer"]));
+    expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(["SLA dépassé", "Reçu à préparer", "Protocole N°01 à signer", "Checklist sous 80 %", "Traitement simultané multi-procédures", "SLA sous 24 h", "Protocole N°02 à signer"]));
   });
   it("expose une actualisation manuelle et ouvre la fiche concernée", () => {
     const refresh = vi.fn();

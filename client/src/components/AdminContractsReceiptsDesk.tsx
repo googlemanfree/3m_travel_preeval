@@ -1,4 +1,5 @@
-import { FileText, RefreshCw, ShieldCheck } from "lucide-react";
+import { FileText, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,67 @@ function formatDate(value: Date | string | null | undefined) {
   return new Date(value).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
 }
 
-export default function AdminContractsReceiptsDesk({ sessionToken }: { sessionToken: string }) {
+type Props = {
+  sessionToken: string;
+  /** Ouvre la fiche 360 / détail candidat sans modifier le dossier. */
+  onOpenCandidate?: (candidateId: string) => void;
+};
+
+export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandidate }: Props) {
+  const utils = trpc.useUtils();
   const query = trpc.adminCandidateManagement.contractsReceiptsDesk.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken), refetchInterval: 45_000 },
   );
 
+  const approveMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Reçu signé pour ${result.dossierNumber}`);
+      void query.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const sendMutation = trpc.adminCandidateManagement.sendPaymentReceiptForCandidate.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Reçu PDF envoyé à ${result.email}`);
+      void query.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const printA5 = async (candidateId: string) => {
+    try {
+      const result = await utils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId });
+      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      if (!printWindow) {
+        toast.error("Autorisez les pop-ups pour imprimer le reçu A5.");
+        return;
+      }
+      printWindow.document.write(result.html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Reçu A5 indisponible.");
+    }
+  };
+
   const data = query.data;
+  const approveCandidateId = approveMutation.variables && typeof approveMutation.variables === "object"
+    ? String(approveMutation.variables.candidateId ?? "")
+    : "";
+  const sendCandidateId = sendMutation.variables && typeof sendMutation.variables === "object"
+    ? String(sendMutation.variables.candidateId ?? "")
+    : "";
+  const busyId = approveMutation.isPending
+    ? approveCandidateId
+    : sendMutation.isPending
+      ? sendCandidateId
+      : "";
 
   return (
-    <Card className="overflow-hidden border-0 shadow-sm">
+    <Card className="overflow-hidden border-0 shadow-sm" data-testid="admin-contracts-receipts-desk">
       <CardContent className="space-y-5 p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -33,7 +85,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken }: { sessionTo
               Bureau reçus & protocoles
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Vue transparente paiement → reçu approuvé → protocole d’accord, avec références de travail.
+              Paiement → reçu A5 / PDF → protocole. Actions locales uniquement — aucun rewrite de statut dossier.
             </p>
           </div>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => void query.refetch()} disabled={query.isFetching}>
@@ -49,7 +101,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken }: { sessionTo
           </div>
           <div className="rounded-xl border bg-orange-50 p-3">
             <p className="text-xs text-orange-800">Reçus à préparer</p>
-            <p className="text-2xl font-bold text-orange-950">{data?.counts.receiptPending ?? "—"}</p>
+            <p className="text-2xl font-bold text-orange-950" data-testid="receipt-pending-count">{data?.counts.receiptPending ?? "—"}</p>
           </div>
           <div className="rounded-xl border bg-blue-50 p-3">
             <p className="text-xs text-blue-800">Protocoles à signer</p>
@@ -76,13 +128,15 @@ export default function AdminContractsReceiptsDesk({ sessionToken }: { sessionTo
                     <th className="px-4 py-3">Étape</th>
                     <th className="px-4 py-3">Reçu</th>
                     <th className="px-4 py-3">Protocole</th>
+                    <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y bg-white">
                   {(data?.pipeline ?? []).map((row) => {
                     const stage = STAGE_LABELS[row.stage];
+                    const rowBusy = busyId === row.candidateId;
                     return (
-                      <tr key={row.candidateId} className="hover:bg-slate-50/80">
+                      <tr key={row.candidateId} className="hover:bg-slate-50/80" data-testid={`receipts-row-${row.candidateId}`}>
                         <td className="px-4 py-3">
                           <p className="font-mono text-xs font-semibold text-blue-900">{row.workingReference}</p>
                           {row.formerAccountReference && (
@@ -112,6 +166,43 @@ export default function AdminContractsReceiptsDesk({ sessionToken }: { sessionTo
                           ) : (
                             <span className="text-blue-700">Signature attendue</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {onOpenCandidate ? (
+                              <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" onClick={() => onOpenCandidate(row.candidateId)}>
+                                <UserRound className="h-3.5 w-3.5" /> Fiche
+                              </Button>
+                            ) : null}
+                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" onClick={() => void printA5(row.candidateId)} data-testid={`receipt-print-a5-${row.candidateId}`}>
+                              <Printer className="h-3.5 w-3.5" /> A5
+                            </Button>
+                            {!row.receiptAvailable ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-8 gap-1 bg-amber-700 px-2 text-xs text-white hover:bg-amber-800"
+                                disabled={rowBusy}
+                                onClick={() => approveMutation.mutate({ sessionToken, candidateId: row.candidateId })}
+                                data-testid={`receipt-approve-${row.candidateId}`}
+                              >
+                                {rowBusy && approveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                                Signer
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-8 gap-1 bg-blue-800 px-2 text-xs text-white hover:bg-blue-900"
+                                disabled={rowBusy}
+                                onClick={() => sendMutation.mutate({ sessionToken, candidateId: row.candidateId, deliveryMode: "resend" })}
+                                data-testid={`receipt-send-${row.candidateId}`}
+                              >
+                                {rowBusy && sendMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                                PDF
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

@@ -846,15 +846,24 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               ) : null}
-              {procedurePaymentConfirmed ? (
-                <Card className="border-slate-200 bg-white p-4 shadow-sm" data-testid="client-payment-receipt-note" role="status">
-                  <p className="text-sm font-semibold text-slate-900">Paiement confirmé — reçu caisse remis en agence</p>
-                  <p className="mt-1 text-xs text-slate-600">Le reçu A5 est délivré au comptoir. Un avis figure aussi dans vos notifications / e-mail. Aucune modification de dossier depuis cet espace.</p>
+              {procedurePaymentConfirmed && !(workflow as any)?.paymentReceiptApproved ? (
+                <Card className="border-amber-200 bg-amber-50/70 p-4 shadow-sm" data-testid="client-payment-receipt-note" role="status">
+                  <p className="text-sm font-semibold text-amber-950">Reçu en cours de validation agence</p>
+                  <p className="mt-1 text-xs text-amber-900">Dès signature, le reçu apparaît ici et dans vos notifications. Votre dossier actif n’est pas modifié depuis cet écran.</p>
                 </Card>
               ) : null}
               <ClientAdvisorWhatsApp dossierNumber={paymentDossierNumber || displayReference} fullName={cProfile.fullName} />
               <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={procedurePaymentConfirmed} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
-              <DossierPaymentCard dossierNumber={paymentDossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={procedurePaymentConfirmed} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
+              <DossierPaymentCard
+                dossierNumber={paymentDossierNumber}
+                amount={(activeDossier as any)?.paymentAmount}
+                currency={(activeDossier as any)?.paymentCurrency}
+                confirmed={procedurePaymentConfirmed}
+                requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)}
+                receiptApproved={Boolean((workflow as any)?.paymentReceiptApproved)}
+                receiptApprovedAt={(workflow as any)?.paymentReceiptApprovedAt ?? null}
+                receiptAmountLabel={(workflow as any)?.paymentReceiptAmount ?? null}
+              />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
               <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">

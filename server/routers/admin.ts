@@ -1711,6 +1711,16 @@ export const adminRouter = router({
           if (progress) checklistPercentByLegacyReference.set(reference, progress.total ? Math.round((progress.completed / progress.total) * 100) : 100);
         });
 
+        const receiptApprovalRows = await db
+          .select({
+            dossierNumber: paymentReceiptApprovals.dossierNumber,
+            candidateEmail: paymentReceiptApprovals.candidateEmail,
+          })
+          .from(paymentReceiptApprovals)
+          .limit(4000);
+        const receiptByDossier = new Set(receiptApprovalRows.map((row) => row.dossierNumber.trim().toUpperCase()));
+        const receiptByEmail = new Set(receiptApprovalRows.map((row) => row.candidateEmail.trim().toLowerCase()));
+
         let candidateRows: Array<{
           id: number;
           email: string;
@@ -1873,6 +1883,7 @@ export const adminRouter = router({
           dueAt: dueAtByLegacyReference.get(`online:${app.id}`) ?? null,
           paymentStatus: app.paymentStatus,
           agreementSigned: Boolean(app.agreementSigned),
+          receiptApproved: receiptByDossier.has(app.dossierNumber.trim().toUpperCase()) || receiptByEmail.has(app.email.trim().toLowerCase()),
           secondProtocolReady: Boolean(app.secondAgreementReadyAt),
           secondProtocolSigned: Boolean(app.secondAgreementSigned),
           checklistPercent: checklistPercentByLegacyReference.get(`online:${app.id}`) ?? null,
@@ -1912,6 +1923,7 @@ export const adminRouter = router({
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
           paymentStatus: paymentStatusForAgency(app.initialPaymentStatus),
           agreementSigned: null,
+          receiptApproved: receiptByDossier.has(`3M-AGN-${app.id.toString().padStart(4, "0")}`) || receiptByEmail.has(app.email.trim().toLowerCase()),
           secondProtocolReady: false,
           secondProtocolSigned: false,
           checklistPercent: checklistPercentByLegacyReference.get(`agency:${app.id}`) ?? null,
@@ -1957,6 +1969,7 @@ export const adminRouter = router({
             dueAt: null,
             paymentStatus: "NOT_PAID" as const,
             agreementSigned: null,
+            receiptApproved: receiptByEmail.has(candidate.email.trim().toLowerCase()),
             secondProtocolReady: false,
             secondProtocolSigned: false,
             checklistPercent: null,

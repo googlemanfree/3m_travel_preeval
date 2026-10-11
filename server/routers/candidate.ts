@@ -28,6 +28,7 @@ import {
   evaluations,
   savedDestinationComparisons,
   candidateEmailChangeRequests,
+  paymentReceiptApprovals,
 } from "../../drizzle/schema";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
@@ -2757,6 +2758,38 @@ export const candidateRouter = router({
       avatarVerificationReason: refreshedReason?.avatarVerificationReason ?? candidate.avatarVerificationReason,
     });
 
+    // Preuve de reçu pour LA procédure active uniquement (lecture seule).
+    let paymentReceipt: { approved: boolean; approvedAt: Date | null; amount: string | null } = {
+      approved: false,
+      approvedAt: null,
+      amount: null,
+    };
+    if (selectedProcedurePaymentConfirmed) {
+      const receiptDossier = (activeApp?.dossierNumber || activeAgencyDossierNumber || "").trim().toUpperCase();
+      const receiptEmail = candidate.email.trim().toLowerCase();
+      try {
+        const approvals = await db
+          .select({
+            dossierNumber: paymentReceiptApprovals.dossierNumber,
+            candidateEmail: paymentReceiptApprovals.candidateEmail,
+            approvedAt: paymentReceiptApprovals.approvedAt,
+            amount: paymentReceiptApprovals.amount,
+          })
+          .from(paymentReceiptApprovals)
+          .where(eq(paymentReceiptApprovals.candidateEmail, candidate.email))
+          .orderBy(desc(paymentReceiptApprovals.approvedAt))
+          .limit(20);
+        const match = approvals.find((row) => row.dossierNumber.trim().toUpperCase() === receiptDossier)
+          || approvals.find((row) => row.candidateEmail.trim().toLowerCase() === receiptEmail)
+          || null;
+        if (match?.approvedAt) {
+          paymentReceipt = { approved: true, approvedAt: match.approvedAt, amount: match.amount ?? null };
+        }
+      } catch (receiptError) {
+        console.warn("[getClientDashboardSummary] payment receipt lookup skipped", receiptError);
+      }
+    }
+
     return {
       profileCompletion,
       passportPhotoRequired,
@@ -2806,6 +2839,9 @@ export const candidateRouter = router({
         // Paiement de LA procédure affichée uniquement (jamais un OR sur les sœurs).
         paymentConfirmed: selectedProcedurePaymentConfirmed,
         paymentOpeningRequested: selectedProcedurePaymentRequested,
+        paymentReceiptApproved: paymentReceipt.approved,
+        paymentReceiptApprovedAt: paymentReceipt.approvedAt,
+        paymentReceiptAmount: paymentReceipt.amount,
         evaluationClientConfirmed: Boolean(activeApp?.evaluationClientConfirmedAt),
         activationRequested: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
         appointmentUnlocked: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
