@@ -33,7 +33,14 @@ import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
 import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ensureAgencyActiveReference } from "../services/canonicalizeActiveDossier";
 import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
+import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
+import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
+
+// Contrat partagé de la notification passport_photo_request, utilisé par le service
+// pour publier la demande dans l’espace client et envoyer l’e-mail correspondant.
+const PASSPORT_PHOTO_REQUEST_TITLE = "Photo de profil type passeport requise";
+const PASSPORT_PHOTO_REQUEST_BODY = "Pour une exploitation optimale de votre dossier dans les espaces employeur et agences de placement, merci de déposer une photo de profil type passeport.";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -1530,7 +1537,7 @@ export const adminCandidateManagementRouter = router({
           fullName: candidate.fullName,
           currentReason: null,
           sendEmail: true,
-          customReason: input.reason?.trim() || null,
+          customReason: input.reason?.trim() || PASSPORT_PHOTO_REQUEST_BODY,
         });
         return {
           success: true,
@@ -2383,6 +2390,156 @@ export const adminCandidateManagementRouter = router({
         duplicates: duplicates.map((row) => ({ dossierNumber: row.dossierNumber, fullName: row.fullName, email: row.email, createdAt: row.createdAt })),
       };
     }),
+  requestRegistrationSupplementaryInfo: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+      destination: z.string().trim().min(2).max(120).optional(),
+      visaType: z.string().trim().min(2).max(120).optional(),
+      forceResend: z.boolean().optional().default(false),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const accountMatch = /^account_(\d+)$/.exec(input.candidateId.trim());
+      let candidateId: number | null = null;
+      let fullName = "";
+      let email = "";
+      let destination = input.destination?.trim() || "";
+      let visaType = input.visaType?.trim() || "";
+      let hasCv = false;
+
+      if (accountMatch) {
+        const id = Number(accountMatch[1]);
+        const [account] = await db.select().from(candidates).where(eq(candidates.id, id)).limit(1);
+        if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+        candidateId = account.id;
+        fullName = account.fullName;
+        email = account.email;
+        if (!destination) {
+          try {
+            const parsed = JSON.parse(account.preferredDestinations || "[]");
+            destination = Array.isArray(parsed) && typeof parsed[0] === "string" ? parsed[0] : (account.destination || "");
+          } catch {
+            destination = account.destination || "";
+          }
+        }
+        if (!visaType) visaType = account.visaType || "";
+        const [fileCv] = await db.select({ id: candidateFiles.id }).from(candidateFiles)
+          .where(and(eq(candidateFiles.candidateId, account.id), eq(candidateFiles.fileType, "cv")))
+          .limit(1);
+        const [evalCv] = await db.select({ cvFileUrl: evaluations.cvFileUrl }).from(evaluations)
+          .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+          .orderBy(desc(evaluations.createdAt))
+          .limit(1);
+        hasCv = Boolean(fileCv || evalCv?.cvFileUrl?.trim());
+      } else {
+        const reference = parseAdminCandidateReference(input.candidateId);
+        if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+        if (reference.source === "online") {
+          const [app] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+          if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+          fullName = app.fullName;
+          email = app.email;
+          destination = destination || app.destination || "";
+          visaType = visaType || app.visaType || "";
+          hasCv = Boolean(app.cvUrl?.trim());
+          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          candidateId = linked?.id ?? null;
+        } else {
+          const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+          if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+          fullName = dossier.fullName;
+          email = dossier.email;
+          destination = destination || dossier.destination || "";
+          visaType = visaType || dossier.visaType || "";
+          hasCv = Boolean(dossier.cvFileUrl?.trim() || dossier.cvFileName?.trim());
+          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+          candidateId = linked?.id ?? null;
+        }
+      }
+
+      if (!email) throw new TRPCError({ code: "BAD_REQUEST", message: "Adresse e-mail candidat introuvable." });
+      if (!destination || !visaType) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Destination et type de visa sont requis pour générer la demande d’informations." });
+      }
+
+      if (candidateId && !input.forceResend) {
+        const [existing] = await db.select({ id: clientNotifications.id }).from(clientNotifications)
+          .where(and(eq(clientNotifications.candidateId, candidateId), eq(clientNotifications.type, "registration_info_request")))
+          .orderBy(desc(clientNotifications.createdAt))
+          .limit(1);
+        if (existing) {
+          return {
+            success: true,
+            alreadySent: true,
+            emailSent: false,
+            itemCount: 0,
+            message: "Une demande d’informations a déjà été envoyée pour ce compte. Utilisez « Renvoyer » pour forcer un nouvel envoi.",
+          };
+        }
+      }
+
+      const request = buildRegistrationInfoRequest({ destination, visaType, hasCv });
+      const portalUrl = "/mon-espace?section=documents";
+      const html = registrationInfoRequestEmailHtml({
+        fullName,
+        destination: request.destination,
+        visaType: request.visaType,
+        items: request.items,
+        portalUrl,
+      });
+      let emailSent = false;
+      try {
+        await sendGenericEmail({ to: email, subject: request.subject, html });
+        emailSent = true;
+      } catch (error) {
+        console.error("[registrationInfoRequest] email failed", error);
+      }
+
+      const bodyLines = request.items
+        .map((item) => `• ${item.label}${item.priority === "required" ? " (prioritaire)" : ""} — ${item.detail}`)
+        .join("\n");
+      const messageBody = `Pour votre projet ${request.destination} · ${request.visaType}, merci de compléter :\n\n${bodyLines}\n\nDéposez les pièces depuis votre espace candidat (Documents).`;
+
+      if (candidateId) {
+        const notificationResult = await db.insert(clientNotifications).values({
+          candidateId,
+          type: "registration_info_request",
+          title: `Informations à compléter — ${request.destination}`,
+          body: `${request.items.length} élément(s) demandé(s) selon votre pays et votre type de visa. Consultez votre espace.`,
+          actionUrl: portalUrl,
+          isRead: false,
+        });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({
+          candidateId,
+          notificationId: notificationId || null,
+          senderRole: "advisor",
+          content: messageBody,
+          isRead: false,
+        });
+      }
+
+      return {
+        success: true,
+        alreadySent: false,
+        emailSent,
+        itemCount: request.items.length,
+        requiresCv: evaluationRequiresCv(visaType),
+        message: emailSent
+          ? `Demande envoyée par e-mail et publiée dans l’espace client (${request.items.length} élément(s)).`
+          : `Demande publiée dans l’espace client (${request.items.length} élément(s)), mais l’e-mail n’a pas pu partir.`,
+      };
+    }),
+
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

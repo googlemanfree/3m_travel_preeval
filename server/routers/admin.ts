@@ -1729,6 +1729,7 @@ export const adminRouter = router({
           city: app.currentCity || "Non renseignée",
           destinationCountry: app.destination || "Non spécifiée",
           projectType: app.visaType || "Non spécifié",
+          isClientActiveTreatment: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === app.dossierNumber,
           isActiveDossier: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === app.dossierNumber,
           status: mapDossierStatus(app.dossierStatus),
           internalStatus: app.dossierStatus,
@@ -2635,7 +2636,7 @@ export const adminRouter = router({
               ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
               : null,
           });
-          const [evaluationRow] = await db.select({ id: evaluations.id }).from(evaluations)
+          const [evaluationRow] = await db.select({ id: evaluations.id, projectType: evaluations.projectType, destinationCountry: evaluations.destinationCountry }).from(evaluations)
             .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
             .limit(1);
           const [openingPaymentRow] = await db.select({ id: agencySettings.id }).from(agencySettings)
@@ -2656,8 +2657,8 @@ export const adminRouter = router({
               email: account.email,
               whatsapp: account.phone || "",
               city: "Compte en ligne",
-              destinationCountry: destinationLabelForStaff(account),
-              projectType: account.visaType || "À qualifier",
+              destinationCountry: destinationLabelForStaff(account) || evaluationRow?.destinationCountry || "Non spécifiée",
+              projectType: account.visaType || evaluationRow?.projectType || "À qualifier",
               // Tout ce que le candidat a déclaré à l'inscription, visible par l'équipe.
               registrationProfile: {
                 preferredDestinations: parsePreferredDestinations(account.preferredDestinations),

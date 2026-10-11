@@ -525,6 +525,17 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Validation hors ligne impossible", description: err.message, variant: "destructive" }),
   });
+  const requestRegistrationInfoMutation = trpc.adminCandidateManagement.requestRegistrationSupplementaryInfo.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: result.alreadySent ? "Demande déjà envoyée" : "Demande d’informations envoyée",
+        description: result.message,
+      });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Demande d’informations impossible", description: err.message, variant: "destructive" }),
+  });
   const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
     onSuccess: (result) => {
       setPaymentConfirmedOptimistically(true);
@@ -890,7 +901,24 @@ export function CandidateDetailModal({
                   <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
                 </div>
               </section>
-              <AdminRegistrationProfile profile={(candidate as any).registrationProfile} />
+              <AdminRegistrationProfile
+                profile={(candidate as any).registrationProfile}
+                fullName={candidate.fullName}
+                email={candidate.email}
+                cvDocument={(data as any)?.cvDocument ?? null}
+                hasCv={Boolean((candidate as any).hasCv || (data as any)?.cvDocument?.documentUrl)}
+                infoRequestAlreadySent={Boolean((candidate as any).registrationInfoRequestSentAt)}
+                isRequestingInfo={requestRegistrationInfoMutation.isPending}
+                onRequestInfo={({ destination, visaType }) =>
+                  requestRegistrationInfoMutation.mutate({
+                    sessionToken,
+                    candidateId,
+                    destination,
+                    visaType,
+                    forceResend: Boolean((candidate as any).registrationInfoRequestSentAt),
+                  })
+                }
+              />
 
               {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5" data-testid="pilotage-decision-panel">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Pilotage guidé</p>
@@ -931,7 +959,7 @@ export function CandidateDetailModal({
                       <p className="mt-2 text-xs leading-5 text-amber-900">Confirmez d’abord le paiement avant d’avancer les étapes du parcours.</p>
                     )}
                     {previousAdminStatus && paymentAlreadyConfirmed && (
-                      <Button type="button" variant="outline" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
+                      <Button type="button" variant="outline" data-testid="cancel-last-kanban-step" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
                         <X className="mr-2 h-4 w-4" />Annuler la dernière validation
                       </Button>
                     )}
@@ -940,6 +968,9 @@ export function CandidateDetailModal({
                   <div className="grid gap-2">
                     <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
                       <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("payments")} data-testid="open-cancel-validated-payment">
+                      <FileText className="mr-2 h-4 w-4 text-amber-700" />Paiements et annulation
                     </Button>
                     <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("overview")} data-testid="open-360-summary">
                       <FileText className="mr-2 h-4 w-4 text-indigo-700" />Synthèse & vue d’ensemble
@@ -2870,7 +2901,7 @@ export default function AdminDashboard() {
                             {candidate.folderCode}
                           </span>
                           {candidate.isActiveDossier && (
-                            <span data-testid="admin-active-dossier-badge" className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                            <span data-testid="admin-active-treatment-badge" data-active-dossier-badge="admin-active-dossier-badge" className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                               Dossier actif
                             </span>
                           )}
