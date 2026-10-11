@@ -1,4 +1,8 @@
 import { useState, useMemo } from 'react';
+
+// Nombre de destinations affichées d'un coup ; le reste s'ouvre avec « Afficher plus » (la page faisait 73 000 px sur mobile).
+const PROCEDURES_PAGE_SIZE = 18;
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'wouter';
 import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink, X } from 'lucide-react';
@@ -51,6 +55,7 @@ export default function ProceduresAdvanced() {
   const [showBudgetCalculator, setShowBudgetCalculator] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'cost' | 'time' | 'salary'>('name');
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const [pageState, setPageState] = useState({ key: '', limit: PROCEDURES_PAGE_SIZE });
   
   // Advanced filters
   const [minSalaryFilter, setMinSalaryFilter] = useState(0);
@@ -123,6 +128,11 @@ export default function ProceduresAdvanced() {
 
     return filtered;
   }, [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter, verifiedPortalOnly]);
+
+  // Toute modification de la recherche, d'un filtre ou du tri revient à la première page.
+  const filterKey = [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter, verifiedPortalOnly].join('|');
+  const visibleLimit = pageState.key === filterKey ? pageState.limit : PROCEDURES_PAGE_SIZE;
+  const visibleCountries = filteredCountries.slice(0, visibleLimit);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -576,7 +586,7 @@ export default function ProceduresAdvanced() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <AnimatePresence>
-            {filteredCountries.map((country) => {
+            {visibleCountries.map((country) => {
               const isExpanded = expandedCountry === country.id;
               const isSelected = selectedForComparison.includes(country.id);
               const destinationMedia = mediaByDestination.get(country.id);
@@ -591,6 +601,7 @@ export default function ProceduresAdvanced() {
               return (
                 <motion.div
                   key={country.id}
+                  data-testid="procedure-card"
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -816,6 +827,14 @@ export default function ProceduresAdvanced() {
             })}
           </AnimatePresence>
         </motion.div>
+
+        {filteredCountries.length > visibleCountries.length && (
+          <div className="mt-8 text-center">
+            <Button variant="outline" className="min-h-11 px-8" data-testid="procedures-show-more" onClick={() => setPageState({ key: filterKey, limit: visibleLimit + PROCEDURES_PAGE_SIZE })}>
+              Afficher plus de destinations ({filteredCountries.length - visibleCountries.length} restantes)
+            </Button>
+          </div>
+        )}
 
         {/* Empty State */}
         {filteredCountries.length === 0 && (

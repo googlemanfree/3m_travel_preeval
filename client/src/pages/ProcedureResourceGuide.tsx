@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+
+// Ressources montrées par catégorie tant que le visiteur ne cherche ni ne filtre (la page faisait 36 000 px sur mobile).
+const CATEGORY_PREVIEW_SIZE = 6;
+
 import {
   BookOpen,
   Check,
@@ -137,6 +141,7 @@ export default function ProcedureResourceGuide() {
   const [categoryFilter, setCategoryFilter] = useState<(typeof CATEGORY_FILTERS)[number]["id"]>("all");
   const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [openCategories, setOpenCategories] = useState<string[]>([]);
   const query = searchQuery.trim().toLowerCase();
   const shareUrl = typeof window !== "undefined" ? getProcedureGuideUrl(window.location.origin) : "/guide-procedures";
 
@@ -175,6 +180,9 @@ export default function ProcedureResourceGuide() {
       return true;
     });
   }, [enriched, filteredResourceIds, categoryFilter, countryFilter]);
+
+  // Liste abrégée seulement quand rien n'est cherché ni filtré : une recherche montre toujours tous les résultats.
+  const compactList = !searchQuery.trim() && categoryFilter === "all" && !countryFilter;
 
   const filteredCategories = useMemo(
     () =>
@@ -408,10 +416,22 @@ export default function ProcedureResourceGuide() {
                 <Sparkles className="h-5 w-5 text-blue-700" aria-hidden="true" />
               </div>
               <div className="grid gap-3 p-4 md:grid-cols-2 md:p-6">
-                {category.resources.map((resource) => (
+                {(compactList && !openCategories.includes(category.id) ? category.resources.slice(0, CATEGORY_PREVIEW_SIZE) : category.resources).map((resource) => (
                   <ResourceCard key={resource.id} resource={resource as EnrichedProcedureResource} language={language} />
                 ))}
               </div>
+              {compactList && !openCategories.includes(category.id) && category.resources.length > CATEGORY_PREVIEW_SIZE && (
+                <div className="border-t border-slate-100 px-4 py-3 text-center md:px-6">
+                  <button
+                    type="button"
+                    className="min-h-11 rounded-xl px-4 text-sm font-bold text-blue-800 underline-offset-4 hover:underline"
+                    data-testid={`guide-show-all-${category.id}`}
+                    onClick={() => setOpenCategories((current) => [...current, category.id])}
+                  >
+                    Afficher les {category.resources.length - CATEGORY_PREVIEW_SIZE} autres ressources
+                  </button>
+                </div>
+              )}
             </section>
           ))}
         </div>
