@@ -1,6 +1,6 @@
 
-## UX phases client et prévisualisation admin — VALIDÉ
-- [x] Guide accessible des 7 phases ajouté directement dans la vue globale client, avec infobulles clavier/survol et détails sans jargon.
-- [x] Bannière distinctive « Prévisualisation administrateur — lecture seule » ajoutée dans la modale admin, avec garde explicite contre les mutations.
-- [ ] Vérification authentifiée non réalisée : le navigateur affiche encore « Accès réservé aux administrateurs ». La garde publique est confirmée et aucune mutation métier n’a été exécutée.
-- [x] 2 suites / 11 tests verts ; `pnpm run check` vert ; `vite build` vert (avertissement de chunks volumineux uniquement).
+## PR #60 — cohérence dossiers, phases client et cockpit — VALIDÉE
+- [x] PR60 mergeable/clean, tests ciblés sur le commit exact : 1 suite / 4 tests verts.
+- [x] `pnpm run check` vert ; `vite build` vert (avertissement chunks volumineux uniquement).
+- [x] Draft sortie puis PR60 squash-mergée sur `main` au commit `cf80bb56`.
+- [x] Checkout WebDev synchronisé sur `user_github/main` `cf80bb56` ; publication à enregistrer par checkpoint.
