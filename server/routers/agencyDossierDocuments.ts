@@ -67,6 +67,10 @@ export const agencyDossierDocumentsRouter = router({
         details: input.verificationComment || `Document ${document.documentName} : statut mis à jour`,
       });
 
+      void import("../services/candidateSynthesisStructure")
+        .then(({ restructureSynthesisForAgencyDossier }) => restructureSynthesisForAgencyDossier(document.dossierId))
+        .catch((error) => console.error("[synthesis] restructure après statut document agence", error));
+
       return { success: true };
     }),
 

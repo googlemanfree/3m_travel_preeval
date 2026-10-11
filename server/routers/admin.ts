@@ -2338,6 +2338,12 @@ export const adminRouter = router({
           }
         }
 
+        if (candidateId) {
+          void import("../services/candidateSynthesisStructure")
+            .then(({ scheduleSynthesisRestructure }) => scheduleSynthesisRestructure(candidateId, "après statut document admin"))
+            .catch((error) => console.error("[synthesis] restructure après statut document admin", error));
+        }
+
         return {
           success: true,
           message: "Statut du document mis à jour avec succès",
@@ -3158,6 +3164,9 @@ export const adminRouter = router({
             if (operationalCase) {
         await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_uploaded", entityType: "candidate_file", entityId: String(Number(insertedDocument[0]?.insertId || 0)), description: `Dépôt admin ciblé · ${input.fileName} · type ${input.fileType} · ${input.mimeType} · ${buffer.length} octets · dossier ${operationalCase.caseNumber || input.candidateId}.` });
       }
+      void import("../services/candidateSynthesisStructure")
+        .then(({ restructureSynthesisAfterDocumentChange }) => restructureSynthesisAfterDocumentChange(input.candidateId!))
+        .catch((error) => console.error("[synthesis] restructure après dépôt admin", error));
       return { success: true, url: stored.url, receiptUrl };
     }),
   suggestDroppedDocumentMetadata: publicProcedure

@@ -23,6 +23,7 @@ import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import AdminSimultaneousProceduresBoard from "@/components/AdminSimultaneousProceduresBoard";
 import ProcedureStepper from "@/components/ProcedureStepper";
+import CandidateSynthesisPanel from "@/components/CandidateSynthesisPanel";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
@@ -1029,6 +1030,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}
               onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
             />
+          )}
+          {Number(candidate.internalId) > 0 && (
+            <CandidateSynthesisPanel sessionToken={sessionToken} candidateId={Number(candidate.internalId)} />
           )}
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">

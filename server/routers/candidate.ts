@@ -954,6 +954,11 @@ export const candidateRouter = router({
           .where(eq(candidates.id, ctx.candidate.id));
       }
 
+      // Restructure automatique de la fiche de synthèse (pièces) après chaque dépôt.
+      void import("../services/candidateSynthesisStructure")
+        .then(({ restructureSynthesisAfterDocumentChange }) => restructureSynthesisAfterDocumentChange(ctx.candidate.id))
+        .catch((error) => console.error("[synthesis] restructure après dépôt candidat", error));
+
       return { success: true, documentId: Number((insertResult as any)[0]?.insertId || 0) };
     }),
 
@@ -972,6 +977,9 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Un document validé ne peut pas être supprimé depuis votre espace." });
       }
       await db.delete(candidateFiles).where(and(eq(candidateFiles.id, input.fileId), eq(candidateFiles.candidateId, ctx.candidate.id)));
+      void import("../services/candidateSynthesisStructure")
+        .then(({ scheduleSynthesisRestructure }) => scheduleSynthesisRestructure(ctx.candidate.id, "après suppression pièce candidat"))
+        .catch((error) => console.error("[synthesis] restructure après suppression candidat", error));
       return { success: true };
     }),
 
