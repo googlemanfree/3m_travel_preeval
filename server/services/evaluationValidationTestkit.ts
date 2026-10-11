@@ -238,6 +238,8 @@ export const CANDIDATE_CONTEXT: EvaluationContext = {
   candidateName: "Aïcha Nkolo",
   candidateEmail: "aicha@example.com",
   candidateCountry: "Canada",
+  visaType: "canada_travail",
+  projectType: "travail",
   cvOnFile: true,
   cvFileName: "cv-aicha-nkolo.pdf",
   cvFileUrl: "https://files.example.com/cv-uploads/1_cv-aicha-nkolo.pdf",

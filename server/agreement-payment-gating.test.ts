@@ -47,7 +47,7 @@ describe("agreement and payment gating contracts", () => {
     expect(gate).toContain("Le candidat doit confirmer la réception et la compréhension du bilan avant de demander le paiement d’ouverture.");
     expect(gate).toContain("La confirmation du bilan par le candidat est obligatoire avant le traitement du dossier.");
     expect(gate).toContain('nextStatus === "en_evaluation"');
-    expect(gate).toContain("Un CV exploitable doit être détecté avant de démarrer l’évaluation.");
+    expect(gate).toContain("Un CV exploitable doit être détecté avant de démarrer l’évaluation pour un visa travail.");
     expect(read("server/routers/evaluationAdmin.ts")).toContain("cvUrl: applications.cvUrl");
   });
 

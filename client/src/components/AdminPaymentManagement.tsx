@@ -310,9 +310,16 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
 
   const handleConfirmAction = async () => {
     if (!selectedPayment || !actionType) return;
-    if (actionType === "cancel" && adminNote.trim().length < 3) {
-      toast.error("Un motif de rejet d’au moins 3 caractères est obligatoire.");
-      return;
+    if (actionType === "cancel") {
+      const minReason = selectedPayment.paymentStatus === "SUCCESS" ? 5 : 3;
+      if (adminNote.trim().length < minReason) {
+        toast.error(
+          selectedPayment.paymentStatus === "SUCCESS"
+            ? "Un motif d’au moins 5 caractères est obligatoire pour annuler un paiement validé."
+            : "Un motif de rejet d’au moins 3 caractères est obligatoire.",
+        );
+        return;
+      }
     }
     
     setIsProcessing(true);
@@ -722,6 +729,21 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                             </>
                           )}
                           {payment.paymentStatus === "SUCCESS" && <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800" title="Ce paiement est déjà confirmé ; aucune seconde validation n’est nécessaire."><CheckCircle2 className="h-3.5 w-3.5" /> Validé · {payment.validatedBy || "conseiller"}</span>}
+                          {payment.paymentStatus === "SUCCESS" && (
+                            <Button
+                              onClick={() => handleCancelPayment(payment)}
+                              variant="ghost"
+                              size="sm"
+                              title="Annuler le paiement déjà validé (motif obligatoire)"
+                              aria-label={`Annuler le paiement validé du dossier ${payment.dossierNumber}`}
+                              className="text-red-700 hover:text-red-800 hover:bg-red-50"
+                              disabled={isProcessing || lockedPaymentId === payment.id}
+                              data-testid="cancel-validated-payment"
+                            >
+                              {lockedPaymentId === payment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                              <span className="hidden xl:inline">Annuler paiement</span>
+                            </Button>
+                          )}
                           {payment.paymentStatus === "SUCCESS" && (
                             <Button onClick={() => void handleSendPackage(payment)} variant="ghost" size="sm" title="Envoyer le reçu et le protocole d’accord N°01 ensemble, dans un seul e-mail" aria-label={`Envoyer reçu et protocole du dossier ${payment.dossierNumber}`} className="text-blue-700 hover:bg-blue-50" disabled={sendPackageMutation.isPending} data-testid="send-receipt-and-protocol">
                               {sendPackageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}<span className="hidden xl:inline">Reçu + protocole</span>

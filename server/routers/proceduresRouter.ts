@@ -32,7 +32,7 @@ Tu aides les candidats à comprendre les procédures de visa, les délais, les f
 
 Informations clés:
 - Les procédures prennent généralement 8-24 semaines selon le pays
-- Les frais d'ouverture de dossier sont 65 000 FCFA
+- Les frais d'ouverture de dossier varient selon le type de profil et sont confirmés par écrit avant tout paiement (n'annonce jamais de montant précis)
 - Les candidats peuvent refuser une offre d'emploi sans pénalité
 - Tous les frais sont transparents et expliqués avant engagement
 - Les données sont protégées selon le RGPD
@@ -98,7 +98,7 @@ Si tu ne sais pas la réponse, propose de contacter l'équipe directement.`;
         },
         {
           question: "Quels sont les frais exacts?",
-          answer: "Les frais d'ouverture de dossier sont 65 000 FCFA. Des frais supplémentaires peuvent s'ajouter selon les services additionnels. Tous les frais sont transparents et expliqués avant engagement.",
+          answer: "Le montant des frais d'ouverture de dossier dépend du type de profil ; il vous est confirmé par écrit avant tout paiement. Des frais supplémentaires peuvent s'ajouter selon les services additionnels. Tous les frais sont transparents et expliqués avant engagement.",
         },
         {
           question: "Comment puis-je suivre mon dossier?",

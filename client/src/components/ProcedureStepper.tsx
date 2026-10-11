@@ -40,7 +40,18 @@ function StepRow({ step, currentStepIndex, busy, onUnlock, onUndo }: { step: Pro
       </span>
       <span className={`min-w-0 flex-1 truncate text-sm ${current ? "font-semibold text-slate-900" : done ? "text-slate-700" : "text-slate-500"}`}>{step.index + 1}. {step.label}</span>
       {step.state === "locked" && <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verrouillé</span>}
-      {done && <button type="button" disabled={busy} onClick={() => onUndo(step)} className="text-xs font-semibold text-rose-700 hover:underline disabled:opacity-50" aria-label={`Annuler la validation de l’étape ${step.index + 1}`}>Annuler</button>}
+      {done && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onUndo(step)}
+          className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+          aria-label={`Annuler la validation de l’étape ${step.index + 1}`}
+          data-testid={`cancel-past-step-${step.index}`}
+        >
+          Annuler l’étape
+        </button>
+      )}
       {step.state === "locked" && <button type="button" disabled={busy} onClick={() => onUnlock(step)} title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`} className="text-xs font-semibold text-amber-700 hover:underline disabled:opacity-50" aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}>Déverrouiller</button>}
     </li>
   );
@@ -144,11 +155,44 @@ export default function ProcedureStepper({
           {view.current.description && <p className="mt-1 text-sm leading-6 text-slate-700">{view.current.description}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" className="bg-blue-700 hover:bg-blue-800" disabled={busy} onClick={() => onValidate(view.current as ProcedureStep)}>{busy ? "Validation…" : "Marquer l’étape comme faite"}</Button>
+            {view.done > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-rose-300 text-rose-800 hover:bg-rose-50"
+                disabled={busy}
+                onClick={() => {
+                  const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+                  if (lastDone) onUndo(lastDone);
+                }}
+                data-testid="cancel-last-past-step"
+              >
+                Annuler l’étape passée
+              </Button>
+            )}
             {view.current.sourceUrl && <a href={view.current.sourceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-700 underline">Source officielle</a>}
           </div>
+          <p className="mt-2 text-xs text-slate-600">Les annulations portent uniquement sur ce dossier ; les procédures sœurs du même client restent inchangées.</p>
         </div>
       ) : view.finished ? (
-        <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900" data-testid="stepper-finished">Toutes les étapes du parcours sont validées.</p>
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4" data-testid="stepper-finished">
+          <p className="text-sm font-semibold text-emerald-900">Toutes les étapes du parcours sont validées.</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-3 border-rose-300 text-rose-800 hover:bg-rose-50"
+            disabled={busy}
+            onClick={() => {
+              const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+              if (lastDone) onUndo(lastDone);
+            }}
+            data-testid="cancel-last-past-step-finished"
+          >
+            Annuler la dernière étape
+          </Button>
+        </div>
       ) : null}
 
       {view.upcoming.length > 0 && (

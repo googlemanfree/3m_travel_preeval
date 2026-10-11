@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { CV_MISSING_FOR_PUBLICATION } from "../../shared/evaluationCv";
+import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import {
   ADMIN_DRAFT_BADGE,
   AI_DRAFT_LABEL,
@@ -161,7 +162,10 @@ export type EvaluationContext = {
   candidateEmail: string;
   /** Pays choisi par le candidat : toujours le pays prioritaire. */
   candidateCountry: string;
-  /** CV au dossier : élément clé, l'évaluation ne peut pas être publiée sans lui. */
+  /** Type de visa / projet — le CV n’est obligatoire que pour le travail. */
+  visaType: string | null;
+  projectType: string | null;
+  /** CV au dossier : obligatoire pour visa travail, optionnel sinon. */
   cvOnFile: boolean;
   cvFileName: string | null;
   /** Lien d'ouverture du CV, réservé à l'administrateur (jamais renvoyé au candidat). */
@@ -556,8 +560,10 @@ export async function publishEvaluation(deps: ValidationDeps, admin: Actor, eval
   if (incomplete.length > 0) throw new ValidationFlowError("INCOMPLETE_VERSION", `Complétez avant de publier : ${incomplete.join(", ")}.`, { missing: incomplete });
 
   const context = await requireContext(deps.store, evaluationId);
-  // Le CV est l'élément clé de la finalisation : sans lui, ni publication ni première validation.
-  if (!context.cvOnFile) throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
+  // Visa travail : CV obligatoire. Autres visas : évaluation intelligente sans bloquer sur le CV.
+  if (evaluationRequiresCv(context.visaType, context.projectType) && !context.cvOnFile) {
+    throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
+  }
   const now = deps.now();
   const report = buildReport(version, { candidateName: context.candidateName, validatedAt: isoDate(now) });
   const rendered = input.sendEmail ? renderEmailFor(deps, version, context.candidateEmail) : null;

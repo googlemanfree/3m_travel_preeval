@@ -25,13 +25,39 @@ const URGENCY_STYLE = {
   low: "border-slate-200 bg-slate-50 text-slate-900",
 } as const;
 
+export type CockpitTreatTarget = {
+  key: string;
+  tab: NonNullable<Cockpit["nextAction"]["tab"]>;
+  label: string;
+};
+
 export default function AdminCandidateCockpitStrip({
   cockpit,
   onOpenTab,
+  onTreatNow,
 }: {
   cockpit: Cockpit;
+  /** @deprecated Préférez onTreatNow — conservé pour les écrans déjà branchés. */
   onOpenTab?: (tab: NonNullable<Cockpit["nextAction"]["tab"]>) => void;
+  /** Action réelle « Traiter maintenant » (ne doit jamais être un no-op). */
+  onTreatNow?: (target: CockpitTreatTarget) => void;
 }) {
+  const treatTarget: CockpitTreatTarget = {
+    key: cockpit.nextAction.key,
+    tab: (cockpit.nextAction.tab || cockpit.blockers[0]?.tab || "overview") as CockpitTreatTarget["tab"],
+    label: cockpit.nextAction.label,
+  };
+
+  const handleTreat = (target: CockpitTreatTarget = treatTarget) => {
+    if (onTreatNow) {
+      onTreatNow(target);
+      return;
+    }
+    if (onOpenTab) onOpenTab(target.tab);
+  };
+
+  const canTreat = Boolean(onTreatNow || onOpenTab);
+
   return (
     <section className={`rounded-2xl border p-4 sm:p-5 ${URGENCY_STYLE[cockpit.nextAction.urgency]}`} data-testid="candidate-cockpit-strip">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -82,23 +108,49 @@ export default function AdminCandidateCockpitStrip({
             </p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {cockpit.blockers.slice(0, 4).map((blocker) => (
-                <li key={blocker.code} className="text-sm text-slate-800">
-                  <span className="font-medium">{blocker.message}</span>
-                </li>
-              ))}
+              {cockpit.blockers.slice(0, 4).map((blocker) => {
+                const blockerTab = (blocker.tab || treatTarget.tab) as CockpitTreatTarget["tab"];
+                return (
+                  <li key={blocker.code}>
+                    {canTreat ? (
+                      <button
+                        type="button"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                        onClick={() =>
+                          handleTreat({
+                            key: blocker.code,
+                            tab: blockerTab,
+                            label: blocker.message,
+                          })
+                        }
+                        data-testid={`cockpit-blocker-${blocker.code}`}
+                      >
+                        <span className="font-medium">{blocker.message}</span>
+                        <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Cliquer pour traiter →</span>
+                      </button>
+                    ) : (
+                      <span className="text-sm font-medium text-slate-800">{blocker.message}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
-          {cockpit.nextAction.tab && onOpenTab ? (
+          {canTreat ? (
             <Button
               type="button"
               size="sm"
               className="mt-3 gap-1.5 bg-slate-900 hover:bg-slate-800"
-              onClick={() => onOpenTab(cockpit.nextAction.tab!)}
+              onClick={() => handleTreat()}
+              data-testid="cockpit-treat-now"
             >
               Traiter maintenant <ChevronRight className="h-3.5 w-3.5" />
             </Button>
-          ) : null}
+          ) : (
+            <p className="mt-3 text-xs font-semibold text-rose-700" data-testid="cockpit-treat-unavailable">
+              Action de traitement indisponible sur cet écran.
+            </p>
+          )}
         </div>
       </div>
     </section>

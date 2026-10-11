@@ -32,6 +32,7 @@ import {
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
+import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyAdmins } from "./adminNotifications";
 import { buildCandidateMessageAlert } from "../services/candidateMessageAlert";
@@ -420,6 +421,9 @@ export const candidateRouter = router({
         educationLevel: z.string().trim().max(100).optional(),
         employmentStatus: z.string().trim().max(100).optional(),
         languageLevel: z.string().trim().max(100).optional(),
+        /** CV obligatoire pour visa travail (tous pays) — pièce clé de l’évaluation. */
+        cvBase64: z.string().min(32).max(7_200_000).optional(),
+        cvFileName: z.string().trim().min(3).max(255).optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
         evaluationAlreadyCompleted: z.boolean().default(false),
       })
@@ -435,6 +439,21 @@ export const candidateRouter = router({
       }
       // On enregistre l'orthographe officielle (et non la saisie brute), sans doublon.
       const { destinations: preferredDestinations } = normalizeCandidateDestinations(input.preferredDestinations);
+
+      const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
+      const { checkCvUpload, CV_REQUIRED_AT_REGISTRATION, safeCvFileName } = await import("../../shared/evaluationCv");
+      if (evaluationRequiresCv(input.visaType) && (!input.cvBase64 || !input.cvFileName)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_AT_REGISTRATION });
+      }
+      let registrationCv: { url: string; key: string; fileName: string; mime: string; size: number } | null = null;
+      if (input.cvBase64 && input.cvFileName) {
+        const checked = checkCvUpload(input.cvBase64);
+        if (checked.ok === false) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });
+        const fileName = safeCvFileName(input.cvFileName);
+        const storageKey = `candidates/registration-cv/${Date.now()}_${fileName}`;
+        const stored = await storagePut(storageKey, Buffer.from(checked.bytes), checked.mime);
+        registrationCv = { url: stored.url, key: storageKey, fileName, mime: checked.mime, size: checked.bytes.length };
+      }
 
       // Vérifier si l'email existe déjà (hors comptes supprimés)
       const existing = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, normalizedEmail), isNull(candidates.deletedAt))).limit(1);
@@ -516,6 +535,18 @@ export const candidateRouter = router({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
         }
         candidateId = inserted[0].id;
+        if (registrationCv) {
+          await db.insert(candidateFiles).values({
+            candidateId,
+            fileType: "cv",
+            fileName: registrationCv.fileName,
+            fileUrl: registrationCv.url,
+            fileKey: registrationCv.key,
+            fileSizeBytes: registrationCv.size,
+            mimeType: registrationCv.mime,
+            status: "uploaded",
+          });
+        }
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         // Ne jamais renvoyer l'erreur brute de la base de données au client
@@ -2603,17 +2634,6 @@ export const candidateRouter = router({
       .where(and(eq(agencyDossiers.email, candidate.email), isNull(agencyDossiers.deletedAt)))
       .orderBy(desc(agencyDossiers.createdAt))
       .limit(10);
-    const selectedApp = input?.selectedDossierNumber
-      ? appRows.find((app) => app.dossierNumber === input.selectedDossierNumber) ?? null
-      : null;
-    const selectedAgency = input?.selectedDossierNumber
-      ? agencyDossierRows.find((dossier) => `3M-AGN-${dossier.id.toString().padStart(4, "0")}` === input.selectedDossierNumber) ?? null
-      : null;
-    // Si le candidat choisit explicitement une procédure agence (ex. 2ᵉ opportunité études),
-    // on ne retombe pas sur une candidature en ligne d’un autre projet.
-    const activeApp = selectedApp
-      || (selectedAgency ? null : (appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null));
-    const activeAgencyDossier = selectedAgency || (!selectedApp ? agencyDossierRows[0] : null) || null;
     const onlineDossiers = [
       ...appRows.map((app) => ({
         dossierNumber: app.dossierNumber,
@@ -2634,6 +2654,23 @@ export const candidateRouter = router({
         source: "agency" as const,
       })),
     ];
+    // Un seul dossier de traitement actif, synchronisé client ↔ admin (persistance + sélection).
+    const activeTreatmentNumber = resolveActiveDossierNumber({
+      persistedActiveDossierNumber: (candidate as { activeDossierNumber?: string | null }).activeDossierNumber,
+      selectedDossierNumber: input?.selectedDossierNumber,
+      dossiers: onlineDossiers,
+    });
+    const selectedApp = activeTreatmentNumber
+      ? appRows.find((app) => app.dossierNumber === activeTreatmentNumber) ?? null
+      : null;
+    const selectedAgency = activeTreatmentNumber
+      ? agencyDossierRows.find((dossier) => `3M-AGN-${dossier.id.toString().padStart(4, "0")}` === activeTreatmentNumber) ?? null
+      : null;
+    // Si le candidat choisit explicitement une procédure agence (ex. 2ᵉ opportunité études),
+    // on ne retombe pas sur une candidature en ligne d’un autre projet.
+    const activeApp = selectedApp
+      || (selectedAgency ? null : (appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null));
+    const activeAgencyDossier = selectedAgency || (!selectedApp ? agencyDossierRows[0] : null) || null;
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
       : null;
@@ -2749,6 +2786,10 @@ export const candidateRouter = router({
         evaluationReviewNote: candidate.evaluationReviewNote,
         createdAt: candidate.createdAt,
       },
+      activeTreatmentDossierNumber: activeTreatmentNumber
+        || activeApp?.dossierNumber
+        || activeAgencyDossierNumber
+        || null,
       activeDossier: activeApp,
       activeAgencyDossier: activeAgencyDossier
         ? {
@@ -2813,6 +2854,44 @@ export const candidateRouter = router({
       },
     };
   }),
+
+  /**
+   * Active le dossier de traitement côté client ET admin.
+   * Ouvrir / sélectionner un dossier le rend le seul dossier traité ; un second dossier
+   * s’active avec sa propre référence et son propre paiement.
+   */
+  setActiveDossier: candidateProcedure
+    .input(z.object({ dossierNumber: z.string().trim().min(3).max(50) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const dossierNumber = input.dossierNumber.trim();
+      const [online] = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(and(eq(applications.candidateId, ctx.candidate.id), eq(applications.dossierNumber, dossierNumber), isNull(applications.deletedAt)))
+        .limit(1);
+      let allowed = Boolean(online);
+      if (!allowed && /^3M-AGN-\d+$/i.test(dossierNumber)) {
+        const agencyId = Number(dossierNumber.replace(/^3M-AGN-/i, ""));
+        if (Number.isFinite(agencyId) && agencyId > 0) {
+          const [agency] = await db
+            .select({ id: agencyDossiers.id })
+            .from(agencyDossiers)
+            .where(and(eq(agencyDossiers.id, agencyId), eq(agencyDossiers.email, ctx.candidate.email), isNull(agencyDossiers.deletedAt)))
+            .limit(1);
+          allowed = Boolean(agency);
+        }
+      }
+      if (!allowed) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Ce dossier n’appartient pas à votre compte." });
+      }
+      await db
+        .update(candidates)
+        .set({ activeDossierNumber: dossierNumber, activeDossierSetAt: new Date() })
+        .where(eq(candidates.id, ctx.candidate.id));
+      return { success: true as const, activeDossierNumber: dossierNumber };
+    }),
 
   saveDestinationComparison: candidateProcedure
     .input(z.object({

@@ -52,8 +52,8 @@ export default function HowItWorks() {
     },
     {
       number: 5,
-      title: "Paiement obligatoire (65 000 XAF)",
-      description: "Finalisez votre candidature en effectuant le paiement de 65 000 XAF. Ce montant couvre les frais administratifs et lance officiellement votre processus.",
+      title: "Paiement des frais d'ouverture",
+      description: "Finalisez votre candidature en réglant les frais d'ouverture. Leur montant dépend de votre profil et vous est confirmé par écrit avant tout paiement. Il couvre les frais administratifs et lance officiellement votre processus.",
       icon: DollarSign,
       color: "bg-rose-100 text-rose-700",
     },

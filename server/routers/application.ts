@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs, paymentReceiptApprovals, ambassadors } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals, ambassadors } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -358,6 +358,12 @@ export const applicationRouter = router({
         ]);
       }
 
+      // Ce nouveau dossier devient immédiatement le dossier de traitement actif (sync admin).
+      await db
+        .update(candidates)
+        .set({ activeDossierNumber: dossierNumber, activeDossierSetAt: new Date() })
+        .where(eq(candidates.id, ctx.candidate.id));
+
       return {
         applicationId: newApp?.id ?? 0,
         dossierNumber,
@@ -365,6 +371,7 @@ export const applicationRouter = router({
         requiresEmailVerification: true,
         paymentUrl: null, // Sera généré après vérification OTP
         message: "Dossier créé — vérification email requise avant paiement",
+        activeDossierNumber: dossierNumber,
       };
     }),
 
@@ -742,15 +749,24 @@ export const applicationRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
       const isValidated = input.paymentStatus === "SUCCESS";
+      const isCancelValidated = input.paymentStatus === "CANCELLED" && application.paymentStatus === "SUCCESS";
       if (isValidated && application.paymentStatus === "SUCCESS" && application.paymentValidatedAt) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `Le paiement est déjà confirmé par ${application.paymentValidatedBy || "un conseiller"} le ${new Date(application.paymentValidatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n’est nécessaire.` });
+      }
+      if (isCancelValidated && (!input.adminNotes || input.adminNotes.trim().length < 5)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Un motif d’au moins 5 caractères est obligatoire pour annuler un paiement déjà validé." });
       }
       if (isValidated) {
         // La validation conseiller peut être faite sans référence saisie : cela couvre les paiements en agence et les validations manuelles documentées.
         // Une référence Orange Money déjà connue est conservée lorsqu’elle existe ; sinon la trace VALIDATION_MANUELLE est enregistrée.
       }
-      const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;
+      const validatedAt = isValidated ? new Date() : isCancelValidated ? null : application.paymentValidatedAt;
       const canStartTreatment = isValidated && application.agreementSigned && application.evaluationDeliveryStatus === "sent";
+      const nextDossierStatus = isCancelValidated && ["paye", "en_attente_documents", "documents_recus"].includes(application.dossierStatus)
+        ? "en_attente_paiement"
+        : canStartTreatment
+          ? "paye"
+          : application.dossierStatus;
       await db.update(applications)
         .set({
           paymentStatus: input.paymentStatus,
@@ -758,10 +774,10 @@ export const applicationRouter = router({
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
           paymentTransactionId: input.paymentReference?.trim() || application.paymentTransactionId || "VALIDATION_MANUELLE",
           paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
-          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : application.paymentConfirmedAmount,
+          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : isCancelValidated ? null : application.paymentConfirmedAmount,
           paymentValidatedAt: validatedAt,
-          paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : application.paymentValidatedBy,
-          dossierStatus: canStartTreatment ? "paye" : application.dossierStatus,
+          paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : isCancelValidated ? null : application.paymentValidatedBy,
+          dossierStatus: nextDossierStatus as typeof application.dossierStatus,
           ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
         })
         .where(eq(applications.id, input.id));
@@ -769,7 +785,7 @@ export const applicationRouter = router({
       await db.insert(paymentAuditLogs).values({
         adminName: ctx.user.name || "Administrateur",
         adminEmail: ctx.user.email || "",
-        action: input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
+        action: isCancelValidated ? "cancelled_validated" : input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
         paymentId: application.id,
         candidateEmail: application.email,
         amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
@@ -785,10 +801,16 @@ export const applicationRouter = router({
           candidateId: application.candidateId,
           caseId: caseRow?.id,
           type: isValidated ? "payment_validated" : "payment_action_required",
-          title: isValidated ? "Paiement validé — quittance disponible" : "Votre paiement nécessite une correction",
+          title: isValidated
+            ? "Paiement validé — quittance disponible"
+            : isCancelValidated
+              ? "Paiement annulé — dossier remis en attente"
+              : "Votre paiement nécessite une correction",
           body: isValidated
             ? `Votre versement de ${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"} pour le dossier ${application.dossierNumber} a été validé. Votre quittance PDF est maintenant disponible dans l’espace client.`
-            : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
+            : isCancelValidated
+              ? `Le paiement validé du dossier ${application.dossierNumber} a été annulé par l’administration. Motif : ${input.adminNotes || "Correction administrative."} Un nouveau règlement est nécessaire pour poursuivre.`
+              : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
           actionUrl: "/mon-espace",
         });
       }

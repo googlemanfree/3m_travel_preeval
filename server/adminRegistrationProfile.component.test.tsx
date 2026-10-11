@@ -62,7 +62,7 @@ describe("synchronisation inscription → back-office (câblage)", () => {
     expect(admin).toContain("destinationCountry: destinationLabelForStaff(candidate)");
     expect(admin).toContain("destinationCountry: destinationLabelForStaff(account)");
     expect(admin).toContain("projectType: candidate.visaType || \"À qualifier\"");
-    expect(admin).toContain("projectType: account.visaType || \"À qualifier\"");
+    expect(admin).toContain("projectType: account.visaType || evaluationRow?.projectType || \"À qualifier\"");
     expect(admin).toContain("preferredDestinations: candidates.preferredDestinations");
     expect(admin).toContain("registrationProfile: {");
     for (const field of ["preferredDestinations", "visaType", "educationLevel", "employmentStatus", "languageLevel", "nationality"]) {
@@ -72,6 +72,8 @@ describe("synchronisation inscription → back-office (câblage)", () => {
 
   it("la fiche candidat de l'admin affiche le bloc du projet déclaré", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
-    expect(dashboard).toContain("<AdminRegistrationProfile profile={(candidate as any).registrationProfile} />");
+    expect(dashboard).toContain("<AdminRegistrationProfile");
+    expect(dashboard).toContain("profile={(candidate as any).registrationProfile}");
+    expect(dashboard).toContain("onRequestInfo=");
   });
 });

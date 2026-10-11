@@ -95,7 +95,7 @@ function generateAdmissibilityReport(evaluation: any): string {
           <p>Pour finaliser votre dossier :</p>
           <ol>
             <li><strong>Téléverser vos pièces justificatives</strong> (passeport, diplômes, justificatifs financiers)</li>
-            <li><strong>Régler les frais d'ouverture de dossier</strong> (65 000 FCFA) en ligne ou en agence</li>
+            <li><strong>Régler les frais d'ouverture de dossier</strong> (montant selon votre profil, confirmé par écrit avant tout paiement) en ligne ou en agence</li>
             <li><strong>Soumettre votre dossier</strong> à nos agences partenaires pour le traitement administratif</li>
           </ol>
 
