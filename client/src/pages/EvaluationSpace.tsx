@@ -23,7 +23,11 @@ import {
   RefreshCw,
   Sparkles,
   Bell,
+  Building2,
+  MessageCircle,
 } from "lucide-react";
+import ClientAdvisorWhatsApp, { clientAdvisorWhatsAppHref } from "@/components/ClientAdvisorWhatsApp";
+import { COMPANY_CONTACTS } from "@/lib/companyContacts";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
@@ -540,14 +544,6 @@ export default function EvaluationSpace() {
       <Button type="button" onClick={openEvaluation} className="mt-5 h-12 bg-violet-700 px-6 text-white hover:bg-violet-800"><Sparkles className="mr-2 h-4 w-4" />Faire mon évaluation</Button>
     </Card>
   );
-  const priority = stats.unreadMessages > 0
-    ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
-    : cProfile.dossierStatus === "documents"
-      ? { title: "Compléter les documents demandés", detail: "Consultez la checklist : l’agence précise les pièces réellement nécessaires à votre dossier.", target: "documents" as const, label: "Voir mes documents", icon: FileText, tone: "bg-blue-50 border-blue-200 text-blue-950" }
-      : !latestEvaluation
-        ? { title: "Poursuivre votre évaluation", detail: "Votre dossier reste préparatoire tant que les informations et le CV requis ne sont pas transmis.", target: "dossier" as const, label: "Faire mon évaluation", icon: Sparkles, tone: "bg-violet-50 border-violet-200 text-violet-950" }
-        : { title: "Suivre l’avancement de votre dossier", detail: reviewDueLabel ? `Une revue est indiquée au plus tard le ${reviewDueLabel}.` : "Votre conseiller publiera la prochaine étape après vérification.", target: "dossier" as const, label: "Suivre mon dossier", icon: FolderOpen, tone: "bg-emerald-50 border-emerald-200 text-emerald-950" };
-  const PriorityIcon = priority.icon;
   const switchToSection = (nextSection: typeof activeTab) => {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
@@ -555,6 +551,15 @@ export default function EvaluationSpace() {
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
   const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
   const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
+  const documentsActionCount = checklistSummary.missing + checklistSummary.replace;
+  const unreadNotificationsCount = Math.max(0, Number(caseTrackingData?.unreadNotifications) || 0);
+  const signaturesPendingCount = agreementAfterPaymentRequired ? 1 : 0;
+  const agencyProofDocuments = agencyDepositedDocuments(caseTrackingData?.cases);
+  const paymentDue = Boolean(paymentDossierNumber) && !procedurePaymentConfirmed && Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested);
+  const paymentHref = paymentDossierNumber
+    ? `/paiement?ref=${encodeURIComponent(paymentDossierNumber)}${(activeDossier as any)?.paymentAmount ? `&montant=${encodeURIComponent(String((activeDossier as any).paymentAmount))}` : ""}`
+    : null;
+  const advisorWhatsAppUrl = clientAdvisorWhatsAppHref(paymentDossierNumber || displayReference, cProfile.fullName);
   // « Étape N sur M » : même calcul (et mêmes jalons) que le parcours affiché plus bas et que les e-mails de l'agence.
   const journeyProgress = describeDossierProgress({
     destination: primaryDestination,
@@ -572,14 +577,37 @@ export default function EvaluationSpace() {
     evaluationRequired,
     evaluationStage: structuredStage,
     cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
+    paymentDue,
+    paymentHref,
     agreementSignatureRequired: agreementAfterPaymentRequired,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
     checklist: checklistSummary,
+    unreadNotifications: unreadNotificationsCount,
+    unreadMessages: stats.unreadMessages,
+    advisorWhatsAppUrl,
   });
+  const priorityTone =
+    nextStep.tone === "action"
+      ? "bg-blue-50 border-blue-200 text-blue-950"
+      : nextStep.tone === "info"
+        ? "bg-slate-50 border-slate-200 text-slate-950"
+        : "bg-emerald-50 border-emerald-200 text-emerald-950";
+  const PriorityIcon =
+    nextStep.id.includes("message") ? MessageSquare
+      : nextStep.id.includes("notification") ? Bell
+        : nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
+          : nextStep.id.includes("payment") ? FolderOpen
+            : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
+              : nextStep.id.includes("agreement") ? ShieldCheck
+                : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
     else if (step.action.kind === "section") switchToSection(step.action.section);
     else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    else if (step.action.kind === "link") {
+      if (/^https?:\/\//i.test(step.action.href)) window.open(step.action.href, "_blank", "noopener,noreferrer");
+      else setLocation(step.action.href);
+    }
   };
   const openDocumentClarification = (documentLabel: string) => {
     setClarificationDocument(documentLabel);
@@ -591,7 +619,7 @@ export default function EvaluationSpace() {
   };
 
   return (
-    <main className="premium-page-shell min-h-screen pb-16">
+    <main className="premium-page-shell min-h-screen pb-28 md:pb-16">
       {/* En-tête du tableau de bord unifié */}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-4 sm:px-6 md:flex-row lg:px-8">
@@ -685,9 +713,10 @@ export default function EvaluationSpace() {
                   setSecondaryDestination(String(primaryDestination || activeDossier?.destination || "").trim());
                   setSecondaryDossierOpen(true);
                 }}
-                className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                className="ml-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                data-testid="add-secondary-dossier"
               >
-                + Ajouter une seconde opportunité (Travail / Études)
+                + Autre projet (optionnel)
               </button>
             ) : (
               <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
@@ -708,7 +737,7 @@ export default function EvaluationSpace() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
-              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " (double opportunité possible : travail + études — 1 dossier = 1 paiement)" : ""}, avec la prochaine action à effectuer pour chacun.</p>
+              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " — un dossier = un paiement distinct" : " — votre dossier actif n’est pas modifié par cet écran"}. Prochaine action affichée pour chaque dossier.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
@@ -745,16 +774,17 @@ export default function EvaluationSpace() {
           <ClientSpaceNavigation compact />
           <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-slate-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
           {[
-            { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
-            { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
-            { id: "signatures", label: "Documents à signer", icon: ShieldCheck },
-            { id: "documents", label: "Centre Documentaire", icon: FileText },
-            { id: "notifications", label: `Notifications ${(caseTrackingData?.unreadNotifications ?? 0) > 0 ? `(${caseTrackingData?.unreadNotifications})` : ""}`, icon: Bell },
-            { id: "profile", label: "Mon Profil & Avatar", icon: User },
-            { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
+            { id: "overview", label: "Vue d'ensemble", icon: TrendingUp, badge: 0 },
+            { id: "dossier", label: "Dossier", icon: FolderOpen, badge: 0 },
+            { id: "signatures", label: "Signatures", icon: ShieldCheck, badge: signaturesPendingCount },
+            { id: "documents", label: "Documents", icon: FileText, badge: documentsActionCount },
+            { id: "notifications", label: "Notifications", icon: Bell, badge: unreadNotificationsCount },
+            { id: "profile", label: "Profil", icon: User, badge: 0 },
+            { id: "messages", label: "Messages", icon: MessageSquare, badge: stats.unreadMessages },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const badge = Number(tab.badge) || 0;
             return (
               <button
                 key={tab.id}
@@ -771,9 +801,21 @@ export default function EvaluationSpace() {
                     ? "premium-action text-white shadow-md"
                     : "border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60"
                 }`}
+                data-testid={`client-tab-${tab.id}`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
+                {badge > 0 ? (
+                  <span
+                    className={`ml-0.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                      isActive ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
+                    }`}
+                    aria-label={`${badge} action${badge > 1 ? "s" : ""}`}
+                    data-testid={`client-tab-badge-${tab.id}`}
+                  >
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -784,6 +826,33 @@ export default function EvaluationSpace() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               <NextStepCard step={nextStep} onAct={actOnNextStep} />
+              {agencyProofDocuments.length > 0 ? (
+                <Card className="border-emerald-200 bg-emerald-50/60 p-5 shadow-sm" data-testid="client-agency-proofs" role="region" aria-labelledby="client-agency-proofs-title">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 gap-3">
+                      <span className="shrink-0 rounded-xl bg-emerald-700 p-3 text-white"><Building2 className="h-5 w-5" aria-hidden="true" /></span>
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-800">Preuves agence</p>
+                        <h3 id="client-agency-proofs-title" className="mt-1 text-lg font-black text-slate-950">{agencyProofDocuments.length} document{agencyProofDocuments.length > 1 ? "s" : ""} remis en agence</h3>
+                        <p className="mt-1 text-sm text-slate-700">Visible ici en lecture seule — votre dossier actif n’est pas modifié depuis cet écran.</p>
+                        <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                          {agencyProofDocuments.slice(0, 3).map((doc) => (
+                            <li key={doc.id} className="truncate">• {doc.documentType} — {doc.fileName}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" className="shrink-0 border-emerald-300 bg-white" onClick={() => switchToSection("documents")}>Voir les preuves</Button>
+                  </div>
+                </Card>
+              ) : null}
+              {procedurePaymentConfirmed ? (
+                <Card className="border-slate-200 bg-white p-4 shadow-sm" data-testid="client-payment-receipt-note" role="status">
+                  <p className="text-sm font-semibold text-slate-900">Paiement confirmé — reçu caisse remis en agence</p>
+                  <p className="mt-1 text-xs text-slate-600">Le reçu A5 est délivré au comptoir. Un avis figure aussi dans vos notifications / e-mail. Aucune modification de dossier depuis cet espace.</p>
+                </Card>
+              ) : null}
+              <ClientAdvisorWhatsApp dossierNumber={paymentDossierNumber || displayReference} fullName={cProfile.fullName} />
               <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={procedurePaymentConfirmed} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
               <DossierPaymentCard dossierNumber={paymentDossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={procedurePaymentConfirmed} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
@@ -1031,20 +1100,22 @@ export default function EvaluationSpace() {
               </Card>
 
               <section aria-labelledby="client-priority-title">
-                <Card className={`border p-5 shadow-sm ${priority.tone}`}>
+                <Card className={`border p-5 shadow-sm ${priorityTone}`} data-testid="client-priority-mirror">
                   <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                     <div className="flex min-w-0 gap-3">
                       <span className="shrink-0 rounded-xl bg-white/80 p-3 shadow-sm"><PriorityIcon className="h-5 w-5" aria-hidden="true" /></span>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">Priorité du dossier</p>
-                        <h3 id="client-priority-title" className="mt-1 text-lg font-black">{priority.title}</h3>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{priority.detail}</p>
-                        <p className="mt-2 text-xs leading-5 opacity-80">Les statuts et demandes sont synchronisés depuis l’agence. Aucune décision n’est prise automatiquement dans cet espace.</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">À faire maintenant</p>
+                        <h3 id="client-priority-title" className="mt-1 text-lg font-black">{nextStep.title}</h3>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{nextStep.description}</p>
+                        <p className="mt-2 text-xs leading-5 opacity-80">Lecture seule des dossiers actifs : les statuts restent ceux validés par l’agence. Aucune réécriture automatique ici.</p>
                       </div>
                     </div>
-                    <Button type="button" onClick={() => evaluationRequired ? openEvaluation() : switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
-                      {priority.label}<ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {nextStep.actionLabel ? (
+                      <Button type="button" onClick={() => actOnNextStep(nextStep)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
+                        {nextStep.actionLabel}<ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    ) : null}
                   </div>
                   <div className="mt-5 grid gap-2 border-t border-current/15 pt-4 sm:grid-cols-2 xl:grid-cols-4">
                     <button type="button" onClick={() => switchToSection("dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
@@ -1436,16 +1507,17 @@ export default function EvaluationSpace() {
 
           {activeTab === "messages" && (
             <div className="space-y-6">
-              <div className="premium-surface mb-2 flex items-center justify-between rounded-2xl border-blue-100/80 bg-blue-50/70 p-5">
+              <div className="premium-surface mb-2 flex flex-col gap-4 rounded-2xl border-blue-100/80 bg-blue-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client</p>
                   <h3 className="premium-section-title mt-1 text-lg sm:text-xl">
                     Messagerie avec votre conseiller 3M TRAVEL AGENCY
                   </h3>
                   <p className="premium-copy mt-1 text-sm">
-                    Posez vos questions à l’équipe ou échangez directement avec votre conseiller attitré.
+                    Posez vos questions à l’équipe ou écrivez directement sur WhatsApp ({COMPANY_CONTACTS.yaounde.whatsappNumber}).
                   </p>
                 </div>
+                <ClientAdvisorWhatsApp dossierNumber={paymentDossierNumber || displayReference} fullName={cProfile.fullName} compact />
               </div>
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
@@ -1461,6 +1533,20 @@ export default function EvaluationSpace() {
           )}
 	        </div>
 	      </div>
+      {nextStep.actionLabel ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
+          <div className="mx-auto flex max-w-7xl items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">À faire maintenant</p>
+              <p className="truncate text-sm font-bold text-slate-950">{nextStep.title}</p>
+            </div>
+            <Button type="button" onClick={() => actOnNextStep(nextStep)} className="h-11 shrink-0 bg-blue-800 text-white hover:bg-blue-900">
+              {nextStep.action.kind === "link" && /wa\.me\//i.test(nextStep.action.href) ? <MessageCircle className="mr-2 h-4 w-4" /> : null}
+              {nextStep.actionLabel}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <Dialog open={agreementPreviewOpen} onOpenChange={(open) => { if (!open) setAgreementPreviewOpen(false); }}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
