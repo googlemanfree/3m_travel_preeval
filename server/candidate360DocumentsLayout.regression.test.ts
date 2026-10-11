@@ -45,6 +45,6 @@ describe("onglet Documents du dossier (administration) : une vue claire, les out
     const router = source("server/routers/adminCaseDesk.ts");
     expect(router).toContain("requireValidAdminSession(input.sessionToken)");
     expect(router.match(/publicProcedure/g)?.length).toBeGreaterThanOrEqual(3);
-    expect((router.match(/await loadContext\(input\)/g) ?? []).length).toBe(3);
+    expect((router.match(/await loadContext\(input\)/g) ?? []).length).toBe(4);
   });
 });
