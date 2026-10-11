@@ -1845,6 +1845,16 @@ export const adminRouter = router({
         };
         const paymentStatusForAgency = (status: string): "NOT_PAID" | "PENDING" | "SUCCESS" => status === "paid" ? "SUCCESS" : status === "pending" ? "PENDING" : "NOT_PAID";
 
+        // Statut protocole agence (agency_settings / PDF signé) — lecture seule, aucun rewrite de status.
+        const { loadAgencyAgreementSignaturesByIds, loadAgencyProtocolSignedDocIds } = await import("../services/agencyAgreementSignature");
+        const agencyIdsForProtocol = agencyApps.map((app) => app.id);
+        const [agencyProtocolSignatures, agencyProtocolSignedDocs] = await Promise.all([
+          loadAgencyAgreementSignaturesByIds(db, agencyIdsForProtocol),
+          loadAgencyProtocolSignedDocIds(db, agencyIdsForProtocol),
+        ]);
+        const agencyProtocolSigned = (dossierId: number) =>
+          agencyProtocolSignatures.has(dossierId) || agencyProtocolSignedDocs.has(dossierId);
+
         // Normaliser les dossiers en ligne
         const normalizedOnline = onlineApps.map(app => ({
           id: `online_${app.id}`,
@@ -1922,7 +1932,7 @@ export const adminRouter = router({
           evaluationScheduledAt: null,
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
           paymentStatus: paymentStatusForAgency(app.initialPaymentStatus),
-          agreementSigned: null,
+          agreementSigned: agencyProtocolSigned(app.id),
           receiptApproved: receiptByDossier.has(`3M-AGN-${app.id.toString().padStart(4, "0")}`) || receiptByEmail.has(app.email.trim().toLowerCase()),
           secondProtocolReady: false,
           secondProtocolSigned: false,
@@ -4402,7 +4412,7 @@ export const adminRouter = router({
           hasEvaluationRecord: Boolean(latestEvaluation),
           paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
           receiptApproved: Boolean(paymentSnapshot?.receiptApproval),
-          protocolSigned: Boolean(onlineApp?.agreementSigned),
+          protocolSigned: protocolOneSigned,
           dossierActivated: true,
           pendingDocuments,
           workflowStatus: operationalCase.currentStatus,
@@ -4557,8 +4567,8 @@ export const adminRouter = router({
               : agencyStatus === "approuve" ? "APPROVED" : "PENDING_48H");
           const guided = resolveGuidedNextAdminAction({
             currentStatus: adminStatus,
-            paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
-            protocolSigned: Boolean(onlineApp?.agreementSigned),
+            paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (reference.source === "agency" && (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "paid"),
+            protocolSigned: protocolOneSigned,
             documentsReady: ((countryProcedureChecklist?.missing ?? 0) + (countryProcedureChecklist?.replace ?? 0)) === 0,
             checklistPercent: countryProcedureChecklist?.percent ?? null,
             procedureKind,
