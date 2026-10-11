@@ -1,8 +1,8 @@
 
-## PR #57 — photo passeport travail, cockpit 360 et dossier actif — VALIDÉE LOCALEMENT
-- [x] Activation Travail déclenche l’exigence photo passeport, notification espace client et e-mail ; dépôt Profil remplace la photo de profil.
-- [x] Admin : aperçu/téléchargement/demande photo passeport ; garde du dossier actif 3M-AGN et annulation paiement/étape conservées.
-- [x] Contrats d’informations complémentaires et fallback inscription restaurés après fusion avec main.
-- [x] `pnpm run check` vert ; 4 suites ciblées / 14 tests verts ; `vite build` vert avec avertissement de chunks volumineux uniquement.
-- [x] Checkpoint/publication production confirmés : version WebDev `fdcb5837`, build live `nogit.202610110127` sur les quatre domaines.
-- [x] Purge CDN tentée de façon ciblée, mais non exécutée : le connecteur Cloudflare autorisé retourne zéro zone (`GET /zones`, 200). Aucun mauvais compte ni purge globale n’a été utilisé.
+## PR57 — correctif urgent poste 360 — VALIDÉ
+- [x] Branche synchronisée au commit PR57 `e097bcd9`, puis correctif TypeScript poussé et PR squash-mergée sur `main` au commit `39fa28c0`.
+- [x] `getCandidateDetails` est en lecture seule ; la résolution EVAL→3M reste manuelle via le bouton ; le fallback admin sans `activeDossierNumber` est conservé.
+- [x] `drizzle/0079_active_dossier_number.sql` confirmé en base : `candidates.activeDossierNumber` existe en `varchar(80)` ; aucune réapplication destructive.
+- [x] TypeScript vert, build production vert, régression cockpit 360 : 4/4 tests verts ; preview redémarrée sur `39fa28c0`.
+- [ ] Contrôle authentifié de plusieurs fiches (3M-AGN, EVAL-AG, pré-dossier) non réalisé : la session admin n’est pas active dans le navigateur ; le contrôle public confirme seulement la garde « Accès réservé aux administrateurs ».
+- [x] Purge CDN externe non exécutée : la zone Cloudflare n’est pas visible dans le connecteur autorisé, après une tentative ciblée déjà documentée ; aucun compte erroné n’a été utilisé.
