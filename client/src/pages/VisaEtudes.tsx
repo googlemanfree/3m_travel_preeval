@@ -80,15 +80,15 @@ export default function VisaEtudes() {
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-[38%_42%] sm:object-[36%_40%]"
+          imgClassName="h-full w-full object-cover object-[22%_36%] sm:object-[18%_34%]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/92 via-[#0a2748]/55 to-[#061018]/35 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/85 via-[#0a2748]/40 to-[#061018]/20 sm:bg-gradient-to-r sm:from-[#061018]/80 sm:via-[#0a2748]/42 sm:to-[#061018]/10" />
         <div className="relative z-10 mx-auto w-full max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl"
+            className="max-w-xl sm:max-w-lg lg:max-w-xl"
           >
             <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
               3M TRAVEL AGENCY
