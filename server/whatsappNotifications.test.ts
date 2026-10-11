@@ -5,6 +5,7 @@ import { normalizeWhatsAppPhone, toE164WhatsApp } from "../shared/whatsappPhone"
 import {
   buildAgencyDocumentsPublishedWhatsApp,
   buildDossierCreatedWhatsApp,
+  buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
 } from "./whatsappService";
 
@@ -64,6 +65,20 @@ describe("messages WhatsApp dossier / documents", () => {
     expect(message).toContain("Collecte des documents");
     expect(message).toContain("Étape 3 sur 7");
   });
+
+  it("construit le message de reçu signé", () => {
+    const message = buildPaymentReceiptApprovedWhatsApp({
+      candidateName: "Grace",
+      dossierNumber: "3M-AGN-0015",
+      amount: "65000",
+      currency: "XAF",
+    });
+    expect(message).toContain("Grace");
+    expect(message).toContain("3M-AGN-0015");
+    expect(message).toContain("65000 XAF");
+    expect(message).toContain("mon-espace?section=overview");
+    expect(message).toContain("Reçu de paiement validé");
+  });
 });
 
 describe("branchements WhatsApp admin", () => {
@@ -80,9 +95,16 @@ describe("branchements WhatsApp admin", () => {
     const service = read("server/whatsappService.ts");
     expect(service).toContain("toE164WhatsApp");
     expect(service).toContain("buildAgencyDocumentsPublishedWhatsApp");
+    expect(service).toContain("buildPaymentReceiptApprovedWhatsApp");
     expect(service).toContain("URLSearchParams");
+
+    const management = read("server/routers/adminCandidateManagement.ts");
+    expect(management).toContain("notifyPaymentReceiptApprovedWhatsApp");
+    expect(management).toContain("receipt_approved_whatsapp");
+    expect(management).toContain("whatsappSent");
 
     expect(read("client/src/components/AgencyDossierDocumentCenter.tsx")).toContain("WhatsApp envoyé au client");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("WhatsApp envoyé");
+    expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("WhatsApp envoyé au client");
   });
 });

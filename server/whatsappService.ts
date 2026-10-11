@@ -136,6 +136,28 @@ ${CLIENT_SPACE_URL}
 `.trim();
 }
 
+export function buildPaymentReceiptApprovedWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  amount: string;
+  currency: string;
+}): string {
+  const amountLabel = `${params.amount} ${params.currency}`.trim();
+  return `
+🧾 *Reçu de paiement validé*
+
+Bonjour ${params.candidateName},
+
+Votre reçu pour le dossier *${params.dossierNumber}* a été signé par 3M TRAVEL AGENCY.
+💰 *Montant :* ${amountLabel}
+
+Il est visible dans votre espace (et remis au comptoir en A5 si paiement en agence) :
+${CLIENT_SPACE_URL}?section=overview
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
 /**
  * Envoyer le bilan d'admissibilité par WhatsApp
  */

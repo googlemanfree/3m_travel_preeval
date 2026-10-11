@@ -31,7 +31,12 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
 
   const approveMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation({
     onSuccess: (result) => {
-      toast.success(`Reçu signé pour ${result.dossierNumber}`);
+      const wa = (result as { whatsappSent?: boolean; whatsappSkippedReason?: string | null }).whatsappSent
+        ? " · WhatsApp envoyé au client"
+        : (result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason
+          ? ` · WhatsApp non envoyé (${(result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason})`
+          : "";
+      toast.success(`Reçu signé pour ${result.dossierNumber}${wa}`);
       void query.refetch();
     },
     onError: (error) => toast.error(error.message),
