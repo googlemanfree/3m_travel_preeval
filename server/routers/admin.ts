@@ -32,7 +32,6 @@ import {
   canonicalAgencyFolderCode,
 } from "../../shared/evalAgencyShell";
 import {
-  ensureAgencyActiveReference,
   purgeAllOrphanEvalAgencyShells,
   purgeEvalAgencyShell,
   setAdminActiveDossierReference,
