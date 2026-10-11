@@ -10,6 +10,7 @@ import { requireAdminSessionFromCookie, requireValidAdminSession } from "./admin
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
 import { accountReference, agencyDossierReference, referenceChangeSentence, resolveClientReference } from "../../shared/caseReference";
@@ -1900,8 +1901,87 @@ export const adminCandidateManagementRouter = router({
         console.error("[Payment] receipt + protocol package failed", { dossierNumber, error });
       }
 
-      return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt, packageSent, packageError };
+      return {
+        success: true,
+        alreadyConfirmed,
+        dossierNumber,
+        candidateEmail,
+        fullName,
+        validatedBy: admin.email || "Administrateur",
+        validatedAt,
+        packageSent,
+        packageError,
+        receiptA5Ready: true,
+        amount,
+        currency: "XAF",
+      };
     }),
+
+  /** HTML imprimable du reçu A5 (caisse) pour un paiement déjà confirmé. */
+  getPaymentReceiptA5Html: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+    }))
+    .query(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+      let fullName = "";
+      let dossierNumber = "";
+      let amount = "65000";
+      let paymentMethod = "Paiement en agence";
+      let paid = false;
+      let paidAt = new Date();
+
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        paid = application.paymentStatus === "SUCCESS";
+        fullName = application.fullName;
+        dossierNumber = application.dossierNumber;
+        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
+        paymentMethod = application.paymentMethod || "Validation administrative";
+        paidAt = application.paymentDate ?? application.paymentValidatedAt ?? new Date();
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        paid = dossier.initialPaymentStatus === "paid";
+        fullName = dossier.fullName;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        const [latestAudit] = await db.select().from(paymentAuditLogs)
+          .where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email)))
+          .orderBy(desc(paymentAuditLogs.createdAt))
+          .limit(1);
+        const audited = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") : "";
+        amount = audited || "65000";
+        paymentMethod = "Espèces / Mobile Money — agence";
+        paidAt = dossier.lastStatusChangeAt ?? dossier.updatedAt ?? new Date();
+      }
+
+      if (!paid) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant d’imprimer le reçu A5." });
+      }
+
+      const html = generateReceiptA5HTML({
+        receiptNumber: `REC-A5-${dossierNumber.replace(/[^A-Z0-9-]/gi, "")}`,
+        date: paidAt,
+        time: paidAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }),
+        candidateName: fullName,
+        amount,
+        currency: "XAF",
+        paymentMethod,
+        agentName: admin.fullName || admin.email || "Conseiller 3M",
+        agencyLocation: "Yaoundé — Biyem-Assi",
+        description: `Frais de dossier ${dossierNumber}`,
+      });
+
+      return { success: true, dossierNumber, html };
+    }),
+
   /** Envoie (ou renvoie) le reçu et le Protocole d'accord N°01 ensemble, dans un seul e-mail, pour un paiement déjà confirmé. */
   sendReceiptAndProtocol: publicProcedure
     .input(z.object({

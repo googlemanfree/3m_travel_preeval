@@ -565,6 +565,28 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Demande d’informations impossible", description: err.message, variant: "destructive" }),
   });
+  const detailUtils = trpc.useUtils();
+  const printReceiptA5 = async (candidateRef: string) => {
+    try {
+      const result = await detailUtils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId: candidateRef });
+      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      if (!printWindow) {
+        toast({ title: "Pop-up bloquée", description: "Autorisez les fenêtres pour imprimer le reçu A5.", variant: "destructive" });
+        return;
+      }
+      printWindow.document.write(result.html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    } catch (error) {
+      toast({
+        title: "Reçu A5 indisponible",
+        description: error instanceof Error ? error.message : "Impossible de générer le reçu A5.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
     onSuccess: (result) => {
       setPaymentConfirmedOptimistically(true);
@@ -576,6 +598,9 @@ export function CandidateDetailModal({
             ? `${result.dossierNumber} — paiement validé, mais le reçu et le protocole n’ont pas pu partir : ${result.packageError} Relancez « Envoyer reçu + protocole ».`
             : `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
       });
+      if (result.receiptA5Ready && candidate?.id) {
+        void printReceiptA5(candidate.id);
+      }
       void refetch();
       onStatusUpdated();
     },
@@ -995,6 +1020,16 @@ export function CandidateDetailModal({
                           {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Frais d’ouverture au statut SUCCESS."}
                           {paymentSnapshot?.validatedAt ? ` · ${new Date(paymentSnapshot.validatedAt).toLocaleString("fr-FR")}` : ""}
                         </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 border-emerald-400 bg-white text-emerald-900 hover:bg-emerald-50"
+                          data-testid="print-receipt-a5"
+                          onClick={() => void printReceiptA5(candidate.id)}
+                        >
+                          Imprimer reçu A5 (caisse)
+                        </Button>
                       </div>
                     ) : (
                       <Button
@@ -1244,9 +1279,18 @@ function ImportAgencyModal({
         ? ` Checklist ${result.procedure.checklistLabel || ""} : ${result.procedure.checklistAdded} pièce(s).`
         : "";
       const whatsappHint = result.whatsappSent ? " WhatsApp envoyé." : "";
+      const accessHint = result.clientInviteSent
+        ? " Lien d’activation espace client envoyé."
+        : result.clientAccountCreated
+          ? " Compte client créé."
+          : "";
       toast({
-        title: result.linkedCandidateId ? "Dossier rattaché au compte client" : "Dossier créé",
-        description: `${result.message}${checklistHint}${whatsappHint} ${result.nextStep || ""}`.trim(),
+        title: result.clientAccountCreated
+          ? "Dossier + compte client créés"
+          : result.linkedCandidateId
+            ? "Dossier rattaché au compte client"
+            : "Dossier créé",
+        description: `${result.message}${checklistHint}${whatsappHint}${accessHint} ${result.nextStep || ""}`.trim(),
       });
       onImported();
       onClose();

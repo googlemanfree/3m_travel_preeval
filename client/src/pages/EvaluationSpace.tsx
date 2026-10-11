@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  Bell,
 } from "lucide-react";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -60,6 +61,7 @@ import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
+import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
@@ -88,7 +90,7 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const validSections = ["overview", "dossier", "signatures", "documents", "profile", "messages"] as const;
+  const validSections = ["overview", "dossier", "signatures", "documents", "notifications", "profile", "messages"] as const;
   type ClientSection = (typeof validSections)[number];
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
@@ -747,6 +749,7 @@ export default function EvaluationSpace() {
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
             { id: "signatures", label: "Documents à signer", icon: ShieldCheck },
             { id: "documents", label: "Centre Documentaire", icon: FileText },
+            { id: "notifications", label: `Notifications ${(caseTrackingData?.unreadNotifications ?? 0) > 0 ? `(${caseTrackingData?.unreadNotifications})` : ""}`, icon: Bell },
             { id: "profile", label: "Mon Profil & Avatar", icon: User },
             { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
           ].map((tab) => {
@@ -1415,6 +1418,15 @@ export default function EvaluationSpace() {
               </section>
             </div>
           ))}
+
+          {activeTab === "notifications" && (
+            <div className="space-y-6" data-testid="notifications-section">
+              <ClientNotificationsInbox
+                notifications={(caseTrackingData?.notifications ?? []) as any[]}
+                onChanged={() => { void refetchCaseTracking(); }}
+              />
+            </div>
+          )}
 
           {activeTab === "profile" && (
             <div className="space-y-6">

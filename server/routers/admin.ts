@@ -48,6 +48,8 @@ import {
   notifyDossierCreatedWhatsApp,
   notifyProcedureStageWhatsApp,
 } from "../services/clientWhatsAppNotify";
+import { ensureAgencyClientAccess } from "../services/ensureAgencyClientAccess";
+import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
 import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -2713,22 +2715,28 @@ export const adminRouter = router({
         const dossierId = (result as any)[0]?.insertId || 0;
         const folderCode = `3M-AGN-${dossierId.toString().padStart(4, "0")}`;
 
-        // Aligner le compte candidat s’il existe déjà (pays précis + procédure).
+        // Compte client : création si besoin + lien d’activation / accès dossier.
         let linkedCandidateId: number | null = null;
+        let clientAccountCreated = false;
+        let clientInviteSent = false;
+        let clientAccessUrl = buildCandidateSpaceAccessUrl(folderCode);
         try {
-          const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates)
-            .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${input.email}))`)
-            .limit(1);
-          if (linkedCandidate) {
-            linkedCandidateId = linkedCandidate.id;
-            await db.update(candidates).set({
-              destination: procedure.coarseCategory,
-              visaType: procedure.visaType,
-              preferredDestinations: JSON.stringify(procedure.preferredDestinations),
-            }).where(eq(candidates.id, linkedCandidate.id));
-          }
+          const access = await ensureAgencyClientAccess(db, {
+            email: input.email,
+            fullName: input.fullName,
+            phone: input.whatsapp,
+            destinationCoarse: procedure.coarseCategory,
+            visaType: procedure.visaType,
+            preferredDestinations: procedure.preferredDestinations,
+            dossierNumber: folderCode,
+            sendInviteEmail: true,
+          });
+          linkedCandidateId = access.candidateId;
+          clientAccountCreated = access.created;
+          clientInviteSent = access.inviteSent;
+          clientAccessUrl = access.setPasswordUrl || access.accessUrl;
         } catch (linkErr) {
-          console.error("[Import Agency Dossier] Sync compte candidat:", linkErr);
+          console.error("[Import Agency Dossier] Accès compte client:", linkErr);
         }
 
         let checklistAdded = 0;
@@ -2748,9 +2756,10 @@ export const adminRouter = router({
           console.error("[Import Agency Dossier] Seed checklist:", seedErr);
         }
 
-        // Envoyer un email de bienvenue
-        try {
-          const htmlContent = `
+        // E-mail de bienvenue avec lien d’accès sécurisé (sauf si une invitation « activer mon espace » vient d’être envoyée).
+        if (!clientInviteSent) {
+          try {
+            const htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center;">
                 <h1 style="color: #fff; font-size: 22px; margin: 0;">3M TRAVEL AGENCY</h1>
@@ -2764,21 +2773,22 @@ export const adminRouter = router({
                   <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(procedure.destination)}</p>
                   <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(procedure.visaType)}</p>
                 </div>
-                <p style="color: #374151;">Notre équipe vous contactera sous peu pour les prochaines étapes.</p>
-                <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                <p style="color: #374151;">Connectez-vous pour consulter vos documents et suivre chaque étape.</p>
+                <a href="${esc(clientAccessUrl)}" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
               </div>
               <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
                 <p>3M TRAVEL AGENCY — Yaoundé, Cameroun | +237 620-996-045</p>
               </div>
             </div>
           `;
-          await sendGenericEmail({
-            to: input.email,
-            subject: `📋 Votre dossier ${folderCode} a été créé - 3M TRAVEL AGENCY`,
-            html: htmlContent
-          });
-        } catch (emailErr) {
-          console.error("[Import Agency Dossier] Email failed:", emailErr);
+            await sendGenericEmail({
+              to: input.email,
+              subject: `📋 Votre dossier ${folderCode} a été créé - 3M TRAVEL AGENCY`,
+              html: htmlContent,
+            });
+          } catch (emailErr) {
+            console.error("[Import Agency Dossier] Email failed:", emailErr);
+          }
         }
 
         let whatsappSent = false;
@@ -2803,10 +2813,15 @@ export const adminRouter = router({
           folderCode,
           dossierId,
           linkedCandidateId,
+          clientAccountCreated,
+          clientInviteSent,
+          clientAccessUrl,
           whatsappSent,
-          message: linkedCandidateId
-            ? `Dossier agence créé et rattaché au compte client existant : ${folderCode}`
-            : `Dossier agence créé avec succès : ${folderCode}`,
+          message: clientAccountCreated
+            ? `Dossier créé et compte client ouvert : ${folderCode}`
+            : linkedCandidateId
+              ? `Dossier agence créé et rattaché au compte client existant : ${folderCode}`
+              : `Dossier agence créé avec succès : ${folderCode}`,
           procedure: {
             destination: procedure.destination,
             visaType: procedure.visaType,
@@ -2815,7 +2830,9 @@ export const adminRouter = router({
             checklistAdded,
             documentsReceived: receivedPieces,
           },
-          nextStep: "Scannez les pièces remises puis publiez-les vers l’espace client depuis le centre documentaire du dossier.",
+          nextStep: clientInviteSent
+            ? "Le client a reçu un lien pour activer son espace. Scannez ensuite les pièces et publiez-les."
+            : "Scannez les pièces remises puis publiez-les vers l’espace client depuis le centre documentaire du dossier.",
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
