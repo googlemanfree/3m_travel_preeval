@@ -2,7 +2,7 @@
  * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
+import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
@@ -132,6 +132,7 @@ import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/a
 import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
 import { ADMIN_PROCEDURE_TYPES, normalizeAdminProcedureType } from "@shared/dossierProcedureSelection";
 import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { evaluationRequiresCv } from "@shared/evaluationVisaCv";
 import { CountrySelect } from "@/components/CountryPicker";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
@@ -400,6 +401,7 @@ export function CandidateDetailModal({
   const [rollbackReason, setRollbackReason] = useState("");
   const [cancelPaymentDialogOpen, setCancelPaymentDialogOpen] = useState(false);
   const [cancelPaymentReason, setCancelPaymentReason] = useState("");
+  const [portraitPreviewOpen, setPortraitPreviewOpen] = useState(false);
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
     {
@@ -475,14 +477,20 @@ export function CandidateDetailModal({
       toast({ title: "Activation impossible", description: message, variant: "destructive" });
     },
   });
+  const preDossierHasCv = Boolean((candidate as any)?.hasCv || (data as any)?.cvDocument?.documentUrl);
+  const preDossierCvRequired = evaluationRequiresCv(preDossierVisaType || (candidate as any)?.projectType || (candidate as any)?.registrationProfile?.visaType);
+  const preDossierCvBlocksActivation = Boolean(isPreDossierAccount && preDossierCvRequired && !preDossierHasCv);
   const isPreDossierActivationDisabled = !preDossierDestination.trim()
     || !preDossierVisaType.trim()
     || evaluationBlocksActivation
+    || preDossierCvBlocksActivation
     || activatePreDossierMutation.isPending;
   const preDossierActivationGuidance = activatePreDossierMutation.isPending
     ? "Activation en cours : veuillez patienter."
     : evaluationBlocksActivation
       ? "Validez l’évaluation déclarée ou demandez un complément avant d’ouvrir le dossier."
+      : preDossierCvBlocksActivation
+        ? "Visa travail : un CV exploitable est obligatoire avant d’ouvrir le dossier. Relancez le candidat pour le déposer."
       : !preDossierDestination.trim() || !preDossierVisaType.trim()
         ? "Renseignez la destination confirmée et la procédure pour activer ce bouton."
         : "Les informations requises sont complètes. Une confirmation sera demandée avant l’activation.";
@@ -503,6 +511,46 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Validation hors ligne impossible", description: err.message, variant: "destructive" }),
   });
+  const requestRegistrationInfoMutation = trpc.adminCandidateManagement.requestRegistrationSupplementaryInfo.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: result.alreadySent ? "Demande déjà envoyée" : "Demande d’informations envoyée",
+        description: result.message,
+      });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Envoi impossible", description: err.message, variant: "destructive" }),
+  });
+  const requestPassportPhotoMutation = trpc.adminCandidateManagement.reviewPortrait.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Photo de profil", description: result.message || "Demande enregistrée." });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Demande photo impossible", description: err.message, variant: "destructive" }),
+  });
+  useEffect(() => {
+    setPortraitPreviewOpen(false);
+  }, [candidateId]);
+  const autoRegistrationInfoSentFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isPreDossierAccount || !candidate) return;
+    const profile = (candidate as any).registrationProfile as { preferredDestinations?: string[]; visaType?: string | null } | undefined;
+    const destination = profile?.preferredDestinations?.[0] || (candidate.destinationCountry !== "Non spécifiée" ? candidate.destinationCountry : "");
+    const visaType = profile?.visaType || (candidate.projectType !== "À qualifier" ? candidate.projectType : "");
+    if (!destination || !visaType) return;
+    if ((candidate as any).registrationInfoRequestSentAt) return;
+    if (autoRegistrationInfoSentFor.current === candidateId) return;
+    autoRegistrationInfoSentFor.current = candidateId;
+    requestRegistrationInfoMutation.mutate({
+      sessionToken,
+      candidateId,
+      destination,
+      visaType,
+      forceResend: false,
+    });
+  }, [isPreDossierAccount, candidate, candidateId, sessionToken]);
   const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
     onSuccess: (result) => {
       setPaymentConfirmedOptimistically(true);
@@ -583,37 +631,86 @@ export function CandidateDetailModal({
             <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
               <div className="flex items-center gap-4">
                 {candidate.avatarUrl ? (
-                  <img
-                    src={candidate.avatarUrl}
-                    alt={candidate.fullName}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-600 shadow-md"
-                  />
+                  <button
+                    type="button"
+                    className="group relative shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                    onClick={() => setPortraitPreviewOpen(true)}
+                    aria-label={`Agrandir la photo de ${candidate.fullName}`}
+                    data-testid="candidate-portrait-preview-trigger"
+                  >
+                    <img
+                      src={candidate.avatarUrl}
+                      alt={candidate.fullName}
+                      className="h-16 w-16 rounded-full border-2 border-blue-600 object-cover shadow-md transition group-hover:brightness-95"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/45 group-hover:opacity-100">
+                      <Eye className="h-5 w-5" />
+                    </span>
+                  </button>
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white shadow-md">
                     {candidate.fullName.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
                   <h3 className="text-lg font-bold text-blue-900">{candidate.fullName}</h3>
-                  <p className="text-sm text-blue-600 font-mono font-semibold">{candidate.folderCode}</p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <p className="text-sm font-mono font-semibold text-blue-600">{candidate.folderCode}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     {candidate.whatsapp && (
                       <a
-                        href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, '')}`}
+                        href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-green-700 text-white text-xs px-2.5 py-1 rounded-md hover:bg-green-800 transition"
+                        className="inline-flex items-center gap-1 rounded-md bg-green-700 px-2.5 py-1 text-xs text-white transition hover:bg-green-800"
                       >
-                        💬 WhatsApp
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                       </a>
                     )}
                     <a
                       href={`mailto:${candidate.email}`}
-                      className="inline-flex items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-md hover:bg-blue-700 transition"
+                      className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs text-white transition hover:bg-blue-700"
                     >
-                      ✉️ Email
+                      <Mail className="h-3.5 w-3.5" /> Email
                     </a>
+                    {candidate.avatarUrl && (
+                      <>
+                        <Button type="button" size="sm" variant="outline" className="h-7 border-blue-200 bg-white px-2 text-xs" onClick={() => setPortraitPreviewOpen(true)} data-testid="candidate-portrait-view">
+                          <Eye className="mr-1 h-3.5 w-3.5" />Voir
+                        </Button>
+                        <a
+                          href={candidate.avatarUrl}
+                          download={`photo-${String(candidate.fullName || "candidat").replace(/[^\w.-]+/g, "_")}.jpg`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-blue-200 bg-white px-2 text-xs font-medium text-slate-800 hover:bg-blue-50"
+                          data-testid="candidate-portrait-download"
+                        >
+                          <Download className="h-3.5 w-3.5" />Télécharger
+                        </a>
+                      </>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 border-amber-300 bg-amber-50 px-2 text-xs text-amber-950 hover:bg-amber-100"
+                      disabled={requestPassportPhotoMutation.isPending}
+                      onClick={() =>
+                        requestPassportPhotoMutation.mutate({
+                          sessionToken,
+                          candidateId,
+                          decision: "request_passport",
+                        })
+                      }
+                      data-testid="candidate-portrait-request-passport"
+                    >
+                      <ImagePlus className="mr-1 h-3.5 w-3.5" />
+                      {requestPassportPhotoMutation.isPending ? "Envoi…" : "Demander photo passeport"}
+                    </Button>
                   </div>
+                  <p className="mt-1.5 max-w-xl text-[11px] leading-4 text-slate-600">
+                    Photo type passeport recommandée pour les espaces employeur et agences de placement (fond uni, visage de face).
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5">
@@ -621,18 +718,97 @@ export function CandidateDetailModal({
                 <SourceBadge source={candidate.source} />
               </div>
             </div>
+            {portraitPreviewOpen && candidate.avatarUrl && (
+              <div
+                className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Photo de ${candidate.fullName}`}
+                onClick={() => setPortraitPreviewOpen(false)}
+                data-testid="candidate-portrait-modal"
+              >
+                <div className="relative max-h-[90vh] w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{candidate.fullName}</p>
+                      <p className="text-xs text-slate-500">Aperçu photo de profil · {candidate.folderCode}</p>
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setPortraitPreviewOpen(false)} aria-label="Fermer l’aperçu">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <img src={candidate.avatarUrl} alt={`Photo de ${candidate.fullName}`} className="max-h-[70vh] w-full rounded-xl object-contain bg-slate-100" />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href={candidate.avatarUrl}
+                      download={`photo-${String(candidate.fullName || "candidat").replace(/[^\w.-]+/g, "_")}.jpg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-9 items-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"
+                    >
+                      <Download className="h-4 w-4" />Télécharger la photo
+                    </a>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-amber-300 text-amber-950"
+                      disabled={requestPassportPhotoMutation.isPending}
+                      onClick={() =>
+                        requestPassportPhotoMutation.mutate({
+                          sessionToken,
+                          candidateId,
+                          decision: "request_passport",
+                        })
+                      }
+                    >
+                      <ImagePlus className="mr-2 h-4 w-4" />Demander une photo type passeport
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isPreDossierAccount ? (
               <>
                 {(data as any)?.cockpit ? (
                   <AdminCandidateCockpitStrip
                     cockpit={(data as any).cockpit}
-                    onOpenTab={(tab) => {
-                      if (tab === "evaluation") setEvaluationEditorOpen(true);
-                      else setCandidate360Tab(tab);
+                    onTreatNow={(target) => {
+                      // Pré-dossier : pas de fiche 360° — brancher chaque bloqueur sur une action réelle.
+                      if (target.tab === "evaluation" || target.key === "evaluation_missing" || target.key === "evaluation_pending" || target.key === "request_evaluation" || target.key === "review_evaluation" || target.key === "validate_evaluation") {
+                        setEvaluationEditorOpen(true);
+                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        toast({ title: "Évaluation", description: "Ouvrez ou validez l’évaluation pour lever ce bloqueur." });
+                        return;
+                      }
+                      if (target.tab === "payments" || target.key === "payment_missing" || target.key === "confirm_payment" || target.key === "receipt_missing" || target.key === "protocol_unsigned") {
+                        onOpenOperations("payments", candidate.folderCode);
+                        toast({ title: "Paiements", description: `Module paiements ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "documents" || target.key === "documents_pending") {
+                        onOpenOperations("documents", candidate.folderCode);
+                        toast({ title: "Documents", description: `Module documents ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "messages") {
+                        onOpenOperations("emails", candidate.folderCode);
+                        toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      // overview / e-mail / activation → panneau d’ouverture du dossier
+                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      toast({
+                        title: "Traitement pré-dossier",
+                        description:
+                          target.key === "confirm_email" || target.key === "email_unverified"
+                            ? "Confirmez l’e-mail (WhatsApp / e-mail ci-contre) puis poursuivez l’ouverture du dossier."
+                            : "Complétez destination et procédure, puis ouvrez le dossier pour activer le suivi.",
+                      });
                     }}
                   />
                 ) : null}
+                <div id="predossier-evaluation-panel">
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
@@ -645,8 +821,9 @@ export function CandidateDetailModal({
                   onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel, note })}
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
+                </div>
                 {candidate?.internalStatus === "nouveau" ? (
-                  <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
+                  <section id="predossier-treatment-panel" className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
@@ -770,7 +947,24 @@ export function CandidateDetailModal({
                   <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
                 </div>
               </section>
-              <AdminRegistrationProfile profile={(candidate as any).registrationProfile} />
+              <AdminRegistrationProfile
+                profile={(candidate as any).registrationProfile}
+                fullName={candidate.fullName}
+                email={candidate.email}
+                cvDocument={(data as any)?.cvDocument ?? null}
+                hasCv={Boolean((candidate as any).hasCv || (data as any)?.cvDocument?.documentUrl)}
+                infoRequestAlreadySent={Boolean((candidate as any).registrationInfoRequestSentAt)}
+                isRequestingInfo={requestRegistrationInfoMutation.isPending}
+                onRequestInfo={({ destination, visaType }) =>
+                  requestRegistrationInfoMutation.mutate({
+                    sessionToken,
+                    candidateId,
+                    destination,
+                    visaType,
+                    forceResend: Boolean((candidate as any).registrationInfoRequestSentAt),
+                  })
+                }
+              />
 
               {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
@@ -816,6 +1010,7 @@ export function CandidateDetailModal({
                         <X className="mr-2 h-4 w-4" />Annuler l’étape passée ({STATUS_CONFIG[candidate.status as AdminStatus]?.label || "étape actuelle"})
                       </Button>
                     )}
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
                     {(paymentAlreadyConfirmed || (candidate as Candidate).paymentStatus === "SUCCESS") && (
                       <Button
                         type="button"

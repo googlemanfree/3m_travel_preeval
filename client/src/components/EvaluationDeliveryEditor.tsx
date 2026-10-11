@@ -93,7 +93,16 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
   }, [restoredPlatformToken]);
   const [candidateBootstrapReady, setCandidateBootstrapReady] = useState(sourceType !== "candidate");
   const [candidateBootstrapApplicationId, setCandidateBootstrapApplicationId] = useState<number | null>(null);
+  const [bootstrapApplicationSnapshot, setBootstrapApplicationSnapshot] = useState<{
+    id: number;
+    dossierNumber: string;
+    fullName: string;
+    email: string;
+    whatsappNumber?: string | null;
+    destination?: string | null;
+  } | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [useEmptyDraftFallback, setUseEmptyDraftFallback] = useState(false);
   const effectiveSourceRecordId = sourceType === "candidate" && candidateBootstrapApplicationId !== null ? candidateBootstrapApplicationId : sourceRecordId;
   const bootstrapAttempt = useRef("");
   const bootstrapTimeout = useRef<number | null>(null);
@@ -101,11 +110,23 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     onSuccess: (result) => {
       const resolvedApplicationId = result.application?.id;
       if (typeof resolvedApplicationId === "number") setCandidateBootstrapApplicationId(resolvedApplicationId);
+      if (result.application) {
+        setBootstrapApplicationSnapshot({
+          id: result.application.id,
+          dossierNumber: result.application.dossierNumber,
+          fullName: result.application.fullName,
+          email: result.application.email,
+          whatsappNumber: result.application.whatsappNumber ?? null,
+          destination: result.application.destination ?? null,
+        });
+      }
       setBootstrapError(null);
+      setUseEmptyDraftFallback(false);
       setCandidateBootstrapReady(true);
     },
     onError: (bootstrapError) => {
       setCandidateBootstrapApplicationId(null);
+      setBootstrapApplicationSnapshot(null);
       setCandidateBootstrapReady(false);
       setBootstrapError(bootstrapError.message);
       toast({ title: "Initialisation impossible", description: bootstrapError.message, variant: "destructive" });
@@ -136,20 +157,79 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       bootstrapTimeout.current = null;
       if (sourceType === "candidate") {
         setCandidateBootstrapApplicationId(null);
+        setBootstrapApplicationSnapshot(null);
         setCandidateBootstrapReady(false);
         setBootstrapError(null);
       }
+      setUseEmptyDraftFallback(false);
     }
   }, [open, sourceType]);
   const retryCandidateBootstrap = () => {
     bootstrapAttempt.current = "";
     setBootstrapError(null);
     setCandidateBootstrapApplicationId(null);
+    setBootstrapApplicationSnapshot(null);
+    setUseEmptyDraftFallback(false);
     setCandidateBootstrapReady(false);
     initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" });
   };
   const queryEnabled = open && Boolean(sessionToken) && (sourceType !== "candidate" || candidateBootstrapReady);
   const { data, isLoading, isFetching, isError, error, refetch } = trpc.unifiedRequests.getEvaluationDelivery.useQuery({ sessionToken, sourceRecordId: effectiveSourceRecordId }, { enabled: queryEnabled, retry: 2, refetchOnWindowFocus: false });
+  useEffect(() => {
+    if (data) setUseEmptyDraftFallback(false);
+  }, [data]);
+  const emptyDraftFallback = useMemo(() => {
+    if (!useEmptyDraftFallback) return null;
+    const snapshot = bootstrapApplicationSnapshot;
+    return {
+      application: {
+        id: snapshot?.id ?? effectiveSourceRecordId,
+        dossierNumber: snapshot?.dossierNumber ?? `EVAL-DRAFT-${effectiveSourceRecordId}`,
+        fullName: snapshot?.fullName ?? "Candidat",
+        email: snapshot?.email ?? "",
+        whatsappNumber: snapshot?.whatsappNumber ?? null,
+        destination: snapshot?.destination ?? "europe",
+        scoringTotal: 0,
+        evaluationScheduledAt: null as string | null,
+        evaluationDeliveryStatus: "draft",
+        evaluationReportViewedAt: null as string | null,
+        evaluationApprovalStatus: "not_required",
+        evaluationRequiresSecondApproval: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      versions: [] as Array<Record<string, unknown>>,
+      offlineEvaluation: { validated: false as const, validatedAt: null as string | null, validatedBy: null as string | null },
+      draft: {
+        destination: normalizeDestination(snapshot?.destination),
+        modelLabel: null,
+        criteria: null,
+        finalScore: 0,
+        verdict: "",
+        profileSummary: "",
+        strengths: [] as string[],
+        weaknesses: [] as string[],
+        recommendations: [] as string[],
+        informationToVerify: [] as string[],
+        nextAdminAction: "",
+        message: "",
+        language: "fr" as const,
+        subject: "Votre bilan d'évaluation 3M TRAVEL AGENCY",
+        requiresSecondApproval: false,
+        advisorValidated: false,
+        advisorValidatedAt: null as string | null,
+        advisorValidatedByAdminId: null as number | null,
+      },
+    };
+  }, [bootstrapApplicationSnapshot, effectiveSourceRecordId, useEmptyDraftFallback]);
+  const deliveryData = data ?? emptyDraftFallback;
+  const loadErrorMessage = (() => {
+    const raw = error?.message || "";
+    if (raw.includes("Unable to transform response")) {
+      return "La réponse du serveur n’a pas pu être lue. Réessayez, ou continuez avec un brouillon vide pour rédiger le bilan.";
+    }
+    return raw || "Aucune donnée n’a été retournée par le serveur.";
+  })();
   const [score, setScore] = useState("0");
   const [destination, setDestination] = useState<EvaluationDestination>("europe");
   const [verdict, setVerdict] = useState("");
@@ -174,22 +254,22 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
   const lastAutosavedPayload = useRef("");
 
   useEffect(() => {
-    if (!data?.draft) return;
-    setDestination(normalizeDestination(data.draft.destination));
-    setScore(String(data.draft.finalScore));
-    setVerdict(data.draft.verdict);
-    setStrengths(joinLines(data.draft.strengths));
-    setWeaknesses(joinLines(data.draft.weaknesses));
-    setRecommendations(joinLines(data.draft.recommendations));
-    setSubject(data.draft.subject);
-    setMessage(data.draft.message);
-    setLanguage(data.draft.language === "en" ? "en" : "fr");
-    setScheduledAt(data.application.evaluationScheduledAt ? new Date(data.application.evaluationScheduledAt).toISOString().slice(0, 16) : "");
-    setRequiresSecondApproval(data.draft.requiresSecondApproval);
-    setComparisonLeftId(String(data.versions[1]?.id ?? data.versions[0]?.id ?? ""));
-    setComparisonRightId(String(data.versions[0]?.id ?? ""));
+    if (!deliveryData?.draft) return;
+    setDestination(normalizeDestination(deliveryData.draft.destination));
+    setScore(String(deliveryData.draft.finalScore));
+    setVerdict(deliveryData.draft.verdict);
+    setStrengths(joinLines(deliveryData.draft.strengths));
+    setWeaknesses(joinLines(deliveryData.draft.weaknesses));
+    setRecommendations(joinLines(deliveryData.draft.recommendations));
+    setSubject(deliveryData.draft.subject);
+    setMessage(deliveryData.draft.message);
+    setLanguage(deliveryData.draft.language === "en" ? "en" : "fr");
+    setScheduledAt(deliveryData.application.evaluationScheduledAt ? new Date(deliveryData.application.evaluationScheduledAt).toISOString().slice(0, 16) : "");
+    setRequiresSecondApproval(deliveryData.draft.requiresSecondApproval);
+    setComparisonLeftId(String(deliveryData.versions[1]?.id ?? deliveryData.versions[0]?.id ?? ""));
+    setComparisonRightId(String(deliveryData.versions[0]?.id ?? ""));
     setPreviewHtml("");
-  }, [data]);
+  }, [deliveryData]);
 
   const payload = useMemo(() => ({
     sessionToken,
@@ -218,7 +298,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     },
     onError: (error) => toast({ title: "Envoi impossible", description: error.message, variant: "destructive" }),
   });
-  const sendHistory = trpc.unifiedRequests.listEvaluationDeliveryHistory.useQuery({ sessionToken, sourceRecordId: effectiveSourceRecordId }, { enabled: open && Boolean(sessionToken) && Boolean(data), refetchOnWindowFocus: false });
+  const sendHistory = trpc.unifiedRequests.listEvaluationDeliveryHistory.useQuery({ sessionToken, sourceRecordId: effectiveSourceRecordId }, { enabled: open && Boolean(sessionToken) && Boolean(deliveryData), refetchOnWindowFocus: false });
   const resendHistory = trpc.unifiedRequests.resendEvaluationHistory.useMutation({ onSuccess: (result) => { void sendHistory.refetch(); toast({ title: "Bilan renvoyé", description: result.message }); }, onError: (error) => toast({ title: "Renvoi impossible", description: error.message, variant: "destructive" }) });
   const schedule = trpc.unifiedRequests.scheduleEvaluationDelivery.useMutation({
     onSuccess: (result) => {
@@ -240,7 +320,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     onError: (error) => toast({ title: "Validation impossible", description: error.message, variant: "destructive" }),
   });
   useEffect(() => {
-    if (!open || !data || isLoading || isFetching || saveDraft.isPending) return;
+    if (!open || !deliveryData || isLoading || isFetching || saveDraft.isPending) return;
     const fingerprint = JSON.stringify(payload);
     if (fingerprint === lastAutosavedPayload.current) return;
     setAutosaveStatus("saving");
@@ -251,7 +331,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
       });
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [open, data, isLoading, isFetching, payload]);
+  }, [open, deliveryData, isLoading, isFetching, payload]);
 
   const previewEmail = trpc.unifiedRequests.previewEvaluationDeliveryEmail.useQuery({ sessionToken, sourceRecordId: effectiveSourceRecordId }, { enabled: false });
   const deliveryHealth = trpc.monitoring.getEvaluationDeliveryHealth.useQuery(undefined, { enabled: open && Boolean(sessionToken), refetchOnWindowFocus: false });
@@ -375,16 +455,16 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     setEmailPreview(result.data);
     setEmailPreviewOpen(true);
   };
-  const offlineEvaluationValidated = data?.offlineEvaluation?.validated === true;
-  const currentDraft = data?.draft ?? {
+  const offlineEvaluationValidated = deliveryData?.offlineEvaluation?.validated === true;
+  const currentDraft = deliveryData?.draft ?? {
     advisorValidated: false,
     profileSummary: "",
     informationToVerify: [] as string[],
     nextAdminAction: "",
   };
-  const requiresApprovalBeforeDelivery = !currentDraft.advisorValidated || (requiresSecondApproval && data?.application?.evaluationApprovalStatus !== "approved");
-  const provisionalReference = Boolean(data?.application?.dossierNumber?.startsWith("EVAL-DRAFT-"));
-  const reviewDeadline = data?.application?.createdAt ? new Date(new Date(data.application.createdAt).getTime() + 8 * 60 * 60 * 1000) : null;
+  const requiresApprovalBeforeDelivery = !currentDraft.advisorValidated || (requiresSecondApproval && deliveryData?.application?.evaluationApprovalStatus !== "approved");
+  const provisionalReference = Boolean(deliveryData?.application?.dossierNumber?.startsWith("EVAL-DRAFT-"));
+  const reviewDeadline = deliveryData?.application?.createdAt ? new Date(new Date(deliveryData.application.createdAt).getTime() + 8 * 60 * 60 * 1000) : null;
   const reviewOverdue = Boolean(reviewDeadline && !currentDraft.advisorValidated && reviewDeadline.getTime() <= Date.now());
   const parseVersionDraft = (version: any) => { try { return JSON.parse(version?.contentJson || "{}").adminDraft ?? {}; } catch { return {}; } };
   const resumeVersion = (version: any) => {
@@ -403,7 +483,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     setPreviewHtml(String(version.reportHtml ?? ""));
     toast({ title: `Version ${version.versionNumber} reprise`, description: "Vous pouvez maintenant la modifier puis l’enregistrer ou la valider avant envoi." });
   };
-  const versions = data?.versions ?? [];
+  const versions = deliveryData?.versions ?? [];
   const comparisonLeft = versions.find((version: any) => String(version.id) === comparisonLeftId);
   const comparisonRight = versions.find((version: any) => String(version.id) === comparisonRightId);
   const leftDraft = parseVersionDraft(comparisonLeft);
@@ -439,7 +519,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
   };
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col overflow-hidden rounded-none border-0 border-slate-200 bg-slate-50/95 p-3 shadow-2xl sm:p-5 lg:p-6">
+    <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen !max-w-none flex-col overflow-hidden rounded-none border-0 border-slate-200 bg-slate-50/95 p-3 shadow-2xl sm:h-[calc(100vh-1rem)] sm:w-[calc(100vw-1rem)] sm:!max-w-none sm:rounded-2xl sm:p-5 lg:p-6">
       <DialogHeader className="shrink-0 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm lg:px-7">
         <DialogTitle className="flex items-center gap-2"><FilePenLine className="h-5 w-5 text-blue-700" />Préparer le bilan avant envoi</DialogTitle>
         <DialogDescription>Rédigez directement le bilan dans cet espace de travail, prévisualisez-le et validez-le humainement avant toute diffusion. Aucun bilan n’est envoyé automatiquement sans validation du conseiller.</DialogDescription>

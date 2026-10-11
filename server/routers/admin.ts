@@ -36,8 +36,23 @@ import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
+import { CV_REMINDER_BODY_FR, CV_REMINDER_SUBJECT_FR, evaluationRequiresCv } from "../../shared/evaluationVisaCv";
+import { storageGetSignedUrl } from "../storage";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+async function resolveAdminReadableUrl(rawUrl: string | null | undefined): Promise<string | null> {
+  const value = String(rawUrl ?? "").trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  const key = value.replace(/^\/manus-storage\//, "").replace(/^\//, "");
+  if (!key) return null;
+  try {
+    return await storageGetSignedUrl(key);
+  } catch {
+    return value.startsWith("/") ? value : `/manus-storage/${key}`;
+  }
+}
 
 export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
   const raw = String(value ?? "").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
@@ -2695,15 +2710,43 @@ export const adminRouter = router({
               ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
               : null,
           });
-          const [evaluationRow] = await db.select({ id: evaluations.id }).from(evaluations)
+          const [evaluationRow] = await db.select({
+            id: evaluations.id,
+            cvFileUrl: evaluations.cvFileUrl,
+            cvFileName: evaluations.cvFileName,
+            visaType: evaluations.visaType,
+            projectType: evaluations.projectType,
+            destinationCountry: evaluations.destinationCountry,
+          }).from(evaluations)
             .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+            .orderBy(desc(evaluations.createdAt))
             .limit(1);
+          const evaluationClientDocs = evaluationRow
+            ? await db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, evaluationRow.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(50)
+            : [];
+          const fileCv = docs.find((doc) => String(doc.fileType ?? "").toLowerCase() === "cv");
+          const clientCv = evaluationClientDocs.find((doc) => normalizeAdminDocumentType(doc.documentType, doc.documentName) === "cv");
+          const rawCvUrl = evaluationRow?.cvFileUrl?.trim() || fileCv?.fileUrl || clientCv?.documentUrl || null;
+          const cvDocument = rawCvUrl ? {
+            id: evaluationRow?.cvFileUrl ? `evaluation-cv-${evaluationRow.id}` : fileCv ? `candidate-file-cv-${fileCv.id}` : `client-doc-cv-${clientCv?.id}`,
+            documentType: "cv" as const,
+            fileName: evaluationRow?.cvFileName || fileCv?.fileName || clientCv?.documentName || "CV du candidat",
+            documentUrl: await resolveAdminReadableUrl(rawCvUrl),
+            uploadedAt: fileCv?.uploadedAt ?? clientCv?.uploadedAt ?? account.createdAt,
+            source: evaluationRow?.cvFileUrl ? "evaluation" : fileCv ? "candidate_files" : "client_documents",
+          } : null;
           const [openingPaymentRow] = await db.select({ id: agencySettings.id }).from(agencySettings)
             .where(eq(agencySettings.settingKey, `opening_payment:${account.id}`))
+            .limit(1);
+          const [registrationInfoNotification] = await db.select({ id: clientNotifications.id, createdAt: clientNotifications.createdAt })
+            .from(clientNotifications)
+            .where(and(eq(clientNotifications.candidateId, account.id), eq(clientNotifications.type, "registration_info_request")))
+            .orderBy(desc(clientNotifications.createdAt))
             .limit(1);
           const pendingDocuments = docs.filter((doc) => doc.status === "uploaded").length;
           const dossierActivated = account.dossierStatus !== "nouveau" || Boolean(linkedAgencyDossierId);
           const paymentConfirmed = dossierActivated || Boolean(openingPaymentRow);
+          const resolvedVisa = evaluationRow?.visaType || evaluationRow?.projectType || account.visaType || null;
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
@@ -2716,8 +2759,8 @@ export const adminRouter = router({
               email: account.email,
               whatsapp: account.phone || "",
               city: "Compte en ligne",
-              destinationCountry: destinationLabelForStaff(account),
-              projectType: account.visaType || "À qualifier",
+              destinationCountry: destinationLabelForStaff(account) || evaluationRow?.destinationCountry || "Non spécifiée",
+              projectType: account.visaType || evaluationRow?.projectType || "À qualifier",
               // Tout ce que le candidat a déclaré à l'inscription, visible par l'équipe.
               registrationProfile: {
                 preferredDestinations: parsePreferredDestinations(account.preferredDestinations),
@@ -2745,10 +2788,25 @@ export const adminRouter = router({
               evaluationReviewNote: account.evaluationReviewNote,
               evaluationValidatedAt: account.evaluationReviewedAt,
               evaluationValidatedBy: account.evaluationReviewedBy,
+              hasCv: Boolean(cvDocument),
+              evaluationRequiresCv: evaluationRequiresCv(resolvedVisa, evaluationRow?.projectType),
+              registrationInfoRequestSentAt: registrationInfoNotification?.createdAt ?? null,
               createdAt: account.createdAt,
               updatedAt: account.updatedAt,
             },
-            documents: docs,
+            documents: [
+              ...docs,
+              ...evaluationClientDocs.map((doc) => ({
+                id: `eval-doc-${doc.id}`,
+                candidateId: account.id,
+                fileType: normalizeAdminDocumentType(doc.documentType, doc.documentName),
+                fileName: doc.documentName,
+                fileUrl: doc.documentUrl,
+                status: doc.verificationStatus || "uploaded",
+                uploadedAt: doc.uploadedAt,
+              })),
+            ],
+            cvDocument,
             cockpit: buildCandidateCockpit({
               emailVerified: account.emailVerified,
               evaluationStatus: account.evaluationDeclarationStatus,

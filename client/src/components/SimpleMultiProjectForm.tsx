@@ -183,10 +183,10 @@ export function SimpleMultiProjectForm() {
         return false;
       }
     }
-    if (step === 3) {
+    if (step === 3 && formData.projectType === "travail") {
       const hasCv = selectedDocuments.some((item) => item.documentType === "cv") || Boolean(formData.cvLink?.trim());
       if (!hasCv) {
-        toast.error("Ajoutez d’abord votre CV en fichier ou indiquez un lien CV sécurisé.");
+        toast.error("Pour un projet de visa travail, ajoutez d’abord votre CV en fichier ou indiquez un lien CV sécurisé.");
         return false;
       }
     }

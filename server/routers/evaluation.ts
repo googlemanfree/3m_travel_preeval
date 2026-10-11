@@ -375,6 +375,12 @@ export const evaluationRouter = router({
       let cvFileUrl: string | undefined;
       let cvFileName: string | undefined;
 
+      const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
+      const { CV_REQUIRED_MESSAGE } = await import("../../shared/evaluationCv");
+      if (evaluationRequiresCv(input.visaType, input.projectType) && !(input.cvBase64 && input.cvFileName)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_MESSAGE });
+      }
+
       // Upload du CV si fourni
       if (input.cvBase64 && input.cvFileName) {
         try {

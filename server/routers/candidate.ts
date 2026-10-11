@@ -421,6 +421,9 @@ export const candidateRouter = router({
         educationLevel: z.string().trim().max(100).optional(),
         employmentStatus: z.string().trim().max(100).optional(),
         languageLevel: z.string().trim().max(100).optional(),
+        /** CV obligatoire pour visa travail (tous pays) — pièce clé de l’évaluation. */
+        cvBase64: z.string().min(32).max(7_200_000).optional(),
+        cvFileName: z.string().trim().min(3).max(255).optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
         evaluationAlreadyCompleted: z.boolean().default(false),
       })
@@ -436,6 +439,21 @@ export const candidateRouter = router({
       }
       // On enregistre l'orthographe officielle (et non la saisie brute), sans doublon.
       const { destinations: preferredDestinations } = normalizeCandidateDestinations(input.preferredDestinations);
+
+      const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
+      const { checkCvUpload, CV_REQUIRED_AT_REGISTRATION, safeCvFileName } = await import("../../shared/evaluationCv");
+      if (evaluationRequiresCv(input.visaType) && (!input.cvBase64 || !input.cvFileName)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_AT_REGISTRATION });
+      }
+      let registrationCv: { url: string; key: string; fileName: string; mime: string; size: number } | null = null;
+      if (input.cvBase64 && input.cvFileName) {
+        const checked = checkCvUpload(input.cvBase64);
+        if (!checked.ok) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });
+        const fileName = safeCvFileName(input.cvFileName);
+        const storageKey = `candidates/registration-cv/${Date.now()}_${fileName}`;
+        const stored = await storagePut(storageKey, Buffer.from(checked.bytes), checked.mime);
+        registrationCv = { url: stored.url, key: storageKey, fileName, mime: checked.mime, size: checked.bytes.length };
+      }
 
       // Vérifier si l'email existe déjà (hors comptes supprimés)
       const existing = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.email, normalizedEmail), isNull(candidates.deletedAt))).limit(1);
@@ -517,6 +535,18 @@ export const candidateRouter = router({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
         }
         candidateId = inserted[0].id;
+        if (registrationCv) {
+          await db.insert(candidateFiles).values({
+            candidateId,
+            fileType: "cv",
+            fileName: registrationCv.fileName,
+            fileUrl: registrationCv.url,
+            fileKey: registrationCv.key,
+            fileSizeBytes: registrationCv.size,
+            mimeType: registrationCv.mime,
+            status: "uploaded",
+          });
+        }
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         // Ne jamais renvoyer l'erreur brute de la base de données au client

@@ -738,7 +738,12 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       {(data as any).cockpit ? (
         <AdminCandidateCockpitStrip
           cockpit={(data as any).cockpit}
-          onOpenTab={(tab) => setActiveTab(tab)}
+          onTreatNow={(target) => {
+            setActiveTab(target.tab);
+            window.requestAnimationFrame(() => {
+              document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          }}
         />
       ) : (
         <section className="grid gap-3 sm:grid-cols-3">

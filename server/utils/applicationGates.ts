@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 
 export const APPLICATION_PROCESSING_STATUSES = new Set([
   "paye",
@@ -17,16 +18,19 @@ type ApplicationGateRecord = {
   paymentValidatedBy?: string | null;
   cvUrl?: string | null;
   hasCv?: boolean;
+  visaType?: string | null;
+  projectType?: string | null;
   evaluationDeliveryStatus?: string | null;
   evaluationClientConfirmed?: boolean;
 };
 
 export function assertApplicationCanEnterStatus(application: ApplicationGateRecord, nextStatus: string): void {
   const cvDetected = application.hasCv ?? Boolean(application.cvUrl?.trim());
-  if (nextStatus === "en_evaluation" && !cvDetected) {
+  const cvMandatory = evaluationRequiresCv(application.visaType, application.projectType);
+  if (nextStatus === "en_evaluation" && cvMandatory && !cvDetected) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "Un CV exploitable doit être détecté avant de démarrer l’évaluation.",
+      message: "Un CV exploitable doit être détecté avant de démarrer l’évaluation pour un visa travail. Relancez le candidat pour le déposer.",
     });
   }
   if (nextStatus === "bilan_envoye" && application.evaluationDeliveryStatus !== "sent") {
