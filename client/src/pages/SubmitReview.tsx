@@ -29,6 +29,8 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Intégré dans /avis ou l'espace d'évaluation, la page a déjà son h1 : le titre du formulaire devient h2.
+  const Heading = embedded ? "h2" : "h1";
 
   const submitMutation = trpc.customerReview.submit.useMutation();
 
@@ -110,7 +112,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">Partagez votre Expérience</h1>
+          <Heading className="text-4xl font-bold text-slate-900 mb-4">Partagez votre Expérience</Heading>
           <p className="text-lg text-slate-600">
             Votre avis nous aide à améliorer nos services et guide d'autres candidats
           </p>

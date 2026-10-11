@@ -100,7 +100,7 @@ function EmailSummaryButton({ flight, compact = false }: { flight: Flight; compa
               <input
                 type="email"
                 required
-                placeholder="votre.email@exemple.com"
+                aria-label="Adresse e-mail" placeholder="votre.email@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={320}
@@ -243,6 +243,7 @@ export function AirportInput({
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
+          aria-label={label}
           placeholder={placeholder}
           maxLength={200}
           className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors"
@@ -1119,7 +1120,7 @@ export default function Flights() {
                 <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Départ</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                  <input type="date" value={departureDate} min={today()}
+                  <input type="date" aria-label="Date de départ" value={departureDate} min={today()}
                     onChange={(e) => handleDepartureDateChange(e.target.value)}
                     className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                 </div>
@@ -1129,7 +1130,7 @@ export default function Flights() {
                   <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Retour</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                    <input type="date" value={returnDate} min={departureDate}
+                    <input type="date" aria-label="Date de retour" value={returnDate} min={departureDate}
                       onChange={(e) => handleReturnDateChange(e.target.value)}
                       className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                   </div>
@@ -1298,6 +1299,7 @@ export default function Flights() {
                 <div className="mb-5">
                   <div className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Alliance aérienne</div>
                   <select
+                    aria-label="Alliance aérienne"
                     value={selectedAlliance}
                     onChange={(e) => setSelectedAlliance(e.target.value)}
                     className="w-full bg-slate-50 border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
@@ -1546,25 +1548,25 @@ function AIPlannerForm() {
         <form onSubmit={(e) => { e.preventDefault(); planMutation.mutate({ origin, destination, dates, budget, preferences }); }} className="space-y-3">
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Ville de départ</label>
-            <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" aria-label="Ville de départ" value={origin} onChange={(e) => setOrigin(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Destination</label>
-            <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" aria-label="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Période / Dates</label>
-              <input type="text" value={dates} onChange={(e) => setDates(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" aria-label="Période / Dates" value={dates} onChange={(e) => setDates(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Budget</label>
-              <input type="text" value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={50} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" aria-label="Budget" value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={50} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Préférences particulières</label>
-            <input type="text" value={preferences} onChange={(e) => setPreferences(e.target.value)} maxLength={500} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+            <input type="text" aria-label="Préférences particulières" value={preferences} onChange={(e) => setPreferences(e.target.value)} maxLength={500} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
           </div>
 
           <button type="submit" disabled={planMutation.isPending} className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2">

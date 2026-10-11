@@ -61,9 +61,9 @@ export default function Avis() {
       </section>
       <section className="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
         <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence 3M TRAVEL AGENCY</p>
-        <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+        <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
           Retours d’expérience et qualité de service
-        </h1>
+        </h2>
         <p className="mt-6 max-w-3xl text-base leading-7 text-slate-600">
           Nous ne publions pas de notes, statistiques ou témoignages attribués à des clients sans source vérifiable et autorisation adaptée. Les avis affichés ci-dessous sont des retours réellement soumis, vérifiés et approuvés par l’équipe avant publication, avec le consentement explicite de leur auteur.
         </p>

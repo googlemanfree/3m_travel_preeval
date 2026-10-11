@@ -356,6 +356,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Salaire minimum (EUR)</label>
                 <Input
+                  aria-label="Salaire minimum (EUR)"
                   type="range"
                   min="0"
                   max="7000"
@@ -370,6 +371,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Coût max (EUR)</label>
                 <Input
+                  aria-label="Coût max (EUR)"
                   type="range"
                   min="0"
                   max="10000"
@@ -384,6 +386,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Délai max (semaines)</label>
                 <Input
+                  aria-label="Délai max (semaines)"
                   type="range"
                   min="0"
                   max="52"
@@ -398,6 +401,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Difficulté</label>
                 <select
+                  aria-label="Difficulté"
                   value={difficultyFilter}
                   onChange={(e) => setDifficultyFilter(e.target.value as any)}
                   className="w-full px-3 py-2 rounded border border-slate-200 text-sm bg-white"
@@ -414,6 +418,7 @@ export default function ProceduresAdvanced() {
             <div className="flex flex-wrap gap-3 justify-between items-center">
               <div className="flex gap-2">
                 <select
+                  aria-label="Trier les procédures"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium hover:border-blue-500 transition-colors"
@@ -473,6 +478,7 @@ export default function ProceduresAdvanced() {
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-3">Sélectionner un pays</label>
                     <select
+                      aria-label="Sélectionner un pays"
                       value={selectedCountryForBudget || ''}
                       onChange={(e) => setSelectedCountryForBudget(e.target.value)}
                       className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm"
@@ -489,6 +495,7 @@ export default function ProceduresAdvanced() {
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-3">Frais de services 3M (EUR)</label>
                     <Input
+                      aria-label="Frais de services 3M (EUR)"
                       type="number"
                       value={servicesFee}
                       onChange={(e) => setServicesFee(parseInt(e.target.value) || 0)}

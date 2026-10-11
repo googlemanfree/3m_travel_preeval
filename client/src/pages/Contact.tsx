@@ -315,6 +315,7 @@ export default function Contact() {
                     <Input
                       type="text"
                       name="name"
+                      aria-label="Nom complet"
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="Votre nom"
@@ -331,6 +332,7 @@ export default function Contact() {
                     <Input
                       type="email"
                       name="email"
+                      aria-label="E-mail"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="votre@email.com"
@@ -350,6 +352,7 @@ export default function Contact() {
                     <Input
                       type="tel"
                       name="phone"
+                      aria-label="Téléphone"
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="+237 6XX XXX XXX"
@@ -365,6 +368,7 @@ export default function Contact() {
                     <Input
                       type="text"
                       name="subject"
+                      aria-label="Sujet"
                       value={formData.subject}
                       onChange={handleInputChange}
                       placeholder="Sujet de votre message"
@@ -382,6 +386,7 @@ export default function Contact() {
                   </label>
                   <textarea
                     name="message"
+                    aria-label="Message"
                     value={formData.message}
                     onChange={handleInputChange}
                     placeholder="Décrivez votre demande..."

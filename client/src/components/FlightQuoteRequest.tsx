@@ -96,7 +96,7 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
           <QuoteField label="Nombre de passagers" name="quoteTravelers" type="number" min="1" defaultValue="1" required />
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700">Classe de voyage</label>
-            <select name="quoteCabin" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" defaultValue="Économique">
+            <select aria-label="Classe de voyage" name="quoteCabin" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" defaultValue="Économique">
               <option>Économique</option>
               <option>Premium Economy</option>
               <option>Affaires</option>
@@ -129,7 +129,7 @@ function QuoteField({ label, name, type = "text", required, min, defaultValue, m
   return (
     <div>
       <label className="mb-1 block text-sm font-semibold text-gray-700">{label}</label>
-      <input name={name} type={type} required={required} min={min} defaultValue={defaultValue} maxLength={maxLength} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500" />
+      <input aria-label={label} name={name} type={type} required={required} min={min} defaultValue={defaultValue} maxLength={maxLength} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500" />
     </div>
   );
 }

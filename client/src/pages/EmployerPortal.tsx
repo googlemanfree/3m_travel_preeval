@@ -277,12 +277,12 @@ export default function EmployerPortal() {
           {authTab === "login" ? (
             <Card className="premium-surface overflow-hidden border-blue-100" data-testid="partner-auth-login">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[#071b3d]">
+                <h1 className="flex items-center gap-2 font-semibold leading-none text-[#071b3d]">
                   {isAgencyPortal ? <BriefcaseBusiness className="h-5 w-5 text-[#1463ff]" /> : <Building2 className="h-5 w-5 text-[#1463ff]" />}
                   {isAgencyPortal
                     ? t("Espace agence de placement", "Placement agency workspace")
                     : t("Portail employeur vérifié", "Verified employer portal")}
-                </CardTitle>
+                </h1>
                 <CardDescription>
                   {isAgencyPortal
                     ? t("Connexion réservée aux agences déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified agencies. Credentials are issued by 3M after your registration is reviewed.")
@@ -291,14 +291,14 @@ export default function EmployerPortal() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="relative">
-                  <Input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} autoComplete="username" className="pr-10" />
+                  <Input type="email" aria-label={t("E-mail professionnel", "Business email")} value={email} onChange={event => setEmail(event.target.value)} placeholder={t("E-mail professionnel", "Business email")} maxLength={320} autoComplete="username" className="pr-10" />
                   {email.trim() && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("E-mail renseigné", "Email entered")} />}
                 </div>
                 <div className="relative">
-                  <Input type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} autoComplete="current-password" className="pr-10" />
+                  <Input type="password" aria-label={t("Mot de passe", "Password")} value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} autoComplete="current-password" className="pr-10" />
                   {password && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("Mot de passe renseigné", "Password entered")} />}
                 </div>
-                {needsTwoFactor && <Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
+                {needsTwoFactor && <Input inputMode="numeric" aria-label={t("Code 2FA ou récupération", "2FA or recovery code")} autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
                 <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" aria-live="polite">
                   <span className={`h-2 w-2 rounded-full ${email.trim() && password ? "bg-emerald-500" : "bg-amber-400"}`} aria-hidden="true" />
                   {!email.trim()
@@ -387,7 +387,7 @@ export default function EmployerPortal() {
         </button>
       ))}
     </nav>
-    {workspaceTab === "security" && <section className="rounded-xl border border-slate-200 bg-white p-4" data-testid="partner-security-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{t("Authentification à deux facteurs", "Two-factor authentication")}</p><p className="text-sm text-slate-600">{totpStatus.data?.enabled ? t("Protection 2FA active pour les nouvelles connexions.", "2FA protection is active for new sign-ins.") : t("Configurez une application d’authentification pour protéger les prochaines connexions.", "Set up an authenticator app to protect future sign-ins.")}</p></div>{!totpStatus.data?.enabled && !qrDataUrl && <Button variant="outline" onClick={() => beginTotp.mutate({ sessionToken })}>{t("Configurer 2FA", "Set up 2FA")}</Button>}</div>{qrDataUrl && <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><img src={qrDataUrl} alt={t("QR code de configuration 2FA", "2FA setup QR code")} className="h-[220px] w-[220px] border bg-white p-2" /><div className="space-y-3"><Input inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code à six chiffres", "Six-digit code")} maxLength={32} /><Button disabled={!twoFactorCode || confirmTotp.isPending} onClick={() => confirmTotp.mutate({ sessionToken, code: twoFactorCode })}>{t("Confirmer et générer les codes", "Confirm and generate codes")}</Button></div></div>}{recoveryCodes.length > 0 && <div className="mt-4 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">{t("Codes de récupération — conservez-les hors ligne", "Recovery codes — store offline")}</p><p className="mt-1">{recoveryCodes.join(" · ")}</p></div>}</section>}
+    {workspaceTab === "security" && <section className="rounded-xl border border-slate-200 bg-white p-4" data-testid="partner-security-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-slate-900">{t("Authentification à deux facteurs", "Two-factor authentication")}</p><p className="text-sm text-slate-600">{totpStatus.data?.enabled ? t("Protection 2FA active pour les nouvelles connexions.", "2FA protection is active for new sign-ins.") : t("Configurez une application d’authentification pour protéger les prochaines connexions.", "Set up an authenticator app to protect future sign-ins.")}</p></div>{!totpStatus.data?.enabled && !qrDataUrl && <Button variant="outline" onClick={() => beginTotp.mutate({ sessionToken })}>{t("Configurer 2FA", "Set up 2FA")}</Button>}</div>{qrDataUrl && <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><img src={qrDataUrl} alt={t("QR code de configuration 2FA", "2FA setup QR code")} className="h-[220px] w-[220px] border bg-white p-2" /><div className="space-y-3"><Input inputMode="numeric" aria-label={t("Code 2FA ou récupération", "2FA or recovery code")} autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code à six chiffres", "Six-digit code")} maxLength={32} /><Button disabled={!twoFactorCode || confirmTotp.isPending} onClick={() => confirmTotp.mutate({ sessionToken, code: twoFactorCode })}>{t("Confirmer et générer les codes", "Confirm and generate codes")}</Button></div></div>}{recoveryCodes.length > 0 && <div className="mt-4 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">{t("Codes de récupération — conservez-les hors ligne", "Recovery codes — store offline")}</p><p className="mt-1">{recoveryCodes.join(" · ")}</p></div>}</section>}
     {workspaceTab === "team" && <section className="grid gap-4 lg:grid-cols-2" data-testid="partner-team-panel">
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3"><p className="flex items-center gap-2 font-bold text-slate-900"><Bell className="h-4 w-4 text-indigo-700" />{t("Notifications internes", "Internal notifications")} {unreadNotifications.length > 0 && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-800">{unreadNotifications.length}</span>}</p>{unreadNotifications.length > 0 && <Button size="sm" variant="outline" disabled={markAllNotificationsRead.isPending} onClick={() => markAllNotificationsRead.mutate({ sessionToken })}>{t("Tout marquer comme lu", "Mark all as read")}</Button>}</div>
