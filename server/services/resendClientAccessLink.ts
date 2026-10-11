@@ -18,7 +18,6 @@ export type ResendClientAccessResult = {
   candidateId: number;
   email: string;
   dossierNumber: string;
-  setPasswordUrl: string;
   emailSent: boolean;
   whatsappSent: boolean;
   whatsappSkippedReason: string | null;
@@ -222,7 +221,6 @@ export async function resendClientAccessLink(
     candidateId: candidateRowId,
     email,
     dossierNumber,
-    setPasswordUrl,
     emailSent,
     whatsappSent,
     whatsappSkippedReason,

@@ -2838,7 +2838,8 @@ export const adminRouter = router({
           linkedCandidateId,
           clientAccountCreated,
           clientInviteSent,
-          clientAccessUrl,
+          // Lien de connexion public seulement : le lien de définition du mot de passe (secret) part uniquement au client.
+          clientAccessUrl: buildCandidateSpaceAccessUrl(folderCode),
           whatsappSent,
           message: clientAccountCreated
             ? `Dossier créé et compte client ouvert : ${folderCode}`
