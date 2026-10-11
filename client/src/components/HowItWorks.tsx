@@ -14,8 +14,8 @@ export default function HowItWorks() {
     {
       number: 2,
       icon: FileText,
-      title: 'Ouverture de Dossier (65 000 FCFA)',
-      description: 'Reçu officiel et signature du mandat. Votre dossier est enregistré dans notre système.',
+      title: 'Ouverture de Dossier',
+      description: 'Reçu officiel et signature du mandat. Le montant des frais dépend de votre profil et vous est confirmé avant paiement. Votre dossier est enregistré dans notre système.',
       color: 'bg-purple-100 text-purple-600',
     },
     {

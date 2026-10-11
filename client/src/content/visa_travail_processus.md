@@ -22,7 +22,7 @@ Sous **48 heures** après la soumission de votre profil, vous recevrez par e-mai
 
 Une fois votre bilan reçu, et si vous décidez de poursuivre, cette étape est essentielle. Elle comprend :
 
-*   **Le règlement des frais de dossier (65 000 XAF)** : Ce paiement est obligatoire et active officiellement votre candidature. Il couvre les coûts administratifs et le lancement de votre processus.
+*   **Le règlement des frais de dossier** : leur montant dépend de votre profil et vous est confirmé par écrit avant tout paiement. Ce paiement est obligatoire et active officiellement votre candidature. Il couvre les coûts administratifs et le lancement de votre processus.
 *   **Le dépôt de vos documents originaux ou la vérification en ligne** : Pour ceux qui sont dans la ville, vous pourrez déposer vos originaux à notre agence. Pour les clients à distance, un système de scan professionnel en ligne sécurisé vous permettra de soumettre vos pièces justificatives en toute conformité.
 
 Cette étape marque le passage de l'évaluation à l'action concrète, nous permettant de constituer votre dossier avec la rigueur nécessaire.

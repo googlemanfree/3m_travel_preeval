@@ -425,7 +425,7 @@ export default function ProcedureDetailModal({ procedure, open, onClose, onConti
               <div>
                 <p className="text-sm font-bold text-amber-800">Frais d'ouverture de dossier 3M TRAVEL AGENCY</p>
                 <p className="text-sm text-amber-700 mt-1">
-                  <strong>65 000 FCFA</strong> — frais obligatoires et non remboursables pour l'ouverture et le traitement de votre dossier par nos conseillers. Ces frais couvrent l'évaluation complète, la constitution du dossier et le suivi jusqu'à l'obtention du visa.
+                  <strong>Montant selon votre profil</strong>, confirmé par écrit avant tout paiement. Frais obligatoires et non remboursables pour l'ouverture et le traitement de votre dossier par nos conseillers. Ces frais couvrent l'évaluation complète, la constitution du dossier et le suivi jusqu'à l'obtention du visa.
                 </p>
               </div>
             </div>

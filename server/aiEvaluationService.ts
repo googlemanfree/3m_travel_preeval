@@ -80,7 +80,7 @@ Consignes de notation et de structure :
 - Évalue la destination initiale (${destination}) : attribue un score entre 50 et 60/100 en expliquant les blocages légaux/ministériels de 2026 (contingentement, bilinguisme, ADEM, salaire social minimum).
 - Recommande les destinations fortes (Pologne: 95/100 pour la rapidité / Canada: 90/100 pour la Résidence Permanente).
 - Inclus la synthèse des scores visuelle avec barres (████), le tableau des critères (Formation/25, Expérience/25, Langues/20, Secteur/20, Ajustement/10).
-- Mentionne les points forts, points de vigilance, le cadre juridique, les frais d'ouverture obligatoires de 65 000 FCFA non remboursables, la liste des pièces justificatives, le suivi WhatsApp (698 104 832) et les étapes immédiates.
+- Mentionne les points forts, points de vigilance, le cadre juridique, les frais d'ouverture obligatoires et non remboursables (leur montant dépend du type de profil et sera confirmé par écrit par l'agence avant tout paiement : n'annonce jamais de montant précis), la liste des pièces justificatives, le suivi WhatsApp (698 104 832) et les étapes immédiates.
 - N'utilise aucun formatage Markdown (pas de **, pas de #, pas de code blocks). Uniquement du texte brut lisible directement dans un e-mail.
 
 Signature obligatoire :
@@ -189,7 +189,7 @@ Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigrati
 
 FRAIS D'OUVERTURE DE DOSSIER
 
-Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de 65 000 FCFA est requis. Ces frais techniques courent l'audit initial, le traitement documentaire et sont non remboursables en toutes circonstances.
+Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires, dont le montant dépend de votre profil et vous est confirmé par écrit avant tout paiement, est requis. Ces frais techniques courent l'audit initial, le traitement documentaire et sont non remboursables en toutes circonstances.
 
 ---
 
@@ -212,7 +212,7 @@ Grâce à notre infrastructure numérique interconnectée, vous pouvez valider e
 PROCHAINES ÉTAPES IMMÉDIATES
 
 1. Confirmation de votre stratégie de traitement (Maintien strict sur la destination initiale ou bascule sur les destinations recommandées).
-2. Règlement des frais d'ouverture de dossier (65 000 FCFA) directement en ligne sur notre plateforme.
+2. Règlement des frais d'ouverture de dossier (montant selon votre profil, confirmé par écrit avant tout paiement) directement en ligne sur notre plateforme.
 3. Téléversement de vos pièces justificatives numériques pour l'audit de conformité immédiat.
 
 ---

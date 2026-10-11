@@ -10,7 +10,7 @@ export default function FAQSection() {
       id: 1,
       question: 'Comment s\'effectue le paiement des frais d\'ouverture de dossier ?',
       answer:
-        'Tous les règlements (65 000 FCFA) s\'effectuent par guichet sécurisé Mobile Money/Visa ou à l\'agence de Yaoundé avec reçu officiel au nom de 3M Travel Agency SARL. Nous acceptons également les virements bancaires pour les montants importants.',
+        'Le montant des frais d\'ouverture dépend de votre profil ; il vous est confirmé par écrit avant tout paiement. Les règlements s\'effectuent par guichet sécurisé Mobile Money/Visa ou à l\'agence de Yaoundé avec reçu officiel au nom de 3M Travel Agency SARL. Nous acceptons également les virements bancaires pour les montants importants.',
     },
     {
       id: 2,
