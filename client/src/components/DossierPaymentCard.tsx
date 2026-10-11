@@ -1,4 +1,4 @@
-import { CheckCircle2, CreditCard } from "lucide-react";
+import { CheckCircle2, CreditCard, FileCheck2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { formatAmount } from "@shared/paymentMethods";
 import PaymentProofUpload from "@/components/PaymentProofUpload";
@@ -11,24 +11,54 @@ type Props = {
   confirmed: boolean;
   /** Le candidat a demandé l'ouverture de son dossier : le règlement des frais est attendu. */
   requested: boolean;
+  /** Reçu signé / approuvé par l’agence (lecture seule). */
+  receiptApproved?: boolean;
+  receiptApprovedAt?: string | Date | null;
+  receiptAmountLabel?: string | null;
 };
 
 /**
  * Règlement des frais d'ouverture, depuis l'espace client : montant à régler et accès à tous les moyens de paiement
  * (virement, dépôt Mobile Money, agence, en ligne quand il est activé). Rien n'est affiché tant que le règlement n'est pas attendu.
  */
-export default function DossierPaymentCard({ dossierNumber, amount, currency, confirmed, requested }: Props) {
+export default function DossierPaymentCard({
+  dossierNumber,
+  amount,
+  currency,
+  confirmed,
+  requested,
+  receiptApproved = false,
+  receiptApprovedAt = null,
+  receiptAmountLabel = null,
+}: Props) {
   if (!dossierNumber || (!requested && !confirmed)) return null;
   if (confirmed) {
+    const approvedAtLabel = receiptApprovedAt
+      ? new Date(receiptApprovedAt).toLocaleDateString("fr-FR", { dateStyle: "long" })
+      : null;
     return (
       <Card className="border-emerald-200 bg-emerald-50 p-4" data-testid="dossier-payment" data-state="confirmed" role="status">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Paiement confirmé par l’agence. Ce règlement ne couvre que ce dossier.</p>
           <span className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-black text-emerald-900" data-testid="payment-dossier-reference">Référence : <span className="font-mono">{dossierNumber}</span></span>
         </div>
-        <p className="mt-2 text-xs text-emerald-800">
-          Votre reçu est remis en agence (format caisse) et confirmé par e-mail. Aucune action n’est requise ici — consultez vos notifications si un nouvel avis apparaît.
-        </p>
+        {receiptApproved ? (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-300 bg-white/80 p-3" data-testid="payment-receipt-approved">
+            <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-bold text-emerald-950">Reçu validé et synchronisé</p>
+              <p className="mt-1 text-xs text-emerald-800">
+                {receiptAmountLabel ? `Montant enregistré : ${receiptAmountLabel}. ` : ""}
+                {approvedAtLabel ? `Signé le ${approvedAtLabel}. ` : ""}
+                Exemplaire e-mail / caisse A5 disponible auprès de l’agence. Aucune action requise ici.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-emerald-800" data-testid="payment-receipt-pending">
+            Paiement enregistré — le reçu signé apparaîtra ici dès validation par l’agence (e-mail + notification).
+          </p>
+        )}
       </Card>
     );
   }

@@ -824,7 +824,7 @@ export const adminCandidateManagementRouter = router({
         if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status });
       }
 
-      const pipeline = paidApps.map((app) => {
+      const onlinePipeline = paidApps.map((app) => {
         const agency = agencyByEmail.get(app.email.trim().toLowerCase()) ?? null;
         const reference = app.candidateId
           ? resolveClientReference({
@@ -849,17 +849,54 @@ export const adminCandidateManagementRouter = router({
           paymentConfirmed: true,
           receiptAvailable,
           protocolSigned: Boolean(app.agreementSigned),
-          stage: !receiptAvailable
+          stage: (!receiptAvailable
             ? "receipt_pending"
             : !app.agreementSigned
               ? "protocol_pending"
-              : "complete",
+              : "complete") as "receipt_pending" | "protocol_pending" | "complete",
         };
       });
 
+      // Dossiers agence payés (walk-in) : même chaîne reçu → protocole, sans rewrite de statut.
+      const paidAgency = await db.select({
+        id: agencyDossiers.id,
+        fullName: agencyDossiers.fullName,
+        email: agencyDossiers.email,
+        status: agencyDossiers.status,
+        updatedAt: agencyDossiers.updatedAt,
+        createdAt: agencyDossiers.createdAt,
+      }).from(agencyDossiers).where(and(
+        eq(agencyDossiers.initialPaymentStatus, "paid"),
+        isNull(agencyDossiers.deletedAt),
+      )).orderBy(desc(agencyDossiers.updatedAt)).limit(200);
+
+      const onlineEmails = new Set(onlinePipeline.map((row) => row.email.trim().toLowerCase()));
+      const agencyPipeline = paidAgency
+        .filter((dossier) => !onlineEmails.has(dossier.email.trim().toLowerCase()))
+        .map((dossier) => {
+          const dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+          const receiptAvailable = receiptByDossier.has(dossierNumber.trim().toUpperCase())
+            || receiptByEmail.has(dossier.email.trim().toLowerCase());
+          return {
+            candidateId: `agency_${dossier.id}`,
+            dossierNumber,
+            workingReference: dossierNumber,
+            formerAccountReference: null as string | null,
+            fullName: dossier.fullName,
+            email: dossier.email,
+            paymentConfirmed: true,
+            receiptAvailable,
+            protocolSigned: false,
+            stage: (receiptAvailable ? "protocol_pending" : "receipt_pending") as "receipt_pending" | "protocol_pending" | "complete",
+          };
+        });
+
+      const pipeline = [...onlinePipeline, ...agencyPipeline]
+        .sort((a, b) => Number(a.receiptAvailable) - Number(b.receiptAvailable) || a.fullName.localeCompare(b.fullName, "fr"));
+
       return {
         counts: {
-          awaitingProtocol: awaitingProtocol.length,
+          awaitingProtocol: awaitingProtocol.length + agencyPipeline.filter((row) => !row.receiptAvailable || !row.protocolSigned).length,
           receiptPending: pipeline.filter((row) => row.stage === "receipt_pending").length,
           protocolPending: pipeline.filter((row) => row.stage === "protocol_pending").length,
           complete: pipeline.filter((row) => row.stage === "complete").length,
@@ -2039,6 +2076,22 @@ export const adminCandidateManagementRouter = router({
       const signatureHash = createReceiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount, currency, approvedByEmail, approvedAt });
       const [approval] = await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount: `${amount} ${currency}`, currency, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash }).$returningId();
       await db.insert(paymentAuditLogs).values({ adminName: approvedByName, adminEmail: approvedByEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail, amount: `${amount} ${currency}`, details: `Reçu validé et signé électroniquement pour ${dossierNumber}. Empreinte ${signatureHash}.` });
+      // Notification durable espace client — n’écrit pas le statut du dossier.
+      try {
+        const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1);
+        if (linkedCandidate?.id) {
+          await db.insert(clientNotifications).values({
+            candidateId: linkedCandidate.id,
+            type: "payment_receipt_approved",
+            title: "Reçu de paiement validé",
+            body: `Votre reçu pour le dossier ${dossierNumber} a été signé par l’agence (${amount} ${currency}). Consultez votre e-mail ou demandez le reçu caisse A5 au comptoir.`,
+            actionUrl: "/mon-espace?section=overview",
+            isRead: false,
+          });
+        }
+      } catch (notifyError) {
+        console.warn("[approvePaymentReceipt] client notification skipped", notifyError);
+      }
       return { success: true, approvalId: Number(approval?.id ?? 0), dossierNumber, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash };
     }),
 

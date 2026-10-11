@@ -3368,7 +3368,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
-            <AdminContractsReceiptsDesk sessionToken={sessionToken || ""} />
+            <AdminContractsReceiptsDesk sessionToken={sessionToken || ""} onOpenCandidate={(candidateId) => setSelectedCandidateId(candidateId)} />
             <AdminPaymentInstructions sessionToken={sessionToken || ""} />
             <AdminPaymentManagement
               sessionToken={sessionToken || ""}
