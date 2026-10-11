@@ -186,7 +186,7 @@ export function generateLuxembourgPDF(data: LuxembourgEvaluationData): Buffer {
   const nextSteps = [
     '1. Contactez notre équipe via WhatsApp pour discuter de votre profil',
     '2. Préparez vos documents (diplômes, certificats de travail, tests de langue)',
-    '3. Ouvrez votre dossier (frais : 65 000 FCFA)',
+    '3. Ouvrez votre dossier (frais selon votre profil, confirmés avant paiement)',
     '4. Soumettez vos documents pour vérification',
     '5. Recevez votre rapport d\'admissibilité complet',
   ];

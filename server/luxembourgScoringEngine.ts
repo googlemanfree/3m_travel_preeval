@@ -114,7 +114,7 @@ export function computeLuxembourgScore(input: ScoringInput): ScoringResult {
   if (total >= 80) {
     eligibilityStatus = "tres_eligible";
     statusLabel = "✅✅✅ TRÈS ÉLIGIBLE Luxembourg";
-    recommendationText = "Profil Excellent — Votre profil est très attractif pour le Luxembourg. Placement immédiat recommandé avec frais d'ouverture de 65 000 FCFA.";
+    recommendationText = "Profil Excellent — Votre profil est très attractif pour le Luxembourg. Placement immédiat recommandé ; frais d'ouverture selon votre profil, confirmés par écrit avant paiement.";
   } else if (total >= 70) {
     eligibilityStatus = "eligible";
     statusLabel = "✅✅ ÉLIGIBLE Luxembourg";

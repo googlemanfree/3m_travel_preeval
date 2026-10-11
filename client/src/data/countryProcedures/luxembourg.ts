@@ -129,7 +129,7 @@ export const luxembourgProcedure: CountryProcedure = {
     "C'est toujours le candidat qui signe son contrat de travail — jamais l'agence à sa place",
   ],
   fees: [
-    { label: "Ouverture & traitement de profil", detail: "Dû à la signature du mandat, non remboursable", amount: "65 000 FCFA", chargedTo: "Client" },
+    { label: "Ouverture & traitement de profil", detail: "Montant selon votre profil, confirmé par écrit avant paiement ; dû à la signature du mandat, non remboursable", amount: "Selon profil", chargedTo: "Client" },
     { label: "Honoraires 3M TRAVEL AGENCY", detail: "Analyse, mise en relation, suivi complet jusqu'au visa", amount: "1 500 000 FCFA", chargedTo: "Client" },
     { label: "Visa Type D", detail: "Frais officiels Ambassade de Belgique (représentation Luxembourg)", amount: "≈131 000 FCFA", chargedTo: "Client" },
     { label: "Frais médicaux", detail: "Certificat médical si exigé par l'ambassade", amount: "15 000 – 30 000 FCFA", chargedTo: "Client" },
@@ -140,10 +140,10 @@ export const luxembourgProcedure: CountryProcedure = {
   transparencyNote: "Aucun frais d'agence n'est exigé avant signature d'un mandat écrit. Le test ADEM et le permis de travail sont intégralement financés par l'employeur — toute demande de paiement à ce sujet par un intermédiaire est une tentative de fraude.",
   paymentOptions: [
     { name: "Paiement complet", amount: "2 300 000 FCFA", conditions: "Meilleur tarif, traitement prioritaire, paiement à la signature." },
-    { name: "Par tranches (+15%)", amount: "2 645 000 FCFA", conditions: "Paiement flexible, échéancier par contrat, 65 000 F dû à la signature." },
-    { name: "Sortie de Visa Garanti (+25%)", amount: "2 875 000 FCFA", conditions: "Solde à l'obtention du visa, garanti par contrat, 65 000 F dû à la signature." },
+    { name: "Par tranches (+15%)", amount: "2 645 000 FCFA", conditions: "Paiement flexible, échéancier par contrat, frais d'ouverture (selon profil) dus à la signature." },
+    { name: "Sortie de Visa Garanti (+25%)", amount: "2 875 000 FCFA", conditions: "Solde à l'obtention du visa, garanti par contrat, frais d'ouverture (selon profil) dus à la signature." },
   ],
-  paymentNote: "Dans tous les cas, les frais d'ouverture de dossier (65 000 FCFA) sont exigibles à la signature du mandat et non remboursables. Aucun autre frais d'agence n'est exigé avant signature écrite.",
+  paymentNote: "Dans tous les cas, les frais d'ouverture de dossier (montant selon votre profil, confirmé par écrit avant paiement) sont exigibles à la signature du mandat et non remboursables. Aucun autre frais d'agence n'est exigé avant signature écrite.",
   faq: [
     { question: "Une agence peut-elle garantir un visa de travail à 100% ?", answer: "Non, aucune agence sérieuse ne peut garantir l'issue d'une décision qui relève exclusivement de la Direction de l'Immigration. Méfiez-vous des promesses de visa garanti sans emploi réel." },
     { question: "Dois-je payer pour le test ADEM ou le permis de travail ?", answer: "Non, ces procédures sont intégralement à la charge de l'employeur. Toute demande de paiement est frauduleuse." },

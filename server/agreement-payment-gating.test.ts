@@ -73,9 +73,10 @@ describe("agreement and payment gating contracts", () => {
   it("provides accessible manual payment and next-step controls in the candidate admin workspace", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
     expect(dashboard).toContain('data-testid="confirm-payment-button"');
-    expect(dashboard).toContain("Étape suivante");
+    // Le bouton « Étape suivante » vit maintenant dans le kanban ; le tableau de bord garde la règle et le message de garde-fou.
+    expect(read("client/src/components/AdminCandidateKanban.tsx")).toContain("Étape suivante");
     expect(dashboard).toContain("getNextAdminStatus");
-    expect(dashboard).toContain("Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes");
+    expect(dashboard).toContain("Le serveur vérifie l’évaluation, le protocole, le paiement, la sélection employeur (visa travail) et l’ordre des étapes");
     expect(dashboard).toContain('data-testid="payment-already-confirmed"');
   });
 

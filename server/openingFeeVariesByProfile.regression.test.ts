@@ -23,6 +23,11 @@ const INFORMATIONAL_FILES = [
   "server/routers/aiCopilot.ts",
   "server/routers/proceduresRouter.ts",
   "server/evaluationService.ts",
+  "client/src/data/countryProcedures/luxembourg.ts",
+  "server/luxembourgPdfGenerator.ts",
+  "server/luxembourgScoringEngine.ts",
+  "server/routers/luxembourgEvaluation.ts",
+  "shared/agreementProtocolContent.ts",
 ];
 
 describe("frais d'ouverture : le montant dépend du profil", () => {
