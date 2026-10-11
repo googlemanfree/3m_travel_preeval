@@ -1,6 +1,6 @@
 
-## PR75 — protocole agence dans Aujourd’hui et cockpit 360
-- [x] PR75 sortie du draft; validation locale du commit `383b8eea` : 2 suites / 6 tests verts, typecheck et build verts.
-- [x] PR75 squash-mergée sur `main` au commit `c6572e95`.
-- [x] WebDev synchronisé et redémarré sur `c6572e95`. Contrôle lecture seule admin chargé; les tests et le code confirment la lecture `agency_settings`/PDF signé, `agreementSigned` agence dans Aujourd’hui, et `protocolOneSigned` dans le cockpit 360, sans rewrite de statut. Le jeu courant exposait 0 dossier agence, donc aucun cas métier agence réel n’a été ouvert ni muté; le checkpoint final reste à créer ci-dessous.
-- [x] Checkpoint WebDev final PR75 créé : version `6dd1762f`.
+## PR76 — cockpit 360 barre reçu
+- [x] PR76 sortie du draft; validation locale du commit `ae8af907` : 1 suite / 2 tests verts, typecheck et build verts.
+- [x] PR76 squash-mergée sur `main` au commit `13b94ed3`.
+- [x] WebDev synchronisé et redémarré sur `13b94ed3`. Le cockpit cible `candidate360-receipt-actions` pour `receipt_missing`/`approve_receipt` et expose Valider et signer, A5 et PDF via les mutations existantes, sans rewrite de statut. Le jeu courant ne permettait pas d’ouvrir une fiche paiement réelle; aucun paiement ni reçu n’a été muté.
+- [ ] Checkpoint WebDev final PR76 à créer avant publication du résultat.
