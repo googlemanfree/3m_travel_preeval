@@ -63,10 +63,16 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
   };
 
   const data = query.data;
+  const approveCandidateId = approveMutation.variables && typeof approveMutation.variables === "object"
+    ? String(approveMutation.variables.candidateId ?? "")
+    : "";
+  const sendCandidateId = sendMutation.variables && typeof sendMutation.variables === "object"
+    ? String(sendMutation.variables.candidateId ?? "")
+    : "";
   const busyId = approveMutation.isPending
-    ? String(approveMutation.variables?.candidateId ?? "")
+    ? approveCandidateId
     : sendMutation.isPending
-      ? String(sendMutation.variables?.candidateId ?? "")
+      ? sendCandidateId
       : "";
 
   return (
