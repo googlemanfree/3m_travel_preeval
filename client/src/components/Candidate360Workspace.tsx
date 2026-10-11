@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
-  FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
+  FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Printer, Save, Send, ShieldAlert, UserCheck, Loader2,
   ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -500,7 +500,24 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const paymentSnapshot: any = data.payments?.[0] ?? null;
   const agreementState: any = (data as any).agreement ?? (data as any).protocol ?? null;
   const paymentConfirmed = ["SUCCESS", "success", "completed", "paid", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const receiptApproved = Boolean(paymentSnapshot?.receiptApproval);
   const protocolSigned = Boolean(agreementState?.signed || agreementState?.agreementSigned || agreementState?.signedAt || agreementState?.agreementSignedAt);
+  const printReceiptA5 = async () => {
+    try {
+      const result = await utils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId: candidate.id });
+      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      if (!printWindow) {
+        toast.error("Autorisez les pop-ups pour imprimer le reçu A5.");
+        return;
+      }
+      printWindow.document.write(result.html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Reçu A5 indisponible.");
+    }
+  };
   // Prérequis déjà validés = verts (plus de faux bouchons paiement / protocole / évaluation).
   const coherenceChecks = [
     { label: "CV exploitable", ok: Boolean(candidateCv?.documentUrl), detail: candidateCv?.fileName || "Aucun CV rattaché" },
@@ -1570,6 +1587,62 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </Dialog>
         <TabsContent value="payments" className="space-y-3 pt-4">
           <div id="candidate360-payments-panel" className="scroll-mt-24 space-y-3">
+          {paymentConfirmed ? (
+            <div
+              id="candidate360-receipt-actions"
+              className="scroll-mt-24 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"
+              data-testid="candidate360-receipt-actions"
+            >
+              <p className="mr-auto text-sm text-slate-700">
+                <strong className="text-amber-950">Reçu :</strong>{" "}
+                {receiptApproved
+                  ? "validé — imprimer l’A5 ou renvoyer le PDF."
+                  : "à valider et signer avant envoi au client."}
+              </p>
+              {!receiptApproved ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-amber-300 text-amber-950 hover:bg-amber-100"
+                  disabled={!sessionToken || approvePaymentReceiptMutation.isPending || actionLocks.approveReceipt}
+                  onClick={() => { lockAction("approveReceipt"); approvePaymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
+                  data-testid="candidate360-receipt-approve"
+                >
+                  {approvePaymentReceiptMutation.isPending || actionLocks.approveReceipt ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  Valider et signer
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-slate-300 text-slate-800"
+                disabled={!sessionToken}
+                onClick={() => void printReceiptA5()}
+                data-testid="candidate360-receipt-a5"
+                title="Imprimer le reçu A5 (caisse)"
+              >
+                <Printer className="h-4 w-4" />
+                A5
+              </Button>
+              {receiptApproved ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-1.5 bg-blue-700 text-white hover:bg-blue-800"
+                  disabled={!sessionToken || paymentReceiptMutation.isPending || actionLocks.paymentReceipt}
+                  onClick={() => { lockAction("paymentReceipt"); paymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id, deliveryMode: "resend" }); }}
+                  data-testid="candidate360-receipt-pdf"
+                >
+                  {paymentReceiptMutation.isPending || actionLocks.paymentReceipt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  PDF
+                </Button>
+              ) : null}
+            </div>
+          ) : (
+            <div id="candidate360-receipt-actions" className="sr-only" aria-hidden="true" data-testid="candidate360-receipt-actions" />
+          )}
           {openingPaymentHistory?.pendingProof ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-sm"><div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">Nouvelle preuve de paiement à valider</p><PaymentHistoryStatusBadge status="pending" /></div><p className="mt-1 text-sm">{openingPaymentHistory.pendingProof.fileName || "Une preuve"} a été déposée le {formatDate(openingPaymentHistory.pendingProof.uploadedAt)} par {openingPaymentHistory.pendingProof.uploadedBy}. Validez-la avant toute activation.</p></div></div><Button type="button" size="sm" className="bg-amber-700 text-white hover:bg-amber-800" onClick={() => setActiveTab("payments")}>Ouvrir les paiements</Button></div> : null}
           <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4" aria-label="Historique des paiements multiples">
             <div className="flex flex-wrap items-start justify-between gap-3">
