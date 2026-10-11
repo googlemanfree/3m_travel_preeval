@@ -25,4 +25,12 @@ describe("recueil d’avis à validation humaine", () => {
     expect(app).toContain('path={"/admin/customer-reviews"}');
     expect(app).toContain("<AdminGuard message=\"Accès réservé aux administrateurs.\">");
   });
+
+  it("ne transforme pas une panne de lecture des avis en erreur bloquante sur l’accueil", () => {
+    const router = read("server/routers/customerReview.ts");
+    const publicList = router.slice(router.indexOf("listApproved:"), router.indexOf("translateApproved:"));
+    expect(publicList).toContain("try {");
+    expect(publicList).toContain('logger.error("customer_review.list_approved_failed"');
+    expect(publicList).toContain("return [];");
+  });
 });
