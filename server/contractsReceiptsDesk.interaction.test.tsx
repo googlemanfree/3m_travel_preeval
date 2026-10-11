@@ -56,6 +56,7 @@ vi.mock("@/lib/trpc", () => ({
       },
       approvePaymentReceipt: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
       sendPaymentReceiptForCandidate: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
+      resendClientAccessLink: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
       resendAgreementSignatureReminder: {
         useMutation: () => ({ mutate: remindMutate, isPending: false, variables: undefined }),
       },
