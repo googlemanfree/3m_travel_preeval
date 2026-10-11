@@ -1,15 +1,7 @@
 
-## Pack confiance ops PR68-70 — VALIDÉ / PUBLIÉ
-- [x] PR68 fusionnée sur `main` (`ef3ae285`) : 18/18 tests ciblés, typecheck et build verts.
-- [x] PR69 fusionnée sur `main` (`75bc5cb0`) : 6/6 tests ciblés, typecheck et build verts; anti-spam 60 s.
-- [x] PR70 fusionnée sur `main` (`dc62c984`) : 3/3 tests ciblés; validation croisée PR68-69 : 12/12 tests, typecheck vert.
-- [x] Test d’interaction du bureau adapté au mock d’accès PR69 : 6 suites / 19 tests du pack verts.
-- [x] Checkpoint WebDev/publication effectué; smoke admin public validé. Le smoke client authentifié reste distinct et nécessite une session client.
-- [x] Purge Cloudflare tentée : zone non reconnue par le connecteur; aucune purge globale lancée.
-
-## Correctif avis publics — tRPC response transform
-- [x] `customerReview.listApproved` tolérant aux indisponibilités DB/erreurs de lecture, avec journalisation serveur et retour JSON sûr `[]`.
-- [x] Régression ciblée ajoutée; test ciblé, typecheck et build verts.
-- [x] Endpoint local/public contrôlé : réponse tRPC JSON `200` avec liste vide quand aucun avis approuvé n’est disponible.
-- [x] Suite historique complète exécutée et classifiée factuellement : 3 249 tests verts, 19 échecs dans 15 fichiers hors des fichiers modifiés par ce correctif; aucune modification opportuniste appliquée. La baseline antérieure n’a pas été rejouée.
-- [x] Checkpoint WebDev du correctif créé : version `5a055e11`.
+## PR72 — relance protocole agence walk-in
+- [x] PR72 sortie du draft; GitHub indiquait `MERGEABLE/CLEAN` et aucun check automatique n’était publié. Validation locale du commit `4815ac6e` : 12/12 tests ciblés, typecheck et build verts.
+- [x] PR72 squash-mergée sur `main` au commit `60c1b563`.
+- [x] WebDev synchronisé et redémarré sur `60c1b563`; vérification lecture seule sur `https://www.3mtravelagency.com/admin` → Paiements → Protocoles / reçus : bureau chargé, actions de signature/relance présentes pour les lignes éligibles. Aucun bouton agence réel n’a été cliqué et aucune notification n’a été envoyée, car aucune ligne `agency_*` éligible n’était exposée dans le jeu courant. Le checkpoint final reste à créer ci-dessous.
+- [x] Garde-fou vérifié dans le diff et les tests : relance agence seulement si paiement `paid` et signature absente; aucune écriture de `applications.status` ou `agency_dossiers.status`.
+- [ ] Checkpoint WebDev final PR72 à créer avant publication du résultat.
