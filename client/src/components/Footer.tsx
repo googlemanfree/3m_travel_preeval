@@ -271,19 +271,19 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />
-                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-100 underline-offset-2 hover:underline">
+                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-emerald-100 underline-offset-2 hover:underline">
                     {copy(footerCopy.yaoundeWhatsapp)} : {COMPANY_CONTACTS.yaounde.whatsappNumber}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="font-semibold hover:text-white">
+                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="inline-block py-1 font-semibold hover:text-white">
                     {copy(footerCopy.yaoundePhone)} : {COMPANY_CONTACTS.yaounde.phone}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
                 </div>
               </div>
             </div>
@@ -296,13 +296,13 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="font-semibold hover:text-white">
+                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="inline-block py-1 font-semibold hover:text-white">
                     {copy(footerCopy.ottawaOffice)} : {OFFICE_CONTACTS.ottawa.whatsappDisplay}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
                 </div>
               </div>
             </div>

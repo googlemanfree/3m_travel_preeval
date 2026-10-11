@@ -101,6 +101,13 @@ export default function AdminClientSpacePreview({
           </DialogHeader>
 
           <div className="max-h-[calc(92vh-7rem)] overflow-y-auto bg-slate-100 p-4 sm:p-5">
+            <div className="mx-auto mb-4 flex max-w-xl items-start gap-3 rounded-xl border-2 border-indigo-300 bg-indigo-50 px-4 py-3 text-indigo-950 shadow-sm" role="status" data-testid="admin-client-preview-banner">
+              <Eye className="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-black">Prévisualisation administrateur</p>
+                <p className="mt-0.5 text-xs leading-5 text-indigo-800">Lecture seule : vous consultez le rendu candidat sans envoyer de message, modifier un statut ou déposer un document.</p>
+              </div>
+            </div>
             {previewQuery.isLoading ? (
               <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-600">
                 <Loader2 className="h-4 w-4 animate-spin" /> Chargement de l’espace client…

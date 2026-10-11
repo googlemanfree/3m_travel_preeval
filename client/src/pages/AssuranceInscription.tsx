@@ -1,4 +1,4 @@
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useId, useRef, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { MessageCircle, Plus, Shield, Trash2 } from "lucide-react";
@@ -123,5 +123,6 @@ function DestinationCountryField() {
 
 function Field({ label, name, type = "text", required, placeholder, value, onChange, maxLength }: { label: string; name?: string; type?: string; required?: boolean; placeholder?: string; value?: string; onChange?: (value: string) => void; maxLength?: number }) {
   const inputProps = value !== undefined ? { value, onChange: (event: React.ChangeEvent<HTMLInputElement>) => onChange?.(event.target.value) } : {};
-  return <div><Label>{label}</Label><Input name={name} type={type} required={required} placeholder={placeholder} maxLength={maxLength} className="mt-2" {...inputProps} /></div>;
+  const id = useId();
+  return <div><Label htmlFor={id}>{label}</Label><Input id={id} name={name} type={type} required={required} placeholder={placeholder} maxLength={maxLength} className="mt-2" {...inputProps} /></div>;
 }

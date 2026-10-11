@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLIENT_DOSSIER_PHASE_GUIDE,
   clientPhaseLabel,
   describeClientDossierPhase,
   resolveClientDossierPhase,
@@ -9,6 +10,20 @@ import { evaluateAdminStageTransition } from "../shared/transitionGuards";
 import { CLIENT_DOSSIER_STATUS_LABELS, clientStatusLabel } from "../shared/dossierProgress";
 
 describe("phases client — peu de libellés stables", () => {
+  it("expose exactement sept phases expliquées côté client", () => {
+    expect(CLIENT_DOSSIER_PHASE_GUIDE).toHaveLength(7);
+    expect(CLIENT_DOSSIER_PHASE_GUIDE.map((item) => item.label)).toEqual([
+      "Dossier créé",
+      "Évaluation en cours",
+      "Ouverture du dossier",
+      "Documents à compléter",
+      "Traitement en cours",
+      "Décision favorable",
+      "Décision défavorable",
+    ]);
+    expect(CLIENT_DOSSIER_PHASE_GUIDE.every((item) => item.detail.length > 20)).toBe(true);
+  });
+
   it("regroupe les micro-statuts en phases lisibles", () => {
     expect(resolveClientDossierPhase("bilan_envoye")).toBe("opening");
     expect(resolveClientDossierPhase("en_attente_paiement")).toBe("opening");

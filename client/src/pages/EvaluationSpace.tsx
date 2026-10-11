@@ -51,6 +51,7 @@ import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
 import ClientDossierStepAlert from "@/components/ClientDossierStepAlert";
 import ClientUploadedDocumentsStatus from "@/components/ClientUploadedDocumentsStatus";
+import ClientPhaseGuide from "@/components/ClientPhaseGuide";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
@@ -704,6 +705,7 @@ export default function EvaluationSpace() {
             </p>
           )}
           {stepAdvanceAlert && <div className="mt-3"><ClientDossierStepAlert change={stepAdvanceAlert} onDismiss={() => setStepAdvanceAlert(null)} /></div>}
+          <div className="mt-4"><ClientPhaseGuide /></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);

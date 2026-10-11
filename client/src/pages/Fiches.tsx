@@ -1,4 +1,8 @@
 import { useState, useMemo } from "react";
+
+// Nombre de fiches affichées d'un coup ; le reste s'ouvre avec « Afficher plus » (la page faisait 55 000 px sur mobile).
+const FICHES_PAGE_SIZE = 18;
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -201,7 +205,7 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
 
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-3 flex items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors"
+            className="mt-3 flex min-h-11 items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors"
           >
             {expanded ? (
               <><ChevronUp className="w-4 h-4" /> Réduire</>
@@ -219,6 +223,7 @@ export default function Fiches() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState<string>("Tous");
   const [activeCountry, setActiveCountry] = useState<string>("Tous");
+  const [pageState, setPageState] = useState({ key: "", limit: FICHES_PAGE_SIZE });
   const visual = getServiceVisual("dossier");
 
   // Dédupliquer : garder la fiche la plus complète par pays+type
@@ -259,6 +264,11 @@ export default function Fiches() {
       return matchSearch && matchType && matchCountry;
     });
   }, [dedupedData, search, activeType, activeCountry]);
+
+  // Toute modification de la recherche ou d'un filtre revient à la première page.
+  const filterKey = `${search}|${activeType}|${activeCountry}`;
+  const visibleLimit = pageState.key === filterKey ? pageState.limit : FICHES_PAGE_SIZE;
+  const visible = filtered.slice(0, visibleLimit);
 
   // Trouver le PDF correspondant à une procédure
   function findPdf(proc: ProcedureInfo): string | undefined {
@@ -341,6 +351,7 @@ export default function Fiches() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
+                aria-label="Rechercher une fiche pays"
                 placeholder="Rechercher un pays, un secteur, une condition..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -378,6 +389,7 @@ export default function Fiches() {
 
             {/* Filtre pays */}
             <select
+              aria-label="Filtrer les fiches par pays"
               value={activeCountry}
               onChange={e => setActiveCountry(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -415,9 +427,16 @@ export default function Fiches() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filtered.map((proc, i) => (
+            {visible.map((proc, i) => (
               <FicheCard key={`${proc.country}-${proc.visaType}-${i}`} proc={proc} pdfUrl={findPdf(proc)} />
             ))}
+          </div>
+        )}
+        {filtered.length > visible.length && (
+          <div className="mt-8 text-center">
+            <Button variant="outline" className="min-h-11 px-8" data-testid="fiches-show-more" onClick={() => setPageState({ key: filterKey, limit: visibleLimit + FICHES_PAGE_SIZE })}>
+              Afficher plus de fiches ({filtered.length - visible.length} restantes)
+            </Button>
           </div>
         )}
       </section>
