@@ -14,6 +14,7 @@ describe("reçus synchronisés — confiance client/admin", () => {
     expect(desk).toContain("onOpenCandidate");
     expect(desk).toContain("aucun rewrite de statut dossier");
     expect(management).toContain('type: "payment_receipt_approved"');
+    expect(management).toContain("notifyPaymentReceiptApprovedWhatsApp");
     expect(management).toContain("agencyDossiers.initialPaymentStatus");
   });
 

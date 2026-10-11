@@ -37,6 +37,7 @@ import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequiremen
 import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
+import { notifyPaymentReceiptApprovedWhatsApp } from "../services/clientWhatsAppNotify";
 
 // Contrat partagé de la notification passport_photo_request, utilisé par le service
 // pour publier la demande dans l’espace client et envoyer l’e-mail correspondant.
@@ -2048,6 +2049,8 @@ export const adminCandidateManagementRouter = router({
 
       let dossierNumber = input.candidateId;
       let candidateEmail = "";
+      let fullName = "";
+      let phone: string | null = null;
       let amount = "65000";
       let currency = "XAF";
       if (reference.source === "agency") {
@@ -2056,6 +2059,8 @@ export const adminCandidateManagementRouter = router({
         if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
         dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
         candidateEmail = dossier.email;
+        fullName = dossier.fullName;
+        phone = dossier.phone || null;
         const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
         amount = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") || amount : amount;
       } else {
@@ -2064,10 +2069,16 @@ export const adminCandidateManagementRouter = router({
         if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
         dossierNumber = application.dossierNumber;
         candidateEmail = application.email;
+        fullName = application.fullName;
+        phone = application.whatsappNumber || null;
         amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
         currency = application.paymentCurrency ?? currency;
       }
       if (!candidateEmail) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+
+      const [linkedCandidate] = await db.select({ id: candidates.id, phone: candidates.phone, fullName: candidates.fullName }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1);
+      if (!phone) phone = linkedCandidate?.phone || null;
+      if (!fullName) fullName = linkedCandidate?.fullName || candidateEmail;
 
       const approvedAt = new Date();
       const approvedByEmail = admin.email || "Administrateur";
@@ -2076,9 +2087,10 @@ export const adminCandidateManagementRouter = router({
       const signatureHash = createReceiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount, currency, approvedByEmail, approvedAt });
       const [approval] = await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount: `${amount} ${currency}`, currency, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash }).$returningId();
       await db.insert(paymentAuditLogs).values({ adminName: approvedByName, adminEmail: approvedByEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail, amount: `${amount} ${currency}`, details: `Reçu validé et signé électroniquement pour ${dossierNumber}. Empreinte ${signatureHash}.` });
-      // Notification durable espace client — n’écrit pas le statut du dossier.
+      // Notification durable + WhatsApp « au mieux » — n’écrit pas le statut du dossier.
+      let whatsappSent = false;
+      let whatsappSkippedReason: string | null = null;
       try {
-        const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1);
         if (linkedCandidate?.id) {
           await db.insert(clientNotifications).values({
             candidateId: linkedCandidate.id,
@@ -2089,10 +2101,42 @@ export const adminCandidateManagementRouter = router({
             isRead: false,
           });
         }
+        const wa = await notifyPaymentReceiptApprovedWhatsApp({
+          phone,
+          candidateName: fullName,
+          dossierNumber,
+          amount,
+          currency,
+        });
+        whatsappSent = wa.sent;
+        whatsappSkippedReason = wa.sent ? null : (wa.error || "WhatsApp non envoyé");
+        if (wa.sent) {
+          await db.insert(paymentAuditLogs).values({
+            adminName: approvedByName,
+            adminEmail: approvedByEmail,
+            action: "receipt_approved_whatsapp",
+            paymentId: reference.id,
+            candidateEmail,
+            amount: `${amount} ${currency}`,
+            details: `WhatsApp reçu signé envoyé pour ${dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+          });
+        }
       } catch (notifyError) {
-        console.warn("[approvePaymentReceipt] client notification skipped", notifyError);
+        console.warn("[approvePaymentReceipt] client notification / WhatsApp skipped", notifyError);
+        whatsappSkippedReason = notifyError instanceof Error ? notifyError.message : "Notification ignorée";
       }
-      return { success: true, approvalId: Number(approval?.id ?? 0), dossierNumber, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash };
+      return {
+        success: true,
+        approvalId: Number(approval?.id ?? 0),
+        dossierNumber,
+        approvedByName,
+        approvedByEmail,
+        approvedAt,
+        signatureLabel,
+        signatureHash,
+        whatsappSent,
+        whatsappSkippedReason,
+      };
     }),
 
   sendPaymentReceiptForCandidate: publicProcedure
