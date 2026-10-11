@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { openingFeeLabelFromSearch } from '@shared/openingFee';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 
 export default function PaymentSuccessPage() {
+  const amountLabel = openingFeeLabelFromSearch(window.location.search);
   const [, navigate] = useLocation();
 
   return (
@@ -53,7 +55,7 @@ export default function PaymentSuccessPage() {
           <div className="space-y-3 text-left">
             <div className="flex justify-between">
               <span className="text-gray-600">Montant payé :</span>
-              <span className="font-bold text-gray-900">65 000 XAF</span>
+              <span className="font-bold text-gray-900">{amountLabel}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Statut :</span>

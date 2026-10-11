@@ -1,5 +1,5 @@
 ﻿/**
- * Routeur tRPC — Paiement des Frais d'Ouverture de Dossier (65 000 XAF)
+ * Routeur tRPC — Paiement des Frais d'Ouverture de Dossier (montant fixé par dossier ; 65 000 XAF par défaut)
  * Gère l'initiation, la confirmation et le suivi des paiements
  */
 
@@ -41,7 +41,7 @@ function safeDocumentName(fileName: string): string {
 
 export const paymentRouter = router({
   /**
-   * Initier un paiement pour un dossier (65 000 XAF)
+   * Initier un paiement pour un dossier (montant du dossier, 65 000 XAF par défaut)
    */
   initiateFolderPayment: publicProcedure
     .input(z.object({
@@ -89,7 +89,7 @@ export const paymentRouter = router({
           .set({
             paymentStatus: "PENDING",
             paymentTransactionId: transactionId,
-            paymentAmount: PAYMENT_AMOUNT,
+            paymentAmount: application.paymentAmount ?? PAYMENT_AMOUNT,
             paymentCurrency: PAYMENT_CURRENCY,
             paymentMethod: null,
           })
@@ -101,7 +101,7 @@ export const paymentRouter = router({
 
         return {
           success: true,
-          amount: PAYMENT_AMOUNT,
+          amount: application.paymentAmount ?? PAYMENT_AMOUNT,
           currency: PAYMENT_CURRENCY,
           transactionId,
           paymentUrl,
@@ -190,7 +190,7 @@ export const paymentRouter = router({
           success: true,
           message: "Paiement confirmé avec succès",
           dossierNumber: input.dossierNumber,
-          amount: PAYMENT_AMOUNT,
+          amount: application.paymentAmount ?? PAYMENT_AMOUNT,
           currency: PAYMENT_CURRENCY,
           transactionId: input.transactionId,
         };

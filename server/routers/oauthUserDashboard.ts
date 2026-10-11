@@ -200,9 +200,8 @@ export const oauthUserDashboardRouter = router({
         id: "payment-pending",
         type: "payment",
         title: "Paiement obligatoire",
-        description: "Veuillez effectuer le paiement de 65 000 XAF pour finaliser votre dossier.",
+        description: "Veuillez effectuer le paiement des frais d'ouverture, dont le montant vous a été confirmé par votre conseiller, pour finaliser votre dossier.",
         urgency: "high",
-        amount: 65000,
         action: { label: "Payer maintenant", href: "/mon-dossier" },
       });
     }

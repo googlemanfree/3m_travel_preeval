@@ -192,7 +192,7 @@ async function sendPaymentValidationEmail(candidateId: string): Promise<boolean>
       to: candidate.email,
       replyTo: AGENCY_EMAIL,
       subject: '✅ Votre paiement a été validé - 3M TRAVEL AGENCY',
-      html: `<h2>Paiement validé</h2><p>Bonjour ${esc(candidate.fullName)},</p><p>Votre paiement de 65 000 XAF a été validé avec succès.</p><p><strong>Prochaine étape :</strong> vous pouvez maintenant déposer vos documents dans votre espace candidat.</p><p><a href="https://www.3mtravelagency.com/mon-espace">Accéder à mon espace</a></p><p>Cordialement,<br/>L'équipe 3M TRAVEL AGENCY</p>`,
+      html: `<h2>Paiement validé</h2><p>Bonjour ${esc(candidate.fullName)},</p><p>Votre paiement des frais d’ouverture de dossier a été validé avec succès.</p><p><strong>Prochaine étape :</strong> vous pouvez maintenant déposer vos documents dans votre espace candidat.</p><p><a href="https://www.3mtravelagency.com/mon-espace">Accéder à mon espace</a></p><p>Cordialement,<br/>L'équipe 3M TRAVEL AGENCY</p>`,
     });
     return true;
   } catch (error) {

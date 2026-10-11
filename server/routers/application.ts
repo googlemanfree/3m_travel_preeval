@@ -29,6 +29,7 @@ import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
+import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -726,6 +727,59 @@ export const applicationRouter = router({
           lastFailureAt: null,
         },
       }));
+    }),
+
+  /**
+   * Fixer le montant des frais d'ouverture d'un dossier : il dépend du type de profil et doit être confirmé par écrit
+   * au candidat avant tout paiement. Impossible une fois le paiement validé (annuler d'abord la validation).
+   */
+  adminSetOpeningFee: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      amount: z.number().int().min(MIN_OPENING_FEE_XAF).max(MAX_OPENING_FEE_XAF),
+      reason: z.string().trim().min(3).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.paymentStatus === "SUCCESS") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le paiement de ce dossier est déjà validé : le montant ne peut plus être modifié. Annulez d’abord la validation si une correction est nécessaire." });
+      }
+
+      const previous = application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      if (previous === input.amount && application.paymentExpectedAmount === input.amount) {
+        return { id: application.id, amount: input.amount, previousAmount: previous, changed: false as const };
+      }
+
+      // Une transaction en ligne déjà ouverte l'a été à l'ancien montant : on la libère pour que le prochain paiement
+      // parte au bon montant. Les références saisies à la main (Orange Money, virement…) ne sont jamais effacées.
+      const transactionId = application.paymentTransactionId ?? "";
+      const releaseOnlineTransaction = application.paymentStatus === "PENDING" && /^(TX-)?3M-/.test(transactionId);
+      await db.update(applications)
+        .set({
+          paymentAmount: input.amount,
+          paymentExpectedAmount: input.amount,
+          ...(releaseOnlineTransaction ? { paymentTransactionId: null } : {}),
+        })
+        .where(eq(applications.id, application.id));
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: ctx.user.name || "Administrateur",
+        adminEmail: ctx.user.email || "",
+        action: "opening_fee_set",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: formatXaf(input.amount, application.paymentCurrency ?? "XAF"),
+        details: `Frais d'ouverture du dossier ${application.dossierNumber} : ${formatXaf(previous)} → ${formatXaf(input.amount)}. Motif : ${input.reason}${releaseOnlineTransaction ? " (transaction en ligne précédente libérée)" : ""}`,
+      });
+
+      return { id: application.id, amount: input.amount, previousAmount: previous, changed: true as const };
     }),
 
   /** Valider ou annuler un paiement depuis le tableau de bord administrateur. */

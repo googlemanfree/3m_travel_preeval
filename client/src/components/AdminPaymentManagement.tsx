@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
 import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
+import AdminOpeningFeeDialog from "@/components/AdminOpeningFeeDialog";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 
 interface Payment {
@@ -63,6 +64,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   const [adminNote, setAdminNote] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState("");
+  const [feePayment, setFeePayment] = useState<Payment | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
@@ -659,6 +661,11 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                       </td>
                       <td className="py-3 px-4 text-right text-xs text-gray-700">
                         <p><span className="text-gray-500">Attendu :</span> <strong>{payment.expectedAmount.toLocaleString("fr-FR")} {payment.currency}</strong></p>
+                        {payment.paymentStatus !== "SUCCESS" && (
+                          <button type="button" className="mt-0.5 text-[11px] font-semibold text-blue-700 underline underline-offset-2" data-testid="edit-opening-fee" onClick={() => setFeePayment(payment)}>
+                            Modifier le montant
+                          </button>
+                        )}
                         <p className={payment.confirmedAmount != null && payment.confirmedAmount !== payment.expectedAmount ? "font-bold text-rose-700" : "text-emerald-700"}><span className="text-gray-500">Confirmé :</span> {payment.confirmedAmount != null ? `${payment.confirmedAmount.toLocaleString("fr-FR")} ${payment.currency}` : "—"}</p>
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -896,7 +903,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                       {actionType === 'confirm' ? (
                     <div className="space-y-3">
                         <p className="text-sm text-slate-700">
-                        En confirmant ce versement de <strong>65 000 XAF</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
+                        En confirmant ce versement de <strong>{(Number(confirmedAmount) || selectedPayment.expectedAmount).toLocaleString("fr-FR")} {selectedPayment.currency}</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
                       </p>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
@@ -1034,6 +1041,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AdminOpeningFeeDialog payment={feePayment} onClose={() => setFeePayment(null)} onSaved={() => { setFeePayment(null); refetch(); }} />
     </div>
   );
 }
