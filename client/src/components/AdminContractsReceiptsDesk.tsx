@@ -93,7 +93,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
     : "";
   const accessCandidateId = accessMutation.variables && typeof accessMutation.variables === "object"
     ? String(accessMutation.variables.candidateId ?? "")
-=======
+    : "";
   const remindCandidateId = remindMutation.variables && typeof remindMutation.variables === "object"
     ? String(remindMutation.variables.candidateId ?? "")
     : "";
@@ -103,10 +103,9 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
       ? sendCandidateId
       : accessMutation.isPending
         ? accessCandidateId
-=======
-      : remindMutation.isPending
-        ? remindCandidateId
-        : "";
+        : remindMutation.isPending
+          ? remindCandidateId
+          : "";
 
   return (
     <Card className="overflow-hidden border-0 shadow-sm" data-testid="admin-contracts-receipts-desk">
@@ -248,7 +247,6 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                               {rowBusy && accessMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                               Accès
                             </Button>
-=======
                             {row.stage === "protocol_pending" && row.candidateId.startsWith("online_") && !row.protocolSigned ? (
                               <Button
                                 type="button"
