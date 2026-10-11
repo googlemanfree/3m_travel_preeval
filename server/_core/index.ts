@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { buildApiNotFoundPayload } from "./apiJsonContract";
+import { securityHeadersMiddleware } from "./securityHeaders";
 import { registerOAuthRoutes } from "./oauth";
 import { registerGoogleCandidateOAuthRoutes } from "../googleCandidateOAuth";
 import { registerStorageProxy } from "./storageProxy";
@@ -53,6 +54,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  app.use(securityHeadersMiddleware);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

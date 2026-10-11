@@ -190,6 +190,7 @@ export default function Ressources() {
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
+                aria-label={language === 'en' ? 'Search by country or visa type' : 'Rechercher par pays ou type de visa'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={language === 'en' ? 'Search country, visa type...' : 'Rechercher un pays, un type de visa…'}

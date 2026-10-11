@@ -68,7 +68,7 @@ export default function HomeSearchBar() {
             </div>
             <a
               href="/guide-procedures"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-800 underline-offset-4 hover:underline"
+              className="inline-flex min-h-6 items-center gap-1.5 text-sm font-semibold text-blue-800 underline-offset-4 hover:underline"
             >
               <BookOpen className="h-4 w-4" aria-hidden="true" />
               Bibliothèque PDF
