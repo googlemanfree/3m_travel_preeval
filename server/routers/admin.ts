@@ -4416,6 +4416,56 @@ export const adminRouter = router({
       return { success: true, added: missing.length, country: input.destination || "Standard", procedure: template.label };
     }),
 
+  requestCandidate360Document: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+      documentLabel: z.string().trim().min(2).max(180),
+      details: z.string().trim().max(1_500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select({ email: applications.email, fullName: applications.fullName, dossierNumber: applications.dossierNumber }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, dossierNumber: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
+      const candidateRecord = (await db.select({ id: candidates.id, email: candidates.email }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
+      if (!candidateRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cette demande." });
+      const documentLabel = input.documentLabel.replace(/\s+/g, " ").trim();
+      const requestMessage = (input.details?.replace(/\s+/g, " ").trim() || `Merci de déposer la pièce « ${documentLabel} » dans votre espace candidat.`).slice(0, 1_500);
+      const existing = (await db.select({ id: documentClarificationRequests.id }).from(documentClarificationRequests).where(and(
+        eq(documentClarificationRequests.candidateId, candidateRecord.id),
+        eq(documentClarificationRequests.documentLabel, documentLabel),
+        eq(documentClarificationRequests.status, "pending"),
+      )).limit(1))[0];
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Une demande identique est déjà en attente pour ce candidat." });
+      const dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const [created] = await db.insert(documentClarificationRequests).values({ candidateId: candidateRecord.id, documentLabel, requestMessage, status: "pending", dueAt });
+      const requestId = Number((created as any).insertId || 0);
+      const [notification] = await db.insert(clientNotifications).values({ candidateId: candidateRecord.id, caseId: operationalCase.id, type: "document_clarification_requested", title: "Pièce demandée pour votre dossier", body: requestMessage, actionUrl: "/mon-espace?section=documents", isRead: false });
+      const notificationId = Number((notification as any).insertId || 0) || null;
+      const [message] = await db.insert(candidateMessages).values({ candidateId: candidateRecord.id, notificationId, senderRole: "advisor", content: `Demande de pièce — ${documentLabel}\n\n${requestMessage}`, isRead: false });
+      const candidateMessageId = Number((message as any).insertId || 0) || null;
+      if (requestId) {
+        await db.update(documentClarificationRequests).set({ candidateMessageId, notificationId }).where(eq(documentClarificationRequests.id, requestId));
+        await db.insert(documentClarificationEvents).values({ clarificationRequestId: requestId, candidateId: candidateRecord.id, actorRole: "advisor", eventType: "request_created", message: requestMessage, candidateMessageId, actorAdminId: admin.id });
+      }
+      let emailSent = false;
+      try {
+        await sendGenericEmail({ to: sourceRecord.email, subject: `Pièce demandée — Dossier ${String(sourceRecord.dossierNumber ?? input.candidateId)}`, html: `<p>Bonjour ${esc(sourceRecord.fullName || "Candidat")},</p><p>${esc(requestMessage)}</p><p>Connectez-vous à votre espace 3M TRAVEL AGENCY pour déposer cette pièce.</p>` });
+        emailSent = true;
+      } catch (emailError) {
+        console.error("[Candidate360] Envoi demande de pièce impossible", emailError);
+      }
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_clarification_requested", entityType: "document_clarification", entityId: String(requestId || documentLabel), description: `Demande de pièce « ${documentLabel} » créée${emailSent ? " et envoyée par e-mail" : ""}.` });
+      return { success: true, requestId: requestId || null, emailSent, documentLabel };
+    }),
+
   sendCandidate360DocumentReminder: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1) }))
     .mutation(async ({ input }) => {

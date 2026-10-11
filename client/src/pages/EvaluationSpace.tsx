@@ -49,6 +49,7 @@ import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
 import ClientDossierStepAlert from "@/components/ClientDossierStepAlert";
+import ClientUploadedDocumentsStatus from "@/components/ClientUploadedDocumentsStatus";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
@@ -1301,6 +1302,7 @@ export default function EvaluationSpace() {
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
               <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
+              <ClientUploadedDocumentsStatus documents={[...(candidateFiles ?? []), ...(agencyDocuments ?? [])] as any[]} />
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />
               {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetch()]); }} /></Card>}
               <CaseDocumentsPanel documents={agencyDepositedDocuments(caseTrackingData?.cases)} onDownload={(documentId) => { void downloadCaseDocument(documentId); }} />

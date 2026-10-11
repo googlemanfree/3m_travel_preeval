@@ -37,7 +37,15 @@ describe("contrat de suivi des clarifications", () => {
     expect(adminRouter).toContain("buildDocumentClarificationAnsweredNotification(clarification.documentLabel)");
     expect(adminRouter).toContain('type: clarificationNotification?.type ?? "admin_message"');
     expect(adminRouter).toContain('status: "answered"');
-    expect(adminRouter).toContain("answeredByAdminId: admin.id");
+    expect(adminRouter).toContain('answeredByAdminId: admin.id');
+  });
+
+  it("expose une demande admin de pièce précise protégée par session et reliée au dossier", () => {
+    expect(adminRouter).toContain("requestCandidate360Document: publicProcedure");
+    expect(adminRouter).toContain("requireValidAdminSession(input.sessionToken)");
+    expect(adminRouter).toContain("documentClarificationRequests");
+    expect(adminRouter).toContain('type: "document_clarification_requested"');
+    expect(adminRouter).toContain('actionType: "document_clarification_requested"');
   });
 
   it("signale la demande en attente sans la compter comme une pièce reçue ou validée", () => {

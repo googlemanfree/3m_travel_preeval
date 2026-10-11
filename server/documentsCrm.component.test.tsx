@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 (globalThis as any).React = React;
 
-const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[] }));
+const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[], request: [] as any[] }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -13,6 +13,9 @@ vi.mock("@/lib/trpc", () => ({
       setRequirementStatus: { useMutation: () => ({ mutate: (value: any) => calls.decide.push(value), isPending: false }) },
       depositDocument: { useMutation: () => ({ mutate: (value: any) => calls.deposit.push(value), isPending: false }) },
       addRequirement: { useMutation: () => ({ mutate: (value: any) => calls.add.push(value), isPending: false }) },
+    },
+    admin: {
+      requestCandidate360Document: { useMutation: () => ({ mutate: (value: any) => calls.request.push(value), isPending: false }) },
     },
   },
 }));
@@ -36,7 +39,7 @@ const documents = [
 ];
 
 afterEach(cleanup);
-beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; });
+beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; calls.request.length = 0; });
 
 describe("logique de la vue CRM", () => {
   it("les statuts sont lisibles en français et un statut inconnu vaut « à fournir »", () => {
@@ -188,6 +191,18 @@ describe("vue CRM des pièces", () => {
     fireEvent.keyDown(dialog, { key: "Escape" });
     fireEvent.click(screen.getByRole("button", { name: "Relancer (3)" }));
     expect(props.onRemind).toHaveBeenCalledTimes(1);
+  });
+
+  it("demande une pièce précise depuis la vue globale et envoie les détails au serveur", async () => {
+    renderCrm();
+    fireEvent.click(screen.getByRole("button", { name: "Demander une pièce" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Envoyer la demande" }));
+    expect(within(dialog).getByRole("alert").textContent).toMatch(/nom de la pièce/);
+    fireEvent.change(within(dialog).getByLabelText("Pièce demandée"), { target: { value: "Attestation d’emploi signée" } });
+    fireEvent.change(within(dialog).getByLabelText("Consigne au candidat"), { target: { value: "Joindre une version datée et lisible." } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Envoyer la demande" }));
+    expect(calls.request).toEqual([{ sessionToken: "tok", candidateId: "online-12", documentLabel: "Attestation d’emploi signée", details: "Joindre une version datée et lisible." }]);
   });
 
   it("aucune relance proposée quand tout est en règle, et message clair sans pièce", () => {

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { CheckCircle2, Download, FileUp, Plus, RotateCcw, Send, XCircle } from "lucide-react";
+import { CheckCircle2, Download, FileUp, MessageSquarePlus, Plus, RotateCcw, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,7 @@ type Props = {
   reminding?: boolean;
 };
 
-type Dialogs = { kind: "deposit" | "reject" | "add" | null; requirement?: CrmRequirement };
+type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirement?: CrmRequirement };
 
 /** Pièces du dossier : une ligne par pièce, une action principale par état. */
 export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding }: Props) {
@@ -68,6 +68,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
   const decide = trpc.adminCaseDesk.setRequirementStatus.useMutation({ onSuccess: (_result, variables) => { const status = (variables as { status?: string } | undefined)?.status; done(status === "approved" ? "Pièce validée : le candidat est prévenu." : status === "rejected" ? "Pièce à corriger : le candidat est prévenu." : status === "waived" ? "Pièce marquée non requise." : "Pièce rouverte."); }, onError: failed });
   const deposit = trpc.adminCaseDesk.depositDocument.useMutation({ onSuccess: (_result, variables) => done((variables as { validate?: boolean } | undefined)?.validate ? "Document déposé et validé : visible dans l’espace du candidat." : "Document déposé : visible dans l’espace du candidat, à vérifier."), onError: failed });
   const add = trpc.adminCaseDesk.addRequirement.useMutation({ onSuccess: () => done("Pièce ajoutée à la checklist."), onError: failed });
+  const request = trpc.admin.requestCandidate360Document.useMutation({ onSuccess: () => done("Demande de pièce envoyée au candidat."), onError: failed });
 
   const act = (action: RowAction, requirement: CrmRequirement) => {
     if (action === "deposit") setDialog({ kind: "deposit", requirement });
@@ -91,6 +92,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "request" })}><MessageSquarePlus className="mr-1.5 h-4 w-4" aria-hidden="true" />Demander une pièce</Button>
           <Button type="button" size="sm" onClick={() => setDialog({ kind: "add" })}><Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />Ajouter une pièce</Button>
         </div>
       </header>
@@ -162,6 +164,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
       }} />
       <RejectDialog open={dialog.kind === "reject"} requirement={dialog.requirement} busy={decide.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(comment) => dialog.requirement && decide.mutate({ sessionToken, candidateId, requirementId: dialog.requirement.id, status: "rejected", comment })} />
       <AddDialog open={dialog.kind === "add"} busy={add.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(values) => add.mutate({ sessionToken, candidateId, documentType: values.documentType, comment: values.comment || undefined, dueAt: values.dueAt || undefined })} />
+      <RequestDialog open={dialog.kind === "request"} busy={request.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(values) => request.mutate({ sessionToken, candidateId, documentLabel: values.documentLabel, details: values.details || undefined })} />
     </section>
   );
 }
@@ -228,6 +231,26 @@ function AddDialog({ open, busy, onClose, onSubmit }: { open: boolean; busy: boo
           {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
         </div>
         <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Annuler</Button><Button type="button" disabled={busy} onClick={() => { if (documentType.trim().length < 2) return setError("Indiquez la pièce à demander."); setError(null); onSubmit({ documentType: documentType.trim(), comment: comment.trim(), dueAt }); }}>{busy ? "Ajout…" : "Ajouter"}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RequestDialog({ open, busy, onClose, onSubmit }: { open: boolean; busy: boolean; onClose: () => void; onSubmit: (values: { documentLabel: string; details: string }) => void }) {
+  const [documentLabel, setDocumentLabel] = useState("");
+  const [details, setDetails] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const reset = () => { setDocumentLabel(""); setDetails(""); setError(null); };
+  return (
+    <Dialog open={open} onOpenChange={(next) => { if (!next) { reset(); onClose(); } }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Demander une pièce précise</DialogTitle><DialogDescription>La demande sera enregistrée dans le dossier, affichée dans l’espace client et transmise au candidat par notification et e-mail.</DialogDescription></DialogHeader>
+        <div className="space-y-3">
+          <div><Label htmlFor="request-document-label">Pièce demandée</Label><Input id="request-document-label" value={documentLabel} onChange={(event) => setDocumentLabel(event.target.value)} maxLength={180} placeholder="Ex. Attestation d’emploi signée" className="mt-1" /></div>
+          <div><Label htmlFor="request-document-details">Consigne au candidat</Label><Textarea id="request-document-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={1500} rows={4} className="mt-1" placeholder="Précisez le format, la période ou les éléments à vérifier." /></div>
+          {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
+        </div>
+        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Annuler</Button><Button type="button" disabled={busy} onClick={() => { if (documentLabel.trim().length < 2) return setError("Indiquez le nom de la pièce demandée."); setError(null); onSubmit({ documentLabel: documentLabel.trim(), details: details.trim() }); }}>{busy ? "Envoi…" : "Envoyer la demande"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
