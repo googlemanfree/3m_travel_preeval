@@ -6,6 +6,7 @@ import {
   buildAgencyDocumentsPublishedWhatsApp,
   buildClientAccessLinkWhatsApp,
   buildAgreementSignatureReminderWhatsApp,
+  buildAgreementSignedWhatsApp,
   buildDossierCreatedWhatsApp,
   buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
@@ -135,5 +136,16 @@ export async function notifyAgreementSignatureReminderWhatsApp(input: {
   return safeSend(
     input.phone,
     buildAgreementSignatureReminderWhatsApp({ candidateName: input.candidateName, dossierNumber: input.dossierNumber }),
+  );
+}
+
+export async function notifyAgreementSignedWhatsApp(input: {
+  phone?: string | null;
+  candidateName: string;
+  dossierNumber: string;
+}): Promise<WhatsAppNotifyResult> {
+  return safeSend(
+    input.phone,
+    buildAgreementSignedWhatsApp({ candidateName: input.candidateName, dossierNumber: input.dossierNumber }),
   );
 }
