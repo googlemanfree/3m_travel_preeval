@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { BedDouble, CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, ShieldCheck, WifiOff } from "lucide-react";
+import { BedDouble, Bell, CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, ShieldCheck, WifiOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +12,16 @@ import { toast } from "sonner";
 import { resetPwaCache } from "@/lib/pwaClient";
 
 const quickLinks = [
-  { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
-  { href: "/flights#3m-booking", label: "Mes séjours", description: "Suivre une demande d’hôtel", icon: BedDouble, tone: "bg-orange-50 text-orange-700" },
-  { href: "/mon-espace?section=dossier", label: "Mon dossier", description: "Suivre votre dossier actif et ses étapes", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
-  { href: "/mon-espace?section=documents", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
-  { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700" },
-  { href: "/evisas", label: "Destinations", description: "Explorer les procédures e-Visa", icon: Plane, tone: "bg-amber-50 text-amber-700" },
-  { href: "/mon-espace?section=messages", label: "Messagerie", description: "Échanger avec votre conseiller", icon: MessageCircle, tone: "bg-sky-50 text-sky-700" },
-  { href: "/mon-espace?section=profile", label: "Mon profil", description: "Mettre à jour vos informations", icon: UserRound, tone: "bg-violet-50 text-violet-700" },
-  { href: "/assistance-acces", label: "Assistance accès", description: "Signaler une difficulté d’accès", icon: ShieldCheck, tone: "bg-slate-100 text-slate-700" },
+  { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700", badgeKey: null },
+  { href: "/flights#3m-booking", label: "Mes séjours", description: "Suivre une demande d’hôtel", icon: BedDouble, tone: "bg-orange-50 text-orange-700", badgeKey: null },
+  { href: "/mon-espace?section=dossier", label: "Mon dossier", description: "Suivre votre dossier actif et ses étapes", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700", badgeKey: null },
+  { href: "/mon-espace?section=documents", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700", badgeKey: "documents" as const },
+  { href: "/mon-espace?section=notifications", label: "Notifications", description: "Avis durable de l’agence (reçus, pièces, étapes)", icon: Bell, tone: "bg-amber-50 text-amber-800", badgeKey: "notifications" as const },
+  { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700", badgeKey: null },
+  { href: "/evisas", label: "Destinations", description: "Explorer les procédures e-Visa", icon: Plane, tone: "bg-amber-50 text-amber-700", badgeKey: null },
+  { href: "/mon-espace?section=messages", label: "Messagerie", description: "Échanger avec votre conseiller", icon: MessageCircle, tone: "bg-sky-50 text-sky-700", badgeKey: "messages" as const },
+  { href: "/mon-espace?section=profile", label: "Mon profil", description: "Mettre à jour vos informations", icon: UserRound, tone: "bg-violet-50 text-violet-700", badgeKey: "profile" as const },
+  { href: "/assistance-acces", label: "Assistance accès", description: "Signaler une difficulté d’accès", icon: ShieldCheck, tone: "bg-slate-100 text-slate-700", badgeKey: null },
 ] as const;
 
 const statusLabels: Record<string, string> = {
@@ -113,6 +114,8 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
   const [, setLocation] = useLocation();
   const { candidate } = useCandidateAuth();
   const dossierQuery = trpc.candidate.getClientDashboardSummary.useQuery(undefined, { enabled: Boolean(candidate) });
+  const caseTrackingQuery = trpc.caseTracking.getMyCases.useQuery(undefined, { enabled: Boolean(candidate), refetchInterval: 60_000 });
+  const clarificationsQuery = trpc.candidate.getDocumentClarifications.useQuery(undefined, { enabled: Boolean(candidate), refetchInterval: 60_000 });
   const requestsQuery = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled: Boolean(candidate) });
   const hotelRequestsQuery = trpc.tourism.myRequests.useQuery(undefined, { enabled: Boolean(candidate) });
   const loyaltyQuery = trpc.flightBooking.getMyLoyalty.useQuery(undefined, { enabled: Boolean(candidate) });
@@ -241,11 +244,25 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
   const legacyEvaluationNumber = dossierPayload?.activeDossier?.dossierNumber && dossierPayload.activeDossier.dossierNumber !== dossierNumber
     ? dossierPayload.activeDossier.dossierNumber
     : null;
+  const unreadMessages = Number(dossierPayload?.stats?.unreadMessages) || 0;
+  const unreadNotifications = Number(caseTrackingQuery.data?.unreadNotifications) || 0;
+  const clarificationUploadCount = (clarificationsQuery.data ?? []).filter((item) => item.canUpload).length;
+  const passportPhotoRequired = Boolean(
+    (dossierPayload as { passportPhotoRequired?: boolean } | undefined)?.passportPhotoRequired
+    || (dossierPayload?.candidate as { passportPhotoRequired?: boolean } | undefined)?.passportPhotoRequired,
+  );
+  const navBadges = {
+    documents: clarificationUploadCount,
+    notifications: unreadNotifications,
+    messages: unreadMessages,
+    profile: passportPhotoRequired ? 1 : 0,
+  } as const;
   const visibleQuickLinks = quickLinks.filter((link) => {
     // En mode compact (sur /mon-espace), la barre d'onglets juste en dessous couvre déjà
     // dossier/documents/messagerie/profil : on évite de dupliquer ces raccourcis ici.
+    // On conserve Notifications (absente des onglets historiques) pour le signal d’action.
     if (compact && ["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return false;
-    if (["Mon dossier", "Mes documents", "Messagerie", "Mon profil"].includes(link.label)) return true;
+    if (["Mon dossier", "Mes documents", "Notifications", "Messagerie", "Mon profil"].includes(link.label)) return true;
     if (["Réserver un vol", "Vols favoris"].includes(link.label)) return Boolean(requestsQuery.data?.length);
     if (link.label === "Mes séjours") return Boolean(hotelRequestsQuery.data?.length);
     return false;
@@ -303,13 +320,21 @@ export default function ClientSpaceNavigation({ compact = false }: { compact?: b
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {visibleQuickLinks.map(({ href, label, description, icon: Icon, tone }) => (
-            <a key={href} href={href} className="group min-h-36 rounded-2xl border border-slate-200/80 bg-white/80 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md">
-              <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
-              <span className="mt-3 block text-sm font-black text-slate-950">{label}</span>
-              <span className="mt-1 block text-sm leading-6 text-slate-600">{description}</span>
-            </a>
-          ))}
+          {visibleQuickLinks.map(({ href, label, description, icon: Icon, tone, badgeKey }) => {
+            const badge = badgeKey ? navBadges[badgeKey] : 0;
+            return (
+              <a key={href} href={href} className="group relative min-h-36 rounded-2xl border border-slate-200/80 bg-white/80 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md" data-testid={`client-nav-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+                <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
+                {badge > 0 ? (
+                  <span className="absolute right-3 top-3 inline-flex min-w-[1.35rem] items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-950" data-testid={`client-nav-badge-${badgeKey}`}>
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
+                <span className="mt-3 block text-sm font-black text-slate-950">{label}</span>
+                <span className="mt-1 block text-sm leading-6 text-slate-600">{description}</span>
+              </a>
+            );
+          })}
         </div>
       </Card>
       </PremiumReveal>

@@ -6,7 +6,7 @@
 
 export type NextStepAction =
   | { kind: "evaluation" }
-  | { kind: "section"; section: "dossier" | "documents" | "signatures" | "notifications" | "messages" | "overview" }
+  | { kind: "section"; section: "dossier" | "documents" | "signatures" | "notifications" | "messages" | "overview" | "profile" }
   | { kind: "anchor"; elementId: string }
   | { kind: "link"; href: string }
   | { kind: "none" };
@@ -39,6 +39,13 @@ export type NextStepInput = {
    * lisait « aucune action attendue » alors que sa checklist était vide.
    */
   checklist?: { total: number; missing: number; replace: number; firstMissingLabel?: string | null; firstReplaceLabel?: string | null };
+  /**
+   * Clarifications déjà répondues par l’agence : le candidat doit déposer la pièce.
+   * Ne compte pas les demandes encore en attente de réponse conseiller.
+   */
+  clarificationUploads?: { count: number; firstLabel?: string | null };
+  /** Photo type passeport exigée pour un dossier visa travail. */
+  passportPhotoRequired?: boolean;
   /** Notifications durables non lues (boîte /mon-espace). */
   unreadNotifications?: number;
   /** Messages conseiller non lus. */
@@ -46,6 +53,14 @@ export type NextStepInput = {
   /** Lien WhatsApp conseiller (affiché quand il n’y a plus d’action bloquante). */
   advisorWhatsAppUrl?: string | null;
 };
+
+/** Clarifications « réponse reçue → dépôt attendu » (contrat getDocumentClarifications). */
+export function countClarificationUploads(clarifications: unknown): { count: number; firstLabel: string | null } {
+  const rows = list(clarifications).filter((item) => item.canUpload === true || (item.status === "answered" && !item.hasSubmittedDocument && !item.uploadedCandidateFileId));
+  const first = rows[0];
+  const label = typeof first?.documentLabel === "string" ? first.documentLabel.trim() : null;
+  return { count: rows.length, firstLabel: label || null };
+}
 
 export const EVALUATION_ANCHOR_ID = "evaluation-status";
 
@@ -90,6 +105,21 @@ export function computeNextStep(input: NextStepInput): NextStep {
   if (checklist && checklist.replace > 0) {
     return { id: "checklist-replace", tone: "action", eyebrow: "Une pièce doit être corrigée", title: `Corrigez ${checklist.replace} ${plural(checklist.replace, "pièce refusée", "pièces refusées")}`, description: `${checklist.firstReplaceLabel ? `Commencez par : ${checklist.firstReplaceLabel}. ` : ""}Envoyez une nouvelle version en un geste depuis votre checklist.`, actionLabel: "Envoyer la nouvelle version", action: { kind: "section", section: "documents" } };
   }
+
+  const clarificationCount = Math.max(0, Number(input.clarificationUploads?.count) || 0);
+  if (clarificationCount > 0) {
+    const label = input.clarificationUploads?.firstLabel?.trim() || null;
+    return {
+      id: "clarification-upload",
+      tone: "action",
+      eyebrow: "Réponse de l’agence reçue",
+      title: `Déposez ${clarificationCount} ${plural(clarificationCount, "pièce après clarification", "pièces après clarification")}`,
+      description: `${label ? `Commencez par : ${label}. ` : ""}Votre conseiller a précisé ce qui est attendu — envoyez la pièce depuis le centre documentaire.`,
+      actionLabel: "Déposer la pièce",
+      action: { kind: "section", section: "documents" },
+    };
+  }
+
   const pending = requirements.filter((item) => item.status === "pending").length;
   if (checklist && pending === 0 && checklist.missing > 0) {
     const received = Math.max(0, checklist.total - checklist.missing);
@@ -97,6 +127,18 @@ export function computeNextStep(input: NextStepInput): NextStep {
   }
   if (pending > 0) {
     return { id: "documents-pending", tone: "action", eyebrow: "Documents demandés", title: `Déposez ${pending} ${plural(pending, "pièce", "pièces")}`, description: "Chaque pièce déposée est vérifiée par un conseiller ; vous êtes averti dès qu’elle est validée ou à corriger.", actionLabel: "Ouvrir mes documents", action: { kind: "section", section: "documents" } };
+  }
+
+  if (input.passportPhotoRequired) {
+    return {
+      id: "passport-photo",
+      tone: "action",
+      eyebrow: "Photo obligatoire",
+      title: "Déposez votre photo type passeport",
+      description: "Dossier visa travail actif : cette photo remplace votre portrait pour les employeurs et agences de placement.",
+      actionLabel: "Déposer ma photo",
+      action: { kind: "section", section: "profile" },
+    };
   }
 
   const unreadNotifications = Math.max(0, Number(input.unreadNotifications) || 0);

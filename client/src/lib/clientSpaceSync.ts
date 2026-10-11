@@ -29,6 +29,8 @@ export type ClientSpaceSnapshot = {
   evisa?: Record<string, Tracked & { issued: boolean }>;
   /** Toutes les notifications connues : un identifiant déjà vu (même remis « non lu » par le candidat) n'est jamais réannoncé. */
   notifications?: Record<string, { title: string; body: string; caseId: string | null; unread: boolean }>;
+  /** Nombre de pièces déposées par l’agence (uploadedByRole ≠ candidate). */
+  agencyDocumentCount?: number;
 };
 
 export type ClientSpaceChange = { id: string; tone: "info" | "success" | "warning"; title: string; description?: string };
@@ -82,6 +84,14 @@ export function buildClientSpaceSnapshot(input: {
     }
     snapshot.cases = cases;
     snapshot.requirements = requirements;
+    let agencyDocumentCount = 0;
+    for (const item of asArray(source.cases)) {
+      for (const document of asArray(item.documents)) {
+        const role = text(document.uploadedByRole, 40);
+        if (role && role !== "candidate") agencyDocumentCount += 1;
+      }
+    }
+    snapshot.agencyDocumentCount = agencyDocumentCount;
     const notifications: NonNullable<ClientSpaceSnapshot["notifications"]> = {};
     for (const item of asArray(source.notifications)) {
       const id = idOf(item.id);
@@ -163,6 +173,20 @@ export function diffClientSpace(previous: ClientSpaceSnapshot | null, next: Clie
       if (current.status === "approved") changes.push({ id: `requirement-${id}`, tone: "success", title: `Pièce validée : ${current.label}` });
       else if (current.status === "rejected") changes.push({ id: `requirement-${id}`, tone: "warning", title: `Pièce à corriger : ${current.label}`, description: "Déposez une nouvelle version depuis votre checklist." });
     }
+  }
+
+  if (
+    typeof previous.agencyDocumentCount === "number"
+    && typeof next.agencyDocumentCount === "number"
+    && next.agencyDocumentCount > previous.agencyDocumentCount
+  ) {
+    const added = next.agencyDocumentCount - previous.agencyDocumentCount;
+    changes.push({
+      id: `agency-docs-${next.agencyDocumentCount}`,
+      tone: "success",
+      title: added === 1 ? "Un document a été déposé en agence" : `${added} documents ont été déposés en agence`,
+      description: "Ils sont visibles dans votre centre documentaire, en lecture seule.",
+    });
   }
 
   if (previous.insurance && next.insurance) {
