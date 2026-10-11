@@ -647,6 +647,13 @@ export const candidateRouter = router({
       };
     }
     const c = ctx.candidate;
+    const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
+    const passportPhotoRequired = requiresPassportPhotoUpload({
+      dossierStatus: c.dossierStatus,
+      hasAgencyDossier: c.dossierStatus !== "nouveau",
+      visaType: c.visaType,
+      avatarVerificationReason: c.avatarVerificationReason,
+    });
     return {
       id: c.id,
       fullName: c.fullName,
@@ -669,6 +676,8 @@ export const candidateRouter = router({
       avatarVerificationStatus: c.avatarVerificationStatus,
       avatarVerificationMethod: c.avatarVerificationMethod,
       avatarVerifiedAt: c.avatarVerifiedAt,
+      avatarVerificationReason: c.avatarVerificationReason,
+      passportPhotoRequired,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -874,19 +883,39 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const proof = verifyPortraitProof(input.portraitVerificationToken, ctx.candidate.email, input.avatarUrl);
+      const {
+        PASSPORT_PHOTO_DEPOSITED_REASON,
+        isPassportPhotoRequestReason,
+        requiresPassportPhotoUpload,
+      } = await import("../../shared/passportPhotoRequirement");
+      const replacesPassportRequest = isPassportPhotoRequestReason(ctx.candidate.avatarVerificationReason)
+        || requiresPassportPhotoUpload({
+          dossierStatus: ctx.candidate.dossierStatus,
+          hasAgencyDossier: ctx.candidate.dossierStatus !== "nouveau",
+          visaType: ctx.candidate.visaType,
+          avatarVerificationReason: ctx.candidate.avatarVerificationReason,
+        });
 
       await db.update(candidates)
         .set({
           avatarUrl: input.avatarUrl,
           avatarVerificationStatus: "verified",
           avatarVerificationMethod: proof.captureMethod,
-          avatarVerificationReason: "Portrait humain vérifié avant enregistrement.",
+          // Remplace automatiquement la photo de profil pour les dossiers actifs / demandes passeport.
+          avatarVerificationReason: replacesPassportRequest
+            ? PASSPORT_PHOTO_DEPOSITED_REASON
+            : "Portrait humain vérifié avant enregistrement.",
           avatarFaceCount: 1,
           avatarVerifiedAt: new Date(),
         })
         .where(eq(candidates.id, ctx.candidate.id));
 
-      return { success: true, avatarUrl: input.avatarUrl, avatarVerificationStatus: "verified" as const };
+      return {
+        success: true,
+        avatarUrl: input.avatarUrl,
+        avatarVerificationStatus: "verified" as const,
+        passportPhotoDeposited: replacesPassportRequest,
+      };
     }),
 
   // ── Enregistrer un document après upload S3 ───────────────────────────────
@@ -2661,9 +2690,40 @@ export const candidateRouter = router({
     }));
 
     const profileCompletion = computeProfileCompletion(candidate);
+    const visaForPassport = activeAgencyDossier?.visaType || activeApp?.visaType || candidate.visaType;
+    try {
+      const { ensurePassportPhotoRequirementForActiveWorkDossier } = await import("../passportPhotoRequirementService");
+      await ensurePassportPhotoRequirementForActiveWorkDossier(db, {
+        id: candidate.id,
+        email: candidate.email,
+        fullName: candidate.fullName,
+        dossierStatus: candidate.dossierStatus,
+        visaType: visaForPassport,
+        avatarVerificationReason: candidate.avatarVerificationReason,
+      }, {
+        hasAgencyDossier: Boolean(activeAgencyDossier),
+        projectType: clientEvaluations[0]?.projectType ?? null,
+      });
+    } catch (error) {
+      console.error("[getClientDashboardSummary] passport photo ensure failed", error);
+    }
+    const refreshedReason = (await db.select({
+      avatarVerificationReason: candidates.avatarVerificationReason,
+      avatarVerificationStatus: candidates.avatarVerificationStatus,
+      avatarUrl: candidates.avatarUrl,
+    }).from(candidates).where(eq(candidates.id, candidate.id)).limit(1))[0];
+    const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
+    const passportPhotoRequired = requiresPassportPhotoUpload({
+      dossierStatus: candidate.dossierStatus,
+      hasAgencyDossier: Boolean(activeAgencyDossier) || candidate.dossierStatus !== "nouveau",
+      visaType: visaForPassport,
+      projectType: clientEvaluations[0]?.projectType ?? null,
+      avatarVerificationReason: refreshedReason?.avatarVerificationReason ?? candidate.avatarVerificationReason,
+    });
 
     return {
       profileCompletion,
+      passportPhotoRequired,
       candidate: {
         id: candidate.id,
         fullName: candidate.fullName,
@@ -2671,14 +2731,17 @@ export const candidateRouter = router({
         phone: candidate.phone,
         destination: candidate.destination,
         preferredDestinations: candidate.preferredDestinations ?? null,
-        avatarUrl: (candidate as any).avatarUrl || null,
-        avatarVerificationStatus: candidate.avatarVerificationStatus,
+        avatarUrl: refreshedReason?.avatarUrl || (candidate as any).avatarUrl || null,
+        avatarVerificationStatus: refreshedReason?.avatarVerificationStatus ?? candidate.avatarVerificationStatus,
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
+        avatarVerificationReason: refreshedReason?.avatarVerificationReason ?? candidate.avatarVerificationReason,
+        passportPhotoRequired,
         passportNumber: (candidate as any).passportNumber || null,
         dossierNumber: dashboardDossierNumber,
         reference: clientReference,
         dossierStatus: activeApp?.dossierStatus || (candidate as any).dossierStatus || activeAgencyDossier?.status || "evaluation",
+        visaType: visaForPassport ?? candidate.visaType ?? null,
         evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
         evaluationDeclaredAt: candidate.evaluationDeclaredAt,
         evaluationReviewedAt: candidate.evaluationReviewedAt,

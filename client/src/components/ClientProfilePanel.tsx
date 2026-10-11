@@ -151,9 +151,23 @@ export default function ClientProfilePanel() {
 
   const savedDestinations = parseFavoriteDestinations(profileQuery.data.preferredDestinations);
   const primaryDestinationOption = savedDestinations[0] ? getCandidateDestinationOption(savedDestinations[0]) : undefined;
+  const passportPhotoRequired = Boolean((profileQuery.data as { passportPhotoRequired?: boolean }).passportPhotoRequired);
 
   return (
     <Card className="premium-surface border-blue-100/80 p-5 sm:p-6" aria-labelledby="client-profile-title">
+      {passportPhotoRequired && (
+        <div
+          className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="status"
+          data-testid="passport-photo-required-banner"
+        >
+          <p className="font-bold">Photo type passeport obligatoire</p>
+          <p className="mt-1 leading-6">
+            Votre dossier visa travail est actif. Déposez une photo type passeport (fond uni clair, visage de face) :
+            elle remplace automatiquement votre photo de profil, visible pour les employeurs et agences de placement.
+          </p>
+        </div>
+      )}
       <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
         <CandidateAvatar
           fullName={candidate?.fullName || form.fullName || "Candidat"}
@@ -161,11 +175,27 @@ export default function ClientProfilePanel() {
           email={profileQuery.data.email}
           size="lg"
           editable
+          passportPhotoRequired={passportPhotoRequired}
+          onUpdated={async () => {
+            await Promise.all([
+              utils.candidate.getProfile.invalidate(),
+              utils.candidate.getClientDashboardSummary.invalidate(),
+            ]);
+            toast.success(
+              passportPhotoRequired
+                ? "Photo type passeport enregistrée — elle remplace votre photo de profil."
+                : "Photo de profil mise à jour.",
+            );
+          }}
         />
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>
           <h2 id="client-profile-title" className="premium-section-title mt-1 flex items-center gap-2 text-lg sm:text-xl"><UserRound className="h-5 w-5 text-blue-700" /> Mon profil</h2>
-          <p className="premium-copy mt-1 text-sm">Ces informations servent à préparer et suivre votre dossier.</p>
+          <p className="premium-copy mt-1 text-sm">
+            {passportPhotoRequired
+              ? "Déposez d’abord votre photo type passeport, puis mettez à jour vos informations si besoin."
+              : "Ces informations servent à préparer et suivre votre dossier."}
+          </p>
           <p className="mt-2 text-sm font-semibold text-slate-600">E-mail de connexion : {profileQuery.data.email}</p>
         </div>
       </div>

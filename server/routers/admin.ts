@@ -27,11 +27,16 @@ import { destinationLabelForStaff, parsePreferredDestinations } from "../../shar
 import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
 import {
   collapseEvalAgencyShellRows,
-  isEvalAgencyShell,
   parseEvalAgencyShellId,
   canonicalAgencyCandidateId,
   canonicalAgencyFolderCode,
 } from "../../shared/evalAgencyShell";
+import {
+  ensureAgencyActiveReference,
+  purgeAllOrphanEvalAgencyShells,
+  purgeEvalAgencyShell,
+  setAdminActiveDossierReference,
+} from "../services/canonicalizeActiveDossier";
 import { buildCandidateCockpit } from "../../shared/candidateCockpit";
 import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
 import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
@@ -2742,11 +2747,22 @@ export const adminRouter = router({
           let redirectToCanonicalAgencyId: string | null = null;
           if (evalShellId != null) {
             const [linkedAgency] = await db
-              .select({ id: agencyDossiers.id })
+              .select({ id: agencyDossiers.id, email: agencyDossiers.email })
               .from(agencyDossiers)
               .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
               .limit(1);
-            if (linkedAgency) redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+            if (linkedAgency) {
+              try {
+                await purgeEvalAgencyShell(db, {
+                  agencyDossierId: linkedAgency.id,
+                  candidateEmail: linkedAgency.email,
+                  adminEmail: "system",
+                });
+              } catch (error) {
+                console.error("[getCandidateDetails] purge EVAL shell failed", error);
+              }
+              redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+            }
           }
 
           const paymentSnapshot = {
@@ -3959,13 +3975,37 @@ export const adminRouter = router({
           : null,
       );
       let redirectToCanonicalAgencyId: string | null = null;
+      let evalShellPurged = false;
       if (evalShellId != null) {
         const [linkedAgency] = await db
-          .select({ id: agencyDossiers.id })
+          .select({ id: agencyDossiers.id, email: agencyDossiers.email })
           .from(agencyDossiers)
           .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
           .limit(1);
-        if (linkedAgency) redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+        if (linkedAgency) {
+          // Auto : supprimer le miroir EVAL et verrouiller la référence 3M-AGN.
+          try {
+            const purged = await purgeEvalAgencyShell(db, {
+              agencyDossierId: linkedAgency.id,
+              candidateEmail: linkedAgency.email,
+              adminEmail: admin.email,
+            });
+            evalShellPurged = purged.purgedApplicationIds.length > 0;
+          } catch (error) {
+            console.error("[getCandidate360] canonicalize EVAL shell failed", error);
+          }
+          redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+        }
+      } else if (reference.source === "agency") {
+        try {
+          await ensureAgencyActiveReference(db, {
+            agencyDossierId: reference.id,
+            email: email,
+            adminEmail: admin.email,
+          });
+        } catch (error) {
+          console.error("[getCandidate360] ensure agency active reference failed", error);
+        }
       }
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
@@ -4128,8 +4168,11 @@ export const adminRouter = router({
         siblingProcedures: siblingRows,
         dualOpportunityHandoff,
         redirectToCanonicalAgencyId,
-        evalShellFolderCode: evalShellId != null ? `EVAL-AG-${evalShellId}` : null,
-        canonicalFolderCode: evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null,
+        evalShellPurged,
+        evalShellFolderCode: evalShellId != null && !evalShellPurged ? `EVAL-AG-${evalShellId}` : null,
+        canonicalFolderCode: reference.source === "agency"
+          ? canonicalAgencyFolderCode(reference.id)
+          : (evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null),
         placementSummary: candidateRecord ? await safeCollection((async () => {
           const profile = (await db.select({
             id: placementCandidateProfiles.id,
@@ -4172,6 +4215,144 @@ export const adminRouter = router({
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
+    }),
+
+  /**
+   * Normalise un dossier : référence active 3M-AGN + suppression du miroir EVAL-AG.
+   * Applicable à agency_N ou online_* (si EVAL-AG-{id}).
+   */
+  canonicalizeActiveDossier: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const agencyMatch = /^agency_(\d+)$/i.exec(input.candidateId.trim());
+      const onlineMatch = /^online_(\d+)$/i.exec(input.candidateId.trim());
+      let agencyDossierId: number | null = agencyMatch ? Number(agencyMatch[1]) : null;
+      let email: string | null = null;
+      if (onlineMatch) {
+        const [app] = await db
+          .select({ dossierNumber: applications.dossierNumber, email: applications.email })
+          .from(applications)
+          .where(and(eq(applications.id, Number(onlineMatch[1])), isNull(applications.deletedAt)))
+          .limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        agencyDossierId = parseEvalAgencyShellId(app.dossierNumber);
+        email = app.email;
+        if (agencyDossierId == null) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Ce dossier en ligne n’est pas un miroir EVAL-AG. Utilisez « Modifier la référence » pour un numéro 3M-…",
+          });
+        }
+      }
+      if (agencyDossierId == null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ouvrez un dossier agence 3M-AGN ou un miroir EVAL-AG." });
+      }
+      const [agency] = await db
+        .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+        .from(agencyDossiers)
+        .where(and(eq(agencyDossiers.id, agencyDossierId), isNull(agencyDossiers.deletedAt)))
+        .limit(1);
+      if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence 3M introuvable." });
+      const result = await purgeEvalAgencyShell(db, {
+        agencyDossierId: agency.id,
+        candidateEmail: email || agency.email,
+        adminEmail: admin.email,
+      });
+      return {
+        success: true,
+        canonical: result.canonical,
+        purgedCount: result.purgedApplicationIds.length,
+        redirectToCandidateId: canonicalAgencyCandidateId(agency.id),
+        message: result.purgedApplicationIds.length
+          ? `Référence active ${result.canonical}. ${result.purgedApplicationIds.length} miroir(s) EVAL-AG placé(s) en corbeille.`
+          : `Référence active confirmée : ${result.canonical}.`,
+      };
+    }),
+
+  /** Purge globale des miroirs EVAL-AG encore visibles alors qu’un 3M-AGN existe. */
+  canonicalizeAllEvalAgencyShells: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      limit: z.number().int().min(1).max(500).default(200),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const result = await purgeAllOrphanEvalAgencyShells(db, { adminEmail: admin.email, limit: input.limit });
+      return {
+        success: true,
+        ...result,
+        message: `${result.purged} miroir(s) EVAL-AG normalisé(s) vers des dossiers 3M-AGN (${result.processed} examinés).`,
+      };
+    }),
+
+  /** L’admin corrige manuellement la référence active (doit rester un numéro 3M-…). */
+  updateActiveDossierReference: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+      newReference: z.string().trim().min(4).max(80),
+      renameOnlineApplication: z.boolean().default(false),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const parsed = /^(online|agency)_(\d+)$/i.exec(input.candidateId.trim());
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const source = parsed[1].toLowerCase();
+      const id = Number(parsed[2]);
+      let email = "";
+      let renameOnlineApplicationId: number | null = null;
+      if (source === "online") {
+        const [app] = await db
+          .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
+          .from(applications)
+          .where(and(eq(applications.id, id), isNull(applications.deletedAt)))
+          .limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        email = app.email;
+        if (input.renameOnlineApplication) renameOnlineApplicationId = app.id;
+        // Si c’est encore un EVAL-AG, purger d’abord vers le 3M lié.
+        const shellId = parseEvalAgencyShellId(app.dossierNumber);
+        if (shellId != null) {
+          await purgeEvalAgencyShell(db, { agencyDossierId: shellId, candidateEmail: email, adminEmail: admin.email });
+        }
+      } else {
+        const [agency] = await db
+          .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+          .from(agencyDossiers)
+          .where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt)))
+          .limit(1);
+        if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        email = agency.email;
+        await purgeEvalAgencyShell(db, { agencyDossierId: agency.id, candidateEmail: email, adminEmail: admin.email });
+      }
+      try {
+        const result = await setAdminActiveDossierReference(db, {
+          candidateEmail: email,
+          newReference: input.newReference,
+          adminEmail: admin.email,
+          renameOnlineApplicationId,
+        });
+        return {
+          success: true,
+          ...result,
+          message: `Référence active mise à jour : ${result.activeDossierNumber}${result.renamedApplication ? " (dossier en ligne renommé)" : ""}.`,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : "Impossible de modifier la référence.",
+        });
+      }
     }),
 
   archiveDuplicateRecord: publicProcedure

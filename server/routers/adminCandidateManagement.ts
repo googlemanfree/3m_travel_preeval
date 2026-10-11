@@ -31,6 +31,9 @@ import { buildProtocolOneRichText, buildProtocolTwoRichText } from "../../shared
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
 import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
+import { ensureAgencyActiveReference } from "../services/canonicalizeActiveDossier";
+import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
+import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -211,6 +214,11 @@ async function isOpeningPaymentValidated(db: NonNullable<Awaited<ReturnType<type
 async function resolveCandidateIdForAdmin(candidateId: string) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  const accountMatch = /^account_(\d+)$/.exec(candidateId.trim());
+  if (accountMatch) {
+    const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, Number(accountMatch[1]))).limit(1);
+    return candidate?.id ?? null;
+  }
   const reference = parseAdminCandidateReference(candidateId);
   if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
 
@@ -1390,9 +1398,50 @@ export const adminCandidateManagementRouter = router({
       } catch (err) {
         console.error("[activatePreDossierAccount] Nettoyage des doublons non effectué:", err);
       }
+      // Dossier activé → référence 3M-AGN obligatoire + suppression du miroir EVAL-AG.
+      try {
+        await ensureAgencyActiveReference(db, {
+          agencyDossierId,
+          email: candidate.email,
+          adminEmail: admin.email,
+        });
+        if (additionalAgencyDossierId) {
+          await ensureAgencyActiveReference(db, {
+            agencyDossierId: additionalAgencyDossierId,
+            email: candidate.email,
+            adminEmail: admin.email,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Canonicalisation 3M-AGN non effectuée:", err);
+      }
+      // Visa travail (tous pays) : photo type passeport obligatoire → remplace le profil.
+      let passportPhotoRequested = false;
+      let passportPhotoEmailSent = false;
+      if (
+        isWorkVisaForPassportPhoto(primaryProcedure.visaType)
+        || isWorkVisaForPassportPhoto(input.visaType)
+        || (additionalProcedure && isWorkVisaForPassportPhoto(additionalProcedure.visaType))
+      ) {
+        try {
+          const passportResult = await flagPassportPhotoRequirement(db, {
+            candidateId: candidate.id,
+            email: candidate.email,
+            fullName: candidate.fullName,
+            currentReason: candidate.avatarVerificationReason,
+            sendEmail: true,
+          });
+          passportPhotoRequested = passportResult.flagged;
+          passportPhotoEmailSent = passportResult.emailSent;
+        } catch (err) {
+          console.error("[activatePreDossierAccount] Exigence photo passeport non enregistrée:", err);
+        }
+      }
       return {
         success: true,
         emailSent,
+        passportPhotoRequested,
+        passportPhotoEmailSent,
         linkedExistingDossier,
         agencyDossierId,
         dossierReference,
@@ -1447,29 +1496,84 @@ export const adminCandidateManagementRouter = router({
 
   reviewPortrait: publicProcedure
     .input(z.object({
-      candidateId: z.string().regex(/^(online|agency)_\d+$/),
-      decision: z.enum(["approve", "reject", "request_new"]),
-      reason: z.string().trim().max(500).optional(),
+      sessionToken: z.string().min(1).max(512).optional(),
+      candidateId: z.string().min(1).max(80),
+      decision: z.enum(["approve", "reject", "request_new", "request_passport"]),
+      reason: z.string().trim().max(1000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        if (!input.sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte candidat lié à ce dossier." });
-      const [candidate] = await db.select({ id: candidates.id, avatarUrl: candidates.avatarUrl }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      const [candidate] = await db.select({
+        id: candidates.id,
+        avatarUrl: candidates.avatarUrl,
+        email: candidates.email,
+        fullName: candidates.fullName,
+      }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (input.decision === "approve" && !candidate.avatarUrl) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de valider un portrait absent." });
       }
-      const status = input.decision === "approve" ? "verified" : input.decision === "reject" ? "rejected" : "pending";
-      const reason = input.reason || (input.decision === "approve" ? `Portrait validé manuellement par ${admin.email}.` : "Merci de reprendre votre portrait selon les consignes.");
+      if (input.decision === "request_passport") {
+        const result = await flagPassportPhotoRequirement(db, {
+          candidateId,
+          email: candidate.email,
+          fullName: candidate.fullName,
+          currentReason: null,
+          sendEmail: true,
+          customReason: input.reason?.trim() || null,
+        });
+        return {
+          success: true,
+          status: "pending" as const,
+          candidateId,
+          emailSent: result.emailSent,
+          message: result.emailSent
+            ? "Demande de photo type passeport envoyée par e-mail et publiée dans l’espace client."
+            : "Demande publiée dans l’espace client ; l’e-mail n’a pas pu partir.",
+        };
+      }
+      if (input.decision === "request_new") {
+        const reason = input.reason?.trim() || "Merci de reprendre votre portrait selon les consignes (fond uni, visage de face).";
+        await db.update(candidates).set({
+          avatarVerificationStatus: "pending",
+          avatarVerificationReason: reason,
+          avatarVerifiedAt: null,
+        }).where(eq(candidates.id, candidateId));
+        return {
+          success: true,
+          status: "pending" as const,
+          candidateId,
+          emailSent: false,
+          message: "Demande de nouvelle photo enregistrée.",
+        };
+      }
+      const status = input.decision === "approve" ? "verified" : "rejected";
+      const reason = input.reason?.trim()
+        || (input.decision === "approve"
+          ? `Portrait validé manuellement par ${admin.email}.`
+          : "Merci de reprendre votre portrait selon les consignes.");
       await db.update(candidates).set({
         avatarVerificationStatus: status,
         avatarVerificationReason: reason,
         avatarVerifiedAt: input.decision === "approve" ? new Date() : null,
       }).where(eq(candidates.id, candidateId));
-      return { success: true, status, candidateId };
+      return {
+        success: true,
+        status,
+        candidateId,
+        emailSent: false,
+        message: input.decision === "approve" ? "Portrait validé." : "Décision enregistrée.",
+      };
     }),
 
   updateCandidate: publicProcedure

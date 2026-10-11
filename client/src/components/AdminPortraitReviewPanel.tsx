@@ -34,7 +34,10 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
   const reviewMutation = trpc.adminCandidateManagement.reviewPortrait.useMutation({
     onSuccess: async (result) => {
       await utils.adminCandidateManagement.list.invalidate();
-      toast.success(result.status === "verified" ? "Portrait validé manuellement." : "Demande de nouvelle photo enregistrée.");
+      toast.success(
+        (result as { message?: string }).message
+          || (result.status === "verified" ? "Portrait validé manuellement." : "Demande de nouvelle photo enregistrée."),
+      );
     },
     onError: (error) => toast.error(error.message || "Impossible de mettre à jour le portrait."),
   });
@@ -48,7 +51,7 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
     setReasons((current) => ({ ...current, [String(candidateId)]: value.slice(0, 500) }));
   };
 
-  const review = (candidate: PortraitCandidate, decision: "approve" | "reject" | "request_new") => {
+  const review = (candidate: PortraitCandidate, decision: "approve" | "reject" | "request_new" | "request_passport") => {
     reviewMutation.mutate({
       candidateId: String(candidate.id),
       decision,
@@ -114,6 +117,16 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => review(candidate, "request_new")} disabled={reviewMutation.isPending} className="border-amber-300 text-amber-800 hover:bg-amber-50">
                     <AlertTriangle className="mr-1.5 h-4 w-4" /> Demander une nouvelle photo
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => review(candidate, "request_passport")}
+                    disabled={reviewMutation.isPending}
+                    className="border-blue-300 text-blue-900 hover:bg-blue-50"
+                    data-testid="portrait-request-passport"
+                  >
+                    <ImageOff className="mr-1.5 h-4 w-4" /> Photo type passeport (+ e-mail)
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => review(candidate, "reject")} disabled={reviewMutation.isPending} className="text-red-700 hover:bg-red-50 hover:text-red-800">
                     <XCircle className="mr-1.5 h-4 w-4" /> Signaler suspect

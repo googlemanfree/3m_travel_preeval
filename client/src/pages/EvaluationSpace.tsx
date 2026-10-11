@@ -409,6 +409,10 @@ export default function EvaluationSpace() {
     && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() === "SUCCESS")
     && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() !== "SUCCESS");
   const portraitIsMissing = !cProfile.avatarUrl;
+  const passportPhotoRequired = Boolean(
+    (dashboardData as { passportPhotoRequired?: boolean }).passportPhotoRequired
+    || (rawCProfile as { passportPhotoRequired?: boolean }).passportPhotoRequired,
+  );
   // Pays précis déclarés à l'inscription (jusqu'à 3). Prioritaire sur cProfile.destination, qui ne
   // reste qu'une catégorie large ("europe", "golfe"...) insuffisante pour la checklist et le score.
   const preferredDestinationsList: string[] = (() => {
@@ -804,7 +808,35 @@ export default function EvaluationSpace() {
               <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
               <SelectableProfileCard />
               <PlacementConsentCard />
-              {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
+              {passportPhotoRequired ? (
+                <Card className="border-amber-300 bg-amber-50 p-5" data-testid="passport-photo-required-overview" role="region" aria-labelledby="passport-photo-required-title">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p id="passport-photo-required-title" className="font-bold text-amber-950">Photo type passeport obligatoire</p>
+                      <p className="mt-1 text-sm text-amber-900">
+                        Dossier visa travail actif : déposez une photo type passeport. Elle remplace automatiquement votre photo de profil pour les employeurs et agences de placement.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }}
+                      className="bg-amber-700 text-white hover:bg-amber-800"
+                      data-testid="passport-photo-go-profile"
+                    >
+                      Déposer ma photo
+                    </Button>
+                  </div>
+                </Card>
+              ) : portraitIsMissing ? (
+                <Card className="border-amber-200 bg-amber-50 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-amber-950">Complétez votre profil</p>
+                      <p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p>
+                    </div>
+                    <Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button>
+                  </div>
+                </Card>
+              ) : null}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               <PrivacyDataCard />
               {/* Widgets statistiques et progression */}

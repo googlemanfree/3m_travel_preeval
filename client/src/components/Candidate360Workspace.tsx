@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
-  FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
+  FolderKanban, History, ImagePlus, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck, Loader2,
   ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -177,6 +177,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [actionLocks, setActionLocks] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<Props["initialTab"]>(initialTab);
   const [lockedTaskId, setLockedTaskId] = useState<number | null>(null);
+  const [referenceDraft, setReferenceDraft] = useState(candidate.folderCode || "");
+  const [referenceEditorOpen, setReferenceEditorOpen] = useState(false);
   const lockAction = (key: string) => setActionLocks((current) => ({ ...current, [key]: true }));
   const unlockAction = (key: string) => setActionLocks((current) => ({ ...current, [key]: false }));
   const { data: managedEvisaOverrides } = trpc.evisaCatalogue.getPublicOverrides.useQuery();
@@ -191,6 +193,35 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS),
     },
   );
+  const canonicalizeDossierMutation = trpc.admin.canonicalizeActiveDossier.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      if (result.redirectToCandidateId && result.redirectToCandidateId !== candidate.id) {
+        onSelectSibling?.(result.redirectToCandidateId);
+      } else {
+        void refresh();
+        onRefresh?.();
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const updateReferenceMutation = trpc.admin.updateActiveDossierReference.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      setReferenceEditorOpen(false);
+      void refresh();
+      onRefresh?.();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const requestPassportPhotoMutation = trpc.adminCandidateManagement.reviewPortrait.useMutation({
+    onSuccess: (result) => {
+      toast.success((result as { message?: string }).message || "Demande de photo type passeport envoyée.");
+      void refresh();
+      onRefresh?.();
+    },
+    onError: (err) => toast.error(err.message),
+  });
   const { data: openingPaymentHistory, isLoading: openingPaymentHistoryLoading } = trpc.adminCandidateManagement.getOpeningPaymentHistory.useQuery(
     { sessionToken, candidateId: candidate.id },
     { enabled: Boolean(sessionToken && /^(online|agency)_\d+$/.test(candidate.id)), retry: false },
@@ -212,9 +243,21 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   }, [initialTab]);
 
   useEffect(() => {
+    const canonical = (data as { canonicalFolderCode?: string | null } | undefined)?.canonicalFolderCode
+      || candidate.folderCode
+      || "";
+    setReferenceDraft(canonical);
+  }, [data, candidate.folderCode, candidate.id]);
+
+  useEffect(() => {
     const redirectId = (data as { redirectToCanonicalAgencyId?: string | null } | undefined)?.redirectToCanonicalAgencyId;
     if (!redirectId || redirectId === candidate.id || !onSelectSibling) return;
-    toast.info("Ouverture du dossier actif 3M (le code EVAL-AG est un miroir de préparation).");
+    const purged = (data as { evalShellPurged?: boolean } | undefined)?.evalShellPurged;
+    toast.info(
+      purged
+        ? "Miroir EVAL-AG supprimé. Ouverture du dossier actif 3M-AGN."
+        : "Ouverture du dossier actif 3M (le code EVAL-AG est un miroir de préparation).",
+    );
     onSelectSibling(redirectId);
   }, [data, candidate.id, onSelectSibling]);
 
@@ -686,23 +729,96 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
-        <span className="font-mono text-[11px] font-semibold text-blue-800">
-          {(data as any)?.canonicalFolderCode || candidate.folderCode}
-          {(data as any)?.evalShellFolderCode ? (
-            <span className="ml-2 font-sans font-normal text-slate-500">Variante : {(data as any).evalShellFolderCode}</span>
-          ) : candidate.formerAccountReference ? (
-            <span className="ml-2 font-sans font-normal text-slate-500">Ancien compte : {candidate.formerAccountReference}</span>
-          ) : candidate.referenceKind === "account" ? (
-            <span className="ml-2 font-sans font-normal text-slate-500">Compte — dossier non activé</span>
-          ) : Array.isArray((candidate as any).formerFolderCodes) && (candidate as any).formerFolderCodes.length > 0 ? (
-            <span className="ml-2 font-sans font-normal text-slate-500">Variante : {(candidate as any).formerFolderCodes.join(" · ")}</span>
-          ) : null}
-        </span>
-        <span>{isFetching ? "Synchronisation du dossier…" : dataUpdatedAt ? `Dernière sync : ${formatAdminSyncTime(new Date(dataUpdatedAt))}` : formatAdminSyncTime(null)}</span>
-        <Button type="button" size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs" onClick={() => void refresh()} disabled={isFetching}>
-          <TimerReset className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Actualiser
-        </Button>
+      <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-mono text-[11px] font-semibold text-blue-800">
+            {(data as any)?.canonicalFolderCode || candidate.folderCode}
+            {(data as any)?.evalShellFolderCode ? (
+              <span className="ml-2 font-sans font-normal text-amber-800">Miroir à supprimer : {(data as any).evalShellFolderCode}</span>
+            ) : candidate.formerAccountReference ? (
+              <span className="ml-2 font-sans font-normal text-slate-500">Ancien compte : {candidate.formerAccountReference}</span>
+            ) : candidate.referenceKind === "account" ? (
+              <span className="ml-2 font-sans font-normal text-slate-500">Compte — dossier non activé</span>
+            ) : null}
+          </span>
+          <span>{isFetching ? "Synchronisation du dossier…" : dataUpdatedAt ? `Dernière sync : ${formatAdminSyncTime(new Date(dataUpdatedAt))}` : formatAdminSyncTime(null)}</span>
+          <Button type="button" size="sm" variant="ghost" className="h-7 gap-1.5 px-2 text-xs" onClick={() => void refresh()} disabled={isFetching}>
+            <TimerReset className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} aria-hidden="true" />Actualiser
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2" data-testid="candidate360-reference-actions">
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 bg-emerald-700 text-xs hover:bg-emerald-800"
+            disabled={canonicalizeDossierMutation.isPending}
+            onClick={() => canonicalizeDossierMutation.mutate({ sessionToken, candidateId: candidate.id })}
+            data-testid="canonicalize-active-dossier"
+          >
+            {canonicalizeDossierMutation.isPending ? "Normalisation…" : "Normaliser en 3M-AGN (supprimer EVAL)"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            onClick={() => setReferenceEditorOpen((open) => !open)}
+            data-testid="toggle-reference-editor"
+          >
+            Modifier la référence
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-amber-300 bg-amber-50 text-xs text-amber-950 hover:bg-amber-100"
+            disabled={requestPassportPhotoMutation.isPending}
+            onClick={() =>
+              requestPassportPhotoMutation.mutate({
+                sessionToken,
+                candidateId: candidate.id,
+                decision: "request_passport",
+              })
+            }
+            data-testid="candidate360-request-passport-photo"
+          >
+            <ImagePlus className="mr-1 h-3.5 w-3.5" />
+            {requestPassportPhotoMutation.isPending ? "Envoi…" : "Demander photo passeport (+ e-mail)"}
+          </Button>
+        </div>
+        {referenceEditorOpen && (
+          <div className="flex flex-col gap-2 rounded-md border border-blue-200 bg-white p-3 sm:flex-row sm:items-end" data-testid="candidate360-reference-editor">
+            <div className="min-w-0 flex-1">
+              <Label htmlFor="active-dossier-reference">Référence active (doit commencer par 3M-)</Label>
+              <Input
+                id="active-dossier-reference"
+                className="mt-1 font-mono text-sm"
+                value={referenceDraft}
+                onChange={(event) => setReferenceDraft(event.target.value.toUpperCase())}
+                maxLength={80}
+                placeholder="3M-AGN-240001"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">Les dossiers activés utilisent exclusivement un numéro 3M-AGN. Les codes EVAL-AG sont des miroirs et sont supprimés.</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className="bg-blue-700 hover:bg-blue-800"
+              disabled={updateReferenceMutation.isPending || referenceDraft.trim().length < 4}
+              onClick={() =>
+                updateReferenceMutation.mutate({
+                  sessionToken,
+                  candidateId: candidate.id,
+                  newReference: referenceDraft.trim(),
+                  renameOnlineApplication: candidate.id.startsWith("online_"),
+                })
+              }
+              data-testid="save-active-dossier-reference"
+            >
+              {updateReferenceMutation.isPending ? "Enregistrement…" : "Enregistrer la référence"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {(() => {

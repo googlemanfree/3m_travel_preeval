@@ -36,4 +36,20 @@ describe("cockpit 360 — un seul dossier actif 3M + pilotage cohérent", () => 
     expect(workspace).toContain('data-testid="candidate360-overview-summary"');
     expect(workspace).toContain("redirectToCanonicalAgencyId");
   });
+
+  it("exige la photo type passeport après activation visa travail (auto + admin)", () => {
+    const activation = read("server/routers/adminCandidateManagement.ts");
+    const candidate = read("server/routers/candidate.ts");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    const workspace = read("client/src/components/Candidate360Workspace.tsx");
+    const profile = read("client/src/components/ClientProfilePanel.tsx");
+    expect(activation).toContain("flagPassportPhotoRequirement");
+    expect(activation).toContain("isWorkVisaForPassportPhoto");
+    expect(activation).toContain('decision: z.enum(["approve", "reject", "request_new", "request_passport"])');
+    expect(candidate).toContain("PASSPORT_PHOTO_DEPOSITED_REASON");
+    expect(candidate).toContain("ensurePassportPhotoRequirementForActiveWorkDossier");
+    expect(dashboard).toContain('data-testid="candidate-portrait-request-passport"');
+    expect(workspace).toContain('data-testid="candidate360-request-passport-photo"');
+    expect(profile).toContain('data-testid="passport-photo-required-banner"');
+  });
 });
