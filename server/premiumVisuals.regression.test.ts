@@ -39,6 +39,14 @@ describe("images premium — index intelligent", () => {
     }
   });
 
+  it("sert le hero études dédié (desktop + mobile)", () => {
+    const visual = getServiceVisual("visa-etudes");
+    expect(visual.desktop).toBe("/photos-pays/etudes-hero-desktop.jpg");
+    expect(visual.mobile).toBe("/photos-pays/etudes-hero-mobile.jpg");
+    expect(visual.alt.toLowerCase()).toContain("études");
+    expect(getServiceVisual("etudes").desktop).toBe(visual.desktop);
+  });
+
   it("branche les pages services, destinations, visas et shells sur l’index", () => {
     const services = read("client/src/pages/Services.tsx");
     const hub = read("client/src/pages/DestinationsHub.tsx");

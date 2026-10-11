@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Link } from 'wouter';
 
-import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
 import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import ProofGallerySection from '@/components/ProofGallerySection';
 import { getDestinationVisual, getServiceVisual } from '@/data/premiumVisuals';
@@ -74,42 +73,56 @@ export default function VisaEtudes() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-24 pt-20 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero plein écran — image études dédiée, marque en signal principal */}
+      <section className="relative flex min-h-[100svh] items-end overflow-hidden px-4 pb-16 pt-28 text-white sm:items-center sm:px-6 sm:pb-24 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-95"
+          imgClassName="h-full w-full object-cover object-[42%_28%] sm:object-[46%_32%]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#061a36]/88 via-[#0a3264]/75 to-[#061a36]/92" />
-        <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-amber-100">
-              Visa Études
-            </span>
-            <h1 className="mt-6 mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Étudiez à l'étranger, accompagné à chaque étape
-            </h1>
-            <p className="mx-auto mb-8 max-w-3xl text-lg text-blue-50 sm:text-xl">
-              De l'évaluation de votre profil à la préparation de votre dossier, 3M TRAVEL AGENCY vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/92 via-[#0a2748]/55 to-[#061018]/35 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-transparent" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-2xl"
+          >
+            <p className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl" style={{ fontFamily: '"Sora", "Manrope", sans-serif' }}>
+              3M TRAVEL AGENCY
             </p>
-            <Link href="/evaluation?destination=etudes">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl">
-                Évaluer mon profil gratuitement
-                <ArrowRight size={20} />
-              </motion.button>
-            </Link>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="mx-auto mt-12 max-w-xl rounded-2xl border border-white/20 bg-white/95 p-4 shadow-xl">
-            <StudyAbroadIllustration className="h-auto w-full" />
+            <h1 className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              Visa études — partez étudier à l’étranger
+            </h1>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Évaluation, admission et dossier visa : Campus France, IRCC, uni-assist et procédures officielles, accompagnés depuis Yaoundé.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link href="/evaluation?destination=etudes">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400 sm:w-auto"
+                >
+                  Évaluer mon profil gratuitement
+                  <ArrowRight size={18} aria-hidden="true" />
+                </motion.button>
+              </Link>
+              <a
+                href="#destinations-etudes"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/18"
+              >
+                Voir les destinations
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Destinations */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="destinations-etudes" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">Destinations d'études les plus demandées</h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
