@@ -48,12 +48,16 @@ describe("admin payment agreement recovery action", () => {
     expect(component).toContain("Protocole validé");
   });
 
-  it("branche la relance protocole depuis le bureau reçus (dossiers online)", () => {
+  it("branche la relance protocole depuis le bureau reçus (online + agency)", () => {
     const desk = readFileSync(resolve(process.cwd(), "client/src/components/AdminContractsReceiptsDesk.tsx"), "utf8");
     expect(desk).toContain("resendAgreementSignatureReminder");
     expect(desk).toContain("protocol-remind-");
     expect(desk).toContain('row.stage === "protocol_pending"');
-    expect(desk).toContain('row.candidateId.startsWith("online_")');
+    expect(desk).toContain("/^(online|agency)_\\d+$/");
     expect(desk).toContain("Relancer");
+    expect(router).toContain("/^(online|agency)_\\d+$/");
+    expect(router).toContain("loadAgencyAgreementSignature");
+    expect(router).toContain('reference.source === "online"');
+    expect(router).toContain("initialPaymentStatus");
   });
 });
