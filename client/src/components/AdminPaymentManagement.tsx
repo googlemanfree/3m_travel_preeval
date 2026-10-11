@@ -257,7 +257,12 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
     if (payment.paymentStatus !== "SUCCESS" || payment.agreementSigned || resendAgreementReminderMutation.isPending) return;
     try {
       const result = await resendAgreementReminderMutation.mutateAsync({ sessionToken, candidateId: `online_${payment.id}` });
-      toast.success("Relance envoyée", { description: `Le rappel de signature a été envoyé à ${result.email}.` });
+      const wa = (result as { whatsappSent?: boolean; whatsappSkippedReason?: string | null }).whatsappSent
+        ? " WhatsApp envoyé au client."
+        : (result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason
+          ? ` WhatsApp non envoyé (${(result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason}).`
+          : "";
+      toast.success("Relance envoyée", { description: `Le rappel de signature a été envoyé à ${result.email}.${wa}` });
     } catch (error) {
       toast.error("Relance impossible", { description: error instanceof Error ? error.message : "Une erreur est survenue." });
     }
