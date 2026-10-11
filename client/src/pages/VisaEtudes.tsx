@@ -80,7 +80,7 @@ export default function VisaEtudes() {
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-[40%_72%] sm:object-[42%_68%]"
+          imgClassName="h-full w-full object-cover object-[38%_42%] sm:object-[36%_40%]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/92 via-[#0a2748]/55 to-[#061018]/35 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-transparent" />
         <div className="relative z-10 mx-auto w-full max-w-5xl">
