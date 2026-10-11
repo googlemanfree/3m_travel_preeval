@@ -9,12 +9,14 @@ afterEach(cleanup);
 const candidates: TodayCandidate[] = [
   { id: "online_1", fullName: "Aïcha Nkolo", folderCode: "3M-001", destinationCountry: "Canada", journeySla: { tone: "overdue", label: "SLA dépassé · Documents" }, paymentStatus: "SUCCESS", agreementSigned: false, checklistPercent: 60, siblingCount: 2 },
   { id: "online_2", fullName: "Jean Mvondo", folderCode: "3M-002", destinationCountry: "France", journeySla: { tone: "soon" }, secondProtocolReady: true, secondProtocolSigned: false },
+  { id: "agency_7", fullName: "Walk-in Agence", folderCode: "3M-AGN-0007", destinationCountry: "Belgique", paymentStatus: "SUCCESS", agreementSigned: false, receiptApproved: true },
 ];
 
 describe("tableau admin Aujourd’hui", () => {
   it("agrège SLA, protocoles, checklist et procédures liées", () => {
     const items = buildTodayItems(candidates);
     expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(["SLA dépassé", "Reçu à préparer", "Protocole N°01 à signer", "Checklist sous 80 %", "Traitement simultané multi-procédures", "SLA sous 24 h", "Protocole N°02 à signer"]));
+    expect(items.some((item) => item.candidate.id === "agency_7" && item.label === "Protocole N°01 à signer")).toBe(true);
   });
   it("expose une actualisation manuelle et ouvre la fiche concernée", () => {
     const refresh = vi.fn();
