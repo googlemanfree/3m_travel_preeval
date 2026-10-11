@@ -7,6 +7,7 @@ import { storagePut } from "../storage";
 import { sdk } from "../_core/sdk";
 import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
+import { publishAgencyDocumentsToCase } from "../services/publishAgencyDocumentsToCase";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -118,8 +119,26 @@ export function registerAgencyDossierUploadRoute(app: Express): void {
         console.error("[AgencyDossierUpload] Notification document non envoyée:", notificationError);
       });
 
+      let publishedToClient = 0;
+      let caseNumber: string | null = null;
+      try {
+        const published = await publishAgencyDocumentsToCase(db, {
+          agencyDossierId: dossierId,
+          actorAdminId: null,
+          actorEmail: user.email || "admin",
+          documentIds: [inserted.id],
+          notify: true,
+        });
+        publishedToClient = published.published;
+        caseNumber = published.caseNumber;
+      } catch (publishError) {
+        console.error("[AgencyDossierUpload] Publication espace client:", publishError);
+      }
+
       res.status(201).json({
         success: true,
+        publishedToClient,
+        caseNumber,
         document: {
           id: inserted.id,
           dossierId,

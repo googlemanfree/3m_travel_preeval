@@ -60,6 +60,7 @@ import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
+import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
@@ -455,7 +456,11 @@ export default function EvaluationSpace() {
       return [];
     }
   })();
-  const primaryDestination = preferredDestinationsList[0] || cProfile.destination;
+  const primaryDestination =
+    String(activeDossier?.destination || "").trim()
+    || String(activeAgencyDossier?.destination || "").trim()
+    || preferredDestinationsList[0]
+    || cProfile.destination;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
@@ -485,9 +490,15 @@ export default function EvaluationSpace() {
   const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
   const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
   const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
-  const customRequirements = (caseTrackingData?.cases ?? [])
-    .filter((item: any) => item.caseNumber === evaluationCaseNumber)
-    .flatMap((item: any) => item.requirements ?? []);
+  // Checklist dynamique du dossier actif (3M-AGN / en ligne), pas seulement l’ancienne EVAL-…
+  const customRequirements = pickActiveCaseRequirements(caseTrackingData?.cases as any, [
+    selectedDossierNumber,
+    activeTreatmentDossierNumber,
+    activeDossier?.dossierNumber,
+    activeAgencyDossier?.dossierNumber,
+    cProfile.dossierNumber,
+    evaluationCaseNumber,
+  ]);
   const finalReviewPending = Boolean(latestEvaluation?.secondReviewRequired && !latestEvaluation?.secondReviewedAt);
   const evaluationStatusLabel = cProfile.evaluationDeclarationStatus === "validated"
     ? "Évaluation validée"
