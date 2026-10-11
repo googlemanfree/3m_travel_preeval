@@ -271,6 +271,9 @@ export const candidates = mysqlTable("candidates", {
   evaluationReviewedBy: varchar("evaluationReviewedBy", { length: 320 }),
   evaluationReviewNote: text("evaluationReviewNote"),
   dossierNote: text("dossierNote"),         // Note interne du conseiller
+  /** Référence du dossier actuellement traité (client + admin synchronisés). */
+  activeDossierNumber: varchar("activeDossierNumber", { length: 50 }),
+  activeDossierSetAt: timestamp("activeDossierSetAt"),
   formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
   // Scoring
   scoreResult: varchar("scoreResult", { length: 50 }),

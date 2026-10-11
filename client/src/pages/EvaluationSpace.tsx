@@ -114,6 +114,26 @@ export default function EvaluationSpace() {
   // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
   // dossier payé, sinon le plus récent).
   const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);
+  const setActiveDossierMutation = trpc.candidate.setActiveDossier.useMutation({
+    onSuccess: async (result) => {
+      setSelectedDossierNumber(result.activeDossierNumber);
+      await trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      toast.success("Dossier actif mis à jour", {
+        description: `${result.activeDossierNumber} est maintenant le dossier traité (espace client et administration).`,
+      });
+    },
+    onError: (activateError) => toast.error(activateError.message || "Impossible d’activer ce dossier."),
+  });
+  const activateDossier = (dossierNumber: string | null | undefined) => {
+    if (!dossierNumber) return;
+    const current =
+      selectedDossierNumber
+      || (dashboardData as { activeTreatmentDossierNumber?: string | null } | undefined)?.activeTreatmentDossierNumber
+      || null;
+    setSelectedDossierNumber(dossierNumber);
+    if (current === dossierNumber) return;
+    setActiveDossierMutation.mutate({ dossierNumber });
+  };
   const [secondaryDossierOpen, setSecondaryDossierOpen] = useState(false);
   const [secondaryProject, setSecondaryProject] = useState<SecondaryProjectType>("etudes");
   const [secondaryDestination, setSecondaryDestination] = useState("");
@@ -284,6 +304,12 @@ export default function EvaluationSpace() {
     return () => window.clearTimeout(timeout);
   }, [isLoading]);
 
+  // Aligne l’UI sur le dossier de traitement persisté (sync admin) au premier chargement.
+  useEffect(() => {
+    const persisted = (dashboardData as { activeTreatmentDossierNumber?: string | null } | undefined)?.activeTreatmentDossierNumber;
+    if (!selectedDossierNumber && persisted) setSelectedDossierNumber(persisted);
+  }, [dashboardData, selectedDossierNumber]);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     const [result, caseResult] = await Promise.all([refetch(), refetchCaseTracking()]);
@@ -381,6 +407,10 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const activeTreatmentDossierNumber =
+    (dashboardData as { activeTreatmentDossierNumber?: string | null }).activeTreatmentDossierNumber
+    || activeDossier?.dossierNumber
+    || null;
   const activeAgencyDossier = (dashboardData as { activeAgencyDossier?: { dossierNumber?: string | null; paymentStatus?: string | null; initialPaymentStatus?: string | null; destination?: string | null; visaType?: string | null; status?: string | null } | null }).activeAgencyDossier ?? null;
   const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""}`));
   const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
@@ -603,21 +633,23 @@ export default function EvaluationSpace() {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
             <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
             {onlineDossiers.map((dossier) => {
-              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
+              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeTreatmentDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
                   type="button"
-                  onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)}
+                  onClick={() => activateDossier(dossier.dossierNumber)}
                   aria-pressed={isSelected}
-                  aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}
+                  aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}${isSelected ? " — dossier actif" : ""}`}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
                     isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
+                  data-testid={isSelected ? "client-active-dossier-tab" : undefined}
                 >
                   {dossierSwitcherLabel(dossier)}
                   <span className="ml-1.5 font-mono opacity-75">{dossier.dossierNumber}</span>
+                  {isSelected && <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">Actif</span>}
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isSelected ? "bg-white/20 text-white" : status.tone}`}>
                     {status.label}
                   </span>
@@ -670,7 +702,7 @@ export default function EvaluationSpace() {
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
-              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => activateDossier(dossier.dossierNumber)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
                 <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
                 <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
@@ -681,7 +713,7 @@ export default function EvaluationSpace() {
             <ClientPaymentStatusTable
               dossiers={onlineDossiers}
               selectedDossierNumber={selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber ?? null}
-              onSelect={(dossierNumber) => setSelectedDossierNumber(dossierNumber)}
+              onSelect={(dossierNumber) => activateDossier(dossierNumber)}
               dossierLabel={dossierSwitcherLabel}
             />
           </div>

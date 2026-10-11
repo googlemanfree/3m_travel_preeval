@@ -1270,16 +1270,116 @@ export const adminRouter = router({
       if (reference.source === "online") {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
         if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
-        if (application.paymentStatus === "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste." });
+        if (application.paymentStatus === "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste. Utilisez « Annuler le paiement effectué »." });
         await db.update(applications).set({ paymentStatus: input.status as any, lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.fullName || admin.email || "Admin" }).where(eq(applications.id, reference.id));
       } else {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
         if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
-        if (dossier.initialPaymentStatus === "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste." });
+        if (dossier.initialPaymentStatus === "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Un paiement déjà confirmé ne peut pas être rétrogradé depuis la liste. Utilisez « Annuler le paiement effectué »." });
         const agencyStatus = input.status === "PENDING" ? "pending" : "unknown";
         await db.update(agencyDossiers).set({ initialPaymentStatus: agencyStatus as any, lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.fullName || admin.email || "Admin" }).where(eq(agencyDossiers.id, reference.id));
       }
       return { success: true, status: input.status, validatedBy: admin.email || admin.fullName || "Admin" };
+    }),
+
+  /** Annule un paiement déjà validé (SUCCESS / paid) avec motif — dossier remis en attente de règlement. */
+  cancelValidatedPayment: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      reason: z.string().trim().min(5).max(1000),
+      notifyClient: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide." });
+
+      let dossierNumber = "";
+      let candidateEmail = "";
+      let candidateId: number | null = null;
+
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seuls les paiements déjà validés peuvent être annulés via cette action." });
+        }
+        const nextStatus = ["paye", "en_attente_documents", "documents_recus"].includes(application.dossierStatus)
+          ? "en_attente_paiement"
+          : application.dossierStatus;
+        await db.update(applications).set({
+          paymentStatus: "CANCELLED",
+          paymentValidatedAt: null,
+          paymentValidatedBy: null,
+          paymentConfirmedAmount: null,
+          dossierStatus: nextStatus as typeof application.dossierStatus,
+          adminNote: input.reason.trim(),
+          lastStatusUpdateAt: new Date(),
+          lastStatusUpdatedBy: admin.fullName || admin.email || "Admin",
+        }).where(eq(applications.id, reference.id));
+        await db.insert(paymentAuditLogs).values({
+          adminName: admin.fullName || "Administrateur",
+          adminEmail: admin.email || "",
+          action: "cancelled_validated",
+          paymentId: application.id,
+          candidateEmail: application.email,
+          amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+          details: input.reason.trim(),
+        });
+        dossierNumber = application.dossierNumber;
+        candidateEmail = application.email;
+        candidateId = application.candidateId;
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus !== "paid") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Seuls les paiements déjà validés peuvent être annulés via cette action." });
+        }
+        await db.update(agencyDossiers).set({
+          initialPaymentStatus: "pending",
+          lastStatusChangeAt: new Date(),
+          lastStatusChangeBy: admin.fullName || admin.email || "Admin",
+          adminNotes: `${dossier.adminNotes ? `${dossier.adminNotes}\n` : ""}[Annulation paiement] ${input.reason.trim()}`,
+        }).where(eq(agencyDossiers.id, reference.id));
+        dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
+        candidateEmail = dossier.email;
+        const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+        candidateId = linked?.id ?? null;
+        await db.insert(paymentAuditLogs).values({
+          adminName: admin.fullName || "Administrateur",
+          adminEmail: admin.email || "",
+          action: "cancelled_validated_agency",
+          paymentId: dossier.id,
+          candidateEmail: dossier.email,
+          amount: "frais d’ouverture",
+          details: input.reason.trim(),
+        });
+      }
+
+      await db.insert(adminActivityLogs).values({
+        adminEmail: admin.email,
+        action: "status_changed",
+        evaluationType: "validated_payment_cancel",
+        evaluationId: String(reference.id),
+        oldStatus: "SUCCESS",
+        newStatus: "CANCELLED",
+        details: JSON.stringify({ source: reference.source, dossierNumber, reason: input.reason.trim() }),
+      });
+
+      if (input.notifyClient && candidateId) {
+        await db.insert(clientNotifications).values({
+          candidateId,
+          type: "payment_action_required",
+          title: "Paiement annulé — dossier remis en attente",
+          body: `Le paiement validé du dossier ${dossierNumber} a été annulé. Motif : ${input.reason.trim()}. Un nouveau règlement est nécessaire pour poursuivre.`,
+          actionUrl: "/mon-espace",
+        });
+      }
+
+      return { success: true as const, dossierNumber, status: "CANCELLED" as const };
     }),
 
   /**
@@ -1596,6 +1696,7 @@ export const adminRouter = router({
             preferredDestinations: candidates.preferredDestinations,
             visaType: candidates.visaType,
             dossierStatus: candidates.dossierStatus,
+            activeDossierNumber: candidates.activeDossierNumber,
             evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
             evaluationDeclaredAt: candidates.evaluationDeclaredAt,
             evaluationReviewedAt: candidates.evaluationReviewedAt,
@@ -1712,6 +1813,8 @@ export const adminRouter = router({
           secondProtocolSigned: Boolean(app.secondAgreementSigned),
           checklistPercent: checklistPercentByLegacyReference.get(`online:${app.id}`) ?? null,
           procedureStep: mapDossierStatus(app.dossierStatus),
+          clientActiveDossierNumber: null as string | null,
+          isClientActiveTreatment: false,
         }));
 
         // Normaliser les dossiers agence
@@ -1750,22 +1853,30 @@ export const adminRouter = router({
           secondProtocolSigned: false,
           checklistPercent: checklistPercentByLegacyReference.get(`agency:${app.id}`) ?? null,
           procedureStep: mapAgencyStatus(app.status),
+          clientActiveDossierNumber: null as string | null,
+          isClientActiveTreatment: false,
         }));
 
+        // Un compte n’apparaît en ACCOUNT_ONLY que s’il n’a encore AUCUN dossier
+        // (en ligne ou agence). Sinon le doublon COMPTE + EVAL-DRAFT / 3M-AGN
+        // masque le vrai dossier de traitement côté administrateur.
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
-        const provisionalAccountEmails = new Set(
-          onlineApps
-            .filter((record) => record.dossierNumber?.startsWith("EVAL-DRAFT-"))
-            .map((record) => record.email.toLowerCase()),
+        const activeDossierByEmail = new Map(
+          candidateRows.map((candidate) => [
+            candidate.email.toLowerCase(),
+            ((candidate as { activeDossierNumber?: string | null }).activeDossierNumber || "").trim() || null,
+          ]),
         );
         const normalizedAccounts = candidateRows
-          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()) || provisionalAccountEmails.has(candidate.email.toLowerCase()))
+          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()))
           .map((candidate) => ({
             id: `account_${candidate.id}`,
             internalId: candidate.id,
             folderCode: accountReference(candidate.id),
             formerAccountReference: null as string | null,
             referenceKind: "account" as const,
+            isClientActiveTreatment: false,
+            clientActiveDossierNumber: ((candidate as { activeDossierNumber?: string | null }).activeDossierNumber || "").trim() || null,
             fullName: candidate.fullName,
             email: candidate.email,
             whatsapp: candidate.phone || "",
@@ -1801,9 +1912,17 @@ export const adminRouter = router({
             procedureStep: mapDossierStatus(candidate.dossierStatus),
           }));
 
+        // Marquer le dossier de traitement actif (celui ouvert par le client) — sans modifier les autres.
+        for (const row of [...normalizedOnline, ...normalizedAgency]) {
+          const activeRef = activeDossierByEmail.get(row.email.toLowerCase()) || null;
+          row.clientActiveDossierNumber = activeRef;
+          row.isClientActiveTreatment = Boolean(activeRef && activeRef === row.folderCode);
+        }
+
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
         // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
         // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
+        // Les options d’avancement / annulation s’appliquent au dossier ouvert, sans migrer les sœurs.
         let allCandidates = attachSiblingProcedures([...normalizedOnline, ...normalizedAgency, ...normalizedAccounts]).map((row) => {
           const procedureJourney = buildAdminProcedureSnapshot({
             destination: row.destinationCountry,

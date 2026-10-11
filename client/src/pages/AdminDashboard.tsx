@@ -178,6 +178,9 @@ interface Candidate {
   procedureJourney?: AdminProcedureSnapshot;
   siblingCount?: number;
   siblingProcedures?: SiblingProcedureSummary[];
+  /** Dossier ouvert par le client = dossier de traitement synchronisé. */
+  isClientActiveTreatment?: boolean;
+  clientActiveDossierNumber?: string | null;
   journeySla?: {
     label: string;
     tone: "ok" | "soon" | "overdue" | "unset";
@@ -395,6 +398,8 @@ export function CandidateDetailModal({
   const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
+  const [cancelPaymentDialogOpen, setCancelPaymentDialogOpen] = useState(false);
+  const [cancelPaymentReason, setCancelPaymentReason] = useState("");
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
     {
@@ -444,6 +449,16 @@ export function CandidateDetailModal({
       onStatusUpdated();
     },
     onError: (err) => toast({ title: "Annulation impossible", description: err.message, variant: "destructive" }),
+  });
+  const cancelValidatedPaymentMutation = trpc.admin.cancelValidatedPayment.useMutation({
+    onSuccess: (result) => {
+      setCancelPaymentDialogOpen(false);
+      setCancelPaymentReason("");
+      toast({ title: "Paiement annulé", description: `Le paiement validé du dossier ${result.dossierNumber} est annulé. Le client doit régler à nouveau pour poursuivre.` });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Annulation du paiement impossible", description: err.message, variant: "destructive" }),
   });
 
   const activatePreDossierMutation = trpc.adminCandidateManagement.activatePreDossierAccount.useMutation({
@@ -790,11 +805,33 @@ export function CandidateDetailModal({
                       <p className="mt-2 text-sm font-semibold text-emerald-900">Toutes les étapes prévues sont validées.</p>
                     )}
                     {previousAdminStatus && (
-                      <Button type="button" variant="outline" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
-                        <X className="mr-2 h-4 w-4" />Annuler la dernière validation
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setRollbackDialogOpen(true)}
+                        disabled={revertStatusMutation.isPending}
+                        className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50"
+                        data-testid="cancel-last-kanban-step"
+                      >
+                        <X className="mr-2 h-4 w-4" />Annuler l’étape passée ({STATUS_CONFIG[candidate.status as AdminStatus]?.label || "étape actuelle"})
                       </Button>
                     )}
-                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
+                    {(paymentAlreadyConfirmed || (candidate as Candidate).paymentStatus === "SUCCESS") && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCancelPaymentDialogOpen(true)}
+                        className="mt-2 w-full border-rose-300 text-rose-800 hover:bg-rose-50"
+                        data-testid="open-cancel-validated-payment"
+                      >
+                        <X className="mr-2 h-4 w-4" />Annuler le paiement effectué
+                      </Button>
+                    )}
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">
+                      Avancement et annulations portent uniquement sur ce dossier ({candidate.folderCode})
+                      {(candidate as Candidate).isClientActiveTreatment ? " — dossier actif du client" : ""}
+                      . Les procédures sœurs ne sont pas modifiées.
+                    </p>
                   </div>
                   <Label htmlFor="candidate-status">Statut général</Label>
                   <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
@@ -856,6 +893,47 @@ export function CandidateDetailModal({
             <AlertDialogFooter>
               <AlertDialogCancel disabled={activatePreDossierMutation.isPending}>Annuler</AlertDialogCancel>
               <AlertDialogAction disabled={activatePreDossierMutation.isPending || !candidate?.internalId} onClick={(event) => { event.preventDefault(); setPreDossierActivationError(null); if (candidate?.internalId) activatePreDossierMutation.mutate({ sessionToken, candidateId: candidate.internalId, destination: preDossierDestination.trim(), visaType: preDossierVisaType.trim(), adminNotes: preDossierNotes.trim() || undefined }); }}>{activatePreDossierMutation.isPending ? "Activation…" : "Confirmer l’activation"}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={cancelPaymentDialogOpen} onOpenChange={setCancelPaymentDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Annuler le paiement effectué ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Le paiement validé du dossier {candidate?.folderCode} sera annulé. Ce dossier seul repasse en attente de règlement ; les procédures sœurs ne sont pas touchées.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2 py-2">
+              <Label htmlFor="cancel-payment-reason">Motif obligatoire</Label>
+              <textarea
+                id="cancel-payment-reason"
+                value={cancelPaymentReason}
+                onChange={(event) => setCancelPaymentReason(event.target.value)}
+                minLength={5}
+                maxLength={1000}
+                className="min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                placeholder="Expliquez pourquoi le paiement validé doit être annulé…"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelValidatedPaymentMutation.isPending}>Fermer</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-rose-700 hover:bg-rose-800"
+                disabled={cancelPaymentReason.trim().length < 5 || cancelValidatedPaymentMutation.isPending || !candidateId}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!candidateId) return;
+                  cancelValidatedPaymentMutation.mutate({
+                    sessionToken,
+                    candidateId,
+                    reason: cancelPaymentReason.trim(),
+                    notifyClient,
+                  });
+                }}
+              >
+                {cancelValidatedPaymentMutation.isPending ? "Annulation…" : "Confirmer l’annulation du paiement"}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -2723,6 +2801,15 @@ export default function AdminDashboard() {
                           <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
                             {candidate.folderCode}
                           </span>
+                          {candidate.isClientActiveTreatment && (
+                            <span
+                              className="w-fit rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-900"
+                              data-testid="admin-active-treatment-badge"
+                              title="Dossier ouvert par le client — c’est celui traité côté administration"
+                            >
+                              Dossier actif
+                            </span>
+                          )}
                           <span className="text-[10px] font-semibold text-slate-700">
                             {procedureLabelForDossier({ visaType: candidate.projectType, destination: candidate.destinationCountry, dossierNumber: candidate.folderCode })}
                           </span>
