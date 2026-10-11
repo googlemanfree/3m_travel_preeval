@@ -33,6 +33,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel, describeDossierProgress } from "@shared/dossierProgress";
+import ClientPhaseGauge from "@/components/ClientPhaseGauge";
 import { accountReference } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
@@ -991,7 +992,7 @@ export default function EvaluationSpace() {
                 </Card>
               </div>
 
-              {/* Résumé d’avancement — le parcours détaillé reste dans l’onglet Dossier */}
+              {/* Jauge unique : phase client + prochaine action (sans micro-statuts techniques) */}
               <Card className="border-blue-100 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                   <h3 className="flex items-center gap-2 text-lg font-bold text-slate-950">
@@ -1002,7 +1003,14 @@ export default function EvaluationSpace() {
                     Sync agence {lastSyncedAt ? `· ${new Date(lastSyncedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "· en cours"}
                   </p>
                 </div>
-                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
+                <ClientPhaseGauge
+                  dossierStatus={cProfile.dossierStatus}
+                  destination={primaryDestination}
+                  visaType={journeyVisaType}
+                  procedureLabel={journeyProcedureLabel}
+                  evaluationStatus={cProfile.evaluationDeclarationStatus}
+                  paymentConfirmed={procedurePaymentConfirmed}
+                />
                 <Button type="button" variant="outline" className="mt-4" onClick={() => switchToSection("dossier")}>
                   Voir le parcours détaillé<ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

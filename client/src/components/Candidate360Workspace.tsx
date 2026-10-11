@@ -23,6 +23,7 @@ import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
 import AdminCandidateSummaryCard from "@/components/AdminCandidateSummaryCard";
 import AdminCandidateCockpitStrip, { type CockpitTreatTarget } from "@/components/AdminCandidateCockpitStrip";
 import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
+import AdminEmployerSelectionPanel from "@/components/AdminEmployerSelectionPanel";
 import { cockpitTabLabel } from "@shared/candidateCockpit";
 import AdminSimultaneousProceduresBoard from "@/components/AdminSimultaneousProceduresBoard";
 import ProcedureStepper from "@/components/ProcedureStepper";
@@ -1312,6 +1313,12 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               </div>
             </div>
           )}
+          <AdminEmployerSelectionPanel
+            sessionToken={sessionToken}
+            candidateId={candidate.id}
+            existing={(data as any)?.employerSelection || (data as any)?.secondProtocol}
+            onSaved={() => void refresh()}
+          />
           {candidate.id.startsWith("online_") && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4" data-testid="candidate360-protocol-two">
               <div className="flex flex-wrap items-center justify-between gap-3">
