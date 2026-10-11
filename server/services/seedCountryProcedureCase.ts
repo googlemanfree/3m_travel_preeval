@@ -72,6 +72,8 @@ export async function seedCountryProcedureChecklist(
     destination: string;
     visaType: string;
     actorAdminId?: number | null;
+    /** Pièces déjà remises / demandées en plus du catalogue pays × visa. */
+    customDocuments?: string[];
   },
 ): Promise<{ caseId: number; added: number; label: string }> {
   const operational = input.source === "agency"
@@ -87,6 +89,7 @@ export async function seedCountryProcedureChecklist(
   const template = buildCountryProcedureDocumentChecklist({
     destination: input.destination,
     procedureType: input.visaType,
+    customDocuments: input.customDocuments,
   });
   const existing = await db.select({ documentType: documentRequirements.documentType })
     .from(documentRequirements)

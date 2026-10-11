@@ -45,12 +45,16 @@ describe("dossier dynamique pays + visa", () => {
     const admin = read("server/routers/admin.ts");
     expect(admin).toContain("resolveDossierProcedureSelection");
     expect(admin).toContain("seedCountryProcedureChecklist");
+    expect(admin).toContain("publishAgencyScannedDocumentsToClient");
+    expect(admin).toContain("documentsReceived");
 
     expect(read("server/services/seedCountryProcedureCase.ts")).toContain("procedure_checklist_seeded");
+    expect(read("server/services/seedCountryProcedureCase.ts")).toContain("customDocuments");
     expect(read("client/src/components/AdminPreDossierAccountsPanel.tsx")).toContain("CountrySelect");
     expect(read("client/src/components/AdminPreDossierAccountsPanel.tsx")).toContain("ADMIN_PROCEDURE_TYPES");
     expect(read("client/src/components/AdminPreDossierAccountsPanel.tsx")).toContain("Sans CV");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("ADMIN_PROCEDURE_TYPES");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("CountrySelect");
+    expect(read("client/src/pages/AdminDashboard.tsx")).toContain("previewCountryVisaChecklist");
   });
 });

@@ -39,6 +39,11 @@ import {
 import { buildCandidateCockpit } from "../../shared/candidateCockpit";
 import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
 import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
+import {
+  parseDocumentsReceivedList,
+  previewCountryVisaChecklist,
+  publishAgencyDocumentsToCase,
+} from "../services/publishAgencyDocumentsToCase";
 import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -2605,6 +2610,10 @@ export const adminRouter = router({
       city: z.string().max(100).default("Yaoundé"),
       destinationCountry: z.string().min(2).max(100),
       projectType: z.string().min(2).max(100),
+      /** Liste libre des pièces déjà remises au comptoir (enrichit la checklist dynamique). */
+      documentsReceived: z.string().max(2000).optional(),
+      assignedToAdmin: z.string().email().max(320).optional().or(z.literal("")),
+      depositDate: z.string().max(10).optional(),
       // Paiement de CE dossier uniquement — ne jamais hériter du statut d’un dossier frère du même e-mail.
       initialPaymentStatus: z.enum(["unknown", "pending", "paid"]).default("unknown"),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
@@ -2636,6 +2645,13 @@ export const adminRouter = router({
           });
         }
 
+        const receivedPieces = parseDocumentsReceivedList(input.documentsReceived);
+        const depositNote = input.depositDate ? ` · dépôt ${input.depositDate}` : "";
+        const assignedNote = input.assignedToAdmin ? ` · conseiller ${input.assignedToAdmin}` : "";
+        const piecesNote = receivedPieces.length
+          ? ` · pièces déjà remises : ${receivedPieces.join(", ")}`
+          : "";
+
         const result = await db.insert(agencyDossiers).values({
           fullName: input.fullName,
           email: input.email,
@@ -2646,18 +2662,20 @@ export const adminRouter = router({
           initialPaymentStatus: input.initialPaymentStatus,
           createdByAdmin: admin.email || "admin",
           source: "manual_admin" as any,
-          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType} · paiement initial : ${input.initialPaymentStatus}`,
+          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType} · paiement initial : ${input.initialPaymentStatus}${depositNote}${assignedNote}${piecesNote}`,
         });
 
         const dossierId = (result as any)[0]?.insertId || 0;
         const folderCode = `3M-AGN-${dossierId.toString().padStart(4, "0")}`;
 
         // Aligner le compte candidat s’il existe déjà (pays précis + procédure).
+        let linkedCandidateId: number | null = null;
         try {
           const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates)
             .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${input.email}))`)
             .limit(1);
           if (linkedCandidate) {
+            linkedCandidateId = linkedCandidate.id;
             await db.update(candidates).set({
               destination: procedure.coarseCategory,
               visaType: procedure.visaType,
@@ -2669,6 +2687,7 @@ export const adminRouter = router({
         }
 
         let checklistAdded = 0;
+        let checklistLabel = procedure.visaType;
         try {
           const seeded = await seedCountryProcedureChecklist(db, {
             source: "agency",
@@ -2676,8 +2695,10 @@ export const adminRouter = router({
             destination: procedure.destination,
             visaType: procedure.visaType,
             actorAdminId: admin.id ?? null,
+            customDocuments: receivedPieces,
           });
           checklistAdded = seeded.added;
+          checklistLabel = seeded.label;
         } catch (seedErr) {
           console.error("[Import Agency Dossier] Seed checklist:", seedErr);
         }
@@ -2719,13 +2740,19 @@ export const adminRouter = router({
           success: true,
           folderCode,
           dossierId,
-          message: `Dossier agence créé avec succès : ${folderCode}`,
+          linkedCandidateId,
+          message: linkedCandidateId
+            ? `Dossier agence créé et rattaché au compte client existant : ${folderCode}`
+            : `Dossier agence créé avec succès : ${folderCode}`,
           procedure: {
             destination: procedure.destination,
             visaType: procedure.visaType,
             checklistKey: procedure.checklistKey,
+            checklistLabel,
             checklistAdded,
+            documentsReceived: receivedPieces,
           },
+          nextStep: "Scannez les pièces remises puis publiez-les vers l’espace client depuis le centre documentaire du dossier.",
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -2733,6 +2760,80 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de l'importation du dossier agence",
+        });
+      }
+    }),
+
+  /** Aperçu de la checklist dynamique pays × visa avant création / publication. */
+  previewCountryVisaChecklist: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      destinationCountry: z.string().min(1).max(100),
+      projectType: z.string().min(1).max(100),
+      documentsReceived: z.string().max(2000).optional(),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const procedure = resolveDossierProcedureSelection({
+        destination: input.destinationCountry,
+        visaType: input.projectType,
+      });
+      const checklist = previewCountryVisaChecklist({
+        destination: procedure.destination || input.destinationCountry,
+        visaType: procedure.visaType || input.projectType,
+        documentsReceived: input.documentsReceived,
+      });
+      return {
+        recognized: procedure.recognized,
+        destination: procedure.destination,
+        visaType: procedure.visaType,
+        checklistKey: procedure.checklistKey,
+        label: checklist.label,
+        documents: checklist.documents.map((item) => ({
+          documentType: item.documentType,
+          comment: item.comment,
+          source: item.source,
+        })),
+      };
+    }),
+
+  /**
+   * Publie en masse les documents déjà scannés d’un dossier agence
+   * vers l’espace client (case_documents + notification).
+   */
+  publishAgencyScannedDocumentsToClient: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      agencyDossierId: z.number().int().positive(),
+      documentIds: z.array(z.number().int().positive()).max(100).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      try {
+        const result = await publishAgencyDocumentsToCase(db, {
+          agencyDossierId: input.agencyDossierId,
+          actorAdminId: admin.id ?? null,
+          actorEmail: admin.email || "admin",
+          documentIds: input.documentIds,
+          notify: true,
+        });
+        return {
+          success: true,
+          ...result,
+          message: result.published === 0
+            ? result.totalScanned === 0
+              ? "Aucun document scanné à publier pour ce dossier."
+              : "Tous les documents scannés sont déjà visibles dans l’espace client."
+            : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`,
+        };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[publishAgencyScannedDocumentsToClient]", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err instanceof Error ? err.message : "Publication vers l’espace client impossible.",
         });
       }
     }),
@@ -3394,7 +3495,20 @@ export const adminRouter = router({
           const [receipt] = await db.insert(agencyDossierDocuments).values({ dossierId: input.agencyDossierId, documentType: "decharge_remise_main_propre", documentName: input.receiptFileName || `Decharge-${safeName}.pdf`, documentUrl: receiptStored.url, fileSize: receiptBuffer.length, source: "admin_upload", uploadedBy: admin.email || "admin", verificationStatus: "pending" }).$returningId();
           await db.insert(agencyDossierHistory).values({ dossierId: input.agencyDossierId, action: "receipt_generated", changedBy: admin.email || "admin", oldValue: null, newValue: JSON.stringify({ documentId: receipt.id, sourceDocumentId: inserted.id }), details: "Décharge générée pour le document remis en agence" });
         }
-        return { success: true, url: stored.url, receiptUrl: null, target: "agency_dossier", agencyDossierId: input.agencyDossierId };
+        let publishedToClient = 0;
+        try {
+          const published = await publishAgencyDocumentsToCase(db, {
+            agencyDossierId: input.agencyDossierId,
+            actorAdminId: admin.id ?? null,
+            actorEmail: admin.email || "admin",
+            documentIds: [inserted.id],
+            notify: true,
+          });
+          publishedToClient = published.published;
+        } catch (publishErr) {
+          console.error("[uploadDocumentForCandidate] sync espace client:", publishErr);
+        }
+        return { success: true, url: stored.url, receiptUrl: null, target: "agency_dossier", agencyDossierId: input.agencyDossierId, publishedToClient };
       }
       if (!input.candidateId) throw new TRPCError({ code: "BAD_REQUEST", message: "Cible de dépôt manquante." });
       const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);

@@ -1224,11 +1224,28 @@ function ImportAgencyModal({
     initialStatus: "DOCUMENTS_CHECK" as AdminStatus,
   });
 
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "" : "";
+  const checklistPreview = trpc.admin.previewCountryVisaChecklist.useQuery(
+    {
+      sessionToken,
+      destinationCountry: form.destinationCountry,
+      projectType: form.projectType,
+      documentsReceived: form.documentsReceived || undefined,
+    },
+    {
+      enabled: Boolean(sessionToken && form.destinationCountry && form.projectType),
+      staleTime: 30_000,
+    },
+  );
+
   const importMutation = trpc.admin.importAgencyDossier.useMutation({
     onSuccess: (result) => {
+      const checklistHint = result.procedure?.checklistAdded
+        ? ` Checklist ${result.procedure.checklistLabel || ""} : ${result.procedure.checklistAdded} pièce(s).`
+        : "";
       toast({
-        title: "Dossier créé",
-        description: `${result.message} — Un email de bienvenue a été envoyé.`,
+        title: result.linkedCandidateId ? "Dossier rattaché au compte client" : "Dossier créé",
+        description: `${result.message}${checklistHint} ${result.nextStep || ""}`.trim(),
       });
       onImported();
       onClose();
@@ -1244,7 +1261,20 @@ function ImportAgencyModal({
       toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
-    importMutation.mutate({ sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "" : "", ...form });
+    importMutation.mutate({
+      sessionToken,
+      fullName: form.fullName,
+      email: form.email,
+      whatsapp: form.whatsapp,
+      city: form.city,
+      destinationCountry: form.destinationCountry,
+      projectType: form.projectType,
+      documentsReceived: form.documentsReceived || undefined,
+      assignedToAdmin: form.assignedToAdmin || undefined,
+      depositDate: form.depositDate || undefined,
+      initialPaymentStatus: form.initialPaymentStatus,
+      initialStatus: form.initialStatus,
+    });
   };
 
   const setField = (key: keyof typeof form, value: string) =>
@@ -1256,8 +1286,9 @@ function ImportAgencyModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-blue-900">
             <Building2 className="w-5 h-5" />
-            Saisir un dossier agence
+            Ajouter un dossier déjà inscrit en agence
           </DialogTitle>
+          <p className="text-sm text-slate-600">Crée le dossier dynamique (pays × visa), rattache le compte client s’il existe, puis vous pourrez scanner et publier les pièces dans son espace.</p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1285,6 +1316,7 @@ function ImportAgencyModal({
                 required
                 maxLength={320}
               />
+              <p className="mt-1 text-xs text-slate-500">Même e-mail que le compte client : le dossier et les documents scannés y seront rattachés.</p>
             </div>
 
             <div>
@@ -1343,9 +1375,26 @@ function ImportAgencyModal({
             </div>
 
             <div>
-              <Label htmlFor="documentsReceived">Documents déjà remis</Label>
-              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme" maxLength={2000} className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+              <Label htmlFor="documentsReceived">Documents déjà remis en agence</Label>
+              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme (séparés par des virgules)" maxLength={2000} className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+              <p className="mt-1 text-xs text-slate-500">Ces pièces enrichissent la checklist dynamique. Scannez ensuite les fichiers dans le centre documentaire, puis publiez-les vers l’espace client.</p>
             </div>
+
+            {checklistPreview.data?.documents?.length ? (
+              <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3" data-testid="import-checklist-preview">
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-800">
+                  Checklist dynamique · {checklistPreview.data.destination} · {checklistPreview.data.label}
+                </p>
+                <ul className="mt-2 max-h-36 space-y-1 overflow-y-auto text-xs text-slate-700">
+                  {checklistPreview.data.documents.slice(0, 12).map((item) => (
+                    <li key={`${item.source}-${item.documentType}`}>• {item.documentType}</li>
+                  ))}
+                  {checklistPreview.data.documents.length > 12 ? (
+                    <li className="text-slate-500">+ {checklistPreview.data.documents.length - 12} autre(s)</li>
+                  ) : null}
+                </ul>
+              </div>
+            ) : null}
 
             <div>
               <Label htmlFor="initialPaymentStatus">Statut de paiement initial (ce dossier uniquement)</Label>
