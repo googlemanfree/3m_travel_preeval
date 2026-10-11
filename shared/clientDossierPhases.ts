@@ -22,6 +22,17 @@ export type ClientPhaseInfo = {
   detail: string;
 };
 
+/** Les sept phases stables expliquées dans l’espace client. */
+export const CLIENT_DOSSIER_PHASE_GUIDE = [
+  { phase: "created", label: "Dossier créé", detail: "Votre dossier est enregistré. L’évaluation peut commencer." },
+  { phase: "evaluation", label: "Évaluation en cours", detail: "Nos conseillers analysent votre profil et préparent la suite." },
+  { phase: "opening", label: "Ouverture du dossier", detail: "Bilan, paiement d’ouverture et protocole d’accord activent le suivi." },
+  { phase: "documents", label: "Documents à compléter", detail: "Les pièces attendues sont déposées ou en cours de contrôle." },
+  { phase: "processing", label: "Traitement en cours", detail: "Votre dossier est suivi avec les partenaires, employeurs ou autorités concernés." },
+  { phase: "approved", label: "Décision favorable", detail: "Une issue positive a été enregistrée pour votre dossier." },
+  { phase: "refused", label: "Décision défavorable", detail: "Une décision défavorable a été enregistrée ; contactez 3M pour la suite." },
+] as const satisfies ReadonlyArray<{ phase: Exclude<ClientDossierPhase, "follow_up">; label: string; detail: string }>;
+
 const PHASE_INFO: Record<ClientDossierPhase, Omit<ClientPhaseInfo, "phase">> = {
   created: {
     label: "Dossier créé",

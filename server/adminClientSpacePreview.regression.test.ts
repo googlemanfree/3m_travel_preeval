@@ -17,6 +17,8 @@ describe("prévisualisation espace client admin", () => {
     expect(workspace).toContain("AdminClientSpacePreview");
     expect(preview).toContain('data-testid="admin-client-space-preview-trigger"');
     expect(preview).toContain("Mode prévisualisation — lecture seule");
+    expect(preview).toContain('data-testid="admin-client-preview-banner"');
+    expect(preview).toContain("sans envoyer de message, modifier un statut ou déposer un document");
   });
 
   it("unifie les clés checklist 3M-AG / 3M-AGN pour que le déverrouillage persiste", () => {
