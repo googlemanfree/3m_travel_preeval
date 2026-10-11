@@ -20,13 +20,16 @@ import {
   studyVisaEvaluations,
   consultationRequests,
   applications,
+  candidateMessages,
 } from "../../drizzle/schema";
 import { requireValidAdminSession } from "./adminAuth";
-import { sendValidatedEvaluationResponseEmail } from "../emailService";
+import { sendValidatedEvaluationResponseEmail, sendWorkVisaCvRequestEmail } from "../emailService";
 import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "../services/evaluationResponseTemplates";
 import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
-import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { caseActivityLogs, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { normalizeAdminMessage, richTextToPlainText } from "../services/richText";
+import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -170,7 +173,8 @@ const exportInput = z.object({
 const reviewDraftInput = z.object({
   sessionToken: z.string().min(1),
   evaluationId: z.number().int().positive(),
-  draft: z.string().trim().min(20, "Le projet de réponse doit contenir au moins 20 caractères.").max(8000),
+  /** HTML riche (éditeur type Word) ou texte ; sanitizé côté serveur. */
+  draft: z.string().trim().min(20, "Le projet de réponse doit contenir au moins 20 caractères.").max(20000),
   reason: z.string().trim().min(8, "Indiquez le motif de la modification.").max(800),
 });
 
@@ -233,7 +237,8 @@ function textDetail(value: unknown, maximum = 1000): string | undefined {
 }
 
 function requiresSecondHumanReview(draft: string): boolean {
-  return /défavorable|defavorable|insuffisant|incompatible|inéligible|ineligible|refus|risque élevé|risque eleve|impossible|absence de garantie/i.test(draft);
+  const plain = richTextToPlainText(normalizeAdminMessage(draft));
+  return /défavorable|defavorable|insuffisant|incompatible|inéligible|ineligible|refus|risque élevé|risque eleve|impossible|absence de garantie/i.test(plain);
 }
 
 async function requireEvaluationCandidate(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluationId: number) {
@@ -493,7 +498,11 @@ export const aiEvaluationManagementRouter = router({
         if (!current[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         await assertNotManagedByStructuredValidation(input.evaluationId);
         if (current[0].reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée. Créez une nouvelle évaluation pour toute reprise." });
-        await db.update(evaluations).set({ reviewDraft: input.draft, reviewDraftUpdatedAt: new Date(), reviewDraftUpdatedBy: admin.email }).where(eq(evaluations.id, input.evaluationId));
+        const draftHtml = normalizeAdminMessage(input.draft);
+        const plain = richTextToPlainText(draftHtml);
+        if (plain.length < 20) throw new TRPCError({ code: "BAD_REQUEST", message: "Le projet de réponse doit contenir au moins 20 caractères utiles." });
+        if (plain.length > 8000) throw new TRPCError({ code: "BAD_REQUEST", message: "Le projet de réponse est trop long (8 000 caractères maximum)." });
+        await db.update(evaluations).set({ reviewDraft: draftHtml, reviewDraftUpdatedAt: new Date(), reviewDraftUpdatedBy: admin.email }).where(eq(evaluations.id, input.evaluationId));
         await db.insert(evaluationReviewEvents).values({ evaluationId: input.evaluationId, adminEmail: admin.email, action: "draft_saved", note: input.reason });
         return { success: true };
       }),
@@ -515,10 +524,33 @@ export const aiEvaluationManagementRouter = router({
         await db.update(evaluations).set({ status: secondReviewRequired ? "pending" : "reviewed", reviewedAt: now, reviewedBy: admin.email, reviewNote: input.validationNote, secondReviewRequired }).where(eq(evaluations.id, input.evaluationId));
         await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: secondReviewRequired ? "validated_pending_second_review" : "validated", note: input.validationNote });
         if (secondReviewRequired) return { success: true, delivered: false, requiresSecondReview: true };
-        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft });
+        const responseHtml = normalizeAdminMessage(evaluation.reviewDraft ?? "");
+        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: responseHtml });
+        if (evaluation.candidateId) {
+          const plain = richTextToPlainText(responseHtml);
+          const notificationResult = await db.insert(clientNotifications).values({
+            candidateId: evaluation.candidateId,
+            type: "evaluation_delivered",
+            title: "Votre évaluation a été examinée",
+            body: plain.slice(0, 1800),
+            actionUrl: "/mon-espace",
+            isRead: false,
+            emailSentAt: delivered ? now : null,
+          });
+          const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+          await db.insert(candidateMessages).values({
+            candidateId: evaluation.candidateId,
+            notificationId: notificationId || null,
+            senderRole: "advisor",
+            content: responseHtml,
+            isRead: false,
+          });
+        }
         if (delivered) {
-          await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
-          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
+          await db.update(evaluations).set({ finalResponseSentAt: now, reviewDraft: responseHtml }).where(eq(evaluations.id, evaluation.id));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail et publiée dans l’espace client." });
+        } else {
+          await db.update(evaluations).set({ reviewDraft: responseHtml }).where(eq(evaluations.id, evaluation.id));
         }
         return { success: true, delivered, requiresSecondReview: false };
       }),
@@ -545,12 +577,36 @@ export const aiEvaluationManagementRouter = router({
       if (evaluation.secondReviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde validation est déjà enregistrée." });
       if (evaluation.reviewedBy && evaluation.reviewedBy.toLowerCase() === admin.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "Un second conseiller différent du premier est obligatoire pour cette évaluation." });
       const now = new Date();
-      await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote }).where(eq(evaluations.id, evaluation.id));
+      const responseHtml = normalizeAdminMessage(evaluation.reviewDraft ?? "");
+      await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote, reviewDraft: responseHtml }).where(eq(evaluations.id, evaluation.id));
       await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "second_validated", note: input.validationNote });
-      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
-      if (delivered && !evaluation.finalResponseSentAt) {
-        await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
-        await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée après seconde revue et envoyée par e-mail." });
+      const alreadySent = Boolean(evaluation.finalResponseSentAt);
+      const delivered = alreadySent ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: responseHtml });
+      if (!alreadySent) {
+        if (evaluation.candidateId) {
+          const plain = richTextToPlainText(responseHtml);
+          const notificationResult = await db.insert(clientNotifications).values({
+            candidateId: evaluation.candidateId,
+            type: "evaluation_delivered",
+            title: "Votre évaluation a été examinée",
+            body: plain.slice(0, 1800),
+            actionUrl: "/mon-espace",
+            isRead: false,
+            emailSentAt: delivered ? now : null,
+          });
+          const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+          await db.insert(candidateMessages).values({
+            candidateId: evaluation.candidateId,
+            notificationId: notificationId || null,
+            senderRole: "advisor",
+            content: responseHtml,
+            isRead: false,
+          });
+        }
+        if (delivered) {
+          await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée après seconde revue, envoyée par e-mail et publiée dans l’espace client." });
+        }
       }
       return { success: true, delivered };
     }),
@@ -598,6 +654,85 @@ export const aiEvaluationManagementRouter = router({
           await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "preparation_retry_unavailable", note: input.reason });
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le brouillon n’a pas pu être préparé. La revue manuelle reste disponible." });
         }
+      }),
+
+    /** Réclame le CV pour un dossier visa travail : checklist + e-mail + notification espace client. */
+    requestWorkVisaCv: publicProcedure
+      .input(z.object({
+        sessionToken: z.string().min(1),
+        evaluationId: z.number().int().positive(),
+        reason: z.string().trim().min(8, "Indiquez le motif de la réclamation.").max(800).default("CV requis pour les espaces employeur et agences de placement."),
+      }))
+      .mutation(async ({ input }) => {
+        const admin = await requireValidAdminSession(input.sessionToken);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+        const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
+        if (!isWorkVisaForPassportPhoto(evaluation.projectType)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "La réclamation de CV concerne uniquement les dossiers visa travail." });
+        }
+        const [contact] = await db.select({ email: evaluations.email, fullName: evaluations.fullName }).from(evaluations).where(eq(evaluations.id, evaluation.id)).limit(1);
+        if (!contact?.email) throw new TRPCError({ code: "BAD_REQUEST", message: "Adresse e-mail du candidat introuvable." });
+        const operationalCase = await ensureEvaluationCase(db, evaluation);
+        const [existing] = await db.select({ id: documentRequirements.id, status: documentRequirements.status })
+          .from(documentRequirements)
+          .where(and(eq(documentRequirements.caseId, operationalCase.id), eq(documentRequirements.documentType, "cv")))
+          .limit(1);
+        let requirementId = existing?.id ?? 0;
+        const cvComment = "Déposez votre CV à jour (PDF ou Word) pour les espaces employeur et agences de placement.";
+        if (!existing) {
+          const result = await db.insert(documentRequirements).values({
+            caseId: operationalCase.id,
+            documentType: "cv",
+            isRequired: true,
+            status: "pending",
+            adminComment: cvComment,
+          });
+          requirementId = Number((result as any)[0]?.insertId || 0);
+        } else if (existing.status === "waived" || existing.status === "received" || existing.status === "approved" || existing.status === "rejected") {
+          await db.update(documentRequirements).set({ status: "pending", adminComment: cvComment }).where(eq(documentRequirements.id, existing.id));
+          requirementId = existing.id;
+        }
+        const now = new Date();
+        const emailSent = await sendWorkVisaCvRequestEmail({
+          to: contact.email,
+          fullName: contact.fullName,
+          referenceCode: evaluation.referenceCode,
+        });
+        const body = `Pour poursuivre l’analyse de votre dossier visa travail${evaluation.referenceCode ? ` (réf. ${evaluation.referenceCode})` : ""}, déposez votre CV à jour (PDF ou Word) dans Documents.`;
+        const notificationResult = await db.insert(clientNotifications).values({
+          candidateId: evaluation.candidateId!,
+          type: "document_request",
+          title: "CV requis pour votre dossier visa travail",
+          body,
+          actionUrl: "/mon-espace?section=documents",
+          isRead: false,
+          emailSentAt: emailSent ? now : null,
+        });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({
+          candidateId: evaluation.candidateId!,
+          notificationId: notificationId || null,
+          senderRole: "advisor",
+          content: body,
+          isRead: false,
+        });
+        await db.insert(caseActivityLogs).values({
+          caseId: operationalCase.id,
+          actorRole: "admin",
+          actorId: admin.id,
+          actionType: "work_visa_cv_requested",
+          entityType: "document_requirement",
+          entityId: requirementId ? String(requirementId) : null,
+          description: `CV réclamé pour visa travail. Motif : ${input.reason}`,
+        });
+        await db.insert(evaluationReviewEvents).values({
+          evaluationId: evaluation.id,
+          adminEmail: admin.email,
+          action: "work_visa_cv_requested",
+          note: input.reason,
+        });
+        return { success: true, emailSent, requirementId };
       }),
 
     recordExport: publicProcedure

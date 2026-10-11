@@ -537,6 +537,8 @@ type ClientNotificationEmailInput = {
   fullName?: string | null;
   title: string;
   body: string;
+  /** Corps déjà sanitizé (HTML autorisé) — prioritaire sur `body` pour les réponses riches IFP. */
+  bodyHtml?: string | null;
   actionUrl?: string | null;
   sourceLabel: string;
 };
@@ -557,7 +559,9 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
   const baseUrl = SITE_URL.replace(/\/+$/, "");
   const safeName = escapeEmailHtml(input.fullName?.trim() || "Candidat");
   const safeTitle = escapeEmailHtml(input.title);
-  const safeBody = escapeEmailHtml(input.body).replace(/\n/g, "<br />");
+  const safeBody = input.bodyHtml?.trim()
+    ? input.bodyHtml
+    : escapeEmailHtml(input.body).replace(/\n/g, "<br />");
   const safeSource = escapeEmailHtml(input.sourceLabel);
   const safeActionUrl = input.actionUrl && input.actionUrl.startsWith("/") && !input.actionUrl.startsWith("//")
     ? `${baseUrl}${input.actionUrl}`
@@ -578,7 +582,7 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
             <p>Une nouvelle information est disponible dans votre espace client.</p>
             <div style="background: white; border-left: 4px solid #2563eb; padding: 18px 20px; margin: 22px 0;">
               <p style="margin: 0 0 8px; color: #475569; font-size: 13px;"><strong>Source :</strong> ${safeSource}</p>
-              <p style="margin: 0; line-height: 1.65;">${safeBody}</p>
+              <div style="margin: 0; line-height: 1.65;">${safeBody}</div>
             </div>
             <p style="text-align: center; margin: 28px 0 12px;">
               <a href="${safeActionUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 7px; display: inline-block;">Consulter mon espace client</a>
@@ -618,12 +622,33 @@ export async function sendValidatedEvaluationResponseEmail(input: {
   referenceCode: string;
   response: string;
 }): Promise<boolean> {
+  const { normalizeAdminMessage, richTextToPlainText } = await import("./services/richText");
+  const responseHtml = normalizeAdminMessage(input.response);
+  const responsePlain = richTextToPlainText(responseHtml);
   return sendClientNotificationEmail({
     to: input.to,
     fullName: input.fullName,
     title: "Votre évaluation a été examinée",
-    body: `Référence ${input.referenceCode}\n\n${input.response}\n\nCette réponse a été révisée par un conseiller. Consultez votre espace pour la suite du dossier.`,
+    body: `Référence ${input.referenceCode}\n\n${responsePlain}\n\nCette réponse a été révisée par un conseiller. Consultez votre espace pour la suite du dossier.`,
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;font-size:13px"><strong>Référence :</strong> ${escapeEmailHtml(input.referenceCode)}</p>${responseHtml}<p style="margin:16px 0 0;color:#475569;font-size:13px">Cette réponse a été révisée par un conseiller. Consultez votre espace pour la suite du dossier.</p>`,
     actionUrl: "/mon-espace",
+    sourceLabel: "3M TRAVEL AGENCY",
+  });
+}
+
+/** Demande de CV pour dossier visa travail — e-mail + lien espace documents. */
+export async function sendWorkVisaCvRequestEmail(input: {
+  to: string;
+  fullName: string;
+  referenceCode?: string | null;
+}): Promise<boolean> {
+  const ref = input.referenceCode?.trim() ? ` (réf. ${input.referenceCode.trim()})` : "";
+  return sendClientNotificationEmail({
+    to: input.to,
+    fullName: input.fullName,
+    title: "CV requis pour votre dossier visa travail",
+    body: `Pour poursuivre l’analyse de votre dossier visa travail${ref}, déposez votre CV à jour (PDF ou Word) dans votre espace client → Documents. Un conseiller en a besoin pour les espaces employeur et agences de placement.`,
+    actionUrl: "/mon-espace?section=documents",
     sourceLabel: "3M TRAVEL AGENCY",
   });
 }

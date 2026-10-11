@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { sanitizeRichText } from "@/components/RichTextEditor";
 
 export default function ClientMessagesPanel() {
   const { candidate, isAuthenticated } = useCandidateAuth();
@@ -99,7 +100,11 @@ export default function ClientMessagesPanel() {
                   </span>
                 )}
                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${isCandidate ? "rounded-br-md bg-blue-800 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  {/<\/?[a-z][^>]*>/i.test(message.content) ? (
+                    <div className={`prose prose-sm max-w-none break-words ${isCandidate ? "prose-invert" : "prose-a:text-blue-700"}`} dangerouslySetInnerHTML={{ __html: sanitizeRichText(message.content) }} />
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  )}
                   <p className={`mt-2 flex items-center gap-1 text-[11px] ${isCandidate ? "text-blue-100" : "text-slate-600"}`}>
                     {isCandidate ? <UserRound className="h-3 w-3" aria-hidden="true" /> : <Headphones className="h-3 w-3" aria-hidden="true" />}
                     {isCandidate ? "Vous" : "Équipe 3M TRAVEL AGENCY"} · {new Date(message.createdAt).toLocaleString("fr-FR")}

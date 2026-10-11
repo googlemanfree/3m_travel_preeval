@@ -27,6 +27,7 @@ import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import ClientMessagesPanel from "@/components/ClientMessagesPanel";
+import { sanitizeRichText } from "@/components/RichTextEditor";
 import ClientProfilePanel from "@/components/ClientProfilePanel";
 import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import CandidateAvatar from "@/components/CandidateAvatar";
@@ -469,13 +470,16 @@ export default function EvaluationSpace() {
           ? "Évaluation examinée par l’agence"
           : "Évaluation reçue — examen en cours";
   const validatedEvaluationResponse = latestEvaluation?.finalResponseSentAt && latestEvaluation?.reviewDraft ? String(latestEvaluation.reviewDraft) : null;
+  const validatedEvaluationResponseHtml = validatedEvaluationResponse ? sanitizeRichText(validatedEvaluationResponse) : "";
   const evaluationStatusDetail = cProfile.evaluationDeclarationStatus === "validated"
     ? "Votre évaluation reçue avant la création du compte a été rapprochée de manière sécurisée. Déposez les pièces demandées dans le centre documentaire."
     : !latestEvaluation
     ? "Créez ou poursuivez votre évaluation pour initier le dossier."
     : finalReviewPending
       ? "Une seconde validation humaine est requise avant la diffusion de votre résultat."
-      : validatedEvaluationResponse || cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
+      : validatedEvaluationResponse
+        ? (cProfile.evaluationReviewNote || "Votre réponse d’évaluation a été publiée par l’agence.")
+        : cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
   const evaluationRequired = !latestEvaluation && cProfile.evaluationDeclarationStatus !== "validated" && (Boolean(workflow?.evaluationRequired) || cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
@@ -913,7 +917,12 @@ export default function EvaluationSpace() {
                   </div>
                   <p className="mt-3 text-xs leading-5 text-violet-800">{evaluationStatusDetail}</p>
                   {reviewDueLabel && <p className="mt-2 text-xs font-semibold text-violet-900">Revue estimée au plus tard le {reviewDueLabel}</p>}
-                  {validatedEvaluationResponse && <p className="mt-2 text-xs font-semibold text-emerald-800">Réponse validée par l’agence.</p>}
+                  {validatedEvaluationResponseHtml ? (
+                    <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3" data-testid="validated-evaluation-response">
+                      <p className="text-xs font-semibold text-emerald-800">Réponse validée par l’agence.</p>
+                      <div className="prose prose-sm mt-2 max-w-none text-slate-800 prose-a:text-blue-700" dangerouslySetInnerHTML={{ __html: validatedEvaluationResponseHtml }} />
+                    </div>
+                  ) : null}
                 </Card>
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">

@@ -30,6 +30,8 @@ describe("workflow de revue humaine des évaluations", () => {
     const candidateRouter = read("server/routers/candidate.ts");
     expect(source).toContain("latestEvaluation?.finalResponseSentAt && latestEvaluation?.reviewDraft");
     expect(source).toContain("Réponse validée par l’agence.");
+    expect(source).toContain("validatedEvaluationResponseHtml");
+    expect(source).toContain("sanitizeRichText");
     expect(candidateRouter).toContain("reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null");
   });
 });
