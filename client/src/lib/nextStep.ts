@@ -1,12 +1,14 @@
 /**
  * « Votre prochaine étape » : UNE action claire pour le candidat, déduite des données déjà synchronisées avec
  * le back-office. Logique pure : ordre de priorité explicite, aucune promesse, aucun délai inventé.
+ * Lecture seule — ne modifie jamais un dossier actif.
  */
 
 export type NextStepAction =
   | { kind: "evaluation" }
-  | { kind: "section"; section: "dossier" | "documents" | "signatures" }
+  | { kind: "section"; section: "dossier" | "documents" | "signatures" | "notifications" | "messages" | "overview" }
   | { kind: "anchor"; elementId: string }
+  | { kind: "link"; href: string }
   | { kind: "none" };
 
 export type NextStep = {
@@ -25,6 +27,10 @@ export type NextStepInput = {
   evaluationStage?: "not_started" | "pending" | "info_requested" | "published";
   /** Faux quand le CV manque : l'évaluation ne peut pas être finalisée sans lui. */
   cvOnFile?: boolean;
+  /** Frais d’ouverture demandés et pas encore confirmés par l’agence. */
+  paymentDue?: boolean;
+  /** Lien de paiement (référence dossier), si paymentDue. */
+  paymentHref?: string | null;
   agreementSignatureRequired: boolean;
   /** Pièces des dossiers du candidat (statuts du back-office). */
   requirements?: unknown;
@@ -33,6 +39,12 @@ export type NextStepInput = {
    * lisait « aucune action attendue » alors que sa checklist était vide.
    */
   checklist?: { total: number; missing: number; replace: number; firstMissingLabel?: string | null; firstReplaceLabel?: string | null };
+  /** Notifications durables non lues (boîte /mon-espace). */
+  unreadNotifications?: number;
+  /** Messages conseiller non lus. */
+  unreadMessages?: number;
+  /** Lien WhatsApp conseiller (affiché quand il n’y a plus d’action bloquante). */
+  advisorWhatsAppUrl?: string | null;
 };
 
 export const EVALUATION_ANCHOR_ID = "evaluation-status";
@@ -52,6 +64,17 @@ export function computeNextStep(input: NextStepInput): NextStep {
   // (« info_requested » est déjà traité plus haut : la demande de complément prime sur le CV manquant)
   if (input.evaluationStage === "pending" && input.cvOnFile === false) {
     return { id: "cv-missing", tone: "action", eyebrow: "À faire maintenant", title: "Ajoutez votre CV", description: "Votre évaluation ne peut pas être finalisée sans votre CV (PDF, JPG ou PNG, 5 Mo maximum).", actionLabel: "Ajouter mon CV", action: { kind: "anchor", elementId: EVALUATION_ANCHOR_ID } };
+  }
+  if (input.paymentDue) {
+    return {
+      id: "payment-due",
+      tone: "action",
+      eyebrow: "À faire maintenant",
+      title: "Réglez les frais d’ouverture",
+      description: "Le paiement est pris en compte uniquement quand l’agence le confirme. Utilisez la référence de votre dossier pour tout dépôt ou virement.",
+      actionLabel: "Comment payer",
+      action: input.paymentHref ? { kind: "link", href: input.paymentHref } : { kind: "section", section: "overview" },
+    };
   }
   if (input.agreementSignatureRequired) {
     return { id: "agreement", tone: "action", eyebrow: "Paiement confirmé", title: "Signez votre protocole d’accord", description: "C’est l’étape qui précède le traitement humain de votre dossier.", actionLabel: "Ouvrir le protocole", action: { kind: "section", section: "dossier" } };
@@ -75,11 +98,46 @@ export function computeNextStep(input: NextStepInput): NextStep {
   if (pending > 0) {
     return { id: "documents-pending", tone: "action", eyebrow: "Documents demandés", title: `Déposez ${pending} ${plural(pending, "pièce", "pièces")}`, description: "Chaque pièce déposée est vérifiée par un conseiller ; vous êtes averti dès qu’elle est validée ou à corriger.", actionLabel: "Ouvrir mes documents", action: { kind: "section", section: "documents" } };
   }
+
+  const unreadNotifications = Math.max(0, Number(input.unreadNotifications) || 0);
+  if (unreadNotifications > 0) {
+    return {
+      id: "notifications-unread",
+      tone: "action",
+      eyebrow: "À lire",
+      title: `Lisez ${unreadNotifications} ${plural(unreadNotifications, "notification", "notifications")}`,
+      description: "Nouveaux documents, étapes ou messages de l’agence. Rien n’est modifié dans votre dossier sans votre action.",
+      actionLabel: "Ouvrir mes notifications",
+      action: { kind: "section", section: "notifications" },
+    };
+  }
+
+  const unreadMessages = Math.max(0, Number(input.unreadMessages) || 0);
+  if (unreadMessages > 0) {
+    return {
+      id: "messages-unread",
+      tone: "action",
+      eyebrow: "Message du conseiller",
+      title: `Lisez ${unreadMessages} ${plural(unreadMessages, "message", "messages")}`,
+      description: "Votre conseiller a répondu. Consultez la messagerie pour la suite de votre dossier.",
+      actionLabel: "Ouvrir la messagerie",
+      action: { kind: "section", section: "messages" },
+    };
+  }
+
   if (input.evaluationStage === "published") {
     return { id: "evaluation-published", tone: "info", eyebrow: "Votre évaluation est prête", title: "Consultez votre rapport", description: "Il a été relu et validé par notre équipe. Parlez-en à un conseiller pour préparer la suite.", actionLabel: "Voir mon évaluation", action: { kind: "anchor", elementId: EVALUATION_ANCHOR_ID } };
   }
   if (input.evaluationStage === "pending") {
-    return { id: "waiting-review", tone: "info", eyebrow: "En cours d’examen", title: "Votre évaluation est examinée par notre équipe", description: "Rien à faire de votre côté pour l’instant. Vous serez averti ici dès qu’elle sera publiée.", actionLabel: null, action: { kind: "none" } };
+    return { id: "waiting-review", tone: "info", eyebrow: "En cours d’examen", title: "Votre évaluation est examinée par notre équipe", description: "Rien à faire de votre côté pour l’instant. Vous serez averti ici dès qu’elle sera publiée.", actionLabel: input.advisorWhatsAppUrl ? "Écrire sur WhatsApp" : null, action: input.advisorWhatsAppUrl ? { kind: "link", href: input.advisorWhatsAppUrl } : { kind: "none" } };
   }
-  return { id: "all-clear", tone: "done", eyebrow: "Tout est à jour", title: "Aucune action n’est attendue de votre part", description: "Nous vous avertirons ici dès qu’il y aura du nouveau. Une question ? Écrivez-nous sur WhatsApp.", actionLabel: null, action: { kind: "none" } };
+  return {
+    id: "all-clear",
+    tone: "done",
+    eyebrow: "Tout est à jour",
+    title: "Aucune action n’est attendue de votre part",
+    description: "Nous vous avertirons ici dès qu’il y aura du nouveau. Une question ? Écrivez-nous sur WhatsApp.",
+    actionLabel: input.advisorWhatsAppUrl ? "Écrire sur WhatsApp" : null,
+    action: input.advisorWhatsAppUrl ? { kind: "link", href: input.advisorWhatsAppUrl } : { kind: "none" },
+  };
 }

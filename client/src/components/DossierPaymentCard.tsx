@@ -26,7 +26,9 @@ export default function DossierPaymentCard({ dossierNumber, amount, currency, co
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Paiement confirmé par l’agence. Ce règlement ne couvre que ce dossier.</p>
           <span className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-black text-emerald-900" data-testid="payment-dossier-reference">Référence : <span className="font-mono">{dossierNumber}</span></span>
         </div>
-        <p className="mt-2 text-xs text-emerald-800">Votre reçu vous est envoyé par e-mail.</p>
+        <p className="mt-2 text-xs text-emerald-800">
+          Votre reçu est remis en agence (format caisse) et confirmé par e-mail. Aucune action n’est requise ici — consultez vos notifications si un nouvel avis apparaît.
+        </p>
       </Card>
     );
   }
