@@ -34,8 +34,10 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     const evisa = read("client/src/pages/Evisa.tsx");
     expect(shell).toContain("PremiumReveal");
     expect(shell).toContain("py-16 sm:px-6 sm:py-20");
-    expect(shell).toContain("!text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]");
-    expect(shell).toContain("bg-[#020C3B]/35");
+    expect(shell).toContain("3M TRAVEL AGENCY");
+    expect(shell).toContain("min-h-[88svh]");
+    expect(shell).toContain("bg-amber-500");
+    expect(shell).not.toContain("Une orientation, pas une promesse");
     expect(tarifs).toContain("PremiumReveal");
     expect(tarifs).toContain("premium-section-title");
     expect(schengen).toContain("premium-copy");
