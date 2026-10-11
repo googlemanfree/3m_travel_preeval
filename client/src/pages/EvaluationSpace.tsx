@@ -48,6 +48,7 @@ import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
+import ClientDossierStepAlert from "@/components/ClientDossierStepAlert";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
@@ -95,6 +96,7 @@ export default function EvaluationSpace() {
   const [clarificationDocument, setClarificationDocument] = useState<string | null>(null);
   const [clarificationDetails, setClarificationDetails] = useState("");
   const [uploadClarification, setUploadClarification] = useState<{ id: number; documentLabel: string } | null>(null);
+  const [stepAdvanceAlert, setStepAdvanceAlert] = useState<import("@/lib/clientSpaceSync").ClientSpaceChange | null>(null);
   const seenAnsweredClarificationIds = useRef<Set<number> | null>(null);
 
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -262,6 +264,8 @@ export default function EvaluationSpace() {
     });
     const changes = diffClientSpace(previousSpaceSnapshot.current, next);
     previousSpaceSnapshot.current = mergeClientSpaceSnapshots(previousSpaceSnapshot.current, next);
+    const procedureChange = changes.find((change) => change.id.startsWith("procedure-") || change.id.startsWith("case-"));
+    if (procedureChange) setStepAdvanceAlert(procedureChange);
     for (const change of limitAnnouncements(changes)) {
       const options = { id: change.id, description: change.description, duration: 8_000 };
       if (change.tone === "success") toast.success(change.title, options);
@@ -661,6 +665,7 @@ export default function EvaluationSpace() {
               Chaque dossier a son propre frais d’ouverture. Le paiement d’un dossier ne règle pas les autres : sélectionnez le dossier encore « Paiement à confirmer » pour le régler.
             </p>
           )}
+          {stepAdvanceAlert && <div className="mt-3"><ClientDossierStepAlert change={stepAdvanceAlert} onDismiss={() => setStepAdvanceAlert(null)} /></div>}
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
@@ -1302,8 +1307,9 @@ export default function EvaluationSpace() {
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
-              <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Téléverser de nouveaux documents</h3>
+              <Card className="p-6 border-blue-100 bg-white shadow-sm" data-testid="client-document-dropzone">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces directement</h3>
+                <p className="mb-4 text-sm text-slate-600">Ajoutez les documents demandés pour ce dossier. Chaque dépôt est transmis de façon sécurisée à l’agence et reste en attente de vérification humaine.</p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
                   requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
