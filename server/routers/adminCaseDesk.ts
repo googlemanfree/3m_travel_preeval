@@ -174,6 +174,25 @@ export const adminCaseDeskRouter = router({
     return { success: true, status: input.status };
   }),
 
+  /** Valide en une seule action plusieurs pièces non encore validées du même dossier. */
+  approveRequirementsBulk: publicProcedure
+    .input(adminInput.extend({ requirementIds: z.array(z.number().int().positive()).min(1).max(50) }))
+    .mutation(async ({ input }) => {
+      const { admin, db, operationalCase } = await loadContext(input);
+      const requirementIds = Array.from(new Set(input.requirementIds));
+      const requirements = await Promise.all(requirementIds.map((requirementId) => loadRequirement(db, operationalCase.id, requirementId)));
+      const eligible = requirements.filter((requirement: any) => requirement.status !== "approved" && requirement.status !== "waived");
+      const eligibleIds = new Set(eligible.map((requirement: any) => requirement.id));
+      const skipped = requirements.filter((requirement: any) => !eligibleIds.has(requirement.id)).map((requirement: any) => requirement.id);
+      const now = new Date();
+      for (const requirement of eligible) {
+        await db.update(documentRequirements).set({ status: "approved", adminComment: null, validatedAt: now, rejectedAt: null }).where(eq(documentRequirements.id, requirement.id));
+        await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "requirement_approved", entityType: "document_requirement", entityId: String(requirement.id), description: `Pièce « ${requirement.documentType} » validée en traitement groupé.` });
+        await notifyCandidate(db, operationalCase, requirementNotification({ kind: "approved", documentType: requirement.documentType }));
+      }
+      return { success: true, validatedCount: eligible.length, skippedIds: skipped };
+    }),
+
   /** Ajoute une pièce à la checklist du dossier (une seule, sans passer par la création de checklist complète). */
   addRequirement: publicProcedure
     .input(adminInput.extend({ documentType: z.string().trim().min(2).max(100), comment: z.string().max(500).optional(), dueAt: z.string().max(10).optional() }))

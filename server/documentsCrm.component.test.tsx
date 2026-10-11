@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 (globalThis as any).React = React;
 
-const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[], request: [] as any[] }));
+const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[], request: [] as any[], bulk: [] as any[] }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -13,6 +13,7 @@ vi.mock("@/lib/trpc", () => ({
       setRequirementStatus: { useMutation: () => ({ mutate: (value: any) => calls.decide.push(value), isPending: false }) },
       depositDocument: { useMutation: () => ({ mutate: (value: any) => calls.deposit.push(value), isPending: false }) },
       addRequirement: { useMutation: () => ({ mutate: (value: any) => calls.add.push(value), isPending: false }) },
+      approveRequirementsBulk: { useMutation: () => ({ mutate: (value: any) => calls.bulk.push(value), isPending: false }) },
     },
     admin: {
       requestCandidate360Document: { useMutation: () => ({ mutate: (value: any) => calls.request.push(value), isPending: false }) },
@@ -39,7 +40,7 @@ const documents = [
 ];
 
 afterEach(cleanup);
-beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; calls.request.length = 0; });
+beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; calls.request.length = 0; calls.bulk.length = 0; });
 
 describe("logique de la vue CRM", () => {
   it("les statuts sont lisibles en français et un statut inconnu vaut « à fournir »", () => {
@@ -121,6 +122,14 @@ describe("vue CRM des pièces", () => {
     expect(screen.getByTestId("crm-row-3")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Toutes (6)" }));
     expect(screen.getAllByTestId(/crm-row-/)).toHaveLength(6);
+  });
+
+  it("sélectionne plusieurs pièces, exclut les pièces déjà validées et envoie une seule validation groupée", () => {
+    renderCrm();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Sélectionner toutes les pièces à valider" }));
+    fireEvent.click(screen.getByRole("button", { name: "Valider la sélection (4)" }));
+    expect(calls.bulk).toEqual([{ sessionToken: "tok", candidateId: "online-12", requirementIds: [1, 2, 3, 6] }]);
+    expect(screen.queryByRole("checkbox", { name: "Sélectionner Assurance médicale pour validation" })).toBeNull();
   });
 
   it("valider, non requise et rouvrir envoient la bonne décision au serveur", () => {

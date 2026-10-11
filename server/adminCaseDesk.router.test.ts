@@ -68,6 +68,7 @@ describe("accès", () => {
     const denied = { sessionToken: "faux", candidateId: "online-12" };
     await expect(caller().depositDocument({ ...denied, requirementId: 5, fileName: "a.pdf", base64: PDF_B64, validate: false })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller().setRequirementStatus({ ...denied, requirementId: 5, status: "approved" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller().approveRequirementsBulk({ ...denied, requirementIds: [5] })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller().addRequirement({ ...denied, documentType: "CV" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     expect(h.stored).toHaveLength(0);
     expect(h.inserts).toHaveLength(0);

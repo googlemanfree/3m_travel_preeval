@@ -1,5 +1,6 @@
 
-## Demande de pièce depuis la vue globale et statut documentaire — VALIDÉ
-- [x] Action admin protégée `requestCandidate360Document` depuis la vue globale 360° : demande liée au dossier, notification client, message, journal et e-mail sans donnée sensible superflue.
-- [x] Statut explicite pour chaque document client : Validé, En vérification ou À corriger, avec panneau mobile-first dans l’onglet Documents.
-- [x] Tests ciblés : 3 fichiers / 26 tests verts ; `pnpm run check` vert ; `vite build` vert. Aucun schéma/migration supplémentaire requis : réutilisation des tables de clarification existantes.
+## Validation documentaire admin — VALIDÉ
+- [x] Sélection multiple et validation groupée des pièces non validées ; les pièces déjà validées/non requises ne sont pas sélectionnables, et le bouton d’action est désactivé sans sélection ou pendant l’envoi.
+- [x] Commentaire explicatif obligatoire conservé et testé lors du statut « À corriger » ; le commentaire est affiché au candidat et journalisé côté admin.
+- [x] Tests ciblés : 3 fichiers / 40 tests verts ; `pnpm run check` et `vite build` verts.
+- [x] Suite complète : 575 fichiers et 3 125 tests verts, 5 échecs hors périmètre préexistants (Home-density, Jinko externe, sources pays). Aucun de ces échecs ne concerne cette évolution.
