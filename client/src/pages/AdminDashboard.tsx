@@ -406,7 +406,9 @@ export function CandidateDetailModal({
   );
   const candidate = data?.candidate;
   const paymentSnapshot = (data as { payments?: Array<{ status?: string | null; validatedBy?: string | null; validatedAt?: string | Date | null; paidAt?: string | Date | null; amount?: number | null; currency?: string | null }> } | undefined)?.payments?.[0];
-  const paymentAlreadyConfirmed = paymentConfirmedOptimistically || ["SUCCESS", "success", "completed", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const paymentAlreadyConfirmed = paymentConfirmedOptimistically
+    || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String(paymentSnapshot?.status ?? ""))
+    || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String((candidate as Candidate | undefined)?.paymentStatus ?? ""));
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
   const previousAdminStatus = getPreviousAdminStatus(candidate?.status);
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
@@ -421,6 +423,17 @@ export function CandidateDetailModal({
   useEffect(() => {
     if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
   }, [candidate, openEvaluationEditor]);
+
+  // EVAL-AG-{id} = miroir du dossier actif 3M-AGN-{id} : ouvrir uniquement le 3M.
+  useEffect(() => {
+    const redirectId = (data as { redirectToCanonicalAgencyId?: string | null } | undefined)?.redirectToCanonicalAgencyId;
+    if (!redirectId || redirectId === candidateId) return;
+    toast({
+      title: "Dossier actif 3M",
+      description: `${candidate?.folderCode || "EVAL-AG"} est un miroir de préparation. Ouverture du dossier actif ${redirectId.replace(/^agency_/, "3M-AGN-")}.`,
+    });
+    onNavigateToCandidate?.(redirectId);
+  }, [data, candidateId, candidate?.folderCode, onNavigateToCandidate]);
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -758,17 +771,21 @@ export function CandidateDetailModal({
               </section>
               <AdminRegistrationProfile profile={(candidate as any).registrationProfile} />
 
-              {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
+              {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5" data-testid="pilotage-decision-panel">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Pilotage guidé</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{candidate.projectType || "Procédure à qualifier"}</p>
+                <p className="mt-1 font-mono text-xs text-blue-800">{candidate.folderCode}</p>
+                {Array.isArray((candidate as any).formerFolderCodes) && (candidate as any).formerFolderCodes.length > 0 && (
+                  <p className="mt-1 text-[11px] text-slate-500">Variante : {(candidate as any).formerFolderCodes.join(" · ")}</p>
+                )}
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Validation manuelle guidée</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Prochaine action utile</p>
                     {paymentAlreadyConfirmed ? (
-                      <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status">
+                      <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status" data-testid="payment-already-confirmed">
                         <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Paiement déjà confirmé</div>
                         <p className="mt-1 text-xs font-normal text-emerald-800">
-                          {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Le paiement Frais de dossier est déjà au statut SUCCESS."}
+                          {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Frais d’ouverture au statut SUCCESS."}
                           {paymentSnapshot?.validatedAt ? ` · ${new Date(paymentSnapshot.validatedAt).toLocaleString("fr-FR")}` : ""}
                         </p>
                       </div>
@@ -778,48 +795,55 @@ export function CandidateDetailModal({
                         onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
                         disabled={confirmPaymentForCandidateMutation.isPending}
                         className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
+                        data-testid="confirm-payment-button"
                       >
                         {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
                       </Button>
                     )}
-                    <p className="mt-1 text-xs leading-5 text-amber-900">Un paiement au statut SUCCESS est automatiquement considéré comme déjà confirmé. Aucune seconde validation ni saisie de code secret n’est requise.</p>
-                    {nextAdminStatus ? (
+                    {paymentAlreadyConfirmed && nextAdminStatus ? (
                       <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
-                        <CheckCircle className="mr-2 h-4 w-4" />Valider l’étape suivante : {STATUS_CONFIG[nextAdminStatus].label}
+                        <CheckCircle className="mr-2 h-4 w-4" />Étape suivante : {STATUS_CONFIG[nextAdminStatus].label}
                       </Button>
+                    ) : paymentAlreadyConfirmed ? (
+                      <p className="mt-2 text-sm font-semibold text-emerald-900">Parcours guidé à jour pour ce dossier.</p>
                     ) : (
-                      <p className="mt-2 text-sm font-semibold text-emerald-900">Toutes les étapes prévues sont validées.</p>
+                      <p className="mt-2 text-xs leading-5 text-amber-900">Confirmez d’abord le paiement avant d’avancer les étapes du parcours.</p>
                     )}
-                    {previousAdminStatus && (
+                    {previousAdminStatus && paymentAlreadyConfirmed && (
                       <Button type="button" variant="outline" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
                         <X className="mr-2 h-4 w-4" />Annuler la dernière validation
                       </Button>
                     )}
-                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes.</p>
                   </div>
-                  <Label htmlFor="candidate-status">Statut général</Label>
-                  <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
-                    <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
-                    <SelectContent>{Object.entries(STATUS_CONFIG).map(([key, cfg]) => <SelectItem key={key} value={key}>{cfg.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <label className="flex items-start gap-2 text-sm text-slate-700">
-                    <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
-                    <span>Notifier le candidat par e-mail après la mise à jour.</span>
-                  </label>
-                  <p id="candidate-status-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{updateStatusMutation.isPending ? "Mise à jour du statut en cours." : selectedStatus ? "Le statut est prêt à être enregistré." : "Choisissez un statut pour activer l’enregistrement."}</p>
-                  <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} aria-describedby="candidate-status-guidance" className="w-full bg-blue-700 hover:bg-blue-800">
-                    {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer la décision"}
-                  </Button>
-                </div>
-              </section>}
-
-              {!isPreDossierAccount && <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Centres de traitement</p>
-                <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
-                <div className="mt-4 grid gap-2">
-                  <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
-                  <Button className="justify-start bg-amber-700 text-white hover:bg-amber-800" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
-                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
+                  <div className="grid gap-2">
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
+                      <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("overview")} data-testid="open-360-summary">
+                      <FileText className="mr-2 h-4 w-4 text-indigo-700" />Synthèse & vue d’ensemble
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("messages")}>
+                      <Mail className="mr-2 h-4 w-4 text-blue-700" />Échanges candidat
+                    </Button>
+                  </div>
+                  <details className="rounded-lg border border-slate-200 bg-white p-3">
+                    <summary className="cursor-pointer text-xs font-semibold text-slate-700">Correction avancée du statut</summary>
+                    <div className="mt-3 space-y-2">
+                      <Label htmlFor="candidate-status">Statut général</Label>
+                      <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
+                        <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
+                        <SelectContent>{Object.entries(STATUS_CONFIG).map(([key, cfg]) => <SelectItem key={key} value={key}>{cfg.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <label className="flex items-start gap-2 text-sm text-slate-700">
+                        <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
+                        <span>Notifier le candidat par e-mail.</span>
+                      </label>
+                      <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} className="w-full bg-slate-800 hover:bg-slate-900">
+                        {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer le statut"}
+                      </Button>
+                    </div>
+                  </details>
                 </div>
               </section>}
 

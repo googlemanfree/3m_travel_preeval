@@ -72,10 +72,11 @@ describe("agreement and payment gating contracts", () => {
 
   it("provides accessible manual payment and next-step controls in the candidate admin workspace", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
-    expect(dashboard).toContain("Valider le paiement en agence");
-    expect(dashboard).toContain("Valider l’étape suivante");
+    expect(dashboard).toContain('data-testid="confirm-payment-button"');
+    expect(dashboard).toContain("Étape suivante");
     expect(dashboard).toContain("getNextAdminStatus");
     expect(dashboard).toContain("Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes");
+    expect(dashboard).toContain('data-testid="payment-already-confirmed"');
   });
 
   it("enforces sequential manual status validation and records the admin action", () => {

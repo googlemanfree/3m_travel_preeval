@@ -212,6 +212,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   }, [initialTab]);
 
   useEffect(() => {
+    const redirectId = (data as { redirectToCanonicalAgencyId?: string | null } | undefined)?.redirectToCanonicalAgencyId;
+    if (!redirectId || redirectId === candidate.id || !onSelectSibling) return;
+    toast.info("Ouverture du dossier actif 3M (le code EVAL-AG est un miroir de préparation).");
+    onSelectSibling(redirectId);
+  }, [data, candidate.id, onSelectSibling]);
+
+  useEffect(() => {
     if (!data?.operationalCase) return;
     setWorkflowStatus(data.operationalCase.currentStatus);
     setPriority(data.operationalCase.priority);
@@ -681,11 +688,15 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
         <span className="font-mono text-[11px] font-semibold text-blue-800">
-          {candidate.folderCode}
-          {candidate.formerAccountReference ? (
+          {(data as any)?.canonicalFolderCode || candidate.folderCode}
+          {(data as any)?.evalShellFolderCode ? (
+            <span className="ml-2 font-sans font-normal text-slate-500">Variante : {(data as any).evalShellFolderCode}</span>
+          ) : candidate.formerAccountReference ? (
             <span className="ml-2 font-sans font-normal text-slate-500">Ancien compte : {candidate.formerAccountReference}</span>
           ) : candidate.referenceKind === "account" ? (
             <span className="ml-2 font-sans font-normal text-slate-500">Compte — dossier non activé</span>
+          ) : Array.isArray((candidate as any).formerFolderCodes) && (candidate as any).formerFolderCodes.length > 0 ? (
+            <span className="ml-2 font-sans font-normal text-slate-500">Variante : {(candidate as any).formerFolderCodes.join(" · ")}</span>
           ) : null}
         </span>
         <span>{isFetching ? "Synchronisation du dossier…" : dataUpdatedAt ? `Dernière sync : ${formatAdminSyncTime(new Date(dataUpdatedAt))}` : formatAdminSyncTime(null)}</span>
@@ -695,7 +706,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       </div>
 
       {(() => {
-        const siblings = ((data as any).siblingProcedures as Array<{
+        const rawSiblings = ((data as any).siblingProcedures as Array<{
           id: string;
           folderCode: string;
           projectType?: string | null;
@@ -714,12 +725,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             procedureLabel?: string | null;
           }>)
           : siblingProcedures;
+        const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
         if (!siblings.length) return null;
         return (
           <AdminSimultaneousProceduresBoard
             current={{
               id: candidate.id,
-              folderCode: candidate.folderCode,
+              folderCode: (data as any)?.canonicalFolderCode || candidate.folderCode,
               projectType: candidate.projectType,
               destinationCountry: candidate.destinationCountry,
               paymentStatus: (data as any).payments?.[0]?.status ?? null,
@@ -799,6 +811,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 pt-4">
+          {candidate.internalId > 0 && (
+            <div data-testid="candidate360-overview-summary">
+              <AdminCandidateSummaryCard sessionToken={sessionToken} candidateId={candidate.internalId} />
+            </div>
+          )}
           <section className="grid gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)] lg:p-5">
             <div>
               <div className="flex flex-wrap items-center gap-2"><Badge className="border-blue-200 bg-white text-blue-800">Contexte de la demande</Badge>{data.evaluationContext?.projectType && <Badge variant="secondary">{data.evaluationContext.projectType}</Badge>}</div>
@@ -813,25 +830,27 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </div>
           </section>
           {(() => {
-            const siblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
+            const rawSiblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])
               : siblingProcedures;
-            if (!siblings.length && !onSelectSibling) return null;
+            // Ne pas afficher un miroir EVAL-AG comme seconde procédure du même dossier 3M.
+            const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+            if (!siblings.length) return null;
             return (
               <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4" data-testid="candidate360-procedure-tabs" aria-label="Procédures liées du client">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Multi-procédures</p>
-                    <h4 className="mt-1 text-base font-bold text-slate-950">Dossiers du même client</h4>
+                    <h4 className="mt-1 text-base font-bold text-slate-950">Autres procédures distinctes du même client</h4>
                   </div>
                   <Badge className="border-indigo-200 bg-white text-indigo-800">{siblings.length + 1} procédure(s)</Badge>
                 </div>
-                {(data as any).dualOpportunityHandoff && (
+                {(data as any).dualOpportunityHandoff && siblings.length > 0 && (
                   <p className="mt-2 text-xs leading-5 text-indigo-900">{(data as any).dualOpportunityHandoff}</p>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" disabled>
-                    Actuel · {candidate.folderCode} · {candidate.projectType || "Procédure"}
+                    Actuel · {(data as any)?.canonicalFolderCode || candidate.folderCode} · {candidate.projectType || "Procédure"}
                   </Button>
                   {siblings.map((sibling) => (
                     <Button
@@ -1207,6 +1226,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-3 pt-4">
+          <section className="rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="candidate360-documents-hub">
+            <h4 className="font-semibold text-violet-950">Poste documents — tout au même endroit</h4>
+            <p className="mt-1 text-sm text-violet-900">Télécharger, ouvrir, valider, demander une correction ou déposer une pièce : le CRM ci-dessous regroupe les dépôts candidat et administrateur pour ce dossier actif.</p>
+          </section>
           {data.communications.documentClarifications?.length > 0 && (
             <section className="rounded-xl border border-violet-200 bg-violet-50 p-4" aria-labelledby="admin-document-clarifications-title">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1263,9 +1286,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             onRemind={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
             reminding={documentReminderMutation.isPending || actionLocks.documentReminder}
           />
-          {candidate.internalId > 0 && <AdminCandidateSummaryCard sessionToken={sessionToken} candidateId={candidate.internalId} />}
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
-            <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils du dossier : checklist par procédure, CV, tous les documents</summary>
+            <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils avancés : checklist pays, CV, extraction</summary>
             <div className="space-y-4 border-t p-4">
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" maxLength={2000} /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
           <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })}><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending || isFetchingCv} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{isFetchingCv ? "Lecture du CV…" : cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>

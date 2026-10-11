@@ -25,6 +25,13 @@ import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDos
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
 import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
+import {
+  collapseEvalAgencyShellRows,
+  isEvalAgencyShell,
+  parseEvalAgencyShellId,
+  canonicalAgencyCandidateId,
+  canonicalAgencyFolderCode,
+} from "../../shared/evalAgencyShell";
 import { buildCandidateCockpit } from "../../shared/candidateCockpit";
 import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
 import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
@@ -1829,10 +1836,29 @@ export const adminRouter = router({
             procedureStep: mapDossierStatus(candidate.dossierStatus),
           }));
 
+        // EVAL-AG-{id} est un miroir de préparation du dossier agence 3M-AGN-{id} :
+        // un seul dossier actif (3M). On retire le miroir de la liste principale
+        // mais on conserve EVAL-AG dans les codes recherchables du dossier 3M.
+        const agencyIdsPresent = new Set(
+          normalizedAgency.map((row) => Number(String(row.id).replace(/^agency_/, ""))).filter((id) => id > 0),
+        );
+        const onlineWithoutEvalShells = collapseEvalAgencyShellRows(normalizedOnline);
+        const agencyWithEvalSearch = normalizedAgency.map((row) => {
+          const agencyId = Number(String(row.id).replace(/^agency_/, ""));
+          const evalCode = agencyId > 0 ? `EVAL-AG-${agencyId}` : null;
+          const searchable = Array.from(
+            new Set([
+              row.folderCode,
+              ...(evalCode && agencyIdsPresent.has(agencyId) ? [evalCode] : []),
+            ].filter(Boolean)),
+          );
+          return { ...row, searchableFolderCodes: searchable };
+        });
+
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
         // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
         // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
-        let allCandidates = attachSiblingProcedures([...normalizedOnline, ...normalizedAgency, ...normalizedAccounts]).map((row) => {
+        let allCandidates = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]).map((row) => {
           const procedureJourney = buildAdminProcedureSnapshot({
             destination: row.destinationCountry,
             visaType: row.projectType,
@@ -2712,8 +2738,29 @@ export const adminRouter = router({
             try { scoringData = JSON.parse(app.scoringDetails); } catch {}
           }
 
+          const evalShellId = parseEvalAgencyShellId(app.dossierNumber);
+          let redirectToCanonicalAgencyId: string | null = null;
+          if (evalShellId != null) {
+            const [linkedAgency] = await db
+              .select({ id: agencyDossiers.id })
+              .from(agencyDossiers)
+              .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
+              .limit(1);
+            if (linkedAgency) redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+          }
+
+          const paymentSnapshot = {
+            status: app.paymentStatus,
+            amount: app.paymentAmount ?? null,
+            currency: app.paymentCurrency ?? "XAF",
+            paidAt: (app as any).paymentValidatedAt ?? null,
+            validatedAt: (app as any).paymentValidatedAt ?? null,
+            validatedBy: (app as any).paymentValidatedBy ?? null,
+          };
+
           return serializeAdminCandidateDetails({
             success: true,
+            redirectToCanonicalAgencyId,
             candidate: {
               id: `online_${app.id}`,
               internalId: app.id,
@@ -2733,6 +2780,7 @@ export const adminRouter = router({
               scoringBadge: app.scoringBadge,
               scoringData,
               avatarUrl,
+              paymentStatus: app.paymentStatus,
               evaluationDeclarationStatus: candRec?.evaluationDeclarationStatus ?? "not_declared",
               evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
               evaluationReviewedAt: candRec?.evaluationReviewedAt ?? null,
@@ -2743,15 +2791,24 @@ export const adminRouter = router({
               createdAt: app.createdAt,
               updatedAt: app.updatedAt,
             },
+            payments: [paymentSnapshot],
             documents: docs,
           });
         } else if (source === "agency") {
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
 
-          let avatarUrl = null;
+          let avatarUrl = null as string | null;
+          let candRec: {
+            avatarUrl?: string | null;
+            evaluationDeclarationStatus?: string | null;
+            evaluationDeclaredAt?: Date | null;
+            evaluationReviewedAt?: Date | null;
+            evaluationReviewedBy?: string | null;
+          } | null = null;
           if (dossier.email) {
-            const [candRec] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            const [row] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            candRec = row ?? null;
             avatarUrl = candRec?.avatarUrl || null;
           }
 
@@ -2767,12 +2824,34 @@ export const adminRouter = router({
             return mapping[status] || "PENDING_48H";
           };
 
+          const paymentStatus = dossier.initialPaymentStatus === "paid"
+            ? "SUCCESS"
+            : dossier.initialPaymentStatus === "pending"
+              ? "PENDING"
+              : "NOT_PAID";
+          const paymentSnapshot = {
+            status: paymentStatus,
+            amount: null as number | null,
+            currency: "XAF",
+            paidAt: null as Date | null,
+            validatedAt: null as Date | null,
+            validatedBy: null as string | null,
+          };
+          const agencyDocs = await db
+            .select()
+            .from(agencyDossierDocuments)
+            .where(eq(agencyDossierDocuments.dossierId, dossier.id))
+            .orderBy(desc(agencyDossierDocuments.createdAt))
+            .limit(100);
+
           return serializeAdminCandidateDetails({
             success: true,
+            redirectToCanonicalAgencyId: null,
             candidate: {
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
-              folderCode: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
+              folderCode: agencyDossierReference(dossier.id),
+              formerFolderCodes: [`EVAL-AG-${dossier.id}`],
               fullName: dossier.fullName,
               email: dossier.email,
               whatsapp: dossier.phone || "",
@@ -2787,17 +2866,26 @@ export const adminRouter = router({
               scoringBadge: null,
               scoringData: null,
               avatarUrl,
-              evaluationDeclarationStatus: dossier.evaluationValidatedAt ? "validated" : "not_declared",
-              evaluationDeclaredAt: null,
-              evaluationReviewedAt: dossier.evaluationValidatedAt ?? null,
-              evaluationReviewedBy: dossier.evaluationValidatedBy ?? null,
+              paymentStatus,
+              evaluationDeclarationStatus: dossier.evaluationValidatedAt ? "validated" : (candRec?.evaluationDeclarationStatus ?? "not_declared"),
+              evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
+              evaluationReviewedAt: dossier.evaluationValidatedAt ?? candRec?.evaluationReviewedAt ?? null,
+              evaluationReviewedBy: dossier.evaluationValidatedBy ?? candRec?.evaluationReviewedBy ?? null,
               evaluationReviewNote: null,
               evaluationValidatedAt: dossier.evaluationValidatedAt ?? null,
               evaluationValidatedBy: dossier.evaluationValidatedBy ?? null,
               createdAt: dossier.createdAt,
               updatedAt: dossier.updatedAt,
             },
-            documents: [],
+            payments: [paymentSnapshot],
+            documents: agencyDocs.map((doc) => ({
+              id: doc.id,
+              documentType: doc.documentType,
+              fileName: doc.documentName,
+              fileUrl: doc.documentUrl,
+              uploadedAt: doc.createdAt,
+              verificationStatus: doc.verificationStatus,
+            })),
           });
         }
 
@@ -3853,7 +3941,10 @@ export const adminRouter = router({
               }),
             };
           });
-          return [...online, ...agency].filter((row) => row.id !== input.candidateId);
+          // Un seul dossier actif : masquer les miroirs EVAL-AG dès qu’un 3M-AGN existe.
+          return collapseEvalAgencyShellRows(
+            [...online, ...agency].filter((row) => row.id !== input.candidateId),
+          );
         }),
         [],
         "siblingProcedures",
@@ -3862,6 +3953,20 @@ export const adminRouter = router({
         currentProcedure: procedureLabel ?? visaTypeForJourney,
         siblingProcedures: siblingRows,
       });
+      const evalShellId = parseEvalAgencyShellId(
+        reference.source === "online"
+          ? (sourceRecord as typeof applications.$inferSelect).dossierNumber
+          : null,
+      );
+      let redirectToCanonicalAgencyId: string | null = null;
+      if (evalShellId != null) {
+        const [linkedAgency] = await db
+          .select({ id: agencyDossiers.id })
+          .from(agencyDossiers)
+          .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
+          .limit(1);
+        if (linkedAgency) redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+      }
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         evaluationDeclarationStatus: reference.source === "agency"
@@ -4022,6 +4127,9 @@ export const adminRouter = router({
         secondProtocol,
         siblingProcedures: siblingRows,
         dualOpportunityHandoff,
+        redirectToCanonicalAgencyId,
+        evalShellFolderCode: evalShellId != null ? `EVAL-AG-${evalShellId}` : null,
+        canonicalFolderCode: evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null,
         placementSummary: candidateRecord ? await safeCollection((async () => {
           const profile = (await db.select({
             id: placementCandidateProfiles.id,
