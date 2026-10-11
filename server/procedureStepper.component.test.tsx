@@ -103,6 +103,10 @@ describe("frise d'avancement (vue administrateur)", () => {
     // l'étape en cours n'offre ni « annuler » ni « déverrouiller » dans la liste
     const currentRow = screen.getByTestId("stepper-row-5");
     expect(within(currentRow).queryByRole("button")).toBeNull();
+    // une étape déjà faite n’a plus le bouton Déverrouiller (inactif / retiré)
+    const doneRow = screen.getByTestId("stepper-row-2");
+    expect(within(doneRow).getByTestId("step-unlocked-2").textContent).toMatch(/Déverrouillé/i);
+    expect(within(doneRow).queryByRole("button", { name: /Déverrouiller l’étape/i })).toBeNull();
   });
 
   it("occupé : l'action principale et les actions de liste sont désactivées", () => {

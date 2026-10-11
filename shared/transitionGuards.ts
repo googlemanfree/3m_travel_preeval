@@ -1,9 +1,10 @@
 /**
  * Gardes de transition admin : empêchent de sauter une étape métier
- * (paiement, protocole, documents) même si la séquence Kanban est respectée.
+ * (paiement, protocole, documents, employeur) même si la séquence Kanban est respectée.
  */
 
 import type { AdminOperationalStage } from "./adminProcedureJourney";
+import type { AdminProcedureKind } from "./adminDynamicPilotage";
 
 export type TransitionGuardInput = {
   targetStage: AdminOperationalStage;
@@ -15,6 +16,10 @@ export type TransitionGuardInput = {
   checklistPercent?: number | null;
   secondProtocolReady?: boolean;
   secondProtocolSigned?: boolean;
+  /** Employeur / partenaire d’accueil déjà enregistré (sélection validée). */
+  employerSelected?: boolean;
+  /** Type de procédure — le travail exige une sélection employeur avant décision favorable. */
+  procedureKind?: AdminProcedureKind | null;
 };
 
 export type TransitionGuardResult =
@@ -83,11 +88,20 @@ export function evaluateAdminStageTransition(input: TransitionGuardInput): Trans
     }
   }
 
+  // Visa / décision favorable : jamais sans sélection employeur sur une procédure travail.
+  if (stage === "APPROVED" && input.procedureKind === "work" && !input.employerSelected) {
+    return {
+      ok: false,
+      code: "employer_required",
+      message: "Sélectionnez d’abord un employeur / partenaire (Protocole N°02) avant la décision favorable.",
+    };
+  }
+
   if (stage === "APPROVED" && input.secondProtocolReady && input.secondProtocolSigned === false) {
     return {
       ok: false,
       code: "protocol_two_required",
-      message: "Le Protocole N°02 a été proposé : il doit être signé avant de clôturer en décision finale.",
+      message: "Le Protocole N°02 a été proposé : il doit être signé avant de clôturer en décision favorable.",
     };
   }
 

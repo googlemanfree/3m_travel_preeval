@@ -21,7 +21,9 @@ import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistory
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
 import AdminCandidateSummaryCard from "@/components/AdminCandidateSummaryCard";
-import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
+import AdminCandidateCockpitStrip, { type CockpitTreatTarget } from "@/components/AdminCandidateCockpitStrip";
+import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
+import { cockpitTabLabel } from "@shared/candidateCockpit";
 import AdminSimultaneousProceduresBoard from "@/components/AdminSimultaneousProceduresBoard";
 import ProcedureStepper from "@/components/ProcedureStepper";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -561,11 +563,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-blue-800">Action rapide</p>
-          <p className="text-sm font-medium text-slate-900">Envoyer une notification directe ou un message urgent au candidat</p>
+          <p className="text-sm font-medium text-slate-900">Contrôler la vue candidat, puis envoyer une notification ou un message urgent</p>
         </div>
-        <Button className="bg-blue-700 hover:bg-blue-800 text-white shadow" onClick={() => setQuickMessageOpen(true)}>
-          <Mail className="mr-2 h-4 w-4" /> Message & Notification instantanée
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <AdminClientSpacePreview sessionToken={sessionToken} candidateId={candidate.id} candidateName={candidate.fullName} />
+          <Button className="bg-blue-700 hover:bg-blue-800 text-white shadow" onClick={() => setQuickMessageOpen(true)}>
+            <Mail className="mr-2 h-4 w-4" /> Message & Notification instantanée
+          </Button>
+        </div>
       </div>
 
       <Dialog open={quickMessageOpen} onOpenChange={setQuickMessageOpen}>
@@ -873,10 +878,23 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       {(data as any).cockpit ? (
         <AdminCandidateCockpitStrip
           cockpit={(data as any).cockpit}
-          onTreatNow={(target) => {
+          onTreatNow={(target: CockpitTreatTarget) => {
             setActiveTab(target.tab);
+            const scrollToTarget = () => {
+              const focusNode = document.getElementById(target.focusId)
+                || document.getElementById("candidate-360-tabs");
+              focusNode?.scrollIntoView({ behavior: "smooth", block: "start" });
+              if (focusNode instanceof HTMLElement) {
+                focusNode.setAttribute("data-cockpit-focus", "true");
+                window.setTimeout(() => focusNode.removeAttribute("data-cockpit-focus"), 2400);
+              }
+            };
+            // Laisser Radix monter le TabsContent avant le scroll vers l’ancre interne.
             window.requestAnimationFrame(() => {
-              document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              window.setTimeout(scrollToTarget, 50);
+            });
+            toast.message("Traitement ouvert", {
+              description: `${target.label} → ${cockpitTabLabel(target.tab)}.`,
             });
           }}
         />
@@ -921,7 +939,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       </section>
 
       {openingPaymentHistory?.pendingProof ? <div role="status" className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"><CircleAlert className="h-5 w-5 shrink-0 text-amber-700" /><span><strong>Preuve de paiement en attente :</strong> une nouvelle pièce doit être validée par un administrateur.</span><Button type="button" size="sm" variant="outline" className="ml-auto border-amber-400 bg-white text-amber-900" onClick={() => setActiveTab("payments")}>Voir</Button></div> : null}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full">
+      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full scroll-mt-24">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
           <TabsTrigger value="evaluation" className="text-xs">Évaluation</TabsTrigger>
@@ -933,7 +951,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
         <TabsContent value="overview" className="space-y-4 pt-4">
           {candidate.internalId > 0 && (
-            <div data-testid="candidate360-overview-summary">
+            <div id="candidate360-overview-summary" data-testid="candidate360-overview-summary" className="scroll-mt-24">
               <AdminCandidateSummaryCard sessionToken={sessionToken} candidateId={candidate.internalId} />
             </div>
           )}
@@ -1271,8 +1289,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="evaluation" className="space-y-3 pt-4">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div><div className="flex flex-wrap gap-2">{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}<Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50" disabled={evaluationAlreadyValidated || offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => setOfflineEvaluationOpen(true)}><UserCheck className="mr-2 h-4 w-4" />{evaluationAlreadyValidated ? "Évaluation déjà validée" : "Valider l’évaluation hors ligne"}</Button></div></div></div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord — préparation manuelle</h4><p className="mt-1 text-sm text-slate-700">Modifiez le texte avant envoi. Le serveur exige un paiement confirmé, puis dépose le protocole dans l’espace client et l’envoie par e-mail.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">Double diffusion</Badge></div><div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div>
+          <div id="candidate360-evaluation-panel" className="scroll-mt-24 rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div><div className="flex flex-wrap gap-2">{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}<Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50" disabled={evaluationAlreadyValidated || offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => setOfflineEvaluationOpen(true)}><UserCheck className="mr-2 h-4 w-4" />{evaluationAlreadyValidated ? "Évaluation déjà validée" : "Valider l’évaluation hors ligne"}</Button></div></div></div>
+          <div id="candidate360-protocol-panel" className="scroll-mt-24 rounded-xl border border-amber-200 bg-amber-50/50 p-4" data-testid="candidate360-protocol-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord — préparation manuelle</h4><p className="mt-1 text-sm text-slate-700">Modifiez le texte avant envoi. Le serveur exige un paiement confirmé, puis dépose le protocole dans l’espace client et l’envoie par e-mail.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">Double diffusion</Badge></div><div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div>
           {(data as any)?.placementSummary && (
             <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4" data-testid="candidate360-placement-summary">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1347,7 +1365,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-3 pt-4">
-          <section className="rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="candidate360-documents-hub">
+          <section id="candidate360-documents-panel" className="scroll-mt-24 rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="candidate360-documents-hub">
             <h4 className="font-semibold text-violet-950">Poste documents — tout au même endroit</h4>
             <p className="mt-1 text-sm text-violet-900">Télécharger, ouvrir, valider, demander une correction ou déposer une pièce : le CRM ci-dessous regroupe les dépôts candidat et administrateur pour ce dossier actif.</p>
           </section>
@@ -1503,6 +1521,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </DialogContent>
         </Dialog>
         <TabsContent value="payments" className="space-y-3 pt-4">
+          <div id="candidate360-payments-panel" className="scroll-mt-24 space-y-3">
           {openingPaymentHistory?.pendingProof ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-sm"><div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">Nouvelle preuve de paiement à valider</p><PaymentHistoryStatusBadge status="pending" /></div><p className="mt-1 text-sm">{openingPaymentHistory.pendingProof.fileName || "Une preuve"} a été déposée le {formatDate(openingPaymentHistory.pendingProof.uploadedAt)} par {openingPaymentHistory.pendingProof.uploadedBy}. Validez-la avant toute activation.</p></div></div><Button type="button" size="sm" className="bg-amber-700 text-white hover:bg-amber-800" onClick={() => setActiveTab("payments")}>Ouvrir les paiements</Button></div> : null}
           <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4" aria-label="Historique des paiements multiples">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1513,6 +1532,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             {openingPaymentHistory?.auditRows?.length ? <div className="mt-4 border-t border-indigo-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">Journal des opérations</p><div className="mt-2 space-y-1">{openingPaymentHistory.auditRows.slice(0, 8).map((entry: any) => { const entryStatus = entry.status || (String(entry.action).toLowerCase().includes("reject") || String(entry.action).toLowerCase().includes("fail") ? "rejected" : String(entry.action).toLowerCase().includes("pending") ? "pending" : "validated"); return <div key={entry.id} className="flex flex-wrap items-center gap-2 text-xs text-slate-600"><span className="font-medium text-slate-800">{entry.action === "confirmed" ? "Validation" : entry.action}</span><PaymentHistoryStatusBadge status={entryStatus} /><span>· {entry.amount} · {entry.adminEmail || entry.adminName} · {formatDate(entry.createdAt)}</span></div>; })}</div></div> : null}
           </section>
           {data.payments.length ? data.payments.map((payment: any, index: number) => { const normalizedStatus = String(payment.status ?? "").trim().toUpperCase(); const normalizedMethod = String(payment.method ?? "").trim().toUpperCase(); const paymentConfirmed = ["SUCCESS", "PAID", "CONFIRMED", "CONFIRMÉ", "CONFIRMED_BY_ADVISER"].includes(normalizedStatus) || (normalizedMethod === "AGENCE" && Boolean(payment.paidAt)); return <div key={index} className="rounded-xl border p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-blue-700" /><div><p className="font-semibold text-slate-900">Frais de dossier</p><p className="text-sm text-slate-500">{payment.amount?.toLocaleString("fr-FR")} {payment.currency} · {payment.method || "Méthode à préciser"}</p></div></div><StateBadge status={String(payment.status).toLowerCase()} /></div><p className="mt-3 text-sm text-slate-600">Référence : {payment.reference || "Non renseignée"} · Date : {formatDate(payment.paidAt)}</p>{paymentConfirmed && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3"><div><p className="text-xs text-blue-950">Le reçu doit être validé et signé électroniquement par l’agence avant l’envoi.</p>{payment.receiptApproval ? <p className="mt-1 text-xs font-medium text-emerald-700">Validé par {payment.receiptApproval.approvedByEmail} le {formatDate(payment.receiptApproval.approvedAt)}</p> : <p className="mt-1 text-xs text-amber-700">Validation admin requise · frais non remboursables après début du traitement.</p>}</div><div className="flex flex-wrap gap-2">{!payment.receiptApproval && <Button type="button" size="sm" variant="outline" className="gap-2 border-blue-300 text-blue-800" disabled={approvePaymentReceiptMutation.isPending || actionLocks.approveReceipt} onClick={() => { lockAction("approveReceipt"); approvePaymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id }); }}>{approvePaymentReceiptMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Validation…</> : <><CheckCircle2 className="h-4 w-4" />Valider et signer</>}</Button>}{payment.receiptApproval && <Button type="button" size="sm" className="gap-2 bg-blue-700 text-white hover:bg-blue-800" disabled={paymentReceiptMutation.isPending || actionLocks.paymentReceipt} onClick={() => { lockAction("paymentReceipt"); paymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id, deliveryMode: "resend" }); }}>{paymentReceiptMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="h-4 w-4" />Envoyer le reçu PDF</>}</Button>}{paymentConfirmed && <Button type="button" size="sm" variant="outline" className="gap-2 border-rose-300 text-rose-800 hover:bg-rose-50" disabled={cancelValidatedPaymentMutation.isPending} onClick={() => setCancelPaymentDialogOpen(true)}><X className="h-4 w-4" />Annuler le paiement effectué</Button>}</div></div>}</div>; }) : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun paiement relié à ce dossier agence.</p>}
+          </div>
         </TabsContent>
 
         <TabsContent value="messages" className="grid gap-3 pt-4 sm:grid-cols-2">

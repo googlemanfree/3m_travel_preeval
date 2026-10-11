@@ -142,7 +142,8 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
     blockers.push({
       code: "protocol_unsigned",
       message: "Le protocole d’accord n’est pas encore signé.",
-      tab: "payments",
+      // Le panneau d’envoi / préparation du protocole vit dans l’onglet Évaluation (360°).
+      tab: "evaluation",
     });
   }
   if (dossierActivated && pendingDocuments > 0) {
@@ -254,7 +255,7 @@ function resolveNextAction(stage: CockpitStage, blockers: CockpitBlocker[], plac
         label: `Faire signer le protocole${place}`,
         description: "Envoyer ou relancer le protocole d’accord N°01.",
         urgency: "high",
-        tab: "payments",
+        tab: "evaluation",
       };
     case "documents_review":
       return {
@@ -335,3 +336,50 @@ export const COCKPIT_QUEUE_LABELS: Record<CockpitQueueCategory, string> = {
   protocol_pending: "Protocoles / reçus",
   documents_pending: "Documents à contrôler",
 };
+
+/** Ancres DOM ciblées par « Traiter maintenant » dans la fiche 360°. */
+export function cockpitTreatFocusId(key: string): string {
+  switch (key) {
+    case "protocol_unsigned":
+    case "send_protocol":
+      return "candidate360-protocol-panel";
+    case "documents_pending":
+    case "review_documents":
+      return "candidate360-documents-panel";
+    case "payment_missing":
+    case "confirm_payment":
+    case "receipt_missing":
+    case "approve_receipt":
+      return "candidate360-payments-panel";
+    case "evaluation_missing":
+    case "evaluation_pending":
+    case "review_evaluation":
+    case "request_evaluation":
+    case "validate_evaluation":
+      return "candidate360-evaluation-panel";
+    case "activation_pending":
+    case "activate_dossier":
+    case "confirm_email":
+    case "email_unverified":
+      return "candidate360-overview-summary";
+    default:
+      return "candidate-360-tabs";
+  }
+}
+
+/** Libellé d’onglet pour le feedback utilisateur. */
+export function cockpitTabLabel(tab: CockpitBlocker["tab"] | undefined): string {
+  switch (tab) {
+    case "evaluation":
+      return "Évaluation / protocole";
+    case "payments":
+      return "Paiements";
+    case "documents":
+      return "Documents";
+    case "messages":
+      return "Échanges";
+    case "overview":
+    default:
+      return "Vue d’ensemble";
+  }
+}

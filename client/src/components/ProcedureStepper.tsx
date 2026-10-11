@@ -41,18 +41,35 @@ function StepRow({ step, currentStepIndex, busy, onUnlock, onUndo }: { step: Pro
       <span className={`min-w-0 flex-1 truncate text-sm ${current ? "font-semibold text-slate-900" : done ? "text-slate-700" : "text-slate-500"}`}>{step.index + 1}. {step.label}</span>
       {step.state === "locked" && <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verrouillé</span>}
       {done && (
+        <>
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-700" data-testid={`step-unlocked-${step.index}`}>
+            Déverrouillé
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onUndo(step)}
+            className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+            aria-label={`Annuler la validation de l’étape ${step.index + 1}`}
+            data-testid={`cancel-past-step-${step.index}`}
+          >
+            Annuler l’étape
+          </button>
+        </>
+      )}
+      {step.state === "locked" && (
         <button
           type="button"
           disabled={busy}
-          onClick={() => onUndo(step)}
-          className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
-          aria-label={`Annuler la validation de l’étape ${step.index + 1}`}
-          data-testid={`cancel-past-step-${step.index}`}
+          onClick={() => onUnlock(step)}
+          title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`}
+          className="text-xs font-semibold text-amber-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}
+          data-testid={`unlock-step-${step.index}`}
         >
-          Annuler l’étape
+          Déverrouiller
         </button>
       )}
-      {step.state === "locked" && <button type="button" disabled={busy} onClick={() => onUnlock(step)} title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`} className="text-xs font-semibold text-amber-700 hover:underline disabled:opacity-50" aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}>Déverrouiller</button>}
     </li>
   );
 }

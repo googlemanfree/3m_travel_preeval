@@ -97,6 +97,15 @@ import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPa
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
 import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
+import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
+import {
+  ADMIN_STAGE_CATALOG,
+  ADMIN_STAGE_SEQUENCE,
+  getNextAdminStage,
+  getPreviousAdminStage,
+  resolveGuidedNextAdminAction,
+  type GuidedNextAction,
+} from "@shared/adminStageCatalog";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -193,41 +202,47 @@ interface Candidate {
 
 const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
   PENDING_48H: {
-    label: "Évaluation 48h",
+    label: ADMIN_STAGE_CATALOG.PENDING_48H.label,
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
     icon: <Clock className="w-3 h-3" />,
   },
   PUBLISHED: {
-    label: "Bilan Disponible",
+    label: ADMIN_STAGE_CATALOG.PUBLISHED.label,
     color: "text-blue-700",
     bg: "bg-blue-50 border-blue-200",
     icon: <FileCheck className="w-3 h-3" />,
   },
   DOCUMENTS_CHECK: {
-    label: "Collecte Documents",
+    label: ADMIN_STAGE_CATALOG.DOCUMENTS_CHECK.label,
     color: "text-purple-700",
     bg: "bg-purple-50 border-purple-200",
     icon: <Send className="w-3 h-3" />,
   },
   SUBMITTED: {
-    label: "Soumission Consulaire",
+    label: ADMIN_STAGE_CATALOG.SUBMITTED.label,
     color: "text-indigo-700",
     bg: "bg-indigo-50 border-indigo-200",
     icon: <Globe className="w-3 h-3" />,
   },
   APPROVED: {
-    label: "Visa Accordé",
+    label: ADMIN_STAGE_CATALOG.APPROVED.label,
     color: "text-green-700",
     bg: "bg-green-50 border-green-200",
     icon: <CheckCircle className="w-3 h-3" />,
   },
 };
 
-const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
+const ADMIN_STATUS_SEQUENCE: AdminStatus[] = [...ADMIN_STAGE_SEQUENCE];
 const PAYMENT_STATUS_LABELS: Record<string, string> = { SUCCESS: "Payé", PENDING: "En attente", FAILED: "Échec", CANCELLED: "Annulé", NOT_PAID: "Non payé" };
 const PAYMENT_STATUS_BADGE_CLASSES: Record<string, string> = { SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-800", PENDING: "border-amber-200 bg-amber-50 text-amber-800", FAILED: "border-rose-200 bg-rose-50 text-rose-800", CANCELLED: "border-slate-300 bg-slate-100 text-slate-700", NOT_PAID: "border-slate-300 bg-white text-slate-700" };
-const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation / qualification", PUBLISHED: "Bilan & paiement d’ouverture", DOCUMENTS_CHECK: "Documents de la procédure", SUBMITTED: "Dépôt / soumission officielle", APPROVED: "Décision finale" };
+const PROCEDURE_STEP_LABELS: Record<string, string> = {
+  PENDING_48H: ADMIN_STAGE_CATALOG.PENDING_48H.label,
+  PUBLISHED: ADMIN_STAGE_CATALOG.PUBLISHED.label,
+  DOCUMENTS_CHECK: ADMIN_STAGE_CATALOG.DOCUMENTS_CHECK.label,
+  SUBMITTED: ADMIN_STAGE_CATALOG.SUBMITTED.label,
+  APPROVED: ADMIN_STAGE_CATALOG.APPROVED.label,
+};
 const PROCEDURE_STEP_BADGE_CLASSES: Record<string, string> = { PENDING_48H: "border-violet-200 bg-violet-50 text-violet-800", PUBLISHED: "border-amber-200 bg-amber-50 text-amber-800", DOCUMENTS_CHECK: "border-blue-200 bg-blue-50 text-blue-800", SUBMITTED: "border-indigo-200 bg-indigo-50 text-indigo-800", APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800" };
 
 function procedureStageLabel(candidate: { procedureJourney?: AdminProcedureSnapshot | null }, stage: string): string {
@@ -236,15 +251,11 @@ function procedureStageLabel(candidate: { procedureJourney?: AdminProcedureSnaps
 }
 
 function getNextAdminStatus(status?: string): AdminStatus | null {
-  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
-  if (currentIndex < 0) return "PENDING_48H";
-  return ADMIN_STATUS_SEQUENCE[currentIndex + 1] ?? null;
+  return getNextAdminStage(status) as AdminStatus | null;
 }
 
 function getPreviousAdminStatus(status?: string): AdminStatus | null {
-  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
-  if (currentIndex <= 0) return null;
-  return ADMIN_STATUS_SEQUENCE[currentIndex - 1];
+  return getPreviousAdminStage(status) as AdminStatus | null;
 }
 
 const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; icon: React.ReactNode }> = {
@@ -412,6 +423,21 @@ export function CandidateDetailModal({
     || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String((candidate as Candidate | undefined)?.paymentStatus ?? ""));
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
   const previousAdminStatus = getPreviousAdminStatus(candidate?.status);
+  const stageCoherence = (data as { stageCoherence?: {
+    procedureKind?: string;
+    employerSelected?: boolean;
+    guided?: GuidedNextAction;
+    stages?: Array<{ stage: string; label: string; detail: string; clientLabel: string; prerequisites: string[]; current: boolean }>;
+  } } | undefined)?.stageCoherence;
+  const guidedNext: GuidedNextAction = stageCoherence?.guided ?? resolveGuidedNextAdminAction({
+    currentStatus: candidate?.status,
+    paymentConfirmed: paymentAlreadyConfirmed,
+    procedureKind: (stageCoherence?.procedureKind as any) ?? null,
+    visaType: candidate?.projectType,
+    employerSelected: Boolean(stageCoherence?.employerSelected || (candidate as any)?.secondProtocolReady),
+    secondProtocolReady: Boolean((candidate as any)?.secondProtocolReady),
+    secondProtocolSigned: Boolean((candidate as any)?.secondProtocolSigned),
+  });
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
@@ -758,12 +784,40 @@ export function CandidateDetailModal({
                 {(data as any)?.cockpit ? (
                   <AdminCandidateCockpitStrip
                     cockpit={(data as any).cockpit}
-                    onOpenTab={(tab) => {
-                      if (tab === "evaluation") setEvaluationEditorOpen(true);
-                      else setCandidate360Tab(tab);
+                    onTreatNow={(target) => {
+                      if (target.tab === "evaluation" || target.key === "evaluation_missing" || target.key === "evaluation_pending" || target.key === "request_evaluation" || target.key === "review_evaluation" || target.key === "validate_evaluation") {
+                        setEvaluationEditorOpen(true);
+                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        toast({ title: "Évaluation", description: "Ouvrez ou validez l’évaluation pour lever ce bloqueur." });
+                        return;
+                      }
+                      if (target.tab === "payments" || target.key === "payment_missing" || target.key === "confirm_payment" || target.key === "receipt_missing") {
+                        onOpenOperations("payments", candidate.folderCode);
+                        toast({ title: "Paiements", description: `Module paiements ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "documents" || target.key === "documents_pending") {
+                        onOpenOperations("documents", candidate.folderCode);
+                        toast({ title: "Documents", description: `Module documents ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "messages") {
+                        onOpenOperations("emails", candidate.folderCode);
+                        toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      toast({
+                        title: "Traitement pré-dossier",
+                        description:
+                          target.key === "confirm_email" || target.key === "email_unverified"
+                            ? "Confirmez l’e-mail puis poursuivez l’ouverture du dossier."
+                            : "Complétez destination et procédure, puis ouvrez le dossier pour activer le suivi.",
+                      });
                     }}
                   />
                 ) : null}
+                <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
@@ -776,8 +830,9 @@ export function CandidateDetailModal({
                   onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel, note })}
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
+                </div>
                 {candidate?.internalStatus === "nouveau" ? (
-                  <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
+                  <section id="predossier-treatment-panel" className="scroll-mt-24 rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
@@ -928,7 +983,7 @@ export function CandidateDetailModal({
                   <p className="mt-1 text-[11px] text-slate-500">Variante : {(candidate as any).formerFolderCodes.join(" · ")}</p>
                 )}
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3" data-testid="guided-next-action">
                     <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Prochaine action utile</p>
                     {paymentAlreadyConfirmed ? (
                       <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status" data-testid="payment-already-confirmed">
@@ -949,23 +1004,46 @@ export function CandidateDetailModal({
                         {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
                       </Button>
                     )}
-                    {paymentAlreadyConfirmed && nextAdminStatus ? (
-                      <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
-                        <CheckCircle className="mr-2 h-4 w-4" />Étape suivante : {STATUS_CONFIG[nextAdminStatus].label}
+                    {guidedNext.canAdvance && guidedNext.nextStage ? (
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          updateStatusMutation.mutate({ sessionToken, candidateId, newStatus: guidedNext.nextStage as AdminStatus, notifyClient });
+                        }}
+                        disabled={updateStatusMutation.isPending}
+                        className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800"
+                        data-testid="advance-guided-stage"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />{guidedNext.buttonLabel}
                       </Button>
-                    ) : paymentAlreadyConfirmed ? (
+                    ) : guidedNext.code === "employer_selection" || guidedNext.code === "protocol_two" ? (
+                      <Button
+                        type="button"
+                        onClick={() => setCandidate360Tab(guidedNext.focusTab || "evaluation")}
+                        className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
+                        data-testid="guided-employer-selection"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />{guidedNext.buttonLabel}
+                      </Button>
+                    ) : paymentAlreadyConfirmed && guidedNext.code === "done" ? (
                       <p className="mt-2 text-sm font-semibold text-emerald-900">Parcours guidé à jour pour ce dossier.</p>
-                    ) : (
-                      <p className="mt-2 text-xs leading-5 text-amber-900">Confirmez d’abord le paiement avant d’avancer les étapes du parcours.</p>
-                    )}
+                    ) : null}
+                    <p className="mt-2 text-xs leading-5 text-emerald-900" data-testid="guided-next-reason">{guidedNext.reason}</p>
                     {previousAdminStatus && paymentAlreadyConfirmed && (
                       <Button type="button" variant="outline" data-testid="cancel-last-kanban-step" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
                         <X className="mr-2 h-4 w-4" />Annuler la dernière validation
                       </Button>
                     )}
-                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement, la sélection employeur (visa travail) et l’ordre des étapes.</p>
                   </div>
                   <div className="grid gap-2">
+                    <AdminClientSpacePreview
+                      sessionToken={sessionToken}
+                      candidateId={candidate.id}
+                      candidateName={candidate.fullName}
+                      compact
+                      triggerClassName="justify-start border-indigo-300 bg-indigo-50 text-indigo-950 hover:bg-indigo-100"
+                    />
                     <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
                       <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
                     </Button>
@@ -982,17 +1060,38 @@ export function CandidateDetailModal({
                   <details className="rounded-lg border border-slate-200 bg-white p-3">
                     <summary className="cursor-pointer text-xs font-semibold text-slate-700">Correction avancée du statut</summary>
                     <div className="mt-3 space-y-2">
-                      <Label htmlFor="candidate-status">Statut général</Label>
+                      <Label htmlFor="candidate-status">Étape admin (5 étapes · détail métier)</Label>
                       <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
-                        <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
-                        <SelectContent>{Object.entries(STATUS_CONFIG).map(([key, cfg]) => <SelectItem key={key} value={key}>{cfg.label}</SelectItem>)}</SelectContent>
+                        <SelectTrigger id="candidate-status" className="bg-white" data-testid="admin-status-select"><SelectValue placeholder="Choisir une étape…" /></SelectTrigger>
+                        <SelectContent>
+                          {ADMIN_STATUS_SEQUENCE.map((key) => {
+                            const cfg = STATUS_CONFIG[key];
+                            const catalog = ADMIN_STAGE_CATALOG[key];
+                            return (
+                              <SelectItem key={key} value={key} textValue={cfg.label}>
+                                <div className="flex flex-col gap-0.5 py-0.5">
+                                  <span className="font-semibold">{cfg.label}</span>
+                                  <span className="text-[11px] leading-snug text-slate-500">{catalog.detail}</span>
+                                  <span className="text-[10px] text-indigo-700">Client : {catalog.clientLabel}</span>
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
                       </Select>
+                      {selectedStatus && (
+                        <ul className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600" data-testid="admin-status-prerequisites">
+                          {ADMIN_STAGE_CATALOG[selectedStatus].prerequisites.map((item) => (
+                            <li key={item}>• {item}</li>
+                          ))}
+                        </ul>
+                      )}
                       <label className="flex items-start gap-2 text-sm text-slate-700">
                         <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
-                        <span>Notifier le candidat par e-mail.</span>
+                        <span>Notifier le candidat par e-mail (libellé phase client, sans jargon admin).</span>
                       </label>
                       <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} className="w-full bg-slate-800 hover:bg-slate-900">
-                        {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer le statut"}
+                        {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer l’étape"}
                       </Button>
                     </div>
                   </details>
@@ -1973,7 +2072,7 @@ export default function AdminDashboard() {
             { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="h-4 w-4" />, color: "bg-blue-100 text-blue-800" },
             { label: "Documents", value: stats.documents, icon: <Send className="h-4 w-4" />, color: "bg-violet-100 text-violet-800" },
             { label: "Soumis", value: stats.submitted, icon: <Globe className="h-4 w-4" />, color: "bg-indigo-100 text-indigo-800" },
-            { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-800" },
+            { label: "Décision favorable", value: stats.approved, icon: <CheckCircle className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-800" },
           ].map((s) => (
             <Card key={s.label} className="premium-surface border-white/90">
               <CardContent className="p-3.5">
@@ -2691,7 +2790,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2" aria-label="Filtres rapides par étape">
             <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
-            {[['PENDING_48H', 'Évaluations à traiter'], ['PUBLISHED', 'Bilans / paiement'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Soumission'], ['APPROVED', 'Visa accordé']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
+            {[['PENDING_48H', 'Évaluation'], ['PUBLISHED', 'Ouverture'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Suivi & dépôt'], ['APPROVED', 'Décision favorable']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
           </div>
           {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => setShowPendingSaveConfirm(true)} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
         </div>

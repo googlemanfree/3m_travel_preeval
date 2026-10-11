@@ -61,6 +61,22 @@ describe("admin cockpit dossiers", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
     expect(dashboard).toContain("AdminCockpitControlBoard");
     expect(dashboard).toContain("AdminCandidateCockpitStrip");
+    expect(dashboard).toContain("onTreatNow");
     expect(dashboard).toContain('useState("pilotage")');
+  });
+
+  it("route le protocole vers l’onglet évaluation (où vit le panneau d’envoi)", () => {
+    const cockpit = buildCandidateCockpit({
+      emailVerified: true,
+      evaluationStatus: "validated",
+      paymentConfirmed: true,
+      dossierActivated: true,
+      receiptApproved: true,
+      protocolSigned: false,
+      pendingDocuments: 2,
+    });
+    expect(cockpit.stage).toBe("awaiting_protocol");
+    expect(cockpit.nextAction.tab).toBe("evaluation");
+    expect(cockpit.blockers.some((blocker) => blocker.code === "protocol_unsigned" && blocker.tab === "evaluation")).toBe(true);
   });
 });
