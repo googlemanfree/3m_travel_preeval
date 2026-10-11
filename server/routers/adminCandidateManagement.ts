@@ -41,6 +41,7 @@ import {
   notifyAgreementSignatureReminderWhatsApp,
   notifyPaymentReceiptApprovedWhatsApp,
 } from "../services/clientWhatsAppNotify";
+import { resendClientAccessLink as issueClientAccessLinkResend } from "../services/resendClientAccessLink";
 
 // Contrat partagé de la notification passport_photo_request, utilisé par le service
 // pour publier la demande dans l’espace client et envoyer l’e-mail correspondant.
@@ -2140,6 +2141,37 @@ export const adminCandidateManagementRouter = router({
         whatsappSent,
         whatsappSkippedReason,
       };
+    }),
+
+  /** Renvoie le lien d’accès espace client (48 h) — e-mail + WhatsApp au mieux. Aucun rewrite de statut dossier. */
+  resendClientAccessLink: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(account|online|agency)_\d+$/),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      try {
+        return await issueClientAccessLinkResend(db, {
+          candidateId: input.candidateId,
+          adminEmail: admin.email || "",
+          adminName: admin.email || "Administrateur",
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Renvoi d’accès impossible.";
+        if (message.includes("60 secondes")) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message });
+        }
+        if (message.includes("introuvable") || message.includes("invalide") || message.includes("lié")) {
+          throw new TRPCError({ code: "BAD_REQUEST", message });
+        }
+        if (message.includes("e-mail")) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+      }
     }),
 
   sendPaymentReceiptForCandidate: publicProcedure

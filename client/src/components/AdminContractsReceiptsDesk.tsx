@@ -1,4 +1,4 @@
-import { Bell, FileText, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,14 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
     onError: (error) => toast.error(error.message),
   });
 
+  const accessMutation = trpc.adminCandidateManagement.resendClientAccessLink.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Lien d’accès envoyé à ${result.email}${whatsappToastSuffix(result)}`);
+      void query.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   const remindMutation = trpc.adminCandidateManagement.resendAgreementSignatureReminder.useMutation({
     onSuccess: (result) => {
       toast.success(`Relance protocole envoyée à ${result.email}${whatsappToastSuffix(result)}`);
@@ -83,6 +91,9 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
   const sendCandidateId = sendMutation.variables && typeof sendMutation.variables === "object"
     ? String(sendMutation.variables.candidateId ?? "")
     : "";
+  const accessCandidateId = accessMutation.variables && typeof accessMutation.variables === "object"
+    ? String(accessMutation.variables.candidateId ?? "")
+    : "";
   const remindCandidateId = remindMutation.variables && typeof remindMutation.variables === "object"
     ? String(remindMutation.variables.candidateId ?? "")
     : "";
@@ -90,9 +101,11 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
     ? approveCandidateId
     : sendMutation.isPending
       ? sendCandidateId
-      : remindMutation.isPending
-        ? remindCandidateId
-        : "";
+      : accessMutation.isPending
+        ? accessCandidateId
+        : remindMutation.isPending
+          ? remindCandidateId
+          : "";
 
   return (
     <Card className="overflow-hidden border-0 shadow-sm" data-testid="admin-contracts-receipts-desk">
@@ -221,6 +234,19 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                                 PDF
                               </Button>
                             )}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 border-slate-200 px-2 text-xs text-slate-800 hover:bg-slate-50"
+                              disabled={rowBusy || !sessionToken}
+                              onClick={() => accessMutation.mutate({ sessionToken, candidateId: row.candidateId })}
+                              data-testid={`client-access-resend-${row.candidateId}`}
+                              title="Renvoyer le lien d’accès espace client (e-mail + WhatsApp)"
+                            >
+                              {rowBusy && accessMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                              Accès
+                            </Button>
                             {row.stage === "protocol_pending" && row.candidateId.startsWith("online_") && !row.protocolSigned ? (
                               <Button
                                 type="button"
