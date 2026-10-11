@@ -38,6 +38,10 @@ import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
 import { notifyPaymentReceiptApprovedWhatsApp } from "../services/clientWhatsAppNotify";
+import {
+  loadAgencyAgreementSignaturesByIds,
+  loadAgencyProtocolSignedDocIds,
+} from "../services/agencyAgreementSignature";
 
 // Contrat partagé de la notification passport_photo_request, utilisé par le service
 // pour publier la demande dans l’espace client et envoyer l’e-mail correspondant.
@@ -872,25 +876,34 @@ export const adminCandidateManagementRouter = router({
       )).orderBy(desc(agencyDossiers.updatedAt)).limit(200);
 
       const onlineEmails = new Set(onlinePipeline.map((row) => row.email.trim().toLowerCase()));
-      const agencyPipeline = paidAgency
-        .filter((dossier) => !onlineEmails.has(dossier.email.trim().toLowerCase()))
-        .map((dossier) => {
-          const dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
-          const receiptAvailable = receiptByDossier.has(dossierNumber.trim().toUpperCase())
-            || receiptByEmail.has(dossier.email.trim().toLowerCase());
-          return {
-            candidateId: `agency_${dossier.id}`,
-            dossierNumber,
-            workingReference: dossierNumber,
-            formerAccountReference: null as string | null,
-            fullName: dossier.fullName,
-            email: dossier.email,
-            paymentConfirmed: true,
-            receiptAvailable,
-            protocolSigned: false,
-            stage: (receiptAvailable ? "protocol_pending" : "receipt_pending") as "receipt_pending" | "protocol_pending" | "complete",
-          };
-        });
+      const agencyOnly = paidAgency.filter((dossier) => !onlineEmails.has(dossier.email.trim().toLowerCase()));
+      const agencyIds = agencyOnly.map((dossier) => dossier.id);
+      const [agencySignatures, agencySignedDocs] = await Promise.all([
+        loadAgencyAgreementSignaturesByIds(db, agencyIds),
+        loadAgencyProtocolSignedDocIds(db, agencyIds),
+      ]);
+      const agencyPipeline = agencyOnly.map((dossier) => {
+        const dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        const receiptAvailable = receiptByDossier.has(dossierNumber.trim().toUpperCase())
+          || receiptByEmail.has(dossier.email.trim().toLowerCase());
+        const protocolSigned = agencySignatures.has(dossier.id) || agencySignedDocs.has(dossier.id);
+        return {
+          candidateId: `agency_${dossier.id}`,
+          dossierNumber,
+          workingReference: dossierNumber,
+          formerAccountReference: null as string | null,
+          fullName: dossier.fullName,
+          email: dossier.email,
+          paymentConfirmed: true,
+          receiptAvailable,
+          protocolSigned,
+          stage: (!receiptAvailable
+            ? "receipt_pending"
+            : !protocolSigned
+              ? "protocol_pending"
+              : "complete") as "receipt_pending" | "protocol_pending" | "complete",
+        };
+      });
 
       const pipeline = [...onlinePipeline, ...agencyPipeline]
         .sort((a, b) => Number(a.receiptAvailable) - Number(b.receiptAvailable) || a.fullName.localeCompare(b.fullName, "fr"));

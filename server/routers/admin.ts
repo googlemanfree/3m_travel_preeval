@@ -4263,10 +4263,15 @@ export const adminRouter = router({
         dueAtOverride: operationalCase.dueAt,
       });
       const onlineApp = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect) : null;
+      const { loadAgencyAgreementSignature } = await import("../services/agencyAgreementSignature");
+      const agencyAgreementSignature = reference.source === "agency"
+        ? await loadAgencyAgreementSignature(db, reference.id)
+        : null;
+      const protocolOneSigned = Boolean(onlineApp?.agreementSigned) || Boolean(agencyAgreementSignature);
       const secondProtocol = describeSecondProtocolState({
         destination: destination ?? onlineApp?.destination,
         paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
-        protocolOneSigned: Boolean(onlineApp?.agreementSigned),
+        protocolOneSigned,
         secondProtocolReady: Boolean(onlineApp?.secondAgreementReadyAt),
         secondProtocolSigned: Boolean(onlineApp?.secondAgreementSigned),
         employerName: onlineApp?.secondAgreementEmployer,
@@ -4496,7 +4501,16 @@ export const adminRouter = router({
               agreementSignatureName: (sourceRecord as typeof applications.$inferSelect).agreementSignatureName ?? null,
               dossierNumber: (sourceRecord as typeof applications.$inferSelect).dossierNumber,
             }
-          : null,
+          : {
+              signed: Boolean(agencyAgreementSignature),
+              agreementSigned: Boolean(agencyAgreementSignature),
+              signedAt: agencyAgreementSignature?.signedAt ?? null,
+              agreementSignedAt: agencyAgreementSignature?.signedAt ?? null,
+              signatureName: agencyAgreementSignature?.signatureName ?? null,
+              agreementSignatureName: agencyAgreementSignature?.signatureName ?? null,
+              dossierNumber: agencyAgreementSignature?.dossierNumber || `3M-AGN-${String(reference.id).padStart(4, "0")}`,
+              pdfUrl: agencyAgreementSignature?.pdfUrl ?? null,
+            },
         tasks,
         notes,
         statusHistory,
