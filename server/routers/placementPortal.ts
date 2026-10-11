@@ -1,7 +1,7 @@
 ﻿import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
-import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   adminNotifications,
@@ -11,6 +11,7 @@ import {
   candidateFiles,
   candidates,
   clientNotifications,
+  evaluations,
   placementAccessRequests,
   placementCandidateProfiles,
   placementEmployerAccounts,
@@ -34,11 +35,53 @@ import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatu
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/talentCorridor";
 import { storageGetSignedUrl, storagePut } from "../storage";
-import { buildPlacementSummaryDraft, buildPlacementSummaryPdf, fingerprintPlacementSummary } from "../services/placementProfileSummary";
+import { buildPlacementSummaryDraft, buildPlacementSummaryPdf, detectPortrait, fingerprintPlacementSources, normalizePlacementSummaryDraft, summaryFieldsFromCvDraft } from "../services/placementProfileSummary";
+import { generateCvDraft } from "../services/cvDraftGenerator";
+import { CV_DRAFT_MAX_PER_HOUR, createCvDraftLimiter } from "./cvDraft";
 
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const makeProfileCode = () => `PRF-${randomBytes(4).toString("hex").toUpperCase()}`;
+
+/** Chaque génération de résumé depuis un CV est un appel facturé au modèle : même plafond que le générateur de CV. */
+const allowSummaryFromCv = createCvDraftLimiter();
+
+type SummaryDb = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+
+/** Portrait du candidat : seulement avec son accord « photo » ; JPEG/PNG reconnus par signature, 5 Mo au plus. */
+async function loadSharedPortrait(db: SummaryDb, candidateId: number, photoConsent: boolean) {
+  if (!photoConsent) return { portrait: null, photoId: null as number | null };
+  const photo = (await db.select({ id: candidateFiles.id, key: candidateFiles.fileKey })
+    .from(candidateFiles)
+    .where(and(eq(candidateFiles.candidateId, candidateId), eq(candidateFiles.fileType, "photo"), ne(candidateFiles.status, "rejected")))
+    .orderBy(desc(candidateFiles.id)).limit(1))[0];
+  if (!photo) return { portrait: null, photoId: null as number | null };
+  try {
+    const response = await fetch(await storageGetSignedUrl(photo.key), { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return { portrait: null, photoId: photo.id as number | null };
+    return { portrait: detectPortrait(Buffer.from(await response.arrayBuffer())), photoId: photo.id as number | null };
+  } catch (error) {
+    logger.warn("[placementSummary] portrait illisible", { candidateId, error: error instanceof Error ? error.message : String(error) });
+    return { portrait: null, photoId: photo.id as number | null };
+  }
+}
+
+/** Tout ce qui alimente la fiche de synthèse d'un candidat, lu dans le dossier (jamais saisi par l'administrateur). */
+async function loadSummarySources(db: SummaryDb, candidateId: number) {
+  const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
+  const candidate = (await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1))[0];
+  if (!profile || !candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Profil de synthèse introuvable." });
+  const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1))[0];
+  const [candidateDocs, agencyDocs] = await Promise.all([
+    db.select({ type: candidateFiles.fileType, name: candidateFiles.fileName, status: candidateFiles.status, comment: candidateFiles.rejectionReason }).from(candidateFiles).where(eq(candidateFiles.candidateId, candidateId)).limit(200),
+    db.select({ type: agencyDossierDocuments.documentType, name: agencyDossierDocuments.documentName, status: agencyDossierDocuments.verificationStatus, comment: agencyDossierDocuments.verificationComment }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).limit(200),
+  ]);
+  const base = buildPlacementSummaryDraft({ fullName: candidate.fullName || "Candidat", destination: profile.targetDestination, procedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languages: profile.languagesSummary, profileSummary: profile.summary, documents: [...candidateDocs, ...agencyDocs] });
+  const photoConsent = consent?.status === "granted" && Boolean(consent.photoShareConsent);
+  const { portrait, photoId } = await loadSharedPortrait(db, candidateId, photoConsent);
+  const sourceFingerprint = fingerprintPlacementSources({ draft: base, fullName: candidate.fullName || "", photoConsent, photoId });
+  return { profile, candidate, consent, base, photoConsent, portrait, photoId, sourceFingerprint };
+}
 
 /** Résout candidates.id → référence fiche 360° (online_* / agency_*). */
 async function resolveAdminCandidateRef(
@@ -151,6 +194,10 @@ export const placementPortalRouter = router({
     const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1))[0];
     if (!consent || consent.status !== "granted") throw new TRPCError({ code: "FORBIDDEN", message: "Activez d’abord le consentement de partage du profil." });
     await db.update(candidatePlacementConsents).set({ pdfShareConsent: input.pdfShareConsent ? 1 : 0, photoShareConsent: input.photoShareConsent ? 1 : 0 }).where(eq(candidatePlacementConsents.id, consent.id));
+    if (Boolean(consent.photoShareConsent) !== input.photoShareConsent) {
+      // Le PDF validé a été figé avec ou sans portrait : il doit être régénéré et revalidé avant toute nouvelle diffusion.
+      await db.update(placementCandidateProfiles).set({ summaryStatus: "needs_revalidation", summaryUpdatedAt: new Date() }).where(and(eq(placementCandidateProfiles.candidateId, candidateId), eq(placementCandidateProfiles.summaryStatus, "approved")));
+    }
     return { pdfShareConsent: input.pdfShareConsent, photoShareConsent: input.photoShareConsent };
   }),
 
@@ -158,21 +205,36 @@ export const placementPortalRouter = router({
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
-    const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, input.candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
-    const candidate = (await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1))[0];
-    if (!profile || !candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Profil de synthèse introuvable." });
-    const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, input.candidateId)).limit(1))[0];
-    const [candidateDocs, agencyDocs] = await Promise.all([
-      db.select({ type: candidateFiles.fileType, name: candidateFiles.fileName, status: candidateFiles.status, comment: candidateFiles.rejectionReason }).from(candidateFiles).where(eq(candidateFiles.candidateId, input.candidateId)).limit(200),
-      db.select({ type: agencyDossierDocuments.documentType, name: agencyDossierDocuments.documentName, status: agencyDossierDocuments.verificationStatus, comment: agencyDossierDocuments.verificationComment }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).limit(200),
-    ]);
-    const draft = buildPlacementSummaryDraft({ fullName: candidate.fullName || "Candidat", destination: profile.targetDestination, procedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languages: profile.languagesSummary, profileSummary: profile.summary, documents: [...candidateDocs, ...agencyDocs] });
-    const fingerprint = fingerprintPlacementSummary(draft);
-    const nextStatus = profile.summaryStatus === "approved" && profile.summaryFingerprint !== fingerprint ? "needs_revalidation" : profile.summaryStatus;
-    if (profile.summaryFingerprint !== fingerprint || profile.summaryDraft !== JSON.stringify(draft) || nextStatus !== profile.summaryStatus) {
-      await db.update(placementCandidateProfiles).set({ summaryDraft: JSON.stringify(draft), summaryFingerprint: fingerprint, summaryStatus: nextStatus, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+    const sources = await loadSummarySources(db, input.candidateId);
+    const { profile, base, sourceFingerprint, portrait, photoId } = sources;
+    // Brouillon de travail = ce que l'administrateur a déjà relu (s'il existe) ; les faits du dossier (identité externe, pièces) sont toujours recalculés.
+    let draft = base;
+    if (profile.summaryDraft) {
+      try { draft = normalizePlacementSummaryDraft(JSON.parse(profile.summaryDraft), base); } catch { draft = base; }
     }
-    return { profileId: profile.id, status: nextStatus, draft, previewPdfDataUrl: `data:application/pdf;base64,${buildPlacementSummaryPdf(draft).toString("base64")}`, pdfShareConsent: Boolean(consent?.pdfShareConsent), photoShareConsent: Boolean(consent?.photoShareConsent), profileCode: profile.profileCode, submissionCount: (await db.select({ id: placementProfileSubmissions.id }).from(placementProfileSubmissions).where(eq(placementProfileSubmissions.profileId, profile.id))).length, reviewedBy: admin.email };
+    const sourcesChanged = profile.summaryFingerprint !== sourceFingerprint;
+    let status = profile.summaryStatus;
+    if (sourcesChanged) {
+      // Le dossier a changé : les champs factuels repartent du dossier, le texte relu est conservé, une fiche validée est à revalider.
+      draft = { ...draft, destination: base.destination, procedure: base.procedure, sector: base.sector, experience: base.experience, languages: base.languages };
+      if (status === "approved") status = "needs_revalidation";
+      await db.update(placementCandidateProfiles).set({ summaryDraft: JSON.stringify(draft), summaryFingerprint: sourceFingerprint, summaryStatus: status, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+    }
+    const preview = buildPlacementSummaryPdf(draft, { portrait, reference: profile.profileCode });
+    const submissionCount = (await db.select({ id: placementProfileSubmissions.id }).from(placementProfileSubmissions).where(eq(placementProfileSubmissions.profileId, profile.id))).length;
+    return {
+      profileId: profile.id,
+      status,
+      draft,
+      previewPdfDataUrl: `data:application/pdf;base64,${preview.toString("base64")}`,
+      pdfShareConsent: Boolean(sources.consent?.pdfShareConsent),
+      photoShareConsent: sources.photoConsent,
+      portraitAvailable: photoId !== null,
+      portraitIncluded: portrait !== null,
+      profileCode: profile.profileCode,
+      submissionCount,
+      reviewedBy: admin.email,
+    };
   }),
 
   adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(6000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
@@ -181,15 +243,64 @@ export const placementPortalRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.id, input.profileId), isNull(placementCandidateProfiles.archivedAt))).limit(1))[0];
     if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "Profil introuvable." });
-    if (input.action === "approve") {
-      const parsed = JSON.parse(input.draft) as Parameters<typeof buildPlacementSummaryPdf>[0];
-      const pdf = buildPlacementSummaryPdf(parsed);
-      const stored = await storagePut(`placement-summaries/${profile.profileCode}.pdf`, pdf, "application/pdf");
-      await db.update(placementCandidateProfiles).set({ summaryDraft: input.draft, summaryStatus: "approved", summaryPdfKey: stored.key, summaryReviewNote: input.note || null, summaryValidatedAt: new Date(), summaryValidatedByAdminId: admin.id, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
-      return { status: "approved" as const, pdfUrl: stored.url };
+    const sources = await loadSummarySources(db, profile.candidateId);
+    let draft: ReturnType<typeof normalizePlacementSummaryDraft>;
+    try {
+      draft = normalizePlacementSummaryDraft(JSON.parse(input.draft), sources.base);
+    } catch {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "La fiche est incomplète ou invalide : vérifiez le résumé et les points clés." });
     }
-    await db.update(placementCandidateProfiles).set({ summaryDraft: input.draft, summaryStatus: "rejected", summaryReviewNote: input.note || null, summaryValidatedAt: null, summaryValidatedByAdminId: null, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
-    return { status: "rejected" as const, pdfUrl: null };
+    const serialized = JSON.stringify(draft);
+    if (input.action === "approve") {
+      // Le PDF diffusé est figé à la validation : portrait inclus seulement avec l'accord photo du candidat à cet instant.
+      const pdf = buildPlacementSummaryPdf(draft, { portrait: sources.portrait, reference: profile.profileCode });
+      const stored = await storagePut(`placement-summaries/${profile.profileCode}.pdf`, pdf, "application/pdf");
+      await db.update(placementCandidateProfiles).set({ summaryDraft: serialized, summaryFingerprint: sources.sourceFingerprint, summaryStatus: "approved", summaryPdfKey: stored.key, summaryReviewNote: input.note || null, summaryValidatedAt: new Date(), summaryValidatedByAdminId: admin.id, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+      logger.info("[placementSummary] fiche validée", { profileId: profile.id, admin: admin.email, portraitIncluded: sources.portrait !== null });
+      return { status: "approved" as const, pdfUrl: stored.url, portraitIncluded: sources.portrait !== null };
+    }
+    await db.update(placementCandidateProfiles).set({ summaryDraft: serialized, summaryFingerprint: sources.sourceFingerprint, summaryStatus: "rejected", summaryReviewNote: input.note || null, summaryValidatedAt: null, summaryValidatedByAdminId: null, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+    return { status: "rejected" as const, pdfUrl: null, portraitIncluded: false };
+  }),
+
+  /**
+   * Propose le résumé de la fiche à partir du CV que le candidat a envoyé pour son évaluation (administrateur uniquement).
+   * Mêmes garde-fous que le générateur de CV : accord d'analyse + accord distinct de lecture du CV, CV expurgé avant envoi
+   * au modèle, rien d'inventé. Le résultat n'est qu'une proposition : l'administrateur relit avant de valider.
+   */
+  adminGenerateSummaryFromCv: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    if (!allowSummaryFromCv(admin.email.toLowerCase(), Date.now())) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Limite atteinte : ${CV_DRAFT_MAX_PER_HOUR} générations par heure. Réessayez plus tard.` });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const candidate = (await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1))[0];
+    if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
+    const evaluation = (await db.select().from(evaluations).where(or(eq(evaluations.candidateId, input.candidateId), sql`LOWER(${evaluations.email}) = LOWER(${candidate.email})`)).orderBy(desc(evaluations.createdAt)).limit(1))[0];
+    if (!evaluation) {
+      return { ok: false as const, reason: "no_evaluation" as const, error: "Aucune évaluation avec CV n’est rattachée à ce candidat : le résumé ne peut pas être tiré d’un CV." };
+    }
+    const outcome = await generateCvDraft(evaluation, { style: "international", language: "fr" });
+    logger.info("[placementSummary] résumé depuis le CV", { candidateId: input.candidateId, admin: admin.email, ok: outcome.ok, ...(outcome.ok === false ? { reason: outcome.reason } : {}) });
+    if (outcome.ok === false) return { ok: false as const, reason: outcome.reason, error: outcome.error };
+    return { ok: true as const, fields: summaryFieldsFromCvDraft(outcome.draft), unverified: outcome.unverified, missing: outcome.draft.missing };
+  }),
+
+  /** Aperçu du PDF avec les corrections en cours : rien n'est enregistré. */
+  adminPreviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), draft: z.string().trim().min(50).max(6000) })).mutation(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const sources = await loadSummarySources(db, input.candidateId);
+    let draft: ReturnType<typeof normalizePlacementSummaryDraft>;
+    try {
+      draft = normalizePlacementSummaryDraft(JSON.parse(input.draft), sources.base);
+    } catch {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "La fiche est incomplète ou invalide : vérifiez le résumé et les points clés." });
+    }
+    const pdf = buildPlacementSummaryPdf(draft, { portrait: sources.portrait, reference: sources.profile.profileCode });
+    return { previewPdfDataUrl: `data:application/pdf;base64,${pdf.toString("base64")}`, portraitIncluded: sources.portrait !== null };
   }),
 
   /** Statut « profil sélectionnable » pour l’espace client (corridor Afrique → monde). */
@@ -630,6 +741,7 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
     const { db, organization } = await getEmployerSession(input.sessionToken);
     const row = (await db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles, consent: candidatePlacementConsents }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).innerJoin(candidatePlacementConsents, eq(candidatePlacementConsents.candidateId, placementCandidateProfiles.candidateId)).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))).limit(1))[0];
     if (!row || row.submission.status === "withdrawn" || row.profile.summaryStatus !== "approved" || row.consent.status !== "granted" || !row.consent.pdfShareConsent || !row.profile.summaryPdfKey) throw new TRPCError({ code: "FORBIDDEN", message: "Aucune fiche validée" });
+    logger.info("[placementSummary] fiche téléchargée par un partenaire", { submissionId: input.submissionId, organizationId: organization.id, profileCode: row.profile.profileCode });
     return { url: await storageGetSignedUrl(row.profile.summaryPdfKey), filename: `fiche-synthese-${row.profile.profileCode}.pdf` };
   }),
 
