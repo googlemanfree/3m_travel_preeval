@@ -11,10 +11,12 @@ describe("reçus synchronisés — confiance client/admin", () => {
     expect(desk).toContain("getPaymentReceiptA5Html");
     expect(desk).toContain("approvePaymentReceipt");
     expect(desk).toContain("sendPaymentReceiptForCandidate");
+    expect(desk).toContain("resendAgreementSignatureReminder");
     expect(desk).toContain("onOpenCandidate");
     expect(desk).toContain("aucun rewrite de statut dossier");
     expect(management).toContain('type: "payment_receipt_approved"');
     expect(management).toContain("notifyPaymentReceiptApprovedWhatsApp");
+    expect(management).toContain("notifyAgreementSignatureReminderWhatsApp");
     expect(management).toContain("agencyDossiers.initialPaymentStatus");
   });
 

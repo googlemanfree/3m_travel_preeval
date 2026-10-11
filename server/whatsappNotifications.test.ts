@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { normalizeWhatsAppPhone, toE164WhatsApp } from "../shared/whatsappPhone";
 import {
   buildAgencyDocumentsPublishedWhatsApp,
+  buildAgreementSignatureReminderWhatsApp,
   buildDossierCreatedWhatsApp,
   buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
@@ -79,6 +80,17 @@ describe("messages WhatsApp dossier / documents", () => {
     expect(message).toContain("mon-espace?section=overview");
     expect(message).toContain("Reçu de paiement validé");
   });
+
+  it("construit le message de relance protocole", () => {
+    const message = buildAgreementSignatureReminderWhatsApp({
+      candidateName: "Nadia",
+      dossierNumber: "3M-2026-0088",
+    });
+    expect(message).toContain("Nadia");
+    expect(message).toContain("3M-2026-0088");
+    expect(message).toContain("protocole");
+    expect(message).toContain("mon-espace?section=dossier");
+  });
 });
 
 describe("branchements WhatsApp admin", () => {
@@ -96,15 +108,20 @@ describe("branchements WhatsApp admin", () => {
     expect(service).toContain("toE164WhatsApp");
     expect(service).toContain("buildAgencyDocumentsPublishedWhatsApp");
     expect(service).toContain("buildPaymentReceiptApprovedWhatsApp");
+    expect(service).toContain("buildAgreementSignatureReminderWhatsApp");
     expect(service).toContain("URLSearchParams");
 
     const management = read("server/routers/adminCandidateManagement.ts");
     expect(management).toContain("notifyPaymentReceiptApprovedWhatsApp");
     expect(management).toContain("receipt_approved_whatsapp");
+    expect(management).toContain("notifyAgreementSignatureReminderWhatsApp");
+    expect(management).toContain("agreement_signature_reminder_whatsapp");
     expect(management).toContain("whatsappSent");
 
     expect(read("client/src/components/AgencyDossierDocumentCenter.tsx")).toContain("WhatsApp envoyé au client");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("WhatsApp envoyé");
     expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("WhatsApp envoyé au client");
+    expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("resendAgreementSignatureReminder");
+    expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("protocol-remind-");
   });
 });
