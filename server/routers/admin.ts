@@ -1302,7 +1302,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
       candidateId: z.string().regex(/^(online|agency)_\d+$/),
-      reason: z.string().trim().min(5).max(1000),
+      reason: z.string().trim().min(8).max(2000),
       notifyClient: z.boolean().default(true),
     }))
     .mutation(async ({ input }) => {

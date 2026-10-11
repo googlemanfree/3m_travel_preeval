@@ -44,7 +44,7 @@ export default function AdminCandidateCockpitStrip({
 }) {
   const treatTarget: CockpitTreatTarget = {
     key: cockpit.nextAction.key,
-    tab: cockpit.nextAction.tab || cockpit.blockers[0]?.tab || "overview",
+    tab: (cockpit.nextAction.tab || cockpit.blockers[0]?.tab || "overview") as CockpitTreatTarget["tab"],
     label: cockpit.nextAction.label,
   };
 

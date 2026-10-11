@@ -448,7 +448,7 @@ export const candidateRouter = router({
       let registrationCv: { url: string; key: string; fileName: string; mime: string; size: number } | null = null;
       if (input.cvBase64 && input.cvFileName) {
         const checked = checkCvUpload(input.cvBase64);
-        if (!checked.ok) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });
+        if (checked.ok === false) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });
         const fileName = safeCvFileName(input.cvFileName);
         const storageKey = `candidates/registration-cv/${Date.now()}_${fileName}`;
         const stored = await storagePut(storageKey, Buffer.from(checked.bytes), checked.mime);

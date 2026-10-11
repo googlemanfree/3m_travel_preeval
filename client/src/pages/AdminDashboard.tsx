@@ -452,7 +452,7 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Annulation impossible", description: err.message, variant: "destructive" }),
   });
-  const cancelValidatedPaymentMutation = trpc.admin.cancelValidatedPayment.useMutation({
+  const cancelValidatedPaymentMutation = trpc.admin.cancelValidatedDossierPayment.useMutation({
     onSuccess: (result) => {
       setCancelPaymentDialogOpen(false);
       setCancelPaymentReason("");

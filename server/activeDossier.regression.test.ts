@@ -34,7 +34,7 @@ describe("dossier de traitement actif synchronisé", () => {
     expect(candidate).toContain("resolveActiveDossierNumber");
     expect(application).toContain("activeDossierNumber: dossierNumber");
     expect(admin).toContain("isClientActiveTreatment");
-    expect(admin).toContain("cancelValidatedPayment:");
+    expect(admin).toContain("cancelValidatedDossierPayment:");
     expect(admin).not.toContain("provisionalAccountEmails");
     expect(space).toContain("activateDossier");
     expect(space).toContain("setActiveDossier");
