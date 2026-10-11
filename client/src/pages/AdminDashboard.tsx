@@ -175,6 +175,7 @@ interface Candidate {
   secondProtocolSigned?: boolean;
   checklistPercent?: number | null;
   procedureStep?: string;
+  isActiveDossier?: boolean;
   procedureJourney?: AdminProcedureSnapshot;
   siblingCount?: number;
   siblingProcedures?: SiblingProcedureSummary[];
@@ -2723,6 +2724,11 @@ export default function AdminDashboard() {
                           <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
                             {candidate.folderCode}
                           </span>
+                          {candidate.isActiveDossier && (
+                            <span data-testid="admin-active-dossier-badge" className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                              Dossier actif
+                            </span>
+                          )}
                           <span className="text-[10px] font-semibold text-slate-700">
                             {procedureLabelForDossier({ visaType: candidate.projectType, destination: candidate.destinationCountry, dossierNumber: candidate.folderCode })}
                           </span>

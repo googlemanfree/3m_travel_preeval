@@ -1282,6 +1282,35 @@ export const adminRouter = router({
       return { success: true, status: input.status, validatedBy: admin.email || admin.fullName || "Admin" };
     }),
 
+  cancelValidatedDossierPayment: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      reason: z.string().trim().min(8).max(2000),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide." });
+      const actor = admin.fullName || admin.email || "Admin";
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement de ce dossier n’est pas validé." });
+        await db.update(applications).set({ paymentStatus: "PENDING", dossierStatus: "en_attente_paiement", lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: actor }).where(eq(applications.id, reference.id));
+        await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(reference.id), oldStatus: "SUCCESS", newStatus: "PENDING", details: JSON.stringify({ event: "payment_cancelled", reason: input.reason, dossierNumber: application.dossierNumber }) });
+        return { success: true, dossierNumber: application.dossierNumber, status: "PENDING" as const };
+      }
+      const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+      if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+      if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement de ce dossier n’est pas validé." });
+      await db.update(agencyDossiers).set({ initialPaymentStatus: "pending", lastStatusChangeAt: new Date(), lastStatusChangeBy: actor }).where(eq(agencyDossiers.id, reference.id));
+      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(reference.id), oldStatus: "paid", newStatus: "pending", details: JSON.stringify({ event: "payment_cancelled", reason: input.reason, dossierNumber: `3M-AGN-${reference.id.toString().padStart(4, "0")}` }) });
+      return { success: true, dossierNumber: `3M-AGN-${reference.id.toString().padStart(4, "0")}`, status: "PENDING" as const };
+    }),
+
   /**
    * Modifier les donnees d'une application (par l'admin)
    */
@@ -1601,6 +1630,7 @@ export const adminRouter = router({
             evaluationReviewedAt: candidates.evaluationReviewedAt,
             evaluationReviewedBy: candidates.evaluationReviewedBy,
             evaluationReviewNote: candidates.evaluationReviewNote,
+            activeDossierNumber: candidates.activeDossierNumber,
             createdAt: candidates.createdAt,
             updatedAt: candidates.updatedAt,
             emailVerified: candidates.emailVerified,
@@ -1687,6 +1717,7 @@ export const adminRouter = router({
           city: app.currentCity || "Non renseignée",
           destinationCountry: app.destination || "Non spécifiée",
           projectType: app.visaType || "Non spécifié",
+          isActiveDossier: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === app.dossierNumber,
           status: mapDossierStatus(app.dossierStatus),
           internalStatus: app.dossierStatus,
           source: "WEB" as const,
@@ -1725,6 +1756,7 @@ export const adminRouter = router({
           city: "Yaoundé",
           destinationCountry: app.destination || "Non spécifiée",
           projectType: app.visaType || "Non spécifié",
+          isActiveDossier: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === `3M-AGN-${app.id.toString().padStart(4, "0")}`,
           status: mapAgencyStatus(app.status),
           internalStatus: app.status,
           source: "AGENCY_PHYSICAL" as const,
@@ -1753,13 +1785,8 @@ export const adminRouter = router({
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
-        const provisionalAccountEmails = new Set(
-          onlineApps
-            .filter((record) => record.dossierNumber?.startsWith("EVAL-DRAFT-"))
-            .map((record) => record.email.toLowerCase()),
-        );
         const normalizedAccounts = candidateRows
-          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()) || provisionalAccountEmails.has(candidate.email.toLowerCase()))
+          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()))
           .map((candidate) => ({
             id: `account_${candidate.id}`,
             internalId: candidate.id,
@@ -1773,8 +1800,9 @@ export const adminRouter = router({
             // Pays précis et projet déclarés à l'inscription (et non la catégorie large historique).
             destinationCountry: destinationLabelForStaff(candidate),
             preferredDestinations: parsePreferredDestinations(candidate.preferredDestinations),
-            projectType: candidate.visaType || "À qualifier",
-            status: mapDossierStatus(candidate.dossierStatus),
+          projectType: candidate.visaType || "À qualifier",
+          isActiveDossier: false,
+          status: mapDossierStatus(candidate.dossierStatus),
             internalStatus: candidate.dossierStatus,
             source: "ACCOUNT_ONLY" as const,
             scoringTotal: null,

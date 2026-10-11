@@ -262,6 +262,8 @@ export const candidates = mysqlTable("candidates", {
     "approuve",
     "refuse",
   ]).default("nouveau").notNull(),
+  // Un seul dossier de traitement actif à la fois ; les autres procédures restent inchangées.
+  activeDossierNumber: varchar("activeDossierNumber", { length: 80 }),
   // Déclaration faite par le candidat à la création du compte. Elle indique
   // qu’un résultat d’évaluation existe déjà, sans le présenter comme validé
   // tant que l’équipe n’a pas rapproché le dossier.
