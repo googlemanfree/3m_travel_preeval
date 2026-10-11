@@ -245,7 +245,7 @@ function resolveNextAction(stage: CockpitStage, blockers: CockpitBlocker[], plac
       return {
         key: "approve_receipt",
         label: `Approuver / envoyer le reçu${place}`,
-        description: "Finaliser le reçu avant ou avec le protocole d’accord.",
+        description: "Valider et signer le reçu, imprimer l’A5 caisse, ou renvoyer le PDF au client.",
         urgency: "normal",
         tab: "payments",
       };
@@ -349,9 +349,11 @@ export function cockpitTreatFocusId(key: string): string {
       return "candidate360-documents-panel";
     case "payment_missing":
     case "confirm_payment":
+      return "candidate360-payments-panel";
     case "receipt_missing":
     case "approve_receipt":
-      return "candidate360-payments-panel";
+      // Barre Valider / A5 / PDF en tête du panneau paiements (360°).
+      return "candidate360-receipt-actions";
     case "evaluation_missing":
     case "evaluation_pending":
     case "review_evaluation":
