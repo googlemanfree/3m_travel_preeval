@@ -118,7 +118,6 @@ describe("plus de montant imposé dans le parcours de paiement", () => {
   it("les écrans /payment/* et l'e-mail de validation n'écrivent plus 65 000 en dur", () => {
     for (const file of [
       "client/src/pages/PaymentAgencyConfirmation.tsx",
-      "client/src/pages/PaymentSuccessPage.tsx",
       "client/src/pages/PaymentMethodSelection.tsx",
       "server/routers/paymentValidation.ts",
       "server/routers/candidate.ts",
@@ -127,6 +126,13 @@ describe("plus de montant imposé dans le parcours de paiement", () => {
       expect(read(file), file).not.toMatch(/65[\s .]?000/);
     }
     expect(read("client/src/components/AdminPaymentManagement.tsx")).not.toContain("<strong>65 000 XAF</strong>");
+  });
+
+  it("l'ancienne page /payment/success (« Paiement réussi » et faux numéro de transaction pour tout visiteur) est supprimée au profit de /payment-success", () => {
+    expect(() => read("client/src/pages/PaymentSuccessPage.tsx")).toThrow();
+    expect(read("client/src/App.tsx")).toContain('<Route path={"/payment/success"}>{() => <Redirect to="/payment-success" />}</Route>');
+    expect(read("server/legacyPublicRedirects.ts")).toContain('"/payment/success": "/payment-success"');
+    expect(read("client/src/pages/PaymentSuccess.tsx")).not.toMatch(/TXN-\$\{Date\.now\(\)\}/);
   });
 
   it("l'administration peut modifier le montant d'un paiement non validé", () => {

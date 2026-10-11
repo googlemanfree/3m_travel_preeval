@@ -267,7 +267,6 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/reset-password": privateShell("Nouveau mot de passe", "Définissez un nouveau mot de passe grâce au lien sécurisé reçu par e-mail pour retrouver l’accès à votre espace client."),
   "/payment/method-selection": privateShell("Choisir un mode de paiement", "Sélectionnez le mode de règlement d’un dossier 3M TRAVEL AGENCY depuis votre espace client."),
   "/payment/agency-confirmation": privateShell("Paiement en agence", "Confirmation d’une demande de paiement en agence pour un dossier 3M TRAVEL AGENCY."),
-  "/payment/success": privateShell("Retour de paiement", "Page de retour après un paiement en ligne ; le statut définitif du règlement est confirmé par l’agence."),
   "/payment-success": privateShell("Retour de paiement", "Page de retour après un paiement en ligne ; le statut définitif du règlement est confirmé par l’agence."),
   "/payment/error": privateShell("Paiement non abouti", "Page de retour après un paiement interrompu ou refusé, avec les options pour réessayer ou contacter l’agence."),
   "/payment-failed": privateShell("Paiement non abouti", "Page de retour après un paiement interrompu ou refusé, avec les options pour réessayer ou contacter l’agence."),

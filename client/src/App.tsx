@@ -95,7 +95,6 @@ const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"))
 const HowItWorks = lazyWithTimeout(() => import("./pages/HowItWorks"));
 const EvisaDetailPage = lazyWithTimeout(() => import("./pages/EvisaDetailPage"));
 const DocumentCompliancePage = lazyWithTimeout(() => import("./pages/DocumentCompliancePage"));
-const PaymentSuccessPage = lazyWithTimeout(() => import("./pages/PaymentSuccessPage"));
 const PaymentErrorPage = lazyWithTimeout(() => import("./pages/PaymentErrorPage"));
 const ConsultationBooking = lazyWithTimeout(() => import("./pages/ConsultationBooking"));
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
@@ -182,7 +181,7 @@ function Router() {
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/payment/method-selection"} component={PaymentMethodSelection} />
       <Route path={"/payment/agency-confirmation"} component={PaymentAgencyConfirmation} />
-      <Route path={"/payment/success"} component={PaymentSuccessPage} />
+      <Route path={"/payment/success"}>{() => <Redirect to="/payment-success" />}</Route>
       <Route path={"/payment/error"} component={PaymentErrorPage} />
       <Route path={"/payment/flight/:requestId"} component={CinetPayFlightPayment} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
