@@ -401,8 +401,40 @@ export async function ensureOperationalCase(db: any, reference: { source: "onlin
 }
 
 function serializeAdminCandidateDetails<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  try {
+    return JSON.parse(
+      JSON.stringify(value, (_key, current) => (typeof current === "bigint" ? Number(current) : current)),
+    ) as T;
+  } catch (error) {
+    console.error("[serializeAdminCandidateDetails] serialization failed", error);
+    throw error;
+  }
 }
+
+/** Champs candidats nécessaires à la fiche admin — évite un SELECT * fragile (colonnes récentes). */
+const candidateDetailsSelect = {
+  id: candidates.id,
+  email: candidates.email,
+  fullName: candidates.fullName,
+  phone: candidates.phone,
+  avatarUrl: candidates.avatarUrl,
+  visaType: candidates.visaType,
+  destination: candidates.destination,
+  preferredDestinations: candidates.preferredDestinations,
+  nationality: candidates.nationality,
+  educationLevel: candidates.educationLevel,
+  employmentStatus: candidates.employmentStatus,
+  languageLevel: candidates.languageLevel,
+  dossierStatus: candidates.dossierStatus,
+  emailVerified: candidates.emailVerified,
+  evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+  evaluationDeclaredAt: candidates.evaluationDeclaredAt,
+  evaluationReviewedAt: candidates.evaluationReviewedAt,
+  evaluationReviewedBy: candidates.evaluationReviewedBy,
+  evaluationReviewNote: candidates.evaluationReviewNote,
+  createdAt: candidates.createdAt,
+  updatedAt: candidates.updatedAt,
+} as const;
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -1627,31 +1659,68 @@ export const adminRouter = router({
           if (progress) checklistPercentByLegacyReference.set(reference, progress.total ? Math.round((progress.completed / progress.total) * 100) : 100);
         });
 
-        const candidateRows = await db
-          .select({
-            id: candidates.id,
-            email: candidates.email,
-            fullName: candidates.fullName,
-            phone: candidates.phone,
-            destination: candidates.destination,
-            preferredDestinations: candidates.preferredDestinations,
-            visaType: candidates.visaType,
-            dossierStatus: candidates.dossierStatus,
-            evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
-            evaluationDeclaredAt: candidates.evaluationDeclaredAt,
-            evaluationReviewedAt: candidates.evaluationReviewedAt,
-            evaluationReviewedBy: candidates.evaluationReviewedBy,
-            evaluationReviewNote: candidates.evaluationReviewNote,
-            activeDossierNumber: candidates.activeDossierNumber,
-            createdAt: candidates.createdAt,
-            updatedAt: candidates.updatedAt,
-            emailVerified: candidates.emailVerified,
-            verificationToken: candidates.verificationToken,
-            verificationExpiresAt: candidates.verificationExpiresAt,
-          })
-          .from(candidates)
-          .where(isNull(candidates.deletedAt))
-          .limit(10000);
+        let candidateRows: Array<{
+          id: number;
+          email: string;
+          fullName: string;
+          phone: string | null;
+          destination: string | null;
+          preferredDestinations: string | null;
+          visaType: string | null;
+          dossierStatus: string | null;
+          evaluationDeclarationStatus: string | null;
+          evaluationDeclaredAt: Date | null;
+          evaluationReviewedAt: Date | null;
+          evaluationReviewedBy: string | null;
+          evaluationReviewNote: string | null;
+          activeDossierNumber: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+          emailVerified: boolean | null;
+          verificationToken: string | null;
+          verificationExpiresAt: Date | null;
+        }> = [];
+        try {
+          candidateRows = await db
+            .select({
+              id: candidates.id,
+              email: candidates.email,
+              fullName: candidates.fullName,
+              phone: candidates.phone,
+              destination: candidates.destination,
+              preferredDestinations: candidates.preferredDestinations,
+              visaType: candidates.visaType,
+              dossierStatus: candidates.dossierStatus,
+              evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+              evaluationDeclaredAt: candidates.evaluationDeclaredAt,
+              evaluationReviewedAt: candidates.evaluationReviewedAt,
+              evaluationReviewedBy: candidates.evaluationReviewedBy,
+              evaluationReviewNote: candidates.evaluationReviewNote,
+              activeDossierNumber: candidates.activeDossierNumber,
+              createdAt: candidates.createdAt,
+              updatedAt: candidates.updatedAt,
+              emailVerified: candidates.emailVerified,
+              verificationToken: candidates.verificationToken,
+              verificationExpiresAt: candidates.verificationExpiresAt,
+            })
+            .from(candidates)
+            .where(isNull(candidates.deletedAt))
+            .limit(10000);
+        } catch (error) {
+          // Migration 0079 absente : recharger sans activeDossierNumber pour ne pas bloquer le cockpit.
+          console.warn("[listCandidates] fallback sans activeDossierNumber:", error instanceof Error ? error.message : error);
+          const fallbackRows = await db
+            .select(candidateDetailsSelect)
+            .from(candidates)
+            .where(isNull(candidates.deletedAt))
+            .limit(10000);
+          candidateRows = fallbackRows.map((row) => ({
+            ...row,
+            activeDossierNumber: null,
+            verificationToken: null,
+            verificationExpiresAt: null,
+          }));
+        }
         const activationLogs = await db
           .select({
             recipientEmail: emailDeliveryLogs.recipientEmail,
@@ -2605,7 +2674,7 @@ export const adminRouter = router({
         const accountMatch = /^account_(\d+)$/.exec(input.candidateId.trim());
         if (accountMatch) {
           const candidateId = Number(accountMatch[1]);
-          const [account] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+          const [account] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
           if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
           const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
           const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
@@ -2712,7 +2781,7 @@ export const adminRouter = router({
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
-          const [candRec] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          const [candRec] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, app.email)).limit(1);
           const avatarUrl = candRec?.avatarUrl || null;
 
           const docs = await db.select().from(clientDocuments)
@@ -2743,24 +2812,17 @@ export const adminRouter = router({
             try { scoringData = JSON.parse(app.scoringDetails); } catch {}
           }
 
+          // Lecture seule : pas de purge ici (évite une erreur interne sur GET).
+          // La normalisation EVAL→3M se fait via le bouton admin ou canonicalizeActiveDossier.
           const evalShellId = parseEvalAgencyShellId(app.dossierNumber);
           let redirectToCanonicalAgencyId: string | null = null;
           if (evalShellId != null) {
             const [linkedAgency] = await db
-              .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+              .select({ id: agencyDossiers.id })
               .from(agencyDossiers)
               .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
               .limit(1);
             if (linkedAgency) {
-              try {
-                await purgeEvalAgencyShell(db, {
-                  agencyDossierId: linkedAgency.id,
-                  candidateEmail: linkedAgency.email,
-                  adminEmail: "system",
-                });
-              } catch (error) {
-                console.error("[getCandidateDetails] purge EVAL shell failed", error);
-              }
               redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
             }
           }
@@ -2823,7 +2885,7 @@ export const adminRouter = router({
             evaluationReviewedBy?: string | null;
           } | null = null;
           if (dossier.email) {
-            const [row] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            const [row] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
             candRec = row ?? null;
             avatarUrl = candRec?.avatarUrl || null;
           }
@@ -3745,7 +3807,7 @@ export const adminRouter = router({
         : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
-      const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
+      const candidateRecord = (await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, email)).limit(1))[0];
       const agencyCandidateId = candidateRecord?.id ?? null;
       const linkedApplication = reference.source === "online"
         ? sourceRecord
@@ -3974,37 +4036,17 @@ export const adminRouter = router({
           ? (sourceRecord as typeof applications.$inferSelect).dossierNumber
           : null,
       );
+      // Lecture seule : redirection vers le 3M actif sans mutation (purge via bouton « Normaliser »).
       let redirectToCanonicalAgencyId: string | null = null;
-      let evalShellPurged = false;
+      const evalShellPurged = false;
       if (evalShellId != null) {
         const [linkedAgency] = await db
-          .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+          .select({ id: agencyDossiers.id })
           .from(agencyDossiers)
           .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
           .limit(1);
         if (linkedAgency) {
-          // Auto : supprimer le miroir EVAL et verrouiller la référence 3M-AGN.
-          try {
-            const purged = await purgeEvalAgencyShell(db, {
-              agencyDossierId: linkedAgency.id,
-              candidateEmail: linkedAgency.email,
-              adminEmail: admin.email,
-            });
-            evalShellPurged = purged.purgedApplicationIds.length > 0;
-          } catch (error) {
-            console.error("[getCandidate360] canonicalize EVAL shell failed", error);
-          }
           redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
-        }
-      } else if (reference.source === "agency") {
-        try {
-          await ensureAgencyActiveReference(db, {
-            agencyDossierId: reference.id,
-            email: email,
-            adminEmail: admin.email,
-          });
-        } catch (error) {
-          console.error("[getCandidate360] ensure agency active reference failed", error);
         }
       }
       return {

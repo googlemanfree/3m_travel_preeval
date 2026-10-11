@@ -51,19 +51,24 @@ export async function purgeEvalAgencyShell(
 
   let activeDossierUpdated = false;
   const email = (input.candidateEmail || shells[0]?.email || "").trim();
-  if (email) {
-    const updated = await db
-      .update(candidates)
-      .set({ activeDossierNumber: canonical })
-      .where(and(sql`LOWER(${candidates.email}) = LOWER(${email})`, isNull(candidates.deletedAt)));
-    activeDossierUpdated = true;
-    void updated;
-  } else if (shells[0]?.candidateId) {
-    await db
-      .update(candidates)
-      .set({ activeDossierNumber: canonical })
-      .where(eq(candidates.id, shells[0].candidateId));
-    activeDossierUpdated = true;
+  // activeDossierNumber (migration 0079) : ne jamais faire échouer la lecture admin
+  // si la colonne n’est pas encore déployée sur l’environnement cible.
+  try {
+    if (email) {
+      await db
+        .update(candidates)
+        .set({ activeDossierNumber: canonical })
+        .where(and(sql`LOWER(${candidates.email}) = LOWER(${email})`, isNull(candidates.deletedAt)));
+      activeDossierUpdated = true;
+    } else if (shells[0]?.candidateId) {
+      await db
+        .update(candidates)
+        .set({ activeDossierNumber: canonical })
+        .where(eq(candidates.id, shells[0].candidateId));
+      activeDossierUpdated = true;
+    }
+  } catch (error) {
+    console.warn("[purgeEvalAgencyShell] activeDossierNumber non mis à jour:", error instanceof Error ? error.message : error);
   }
 
   try {
@@ -143,10 +148,18 @@ export async function setAdminActiveDossierReference(
     throw new Error("Référence trop longue.");
   }
 
-  await db
-    .update(candidates)
-    .set({ activeDossierNumber: next })
-    .where(and(sql`LOWER(${candidates.email}) = LOWER(${input.candidateEmail})`, isNull(candidates.deletedAt)));
+  try {
+    await db
+      .update(candidates)
+      .set({ activeDossierNumber: next })
+      .where(and(sql`LOWER(${candidates.email}) = LOWER(${input.candidateEmail})`, isNull(candidates.deletedAt)));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/activeDossierNumber|Unknown column/i.test(message)) {
+      throw new Error("La colonne activeDossierNumber est absente. Appliquez la migration 0079_active_dossier_number.sql puis réessayez.");
+    }
+    throw error;
+  }
 
   let renamedApplication = false;
   if (input.renameOnlineApplicationId && input.renameOnlineApplicationId > 0) {
