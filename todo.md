@@ -1,6 +1,6 @@
 
-## PR #60 — cohérence dossiers, phases client et cockpit — VALIDÉE
-- [x] PR60 mergeable/clean, tests ciblés sur le commit exact : 1 suite / 4 tests verts.
-- [x] `pnpm run check` vert ; `vite build` vert (avertissement chunks volumineux uniquement).
-- [x] Draft sortie puis PR60 squash-mergée sur `main` au commit `cf80bb56`.
-- [x] Checkout WebDev synchronisé sur `user_github/main` `cf80bb56` ; publication à enregistrer par checkpoint.
+## PR #61 — dossiers agence vers espace client et checklist dynamique — VALIDÉE
+- [x] Commit exact validé : 2 suites / 11 tests verts, `pnpm run check` vert et `vite build` vert.
+- [x] PR61 sortie du draft et squash-mergée sur `main` au commit `54089b4c`.
+- [x] Checkout synchronisé sur `user_github/main` ; publication à enregistrer par checkpoint.
+- [ ] Contrôle authentifié réel des parcours scan/publication non exécuté sans session admin active ; à vérifier après publication.
