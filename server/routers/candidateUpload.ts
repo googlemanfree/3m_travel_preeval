@@ -380,6 +380,9 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       }).catch((notificationError) => {
         console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
       });
+      void import("../services/candidateSynthesisStructure")
+        .then(({ scheduleSynthesisRestructure }) => scheduleSynthesisRestructure(candidateId, "après dépôt candidat (upload route)"))
+        .catch((error) => console.error("[synthesis] restructure après dépôt candidat upload", error));
       res.json({ fileUrl: url, fileKey: key, fileName: storedName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier), clarification: clarification ? { id: clarification.id, documentLabel: clarification.documentLabel } : null });
     } catch (error) {
       console.error("[CandidateUpload] Error:", error);

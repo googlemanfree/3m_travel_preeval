@@ -118,6 +118,10 @@ export function registerAgencyDossierUploadRoute(app: Express): void {
         console.error("[AgencyDossierUpload] Notification document non envoyée:", notificationError);
       });
 
+      void import("../services/candidateSynthesisStructure")
+        .then(({ restructureSynthesisForAgencyDossier }) => restructureSynthesisForAgencyDossier(dossierId))
+        .catch((error) => console.error("[synthesis] restructure après dépôt dossier agence", error));
+
       res.status(201).json({
         success: true,
         document: {

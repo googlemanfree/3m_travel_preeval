@@ -115,3 +115,54 @@ export const placementSubmissionEvents = mysqlTable("placement_submission_events
   note: text("note"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("idx_placement_events_submission").on(table.submissionId, table.createdAt)]);
+
+/** Consentement distinct : partager la fiche de synthèse + photo avec employeurs / agences. */
+export const candidateSynthesisShareConsents = mysqlTable("candidate_synthesis_share_consents", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull().unique(),
+  status: mysqlEnum("status", ["granted", "withdrawn"]).notNull().default("withdrawn"),
+  consentedAt: timestamp("consented_at"),
+  withdrawnAt: timestamp("withdrawn_at"),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+/** Fiche de synthèse (1 page) — brouillon admin puis diffusion contrôlée. */
+export const candidateSynthesisSheets = mysqlTable("candidate_synthesis_sheets", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  version: int("version").notNull().default(1),
+  status: mysqlEnum("status", ["draft", "validated", "rejected", "needs_revalidation"]).notNull().default("draft"),
+  draftJson: text("draft_json"),
+  contentJson: text("content_json"),
+  sourceFingerprint: varchar("source_fingerprint", { length: 512 }).notNull().default(""),
+  portraitUrl: text("portrait_url"),
+  missingJson: text("missing_json"),
+  unverifiedJson: text("unverified_json"),
+  generatedByAdminEmail: varchar("generated_by_admin_email", { length: 320 }),
+  validatedByAdminEmail: varchar("validated_by_admin_email", { length: 320 }),
+  rejectedByAdminEmail: varchar("rejected_by_admin_email", { length: 320 }),
+  rejectionReason: text("rejection_reason"),
+  generatedAt: timestamp("generated_at"),
+  validatedAt: timestamp("validated_at"),
+  rejectedAt: timestamp("rejected_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_synthesis_sheets_candidate").on(table.candidateId, table.status, table.version),
+  index("idx_synthesis_sheets_status").on(table.status, table.updatedAt),
+]);
+
+/** Journal sans contenu CV : qui a généré, validé, refusé, téléchargé. */
+export const candidateSynthesisEvents = mysqlTable("candidate_synthesis_events", {
+  id: int("id").autoincrement().primaryKey(),
+  sheetId: int("sheet_id").notNull(),
+  candidateId: int("candidate_id").notNull(),
+  actorType: mysqlEnum("actor_type", ["admin", "employer", "agency", "candidate", "system"]).notNull(),
+  actorRef: varchar("actor_ref", { length: 320 }),
+  action: varchar("action", { length: 80 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_synthesis_events_sheet").on(table.sheetId, table.createdAt),
+  index("idx_synthesis_events_candidate").on(table.candidateId, table.createdAt),
+]);

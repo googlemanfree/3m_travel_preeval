@@ -12,6 +12,10 @@ export function PlacementConsentCard() {
     { candidateToken: candidateToken ?? "" },
     { enabled: Boolean(candidateToken) },
   );
+  const synthesisConsentQuery = trpc.candidateSynthesis.getShareConsent.useQuery(
+    { candidateToken: candidateToken ?? "" },
+    { enabled: Boolean(candidateToken) },
+  );
   const utils = trpc.useUtils();
   const updateMutation = trpc.placementPortal.setMyConsent.useMutation({
     onSuccess: async ({ status }) => {
@@ -20,8 +24,16 @@ export function PlacementConsentCard() {
     },
     onError: (error) => toast.error("Mise à jour impossible", { description: error.message }),
   });
+  const synthesisMutation = trpc.candidateSynthesis.setShareConsent.useMutation({
+    onSuccess: async ({ status }) => {
+      toast.success(status === "granted" ? "Partage de fiche / photo autorisé." : "Partage de fiche retiré.");
+      await utils.candidateSynthesis.getShareConsent.invalidate();
+    },
+    onError: (error) => toast.error("Mise à jour impossible", { description: error.message }),
+  });
 
   const granted = consentQuery.data?.status === "granted";
+  const synthesisGranted = synthesisConsentQuery.data?.status === "granted";
   return (
     <Card className="border-violet-200 bg-violet-50/50" aria-label="Consentement au partage de profil de placement">
       <CardHeader className="pb-3">
@@ -35,6 +47,21 @@ export function PlacementConsentCard() {
           <Button type="button" variant={granted ? "outline" : "default"} disabled={!candidateToken || updateMutation.isPending || consentQuery.isLoading} onClick={() => updateMutation.mutate({ candidateToken: candidateToken!, consented: !granted })} className={granted ? "border-violet-300 text-violet-800" : "bg-violet-700 hover:bg-violet-800"}>
             {updateMutation.isPending ? "Mise à jour…" : granted ? "Retirer mon accord" : "Autoriser le partage anonymisé"}
           </Button>
+        </div>
+        <div className="rounded-lg border border-indigo-200 bg-white p-3" data-testid="synthesis-share-consent">
+          <p className="text-sm leading-6 text-slate-700">Accord distinct pour la <strong>fiche de synthèse PDF</strong> (prénom + initiale + photo) destinée aux employeurs et agences vérifiés, sans coordonnées directes.</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-indigo-950">{synthesisGranted ? "Fiche / photo autorisées" : "Fiche / photo non autorisées"}</span>
+            <Button
+              type="button"
+              variant={synthesisGranted ? "outline" : "default"}
+              disabled={!candidateToken || synthesisMutation.isPending || synthesisConsentQuery.isLoading}
+              onClick={() => synthesisMutation.mutate({ candidateToken: candidateToken!, consented: !synthesisGranted })}
+              className={synthesisGranted ? "border-indigo-300 text-indigo-800" : "bg-indigo-700 hover:bg-indigo-800"}
+            >
+              {synthesisMutation.isPending ? "Mise à jour…" : synthesisGranted ? "Retirer l’accord fiche" : "Autoriser fiche + photo"}
+            </Button>
+          </div>
         </div>
         {granted && <p className="flex items-center gap-2 text-xs font-medium text-emerald-800"><CheckCircle2 className="h-4 w-4" />Vous pouvez retirer cet accord à tout moment. L’agence vérifiera tout retour d’employeur avant de vous contacter.</p>}
       </CardContent>

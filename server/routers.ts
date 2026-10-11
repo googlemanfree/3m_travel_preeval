@@ -9,6 +9,7 @@ import { flightsRouter } from "./routers/flights";
 import { candidateProcedure, candidateRouter } from "./routers/candidate";
 import { evaluationValidationRouterFor } from "./routers/evaluationValidation";
 import { cvDraftRouter } from "./routers/cvDraft";
+import { candidateSynthesisRouter } from "./routers/candidateSynthesis";
 import { applicationRouter } from "./routers/application";
 import { heartbeatRouter } from "./routers/heartbeat";
 import { profileEvaluationRouter } from "./routers/profileEvaluation";
@@ -229,6 +230,8 @@ export const appRouter = router({
   evaluationValidation: evaluationValidationRouterFor(candidateProcedure),
   // Générateur de CV assisté par IA (back-office) : part du CV envoyé par le candidat, avec ses deux consentements
   cvDraft: cvDraftRouter,
+  // Fiche de synthèse employeur / agence (brouillon admin → PDF validé)
+  candidateSynthesis: candidateSynthesisRouter,
   studyVisaEvaluation: studyVisaEvaluationRouter,
   procedures: proceduresRouter,
   evaluationEngine: router(evaluationEngineRouter),
