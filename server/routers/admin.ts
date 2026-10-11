@@ -44,6 +44,10 @@ import {
   previewCountryVisaChecklist,
   publishAgencyDocumentsToCase,
 } from "../services/publishAgencyDocumentsToCase";
+import {
+  notifyDossierCreatedWhatsApp,
+  notifyProcedureStageWhatsApp,
+} from "../services/clientWhatsAppNotify";
 import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
 import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
@@ -2272,7 +2276,8 @@ export const adminRouter = router({
           dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: agencyPaymentConfirmed };
         }
 
-        // Envoyer une notification email au client si demandé : même statut et même « étape N sur M » que son espace client.
+        // Envoyer une notification email + WhatsApp au client si demandé : même statut et même « étape N sur M » que son espace client.
+        let whatsappSent = false;
         if (input.notifyClient && candidateEmail) {
           try {
             const internalStatus = (source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[input.newStatus];
@@ -2283,12 +2288,52 @@ export const adminRouter = router({
             console.error("[Admin Update Status] Email notification failed:", emailErr);
             // Ne pas bloquer la mise à jour si l'email échoue
           }
+
+          try {
+            let phone: string | null = null;
+            if (source === "online") {
+              const [appRow] = await db.select({
+                whatsappNumber: applications.whatsappNumber,
+              }).from(applications).where(eq(applications.id, id)).limit(1);
+              phone = appRow?.whatsappNumber || null;
+            } else {
+              const [dossierRow] = await db.select({ phone: agencyDossiers.phone }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+              phone = dossierRow?.phone || null;
+            }
+            if (!phone) {
+              const [candidateRow] = await db.select({ phone: candidates.phone }).from(candidates)
+                .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${candidateEmail}))`)
+                .limit(1);
+              phone = candidateRow?.phone || null;
+            }
+            const internalStatus = (source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[input.newStatus];
+            const progress = describeDossierProgress({ destination: dossierContext.destination, visaType: dossierContext.visaType, dossierStatus: internalStatus, milestones: { paymentConfirmed: dossierContext.paymentConfirmed } });
+            const stepLabel = progress.stepNumber != null
+              ? (progress.stepLabel
+                ? `Étape ${progress.stepNumber} sur ${progress.stepCount} : ${progress.stepLabel}`
+                : `Étape ${progress.stepNumber} sur ${progress.stepCount}`)
+              : progress.statusLabel;
+            const whatsapp = await notifyProcedureStageWhatsApp({
+              phone,
+              candidateName,
+              dossierNumber: folderCode,
+              stageLabel: statusLabels[input.newStatus] || input.newStatus,
+              stepLabel,
+            });
+            whatsappSent = whatsapp.sent;
+            if (whatsapp.attempted && !whatsapp.sent) {
+              console.warn("[Admin Update Status] WhatsApp:", whatsapp.error);
+            }
+          } catch (whatsappErr) {
+            console.error("[Admin Update Status] WhatsApp notification failed:", whatsappErr);
+          }
         }
 
         return {
           success: true,
           message: `Statut mis à jour : ${statusLabels[input.newStatus]}`,
           notificationSent: input.notifyClient,
+          whatsappSent,
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -2736,11 +2781,29 @@ export const adminRouter = router({
           console.error("[Import Agency Dossier] Email failed:", emailErr);
         }
 
+        let whatsappSent = false;
+        try {
+          const whatsapp = await notifyDossierCreatedWhatsApp({
+            phone: input.whatsapp,
+            candidateName: input.fullName,
+            dossierNumber: folderCode,
+            destination: procedure.destination,
+            visaType: procedure.visaType,
+          });
+          whatsappSent = whatsapp.sent;
+          if (whatsapp.attempted && !whatsapp.sent) {
+            console.warn("[Import Agency Dossier] WhatsApp:", whatsapp.error);
+          }
+        } catch (whatsappErr) {
+          console.error("[Import Agency Dossier] WhatsApp failed:", whatsappErr);
+        }
+
         return {
           success: true,
           folderCode,
           dossierId,
           linkedCandidateId,
+          whatsappSent,
           message: linkedCandidateId
             ? `Dossier agence créé et rattaché au compte client existant : ${folderCode}`
             : `Dossier agence créé avec succès : ${folderCode}`,
@@ -2819,14 +2882,15 @@ export const adminRouter = router({
           documentIds: input.documentIds,
           notify: true,
         });
+        const baseMessage = result.published === 0
+          ? result.totalScanned === 0
+            ? "Aucun document scanné à publier pour ce dossier."
+            : "Tous les documents scannés sont déjà visibles dans l’espace client."
+          : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`;
         return {
           success: true,
           ...result,
-          message: result.published === 0
-            ? result.totalScanned === 0
-              ? "Aucun document scanné à publier pour ce dossier."
-              : "Tous les documents scannés sont déjà visibles dans l’espace client."
-            : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`,
+          message: result.whatsappSent ? `${baseMessage} WhatsApp envoyé au client.` : baseMessage,
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;

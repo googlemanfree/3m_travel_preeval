@@ -58,7 +58,10 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
   });
   const publishMutation = trpc.admin.publishAgencyScannedDocumentsToClient.useMutation({
     onSuccess: (result) => {
-      toast.success(result.message);
+      const whatsappHint = (result as { whatsappSent?: boolean }).whatsappSent
+        ? " WhatsApp envoyé au client."
+        : "";
+      toast.success(`${result.message}${whatsappHint}`);
     },
     onError: (error) => toast.error(error.message || "Publication vers l’espace client impossible."),
   });
