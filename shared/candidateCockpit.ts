@@ -253,7 +253,7 @@ function resolveNextAction(stage: CockpitStage, blockers: CockpitBlocker[], plac
       return {
         key: "send_protocol",
         label: `Faire signer le protocole${place}`,
-        description: "Envoyer ou relancer le protocole d’accord N°01.",
+        description: "Relancer la signature (e-mail + WhatsApp) ou renvoyer l’accès espace client.",
         urgency: "high",
         tab: "evaluation",
       };
@@ -342,7 +342,8 @@ export function cockpitTreatFocusId(key: string): string {
   switch (key) {
     case "protocol_unsigned":
     case "send_protocol":
-      return "candidate360-protocol-panel";
+      // Barre Relancer / Accès en tête du panneau protocole (360°).
+      return "candidate360-protocol-relance";
     case "documents_pending":
     case "review_documents":
       return "candidate360-documents-panel";
