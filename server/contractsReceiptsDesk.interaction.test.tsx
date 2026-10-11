@@ -74,17 +74,23 @@ describe("AdminContractsReceiptsDesk — relance protocole", () => {
     vi.clearAllMocks();
   });
 
-  it("affiche Relancer uniquement pour les dossiers online protocol_pending", async () => {
+  it("affiche Relancer pour online et agency en protocol_pending", async () => {
     const user = userEvent.setup();
     render(<AdminContractsReceiptsDesk sessionToken="session-admin" />);
 
     expect(screen.getByTestId("protocol-remind-online_42")).toBeTruthy();
-    expect(screen.queryByTestId("protocol-remind-agency_7")).toBeNull();
+    expect(screen.getByTestId("protocol-remind-agency_7")).toBeTruthy();
 
     await user.click(screen.getByTestId("protocol-remind-online_42"));
     expect(remindMutate).toHaveBeenCalledWith({
       sessionToken: "session-admin",
       candidateId: "online_42",
+    });
+
+    await user.click(screen.getByTestId("protocol-remind-agency_7"));
+    expect(remindMutate).toHaveBeenCalledWith({
+      sessionToken: "session-admin",
+      candidateId: "agency_7",
     });
   });
 });

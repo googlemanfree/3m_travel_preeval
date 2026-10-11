@@ -43,6 +43,7 @@ import {
 } from "../services/clientWhatsAppNotify";
 import { resendClientAccessLink as issueClientAccessLinkResend } from "../services/resendClientAccessLink";
 import {
+  loadAgencyAgreementSignature,
   loadAgencyAgreementSignaturesByIds,
   loadAgencyProtocolSignedDocIds,
 } from "../services/agencyAgreementSignature";
@@ -2495,35 +2496,68 @@ export const adminCandidateManagementRouter = router({
     }),
 
   resendAgreementSignatureReminder: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^online_\d+$/) }))
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const reference = parseAdminCandidateReference(input.candidateId);
-      if (!reference || reference.source !== "online") throw new TRPCError({ code: "BAD_REQUEST", message: "Dossier en ligne requis pour cette relance." });
-      const [application] = await db.select({
-        id: applications.id,
-        dossierNumber: applications.dossierNumber,
-        fullName: applications.fullName,
-        email: applications.email,
-        destination: applications.destination,
-        paymentStatus: applications.paymentStatus,
-        agreementSigned: applications.agreementSigned,
-        whatsappNumber: applications.whatsappNumber,
-      }).from(applications).where(eq(applications.id, reference.id)).limit(1);
-      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
-      if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
-      if (application.agreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
-      if (!application.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide pour cette relance." });
+
+      // Relance e-mail + WhatsApp — n’écrit jamais applications.status / agency_dossiers.status.
+      let paymentId: number;
+      let dossierNumber: string;
+      let fullName: string;
+      let email: string;
+      let phone: string | null = null;
+
+      if (reference.source === "online") {
+        const [application] = await db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          paymentStatus: applications.paymentStatus,
+          agreementSigned: applications.agreementSigned,
+          whatsappNumber: applications.whatsappNumber,
+        }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
+        if (application.agreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
+        if (!application.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+        paymentId = application.id;
+        dossierNumber = application.dossierNumber;
+        fullName = application.fullName;
+        email = application.email;
+        phone = application.whatsappNumber || null;
+      } else {
+        const [dossier] = await db.select({
+          id: agencyDossiers.id,
+          fullName: agencyDossiers.fullName,
+          email: agencyDossiers.email,
+          phone: agencyDossiers.phone,
+          initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+        }).from(agencyDossiers).where(and(eq(agencyDossiers.id, reference.id), isNull(agencyDossiers.deletedAt))).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
+        const alreadySigned = await loadAgencyAgreementSignature(db, dossier.id);
+        if (alreadySigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
+        if (!dossier.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+        paymentId = dossier.id;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        fullName = dossier.fullName;
+        email = dossier.email;
+        phone = dossier.phone || null;
+      }
+
       const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
-      const safeName = escapeAgreementHtml(application.fullName);
-      const safeDossier = escapeAgreementHtml(application.dossierNumber);
+      const safeName = escapeAgreementHtml(fullName);
+      const safeDossier = escapeAgreementHtml(dossierNumber);
       const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Rappel : signature de votre protocole d’accord</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre paiement est confirmé, mais votre protocole d’accord n’est pas encore signé. Pour poursuivre votre dossier <strong>${safeDossier}</strong>, connectez-vous à votre espace client et finalisez la signature.</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl}/mon-espace" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Ouvrir mon espace client</a></p><p style="font-size:12px;color:#64748b">Ne répondez pas avec des informations bancaires. L’équipe 3M TRAVEL AGENCY reste disponible pour vous accompagner.</p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY — Yaoundé, Cameroun · hello@3mtravelagency.com</div></div></body></html>`;
       try {
-        await sendGenericEmail({ to: application.email, subject: `Rappel — signature du protocole ${application.dossierNumber}`, html });
+        await sendGenericEmail({ to: email, subject: `Rappel — signature du protocole ${dossierNumber}`, html });
       } catch (error) {
-        console.error("[Agreement reminder] Email delivery failed", { dossierNumber: application.dossierNumber, error });
+        console.error("[Agreement reminder] Email delivery failed", { dossierNumber, source: reference.source, error });
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La relance n’a pas pu être envoyée. Vérifiez le service e-mail et réessayez." });
       }
       const adminName = admin.email || "Administrateur";
@@ -2532,36 +2566,37 @@ export const adminCandidateManagementRouter = router({
         adminName,
         adminEmail,
         action: "agreement_signature_reminder_sent",
-        paymentId: application.id,
-        candidateEmail: application.email,
+        paymentId,
+        candidateEmail: email,
         amount: "",
-        details: `Relance de signature du protocole envoyée pour ${application.dossierNumber}.`,
+        details: `Relance de signature du protocole envoyée pour ${dossierNumber} (${reference.source}).`,
       });
 
       // Notification durable + WhatsApp « au mieux » — n’écrit pas le statut du dossier.
       let whatsappSent = false;
       let whatsappSkippedReason: string | null = null;
       try {
+        const emailKey = email.trim().toLowerCase();
         const [linkedCandidate] = await db
           .select({ id: candidates.id, phone: candidates.phone })
           .from(candidates)
-          .where(eq(candidates.email, application.email))
+          .where(and(sql`LOWER(TRIM(${candidates.email})) = ${emailKey}`, isNull(candidates.deletedAt)))
           .limit(1);
         if (linkedCandidate?.id) {
           await db.insert(clientNotifications).values({
             candidateId: linkedCandidate.id,
             type: "agreement_signature_reminder",
             title: "Protocole d’accord à signer",
-            body: `Votre paiement est confirmé pour le dossier ${application.dossierNumber}. Connectez-vous pour finaliser la signature du protocole.`,
+            body: `Votre paiement est confirmé pour le dossier ${dossierNumber}. Connectez-vous pour finaliser la signature du protocole.`,
             actionUrl: "/mon-espace?section=dossier",
             isRead: false,
           });
         }
-        const phone = application.whatsappNumber || linkedCandidate?.phone || null;
+        const waPhone = phone || linkedCandidate?.phone || null;
         const wa = await notifyAgreementSignatureReminderWhatsApp({
-          phone,
-          candidateName: application.fullName,
-          dossierNumber: application.dossierNumber,
+          phone: waPhone,
+          candidateName: fullName,
+          dossierNumber,
         });
         whatsappSent = wa.sent;
         whatsappSkippedReason = wa.sent ? null : (wa.error || "WhatsApp non envoyé");
@@ -2570,10 +2605,10 @@ export const adminCandidateManagementRouter = router({
             adminName,
             adminEmail,
             action: "agreement_signature_reminder_whatsapp",
-            paymentId: application.id,
-            candidateEmail: application.email,
+            paymentId,
+            candidateEmail: email,
             amount: "",
-            details: `WhatsApp relance protocole envoyé pour ${application.dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+            details: `WhatsApp relance protocole envoyé pour ${dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
           });
         }
       } catch (notifyError) {
@@ -2583,8 +2618,9 @@ export const adminCandidateManagementRouter = router({
 
       return {
         success: true,
-        dossierNumber: application.dossierNumber,
-        email: application.email,
+        dossierNumber,
+        email,
+        source: reference.source,
         whatsappSent,
         whatsappSkippedReason,
       };

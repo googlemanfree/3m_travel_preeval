@@ -247,7 +247,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                               {rowBusy && accessMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                               Accès
                             </Button>
-                            {row.stage === "protocol_pending" && row.candidateId.startsWith("online_") && !row.protocolSigned ? (
+                            {row.stage === "protocol_pending" && !row.protocolSigned && /^(online|agency)_\d+$/.test(row.candidateId) ? (
                               <Button
                                 type="button"
                                 size="sm"
