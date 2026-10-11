@@ -1243,9 +1243,10 @@ function ImportAgencyModal({
       const checklistHint = result.procedure?.checklistAdded
         ? ` Checklist ${result.procedure.checklistLabel || ""} : ${result.procedure.checklistAdded} pièce(s).`
         : "";
+      const whatsappHint = result.whatsappSent ? " WhatsApp envoyé." : "";
       toast({
         title: result.linkedCandidateId ? "Dossier rattaché au compte client" : "Dossier créé",
-        description: `${result.message}${checklistHint} ${result.nextStep || ""}`.trim(),
+        description: `${result.message}${checklistHint}${whatsappHint} ${result.nextStep || ""}`.trim(),
       });
       onImported();
       onClose();

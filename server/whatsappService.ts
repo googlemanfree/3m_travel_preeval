@@ -4,10 +4,14 @@
  */
 
 import axios from "axios";
+import { toE164WhatsApp } from "../shared/whatsappPhone";
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || "";
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || "";
 const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || "";
+const CLIENT_SPACE_URL = process.env.SITE_URL
+  ? `${process.env.SITE_URL.replace(/\/$/, "")}/mon-espace`
+  : "https://www.3mtravelagency.com/mon-espace";
 
 /**
  * Envoyer un message WhatsApp via Twilio
@@ -15,36 +19,35 @@ const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || "";
 export async function sendWhatsAppMessage(
   toPhoneNumber: string,
   message: string,
-  templateName?: string,
-  templateParams?: Record<string, string>
+  _templateName?: string,
+  _templateParams?: Record<string, string>
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    // Valider le numéro de téléphone
-    if (!toPhoneNumber || !toPhoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
+    const formattedPhone = toE164WhatsApp(toPhoneNumber);
+    if (!formattedPhone) {
       return { success: false, error: "Numéro de téléphone invalide" };
     }
 
-    // Formater le numéro avec le préfixe +
-    const formattedPhone = toPhoneNumber.startsWith("+") ? toPhoneNumber : `+${toPhoneNumber}`;
+    const body = String(message || "").trim().slice(0, 1500);
+    if (!body) {
+      return { success: false, error: "Message WhatsApp vide" };
+    }
 
-    // Si Twilio n'est pas configuré, retourner un succès simulé
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      console.log(`[WhatsApp Mock] Message envoyé à ${formattedPhone}: ${message}`);
+    // Si Twilio n'est pas configuré, retourner un succès simulé (dev / CI)
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
+      console.log(`[WhatsApp Mock] Message envoyé à ${formattedPhone}: ${body}`);
       return { success: true, messageId: `mock-${Date.now()}` };
     }
 
-    // Construire le payload
-    const payload = {
-      From: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
-      To: `whatsapp:${formattedPhone}`,
-      Body: message,
-    };
+    const params = new URLSearchParams();
+    params.set("From", `whatsapp:${TWILIO_WHATSAPP_NUMBER.startsWith("+") ? TWILIO_WHATSAPP_NUMBER : `+${TWILIO_WHATSAPP_NUMBER}`}`);
+    params.set("To", `whatsapp:${formattedPhone}`);
+    params.set("Body", body);
 
-    // Envoyer via Twilio
     const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64");
     const response = await axios.post(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-      payload,
+      params.toString(),
       {
         headers: {
           Authorization: `Basic ${auth}`,
@@ -60,6 +63,77 @@ export async function sendWhatsAppMessage(
     console.error(`[WhatsApp Error] ${errorMsg}`);
     return { success: false, error: errorMsg };
   }
+}
+
+/** Messages purs — testables sans Twilio. */
+export function buildAgencyDocumentsPublishedWhatsApp(params: {
+  candidateName: string;
+  documentCount: number;
+  dossierNumber?: string | null;
+}): string {
+  const count = Math.max(1, params.documentCount);
+  const dossier = params.dossierNumber ? `\n📋 *Dossier :* ${params.dossierNumber}` : "";
+  return `
+✅ *Documents disponibles dans votre espace*
+
+Bonjour ${params.candidateName},
+
+${count === 1
+    ? "Votre conseiller a publié un document scanné en agence dans votre espace client."
+    : `Votre conseiller a publié ${count} documents scannés en agence dans votre espace client.`}
+${dossier}
+
+Consultez-les ici : ${CLIENT_SPACE_URL}?section=documents
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildDossierCreatedWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  destination: string;
+  visaType: string;
+}): string {
+  return `
+📁 *Dossier ouvert en agence*
+
+Bonjour ${params.candidateName},
+
+Votre dossier a été créé chez 3M TRAVEL AGENCY.
+
+📋 *N° :* ${params.dossierNumber}
+🌍 *Destination :* ${params.destination}
+🛂 *Procédure :* ${params.visaType}
+
+Suivez l’avancement et vos pièces ici :
+${CLIENT_SPACE_URL}
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildProcedureStageWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  stageLabel: string;
+  stepLabel?: string | null;
+}): string {
+  const step = params.stepLabel ? `\n📌 *Progression :* ${params.stepLabel}` : "";
+  return `
+📢 *Mise à jour de votre dossier*
+
+Bonjour ${params.candidateName},
+
+Votre dossier *${params.dossierNumber}* avance.
+
+✅ *Statut :* ${params.stageLabel}${step}
+
+Détails dans votre espace :
+${CLIENT_SPACE_URL}
+
+3M TRAVEL AGENCY
+`.trim();
 }
 
 /**

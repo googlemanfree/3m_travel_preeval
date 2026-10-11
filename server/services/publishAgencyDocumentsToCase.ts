@@ -21,6 +21,7 @@ import {
 import { agencyDossierReference } from "../../shared/caseReference";
 import { buildCountryProcedureDocumentChecklist } from "../../shared/countryProcedureChecklist";
 import type { getDb } from "../db";
+import { notifyAgencyDocumentsPublishedWhatsApp } from "./clientWhatsAppNotify";
 import { seedCountryProcedureChecklist } from "./seedCountryProcedureCase";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -125,12 +126,21 @@ export function parseDocumentsReceivedList(raw?: string | null): string[] {
 async function ensureAgencyCaseWithCandidate(
   db: Db,
   agencyDossierId: number,
-): Promise<{ id: number; caseNumber: string; candidateId: number | null; destination: string | null; visaType: string | null }> {
+): Promise<{
+  id: number;
+  caseNumber: string;
+  candidateId: number | null;
+  destination: string | null;
+  visaType: string | null;
+  fullName: string;
+  phone: string | null;
+  email: string;
+}> {
   const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, agencyDossierId)).limit(1);
   if (!dossier) throw new Error(`Dossier agence #${agencyDossierId} introuvable.`);
 
   const [candidate] = await db
-    .select({ id: candidates.id })
+    .select({ id: candidates.id, phone: candidates.phone })
     .from(candidates)
     .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${dossier.email}))`)
     .limit(1);
@@ -171,6 +181,9 @@ async function ensureAgencyCaseWithCandidate(
     candidateId: operational.candidateId ?? candidate?.id ?? null,
     destination: dossier.destination,
     visaType: dossier.visaType,
+    fullName: dossier.fullName,
+    phone: dossier.phone || candidate?.phone || null,
+    email: dossier.email,
   };
 }
 
@@ -183,6 +196,7 @@ export type PublishAgencyDocumentsResult = {
   totalScanned: number;
   checklistAdded: number;
   checklistLabel: string;
+  whatsappSent: boolean;
 };
 
 /**
@@ -305,6 +319,7 @@ export async function publishAgencyDocumentsToCase(
     }
   }
 
+  let whatsappSent = false;
   if (published > 0) {
     await db.insert(caseActivityLogs).values({
       caseId: operational.id,
@@ -324,23 +339,50 @@ export async function publishAgencyDocumentsToCase(
       details: "Documents scannés envoyés vers l’espace client",
     });
 
-    if (input.notify !== false && operational.candidateId) {
-      try {
-        await db.insert(clientNotifications).values({
-          candidateId: operational.candidateId,
-          caseId: operational.id,
-          type: "agency_documents_published",
-          title: published === 1
-            ? "Un document remis en agence est disponible"
-            : `${published} documents remis en agence sont disponibles`,
-          body: published === 1
-            ? "Votre conseiller a publié dans votre espace un document scanné lors de votre passage en agence. Consultez l’onglet Documents."
-            : `Votre conseiller a publié ${published} documents scannés lors de votre passage en agence. Consultez l’onglet Documents.`,
-          actionUrl: "/mon-espace?section=documents",
-          isRead: false,
-        });
-      } catch (error) {
-        console.warn("[publishAgencyDocumentsToCase] notification:", error instanceof Error ? error.message : error);
+    if (input.notify !== false) {
+      if (operational.candidateId) {
+        try {
+          await db.insert(clientNotifications).values({
+            candidateId: operational.candidateId,
+            caseId: operational.id,
+            type: "agency_documents_published",
+            title: published === 1
+              ? "Un document remis en agence est disponible"
+              : `${published} documents remis en agence sont disponibles`,
+            body: published === 1
+              ? "Votre conseiller a publié dans votre espace un document scanné lors de votre passage en agence. Consultez l’onglet Documents."
+              : `Votre conseiller a publié ${published} documents scannés lors de votre passage en agence. Consultez l’onglet Documents.`,
+            actionUrl: "/mon-espace?section=documents",
+            isRead: false,
+          });
+        } catch (error) {
+          console.warn("[publishAgencyDocumentsToCase] notification:", error instanceof Error ? error.message : error);
+        }
+      }
+
+      const whatsapp = await notifyAgencyDocumentsPublishedWhatsApp({
+        phone: operational.phone,
+        candidateName: operational.fullName,
+        documentCount: published,
+        dossierNumber: operational.caseNumber,
+      });
+      whatsappSent = whatsapp.sent;
+      if (whatsapp.attempted && !whatsapp.sent) {
+        console.warn("[publishAgencyDocumentsToCase] WhatsApp:", whatsapp.error);
+      } else if (whatsapp.sent) {
+        try {
+          await db.insert(caseActivityLogs).values({
+            caseId: operational.id,
+            actorRole: "system",
+            actorId: null,
+            actionType: "whatsapp_documents_published",
+            entityType: "agency_dossier",
+            entityId: String(input.agencyDossierId),
+            description: `WhatsApp envoyé (${whatsapp.phoneE164}) : documents publiés dans l’espace client.`,
+          });
+        } catch {
+          /* journal non bloquant */
+        }
       }
     }
   }
@@ -354,6 +396,7 @@ export async function publishAgencyDocumentsToCase(
     totalScanned: selected.length,
     checklistAdded,
     checklistLabel,
+    whatsappSent,
   };
 }
 
