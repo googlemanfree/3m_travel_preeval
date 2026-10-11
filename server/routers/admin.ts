@@ -2882,14 +2882,15 @@ export const adminRouter = router({
           documentIds: input.documentIds,
           notify: true,
         });
+        const baseMessage = result.published === 0
+          ? result.totalScanned === 0
+            ? "Aucun document scanné à publier pour ce dossier."
+            : "Tous les documents scannés sont déjà visibles dans l’espace client."
+          : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`;
         return {
           success: true,
           ...result,
-          message: result.published === 0
-            ? result.totalScanned === 0
-              ? "Aucun document scanné à publier pour ce dossier."
-              : "Tous les documents scannés sont déjà visibles dans l’espace client."
-            : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`,
+          message: result.whatsappSent ? `${baseMessage} WhatsApp envoyé au client.` : baseMessage,
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
