@@ -22,6 +22,11 @@ export function SelectableProfileCard() {
     { candidateToken: candidateToken ?? "" },
     { enabled: Boolean(candidateToken), retry: false, ...clientSpacePolling() },
   );
+  const consentQuery = trpc.placementPortal.getMyConsent.useQuery(
+    { candidateToken: candidateToken ?? "" },
+    { enabled: Boolean(candidateToken), retry: false, ...clientSpacePolling() },
+  );
+  const saveSummaryConsents = trpc.placementPortal.setMySummaryConsents.useMutation({ onSuccess: () => void consentQuery.refetch() });
 
   if (!candidateToken || statusQuery.isLoading) return null;
   if (statusQuery.error || !statusQuery.data) return null;
@@ -103,6 +108,14 @@ export function SelectableProfileCard() {
               ? "Agencies and employers only see anonymised profiles prepared by 3M after verification. No direct contact is shared."
               : "Les agences et employeurs ne voient que des profils anonymisés préparés par 3M après vérification. Aucun contact direct n’est partagé."}
           </p>
+        )}
+        {consentQuery.data?.status === "granted" && (
+          <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-white p-3" data-testid="summary-share-consents">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Autorisations de partage séparées</p>
+            <label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={Boolean(consentQuery.data.pdfShareConsent)} disabled={saveSummaryConsents.isPending} onChange={(event) => saveSummaryConsents.mutate({ candidateToken: candidateToken!, pdfShareConsent: event.target.checked, photoShareConsent: Boolean(consentQuery.data?.photoShareConsent) })} className="mt-0.5 h-4 w-4" />Autoriser le partage de la fiche PDF 1 page validée avec l’organisation à laquelle le profil est soumis.</label>
+            <label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={Boolean(consentQuery.data.photoShareConsent)} disabled={saveSummaryConsents.isPending} onChange={(event) => saveSummaryConsents.mutate({ candidateToken: candidateToken!, pdfShareConsent: Boolean(consentQuery.data?.pdfShareConsent), photoShareConsent: event.target.checked })} className="mt-0.5 h-4 w-4" />Autoriser séparément l’ajout d’un portrait vérifié ; il n’est jamais partagé par défaut.</label>
+            <p className="text-xs leading-5 text-slate-500">Les coordonnées, numéros de passeport et CV bruts restent exclus. Le contact passe par 3M.</p>
+          </div>
         )}
         {opportunity && (
           <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3" data-testid="selectable-opportunity-live">

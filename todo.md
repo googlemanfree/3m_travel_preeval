@@ -1,6 +1,8 @@
 
-## Validation documentaire admin — VALIDÉ
-- [x] Sélection multiple et validation groupée des pièces non validées ; les pièces déjà validées/non requises ne sont pas sélectionnables, et le bouton d’action est désactivé sans sélection ou pendant l’envoi.
-- [x] Commentaire explicatif obligatoire conservé et testé lors du statut « À corriger » ; le commentaire est affiché au candidat et journalisé côté admin.
-- [x] Tests ciblés : 3 fichiers / 40 tests verts ; `pnpm run check` et `vite build` verts.
-- [x] Suite complète : 575 fichiers et 3 125 tests verts, 5 échecs hors périmètre préexistants (Home-density, Jinko externe, sources pays). Aucun de ces échecs ne concerne cette évolution.
+## Fiche synthèse employeurs/agences — VALIDÉE EN CHECKPOINT
+- [x] Consentements séparés PDF/photo, sans coordonnées, passeport ni CV brut.
+- [x] Reconstruction normalisée des pièces (1 entrée/type), empreinte et passage automatique à « À revalider » après changement.
+- [x] Candidate 360 : brouillon JSON éditable, décision Valider/Refuser, génération d’un PDF 1 page anonymisé et accès téléchargement.
+- [x] Partenaire : bouton « Télécharger la synthèse (PDF) » seulement si fiche validée, consentement PDF actif et soumission à l’organisation ; sinon « Aucune fiche validée ».
+- [x] Tests ciblés : 3 fichiers / 27 tests verts ; `pnpm run check` vert ; `vite build` vert.
+- [ ] Migration `drizzle/0078_placement_profile_summaries.sql` à appliquer avant ouverture en production.

@@ -20,6 +20,7 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
+import AdminCandidateSummaryCard from "@/components/AdminCandidateSummaryCard";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import AdminSimultaneousProceduresBoard from "@/components/AdminSimultaneousProceduresBoard";
 import ProcedureStepper from "@/components/ProcedureStepper";
@@ -1256,6 +1257,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             onRemind={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
             reminding={documentReminderMutation.isPending || actionLocks.documentReminder}
           />
+          {candidate.internalId > 0 && <AdminCandidateSummaryCard sessionToken={sessionToken} candidateId={candidate.internalId} />}
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
             <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils du dossier : checklist par procédure, CV, tous les documents</summary>
             <div className="space-y-4 border-t p-4">

@@ -1,4 +1,4 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, tinyint, varchar } from "drizzle-orm/mysql-core";
 
 /** Demande d’accès structurée avant vérification humaine et remise d’identifiants. */
 export const placementAccessRequests = mysqlTable("placement_access_requests", {
@@ -64,6 +64,8 @@ export const candidatePlacementConsents = mysqlTable("candidate_placement_consen
   id: int("id").autoincrement().primaryKey(),
   candidateId: int("candidate_id").notNull().unique(),
   status: mysqlEnum("status", ["granted", "withdrawn"]).notNull().default("withdrawn"),
+  pdfShareConsent: tinyint("pdf_share_consent").notNull().default(0),
+  photoShareConsent: tinyint("photo_share_consent").notNull().default(0),
   consentedAt: timestamp("consented_at"),
   withdrawnAt: timestamp("withdrawn_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
@@ -80,6 +82,14 @@ export const placementCandidateProfiles = mysqlTable("placement_candidate_profil
   sector: varchar("sector", { length: 160 }),
   yearsExperience: varchar("years_experience", { length: 32 }),
   languagesSummary: varchar("languages_summary", { length: 255 }),
+  summaryStatus: mysqlEnum("summary_status", ["draft", "approved", "rejected", "needs_revalidation"]).notNull().default("draft"),
+  summaryDraft: text("summary_draft"),
+  summaryPdfKey: varchar("summary_pdf_key", { length: 512 }),
+  summaryFingerprint: varchar("summary_fingerprint", { length: 128 }),
+  summaryReviewNote: text("summary_review_note"),
+  summaryValidatedAt: timestamp("summary_validated_at"),
+  summaryValidatedByAdminId: int("summary_validated_by_admin_id"),
+  summaryUpdatedAt: timestamp("summary_updated_at"),
   createdByAdminId: int("created_by_admin_id").notNull(),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
