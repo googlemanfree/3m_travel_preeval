@@ -23,6 +23,11 @@ describe("cockpit 360 — un seul dossier actif 3M + pilotage cohérent", () => 
     expect(admin).toContain("redirectToCanonicalAgencyId");
     expect(admin).toContain("payments: [paymentSnapshot]");
     expect(admin).toContain("formerFolderCodes");
+    expect(admin).toContain("candidateDetailsSelect");
+    // GET fiche = lecture seule (pas de purge EVAL qui peut faire échouer le cockpit)
+    const detailsBlock = admin.slice(admin.indexOf("getCandidateDetails:"), admin.indexOf("assignDossierAdvisor:"));
+    expect(detailsBlock).not.toContain("purgeEvalAgencyShell");
+    expect(detailsBlock).toContain("redirectToCanonicalAgencyId");
   });
 
   it("lisse le panneau de pilotage et centralise documents / synthèse", () => {

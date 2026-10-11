@@ -2223,7 +2223,7 @@ export default function AdminDashboard() {
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   {[...externalEvaluationCandidates, ...candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL")].slice(0, 8).map((candidate) => (
                     <div key={`declaration-${candidate.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-3">
-                      <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
+                      <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
                       <Button type="button" size="sm" variant="outline" onClick={() => setSelectedCandidateId(candidate.id)} aria-label={`Ouvrir le dossier de ${candidate.fullName}`}>Ouvrir</Button>
                     </div>
                   ))}
@@ -2945,7 +2945,7 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
-                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /></div>
+                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /></div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
