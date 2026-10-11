@@ -47,6 +47,19 @@ import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
+import {
+  employerSelectionSettingKey,
+  isEmployerSelected,
+  parseEmployerSelectionSetting,
+  type EmployerSelectionRecord,
+} from "../../shared/employerSelection";
+import {
+  CLIENT_PREVIEW_TTL_MS,
+  clientPreviewSettingKey,
+  isClientPreviewTokenFresh,
+  parseClientPreviewToken,
+} from "../../shared/clientPreviewToken";
+import { randomBytes } from "node:crypto";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -2130,11 +2143,17 @@ export const adminRouter = router({
             procedureType: app.visaType,
           });
           const procedureKind = detectAdminProcedureKind(app.visaType, app.visaType);
-          const employerSelected = Boolean(
-            app.secondAgreementReadyAt
-            || String(app.secondAgreementEmployer ?? "").trim()
-            || String(app.recruitmentPartnerName ?? "").trim(),
-          );
+          const [employerSettingOnline] = await db
+            .select({ settingValue: agencySettings.settingValue })
+            .from(agencySettings)
+            .where(eq(agencySettings.settingKey, employerSelectionSettingKey("online", id)))
+            .limit(1);
+          const employerSelected = isEmployerSelected({
+            stored: parseEmployerSelectionSetting(employerSettingOnline?.settingValue),
+            secondAgreementReady: Boolean(app.secondAgreementReadyAt),
+            secondAgreementEmployer: app.secondAgreementEmployer,
+            recruitmentPartnerName: app.recruitmentPartnerName,
+          });
           const transitionGuard = evaluateAdminStageTransition({
             targetStage: input.newStatus,
             paymentConfirmed: app.paymentStatus === "SUCCESS",
@@ -2204,10 +2223,15 @@ export const adminRouter = router({
           }
 
           const procedureKind = detectAdminProcedureKind(dossier.visaType, dossier.visaType);
-          // Agence : la sélection employeur est matérialisée par l’étape ADEM / recherche aboutie,
-          // ou une note admin contenant un employeur (pas de champ dédié historique).
-          const employerSelected = ["validation_adem"].includes(dossier.status)
-            || /\bemployeur\b/i.test(String(dossier.adminNotes ?? ""));
+          // Lecture seule du dossier + sélection additive (agency_settings) — pas d’écriture « fantôme » sur les notes.
+          const [employerSettingAgency] = await db
+            .select({ settingValue: agencySettings.settingValue })
+            .from(agencySettings)
+            .where(eq(agencySettings.settingKey, employerSelectionSettingKey("agency", id)))
+            .limit(1);
+          const employerSelected = isEmployerSelected({
+            stored: parseEmployerSelectionSetting(employerSettingAgency?.settingValue),
+          }) || ["validation_adem"].includes(dossier.status);
           const agencyPaymentConfirmed = dossier.initialPaymentStatus === "paid";
           const transitionGuard = evaluateAdminStageTransition({
             targetStage: input.newStatus,
@@ -2226,28 +2250,16 @@ export const adminRouter = router({
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
           }
 
-          // Sur une procédure travail encore en « soumis », l’étape Kanban SUBMITTED
-          // bascule d’abord vers recherche_employeur plutôt que d’autoriser un saut vers approuvé.
-          let agencyTargetStatus = internalStatusMap[input.newStatus] as string;
-          if (input.newStatus === "SUBMITTED" && procedureKind === "work" && dossier.status === "documents_requis") {
-            agencyTargetStatus = "soumis";
-          }
-          if (input.newStatus === "APPROVED" && procedureKind === "work" && !employerSelected) {
-            throw new TRPCError({
-              code: "PRECONDITION_FAILED",
-              message: "Passez d’abord le dossier en « Recherche d’employeur » / validez un employeur avant la décision favorable.",
-            });
-          }
-
+          // Mise à jour statut uniquement sur action admin explicite (séquence n+1) — pas de rewrite parallèle.
           await db.update(agencyDossiers)
             .set({
-              status: agencyTargetStatus as any,
+              status: internalStatusMap[input.newStatus] as any,
               lastStatusChangeAt: new Date(),
               lastStatusChangeBy: admin.fullName || "Admin",
             })
             .where(eq(agencyDossiers.id, id));
 
-          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true, agencyStatus: agencyTargetStatus }) });
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true }) });
 
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;
@@ -4053,6 +4065,20 @@ export const adminRouter = router({
         positionTitle: onlineApp?.secondAgreementPosition,
         formulaChosen: (onlineApp?.secondAgreementFormula as "integral" | "echelonne" | "garanti" | null) ?? null,
       });
+      // Sélection employeur additive (agency_settings) — lecture seule des dossiers actifs.
+      const employerSettingKey = employerSelectionSettingKey(reference.source, reference.id);
+      const [employerSettingRow] = await db
+        .select({ settingValue: agencySettings.settingValue })
+        .from(agencySettings)
+        .where(eq(agencySettings.settingKey, employerSettingKey))
+        .limit(1);
+      const storedEmployerSelection = parseEmployerSelectionSetting(employerSettingRow?.settingValue) as EmployerSelectionRecord | null;
+      const employerSelectedFlag = isEmployerSelected({
+        stored: storedEmployerSelection,
+        secondAgreementReady: Boolean(onlineApp?.secondAgreementReadyAt),
+        secondAgreementEmployer: onlineApp?.secondAgreementEmployer,
+        recruitmentPartnerName: onlineApp?.recruitmentPartnerName,
+      });
       const siblingRows = await safeCollection(
         Promise.all([
           db.select({
@@ -4293,22 +4319,9 @@ export const adminRouter = router({
           suggestedFromNow: journeySla.suggestedFromNow.toISOString(),
         },
         secondProtocol,
+        employerSelection: storedEmployerSelection,
         stageCoherence: (() => {
           const procedureKind = detectAdminProcedureKind(visaTypeForJourney, procedureLabel);
-          const agencyStatusForEmployer = reference.source === "agency"
-            ? String((sourceRecord as typeof agencyDossiers.$inferSelect).status)
-            : "";
-          const agencyNotesForEmployer = reference.source === "agency"
-            ? String((sourceRecord as typeof agencyDossiers.$inferSelect).adminNotes ?? "")
-            : "";
-          const employerSelected = reference.source === "online"
-            ? Boolean(
-              onlineApp?.secondAgreementReadyAt
-              || String(onlineApp?.secondAgreementEmployer ?? "").trim()
-              || String(onlineApp?.recruitmentPartnerName ?? "").trim(),
-            )
-            : agencyStatusForEmployer === "validation_adem"
-              || /\bemployeur\s*[:=]/i.test(agencyNotesForEmployer);
           const onlineStatus = onlineApp?.dossierStatus;
           const agencyStatus = reference.source === "agency" ? (sourceRecord as typeof agencyDossiers.$inferSelect).status : null;
           const adminStatus = reference.source === "online"
@@ -4323,17 +4336,22 @@ export const adminRouter = router({
           const guided = resolveGuidedNextAdminAction({
             currentStatus: adminStatus,
             paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+            protocolSigned: Boolean(onlineApp?.agreementSigned),
+            documentsReady: ((countryProcedureChecklist?.missing ?? 0) + (countryProcedureChecklist?.replace ?? 0)) === 0,
+            checklistPercent: countryProcedureChecklist?.percent ?? null,
             procedureKind,
             visaType: visaTypeForJourney,
             procedureLabel,
-            employerSelected,
+            employerSelected: employerSelectedFlag,
             secondProtocolReady: secondProtocol.ready,
             secondProtocolSigned: secondProtocol.signed,
           });
           return {
             adminStatus,
             procedureKind,
-            employerSelected,
+            employerSelected: employerSelectedFlag,
+            subStage: guided.subStage,
+            approvalChecklist: guided.approvalChecklist,
             guided,
             stages: ADMIN_STAGE_SEQUENCE.map((stage) => ({
               stage,
@@ -4942,6 +4960,109 @@ export const adminRouter = router({
                 ? { label: "Consulter la réponse d’évaluation", detail: "Une réponse validée est publiée dans l’espace.", section: "dossier" }
                 : { label: "Suivre l’avancement du dossier", detail: progress.nextStepLabel ? `Prochaine étape : ${progress.nextStepLabel}` : "Aucune action bloquante côté client.", section: "dossier" },
       };
+    }),
+
+  /**
+   * Enregistre la sélection employeur hors table dossier (agency_settings uniquement).
+   * Ne modifie jamais le statut ni les champs d’un dossier actif.
+   */
+  recordEmployerSelection: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+      employerName: z.string().trim().min(2).max(255),
+      positionTitle: z.string().trim().min(2).max(255),
+      note: z.string().trim().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const key = employerSelectionSettingKey(reference.source, reference.id);
+      const record: EmployerSelectionRecord = {
+        employerName: input.employerName.trim(),
+        positionTitle: input.positionTitle.trim(),
+        selectedAt: new Date().toISOString(),
+        selectedBy: admin.email,
+        source: reference.source,
+        sourceId: reference.id,
+        note: input.note?.trim() || undefined,
+      };
+      const [existing] = await db.select({ id: agencySettings.id }).from(agencySettings).where(eq(agencySettings.settingKey, key)).limit(1);
+      if (existing) {
+        await db.update(agencySettings).set({ settingValue: JSON.stringify(record), updatedAt: new Date() }).where(eq(agencySettings.id, existing.id));
+      } else {
+        await db.insert(agencySettings).values({ settingKey: key, settingValue: JSON.stringify(record) });
+      }
+      const operationalCase = await ensureOperationalCase(db, reference);
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "employer_selection_recorded",
+        entityType: "employer_selection",
+        entityId: key,
+        description: `Sélection employeur enregistrée (hors statut dossier) : ${record.employerName} · ${record.positionTitle}`,
+      }).catch(() => undefined);
+      return {
+        success: true,
+        employerSelection: record,
+        message: "Employeur enregistré sans modifier le statut du dossier actif.",
+      };
+    }),
+
+  /**
+   * Jeton court pour ouvrir l’aperçu plein écran — stocké dans agency_settings, TTL 15 min.
+   */
+  mintClientSpacePreviewToken: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const token = randomBytes(24).toString("hex");
+      const createdAt = new Date();
+      const expiresAt = new Date(createdAt.getTime() + CLIENT_PREVIEW_TTL_MS);
+      const payload = {
+        token,
+        candidateId: input.candidateId,
+        adminEmail: admin.email,
+        expiresAt: expiresAt.toISOString(),
+        createdAt: createdAt.toISOString(),
+      };
+      const key = clientPreviewSettingKey(token);
+      await db.insert(agencySettings).values({ settingKey: key, settingValue: JSON.stringify(payload) });
+      return {
+        success: true,
+        token,
+        expiresAt: payload.expiresAt,
+        previewPath: `/admin/apercu-espace-client?candidateId=${encodeURIComponent(input.candidateId)}&previewToken=${token}`,
+      };
+    }),
+
+  resolveClientSpacePreviewToken: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      previewToken: z.string().min(16).max(128),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const key = clientPreviewSettingKey(input.previewToken);
+      const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings).where(eq(agencySettings.settingKey, key)).limit(1);
+      const payload = parseClientPreviewToken(row?.settingValue);
+      if (!payload || !isClientPreviewTokenFresh(payload)) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Jeton d’aperçu expiré ou invalide." });
+      }
+      return { success: true, candidateId: payload.candidateId, expiresAt: payload.expiresAt, adminEmail: payload.adminEmail };
     }),
 
   updateCandidate360Workflow: publicProcedure

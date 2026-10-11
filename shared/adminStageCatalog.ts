@@ -6,6 +6,7 @@
 import type { AdminOperationalStage } from "./adminProcedureJourney";
 import type { ClientDossierPhase } from "./clientDossierPhases";
 import { detectAdminProcedureKind, type AdminProcedureKind } from "./adminDynamicPilotage";
+import { buildApprovalPrerequisitesChecklist, type ApprovalChecklist } from "./approvalChecklist";
 
 export type AdminStageDefinition = {
   stage: AdminOperationalStage;
@@ -97,6 +98,8 @@ export type GuidedNextAction = {
   /** true = on peut appeler updateCandidateStatus avec nextStage */
   canAdvance: boolean;
   nextStage: AdminOperationalStage | null;
+  /** Sous-étape métier affichée sans changer le statut Kanban stocké. */
+  subStage: "none" | "employer_placement" | "awaiting_protocol_two";
   /** Libellé du bouton principal */
   buttonLabel: string;
   /** Explication sous le bouton */
@@ -104,15 +107,22 @@ export type GuidedNextAction = {
   /** Onglet 360° à ouvrir si l’action n’est pas un simple avancement de statut */
   focusTab?: "overview" | "evaluation" | "documents" | "payments" | "messages";
   code: "advance" | "payment" | "employer_selection" | "protocol_two" | "documents" | "done";
+  /** Checklist avant décision favorable (lecture seule). */
+  approvalChecklist: ApprovalChecklist | null;
 };
 
 /**
  * Prochaine action guidée cohérente : n’affiche jamais « Visa / Décision favorable »
  * tant que la sélection employeur manque sur une procédure travail.
+ * Ne réécrit aucun statut de dossier actif.
  */
 export function resolveGuidedNextAdminAction(input: {
   currentStatus?: string | null;
   paymentConfirmed?: boolean;
+  protocolSigned?: boolean;
+  evaluationDelivered?: boolean;
+  documentsReady?: boolean;
+  checklistPercent?: number | null;
   procedureKind?: AdminProcedureKind | null;
   visaType?: string | null;
   procedureLabel?: string | null;
@@ -122,15 +132,30 @@ export function resolveGuidedNextAdminAction(input: {
 }): GuidedNextAction {
   const kind = input.procedureKind ?? detectAdminProcedureKind(input.visaType, input.procedureLabel);
   const nextStage = getNextAdminStage(input.currentStatus);
+  const approvalChecklist = nextStage === "APPROVED" || input.currentStatus === "SUBMITTED"
+    ? buildApprovalPrerequisitesChecklist({
+      paymentConfirmed: input.paymentConfirmed,
+      protocolSigned: input.protocolSigned,
+      evaluationDelivered: input.evaluationDelivered,
+      documentsReady: input.documentsReady,
+      checklistPercent: input.checklistPercent,
+      procedureKind: kind,
+      employerSelected: input.employerSelected,
+      secondProtocolReady: input.secondProtocolReady,
+      secondProtocolSigned: input.secondProtocolSigned,
+    })
+    : null;
 
   if (!input.paymentConfirmed) {
     return {
       canAdvance: false,
       nextStage,
+      subStage: "none",
       buttonLabel: "Valider d’abord le paiement",
       reason: "Le paiement d’ouverture doit être confirmé avant d’avancer les étapes.",
       focusTab: "payments",
       code: "payment",
+      approvalChecklist,
     };
   }
 
@@ -138,20 +163,29 @@ export function resolveGuidedNextAdminAction(input: {
     return {
       canAdvance: false,
       nextStage: null,
+      subStage: "none",
       buttonLabel: "Parcours à jour",
       reason: "Aucune étape Kanban suivante pour ce dossier.",
       code: "done",
+      approvalChecklist,
     };
   }
 
-  if (nextStage === "APPROVED" && kind === "work" && !input.employerSelected) {
+  // Sous-étape Placement (affichage seul) tant que le Kanban est SUBMITTED et l’employeur manque.
+  if (
+    (input.currentStatus === "SUBMITTED" || nextStage === "APPROVED")
+    && kind === "work"
+    && !input.employerSelected
+  ) {
     return {
       canAdvance: false,
       nextStage,
-      buttonLabel: "Sélectionner un employeur / partenaire",
-      reason: "Une procédure travail ne peut pas passer en décision favorable sans sélection employeur enregistrée (Protocole N°02).",
+      subStage: "employer_placement",
+      buttonLabel: "Sous-étape : enregistrer l’employeur / partenaire",
+      reason: "Placement / employeur — étape intermédiaire sans modifier le statut Kanban du dossier actif. Enregistrez la sélection puis reprenez.",
       focusTab: "evaluation",
       code: "employer_selection",
+      approvalChecklist,
     };
   }
 
@@ -159,10 +193,25 @@ export function resolveGuidedNextAdminAction(input: {
     return {
       canAdvance: false,
       nextStage,
+      subStage: "awaiting_protocol_two",
       buttonLabel: "Attendre la signature du Protocole N°02",
       reason: "Le Protocole N°02 a été proposé : le candidat doit le signer avant la décision favorable.",
       focusTab: "evaluation",
       code: "protocol_two",
+      approvalChecklist,
+    };
+  }
+
+  if (nextStage === "APPROVED" && approvalChecklist && !approvalChecklist.ready) {
+    return {
+      canAdvance: false,
+      nextStage,
+      subStage: kind === "work" ? "employer_placement" : "none",
+      buttonLabel: "Compléter les prérequis avant décision",
+      reason: `Manque : ${approvalChecklist.missingRequired.join(" · ")}.`,
+      focusTab: "overview",
+      code: "documents",
+      approvalChecklist,
     };
   }
 
@@ -170,8 +219,10 @@ export function resolveGuidedNextAdminAction(input: {
   return {
     canAdvance: true,
     nextStage,
+    subStage: "none",
     buttonLabel: `Étape suivante : ${def.label}`,
     reason: `${def.detail} Côté client : « ${def.clientLabel} ».`,
     code: "advance",
+    approvalChecklist,
   };
 }

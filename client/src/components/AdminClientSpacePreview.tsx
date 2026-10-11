@@ -3,6 +3,7 @@ import {
   Bell,
   CheckCircle2,
   CircleAlert,
+  ExternalLink,
   Eye,
   FileText,
   FolderOpen,
@@ -12,11 +13,13 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ClientPhaseGauge from "@/components/ClientPhaseGauge";
 
 type Props = {
   sessionToken: string;
@@ -43,6 +46,12 @@ export default function AdminClientSpacePreview({
     { sessionToken, candidateId },
     { enabled: open && Boolean(sessionToken && candidateId), refetchOnWindowFocus: false, retry: 1 },
   );
+  const mintPreview = trpc.admin.mintClientSpacePreviewToken.useMutation({
+    onSuccess: (result) => {
+      window.open(result.previewPath, "_blank", "noopener,noreferrer");
+    },
+    onError: (error) => toast.error(error.message),
+  });
   const data = previewQuery.data;
 
   return (
@@ -72,9 +81,22 @@ export default function AdminClientSpacePreview({
                   Rendu fidèle de ce que le candidat voit dans /mon-espace. Aucune action candidat n’est exécutée depuis cet aperçu.
                 </DialogDescription>
               </div>
-              <Button type="button" size="icon" variant="ghost" onClick={() => setOpen(false)} aria-label="Fermer la prévisualisation">
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={mintPreview.isPending}
+                  onClick={() => mintPreview.mutate({ sessionToken, candidateId })}
+                  data-testid="open-live-client-preview"
+                >
+                  <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                  {mintPreview.isPending ? "Ouverture…" : "Plein écran"}
+                </Button>
+                <Button type="button" size="icon" variant="ghost" onClick={() => setOpen(false)} aria-label="Fermer la prévisualisation">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </DialogHeader>
 
@@ -97,25 +119,16 @@ export default function AdminClientSpacePreview({
                       {data.candidate.dossierNumber} · {data.candidate.destination || "Destination à préciser"}
                       {data.candidate.visaType ? ` · ${data.candidate.visaType}` : ""}
                     </p>
-                    <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-                      <div>
-                        <p className="text-xs text-blue-200">Statut visible (phase client)</p>
-                        <p className="font-semibold">{data.candidate.statusLabel}</p>
-                        {data.candidate.statusDetail ? (
-                          <p className="mt-1 text-xs text-blue-100">{data.candidate.statusDetail}</p>
-                        ) : null}
-                      </div>
-                      <Badge className="border-white/20 bg-white/15 text-white">{data.progress.percent}%</Badge>
-                    </div>
-                    <Progress className="mt-3 h-2 bg-white/20" value={data.progress.percent} />
-                    {data.progress.stepLabel && (
-                      <p className="mt-2 text-xs text-blue-100">
-                        Étape {data.progress.stepNumber}/{data.progress.stepCount} · {data.progress.stepLabel}
-                      </p>
-                    )}
                   </div>
 
                   <div className="space-y-3 p-4">
+                    <ClientPhaseGauge
+                      className="rounded-xl border border-slate-100 p-3"
+                      dossierStatus={data.candidate.dossierStatus}
+                      destination={data.candidate.destination}
+                      visaType={data.candidate.visaType}
+                      paymentConfirmed={data.payment.confirmed}
+                    />
                     <section className="rounded-xl border border-amber-200 bg-amber-50/80 p-3" data-testid="client-preview-next-action">
                       <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Action suivante (vue candidat)</p>
                       <p className="mt-1 font-semibold text-slate-950">{data.nextClientAction.label}</p>

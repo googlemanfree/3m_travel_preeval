@@ -98,6 +98,7 @@ import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccoun
 import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
+import AdminEmployerSelectionPanel from "@/components/AdminEmployerSelectionPanel";
 import {
   ADMIN_STAGE_CATALOG,
   ADMIN_STAGE_SEQUENCE,
@@ -432,11 +433,13 @@ export function CandidateDetailModal({
   const guidedNext: GuidedNextAction = stageCoherence?.guided ?? resolveGuidedNextAdminAction({
     currentStatus: candidate?.status,
     paymentConfirmed: paymentAlreadyConfirmed,
+    protocolSigned: Boolean((candidate as any)?.agreementSigned),
     procedureKind: (stageCoherence?.procedureKind as any) ?? null,
     visaType: candidate?.projectType,
     employerSelected: Boolean(stageCoherence?.employerSelected || (candidate as any)?.secondProtocolReady),
     secondProtocolReady: Boolean((candidate as any)?.secondProtocolReady),
     secondProtocolSigned: Boolean((candidate as any)?.secondProtocolSigned),
+    checklistPercent: (candidate as any)?.checklistPercent ?? null,
   });
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
   const evaluationBlocksActivation = isPreDossierAccount
@@ -1029,12 +1032,37 @@ export function CandidateDetailModal({
                       <p className="mt-2 text-sm font-semibold text-emerald-900">Parcours guidé à jour pour ce dossier.</p>
                     ) : null}
                     <p className="mt-2 text-xs leading-5 text-emerald-900" data-testid="guided-next-reason">{guidedNext.reason}</p>
+                    {guidedNext.subStage === "employer_placement" && (
+                      <div className="mt-3">
+                        <AdminEmployerSelectionPanel
+                          sessionToken={sessionToken}
+                          candidateId={candidate.id}
+                          onSaved={() => { void refetch(); onStatusUpdated(); }}
+                        />
+                      </div>
+                    )}
+                    {guidedNext.approvalChecklist && (
+                      <ul className="mt-3 space-y-1.5 rounded-lg border border-emerald-100 bg-white/80 p-3" data-testid="approval-prerequisites-checklist">
+                        {guidedNext.approvalChecklist.items.map((item) => (
+                          <li key={item.key} className="flex items-start gap-2 text-xs text-slate-700">
+                            <span className={item.ok ? "text-emerald-700" : item.required ? "text-amber-700" : "text-slate-400"}>
+                              {item.ok ? "✓" : "○"}
+                            </span>
+                            <span>
+                              <span className="font-semibold">{item.label}</span>
+                              {!item.required ? <span className="text-slate-400"> · optionnel</span> : null}
+                              <span className="mt-0.5 block text-slate-500">{item.detail}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     {previousAdminStatus && paymentAlreadyConfirmed && (
                       <Button type="button" variant="outline" data-testid="cancel-last-kanban-step" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
                         <X className="mr-2 h-4 w-4" />Annuler la dernière validation
                       </Button>
                     )}
-                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement, la sélection employeur (visa travail) et l’ordre des étapes.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement, la sélection employeur (visa travail) et l’ordre des étapes — sans réécrire les dossiers actifs hors action explicite.</p>
                   </div>
                   <div className="grid gap-2">
                     <AdminClientSpacePreview

@@ -112,6 +112,7 @@ const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
+const AdminClientSpaceLivePreview = lazyWithTimeout(() => import("./pages/AdminClientSpaceLivePreview"));
 const AdminSecurityTotp = lazyWithTimeout(() => import("./pages/AdminSecurityTotp"));
 const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
 const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
@@ -416,6 +417,11 @@ function Router() {
         </AdminGuard>
       </Route>
       {/* Redirection /admin → / pour masquer l'existence du panneau */}
+      <Route path={"/admin/apercu-espace-client"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminClientSpaceLivePreview />
+        </AdminGuard>
+      </Route>
       <Route path={"/admin"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
