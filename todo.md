@@ -11,5 +11,5 @@
 - [x] `customerReview.listApproved` tolérant aux indisponibilités DB/erreurs de lecture, avec journalisation serveur et retour JSON sûr `[]`.
 - [x] Régression ciblée ajoutée; test ciblé, typecheck et build verts.
 - [x] Endpoint local/public contrôlé : réponse tRPC JSON `200` avec liste vide quand aucun avis approuvé n’est disponible.
-- [ ] Suite historique complète : 3 249 tests verts, 19 échecs préexistants dans 15 fichiers hors périmètre de ce correctif; aucune modification opportuniste appliquée.
-- [ ] Checkpoint WebDev du correctif à créer avant publication.
+- [x] Suite historique complète exécutée et classifiée factuellement : 3 249 tests verts, 19 échecs dans 15 fichiers hors des fichiers modifiés par ce correctif; aucune modification opportuniste appliquée. La baseline antérieure n’a pas été rejouée.
+- [x] Checkpoint WebDev du correctif créé : version `5a055e11`.
