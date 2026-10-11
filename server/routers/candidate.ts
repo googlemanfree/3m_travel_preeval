@@ -35,6 +35,7 @@ import {
   loadAgencyAgreementSignature,
   saveAgencyAgreementSignature,
 } from "../services/agencyAgreementSignature";
+import { notifyAgreementSignedWhatsApp } from "../services/clientWhatsAppNotify";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
@@ -1674,6 +1675,34 @@ export const candidateRouter = router({
           console.warn("[Agreement agency] Signed protocol email failed:", err);
         }
 
+        // WhatsApp « au mieux » — n’écrit pas agency_dossiers.status.
+        let whatsappSent = false;
+        try {
+          const wa = await notifyAgreementSignedWhatsApp({
+            phone: dossier.phone || ctx.candidate.phone || null,
+            candidateName: dossier.fullName,
+            dossierNumber,
+          });
+          whatsappSent = wa.sent;
+          if (wa.sent) {
+            try {
+              await db.insert(paymentAuditLogs).values({
+                adminName: "signature-espace-client",
+                adminEmail: dossier.email,
+                action: "agreement_signed_whatsapp",
+                paymentId: dossier.id,
+                candidateEmail: dossier.email,
+                amount: "",
+                details: `WhatsApp confirmation protocole signé pour ${dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+              });
+            } catch {
+              // audit best-effort
+            }
+          }
+        } catch (waErr) {
+          console.warn("[Agreement agency] Signed protocol WhatsApp skipped:", waErr);
+        }
+
         try {
           await notifyAdmins({
             type: "new_document",
@@ -1688,6 +1717,7 @@ export const candidateRouter = router({
         return {
           success: true,
           emailSent,
+          whatsappSent,
           signedPdfUrl: protocolPdf.url,
           message: emailSent
             ? "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail."
@@ -1832,6 +1862,34 @@ export const candidateRouter = router({
         console.warn("[Agreement] Signed protocol email failed:", err);
       }
 
+      // WhatsApp « au mieux » — n’écrit pas applications.status.
+      let whatsappSent = false;
+      try {
+        const wa = await notifyAgreementSignedWhatsApp({
+          phone: application.whatsappNumber || ctx.candidate.phone || null,
+          candidateName: application.fullName,
+          dossierNumber: application.dossierNumber,
+        });
+        whatsappSent = wa.sent;
+        if (wa.sent) {
+          try {
+            await db.insert(paymentAuditLogs).values({
+              adminName: "signature-espace-client",
+              adminEmail: application.email,
+              action: "agreement_signed_whatsapp",
+              paymentId: application.id,
+              candidateEmail: application.email,
+              amount: "",
+              details: `WhatsApp confirmation protocole signé pour ${application.dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+            });
+          } catch {
+            // audit best-effort
+          }
+        }
+      } catch (waErr) {
+        console.warn("[Agreement] Signed protocol WhatsApp skipped:", waErr);
+      }
+
       try {
         await notifyAdmins({
           type: "new_document",
@@ -1846,6 +1904,7 @@ export const candidateRouter = router({
       return {
         success: true,
         emailSent,
+        whatsappSent,
         signedPdfUrl: protocolPdf.url,
         message: emailSent
           ? "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail."

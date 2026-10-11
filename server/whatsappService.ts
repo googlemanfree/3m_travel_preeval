@@ -191,6 +191,23 @@ Sans cette signature, le traitement humain ne peut pas démarrer.
 `.trim();
 }
 
+export function buildAgreementSignedWhatsApp(params: { candidateName: string; dossierNumber: string }): string {
+  return `
+✅ *Protocole d’accord signé*
+
+Bonjour ${params.candidateName},
+
+Votre protocole d’accord pour le dossier *${params.dossierNumber}* est bien enregistré.
+
+Un exemplaire PDF signé vous a été envoyé par e-mail. Retrouvez-le aussi dans votre espace :
+${CLIENT_SPACE_URL}?section=documents
+
+L’équipe 3M TRAVEL AGENCY peut maintenant poursuivre le traitement de votre dossier.
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
 /**
  * Envoyer le bilan d'admissibilité par WhatsApp
  */

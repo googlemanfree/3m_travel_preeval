@@ -5,6 +5,7 @@ import { normalizeWhatsAppPhone, toE164WhatsApp } from "../shared/whatsappPhone"
 import {
   buildAgencyDocumentsPublishedWhatsApp,
   buildAgreementSignatureReminderWhatsApp,
+  buildAgreementSignedWhatsApp,
   buildDossierCreatedWhatsApp,
   buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
@@ -91,6 +92,17 @@ describe("messages WhatsApp dossier / documents", () => {
     expect(message).toContain("protocole");
     expect(message).toContain("mon-espace?section=dossier");
   });
+
+  it("construit le message de protocole signé", () => {
+    const message = buildAgreementSignedWhatsApp({
+      candidateName: "Grace",
+      dossierNumber: "3M-AGN-0021",
+    });
+    expect(message).toContain("Grace");
+    expect(message).toContain("3M-AGN-0021");
+    expect(message).toContain("Protocole d’accord signé");
+    expect(message).toContain("mon-espace?section=documents");
+  });
 });
 
 describe("branchements WhatsApp admin", () => {
@@ -109,7 +121,15 @@ describe("branchements WhatsApp admin", () => {
     expect(service).toContain("buildAgencyDocumentsPublishedWhatsApp");
     expect(service).toContain("buildPaymentReceiptApprovedWhatsApp");
     expect(service).toContain("buildAgreementSignatureReminderWhatsApp");
+    expect(service).toContain("buildAgreementSignedWhatsApp");
     expect(service).toContain("URLSearchParams");
+
+    const notify = read("server/services/clientWhatsAppNotify.ts");
+    expect(notify).toContain("notifyAgreementSignedWhatsApp");
+
+    const candidate = read("server/routers/candidate.ts");
+    expect(candidate).toContain("notifyAgreementSignedWhatsApp");
+    expect(candidate).toContain("agreement_signed_whatsapp");
 
     const management = read("server/routers/adminCandidateManagement.ts");
     expect(management).toContain("notifyPaymentReceiptApprovedWhatsApp");
