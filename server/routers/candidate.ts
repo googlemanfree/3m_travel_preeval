@@ -29,7 +29,12 @@ import {
   savedDestinationComparisons,
   candidateEmailChangeRequests,
   paymentReceiptApprovals,
+  paymentAuditLogs,
 } from "../../drizzle/schema";
+import {
+  loadAgencyAgreementSignature,
+  saveAgencyAgreementSignature,
+} from "../services/agencyAgreementSignature";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
@@ -1508,6 +1513,188 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
+      const forwarded = (ctx as { req?: { headers?: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } } })?.req;
+      const headerIp = forwarded?.headers?.["x-forwarded-for"];
+      const rawIp = input.ipAddress
+        || (typeof headerIp === "string" ? headerIp : Array.isArray(headerIp) ? headerIp[0] : undefined)
+        || forwarded?.socket?.remoteAddress
+        || "unknown";
+      const ipAddress = String(rawIp).split(",")[0].trim().slice(0, 64);
+
+      const base64Data = input.signatureDataUrl.includes(",")
+        ? input.signatureDataUrl.split(",")[1]
+        : input.signatureDataUrl;
+      let signaturePngBytes: Buffer;
+      try {
+        signaturePngBytes = Buffer.from(base64Data, "base64");
+        if (signaturePngBytes.length < 40) {
+          throw new Error("signature trop courte");
+        }
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "La signature manuscrite est invalide. Redessinez-la puis soumettez à nouveau." });
+      }
+
+      const agencyDossierId = parseAgencyDossierReference(input.dossierNumber);
+      if (agencyDossierId) {
+        const dossierNumber = `3M-AGN-${String(agencyDossierId).padStart(4, "0")}`;
+        const [dossier] = await db
+          .select()
+          .from(agencyDossiers)
+          .where(and(
+            eq(agencyDossiers.id, agencyDossierId),
+            sql`LOWER(${agencyDossiers.email}) = LOWER(${ctx.candidate.email})`,
+            isNull(agencyDossiers.deletedAt),
+          ))
+          .limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
+        if (dossier.initialPaymentStatus !== "paid") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être signé qu’après confirmation du paiement." });
+        }
+        const already = await loadAgencyAgreementSignature(db, dossier.id);
+        if (already) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce protocole a déjà été signé." });
+
+        let signatureImageUrl: string | undefined;
+        try {
+          const uploadResult = await storagePut(
+            `signatures/${dossierNumber}-${Date.now()}.png`,
+            signaturePngBytes,
+            "image/png",
+          );
+          signatureImageUrl = uploadResult.url;
+        } catch (err) {
+          console.warn("[Agreement agency] Signature image upload failed:", err);
+        }
+
+        const signedAtDate = new Date();
+        const now = Math.floor(signedAtDate.getTime() / 1000);
+        const empreinteSha = createHash("sha256")
+          .update(`${dossierNumber}|${dossier.email}|${input.signatureName}|${now}|${ipAddress}`)
+          .digest("hex")
+          .slice(0, 24);
+
+        const { buildProtocolOneRichText } = await import("../../shared/agreementProtocolCountryTemplates");
+        const { createAgreementProtocolOnePdf } = await import("../agreementProtocolPdfService");
+        const { buildSignedAgreementEmail } = await import("../services/signedAgreementEmail");
+        const { AGREEMENT_PROTOCOL_VERSION } = await import("../../shared/agreementProtocolContent");
+
+        const protocolVariables = {
+          clientNomComplet: dossier.fullName,
+          dossierRef: dossierNumber,
+          destinationProjet: dossier.destination || "Non spécifiée",
+          clientTelephoneWhatsapp: dossier.phone || undefined,
+          clientEmail: dossier.email,
+          modePaiement: "Paiement en agence",
+          dateHeurePaiement: (dossier.depositDate || dossier.updatedAt)
+            ? new Date(dossier.depositDate || dossier.updatedAt).toLocaleString("fr-FR", { timeZone: "Africa/Douala" })
+            : "Non renseignée",
+          conseillerEmail: dossier.assignedToAdmin || dossier.createdByAdmin || "conseiller@3mtravelagency.com",
+          empreinteSha,
+          clientIpAddress: ipAddress,
+          dateDuJour: signedAtDate.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+        };
+        const protocolText = buildProtocolOneRichText(protocolVariables, dossier.destination, dossier.visaType);
+        const protocolPdf = await createAgreementProtocolOnePdf({
+          dossierNumber,
+          fullName: dossier.fullName,
+          destination: dossier.destination,
+          variables: protocolVariables,
+          content: protocolText,
+          signature: {
+            name: input.signatureName.trim(),
+            pngBytes: signaturePngBytes,
+            signedAt: signedAtDate,
+            ipAddress,
+          },
+        });
+
+        // Persistance hors statut dossier (agency_settings + document) — aucun rewrite de status.
+        await saveAgencyAgreementSignature(db, {
+          dossierId: dossier.id,
+          dossierNumber,
+          signedAt: signedAtDate.toISOString(),
+          signatureName: input.signatureName.trim(),
+          ipAddress,
+          empreinteSha,
+          pdfUrl: protocolPdf.url,
+          candidateEmail: dossier.email,
+        });
+
+        const protocolFileName = `Protocole-accord-01-signe-${dossierNumber}.pdf`;
+        try {
+          await db.insert(agencyDossierDocuments).values({
+            dossierId: dossier.id,
+            documentType: "protocole_accord",
+            documentName: protocolFileName,
+            documentUrl: protocolPdf.url,
+            fileSize: protocolPdf.bytes.length,
+            source: "candidate_upload",
+            uploadedBy: "signature-espace-client",
+            verificationStatus: "verified",
+            verificationComment: `PDF signé du Protocole ${AGREEMENT_PROTOCOL_VERSION} (espace client). Empreinte ${empreinteSha}.`,
+          });
+        } catch (err) {
+          console.warn("[Agreement agency] Signed PDF archive failed:", err);
+        }
+
+        try {
+          await db.insert(paymentAuditLogs).values({
+            adminName: "signature-espace-client",
+            adminEmail: dossier.email,
+            action: "agency_agreement_signed",
+            paymentId: dossier.id,
+            candidateEmail: dossier.email,
+            amount: "",
+            details: `Protocole N°01 signé pour ${dossierNumber}. Empreinte ${empreinteSha}.`,
+          });
+        } catch {
+          // audit best-effort
+        }
+
+        const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+        const emailPayload = buildSignedAgreementEmail({
+          fullName: dossier.fullName,
+          dossierNumber,
+          signatureName: input.signatureName.trim(),
+          signedAt: signedAtDate,
+          siteUrl,
+          protocolFileName,
+          signatureImageUrl,
+        });
+
+        let emailSent = false;
+        try {
+          await sendGenericEmail({
+            to: dossier.email,
+            subject: emailPayload.subject,
+            html: emailPayload.html,
+            attachments: [{ filename: protocolFileName, content: protocolPdf.bytes, contentType: "application/pdf" }],
+          });
+          emailSent = true;
+        } catch (err) {
+          console.warn("[Agreement agency] Signed protocol email failed:", err);
+        }
+
+        try {
+          await notifyAdmins({
+            type: "new_document",
+            title: "Protocole d’accord signé (agence)",
+            message: `${dossier.fullName} a signé le protocole N°01 (${dossierNumber}).`,
+            relatedId: dossierNumber,
+          });
+        } catch {
+          // notification admin optionnelle
+        }
+
+        return {
+          success: true,
+          emailSent,
+          signedPdfUrl: protocolPdf.url,
+          message: emailSent
+            ? "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail."
+            : "Protocole d’accord signé et archivé. L’e-mail n’a pas pu être envoyé pour le moment ; le PDF reste disponible dans vos documents.",
+        };
+      }
+
       const appRows = await db
         .select()
         .from(applications)
@@ -1531,27 +1718,6 @@ export const candidateRouter = router({
       }
       if (application.paymentStatus !== "SUCCESS") {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être signé qu’après confirmation du paiement." });
-      }
-
-      const forwarded = (ctx as { req?: { headers?: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string } } })?.req;
-      const headerIp = forwarded?.headers?.["x-forwarded-for"];
-      const rawIp = input.ipAddress
-        || (typeof headerIp === "string" ? headerIp : Array.isArray(headerIp) ? headerIp[0] : undefined)
-        || forwarded?.socket?.remoteAddress
-        || "unknown";
-      const ipAddress = String(rawIp).split(",")[0].trim().slice(0, 64);
-
-      const base64Data = input.signatureDataUrl.includes(",")
-        ? input.signatureDataUrl.split(",")[1]
-        : input.signatureDataUrl;
-      let signaturePngBytes: Buffer;
-      try {
-        signaturePngBytes = Buffer.from(base64Data, "base64");
-        if (signaturePngBytes.length < 40) {
-          throw new Error("signature trop courte");
-        }
-      } catch {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "La signature manuscrite est invalide. Redessinez-la puis soumettez à nouveau." });
       }
 
       let signatureImageUrl: string | undefined;
@@ -1608,6 +1774,7 @@ export const candidateRouter = router({
         },
       });
 
+      // Signature seulement — ne pas réécrire dossierStatus (contrainte dossiers actifs).
       await db
         .update(applications)
         .set({
@@ -1615,7 +1782,6 @@ export const candidateRouter = router({
           agreementSignedAt: now,
           agreementSignatureName: input.signatureName.trim(),
           agreementIpAddress: ipAddress,
-          dossierStatus: "paye",
           lastStatusUpdateAt: signedAtDate,
         })
         .where(eq(applications.id, application.id));
@@ -2674,6 +2840,9 @@ export const candidateRouter = router({
     const activeAgencyDossierNumber = activeAgencyDossier
       ? `3M-AGN-${activeAgencyDossier.id.toString().padStart(4, "0")}`
       : null;
+    const agencyAgreementSignature = activeAgencyDossier && !activeApp
+      ? await loadAgencyAgreementSignature(db, activeAgencyDossier.id)
+      : null;
     // 1 dossier = 1 paiement : le jalon « payé » suit STRICTEMENT la procédure
     // sélectionnée (en ligne ou agence), jamais un OR sur les autres dossiers du compte.
     const selectedProcedurePaymentConfirmed = activeApp
@@ -2682,6 +2851,7 @@ export const candidateRouter = router({
     const selectedProcedurePaymentRequested = activeApp
       ? Boolean(activeApp.paymentOpeningRequestedAt || activeApp.activationRequestedAt)
       : Boolean(activeAgencyDossier);
+    const agencyAgreementSigned = Boolean(agencyAgreementSignature);
     const candidateHasTrackedDossier = Boolean((candidate as any).dossierNumber)
       || candidate.dossierStatus !== "nouveau"
       || candidate.evaluationDeclarationStatus === "validated";
@@ -2833,6 +3003,10 @@ export const candidateRouter = router({
             paymentStatus: activeAgencyDossier.initialPaymentStatus === "paid" ? "SUCCESS" : activeAgencyDossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
             initialPaymentStatus: activeAgencyDossier.initialPaymentStatus,
             createdAt: activeAgencyDossier.createdAt,
+            agreementSigned: agencyAgreementSigned,
+            agreementSignedAt: agencyAgreementSignature?.signedAt ?? null,
+            agreementSignatureName: agencyAgreementSignature?.signatureName ?? null,
+            signedProtocolPdfUrl: agencyAgreementSignature?.pdfUrl ?? null,
           }
         : null,
       workflow: {
@@ -2845,8 +3019,11 @@ export const candidateRouter = router({
         evaluationClientConfirmed: Boolean(activeApp?.evaluationClientConfirmedAt),
         activationRequested: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
         appointmentUnlocked: Boolean(activeApp?.activationRequestedAt) || Boolean(activeAgencyDossier && !activeApp),
-        agreementSigned: Boolean(activeApp?.agreementSigned),
-        showAgreementAfterPayment: Boolean(activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned),
+        agreementSigned: Boolean(activeApp?.agreementSigned) || agencyAgreementSigned,
+        showAgreementAfterPayment: Boolean(
+          (activeApp && activeApp.paymentStatus === "SUCCESS" && !activeApp.agreementSigned)
+          || (!activeApp && activeAgencyDossier && activeAgencyDossier.initialPaymentStatus === "paid" && !agencyAgreementSigned)
+        ),
         secondAgreementReady: Boolean(activeApp?.secondAgreementReadyAt),
         secondAgreementSigned: Boolean(activeApp?.secondAgreementSigned),
         secondAgreementEmployer: activeApp?.secondAgreementEmployer ?? null,
