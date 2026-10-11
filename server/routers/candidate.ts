@@ -1983,6 +1983,29 @@ export const candidateRouter = router({
     return { success: true, paymentRequested: true, appointmentUnlocked: true, message: "Demande d’activation enregistrée. Le paiement d’ouverture et la prise de rendez-vous sont maintenant disponibles." };
   }),
 
+  /** Sélectionne un seul dossier de traitement sans migrer ni modifier les autres dossiers. */
+  selectActiveDossier: candidateProcedure
+    .input(z.object({ dossierNumber: z.string().trim().min(3).max(80) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [application] = await db.select({ dossierNumber: applications.dossierNumber })
+        .from(applications)
+        .where(and(eq(applications.candidateId, ctx.candidate.id), eq(applications.dossierNumber, input.dossierNumber)))
+        .limit(1);
+      if (!application) {
+        const agencyRef = input.dossierNumber.match(/^3M-AGN-(\d+)$/i);
+        if (!agencyRef) throw new TRPCError({ code: "NOT_FOUND", message: "Ce dossier ne vous est pas rattaché." });
+        const [agency] = await db.select({ id: agencyDossiers.id })
+          .from(agencyDossiers)
+          .where(and(eq(agencyDossiers.id, Number(agencyRef[1])), eq(agencyDossiers.email, ctx.candidate.email)))
+          .limit(1);
+        if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Ce dossier ne vous est pas rattaché." });
+      }
+      await db.update(candidates).set({ activeDossierNumber: input.dossierNumber }).where(eq(candidates.id, ctx.candidate.id));
+      return { success: true, activeDossierNumber: input.dossierNumber };
+    }),
+
   getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1996,18 +2019,26 @@ export const candidateRouter = router({
     // Si une ligne plus recente et non payee a ete creee depuis (nouvelle evaluation,
     // nouveau projet), on garde la ligne payee comme dossier actif : sinon le paiement
     // confirme et le protocole d'accord a signer deviennent invisibles pour le candidat.
-    const activeApplication = candidateApplications.find((row) => row.paymentStatus === "SUCCESS") ?? candidateApplications[0] ?? null;
+    const activeApplication = (ctx.candidate.activeDossierNumber
+      ? candidateApplications.find((row) => row.dossierNumber === ctx.candidate.activeDossierNumber)
+      : undefined)
+      ?? candidateApplications.find((row) => row.paymentStatus === "SUCCESS")
+      ?? candidateApplications[0]
+      ?? null;
     const app = activeApplication ? [activeApplication] : [];
 
     // Les dossiers ouverts directement en agence n’étaient pas reliés à une
     // application en ligne. Ils sont maintenant exposés dans le même espace,
     // uniquement lorsque l’adresse e-mail appartient au candidat connecté.
-    const [historicalAgencyDossier] = await db
+    const agencyDossiersForCandidate = await db
       .select()
       .from(agencyDossiers)
       .where(eq(agencyDossiers.email, ctx.candidate.email))
-      .orderBy(desc(agencyDossiers.createdAt))
-      .limit(1);
+      .orderBy(desc(agencyDossiers.createdAt));
+    const historicalAgencyDossier = (ctx.candidate.activeDossierNumber?.startsWith("3M-AGN-")
+      ? agencyDossiersForCandidate.find((row) => `3M-AGN-${row.id.toString().padStart(4, "0")}` === ctx.candidate.activeDossierNumber)
+      : undefined)
+      ?? agencyDossiersForCandidate[0];
 
     const candidateHasTrackedDossier = Boolean((ctx.candidate as any).dossierNumber)
       || ctx.candidate.dossierStatus !== "nouveau"

@@ -2996,7 +2996,7 @@ export default function AdminDashboard() {
                           <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
                             {candidate.folderCode}
                           </span>
-                          {candidate.isClientActiveTreatment && (
+                          {(candidate.isClientActiveTreatment || (candidate as Candidate & { isActiveDossier?: boolean }).isActiveDossier) && (
                             <span
                               className="w-fit rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-900"
                               data-testid="admin-active-treatment-badge"

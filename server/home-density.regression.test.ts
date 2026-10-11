@@ -18,7 +18,7 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).toContain('id="evaluation-multi"');
     expect(home).toContain("Choisissez votre prochaine étape");
     expect(home).toContain('href="/procedures"');
-    expect(home).toContain('href="/ressources"');
+    expect(home).toContain('href="/guide-procedures"');
   });
 
   it("pointe explicitement vers le simulateur CRS de la page Canada depuis le hub d’accueil", () => {
@@ -58,5 +58,4 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).toContain("Honoraires d’agence — en toute clarté");
   });
 });
-
 

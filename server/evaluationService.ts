@@ -411,7 +411,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       
       <div class="section">
         <div class="section-title">💰 FRAIS D'OUVERTURE DE DOSSIER</div>
-        <p>Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de <strong>65 000 FCFA</strong> est requis.</p>
+        <p>Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires, dont le montant dépend de votre profil et vous est confirmé par écrit avant tout paiement, est requis.</p>
       </div>
       
       <a href="https://www.3mtravelagency.com/verify-application-email?dossier=${app.dossierNumber}" class="cta">Continuer vers le paiement →</a>
@@ -489,7 +489,7 @@ Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigrati
 
 💰 FRAIS D'OUVERTURE DE DOSSIER
 
-Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de 65 000 FCFA est requis.
+Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires, dont le montant dépend de votre profil et vous est confirmé par écrit avant tout paiement, est requis.
 
 Lien de paiement : https://www.3mtravelagency.com/verify-application-email?dossier=${app.dossierNumber}
 

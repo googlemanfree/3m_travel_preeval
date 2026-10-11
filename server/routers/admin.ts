@@ -1298,7 +1298,7 @@ export const adminRouter = router({
     }),
 
   /** Annule un paiement déjà validé (SUCCESS / paid) avec motif — dossier remis en attente de règlement. */
-  cancelValidatedPayment: publicProcedure
+  cancelValidatedDossierPayment: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
       candidateId: z.string().regex(/^(online|agency)_\d+$/),

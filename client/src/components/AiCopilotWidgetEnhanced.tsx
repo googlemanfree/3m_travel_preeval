@@ -22,7 +22,7 @@ const QUICK_ACTIONS = [
   {
     label: "💰 Frais d'ouverture",
     question:
-      "À quoi correspondent les 65 000 FCFA de frais d'ouverture de dossier ?",
+      "À quoi correspondent les frais d'ouverture de dossier et de quoi dépend leur montant ?",
   },
   {
     label: "📄 Documents requis",

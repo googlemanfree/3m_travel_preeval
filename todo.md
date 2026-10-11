@@ -1,6 +1,6 @@
-
-## Validation documentaire admin — VALIDÉ
-- [x] Sélection multiple et validation groupée des pièces non validées ; les pièces déjà validées/non requises ne sont pas sélectionnables, et le bouton d’action est désactivé sans sélection ou pendant l’envoi.
-- [x] Commentaire explicatif obligatoire conservé et testé lors du statut « À corriger » ; le commentaire est affiché au candidat et journalisé côté admin.
-- [x] Tests ciblés : 3 fichiers / 40 tests verts ; `pnpm run check` et `vite build` verts.
-- [x] Suite complète : 575 fichiers et 3 125 tests verts, 5 échecs hors périmètre préexistants (Home-density, Jinko externe, sources pays). Aucun de ces échecs ne concerne cette évolution.
+## Dossier actif client ↔ admin et annulations — VALIDÉ
+- [x] Référence persistante `candidates.activeDossierNumber` ajoutée au schéma et à la migration additive `drizzle/0079_active_dossier_number.sql` ; sélection client protégée et réutilisée au chargement.
+- [x] Projection admin enrichie avec `isActiveDossier`, badge « Dossier actif » et suppression de la ligne COMPTE redondante lorsqu’un vrai dossier EVAL/3M existe.
+- [x] Annulation paiement validé ajoutée côté admin avec motif obligatoire, garde de statut, journalisation et remise en attente sur le seul dossier ciblé ; le retrait d’étape existant reste limité au dossier ouvert et demande un motif.
+- [x] Typecheck vert, build vert, 4 fichiers de régression / 27 tests verts.
+- [x] Migration 0079 exécutée via l’outil SQL WebDev ; vérification shell directe indisponible faute de variables DB locales.

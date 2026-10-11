@@ -8,6 +8,7 @@ import {
   agencyDossiers,
   applications,
   candidatePlacementConsents,
+  candidateFiles,
   candidates,
   clientNotifications,
   placementAccessRequests,
@@ -20,6 +21,7 @@ import {
   placementOrganizations,
   placementProfileSubmissions,
   placementSubmissionEvents,
+  agencyDossierDocuments,
 } from "../../drizzle/schema";
 import { computeSelectableStage, POST_SELECTION_LABELS, resolvePostSelectionStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
@@ -31,6 +33,8 @@ import { verifyCandidateToken } from "./candidate";
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
 import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/talentCorridor";
+import { storageGetSignedUrl, storagePut } from "../storage";
+import { buildPlacementSummaryDraft, buildPlacementSummaryPdf, fingerprintPlacementSummary } from "../services/placementProfileSummary";
 
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -125,7 +129,7 @@ export const placementPortalRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1))[0];
-    return { status: consent?.status ?? "withdrawn", consentedAt: consent?.consentedAt ?? null };
+    return { status: consent?.status ?? "withdrawn", consentedAt: consent?.consentedAt ?? null, pdfShareConsent: Boolean(consent?.pdfShareConsent), photoShareConsent: Boolean(consent?.photoShareConsent) };
   }),
 
   setMyConsent: publicProcedure.input(z.object({ candidateToken: z.string().min(20), consented: z.boolean() })).mutation(async ({ input }) => {
@@ -138,6 +142,54 @@ export const placementPortalRouter = router({
     if (existing) await db.update(candidatePlacementConsents).set(values).where(eq(candidatePlacementConsents.id, existing.id));
     else await db.insert(candidatePlacementConsents).values({ candidateId, ...values });
     return { status: values.status };
+  }),
+
+  setMySummaryConsents: publicProcedure.input(z.object({ candidateToken: z.string().min(20), pdfShareConsent: z.boolean(), photoShareConsent: z.boolean() })).mutation(async ({ input }) => {
+    const candidateId = verifyCandidateToken(input.candidateToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateId)).limit(1))[0];
+    if (!consent || consent.status !== "granted") throw new TRPCError({ code: "FORBIDDEN", message: "Activez d’abord le consentement de partage du profil." });
+    await db.update(candidatePlacementConsents).set({ pdfShareConsent: input.pdfShareConsent ? 1 : 0, photoShareConsent: input.photoShareConsent ? 1 : 0 }).where(eq(candidatePlacementConsents.id, consent.id));
+    return { pdfShareConsent: input.pdfShareConsent, photoShareConsent: input.photoShareConsent };
+  }),
+
+  adminGetCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive() })).query(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, input.candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
+    const candidate = (await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1))[0];
+    if (!profile || !candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Profil de synthèse introuvable." });
+    const consent = (await db.select().from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, input.candidateId)).limit(1))[0];
+    const [candidateDocs, agencyDocs] = await Promise.all([
+      db.select({ type: candidateFiles.fileType, name: candidateFiles.fileName, status: candidateFiles.status, comment: candidateFiles.rejectionReason }).from(candidateFiles).where(eq(candidateFiles.candidateId, input.candidateId)).limit(200),
+      db.select({ type: agencyDossierDocuments.documentType, name: agencyDossierDocuments.documentName, status: agencyDossierDocuments.verificationStatus, comment: agencyDossierDocuments.verificationComment }).from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id)).where(eq(agencyDossiers.email, candidate.email)).limit(200),
+    ]);
+    const draft = buildPlacementSummaryDraft({ fullName: candidate.fullName || "Candidat", destination: profile.targetDestination, procedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languages: profile.languagesSummary, profileSummary: profile.summary, documents: [...candidateDocs, ...agencyDocs] });
+    const fingerprint = fingerprintPlacementSummary(draft);
+    const nextStatus = profile.summaryStatus === "approved" && profile.summaryFingerprint !== fingerprint ? "needs_revalidation" : profile.summaryStatus;
+    if (profile.summaryFingerprint !== fingerprint || profile.summaryDraft !== JSON.stringify(draft) || nextStatus !== profile.summaryStatus) {
+      await db.update(placementCandidateProfiles).set({ summaryDraft: JSON.stringify(draft), summaryFingerprint: fingerprint, summaryStatus: nextStatus, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+    }
+    return { profileId: profile.id, status: nextStatus, draft, previewPdfDataUrl: `data:application/pdf;base64,${buildPlacementSummaryPdf(draft).toString("base64")}`, pdfShareConsent: Boolean(consent?.pdfShareConsent), photoShareConsent: Boolean(consent?.photoShareConsent), profileCode: profile.profileCode, submissionCount: (await db.select({ id: placementProfileSubmissions.id }).from(placementProfileSubmissions).where(eq(placementProfileSubmissions.profileId, profile.id))).length, reviewedBy: admin.email };
+  }),
+
+  adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(6000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.id, input.profileId), isNull(placementCandidateProfiles.archivedAt))).limit(1))[0];
+    if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "Profil introuvable." });
+    if (input.action === "approve") {
+      const parsed = JSON.parse(input.draft) as Parameters<typeof buildPlacementSummaryPdf>[0];
+      const pdf = buildPlacementSummaryPdf(parsed);
+      const stored = await storagePut(`placement-summaries/${profile.profileCode}.pdf`, pdf, "application/pdf");
+      await db.update(placementCandidateProfiles).set({ summaryDraft: input.draft, summaryStatus: "approved", summaryPdfKey: stored.key, summaryReviewNote: input.note || null, summaryValidatedAt: new Date(), summaryValidatedByAdminId: admin.id, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+      return { status: "approved" as const, pdfUrl: stored.url };
+    }
+    await db.update(placementCandidateProfiles).set({ summaryDraft: input.draft, summaryStatus: "rejected", summaryReviewNote: input.note || null, summaryValidatedAt: null, summaryValidatedByAdminId: null, summaryUpdatedAt: new Date() }).where(eq(placementCandidateProfiles.id, profile.id));
+    return { status: "rejected" as const, pdfUrl: null };
   }),
 
   /** Statut « profil sélectionnable » pour l’espace client (corridor Afrique → monde). */
@@ -562,11 +614,23 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
       collection.push({ shareId: share.id, recipientName: recipient.fullName, recipientAccountId: recipient.id, sharedAt: share.createdAt });
       outgoingBySubmission.set(submissionId, collection);
     }
+    const candidateIds = Array.from(new Set(submissions.map(({ profile }) => profile.candidateId)));
+    const consentRows = candidateIds.length ? await db.select().from(candidatePlacementConsents).where(inArray(candidatePlacementConsents.candidateId, candidateIds)) : [];
+    const consentByCandidate = new Map(consentRows.map((consent) => [consent.candidateId, consent]));
     return submissions.map(({ submission, profile }) => {
       const favorite = favoritesBySubmission.get(submission.id);
       const shared = shareBySubmission.get(submission.id);
-      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { shareId: shared.id, sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, outgoingShares: outgoingBySubmission.get(submission.id) ?? [], profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
+      const consent = consentByCandidate.get(profile.candidateId);
+      const summaryAvailable = profile.summaryStatus === "approved" && consent?.status === "granted" && Boolean(consent.pdfShareConsent) && Boolean(submission.id);
+      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { shareId: shared.id, sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, outgoingShares: outgoingBySubmission.get(submission.id) ?? [], profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary, summaryStatus: profile.summaryStatus, summaryAvailable, summaryUnavailableReason: summaryAvailable ? null : "Aucune fiche validée" } };
     });
+  }),
+
+  employerDownloadProfileSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).query(async ({ input }) => {
+    const { db, organization } = await getEmployerSession(input.sessionToken);
+    const row = (await db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles, consent: candidatePlacementConsents }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).innerJoin(candidatePlacementConsents, eq(candidatePlacementConsents.candidateId, placementCandidateProfiles.candidateId)).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))).limit(1))[0];
+    if (!row || row.submission.status === "withdrawn" || row.profile.summaryStatus !== "approved" || row.consent.status !== "granted" || !row.consent.pdfShareConsent || !row.profile.summaryPdfKey) throw new TRPCError({ code: "FORBIDDEN", message: "Aucune fiche validée" });
+    return { url: await storageGetSignedUrl(row.profile.summaryPdfKey), filename: `fiche-synthese-${row.profile.profileCode}.pdf` };
   }),
 
   /** Historique traçable : présentation (envoi) + retours de décision pour l’organisation. */
