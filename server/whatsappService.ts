@@ -158,6 +158,26 @@ ${CLIENT_SPACE_URL}?section=overview
 `.trim();
 }
 
+export function buildAgreementSignatureReminderWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+}): string {
+  return `
+✍️ *Rappel — protocole à signer*
+
+Bonjour ${params.candidateName},
+
+Votre paiement est confirmé pour le dossier *${params.dossierNumber}*, mais le protocole d’accord n’est pas encore signé.
+
+Finalisez la signature ici :
+${CLIENT_SPACE_URL}?section=dossier
+
+Sans cette signature, le traitement humain ne peut pas démarrer.
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
 /**
  * Envoyer le bilan d'admissibilité par WhatsApp
  */
