@@ -70,6 +70,20 @@ describe("gardes de transition", () => {
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) expect(blocked.code).toBe("protocol_two_required");
   });
+
+  it("exige la sélection employeur avant APPROVED sur une procédure travail", () => {
+    const blocked = evaluateAdminStageTransition({
+      targetStage: "APPROVED",
+      paymentConfirmed: true,
+      protocolSigned: true,
+      pendingRequiredDocuments: 0,
+      checklistPercent: 100,
+      procedureKind: "work",
+      employerSelected: false,
+    });
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.code).toBe("employer_required");
+  });
 });
 
 describe("SLA par étape", () => {

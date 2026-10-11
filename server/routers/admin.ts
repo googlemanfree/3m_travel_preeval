@@ -41,11 +41,12 @@ import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureS
 import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
 import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
 import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
-import { buildAdminDynamicPilotageContext, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
+import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
 import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
 import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
+import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -232,14 +233,14 @@ const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "
 export const CANDIDATE360_LEGACY_STATUS_MAP = {
   new: { application: "nouveau", agency: "nouveau", label: "Dossier créé" },
   qualifying: { application: "en_evaluation", agency: "en_cours", label: "Évaluation en cours" },
-  waiting_customer: { application: "en_attente_documents", agency: "documents_requis", label: "Action attendue du candidat" },
+  waiting_customer: { application: "en_attente_documents", agency: "documents_requis", label: "Ouverture du dossier" },
   documents_review: { application: "en_attente_documents", agency: "documents_requis", label: "Documents à compléter" },
-  payment_review: { application: "en_attente_paiement", agency: "en_cours", label: "Paiement à confirmer" },
-  processing: { application: "en_cours_recrutement", agency: "en_cours", label: "Dossier en traitement" },
-  submitted: { application: "soumis_agences", agency: "soumis", label: "Dossier soumis" },
-  completed: { application: "visa_approuve", agency: "approuve", label: "Dossier approuvé" },
-  closed: { application: "visa_approuve", agency: "approuve", label: "Dossier clôturé" },
-  rejected: { application: "refuse", agency: "refuse", label: "Dossier à revoir" },
+  payment_review: { application: "en_attente_paiement", agency: "en_cours", label: "Ouverture du dossier" },
+  processing: { application: "en_cours_recrutement", agency: "en_cours", label: "Traitement en cours" },
+  submitted: { application: "soumis_agences", agency: "soumis", label: "Traitement en cours" },
+  completed: { application: "visa_approuve", agency: "approuve", label: "Décision favorable" },
+  closed: { application: "visa_approuve", agency: "approuve", label: "Décision favorable" },
+  rejected: { application: "refuse", agency: "refuse", label: "Décision défavorable" },
 } as const;
 
 export function mapCandidate360Status(status: (typeof candidate360WorkflowStatuses)[number], source: "online" | "agency") {
@@ -2088,7 +2089,7 @@ export const adminRouter = router({
           "PUBLISHED": "Bilan Consulaire Disponible",
           "DOCUMENTS_CHECK": "Collecte des documents",
           "SUBMITTED": "Soumission consulaire",
-          "APPROVED": "Visa Accordé",
+          "APPROVED": "Décision favorable",
         };
 
         let candidateEmail = "";
@@ -2128,6 +2129,12 @@ export const adminRouter = router({
             destination: app.destination,
             procedureType: app.visaType,
           });
+          const procedureKind = detectAdminProcedureKind(app.visaType, app.visaType);
+          const employerSelected = Boolean(
+            app.secondAgreementReadyAt
+            || String(app.secondAgreementEmployer ?? "").trim()
+            || String(app.recruitmentPartnerName ?? "").trim(),
+          );
           const transitionGuard = evaluateAdminStageTransition({
             targetStage: input.newStatus,
             paymentConfirmed: app.paymentStatus === "SUCCESS",
@@ -2138,6 +2145,8 @@ export const adminRouter = router({
             pendingRequiredDocuments: 0,
             secondProtocolReady: Boolean(app.secondAgreementReadyAt),
             secondProtocolSigned: Boolean(app.secondAgreementSigned),
+            employerSelected,
+            procedureKind,
           });
           if (transitionGuard.ok === false) {
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
@@ -2194,20 +2203,56 @@ export const adminRouter = router({
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
           }
 
+          const procedureKind = detectAdminProcedureKind(dossier.visaType, dossier.visaType);
+          // Agence : la sélection employeur est matérialisée par l’étape ADEM / recherche aboutie,
+          // ou une note admin contenant un employeur (pas de champ dédié historique).
+          const employerSelected = ["validation_adem"].includes(dossier.status)
+            || /\bemployeur\b/i.test(String(dossier.adminNotes ?? ""));
+          const agencyPaymentConfirmed = dossier.initialPaymentStatus === "paid";
+          const transitionGuard = evaluateAdminStageTransition({
+            targetStage: input.newStatus,
+            paymentConfirmed: agencyPaymentConfirmed,
+            protocolSigned: true,
+            evaluationDelivered: Boolean(dossier.evaluationValidatedAt),
+            evaluationClientConfirmed: true,
+            checklistPercent: 100,
+            pendingRequiredDocuments: 0,
+            secondProtocolReady: false,
+            secondProtocolSigned: false,
+            employerSelected,
+            procedureKind,
+          });
+          if (transitionGuard.ok === false) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
+          }
+
+          // Sur une procédure travail encore en « soumis », l’étape Kanban SUBMITTED
+          // bascule d’abord vers recherche_employeur plutôt que d’autoriser un saut vers approuvé.
+          let agencyTargetStatus = internalStatusMap[input.newStatus] as string;
+          if (input.newStatus === "SUBMITTED" && procedureKind === "work" && dossier.status === "documents_requis") {
+            agencyTargetStatus = "soumis";
+          }
+          if (input.newStatus === "APPROVED" && procedureKind === "work" && !employerSelected) {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message: "Passez d’abord le dossier en « Recherche d’employeur » / validez un employeur avant la décision favorable.",
+            });
+          }
+
           await db.update(agencyDossiers)
             .set({
-              status: internalStatusMap[input.newStatus] as any,
+              status: agencyTargetStatus as any,
               lastStatusChangeAt: new Date(),
               lastStatusChangeBy: admin.fullName || "Admin",
             })
             .where(eq(agencyDossiers.id, id));
 
-          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true }) });
+          await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "agency", dossierNumber: `3M-AGN-${id.toString().padStart(4, "0")}`, manualValidation: true, agencyStatus: agencyTargetStatus }) });
 
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;
           folderCode = `3M-AGN-${id.toString().padStart(4, "0")}`;
-          dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: dossier.initialPaymentStatus === "paid" };
+          dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: agencyPaymentConfirmed };
         }
 
         // Envoyer une notification email au client si demandé : même statut et même « étape N sur M » que son espace client.
@@ -2258,7 +2303,7 @@ export const adminRouter = router({
         PUBLISHED: "Bilan Consulaire Disponible",
         DOCUMENTS_CHECK: "Collecte des documents",
         SUBMITTED: "Soumission consulaire",
-        APPROVED: "Visa Accordé",
+        APPROVED: "Décision favorable",
       };
       let currentStatus: (typeof sequence)[number];
       let previousStatus: (typeof sequence)[number];
@@ -4248,6 +4293,58 @@ export const adminRouter = router({
           suggestedFromNow: journeySla.suggestedFromNow.toISOString(),
         },
         secondProtocol,
+        stageCoherence: (() => {
+          const procedureKind = detectAdminProcedureKind(visaTypeForJourney, procedureLabel);
+          const agencyStatusForEmployer = reference.source === "agency"
+            ? String((sourceRecord as typeof agencyDossiers.$inferSelect).status)
+            : "";
+          const agencyNotesForEmployer = reference.source === "agency"
+            ? String((sourceRecord as typeof agencyDossiers.$inferSelect).adminNotes ?? "")
+            : "";
+          const employerSelected = reference.source === "online"
+            ? Boolean(
+              onlineApp?.secondAgreementReadyAt
+              || String(onlineApp?.secondAgreementEmployer ?? "").trim()
+              || String(onlineApp?.recruitmentPartnerName ?? "").trim(),
+            )
+            : agencyStatusForEmployer === "validation_adem"
+              || /\bemployeur\s*[:=]/i.test(agencyNotesForEmployer);
+          const onlineStatus = onlineApp?.dossierStatus;
+          const agencyStatus = reference.source === "agency" ? (sourceRecord as typeof agencyDossiers.$inferSelect).status : null;
+          const adminStatus = reference.source === "online"
+            ? (["bilan_envoye", "en_attente_paiement"].includes(String(onlineStatus)) ? "PUBLISHED"
+              : ["paye", "en_attente_documents", "documents_recus"].includes(String(onlineStatus)) ? "DOCUMENTS_CHECK"
+              : ["soumis_agences", "en_cours_recrutement", "contrat_obtenu"].includes(String(onlineStatus)) ? "SUBMITTED"
+              : onlineStatus === "visa_approuve" ? "APPROVED" : "PENDING_48H")
+            : (agencyStatus === "en_cours" ? "PUBLISHED"
+              : ["documents_requis", "documents_recus"].includes(String(agencyStatus)) ? "DOCUMENTS_CHECK"
+              : ["soumis", "recherche_employeur", "validation_adem"].includes(String(agencyStatus)) ? "SUBMITTED"
+              : agencyStatus === "approuve" ? "APPROVED" : "PENDING_48H");
+          const guided = resolveGuidedNextAdminAction({
+            currentStatus: adminStatus,
+            paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+            procedureKind,
+            visaType: visaTypeForJourney,
+            procedureLabel,
+            employerSelected,
+            secondProtocolReady: secondProtocol.ready,
+            secondProtocolSigned: secondProtocol.signed,
+          });
+          return {
+            adminStatus,
+            procedureKind,
+            employerSelected,
+            guided,
+            stages: ADMIN_STAGE_SEQUENCE.map((stage) => ({
+              stage,
+              label: ADMIN_STAGE_CATALOG[stage].label,
+              detail: ADMIN_STAGE_CATALOG[stage].detail,
+              clientLabel: ADMIN_STAGE_CATALOG[stage].clientLabel,
+              prerequisites: ADMIN_STAGE_CATALOG[stage].prerequisites,
+              current: stage === adminStatus,
+            })),
+          };
+        })(),
         siblingProcedures: siblingRows,
         dualOpportunityHandoff,
         redirectToCanonicalAgencyId,
@@ -4777,6 +4874,8 @@ export const adminRouter = router({
           visaType,
           dossierStatus,
           statusLabel: progress.statusLabel,
+          statusDetail: progress.statusDetail,
+          phase: progress.phase,
           evaluationDeclarationStatus: candidateRow?.evaluationDeclarationStatus ?? null,
           emailVerified: candidateRow?.emailVerified !== false,
         },

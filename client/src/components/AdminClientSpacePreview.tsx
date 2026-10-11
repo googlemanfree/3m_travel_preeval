@@ -99,8 +99,11 @@ export default function AdminClientSpacePreview({
                     </p>
                     <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
                       <div>
-                        <p className="text-xs text-blue-200">Statut visible</p>
+                        <p className="text-xs text-blue-200">Statut visible (phase client)</p>
                         <p className="font-semibold">{data.candidate.statusLabel}</p>
+                        {data.candidate.statusDetail ? (
+                          <p className="mt-1 text-xs text-blue-100">{data.candidate.statusDetail}</p>
+                        ) : null}
                       </div>
                       <Badge className="border-white/20 bg-white/15 text-white">{data.progress.percent}%</Badge>
                     </div>
