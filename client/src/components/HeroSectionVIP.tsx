@@ -167,8 +167,8 @@ export default function HeroSectionVIP({
           data-testid="hero-tagline"
         >
           {t(
-            "3M prépare et suit votre dossier — études, travail, visas.",
-            "3M prepares and follows your file — studies, work, visas.",
+            "Depuis Yaoundé, 3M prépare et suit votre dossier — études, travail, visas et e-Visas.",
+            "From Yaoundé, 3M prepares and follows your file — studies, work, visas and e-Visas.",
           )}
         </motion.p>
 
