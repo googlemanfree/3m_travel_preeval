@@ -37,7 +37,11 @@ import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequiremen
 import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
-import { notifyPaymentReceiptApprovedWhatsApp } from "../services/clientWhatsAppNotify";
+import {
+  notifyAgreementSignatureReminderWhatsApp,
+  notifyPaymentReceiptApprovedWhatsApp,
+} from "../services/clientWhatsAppNotify";
+import { resendClientAccessLink as issueClientAccessLinkResend } from "../services/resendClientAccessLink";
 import {
   loadAgencyAgreementSignaturesByIds,
   loadAgencyProtocolSignedDocIds,
@@ -2152,6 +2156,37 @@ export const adminCandidateManagementRouter = router({
       };
     }),
 
+  /** Renvoie le lien d’accès espace client (48 h) — e-mail + WhatsApp au mieux. Aucun rewrite de statut dossier. */
+  resendClientAccessLink: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(account|online|agency)_\d+$/),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      try {
+        return await issueClientAccessLinkResend(db, {
+          candidateId: input.candidateId,
+          adminEmail: admin.email || "",
+          adminName: admin.email || "Administrateur",
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Renvoi d’accès impossible.";
+        if (message.includes("60 secondes")) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message });
+        }
+        if (message.includes("introuvable") || message.includes("invalide") || message.includes("lié")) {
+          throw new TRPCError({ code: "BAD_REQUEST", message });
+        }
+        if (message.includes("e-mail")) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+      }
+    }),
+
   sendPaymentReceiptForCandidate: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1),
@@ -2467,7 +2502,16 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference || reference.source !== "online") throw new TRPCError({ code: "BAD_REQUEST", message: "Dossier en ligne requis pour cette relance." });
-      const [application] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, destination: applications.destination, paymentStatus: applications.paymentStatus, agreementSigned: applications.agreementSigned }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+      const [application] = await db.select({
+        id: applications.id,
+        dossierNumber: applications.dossierNumber,
+        fullName: applications.fullName,
+        email: applications.email,
+        destination: applications.destination,
+        paymentStatus: applications.paymentStatus,
+        agreementSigned: applications.agreementSigned,
+        whatsappNumber: applications.whatsappNumber,
+      }).from(applications).where(eq(applications.id, reference.id)).limit(1);
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
       if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
       if (application.agreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
@@ -2482,8 +2526,68 @@ export const adminCandidateManagementRouter = router({
         console.error("[Agreement reminder] Email delivery failed", { dossierNumber: application.dossierNumber, error });
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La relance n’a pas pu être envoyée. Vérifiez le service e-mail et réessayez." });
       }
-      await db.insert(paymentAuditLogs).values({ adminName: admin.email || "Administrateur", adminEmail: admin.email || "", action: "agreement_signature_reminder_sent", paymentId: application.id, candidateEmail: application.email, amount: "", details: `Relance de signature du protocole envoyée pour ${application.dossierNumber}.` });
-      return { success: true, dossierNumber: application.dossierNumber, email: application.email };
+      const adminName = admin.email || "Administrateur";
+      const adminEmail = admin.email || "";
+      await db.insert(paymentAuditLogs).values({
+        adminName,
+        adminEmail,
+        action: "agreement_signature_reminder_sent",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: "",
+        details: `Relance de signature du protocole envoyée pour ${application.dossierNumber}.`,
+      });
+
+      // Notification durable + WhatsApp « au mieux » — n’écrit pas le statut du dossier.
+      let whatsappSent = false;
+      let whatsappSkippedReason: string | null = null;
+      try {
+        const [linkedCandidate] = await db
+          .select({ id: candidates.id, phone: candidates.phone })
+          .from(candidates)
+          .where(eq(candidates.email, application.email))
+          .limit(1);
+        if (linkedCandidate?.id) {
+          await db.insert(clientNotifications).values({
+            candidateId: linkedCandidate.id,
+            type: "agreement_signature_reminder",
+            title: "Protocole d’accord à signer",
+            body: `Votre paiement est confirmé pour le dossier ${application.dossierNumber}. Connectez-vous pour finaliser la signature du protocole.`,
+            actionUrl: "/mon-espace?section=dossier",
+            isRead: false,
+          });
+        }
+        const phone = application.whatsappNumber || linkedCandidate?.phone || null;
+        const wa = await notifyAgreementSignatureReminderWhatsApp({
+          phone,
+          candidateName: application.fullName,
+          dossierNumber: application.dossierNumber,
+        });
+        whatsappSent = wa.sent;
+        whatsappSkippedReason = wa.sent ? null : (wa.error || "WhatsApp non envoyé");
+        if (wa.sent) {
+          await db.insert(paymentAuditLogs).values({
+            adminName,
+            adminEmail,
+            action: "agreement_signature_reminder_whatsapp",
+            paymentId: application.id,
+            candidateEmail: application.email,
+            amount: "",
+            details: `WhatsApp relance protocole envoyé pour ${application.dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+          });
+        }
+      } catch (notifyError) {
+        console.warn("[resendAgreementSignatureReminder] client notification / WhatsApp skipped", notifyError);
+        whatsappSkippedReason = notifyError instanceof Error ? notifyError.message : "Notification ignorée";
+      }
+
+      return {
+        success: true,
+        dossierNumber: application.dossierNumber,
+        email: application.email,
+        whatsappSent,
+        whatsappSkippedReason,
+      };
     }),
   // Liste de rattrapage : dossiers en ligne dont le paiement est confirme mais dont le
   // Protocole d'Accord N01 n'a pas encore ete signe (bug historique corrige cote candidat.ts :

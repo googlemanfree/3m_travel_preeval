@@ -1,4 +1,4 @@
-import { FileText, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,12 @@ function formatDate(value: Date | string | null | undefined) {
   return new Date(value).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
 }
 
+function whatsappToastSuffix(result: { whatsappSent?: boolean; whatsappSkippedReason?: string | null }) {
+  if (result.whatsappSent) return " · WhatsApp envoyé au client";
+  if (result.whatsappSkippedReason) return ` · WhatsApp non envoyé (${result.whatsappSkippedReason})`;
+  return "";
+}
+
 type Props = {
   sessionToken: string;
   /** Ouvre la fiche 360 / détail candidat sans modifier le dossier. */
@@ -31,12 +37,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
 
   const approveMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation({
     onSuccess: (result) => {
-      const wa = (result as { whatsappSent?: boolean; whatsappSkippedReason?: string | null }).whatsappSent
-        ? " · WhatsApp envoyé au client"
-        : (result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason
-          ? ` · WhatsApp non envoyé (${(result as { whatsappSkippedReason?: string | null }).whatsappSkippedReason})`
-          : "";
-      toast.success(`Reçu signé pour ${result.dossierNumber}${wa}`);
+      toast.success(`Reçu signé pour ${result.dossierNumber}${whatsappToastSuffix(result)}`);
       void query.refetch();
     },
     onError: (error) => toast.error(error.message),
@@ -45,6 +46,22 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
   const sendMutation = trpc.adminCandidateManagement.sendPaymentReceiptForCandidate.useMutation({
     onSuccess: (result) => {
       toast.success(`Reçu PDF envoyé à ${result.email}`);
+      void query.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const accessMutation = trpc.adminCandidateManagement.resendClientAccessLink.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Lien d’accès envoyé à ${result.email}${whatsappToastSuffix(result)}`);
+      void query.refetch();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const remindMutation = trpc.adminCandidateManagement.resendAgreementSignatureReminder.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Relance protocole envoyée à ${result.email}${whatsappToastSuffix(result)}`);
       void query.refetch();
     },
     onError: (error) => toast.error(error.message),
@@ -74,11 +91,21 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
   const sendCandidateId = sendMutation.variables && typeof sendMutation.variables === "object"
     ? String(sendMutation.variables.candidateId ?? "")
     : "";
+  const accessCandidateId = accessMutation.variables && typeof accessMutation.variables === "object"
+    ? String(accessMutation.variables.candidateId ?? "")
+    : "";
+  const remindCandidateId = remindMutation.variables && typeof remindMutation.variables === "object"
+    ? String(remindMutation.variables.candidateId ?? "")
+    : "";
   const busyId = approveMutation.isPending
     ? approveCandidateId
     : sendMutation.isPending
       ? sendCandidateId
-      : "";
+      : accessMutation.isPending
+        ? accessCandidateId
+        : remindMutation.isPending
+          ? remindCandidateId
+          : "";
 
   return (
     <Card className="overflow-hidden border-0 shadow-sm" data-testid="admin-contracts-receipts-desk">
@@ -207,6 +234,34 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                                 PDF
                               </Button>
                             )}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 border-slate-200 px-2 text-xs text-slate-800 hover:bg-slate-50"
+                              disabled={rowBusy || !sessionToken}
+                              onClick={() => accessMutation.mutate({ sessionToken, candidateId: row.candidateId })}
+                              data-testid={`client-access-resend-${row.candidateId}`}
+                              title="Renvoyer le lien d’accès espace client (e-mail + WhatsApp)"
+                            >
+                              {rowBusy && accessMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                              Accès
+                            </Button>
+                            {row.stage === "protocol_pending" && row.candidateId.startsWith("online_") && !row.protocolSigned ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1 border-indigo-200 px-2 text-xs text-indigo-800 hover:bg-indigo-50"
+                                disabled={rowBusy || !sessionToken}
+                                onClick={() => remindMutation.mutate({ sessionToken, candidateId: row.candidateId })}
+                                data-testid={`protocol-remind-${row.candidateId}`}
+                                title="Relancer la signature du protocole (e-mail + WhatsApp)"
+                              >
+                                {rowBusy && remindMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
+                                Relancer
+                              </Button>
+                            ) : null}
                           </div>
                         </td>
                       </tr>

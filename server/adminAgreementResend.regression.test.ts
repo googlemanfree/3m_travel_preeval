@@ -38,10 +38,22 @@ describe("admin payment agreement recovery action", () => {
   it("expose une relance sécurisée et le filtre de statut de signature", () => {
     expect(router).toContain("resendAgreementSignatureReminder");
     expect(router).toContain("agreement_signature_reminder_sent");
+    expect(router).toContain("notifyAgreementSignatureReminderWhatsApp");
+    expect(router).toContain("agreement_signature_reminder_whatsapp");
+    expect(router).toContain('type: "agreement_signature_reminder"');
     expect(router).toContain("application.agreementSigned");
     expect(component).toContain("agreement-signature-filter");
     expect(component).toContain("resend-agreement-reminder");
     expect(component).toContain("Signature en attente");
     expect(component).toContain("Protocole validé");
+  });
+
+  it("branche la relance protocole depuis le bureau reçus (dossiers online)", () => {
+    const desk = readFileSync(resolve(process.cwd(), "client/src/components/AdminContractsReceiptsDesk.tsx"), "utf8");
+    expect(desk).toContain("resendAgreementSignatureReminder");
+    expect(desk).toContain("protocol-remind-");
+    expect(desk).toContain('row.stage === "protocol_pending"');
+    expect(desk).toContain('row.candidateId.startsWith("online_")');
+    expect(desk).toContain("Relancer");
   });
 });
