@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, CheckCircle2, ChevronDown, ChevronRight, Clock, Download, Eye, FileText, Globe2, Upload, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, ChevronDown, ChevronRight, Clock, Download, Eye, FileText, Globe2, Loader2, RefreshCw, Upload, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { approvalRate, isAgencyHandedDocument, type CandidateDocumentGroup, type GroupableDocument } from "@/lib/documentGroups";
@@ -15,6 +15,9 @@ type Props<T extends GroupableDocument & { documentName: string; documentUrl: st
   onReject: (document: T) => void;
   /** Ouvre le dépôt rapide déjà prérempli sur ce candidat, pour les pièces remises en agence. */
   onAddDocuments: (group: CandidateDocumentGroup<T>) => void;
+  /** Répare le miroir candidate_files → case_documents (idempotent, sans notification). */
+  onSyncToCase?: (group: CandidateDocumentGroup<T>) => void;
+  syncingCandidateId?: number | null;
 };
 
 const STATUS_LABEL = { approved: "Approuvé", pending: "En attente", rejected: "Rejeté" } as const;
@@ -31,6 +34,8 @@ export default function AdminDocumentsByCandidate<T extends GroupableDocument & 
   onSetPending,
   onReject,
   onAddDocuments,
+  onSyncToCase,
+  syncingCandidateId = null,
 }: Props<T>) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const allOpen = groups.length > 0 && groups.every((group) => open[group.key]);
@@ -54,6 +59,8 @@ export default function AdminDocumentsByCandidate<T extends GroupableDocument & 
       {groups.map((group) => {
         const expanded = Boolean(open[group.key]);
         const rate = approvalRate(group);
+        const canSync = Boolean(onSyncToCase && group.candidateId && group.onlineCount > 0);
+        const syncing = Boolean(group.candidateId && syncingCandidateId === group.candidateId);
         return (
           <section key={group.key} className="rounded-2xl border border-slate-200 bg-white shadow-sm" data-testid="candidate-document-group" aria-label={`Documents de ${group.candidateName}`}>
             <div className="flex flex-wrap items-center gap-3 p-4">
@@ -69,11 +76,29 @@ export default function AdminDocumentsByCandidate<T extends GroupableDocument & 
                 {group.pending > 0 && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-900" data-testid="group-pending">{group.pending} à contrôler</span>}
                 {group.rejected > 0 && <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-800">{group.rejected} rejetée(s)</span>}
                 {group.agencyCount > 0 && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800">{group.agencyCount} remise(s) en agence</span>}
+                {group.onlineCount > 0 && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-900" data-testid="group-online">{group.onlineCount} en ligne</span>}
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800">{rate}% validé</span>
               </div>
-              <Button type="button" size="sm" variant="outline" onClick={() => onAddDocuments(group)} className="gap-1.5" data-testid="add-agency-documents">
-                <Upload className="h-3.5 w-3.5" aria-hidden="true" />Ajouter une pièce remise en agence
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {canSync && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || syncing}
+                    onClick={() => onSyncToCase?.(group)}
+                    className="gap-1.5 border-sky-300 text-sky-900 hover:bg-sky-50"
+                    data-testid="sync-candidate-files-to-case"
+                    title="Synchroniser les pièces en ligne vers le coffre du dossier (idempotent)"
+                  >
+                    {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {syncing ? "Sync coffre…" : "Sync coffre dossier"}
+                  </Button>
+                )}
+                <Button type="button" size="sm" variant="outline" onClick={() => onAddDocuments(group)} className="gap-1.5" data-testid="add-agency-documents">
+                  <Upload className="h-3.5 w-3.5" aria-hidden="true" />Ajouter une pièce remise en agence
+                </Button>
+              </div>
             </div>
             {expanded && (
               <ul className="divide-y divide-slate-100 border-t border-slate-100" data-testid="candidate-document-list">

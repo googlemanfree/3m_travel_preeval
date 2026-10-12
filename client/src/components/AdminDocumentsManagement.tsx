@@ -83,6 +83,13 @@ export function AdminDocumentsManagement() {
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
   const uploadDocumentForCandidateMutation = trpc.admin.uploadDocumentForCandidate.useMutation();
   const suggestDroppedDocumentMetadataMutation = trpc.admin.suggestDroppedDocumentMetadata.useMutation();
+  const syncCandidateFilesToCaseMutation = trpc.admin.syncCandidateFilesToCase.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message || "Synchronisation coffre terminée.");
+      void refetch();
+    },
+    onError: (error) => toast.error(error.message || "Synchronisation coffre impossible."),
+  });
 
   // Récupérer les documents via tRPC
   const { data: documentsData, isLoading: isLoadingDocs, dataUpdatedAt: documentsUpdatedAt, isFetching: isFetchingDocs, refetch } = trpc.admin.listDocuments.useQuery(
@@ -305,6 +312,14 @@ export function AdminDocumentsManagement() {
       setUploadDocumentType("document_remis_main_propre");
     }
     document.getElementById("admin-quick-upload")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSyncCandidateFilesToCase = (group: CandidateDocumentGroup<Document>) => {
+    if (!group.candidateId) {
+      toast.error("Identifiant candidat introuvable pour cette fiche.");
+      return;
+    }
+    syncCandidateFilesToCaseMutation.mutate({ sessionToken, candidateId: group.candidateId });
   };
 
   const toggleDocumentSelection = (document: Document) => {
@@ -869,7 +884,7 @@ export function AdminDocumentsManagement() {
             ) : viewMode === "candidates" ? (
               <AdminDocumentsByCandidate<Document>
                 groups={candidateGroups}
-                busy={isLoading}
+                busy={isLoading || syncCandidateFilesToCaseMutation.isPending}
                 typeLabel={getDocumentTypeLabel}
                 onPreview={setPreviewingDoc}
                 onDownload={(doc) => handleDownloadDocument(doc.documentUrl, doc.documentName)}
@@ -877,6 +892,14 @@ export function AdminDocumentsManagement() {
                 onSetPending={handleSetPendingDocument}
                 onReject={handleRejectDocument}
                 onAddDocuments={handleAddDocumentsFor}
+                onSyncToCase={handleSyncCandidateFilesToCase}
+                syncingCandidateId={
+                  syncCandidateFilesToCaseMutation.isPending
+                    && syncCandidateFilesToCaseMutation.variables
+                    && typeof syncCandidateFilesToCaseMutation.variables.candidateId === "number"
+                    ? syncCandidateFilesToCaseMutation.variables.candidateId
+                    : null
+                }
               />
             ) : (
               <div className="overflow-x-auto">

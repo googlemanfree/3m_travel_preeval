@@ -204,9 +204,13 @@ describe("branchement dépôt candidat + réparation admin", () => {
     const candidate = read("server/routers/candidate.ts");
     const oauth = read("server/routers/oauthUserDashboard.ts");
     const admin = read("server/routers/admin.ts");
+    const ui = read("client/src/components/AdminDocumentsByCandidate.tsx");
+    const management = read("client/src/components/AdminDocumentsManagement.tsx");
     expect(candidate).toContain("publishCandidateFilesToCase");
     expect(oauth).toContain("publishCandidateFilesToCase");
     expect(admin).toContain("syncCandidateFilesToCase");
     expect(admin).toContain("publishCandidateFilesToCase");
+    expect(ui).toContain("sync-candidate-files-to-case");
+    expect(management).toContain("syncCandidateFilesToCase");
   });
 });
