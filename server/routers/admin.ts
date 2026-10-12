@@ -433,10 +433,16 @@ export async function ensureOperationalCase(db: any, reference: { source: "onlin
     return created;
   }
 
+  // Fallback QA / écart de données : un cases.caseNumber 3M-AGN-{id} peut exister sans ligne agency_dossiers
+  // ni legacyAgencyDossierId. On le réutilise en lecture seule — pas de création de dossier fantôme.
+  const expectedCaseNumber = agencyDossierReference(reference.id);
+  const [byCaseNumber] = await db.select().from(cases).where(eq(cases.caseNumber, expectedCaseNumber)).limit(1);
+  if (byCaseNumber) return byCaseNumber;
+
   const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
   if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
   const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
-  const caseNumber = `3M-AGN-${dossier.id.toString().padStart(4, "0")}`;
+  const caseNumber = agencyDossierReference(dossier.id);
   await db.insert(cases).values({
     caseNumber,
     candidateId: candidate?.id ?? null,
