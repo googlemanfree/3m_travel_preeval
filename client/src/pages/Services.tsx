@@ -63,11 +63,11 @@ export default function Services() {
     <ServicePageShell
       eyebrow="3M TRAVEL AGENCY"
       title="Visas, études, travail et voyages — un seul interlocuteur à Yaoundé"
-      introduction="Sous la direction d’Aureol DONFACK, 3M prépare et suit votre dossier : mobilité internationale, billets, démarches administratives et numériques — à l’agence ou à distance. La décision finale reste celle des autorités."
+      introduction="3M prépare et suit votre dossier : mobilité internationale, billets, démarches administratives et numériques — à l’agence de Yaoundé ou à distance. La décision finale reste celle des autorités."
       primaryHref="/consultation"
       primaryLabel="Parler à un conseiller"
       secondaryHref="/about"
-      secondaryLabel="À propos d’Aureol DONFACK"
+      secondaryLabel="À propos de 3M"
       notice="Les décisions de visa, de délivrance de documents et de tarification appartiennent aux autorités et prestataires concernés : 3M prépare, oriente et suit votre dossier sans garantir de résultat."
       heroVisual={heroVisual}
     >
