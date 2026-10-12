@@ -45,7 +45,9 @@ const AdminDestinationMedia = lazyWithTimeout(() => import("./pages/AdminDestina
 const AdminMediaLibrary = lazyWithTimeout(() => import("./pages/AdminMediaLibrary"));
 const AdminUserDetails = lazyWithTimeout(() => import("./pages/AdminUserDetails"));
 const VisaEtudes = lazyWithTimeout(() => import("./pages/VisaEtudes"));
-const Canada = lazyWithTimeout(() => import("./pages/Canada"));
+// Canada est chargé de façon synchrone : page publique critique — un chunk lazy
+// manquant (cache SW / déploiement) laissait /canada en écran blanc.
+import Canada from "./pages/Canada";
 const CanadaCrsPage = lazyWithTimeout(() => import("./pages/CanadaCrsPage"));
 const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
 const Formation = lazyWithTimeout(() => import("./pages/Formation"));
