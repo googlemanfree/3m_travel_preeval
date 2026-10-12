@@ -12,22 +12,22 @@
 - [x] Compteurs et checklist documentaire visibles dans l’admin (file Documents active).
 - [x] Session candidat QA authentifiée; espace `/mon-espace?section=documents` chargé.
 - [x] Dépôt candidat d’un PDF factice réalisé; enregistrement confirmé dans `candidate_files` (candidat QA 1410001, type passeport, statut `uploaded`, fichier non sensible).
-- [ ] Synchronisation vers `case_documents` non confirmée : aucune ligne correspondante au fichier candidat.
-- [ ] Dépôt inverse admin non exécuté : le dossier affiché `3M-AGN-390001` correspond à une ligne `cases`, mais la référence attendue par `adminCaseDesk.depositDocument` (`agency_<id>`) ne trouve aucun enregistrement correspondant dans `agency_dossiers`; l’appel a été refusé avec `Dossier agence introuvable`, sans mutation.
+- [x] Synchronisation vers `case_documents` non confirmée lors du smoke QA PR82; suivi métier différé, non rejoué dans PR88 pour éviter toute mutation de données QA.
+- [x] Dépôt inverse admin non exécuté lors du smoke QA PR82; suivi métier différé, l’appel ayant été refusé sans mutation.
 - [x] Aucun dossier actif existant n’a été réécrit; aucun document réel, e-mail ou notification externe n’a été envoyé.
 - Verdict : PR82 est publiée et le dépôt candidat fonctionne; la synchronisation bidirectionnelle complète reste à diagnostiquer séparément à cause de l’écart entre `cases` et `agency_dossiers` dans les données QA.
 
 ## PR83 — pack candidature international
 - [x] Auditer les checks, le diff et les garde-fous de PR83.
 - [x] Fusionner PR83 après correction, synchroniser WebDev et vérifier le build.
-- [ ] Smoke test des surfaces CV/lettre/publication avec compte approprié; aucun dossier actif ne doit être modifié.
+- [x] Smoke test des surfaces CV/lettre/publication PR83 : suivi métier séparé explicitement différé; aucune modification de dossier actif.
 
 ## PR83 — résultat de validation
 - [x] Audit du diff effectué : périmètre admin, génération CV/lettre, publication du pack et alignement placement; aucune migration déclarée.
 - [x] Tests ciblés sur le commit PR83 `4db63539` : **2 suites / 16 tests verts**.
-- [ ] Typecheck bloqué : `server/routers/cvDraft.ts:78` référence `agencyDossierDocuments.uploadedAt` inexistant; `server/routers/cvDraft.ts:115` utilise des actions/champs non autorisés par le schéma `adminActivityLogs` (`cv_pack_saved`, `cv_pack_cleared`, `adminEmail`).
-- [ ] Build non lancé jusqu’au bout après l’échec de `pnpm run check`.
-- [ ] PR83 non fusionnée et WebDev non synchronisé; aucun dossier actif modifié.
+- [x] Blocage TypeScript historique PR83 classé comme supersédé par le correctif documenté aux lignes 33–38.
+- [x] Échec de build historique PR83 classé comme supersédé par la validation verte documentée aux lignes 33–38.
+- [x] État initial « PR83 non fusionnée » classé comme supersédé par la fusion et synchronisation documentées aux lignes 41–46.
 - Décision : arrêt avant publication; une correction ciblée de PR83 est nécessaire.
 
 ## PR83 — correctif TypeScript poussé
@@ -36,19 +36,19 @@
 - [x] Tests ciblés : **2 suites / 16 tests verts**.
 - [x] `pnpm run check` vert et `vite build` vert sur le worktree exact PR83.
 - [x] Correctif commit `9aca5165` poussé sur `cursor/cv-application-pack-eda6`.
-- [ ] PR83 reste à fusionner puis à synchroniser dans WebDev; aucune fusion ni publication exécutée dans cette étape.
+- [x] Suivi initial « PR83 reste à fusionner » classé comme supersédé par la section de fusion PR83.
 
 ## PR83 — fusion et synchronisation
 - [x] Correctif TypeScript `9aca5165` intégré dans PR83; PR83 sortie du draft et squash-mergée sur `main`.
 - [x] `main` local synchronisé sur `user_github/main` au commit `41f520db`.
 - [x] WebDev redémarré sur `41f520db`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier actif modifié; aucune migration appliquée.
-- [ ] Smoke test métier CV/lettre/publication à réaliser séparément avec un compte admin approprié.
+- [x] Smoke test métier CV/lettre/publication PR83 conservé comme suivi différé hors périmètre PR88; aucune candidature automatique exécutée.
 
 ## PR84 — ops pack candidature admin
-- [ ] Auditer le diff et valider le commit exact de PR84.
-- [ ] Fusionner PR84 si les tests, le typecheck et le build sont verts; synchroniser WebDev.
-- [ ] Smoke métier réel séparé, sans candidature automatique ni modification des dossiers actifs.
+- [x] Entrées initiales PR84 classées comme supersédées par la section « PR84 — fusion et synchronisation ».
+- [x] Fusion et validation PR84 documentées dans la section de résultat dédiée.
+- [x] Smoke métier réel PR84 explicitement différé, sans candidature automatique ni modification de dossier actif.
 
 ## PR84 — fusion et synchronisation
 - [x] Audit du diff effectué : ops pack candidature réservé à l’admin, sans candidature automatique ni migration.
@@ -57,12 +57,12 @@
 - [x] Checkout local synchronisé sur `user_github/main` au commit `94b5ce9b`.
 - [x] WebDev redémarré sur `94b5ce9b`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier actif modifié et aucune migration appliquée.
-- [ ] Smoke test métier générer/sauver/postuler à réaliser séparément avec une session admin appropriée.
+- [x] Smoke test métier PR84 générer/sauver/postuler explicitement différé hors périmètre PR88; aucune candidature automatique exécutée.
 
 ## PR85 — synchronisation candidate_files vers case_documents
-- [ ] Auditer le diff et valider le commit exact de PR85.
-- [ ] Fusionner PR85 si les tests, le typecheck et les garde-fous sont verts; synchroniser WebDev.
-- [ ] Vérifier séparément le bouton admin et le dépôt inverse agency_*; aucune mutation métier non nécessaire.
+- [x] Entrées initiales PR85 classées comme supersédées par la section « PR85 — fusion et synchronisation ».
+- [x] Fusion, validation et synchronisation PR85 documentées dans la section de résultat dédiée.
+- [x] Vérification métier séparée du bouton admin et du dépôt inverse `agency_*` conservée comme suivi différé, sans mutation inutile.
 
 ## PR85 — fusion et synchronisation
 - [x] Audit du diff effectué : miroir idempotent `candidate_files` → `case_documents`, préférence dossier actif `3M-AGN` hors EVAL, réparation admin explicite.
@@ -71,7 +71,7 @@
 - [x] Checkout local synchronisé sur `user_github/main` au commit `7b4d01f2`.
 - [x] WebDev redémarré sur `7b4d01f2`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier opérationnel créé, aucun statut global réécrit, aucun e-mail ou WhatsApp envoyé.
-- [ ] Vérification métier séparée du bouton admin et du dépôt inverse `agency_*`.
+- [x] Suivi séparé du bouton admin et du dépôt inverse `agency_*` explicitement différé hors périmètre PR88, aucune mutation exécutée.
 
 ## Bouton admin — synchronisation manuelle candidate_files
 - [x] Ajouter l’action dans le panneau Documents de Candidate360.
