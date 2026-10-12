@@ -44,6 +44,7 @@ import {
   previewCountryVisaChecklist,
   publishAgencyDocumentsToCase,
 } from "../services/publishAgencyDocumentsToCase";
+import { publishCandidateFilesToCase } from "../services/publishCandidateFilesToCase";
 import {
   notifyDossierCreatedWhatsApp,
   notifyProcedureStageWhatsApp,
@@ -2939,6 +2940,45 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: err instanceof Error ? err.message : "Publication vers l’espace client impossible.",
+        });
+      }
+    }),
+
+  /**
+   * Répare / synchronise les pièces candidate_files → case_documents (idempotent).
+   * N’écrit aucun statut de dossier ; ne crée pas de cases s’il n’en existe pas.
+   */
+  syncCandidateFilesToCase: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.number().int().positive(),
+      fileIds: z.array(z.number().int().positive()).max(100).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      try {
+        const result = await publishCandidateFilesToCase(db, {
+          candidateId: input.candidateId,
+          fileIds: input.fileIds,
+          actorAdminId: admin.id ?? null,
+          actorRole: "admin",
+        });
+        const message = result.reason === "no_case"
+          ? "Aucun dossier opérationnel lié à ce candidat : rien à synchroniser (aucun dossier créé)."
+          : result.reason === "no_files"
+            ? "Aucune pièce candidate à synchroniser."
+            : result.published === 0
+              ? "Toutes les pièces candidate sont déjà présentes dans le coffre du dossier."
+              : `${result.published} pièce(s) synchronisée(s) vers ${result.caseNumber}.`;
+        return { success: true, ...result, message };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[syncCandidateFilesToCase]", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err instanceof Error ? err.message : "Synchronisation candidate_files → case_documents impossible.",
         });
       }
     }),
