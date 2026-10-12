@@ -88,7 +88,7 @@
 - [x] Auditer le diff et valider le commit exact de PR88; sync idempotente, best-effort, sans création de `cases`, réécriture de statut ou notification.
 - [x] PR88 corrigée sur `54a279be`, puis sortie du brouillon et squash-mergée sur `main` au commit `9f7a5b27`; **10 tests ciblés verts**, typecheck et build verts.
 - [x] Checkout local et WebDev synchronisés sur `9f7a5b27`; serveur actif sans erreur TypeScript/LSP. Aucun dossier actif ni notification réelle modifié.
-- [ ] Créer le checkpoint WebDev final PR88.
+- [x] Checkpoint WebDev final PR88 créé : version `3761c2a6`.
 
 ## PR88 — correctif TypeScript ciblé
 - [x] Corriger le type des clés `existingNames`/`nameKey` sans modifier le comportement métier; commit `54a279be` poussé sur la branche PR88.
