@@ -583,8 +583,8 @@ export default function EvaluationSpace() {
     dossierStatus: cProfile.dossierStatus,
     evaluationStatus: cProfile.evaluationDeclarationStatus,
     milestones: {
-      evaluationClientConfirmed: Boolean((cProfile as any).evaluationClientConfirmedAt),
-      activationRequested: Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested),
+      evaluationClientConfirmed: Boolean(workflow?.evaluationClientConfirmed || (activeDossier as any)?.evaluationClientConfirmedAt),
+      activationRequested: Boolean((activeDossier as any)?.activationRequestedAt) || Boolean(workflow?.activationRequested),
       paymentConfirmed: procedurePaymentConfirmed,
     },
   });
@@ -1231,7 +1231,24 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested)} paymentConfirmed={procedurePaymentConfirmed} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
+              <CandidateCountryJourney
+                destination={primaryDestination}
+                visaType={journeyVisaType}
+                procedureLabel={journeyProcedureLabel}
+                dossierStatus={cProfile.dossierStatus}
+                evaluationStatus={cProfile.evaluationDeclarationStatus}
+                evaluationClientConfirmed={Boolean(workflow?.evaluationClientConfirmed || (activeDossier as any)?.evaluationClientConfirmedAt)}
+                bilanAvailable={Boolean(
+                  (activeDossier as any)?.evaluationDeliveryStatus === "sent"
+                  || (activeDossier as any)?.evaluationReportPdfUrl
+                  || (activeDossier as any)?.evaluationReportPdfKey
+                  || latestEvaluation?.finalResponseSentAt,
+                )}
+                evaluationReportPdfUrl={(activeDossier as any)?.evaluationReportPdfUrl ?? null}
+                activationRequested={Boolean((activeDossier as any)?.activationRequestedAt) || Boolean(workflow?.activationRequested)}
+                paymentConfirmed={procedurePaymentConfirmed}
+                documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))}
+              />
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

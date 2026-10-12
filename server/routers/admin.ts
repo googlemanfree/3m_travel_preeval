@@ -4958,10 +4958,27 @@ export const adminRouter = router({
         const nextAllowedIndex = Math.max(baseIndex, contiguousCount);
         if (!input.forceUnlock) {
           if (stepIndex > nextAllowedIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord les étapes précédentes dans l’ordre." });
-          if (stepIndex >= 4 && !source.evaluationClientConfirmedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
-          if (stepIndex >= 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant cette étape." });
+          // Étape 4 = confirmation par le candidat : elle ne peut pas exiger d’être déjà confirmée.
+          // Les étapes suivantes (paiement, pièces…) exigent la confirmation.
+          if (stepIndex === 4 && !source.evaluationClientConfirmedAt) {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message: "Cette étape est confirmée par le candidat dans son espace. Attendez sa confirmation, ou utilisez « Déverrouiller » si elle a été reçue hors ligne (téléphone, agence).",
+            });
+          }
+          if (stepIndex > 4 && !source.evaluationClientConfirmedAt) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
+          }
+          // Étape 5 = paiement : le prérequis paiement s’applique aux étapes après le paiement.
+          if (stepIndex > 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement doit être validé par un administrateur avant cette étape." });
+          }
         }
         completed.add(`checklist-${stepIndex}`);
+        // Déverrouillage admin de la confirmation = enregistrement d’une confirmation hors ligne.
+        if (input.forceUnlock && stepIndex === 4 && reference.source === "online" && !source.evaluationClientConfirmedAt) {
+          await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, reference.id));
+        }
       } else {
         if (!input.forceUnlock) {
           const highest = Math.max(-1, ...Array.from(completed).map((value) => Number(value.replace("checklist-", ""))).filter(Number.isFinite));

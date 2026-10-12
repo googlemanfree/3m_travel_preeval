@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, FileDown, MapPinned, ListChecks, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Download, ExternalLink, Eye, FileCheck2, FileDown, MapPinned, ListChecks, Loader2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
@@ -17,16 +18,20 @@ type Props = {
   dossierStatus?: string | null;
   evaluationStatus?: string | null;
   evaluationClientConfirmed?: boolean;
+  /** Bilan PDF disponible (envoyé par l’agence) — active le bouton de confirmation. */
+  bilanAvailable?: boolean;
+  evaluationReportPdfUrl?: string | null;
   activationRequested?: boolean;
   paymentConfirmed?: boolean;
   documents?: Array<{ documentName?: string | null; documentType?: string | null; documentUrl?: string | null; verificationStatus?: string | null }>;
 };
 
-export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, evaluationClientConfirmed, activationRequested, paymentConfirmed, documents = [] }: Props) {
+export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, evaluationClientConfirmed, bilanAvailable = false, evaluationReportPdfUrl = null, activationRequested, paymentConfirmed, documents = [] }: Props) {
   const [previewDocument, setPreviewDocument] = useState<{ title: string; url: string; fileType: string } | null>(null);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
   const { toast } = useToast();
   const checklistQuery = trpc.candidate.getProcedureChecklist.useQuery(undefined, { retry: false });
+  const dossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, { retry: false });
   const trpcUtils = trpc.useUtils();
   const checklistMutation = trpc.candidate.updateProcedureChecklist.useMutation({
     onSuccess: async (result) => {
@@ -36,7 +41,22 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
     },
     onError: (error) => toast({ title: "Checklist non sauvegardée", description: error.message, variant: "destructive" }),
   });
+  const confirmBilanMutation = trpc.candidate.confirmEvaluationReceipt.useMutation({
+    onSuccess: async (result) => {
+      toast({ title: "Bilan confirmé", description: result.message });
+      await checklistQuery.refetch();
+      await trpcUtils.candidate.getMyDossierData.invalidate();
+      await trpcUtils.candidate.getClientDashboardSummary.invalidate();
+    },
+    onError: (error) => toast({ title: "Confirmation impossible", description: error.message, variant: "destructive" }),
+  });
   const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel);
+  const signedBilanUrl = evaluationReportPdfUrl || dossierQuery.data?.data?.evaluationReportPdfUrl || null;
+  const bilanReady = Boolean(
+    bilanAvailable
+    || dossierQuery.data?.data?.application?.evaluationDeliveryStatus === "sent"
+    || signedBilanUrl,
+  );
   const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const destinationKey = normalize(destination);
   const officialRecord = OFFICIAL_SOURCE_CATALOG[destinationKey];
@@ -187,6 +207,54 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
         ) : null}
       </CardHeader>
       <CardContent className="space-y-4 p-5">
+        {journey.steps[currentIndex]?.id === "candidate_confirmation" && !evaluationClientConfirmed ? (
+          <section
+            className="rounded-xl border border-amber-300 bg-amber-50 p-4"
+            aria-labelledby="confirm-bilan-title"
+            data-testid="candidate-confirm-bilan"
+          >
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <h3 id="confirm-bilan-title" className="font-bold text-amber-950">Confirmez la réception du bilan</h3>
+                <p className="mt-1 text-sm leading-6 text-amber-900">
+                  Après lecture du bilan d’évaluation, confirmez que vous l’avez reçu et compris. C’est une étape réservée au candidat — elle débloque ensuite le paiement des frais d’ouverture.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {signedBilanUrl ? (
+                    <Button asChild type="button" variant="outline" className="border-amber-300 bg-white text-amber-950 hover:bg-amber-100">
+                      <a href={signedBilanUrl} target="_blank" rel="noreferrer">
+                        <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Ouvrir le bilan PDF
+                      </a>
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    className="bg-amber-700 text-white hover:bg-amber-800"
+                    disabled={!bilanReady || confirmBilanMutation.isPending}
+                    onClick={() => confirmBilanMutation.mutate()}
+                    data-testid="confirm-bilan-button"
+                  >
+                    {confirmBilanMutation.isPending ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />Confirmation…</>
+                    ) : (
+                      <><ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />Je confirme avoir reçu et compris le bilan</>
+                    )}
+                  </Button>
+                </div>
+                {!bilanReady ? (
+                  <p className="mt-2 text-xs font-medium text-amber-800">Le bilan PDF n’est pas encore disponible. Dès que l’agence l’envoie, ce bouton s’active.</p>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+        {evaluationClientConfirmed ? (
+          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-testid="candidate-bilan-confirmed">
+            Bilan confirmé. Vous pouvez poursuivre vers le paiement des frais d’ouverture lorsque l’agence le demande.
+          </p>
+        ) : null}
         <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4" aria-labelledby="procedure-checklist-title">
           <div className="mb-4 rounded-lg border border-blue-200 bg-white/80 p-3" aria-labelledby="checklist-progress-title" data-testid="client-phase-meters">
             <div className="flex flex-wrap items-center justify-between gap-2"><p id="checklist-progress-title" className="text-xs font-black uppercase tracking-[0.12em] text-blue-950">Progression du parcours</p><p className="text-sm font-black text-blue-900">{progress}% <span className="font-medium text-slate-600">({completedStepCount}/{journey.steps.length} étapes)</span></p></div>

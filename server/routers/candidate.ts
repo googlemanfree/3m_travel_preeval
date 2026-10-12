@@ -2213,8 +2213,42 @@ export const candidateRouter = router({
     if (application.evaluationDeliveryStatus !== "sent" || (!application.evaluationReportPdfKey && !application.evaluationReportPdfUrl)) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le bilan PDF doit être envoyé avant confirmation." });
     }
-    await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, application.id));
-    return { success: true, message: "Bilan confirmé. Vous pouvez maintenant demander l’activation du dossier." };
+    if (application.evaluationClientConfirmedAt) {
+      return { success: true, alreadyConfirmed: true, message: "Bilan déjà confirmé. Vous pouvez poursuivre vers le paiement d’ouverture." };
+    }
+    const now = new Date();
+    await db.update(applications).set({ evaluationClientConfirmedAt: now }).where(eq(applications.id, application.id));
+    // Synchronise la checklist parcours (étape 4 = confirmation du bilan) avec l’admin 360.
+    const context = await resolveCandidateProcedureContext(db, ctx.candidate);
+    if (context) {
+      const confirmationStepId = "checklist-4";
+      const [existing] = await db.select().from(procedureChecklistProgress)
+        .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
+        .limit(1);
+      const completed = new Set(parseChecklistStepIds(existing?.completedStepIds));
+      completed.add(confirmationStepId);
+      const completedStepIds = JSON.stringify(Array.from(completed));
+      if (existing) {
+        await db.update(procedureChecklistProgress).set({
+          completedStepIds,
+          destination: context.destination,
+          visaType: context.visaType,
+          updatedByRole: "candidate",
+          updatedById: ctx.candidate.id,
+        }).where(and(eq(procedureChecklistProgress.id, existing.id), eq(procedureChecklistProgress.candidateId, context.candidateId)));
+      } else {
+        await db.insert(procedureChecklistProgress).values({
+          dossierKey: context.dossierKey,
+          candidateId: context.candidateId,
+          destination: context.destination,
+          visaType: context.visaType,
+          completedStepIds,
+          updatedByRole: "candidate",
+          updatedById: ctx.candidate.id,
+        });
+      }
+    }
+    return { success: true, alreadyConfirmed: false, message: "Bilan confirmé. Vous pouvez maintenant demander l’activation du dossier." };
   }),
 
   requestDossierActivation: candidateProcedure.mutation(async ({ ctx }) => {
