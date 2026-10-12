@@ -120,6 +120,26 @@ describe("panneau pack candidature admin", () => {
     expect((screen.getByLabelText("Langue du CV") as HTMLSelectElement).value).toBe("en");
   });
 
+  it("sans pack enregistré : pré-sélectionne le format recommandé par la préparation", async () => {
+    state.packData = {
+      pack: null,
+      readiness: {
+        score: 25,
+        readyToApply: false,
+        recommendedStyle: "international",
+        recommendedLanguage: "en",
+        checks: [],
+      },
+      identity,
+      supportingFacts: [],
+    };
+    mount("Canada");
+    await waitFor(() => {
+      expect((screen.getByLabelText("Format du CV") as HTMLSelectElement).value).toBe("international");
+      expect((screen.getByLabelText("Langue du CV") as HTMLSelectElement).value).toBe("en");
+    });
+  });
+
   it("recharge le pack enregistré et affiche le tableau de préparation", async () => {
     state.packData = {
       pack: {

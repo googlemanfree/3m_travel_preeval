@@ -50,7 +50,7 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
 
   useEffect(() => {
     if (hydrated || !packQuery.data) return;
-    const { pack, identity: loadedIdentity, supportingFacts: facts } = packQuery.data;
+    const { pack, identity: loadedIdentity, supportingFacts: facts, readiness } = packQuery.data;
     setIdentity(loadedIdentity);
     setSupportingFacts(facts ?? []);
     if (pack) {
@@ -62,6 +62,10 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
       setMotivationLetter(pack.motivationLetter ?? "");
       setUnverified([]);
       setFailure(null);
+    } else if (readiness?.recommendedStyle) {
+      // Automatisation douce : pré-sélectionne le format/langue recommandés tant qu’aucun pack n’est enregistré.
+      setStyle(readiness.recommendedStyle);
+      setLanguage(readiness.recommendedLanguage);
     }
     setHydrated(true);
   }, [packQuery.data, hydrated]);
