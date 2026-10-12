@@ -103,11 +103,11 @@ export default function PaymentReceipt({
   const shareReceipt = async () => {
     setIsSharing(true);
     try {
-      const text = `Paiement confirmé pour mon dossier 3M Travel ${dossierNumber}. Montant: ${amount} ${currency}. Transaction ID: ${transactionId}`;
+      const text = `Paiement confirmé pour mon dossier 3M TRAVEL AGENCY ${dossierNumber}. Montant: ${amount} ${currency}. Transaction ID: ${transactionId}`;
 
       if (navigator.share) {
         await navigator.share({
-          title: "Reçu de Paiement 3M Travel",
+          title: "Reçu de Paiement 3M TRAVEL AGENCY",
           text: text,
         });
       } else {
@@ -166,7 +166,7 @@ export default function PaymentReceipt({
           <div className="mb-4 flex justify-center">
             <img
               src={LOGO_URL}
-              alt="3M Travel Logo"
+              alt="3M TRAVEL AGENCY Logo"
               className="h-16 object-contain"
             />
           </div>
@@ -175,7 +175,7 @@ export default function PaymentReceipt({
             <FileText className="w-4 h-4" />
             REÇU DE PAIEMENT OFFICIEL
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">3M Travel & Services</h2>
+          <h2 className="text-3xl font-bold text-gray-900">3M TRAVEL AGENCY</h2>
           <p className="text-gray-500 text-sm mt-1">Pré-Évaluation Visa & Immigration</p>
         </div>
 
@@ -283,7 +283,7 @@ export default function PaymentReceipt({
             Ce reçu est une preuve officielle de votre paiement. Conservez-le précieusement.
           </p>
           <p className="text-gray-400 text-xs mt-2">
-            © 2026 3M Travel & Services. Tous droits réservés.
+            © 2026 3M TRAVEL AGENCY. Tous droits réservés.
           </p>
           <p className="text-gray-400 text-xs mt-1">
             Reçu généré le {new Date().toLocaleDateString("fr-FR")}

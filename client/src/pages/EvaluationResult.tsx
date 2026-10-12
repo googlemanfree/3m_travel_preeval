@@ -168,7 +168,7 @@ export default function EvaluationResult() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.text("3M Travel & Services", 14, 13);
+      doc.text("3M TRAVEL AGENCY", 14, 13);
       doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
       doc.text("Résultat d'évaluation — Checklist de documents", 14, 22);
@@ -223,7 +223,7 @@ export default function EvaluationResult() {
       const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
       doc.setFontSize(9);
       doc.setTextColor(120, 120, 120);
-      doc.text("Ce document est généré automatiquement par la plateforme 3M Travel & Services.", 14, finalY);
+      doc.text("Ce document est généré automatiquement par la plateforme 3M TRAVEL AGENCY.", 14, finalY);
       doc.text("Les exigences officielles peuvent évoluer ; vérifiez toujours auprès des autorités compétentes.", 14, finalY + 6);
 
       doc.save(`evaluation-3m-${country.toLowerCase().replace(/\s/g, "-")}-${visaType.toLowerCase().replace(/\s/g, "-")}.pdf`);

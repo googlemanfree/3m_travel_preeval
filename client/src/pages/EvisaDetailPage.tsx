@@ -80,7 +80,7 @@ export default function EvisaDetailPage() {
             {isFavorite ? 'Enregistré en favori' : 'Ajouter aux favoris'}
           </Button>
         </div>
-        <SocialShareButtons title={`${destination.country} e‑Visa | 3M Travel & Services`} />
+        <SocialShareButtons title={`${destination.country} e‑Visa | 3M TRAVEL AGENCY`} />
 
         {/* Hero Section */}
         <motion.div 
@@ -262,7 +262,7 @@ export default function EvisaDetailPage() {
                   </div>
                 )}
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl text-xs text-blue-900 space-y-1">
-                  <p className="font-bold">Contrôle 3M Travel & Services :</p>
+                  <p className="font-bold">Contrôle 3M TRAVEL AGENCY :</p>
                   <p>Validation par nos experts avant soumission officielle sur le portail consulaire.</p>
                 </div>
 

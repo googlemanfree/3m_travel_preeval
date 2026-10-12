@@ -11,7 +11,7 @@ describe("navigation documentaire Candidate360", () => {
     expect(dashboard).toContain("initialTab={candidate360Tab}");
     expect(dashboard).not.toContain('onClick={() => onOpenOperations("documents", candidate.folderCode)}');
     expect(workspace).toContain('const [activeTab, setActiveTab]');
-    expect(workspace).toContain('<Tabs value={activeTab} onValueChange=');
+    expect(workspace).toContain('<Tabs id="candidate-360-tabs" value={activeTab} onValueChange=');
     expect(workspace).toContain('<TabsTrigger value="documents"');
   });
 });

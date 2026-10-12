@@ -9,9 +9,11 @@ const navbar = read("client/src/components/Navbar.tsx");
 const hero = read("client/src/components/HeroSectionVIP.tsx");
 const themeToggle = read("client/src/components/ThemeToggle.tsx");
 const styles = read("client/src/index.css");
+const indexHtml = read("client/index.html");
 const floating = read("client/src/components/FloatingActionMenu.tsx");
 const home = read("client/src/pages/Home.tsx");
 const quickActions = read("client/src/components/QuickActionsSection.tsx");
+const reviews = read("client/src/components/ApprovedReviewsSection.tsx");
 
 describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   it("garde un header téléphone compact sur une seule ligne", () => {
@@ -44,5 +46,54 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(home).toContain("bottom-[max(1.5rem,env(safe-area-inset-bottom))]");
     expect(home).toContain("w-full max-w-[22rem] sm:w-auto");
     expect(home).toContain("min-h-12 w-full");
+  });
+
+  it("affiche une barre CTA sticky mobile (Évaluer seul) hors du formulaire ; WhatsApp reste en pastille", () => {
+    expect(home).toContain('data-testid="home-sticky-cta"');
+    expect(home).toContain("showStickyCta");
+    expect(home).toContain("Évaluer mon projet — gratuit");
+    expect(home).toContain("md:hidden");
+    expect(home).toContain("Action rapide d’évaluation");
+    expect(home).not.toContain('home-sticky-cta"\n          role="region"\n          aria-label="Actions rapides');
+    expect(styles).toContain('body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp');
+  });
+
+  it("n’empile pas Aureol / vols sur l’accueil (WhatsApp seul + sticky)", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain("isHomeRoute");
+    expect(app).toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
+    expect(app).toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+  });
+
+  it("affiche une progression de défilement et des transitions accessibles", () => {
+    expect(home).toContain('data-testid="mobile-scroll-progress"');
+    expect(home).toContain("aria-valuenow={Math.round(scrollProgress)}");
+    expect(home).toContain("mobile-section-transition");
+    expect(styles).toContain(".mobile-section-transition");
+    expect(styles).toContain("opacity: 1 !important");
+  });
+
+  it("rend les ressources prioritaires directement visibles sur mobile sans doublon Évaluer", () => {
+    expect(home).toContain('id="mobile-home-nav"');
+    expect(home).toContain("Accès rapides mobile");
+    expect(home).toContain('href="/procedures"');
+    expect(home).toContain("sm:hidden");
+    expect(home).toContain("touch-target inline-flex");
+    const navBlock = home.slice(home.indexOf('id="mobile-home-nav"'), home.indexOf("home-talent-corridor"));
+    expect(navBlock).not.toContain('href="#evaluation-multi"');
+  });
+
+  it("précharge l’image hero adaptée au viewport", () => {
+    expect(indexHtml).toContain('rel="preload" as="image"');
+    expect(indexHtml).toContain("3m-hero-real-woman-man-mobile_335e606e.webp");
+    expect(indexHtml).toContain('media="(max-width: 767px)"');
+    expect(indexHtml).toContain('fetchpriority="high"');
+  });
+
+  it("permet de partager rapidement un témoignage approuvé", () => {
+    expect(reviews).toContain("navigator.share");
+    expect(reviews).toContain("https://wa.me/?text=");
+    expect(reviews).toContain("Partager le témoignage");
+    expect(reviews).toContain("min-h-11");
   });
 });

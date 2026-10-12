@@ -1,14 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BadgeCheck, CreditCard, ListChecks, MessageCircle, Plane, Route as RouteIcon, Search, Send, ShieldCheck, Star } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
+  FEATURED_AFRICA_CARRIERS,
   FLIGHT_ADVANTAGES,
   FLIGHT_BOOKING_STEPS,
   FLIGHT_COMPANION_SERVICES,
+  FLIGHT_EMPTY_STATE_ROUTES,
   FLIGHT_ROUTES_BY_DEPARTURE,
   FLIGHT_ROUTE_GROUPS,
   FLIGHT_SERVICE_TABS,
   type FlightRoute,
 } from "@/data/flightDiscovery";
+import { PROOF_CATEGORY_LABELS, PROOF_PHOTOS } from "@/data/proofPhotos";
+import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 
 type PickRoute = (route: FlightRoute) => void;
 
@@ -77,7 +84,7 @@ export function FlightBestOffers({ offers, retrievedAt, onPick, onAdvisor }: { o
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-amber-600">Meilleures offres</p>
         <h2 id="flight-offers-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Les tarifs les plus bas relevés pour vous</h2>
-        <p className="mt-2 text-sm text-slate-600">Comparez les meilleurs tarifs sur les parcours les plus demandés, puis lancez la recherche en un clic.</p>
+        <p className="premium-copy mt-2 text-sm">Comparez les meilleurs tarifs sur les parcours les plus demandés, puis lancez la recherche en un clic.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {offers.map((offer) => (
@@ -149,7 +156,7 @@ export function FlightClientReviews({ reviews }: { reviews: ClientReview[] }) {
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-amber-600">Avis de nos clients</p>
         <h2 id="flight-reviews-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Ils ont voyagé avec 3M</h2>
-        <p className="mt-2 text-sm text-slate-600">Avis déposés par des clients, publiés avec leur accord après vérification par notre équipe.</p>
+        <p className="premium-copy mt-2 text-sm">Avis déposés par des clients, publiés avec leur accord après vérification par notre équipe.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {shown.map((review, index) => (
@@ -201,6 +208,208 @@ function RouteButton({ route, onPick }: { route: FlightRoute; onPick: PickRoute 
   );
 }
 
+/** Carte fantôme : silhouette d’un résultat, sans aucun montant affiché. */
+function FlightSkeletonCard() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2">
+        <Skeleton className="h-4 w-40 rounded-full motion-reduce:animate-none" />
+      </div>
+      <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:p-5">
+        <div className="flex min-w-[140px] items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl motion-reduce:animate-none" />
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-24 motion-reduce:animate-none" />
+            <Skeleton className="h-3 w-16 motion-reduce:animate-none" />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center gap-3">
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-6 w-14 motion-reduce:animate-none" />
+            <Skeleton className="mx-auto h-3 w-10 motion-reduce:animate-none" />
+          </div>
+          <div className="flex flex-1 flex-col items-center gap-2">
+            <Skeleton className="h-2.5 w-16 motion-reduce:animate-none" />
+            <div className="flex w-full items-center gap-1">
+              <div className="h-px flex-1 bg-slate-200" />
+              <Plane className="h-3.5 w-3.5 text-slate-300" />
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+            <Skeleton className="h-5 w-16 rounded-full motion-reduce:animate-none" />
+          </div>
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-6 w-14 motion-reduce:animate-none" />
+            <Skeleton className="mx-auto h-3 w-10 motion-reduce:animate-none" />
+          </div>
+        </div>
+        <div className="flex flex-col items-stretch gap-2 md:min-w-[160px] md:items-end">
+          <Skeleton className="h-8 w-28 motion-reduce:animate-none md:ml-auto" />
+          <Skeleton className="h-3 w-24 motion-reduce:animate-none md:ml-auto" />
+          <Skeleton className="mt-1 h-10 w-full rounded-xl motion-reduce:animate-none" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Chargement premium de la recherche : cartes fantômes + barre de progression.
+ * Aucun tarif inventé — uniquement un état d’attente rassurant.
+ */
+export function FlightSearchSkeleton({ routeLabel }: { routeLabel?: string }) {
+  return (
+    <section
+      className="mx-auto my-8 max-w-5xl"
+      data-testid="flight-search-skeleton"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Recherche de vols en cours"
+    >
+      <div className="mb-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-800">
+            <Plane className="h-5 w-5 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-widest text-blue-700">Recherche en cours</p>
+            <h3 className="mt-1 text-lg font-black text-slate-950">
+              {routeLabel ? `Comparaison des vols ${routeLabel}` : "Interrogation des compagnies aériennes"}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Les tarifs s’afficheront uniquement lorsqu’ils seront relevés en direct — aucun prix de vitrine.
+            </p>
+            <div
+              className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"
+              role="progressbar"
+              aria-label="Progression de la recherche"
+            >
+              <div className="flight-skeleton-progress h-full rounded-full bg-gradient-to-r from-blue-500 via-blue-700 to-[#0B2A52]" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <FlightSkeletonCard />
+        <FlightSkeletonCard />
+        <FlightSkeletonCard />
+      </div>
+      <p className="mt-4 text-center text-xs text-slate-500">Patientez quelques secondes — un conseiller peut aussi lancer la recherche pour vous.</p>
+    </section>
+  );
+}
+
+/**
+ * État vide premium après une recherche sans résultat (ou fournisseur indisponible).
+ * Aucun tarif inventé : uniquement des parcours cliquables + WhatsApp conseiller.
+ */
+export function FlightSearchEmptyState({
+  reason,
+  notice,
+  whatsappUrl,
+  onPickRoute,
+  onRetry,
+  onWhatsAppClick,
+  whatsappTestId = "search-whatsapp-no_results",
+}: {
+  reason: "no_results" | "unavailable" | "error";
+  notice?: string | null;
+  whatsappUrl: string;
+  onPickRoute: PickRoute;
+  onRetry?: () => void;
+  onWhatsAppClick?: () => void;
+  whatsappTestId?: string;
+}) {
+  const copy =
+    reason === "unavailable"
+      ? {
+          eyebrow: "Recherche en direct",
+          title: "Tarifs momentanément indisponibles",
+          body: "Nous préférons n’afficher aucun prix plutôt qu’un tarif non vérifié. Réessayez ou écrivez à un conseiller 3M.",
+        }
+      : reason === "error"
+        ? {
+            eyebrow: "Recherche interrompue",
+            title: "La recherche n’a pas abouti",
+            body: "Vérifiez les dates et les aéroports, puis relancez. Vous pouvez aussi démarrer sur un parcours fréquent depuis Yaoundé.",
+          }
+        : {
+            eyebrow: "Aucun vol pour ces critères",
+            title: "Essayez un autre parcours ou une autre date",
+            body: "Aucun résultat pour cette recherche. Lancez un trajet fréquent en un tap — le prix viendra uniquement d’une vraie recherche.",
+          };
+
+  return (
+    <section
+      className="mx-auto my-8 max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-6 text-center shadow-sm sm:p-8"
+      data-testid="flight-search-empty-state"
+      aria-labelledby="flight-empty-title"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-800" aria-hidden="true">
+        <Plane className="h-7 w-7" />
+      </div>
+      <p className="mt-4 text-xs font-black uppercase tracking-widest text-blue-700">{copy.eyebrow}</p>
+      <h3 id="flight-empty-title" className="mt-2 text-xl font-black text-slate-950 sm:text-2xl">{copy.title}</h3>
+      <p className="premium-section-lead mx-auto mt-2 text-center">{notice?.trim() || copy.body}</p>
+
+      <div className="mt-6 text-left" data-testid="flight-empty-shortcuts">
+        <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500">Parcours fréquents depuis Yaoundé</p>
+        <ul className="grid gap-2">
+          {FLIGHT_EMPTY_STATE_ROUTES.map((route) => (
+            <li key={route.id}>
+              <button
+                type="button"
+                onClick={() => onPickRoute(route)}
+                data-testid={`flight-empty-route-${route.id}`}
+                className="touch-target group flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+              >
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 text-sm font-black text-slate-900">
+                    <span className="truncate">{route.from.city}</span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden="true" />
+                    <span className="truncate">{route.to.city}</span>
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
+                    {route.from.iata} → {route.to.iata} · sans tarif affiché avant recherche
+                  </span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-800 group-hover:bg-blue-700 group-hover:text-white">
+                  <Search className="h-3 w-3" aria-hidden="true" /> Voir
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E3A8A] px-5 text-sm font-black text-white transition hover:bg-[#163066] active:scale-[0.98]"
+          >
+            Relancer la recherche
+          </button>
+        )}
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid={whatsappTestId}
+          onClick={onWhatsAppClick}
+          className="touch-target inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-black text-white transition hover:bg-emerald-800 active:scale-[0.98]"
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp conseiller
+        </a>
+      </div>
+      <p className="mt-4 text-[11px] leading-5 text-slate-500">
+        Aucun prix de vitrine : les tarifs n’apparaissent qu’après une recherche live, confirmés ensuite par l’agence.
+      </p>
+    </section>
+  );
+}
+
 /** Parcours fréquents : un clic lance la recherche. Aucun tarif n'est affiché avant une vraie recherche. */
 export function FlightPopularRoutes({ onPick }: { onPick: PickRoute }) {
   return (
@@ -208,22 +417,32 @@ export function FlightPopularRoutes({ onPick }: { onPick: PickRoute }) {
       <div className="mx-auto mb-8 max-w-2xl text-center">
         <p className="text-xs font-black uppercase tracking-widest text-blue-700">Parcours fréquents</p>
         <h2 id="flight-popular-title" className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Où voulez-vous aller ?</h2>
-        <p className="mt-2 text-sm text-slate-600">Choisissez un trajet : nous lançons la recherche avec des dates dans deux semaines, que vous pouvez modifier ensuite. Le prix affiché est toujours celui de la recherche, jamais un tarif de vitrine.</p>
+        <p className="premium-copy mt-2 text-sm">Choisissez un trajet : nous lançons la recherche avec des dates dans deux semaines, que vous pouvez modifier ensuite. Le prix affiché est toujours celui de la recherche, jamais un tarif de vitrine.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        {FLIGHT_ROUTE_GROUPS.map((group) => (
-          <div key={group.id} className="rounded-3xl border border-slate-100 bg-slate-50/70 p-5">
-            <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
-              <Plane className="h-5 w-5 text-blue-700" aria-hidden="true" /> {group.title}
-            </h3>
-            <p className="mb-4 mt-1 text-xs text-slate-500">{group.intro}</p>
-            <div className="grid gap-3">
-              {group.routes.map((route) => (
-                <RouteButton key={route.id} route={route} onPick={onPick} />
-              ))}
+        {FLIGHT_ROUTE_GROUPS.map((group) => {
+          const visual = getDestinationVisual(group.visualSlug) ?? getServiceVisual("vols");
+          return (
+            <div key={group.id} className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/70">
+              <PremiumCoverImage
+                visual={visual}
+                className="aspect-[21/9]"
+                imgClassName="h-full w-full object-cover"
+              />
+              <div className="p-5">
+                <h3 className="flex items-center gap-2 text-lg font-black text-slate-900">
+                  <Plane className="h-5 w-5 text-blue-700" aria-hidden="true" /> {group.title}
+                </h3>
+                <p className="mb-4 mt-1 text-xs text-slate-500">{group.intro}</p>
+                <div className="grid gap-3">
+                  {group.routes.map((route) => (
+                    <RouteButton key={route.id} route={route} onPick={onPick} />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -243,7 +462,7 @@ function HowItWorks() {
               <span className="absolute -top-3 left-5 rounded-full bg-blue-700 px-2.5 py-0.5 text-xs font-black text-white">Étape {index + 1}</span>
               <Icon className="mb-3 mt-1 h-6 w-6 text-blue-700" aria-hidden="true" />
               <h3 className="text-base font-black text-slate-900">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-6 text-slate-600">{step.text}</p>
+              <p className="premium-copy mt-1.5 text-[0.95rem]">{step.text}</p>
             </li>
           );
         })}
@@ -258,7 +477,7 @@ function Advantages() {
   return (
     <section aria-labelledby="flight-advantages-title" className="bg-slate-50 py-10" data-testid="flight-advantages">
       <div className="mx-auto max-w-6xl px-4">
-        <h2 id="flight-advantages-title" className="mb-8 text-center text-2xl font-black text-slate-900 md:text-3xl">Pourquoi réserver avec 3M Travel</h2>
+        <h2 id="flight-advantages-title" className="premium-section-title mb-8 text-center text-2xl md:text-3xl">Pourquoi réserver avec 3M TRAVEL AGENCY</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FLIGHT_ADVANTAGES.map((item, index) => {
             const Icon = ADVANTAGE_ICONS[index] ?? ShieldCheck;
@@ -266,7 +485,7 @@ function Advantages() {
               <div key={item.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon className="h-5 w-5" aria-hidden="true" /></span>
                 <h3 className="text-base font-black text-slate-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.text}</p>
+                <p className="premium-copy mt-1.5 text-[0.95rem]">{item.text}</p>
               </div>
             );
           })}
@@ -279,14 +498,21 @@ function Advantages() {
 function CompanionServices() {
   return (
     <section aria-labelledby="flight-companion-title" className="mx-auto max-w-6xl px-4 py-10" data-testid="flight-companion-services">
-      <h2 id="flight-companion-title" className="mb-2 text-center text-2xl font-black text-slate-900 md:text-3xl">Complétez votre voyage</h2>
-      <p className="mx-auto mb-8 max-w-2xl text-center text-sm text-slate-600">Le billet n’est qu’une étape : préparez aussi votre visa, votre assurance et votre hébergement au même endroit.</p>
+      <h2 id="flight-companion-title" className="premium-section-title mb-2 text-center text-2xl md:text-3xl">Complétez votre voyage</h2>
+      <p className="premium-section-lead mx-auto mb-8 text-center">Le billet n’est qu’une étape : préparez aussi votre visa, votre assurance et votre hébergement au même endroit.</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {FLIGHT_COMPANION_SERVICES.map((item) => (
-          <a key={item.title} href={item.href} className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
-            <h3 className="text-base font-black text-slate-900">{item.title}</h3>
-            <p className="mt-1.5 flex-1 text-sm leading-6 text-slate-600">{item.text}</p>
-            <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-blue-700">{item.cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+          <a key={item.title} href={item.href} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+            <PremiumCoverImage
+              visual={getServiceVisual(item.visualId)}
+              className="aspect-[16/10]"
+              imgClassName="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <span className="flex flex-1 flex-col p-5">
+              <h3 className="text-base font-black text-slate-900">{item.title}</h3>
+              <p className="premium-copy mt-1.5 flex-1 text-[0.95rem]">{item.text}</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-black text-blue-700">{item.cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true" /></span>
+            </span>
           </a>
         ))}
       </div>
@@ -318,11 +544,135 @@ function RoutesByDeparture({ onPick }: { onPick: PickRoute }) {
   );
 }
 
+function CarrierLogo({ name, logo }: { name: string; logo: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+      {!failed ? (
+        <img src={logo} alt="" className="h-full w-full object-contain p-1.5" loading="lazy" onError={() => setFailed(true)} />
+      ) : (
+        <Plane className="h-4 w-4 text-slate-400" aria-hidden="true" />
+      )}
+      <span className="sr-only">{name}</span>
+    </div>
+  );
+}
+
+/** Bandeau compagnies Afrique / Cameroun — logos utiles, aucun tarif inventé. */
+export function FlightAfricaCarriersBand() {
+  const reduceMotion = useReducedMotion();
+  return (
+    <section
+      aria-labelledby="flight-africa-carriers-title"
+      className="border-y border-slate-100 bg-white py-8"
+      data-testid="flight-africa-carriers"
+    >
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto mb-6 max-w-2xl text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">Billets internationaux · 3M TRAVEL AGENCY</p>
+          <h2 id="flight-africa-carriers-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
+            Compagnies & corridors fréquents
+          </h2>
+          <p className="premium-copy mt-2 text-sm">
+            Camair-Co, Ethiopian, ASKY, Air France, Turkish et d’autres compagnies pour vos vols depuis Yaoundé et Douala. Les tarifs n’apparaissent qu’après une recherche live — aucun prix de vitrine.
+          </p>
+        </div>
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          {FEATURED_AFRICA_CARRIERS.map((carrier, index) => (
+            <motion.li
+              key={carrier.code}
+              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.35, delay: reduceMotion ? 0 : Math.min(index, 9) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 px-3 py-3 shadow-sm"
+              data-testid={`flight-carrier-${carrier.code}`}
+            >
+              <CarrierLogo name={carrier.name} logo={carrier.logo} />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-slate-900">{carrier.name}</span>
+                <span className="block truncate text-[11px] font-semibold text-slate-500">{carrier.code} · {carrier.hub}</span>
+                <span className="mt-0.5 block truncate text-[10px] font-bold uppercase tracking-wide text-blue-700">{carrier.corridor}</span>
+              </span>
+            </motion.li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/** Pont billet → visa : preuves réelles déjà publiées (données masquées), sans slogans inventés. */
+export function FlightMobilityProofBridge() {
+  const reduceMotion = useReducedMotion();
+  const samples = PROOF_PHOTOS.filter((photo) => ["canada", "schengen", "chine"].includes(photo.category)).slice(0, 6);
+  return (
+    <section
+      aria-labelledby="flight-mobility-bridge-title"
+      className="bg-gradient-to-b from-slate-50 to-white py-12"
+      data-testid="flight-mobility-proof-bridge"
+    >
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="text-xs font-black uppercase tracking-widest text-blue-700">3M TRAVEL AGENCY · tous les services</p>
+          <h2 id="flight-mobility-bridge-title" className="mt-2 text-2xl font-black text-slate-950 md:text-3xl">
+            Billet, visa, assurance — au même endroit
+          </h2>
+          <p className="premium-copy mt-2 text-[0.95rem]">
+            Outre les billets d’avion internationaux, 3M TRAVEL AGENCY accompagne visas, e-Visa, assurance et séjours. Preuves réelles de dossiers traités (identités masquées) — aucune statistique inventée.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {samples.map((photo, index) => (
+            <motion.figure
+              key={photo.src}
+              initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: reduceMotion ? 0 : index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 ease-out hover:scale-[1.03] motion-reduce:transition-none motion-reduce:hover:scale-100"
+                />
+              </div>
+              <figcaption className="p-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-blue-700">{PROOF_CATEGORY_LABELS[photo.category].fr}</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-slate-800">{photo.caption}</p>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="/#proof-gallery-title"
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1E3A8A] px-5 text-sm font-black text-white transition hover:bg-[#163066]"
+          >
+            Voir toutes les preuves
+          </a>
+          <a
+            href="/procedures"
+            className="touch-target inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50"
+          >
+            Préparer un visa
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Sections toujours visibles sous les résultats : étapes, garanties, services liés et maillage par ville de départ. */
 export function FlightLowerSections({ onPick }: { onPick: PickRoute }) {
   return (
     <>
+      <FlightAfricaCarriersBand />
       <HowItWorks />
+      <FlightMobilityProofBridge />
       <Advantages />
       <CompanionServices />
       <RoutesByDeparture onPick={onPick} />

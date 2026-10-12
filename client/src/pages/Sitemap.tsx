@@ -11,7 +11,7 @@ type SitemapSection = { key: string; title: Copy; description: Copy; icon: typeo
 
 const COPY = {
   eyebrow: { fr: "Navigation complète", en: "Full navigation" },
-  title: { fr: "Plan du site 3M Travel & Services", en: "3M Travel & Services sitemap" },
+  title: { fr: "Plan du site 3M TRAVEL AGENCY", en: "3M TRAVEL AGENCY sitemap" },
   intro: { fr: "Retrouvez chaque service, ressource et espace d’information dans une navigation structurée. Les liens d’aide indiquent leur rôle avant l’ouverture de la page.", en: "Find every service, resource and information area through structured navigation. Each link explains its purpose before you open the page." },
   access: { fr: "Les services publics restent accessibles sans compte lorsque cela est indiqué ; les espaces de suivi demandent une connexion sécurisée.", en: "Public services remain available without an account where indicated; tracking areas require a secure sign-in." },
   searchLabel: { fr: "Rechercher dans le plan du site", en: "Search the sitemap" },
@@ -27,7 +27,7 @@ const COPY = {
 
 const SITE_SECTIONS: SitemapSection[] = [
   {
-    key: "discover", title: { fr: "Découvrir 3M Travel", en: "Discover 3M Travel" }, description: { fr: "Les accès essentiels pour comprendre l’accompagnement, les tarifs et les canaux de contact.", en: "Essential links to understand support, pricing and contact channels." }, icon: Compass,
+    key: "discover", title: { fr: "Découvrir 3M TRAVEL AGENCY", en: "Discover 3M TRAVEL AGENCY" }, description: { fr: "Les accès essentiels pour comprendre l’accompagnement, les tarifs et les canaux de contact.", en: "Essential links to understand support, pricing and contact channels." }, icon: Compass,
     links: [
       { key: "home", label: { fr: "Accueil", en: "Home" }, href: "/", description: { fr: "Revenir aux services principaux et à l’évaluation gratuite.", en: "Return to core services and the free assessment." } },
       { key: "about", label: { fr: "À propos", en: "About us" }, href: "/about", description: { fr: "Découvrir le rôle de conseil et les engagements de transparence.", en: "Learn about our advisory role and transparency commitments." } },
@@ -55,6 +55,15 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "official_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les liens gouvernementaux par destination.", en: "Check government links by destination." } },
       { key: "blog", label: { fr: "Blog", en: "Blog" }, href: "/blog", description: { fr: "Lire les articles et mises à jour publiés par l’agence.", en: "Read articles and updates published by the agency." } },
       { key: "accessibility", label: { fr: "Accessibilité", en: "Accessibility" }, href: "/accessibilite", description: { fr: "Ajuster la taille du texte et les préférences de mouvement.", en: "Adjust text size and motion preferences." } },
+    ],
+  },
+  {
+    key: "corridor", title: { fr: "Corridor de talents international", en: "International talent corridor" }, description: { fr: "Les quatre interfaces : candidat, back-office 3M, agences et employeurs.", en: "The four interfaces: candidate, 3M back-office, agencies and employers." }, icon: ShieldCheck,
+    links: [
+      { key: "partners", label: { fr: "Hub partenaires", en: "Partners hub" }, href: "/partenaires", description: { fr: "Vue d’ensemble Afrique → Europe / Amériques / Asie.", en: "Overview Africa → Europe / Americas / Asia." } },
+      { key: "agencies", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Portail B2B pour agences partenaires vérifiées.", en: "B2B portal for verified partner agencies." } },
+      { key: "employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Portail B2B pour employeurs directs.", en: "B2B portal for direct employers." } },
+      { key: "candidate_space_corridor", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/mon-espace", description: { fr: "Profil sélectionnable, consentement et suivi.", en: "Selectable profile, consent and tracking." } },
     ],
   },
   {

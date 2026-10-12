@@ -13,7 +13,7 @@ export function followUpMessage(input: { fullName: string; missing: number; repl
   const toDo = input.missing + input.replace;
   const first = input.fullName.trim().split(/\s+/)[0] || "";
   return [
-    `Bonjour ${first}, c'est 3M Travel & Services.`,
+    `Bonjour ${first}, c'est 3M TRAVEL AGENCY.`,
     `Il vous reste ${toDo} pièce${toDo > 1 ? "s" : ""} à envoyer pour votre dossier${input.firstLabel ? ` (prochaine pièce : ${input.firstLabel})` : ""}.`,
     "Vous pouvez les envoyer en un geste depuis votre espace client, photo du téléphone comprise. Besoin d'aide ? Répondez ici.",
   ].join("\n");

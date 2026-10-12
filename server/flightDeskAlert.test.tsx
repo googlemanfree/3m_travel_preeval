@@ -78,7 +78,7 @@ describe("e-mail d'alerte au comptoir", () => {
   const email = buildDeskAlertEmail(data, { adminUrl: "https://www.3mtravelagency.com/admin", deskWhatsApp: DEFAULT_DESK_WHATSAPP });
 
   it("signale l'urgence dans l'objet et donne la référence, le trajet et la date", () => {
-    expect(email.subject).toBe("[URGENT] [3M Travel] Réservation vol FB-2026-ABC123 — Douala → Paris — 2026-11-20");
+    expect(email.subject).toBe("[URGENT] [3M TRAVEL AGENCY] Réservation vol FB-2026-ABC123 — Douala → Paris — 2026-11-20");
     expect(email.html).toContain("réservation réelle (option) en attente de l’émission");
     expect(email.html).toContain("uniquement après paiement validé");
     expect(email.html).toContain("à revalider auprès de la compagnie");

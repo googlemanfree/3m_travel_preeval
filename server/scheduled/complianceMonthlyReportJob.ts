@@ -78,7 +78,7 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
     const reportHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
         <h2 style="color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-          Rapport d'Audit Mensuel de Conformité Documentaire — 3M Travel & Services
+          Rapport d'Audit Mensuel de Conformité Documentaire — 3M TRAVEL AGENCY
         </h2>
         <p style="font-size: 14px; color: #64748b;">Période : <strong>${monthName}</strong></p>
         
@@ -122,7 +122,7 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
         </table>
 
         <p style="font-size: 12px; color: #94a3b8; margin-top: 30px; border-top: 1px solid #e2e8f0; pt-10px;">
-          Ce rapport est généré automatiquement par le système de conformité de 3M Travel & Services. Pour toute question, contactez l'administration via <a href="mailto:hello@3mtravelagency.com">hello@3mtravelagency.com</a>.
+          Ce rapport est généré automatiquement par le système de conformité de 3M TRAVEL AGENCY. Pour toute question, contactez l'administration via <a href="mailto:hello@3mtravelagency.com">hello@3mtravelagency.com</a>.
         </p>
       </div>
     `;

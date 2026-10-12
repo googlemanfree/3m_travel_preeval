@@ -1,9 +1,11 @@
 ﻿import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-import { eq, and, SQL } from "drizzle-orm";
+import { eq, and, desc, SQL } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import * as drizzleSchema from "../../drizzle/schema";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
+import { candidateProcedure } from "./candidate";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -164,7 +166,7 @@ export const translationRouter = router({
         try {
           await sendEmail({
             to: completedReq.candidateEmail,
-            subject: "Votre traduction est prête — 3M Travel",
+            subject: "Votre traduction est prête — 3M TRAVEL AGENCY",
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:linear-gradient(135deg,#1E3A8A,#2563EB);padding:32px;text-align:center;color:#fff"><h1 style="margin:0;font-size:20px">Votre document traduit est disponible</h1></div><div style="padding:32px;background:#f9fafb"><p>Bonjour <strong>${esc(completedReq.candidateName || completedReq.candidateEmail)}</strong>,</p><p>La traduction de votre document <strong>${esc(completedReq.sourceDocumentName || "document")}</strong> est terminée et disponible au téléchargement.</p><p style="text-align:center;margin:24px 0"><a href="${/^https?:\/\//i.test(input.translatedDocumentUrl) ? esc(input.translatedDocumentUrl) : "#"}" style="background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;display:inline-block">Télécharger le document traduit</a></p><p>Pour toute question : <strong>+237 698 104 832</strong> (WhatsApp)</p></div><div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">3M Travel Agency SARL — <a href="https://www.3mtravelagency.com">www.3mtravelagency.com</a></div></div>`,
           });
         } catch (emailErr) {
@@ -189,4 +191,28 @@ export const translationRouter = router({
       const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing).limit(200);
       return documentTypes.map(dt => dt.documentType);
     }),
+
+  /** Espace client : suivi des traductions liées à l’e-mail du candidat. */
+  getMyRequests: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    return db
+      .select({
+        id: drizzleSchema.translationRequests.id,
+        documentType: drizzleSchema.translationRequests.documentType,
+        sourceLanguageCode: drizzleSchema.translationRequests.sourceLanguageCode,
+        targetLanguageCode: drizzleSchema.translationRequests.targetLanguageCode,
+        sourceDocumentName: drizzleSchema.translationRequests.sourceDocumentName,
+        status: drizzleSchema.translationRequests.status,
+        totalPrice: drizzleSchema.translationRequests.totalPrice,
+        currency: drizzleSchema.translationRequests.currency,
+        translatedDocumentUrl: drizzleSchema.translationRequests.translatedDocumentUrl,
+        createdAt: drizzleSchema.translationRequests.createdAt,
+        updatedAt: drizzleSchema.translationRequests.updatedAt,
+      })
+      .from(drizzleSchema.translationRequests)
+      .where(eq(drizzleSchema.translationRequests.candidateEmail, ctx.candidate.email))
+      .orderBy(desc(drizzleSchema.translationRequests.createdAt))
+      .limit(50);
+  }),
 });

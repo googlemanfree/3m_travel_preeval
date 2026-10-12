@@ -211,7 +211,7 @@ export function generateReceiptA5HTML(receipt: {
           <div class="barcode">${esc(receipt.receiptNumber)}</div>
           <p>Merci de votre confiance !</p>
           <p>Conservez ce reçu à titre de preuve de paiement</p>
-          <p style="font-size: 9px; margin-top: 3mm;">© 2026 3M Travel & Services</p>
+          <p style="font-size: 9px; margin-top: 3mm;">© 2026 3M TRAVEL AGENCY</p>
         </div>
       </div>
     </body>

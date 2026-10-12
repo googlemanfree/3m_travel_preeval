@@ -817,7 +817,7 @@ export default function PremiumEvaluationFormSteps47({
               ✓ Je confirme que les informations fournies sont exactes et complètes.
             </p>
             <p>
-              ✓ J'autorise 3M Travel & Services à analyser mon profil et à me contacter pour discuter de mon projet.
+              ✓ J'autorise 3M TRAVEL AGENCY à analyser mon profil et à me contacter pour discuter de mon projet.
             </p>
             <p>
               ✓ J'accepte que mes données soient traitées conformément à la politique de confidentialité.

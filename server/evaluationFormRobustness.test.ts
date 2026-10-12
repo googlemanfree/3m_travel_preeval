@@ -21,7 +21,7 @@ describe("Formulaire d'évaluation et robustesse des redirections", () => {
       sector: "Destination souhaitée : Canada",
     };
 
-    const text = `Bonjour 3M Travel, voici les détails de mon projet :\n- Nom : ${formData.fullName}\n- Email : ${formData.email}\n- WhatsApp : ${formData.whatsappPhone}\n- Nationalité : ${formData.nationality}\n- Type de projet : ${formData.projectType.toUpperCase()}\n- Précisions / Destination : ${formData.sector}`;
+    const text = `Bonjour 3M TRAVEL AGENCY, voici les détails de mon projet :\n- Nom : ${formData.fullName}\n- Email : ${formData.email}\n- WhatsApp : ${formData.whatsappPhone}\n- Nationalité : ${formData.nationality}\n- Type de projet : ${formData.projectType.toUpperCase()}\n- Précisions / Destination : ${formData.sector}`;
     const encoded = encodeURIComponent(text);
     const expectedUrl = `https://wa.me/237698104832?text=${encoded}`;
 

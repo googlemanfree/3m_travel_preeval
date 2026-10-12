@@ -13,8 +13,10 @@ export type CvMimeType = (typeof CV_ACCEPTED_MIME_TYPES)[number];
 
 export const CV_ACCEPT_ATTRIBUTE = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
 
-export const CV_REQUIRED_MESSAGE = "Ajoutez votre CV pour finaliser votre évaluation : elle ne peut pas être validée sans lui.";
-export const CV_MISSING_FOR_PUBLICATION = "L’évaluation ne peut pas être publiée sans le CV du candidat : demandez-le-lui ou attendez son dépôt dans son espace.";
+export const CV_REQUIRED_MESSAGE = "Pour un projet de visa travail, le CV est obligatoire quel que soit le pays : ajoutez-le pour finaliser votre évaluation.";
+export const CV_REQUIRED_AT_REGISTRATION = "Pour un projet de visa travail, joignez votre CV dès l’inscription : c’est la pièce clé pour finaliser l’évaluation.";
+export const CV_MISSING_FOR_PUBLICATION = "L’évaluation d’un visa travail ne peut pas être publiée sans le CV du candidat : demandez-le-lui ou attendez son dépôt dans son espace.";
+export const CV_MISSING_FOR_ACTIVATION = "Un CV exploitable est obligatoire pour ouvrir un dossier en visa travail. Relancez le candidat pour qu’il le dépose.";
 export const CV_FORMAT_MESSAGE = "Le CV doit être au format PDF, JPG ou PNG.";
 export const CV_TOO_LARGE_MESSAGE = "Le CV ne doit pas dépasser 5 Mo.";
 export const CV_EMPTY_MESSAGE = "Le fichier du CV est vide.";

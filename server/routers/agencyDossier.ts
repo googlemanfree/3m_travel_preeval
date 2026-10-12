@@ -79,7 +79,7 @@ export const agencyDossierRouter = router({
 
         try {
           const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #1e40af;">Bienvenue chez 3M Travel & Services</h2>
+            <h2 style="color: #1e40af;">Bienvenue chez 3M TRAVEL AGENCY</h2>
             <p>Bonjour ${esc(input.fullName)},</p>
             <p>Votre dossier a été créé avec succès dans notre système.</p>
             <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -89,14 +89,14 @@ export const agencyDossierRouter = router({
               <p><strong>Statut:</strong> Nouveau</p>
             </div>
             <p>Notre équipe examinera votre dossier et vous contactera sous peu avec les prochaines étapes.</p>
-            <p style="color: #666;">Cordialement,<br/>L'équipe 3M Travel & Services</p>
+            <p style="color: #666;">Cordialement,<br/>L'équipe 3M TRAVEL AGENCY</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+            <p style="color: #999; font-size: 12px;">3M TRAVEL AGENCY - Pré-évaluation Visa & Immigration</p>
           </div>`;
 
           await sendGenericEmail({
             to: input.email,
-            subject: "📋 Votre dossier a été créé - 3M Travel & Services",
+            subject: "📋 Votre dossier a été créé - 3M TRAVEL AGENCY",
             html: htmlContent
           });
         } catch (emailErr) {
@@ -405,12 +405,12 @@ export const agencyDossierRouter = router({
             <p>Bonjour ${esc(dossier[0].fullName)},</p>
             <p>${statusMessages[input.newStatus]}</p>
             ${input.notes ? `<p><strong>Message:</strong> ${esc(input.notes)}</p>` : ""}
-            <p>Cordialement,<br/>L'équipe 3M Travel & Services</p>
+            <p>Cordialement,<br/>L'équipe 3M TRAVEL AGENCY</p>
           </div>`;
 
           await sendGenericEmail({
             to: dossier[0].email,
-            subject: "📋 Mise à jour de votre dossier - 3M Travel & Services",
+            subject: "📋 Mise à jour de votre dossier - 3M TRAVEL AGENCY",
             html: htmlContent
           });
         } catch (emailErr) {
@@ -595,7 +595,7 @@ export const agencyDossierRouter = router({
       if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent envoyer une relance" });
       const [dossier] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, input.dossierId), isNull(agencyDossiers.deletedAt))).limit(1);
       if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier actif introuvable" });
-      await sendGenericEmail({ to: dossier.email, subject: "Rappel concernant votre dossier — 3M Travel & Services", html: `<p>Bonjour ${esc(dossier.fullName)},</p><p>${esc(input.message).replace(/\n/g, "<br/>")}</p><p>Cordialement,<br/>3M Travel &amp; Services</p>` });
+      await sendGenericEmail({ to: dossier.email, subject: "Rappel concernant votre dossier — 3M TRAVEL AGENCY", html: `<p>Bonjour ${esc(dossier.fullName)},</p><p>${esc(input.message).replace(/\n/g, "<br/>")}</p><p>Cordialement,<br/>3M TRAVEL AGENCY</p>` });
       await db.insert(agencyDossierHistory).values({ dossierId: input.dossierId, action: "manual_reminder", changedBy: ctx.user.email || "unknown", oldValue: null, newValue: null, details: "Relance manuelle envoyée" });
       return { success: true };
     }),

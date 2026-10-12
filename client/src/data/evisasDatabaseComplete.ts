@@ -33,7 +33,7 @@ const createVerificationFirstEvisa = (id: string, country: string, capital: stri
   docs: "Passeport valide, photographie et justificatifs de voyage : exigences à confirmer selon la nationalité, le motif et la date de départ.",
   fee: "À confirmer par le portail officiel",
   note: "Fiche de repérage : la disponibilité de l’e‑Visa et les conditions d’entrée varient selon la nationalité, le type de passeport, le motif du voyage et les règles en vigueur. Vérification obligatoire sur le portail officiel avant paiement ou réservation.",
-  culture: "Destination disponible pour une pré‑évaluation d’e‑Visa par 3M Travel & Services.",
+  culture: "Destination disponible pour une pré‑évaluation d’e‑Visa par 3M TRAVEL AGENCY.",
   workInfo: "Toute mobilité professionnelle dépend d’une offre, d’une autorisation et des règles applicables ; elle n’est pas garantie par cette pré‑évaluation.",
   highlights: ["Éligibilité à vérifier", "Portail officiel à consulter"],
   emblems: ["Vérification consulaire requise"],

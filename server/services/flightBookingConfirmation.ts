@@ -38,11 +38,11 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput): 
   const trackHref = `${(process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "")}/suivi-vol?ref=${encodeURIComponent(requestRef)}`;
   const whatsappHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Bonjour, je souhaite suivre ma demande de réservation ${requestRef}.`)}`;
 
-  const subject = `Votre demande de réservation ${requestRef} — 3M Travel & Services`;
+  const subject = `Votre demande de réservation ${requestRef} — 3M TRAVEL AGENCY`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#172554">
 <h2 style="margin:0 0 12px;color:#1d4ed8">Nous avons bien reçu votre demande</h2>
 <p style="margin:0 0 16px">${escapeHtml(greeting)},</p>
-<p style="margin:0 0 16px">Votre demande de réservation de vol a été transmise à 3M Travel &amp; Services. Conservez votre référence :</p>
+<p style="margin:0 0 16px">Votre demande de réservation de vol a été transmise à 3M TRAVEL AGENCY. Conservez votre référence :</p>
 <p style="margin:0 0 16px;padding:14px;background:#eff6ff;border:2px dashed #2563eb;border-radius:10px;font-size:18px;font-weight:bold;text-align:center;color:#1e3a8a">${escapeHtml(requestRef)}</p>
 <p style="margin:0 0 4px"><strong>Trajet :</strong> ${escapeHtml(route)}</p>
 <p style="margin:0 0 4px"><strong>Compagnie :</strong> ${escapeHtml(airline)}</p>
@@ -57,7 +57,7 @@ ${returnDeparture ? `<p style="margin:0 0 ${quotedTotal ? "4" : "16"}px"><strong
 <p style="margin:0 0 16px;font-size:13px;color:#475569">Le tarif affiché sur le site est indicatif : il peut évoluer jusqu’à la confirmation. Cette demande n’est pas un billet.</p>
 <p style="margin:0 0 12px"><a href="${trackHref}" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Suivre ma réservation et renseigner les passeports</a></p>
 <p style="margin:0 0 20px"><a href="${whatsappHref}" style="display:inline-block;background:#16a34a;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Suivre ma demande sur WhatsApp</a></p>
-<p style="margin:0;font-size:12px;color:#94a3b8">3M Travel &amp; Services · Yaoundé · hello@3mtravelagency.com. Vous recevez ce message parce qu’une demande a été envoyée avec cette adresse ; si ce n’est pas vous, ignorez-le.</p>
+<p style="margin:0;font-size:12px;color:#94a3b8">3M TRAVEL AGENCY · Yaoundé · hello@3mtravelagency.com. Vous recevez ce message parce qu’une demande a été envoyée avec cette adresse ; si ce n’est pas vous, ignorez-le.</p>
 </div>`;
   return { subject, html };
 }

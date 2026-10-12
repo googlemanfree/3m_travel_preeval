@@ -14,7 +14,7 @@ const office = COMPANY_PROFILE.offices.cameroon;
 export default function PaymentProofUpload({ reference, className = "" }: { reference: string; className?: string }) {
   const { isAuthenticated } = useCandidateAuth();
   if (!reference) return null;
-  const whatsappHref = `https://wa.me/${office.whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services, voici la preuve de mon paiement. Référence : ${reference}`)}`;
+  const whatsappHref = `https://wa.me/${office.whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY, voici la preuve de mon paiement. Référence : ${reference}`)}`;
 
   return (
     <div className={`rounded-xl border border-blue-100 bg-white p-4 ${className}`} data-testid="payment-proof-upload">

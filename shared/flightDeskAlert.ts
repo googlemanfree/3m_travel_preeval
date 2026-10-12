@@ -108,5 +108,5 @@ export function whatsAppLink(number: string | null | undefined, message: string)
 
 /** Message d'accueil pour écrire au client depuis le comptoir. */
 export function clientContactMessage(data: DeskAlertData): string {
-  return `Bonjour ${data.passengerName}, c'est 3M Travel & Services au sujet de votre demande de réservation ${data.requestRef} (${data.outbound.route}, ${data.outbound.date}). Nous vérifions la disponibilité et le tarif auprès de la compagnie et revenons vers vous très vite. Aucun paiement n'est demandé avant cette confirmation.`;
+  return `Bonjour ${data.passengerName}, c'est 3M TRAVEL AGENCY au sujet de votre demande de réservation ${data.requestRef} (${data.outbound.route}, ${data.outbound.date}). Nous vérifions la disponibilité et le tarif auprès de la compagnie et revenons vers vous très vite. Aucun paiement n'est demandé avant cette confirmation.`;
 }

@@ -1,5 +1,5 @@
 /**
- * Moteur de scoring automatique 3M Travel Agency
+ * Moteur de scoring automatique 3M TRAVEL AGENCY
  * Calcule un score d'éligibilité sur 100 points selon 5 critères.
  */
 

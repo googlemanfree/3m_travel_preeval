@@ -18,6 +18,12 @@ import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSo
 import { getEnglishContentByEnSlug } from '@/data/procedures107English';
 import { getCountryDetailLabels } from './CountryDetailPage.i18n';
 import { trpc } from '@/lib/trpc';
+import { DestinationVisualSheet } from '@/components/DestinationVisualSheet';
+import { PublishedGuideSummaryPanel } from '@/components/PublishedGuideSummaryPanel';
+import ProofGallerySection from '@/components/ProofGallerySection';
+import { proofFilterForProcedure } from '@/data/destinationGallery';
+import { setPageSeo } from '@/lib/pageSeo';
+import { resolvePublishedGuideSummary } from '@shared/publishedGuideSummaries';
 
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
@@ -36,6 +42,9 @@ export default function CountryDetailPage() {
 
   const destinationDetail = getPublicDestinationDetail(countryId);
   const baseCountry = destinationDetail?.procedure;
+  const publishedSummary = baseCountry
+    ? resolvePublishedGuideSummary(baseCountry.name, baseCountry.visaType)
+    : null;
   const country = baseCountry && englishContent
     ? {
         ...baseCountry,
@@ -73,22 +82,26 @@ export default function CountryDetailPage() {
   useEffect(() => {
     if (!country) return;
     const displayTitle = getProcedureDisplayTitle(country, locale);
+    const procedureVisual = getProcedureVisualSources(country);
+    const seoImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
     if (locale === 'en') {
-      document.title = `${displayTitle} from Yaoundé | 3M Travel & Services`;
-      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
-        "content",
-        `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M Travel & Services.`,
-      );
       document.documentElement.lang = 'en';
+      setPageSeo({
+        title: `${displayTitle} from Yaoundé | 3M TRAVEL AGENCY`,
+        description: `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M TRAVEL AGENCY.`,
+        image: seoImage,
+        imageAlt: `International mobility illustration for ${country.name}`,
+      });
     } else {
-      document.title = `${displayTitle} à Yaoundé | 3M Travel & Services`;
-      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
-        "content",
-        `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M Travel & Services.`,
-      );
       document.documentElement.lang = 'fr';
+      setPageSeo({
+        title: `${displayTitle} à Yaoundé | 3M TRAVEL AGENCY`,
+        description: `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M TRAVEL AGENCY.`,
+        image: seoImage,
+        imageAlt: `Illustration mobilité internationale pour ${country.name}`,
+      });
     }
-  }, [country, locale]);
+  }, [country, locale, destinationMedia?.imageUrl]);
 
   useEffect(() => {
     if (countryId) {
@@ -293,6 +306,12 @@ export default function CountryDetailPage() {
           </div>
         </motion.div>
 
+        <DestinationVisualSheet
+          slugOrId={country.id}
+          countryName={country.name}
+          className="rounded-3xl"
+        />
+
         {/* Indicateurs clés */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-5 border-slate-200 shadow-sm bg-white rounded-2xl">
@@ -348,6 +367,21 @@ export default function CountryDetailPage() {
                 ))}
               </div>
             </Card>
+
+            {locale === 'fr' && publishedSummary ? (
+              <PublishedGuideSummaryPanel
+                tone="public"
+                testId="country-published-guide-summary"
+                headline={publishedSummary.headline}
+                overview={publishedSummary.overview}
+                stepHighlights={publishedSummary.stepHighlights}
+                programLabel={publishedSummary.visaLabel}
+                pdfUrl={publishedSummary.pdfUrl || country.pdfUrl}
+                pdfTitle={publishedSummary.pdfTitle}
+                officialPortalUrl={publishedSummary.officialPortalUrl}
+                officialPortalLabel={publishedSummary.officialPortalLabel}
+              />
+            ) : null}
 
             {/* Procédure étape par étape */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl space-y-6">
@@ -547,6 +581,18 @@ export default function CountryDetailPage() {
           </div>
 
         </div>
+
+        <ProofGallerySection
+          initialFilter={proofFilterForProcedure(country.visaType)}
+          lockFilter
+          collapsedCount={3}
+          hideWhenEmpty
+          className="rounded-3xl border border-slate-200 bg-white px-4 py-10 shadow-sm"
+          titleFr="Preuves liées à ce type de dossier"
+          titleEn="Proofs related to this kind of file"
+          leadFr="Extraits anonymisés de dossiers réellement traités — pour situer le niveau d’exigence, sans promesse de résultat."
+          leadEn="Redacted excerpts from files actually handled — to illustrate requirements, without promising an outcome."
+        />
 
       </div>
     </main>

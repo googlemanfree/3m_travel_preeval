@@ -51,7 +51,7 @@ export default function SuperAdminDashboard() {
         <header className="flex flex-col gap-4 rounded-2xl bg-slate-950 p-6 text-white shadow-xl sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-cyan-300" /><Badge className="bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/15">Administrateur</Badge></div>
-            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Pilotage global 3M Travel Agency</h1>
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Pilotage global 3M TRAVEL AGENCY</h1>
             <p className="mt-2 text-sm text-slate-300">Statistiques réelles des opérations, dossiers et demandes de vols.</p>
           </div>
           <div className="flex flex-wrap gap-2">

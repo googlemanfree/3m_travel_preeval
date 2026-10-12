@@ -3,7 +3,7 @@ import { canonicalRedirectFromHosts, canonicalRedirectTarget, OFFICIAL_SITE_ORIG
 import fs from "node:fs";
 import path from "node:path";
 
-describe("domaine officiel 3M Travel", () => {
+describe("domaine officiel 3M TRAVEL AGENCY", () => {
   it("redirige les deux variantes .click vers www.3mtravelagency.com en conservant le chemin", () => {
     expect(canonicalRedirectTarget("3mtravelagency.click", "/procedures?country=CA")).toBe("https://www.3mtravelagency.com/procedures?country=CA");
     expect(canonicalRedirectTarget("www.3mtravelagency.click", "/sitemap.xml")).toBe("https://www.3mtravelagency.com/sitemap.xml");

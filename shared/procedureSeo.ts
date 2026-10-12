@@ -56,7 +56,7 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
     const projectNounEn = VISA_TYPE_PROJECT_NOUN_EN[procedure.visaType];
     return [
       {
-        question: `How does 3M Travel & Services support a ${projectNounEn} project to ${procedure.name} from Yaoundé?`,
+        question: `How does 3M TRAVEL AGENCY support a ${projectNounEn} project to ${procedure.name} from Yaoundé?`,
         answer: `An advisor reviews your project details, outlines the documents generally requested for a ${labelEn} visa to ${procedure.name}, and supports you through preparing your file. Final requirements and the decision remain with the competent authority.`,
       },
       {
@@ -65,11 +65,11 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
       },
       {
         question: `Is the processing time or decision for a ${labelEn} visa to ${procedure.name} guaranteed?`,
-        answer: `No. Processing time and the final decision belong exclusively to the competent authority, institution, or employer involved. 3M Travel & Services supports preparation and follow-up without guaranteeing the outcome.`,
+        answer: `No. Processing time and the final decision belong exclusively to the competent authority, institution, or employer involved. 3M TRAVEL AGENCY supports preparation and follow-up without guaranteeing the outcome.`,
       },
       {
         question: `How do I start my evaluation for ${procedure.name}?`,
-        answer: `Use the site's evaluation form, specifying your destination and project type, or contact 3M Travel & Services in Yaoundé for an initial orientation.`,
+        answer: `Use the site's evaluation form, specifying your destination and project type, or contact 3M TRAVEL AGENCY in Yaoundé for an initial orientation.`,
       },
     ];
   }
@@ -78,7 +78,7 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
   const projectNoun = VISA_TYPE_PROJECT_NOUN[procedure.visaType];
   return [
     {
-      question: `Comment 3M Travel & Services accompagne-t-il un projet ${projectNoun} vers ${procedure.name} depuis Yaoundé ?`,
+      question: `Comment 3M TRAVEL AGENCY accompagne-t-il un projet ${projectNoun} vers ${procedure.name} depuis Yaoundé ?`,
       answer: `Un conseiller examine les informations de votre projet, indique les pièces généralement demandées pour un visa ${label} vers ${procedure.name} et vous accompagne dans la préparation du dossier. Les exigences définitives et la décision relèvent de l'autorité compétente.`,
     },
     {
@@ -87,11 +87,11 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
     },
     {
       question: `Le délai et la décision pour un visa ${label} vers ${procedure.name} sont-ils garantis ?`,
-      answer: `Non. Le délai de traitement et la décision finale appartiennent exclusivement à l'autorité compétente, à l'établissement ou à l'employeur concerné. 3M Travel & Services accompagne la préparation et le suivi du dossier sans garantir l'issue.`,
+      answer: `Non. Le délai de traitement et la décision finale appartiennent exclusivement à l'autorité compétente, à l'établissement ou à l'employeur concerné. 3M TRAVEL AGENCY accompagne la préparation et le suivi du dossier sans garantir l'issue.`,
     },
     {
       question: `Comment démarrer mon évaluation pour ${procedure.name} ?`,
-      answer: `Utilisez le formulaire d'évaluation du site en précisant votre destination et votre type de projet, ou contactez 3M Travel & Services à Yaoundé pour une première orientation.`,
+      answer: `Utilisez le formulaire d'évaluation du site en précisant votre destination et votre type de projet, ou contactez 3M TRAVEL AGENCY à Yaoundé pour une première orientation.`,
     },
   ];
 };

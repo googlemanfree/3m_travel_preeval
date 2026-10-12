@@ -16,6 +16,7 @@ import {
   evaluations,
   flightBookingRequests,
   insuranceRequests,
+  digitalServiceRequests,
   profileEvaluations,
   translationRequests,
   tourismServiceRequests,
@@ -34,7 +35,7 @@ import { normalizeAdminMessage, richTextToPlainText, sanitizeRichTextHtml } from
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 
-const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
+const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism", "digital"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 const priorities = ["low", "normal", "high", "urgent"] as const;
 const evaluationDraftSchema = z.object({
@@ -63,6 +64,48 @@ function mapCandidateDestination(destination: string | null | undefined): "canad
 function generateBootstrapEvaluationReference() {
   // applications.dossierNumber est limité à 20 caractères en production.
   return `EVAL-DRAFT-${new Date().getFullYear()}-${randomInt(1000, 10000)}`;
+}
+
+/** Dates JSON-safe (ISO) — évite les échecs superjson « Unable to transform response ». */
+function toIsoDate(value: Date | string | null | undefined): string | null {
+  if (value == null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/** DTO minimal pour l’éditeur de bilan — pas la ligne applications complète (scoringDetails, HTML, etc.). */
+function serializeEvaluationDeliveryApplication(application: {
+  id: number;
+  dossierNumber: string;
+  fullName: string;
+  email: string;
+  whatsappNumber?: string | null;
+  destination?: string | null;
+  scoringTotal?: number | null;
+  evaluationScheduledAt?: Date | string | null;
+  evaluationDeliveryStatus?: string | null;
+  evaluationReportViewedAt?: Date | string | null;
+  evaluationApprovalStatus?: string | null;
+  evaluationRequiresSecondApproval?: boolean | null;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+}) {
+  return {
+    id: application.id,
+    dossierNumber: application.dossierNumber,
+    fullName: application.fullName,
+    email: application.email,
+    whatsappNumber: application.whatsappNumber ?? null,
+    destination: application.destination ?? null,
+    scoringTotal: application.scoringTotal ?? 0,
+    evaluationScheduledAt: toIsoDate(application.evaluationScheduledAt),
+    evaluationDeliveryStatus: application.evaluationDeliveryStatus ?? "draft",
+    evaluationReportViewedAt: toIsoDate(application.evaluationReportViewedAt),
+    evaluationApprovalStatus: application.evaluationApprovalStatus ?? "not_required",
+    evaluationRequiresSecondApproval: Boolean(application.evaluationRequiresSecondApproval),
+    createdAt: toIsoDate(application.createdAt),
+    updatedAt: toIsoDate(application.updatedAt),
+  };
 }
 
 async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
@@ -394,7 +437,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism] = await Promise.all([
+  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism, digitals] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
     loadLegacyProfileEvaluations(db),
     loadOptionalSource("consultation_requests", () => db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200), []),
@@ -404,6 +447,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     loadOptionalSource("contact_messages", () => db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200), []),
     loadOptionalSource("agency_dossiers", () => db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200), []),
     loadOptionalSource("tourism_service_requests", () => db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(200), []),
+    loadOptionalSource("digital_service_requests", () => db.select().from(digitalServiceRequests).orderBy(desc(digitalServiceRequests.createdAt)).limit(200), []),
   ]);
 
   const firstContactBySession = new Set<string>();
@@ -429,6 +473,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     ...contactSnapshots,
     ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...tourism.map((row) => ({ sourceType: "tourism" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Tourisme & Devis", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...digitals.map((row) => ({ sourceType: "digital" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: null, requestTypeLabel: "3M Solutions / digital", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
   ];
 }
 
@@ -574,7 +619,7 @@ initializeEvaluationDelivery: publicProcedure
         const [linkedCandidate] = await db.select().from(candidates).where(eq(candidates.email, agencyDossier.email)).limit(1);
         const agencyApplication = await resolveEvaluationApplication(db, agencyDossier.id);
         if (!agencyApplication) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation agence introuvable." });
-        return { success: true, created: false, candidateId: linkedCandidate?.id ?? null, application: agencyApplication, message: "Dossier d’évaluation agence résolu." };
+        return { success: true, created: false, candidateId: linkedCandidate?.id ?? null, application: serializeEvaluationDeliveryApplication(agencyApplication), message: "Dossier d’évaluation agence résolu." };
       }
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
@@ -584,10 +629,10 @@ initializeEvaluationDelivery: publicProcedure
         .orderBy(desc(agencyDossiers.createdAt)).limit(1);
       if (linkedAgencyDossier) {
         const agencyApplication = await resolveEvaluationApplication(db, linkedAgencyDossier.id);
-        if (agencyApplication) return { success: true, created: false, candidateId: candidate.id, application: agencyApplication, message: "Dossier d’évaluation agence résolu pour ce compte candidat." };
+        if (agencyApplication) return { success: true, created: false, candidateId: candidate.id, application: serializeEvaluationDeliveryApplication(agencyApplication), message: "Dossier d’évaluation agence résolu pour ce compte candidat." };
       }
       const [existing] = await db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)).limit(1);
-      if (existing) return { success: true, created: false, candidateId: candidate.id, application: existing, message: "Le dossier d’évaluation provisoire existe déjà." };
+      if (existing) return { success: true, created: false, candidateId: candidate.id, application: serializeEvaluationDeliveryApplication(existing), message: "Le dossier d’évaluation provisoire existe déjà." };
 
       let dossierNumber = generateBootstrapEvaluationReference();
       while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
@@ -633,7 +678,7 @@ initializeEvaluationDelivery: publicProcedure
       });
       const [application] = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
       if (!application) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le dossier provisoire n’a pas pu être initialisé." });
-      return { success: true, created: true, candidateId: candidate.id, application, message: "Dossier d’évaluation provisoire initialisé sans activer le dossier client." };
+      return { success: true, created: true, candidateId: candidate.id, application: serializeEvaluationDeliveryApplication(application), message: "Dossier d’évaluation provisoire initialisé sans activer le dossier client." };
     }),
 
   getEvaluationDelivery: publicProcedure
@@ -651,8 +696,53 @@ initializeEvaluationDelivery: publicProcedure
       const normalizedApplicationEmail = String(application.email || "").trim().toLowerCase();
       const offlineAgencyDossier = agencyDossierCandidates.find((item) => String(item.email || "").trim().toLowerCase() === normalizedApplicationEmail);
       const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, contentJson: evaluationBilanVersions.contentJson, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
-      const versions = await Promise.all(rawVersions.map(async (version) => ({ ...version, pdfUrl: version.pdfKey ? await storageGetSignedUrl(version.pdfKey) : null })));
-      return { application, versions, offlineEvaluation: offlineAgencyDossier?.evaluationValidatedAt ? { validated: true, validatedAt: offlineAgencyDossier.evaluationValidatedAt, validatedBy: offlineAgencyDossier.evaluationValidatedBy } : { validated: false, validatedAt: null, validatedBy: null }, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", profileSummary: adminDraft.profileSummary ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify : [], nextAdminAction: adminDraft.nextAdminAction ?? "", message: application.evaluationDeliveryMessage ?? "", language: adminDraft.language === "en" ? "en" : "fr", subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M Travel" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`), requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
+      const versions = await Promise.all(rawVersions.map(async (version) => {
+        let pdfUrl: string | null = null;
+        if (version.pdfKey) {
+          try { pdfUrl = await storageGetSignedUrl(version.pdfKey); } catch { pdfUrl = null; }
+        }
+        return {
+          id: version.id,
+          versionNumber: version.versionNumber,
+          contentJson: typeof version.contentJson === "string" ? version.contentJson : JSON.stringify(version.contentJson ?? {}),
+          approvalStatus: version.approvalStatus,
+          requiresSecondApproval: Boolean(version.requiresSecondApproval),
+          approvalComment: version.approvalComment ?? null,
+          createdByAdminAccountId: version.createdByAdminAccountId ?? null,
+          createdAt: toIsoDate(version.createdAt),
+          approvedAt: toIsoDate(version.approvedAt),
+          sentAt: toIsoDate(version.sentAt),
+          pdfUrl,
+        };
+      }));
+      const advisorValidatedAt = toIsoDate(adminDraft.advisorValidatedAt ?? null);
+      return {
+        application: serializeEvaluationDeliveryApplication(application),
+        versions,
+        offlineEvaluation: offlineAgencyDossier?.evaluationValidatedAt
+          ? { validated: true, validatedAt: toIsoDate(offlineAgencyDossier.evaluationValidatedAt), validatedBy: offlineAgencyDossier.evaluationValidatedBy ?? null }
+          : { validated: false, validatedAt: null, validatedBy: null },
+        draft: {
+          destination: adminDraft.destination ?? application.destination ?? "europe",
+          modelLabel: adminDraft.modelLabel ?? null,
+          criteria: adminDraft.criteria ?? null,
+          finalScore: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : (application.scoringTotal ?? 0),
+          verdict: String(adminDraft.verdict ?? ""),
+          profileSummary: String(adminDraft.profileSummary ?? ""),
+          strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths.map(String) : [],
+          weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses.map(String) : [],
+          recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations.map(String) : [],
+          informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify.map(String) : [],
+          nextAdminAction: String(adminDraft.nextAdminAction ?? ""),
+          message: application.evaluationDeliveryMessage ?? "",
+          language: adminDraft.language === "en" ? "en" : "fr",
+          subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M TRAVEL AGENCY" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`),
+          requiresSecondApproval: Boolean(application.evaluationRequiresSecondApproval),
+          advisorValidated: adminDraft.advisorValidated === true,
+          advisorValidatedAt,
+          advisorValidatedByAdminId: typeof adminDraft.advisorValidatedByAdminId === "number" ? adminDraft.advisorValidatedByAdminId : null,
+        },
+      };
     }),
 
   previewEvaluationDeliveryEmail: publicProcedure
@@ -906,7 +996,7 @@ initializeEvaluationDelivery: publicProcedure
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const row = (await db.select().from(evaluationEmails).where(eq(evaluationEmails.id, input.emailId)).limit(1))[0];
       if (!row?.reportContent) throw new TRPCError({ code: "NOT_FOUND", message: "Le contenu de ce bilan historique n’est plus disponible." });
-      const subject = `Rappel de votre bilan d’évaluation - 3M Travel`;
+      const subject = `Rappel de votre bilan d’évaluation - 3M TRAVEL AGENCY`;
       const inserted = await db.insert(evaluationEmails).values({ evaluationId: row.evaluationId, candidateEmail: row.candidateEmail, candidateName: row.candidateName, destinationCountry: row.destinationCountry, visaType: row.visaType, emailType: "follow_up", language: row.language, scheduledAt: new Date(), status: "pending", reportContent: row.reportContent, secureLink: row.secureLink });
       const trackingId = Number((inserted as any)[0]?.insertId ?? 0);
       try {

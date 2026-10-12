@@ -12,7 +12,7 @@ describe("SEO dynamique", () => {
     expect(svg).toContain("Canada &amp; procédures");
     expect(svg).toContain("/canada");
     expect(svg).toContain('width="1200" height="630"');
-    expect(renderOgImageSvg("")).toContain("3M Travel Agency");
+    expect(renderOgImageSvg("")).toContain("3M TRAVEL AGENCY");
   });
 
   it("génère un sitemap avec les routes indexables et robots avec les espaces privés bloqués", () => {
@@ -38,7 +38,7 @@ describe("SEO dynamique", () => {
   it("génère un BlogPosting pour la page éditoriale Blog", () => {
     const html = composePublicPrerender(template, "/blog").html;
     expect(html).toContain('"@type":"BlogPosting"');
-    expect(html).toContain('"headline":"Ressources mobilité internationale | 3M Travel & Services"');
+    expect(html).toContain('"headline":"Ressources mobilité internationale | 3M TRAVEL AGENCY"');
   });
 
   it("construit des URL de partage encodées pour les trois réseaux", () => {
@@ -87,13 +87,13 @@ describe("SEO dynamique", () => {
     expect(contact).toContain("hello@3mtravelagency.com");
     expect(sources).toContain("Immigration, Réfugiés et Citoyenneté Canada");
     expect(sources).toContain("Ouvrir la source officielle");
-    expect(procedures).toContain("107 procédures par destination");
+    expect(procedures).toContain("Catalogue des procédures documentées");
     expect(procedures).toContain("/procedures/allemagne-visiteur");
     expect((procedures.match(/href="\/procedures\//g) ?? []).length).toBeLessThan(30);
     expect(procedures).toContain("Ouvrir l’annuaire interactif complet");
     expect(evisas).toContain("Annuaire des procédures e-Visa");
     expect(evisas).toContain("Kenya");
     expect(pricing).toContain("Comprendre les tarifs avant de vous engager");
-    expect(sitemap).toContain("Accéder rapidement aux services 3M Travel");
+    expect(sitemap).toContain("Accéder rapidement aux services 3M TRAVEL AGENCY");
   });
 });

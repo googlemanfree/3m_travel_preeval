@@ -23,6 +23,6 @@ describe("aucune statistique de réussite inventée sur le site public", () => {
 
   it("les pages e-Visa décrivent un contrôle avant soumission, pas une « garantie »", () => {
     expect(read("client/src/pages/Evisa.tsx")).not.toContain("Garantie Conformité");
-    expect(read("client/src/pages/EvisaDetailPage.tsx")).not.toContain("Garantie 3M Travel");
+    expect(read("client/src/pages/EvisaDetailPage.tsx")).not.toContain("Garantie 3M TRAVEL AGENCY");
   });
 });

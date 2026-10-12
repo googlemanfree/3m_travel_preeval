@@ -1,12 +1,17 @@
 /**
- * Dashboard Administrateur — 3M Travel & Services
+ * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="min-w-0 rounded-2xl border border-slate-200/80 bg-white/90 p-2.5 shadow-[0_10px_28px_-24px_rgba(7,27,61,0.65)]"><p className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{title}</p><TabsList className="flex h-auto w-full flex-wrap gap-1 bg-slate-100/90 p-1">{children}</TabsList></section>;
+  return (
+    <section className="premium-surface min-w-0 rounded-2xl p-3">
+      <p className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.14em] text-slate-600">{title}</p>
+      <TabsList className="flex h-auto w-full flex-wrap gap-1 bg-slate-100/90 p-1">{children}</TabsList>
+    </section>
+  );
 }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,8 +91,22 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
+import AdminContractsReceiptsDesk from "@/components/AdminContractsReceiptsDesk";
+import AdminNoEvaluationOutreachPanel from "@/components/AdminNoEvaluationOutreachPanel";
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
+import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
+import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
+import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
+import AdminEmployerSelectionPanel from "@/components/AdminEmployerSelectionPanel";
+import {
+  ADMIN_STAGE_CATALOG,
+  ADMIN_STAGE_SEQUENCE,
+  getNextAdminStage,
+  getPreviousAdminStage,
+  resolveGuidedNextAdminAction,
+  type GuidedNextAction,
+} from "@shared/adminStageCatalog";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -104,7 +123,8 @@ import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
-import { AdminCandidateKanban, type KanbanCandidate } from "@/components/AdminCandidateKanban";
+import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminTodayDashboard";
+import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -117,6 +137,12 @@ import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
+import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
+import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/adminProcedureJourney";
+import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
+import { ADMIN_PROCEDURE_TYPES, normalizeAdminProcedureType } from "@shared/dossierProcedureSelection";
+import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { CountrySelect } from "@/components/CountryPicker";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -154,60 +180,83 @@ interface Candidate {
   evaluationScheduledAt?: Date | string | null;
   dueAt?: Date | string | null;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "NOT_PAID";
+  agreementSigned?: boolean | null;
+  secondProtocolReady?: boolean;
+  secondProtocolSigned?: boolean;
+  checklistPercent?: number | null;
   procedureStep?: string;
+  isActiveDossier?: boolean;
+  procedureJourney?: AdminProcedureSnapshot;
+  siblingCount?: number;
+  siblingProcedures?: SiblingProcedureSummary[];
+  journeySla?: {
+    label: string;
+    tone: "ok" | "soon" | "overdue" | "unset";
+    slaDays: number;
+    stepLabel: string | null;
+    explanation: string;
+    dueAt: string | null;
+  };
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
   PENDING_48H: {
-    label: "Évaluation 48h",
+    label: ADMIN_STAGE_CATALOG.PENDING_48H.label,
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
     icon: <Clock className="w-3 h-3" />,
   },
   PUBLISHED: {
-    label: "Bilan Disponible",
+    label: ADMIN_STAGE_CATALOG.PUBLISHED.label,
     color: "text-blue-700",
     bg: "bg-blue-50 border-blue-200",
     icon: <FileCheck className="w-3 h-3" />,
   },
   DOCUMENTS_CHECK: {
-    label: "Collecte Documents",
+    label: ADMIN_STAGE_CATALOG.DOCUMENTS_CHECK.label,
     color: "text-purple-700",
     bg: "bg-purple-50 border-purple-200",
     icon: <Send className="w-3 h-3" />,
   },
   SUBMITTED: {
-    label: "Soumission Consulaire",
+    label: ADMIN_STAGE_CATALOG.SUBMITTED.label,
     color: "text-indigo-700",
     bg: "bg-indigo-50 border-indigo-200",
     icon: <Globe className="w-3 h-3" />,
   },
   APPROVED: {
-    label: "Visa Accordé",
+    label: ADMIN_STAGE_CATALOG.APPROVED.label,
     color: "text-green-700",
     bg: "bg-green-50 border-green-200",
     icon: <CheckCircle className="w-3 h-3" />,
   },
 };
 
-const ADMIN_STATUS_SEQUENCE: AdminStatus[] = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"];
+const ADMIN_STATUS_SEQUENCE: AdminStatus[] = [...ADMIN_STAGE_SEQUENCE];
 const PAYMENT_STATUS_LABELS: Record<string, string> = { SUCCESS: "Payé", PENDING: "En attente", FAILED: "Échec", CANCELLED: "Annulé", NOT_PAID: "Non payé" };
 const PAYMENT_STATUS_BADGE_CLASSES: Record<string, string> = { SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-800", PENDING: "border-amber-200 bg-amber-50 text-amber-800", FAILED: "border-rose-200 bg-rose-50 text-rose-800", CANCELLED: "border-slate-300 bg-slate-100 text-slate-700", NOT_PAID: "border-slate-300 bg-white text-slate-700" };
-const PROCEDURE_STEP_LABELS: Record<string, string> = { PENDING_48H: "Évaluation à traiter", PUBLISHED: "Bilan / paiement", DOCUMENTS_CHECK: "Collecte documents", SUBMITTED: "Soumission consulaire", APPROVED: "Visa accordé" };
+const PROCEDURE_STEP_LABELS: Record<string, string> = {
+  PENDING_48H: ADMIN_STAGE_CATALOG.PENDING_48H.label,
+  PUBLISHED: ADMIN_STAGE_CATALOG.PUBLISHED.label,
+  DOCUMENTS_CHECK: ADMIN_STAGE_CATALOG.DOCUMENTS_CHECK.label,
+  SUBMITTED: ADMIN_STAGE_CATALOG.SUBMITTED.label,
+  APPROVED: ADMIN_STAGE_CATALOG.APPROVED.label,
+};
 const PROCEDURE_STEP_BADGE_CLASSES: Record<string, string> = { PENDING_48H: "border-violet-200 bg-violet-50 text-violet-800", PUBLISHED: "border-amber-200 bg-amber-50 text-amber-800", DOCUMENTS_CHECK: "border-blue-200 bg-blue-50 text-blue-800", SUBMITTED: "border-indigo-200 bg-indigo-50 text-indigo-800", APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800" };
 
+function procedureStageLabel(candidate: { procedureJourney?: AdminProcedureSnapshot | null }, stage: string): string {
+  const fromJourney = candidate.procedureJourney?.stageLabels?.[stage as keyof NonNullable<AdminProcedureSnapshot["stageLabels"]>];
+  return fromJourney || PROCEDURE_STEP_LABELS[stage] || stage;
+}
+
 function getNextAdminStatus(status?: string): AdminStatus | null {
-  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
-  if (currentIndex < 0) return "PENDING_48H";
-  return ADMIN_STATUS_SEQUENCE[currentIndex + 1] ?? null;
+  return getNextAdminStage(status) as AdminStatus | null;
 }
 
 function getPreviousAdminStatus(status?: string): AdminStatus | null {
-  const currentIndex = ADMIN_STATUS_SEQUENCE.indexOf(status as AdminStatus);
-  if (currentIndex <= 0) return null;
-  return ADMIN_STATUS_SEQUENCE[currentIndex - 1];
+  return getPreviousAdminStage(status) as AdminStatus | null;
 }
 
 const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; icon: React.ReactNode }> = {
@@ -234,16 +283,9 @@ const SCORING_BADGE_CONFIG: Record<string, { label: string; color: string }> = {
   faible: { label: "Faible", color: "text-red-700 bg-red-50 border-red-200" },
 };
 
-const DESTINATION_OPTIONS = [
-  "Canada", "France", "Belgique", "Suisse", "Allemagne", "Royaume-Uni",
-  "États-Unis", "Portugal", "Espagne", "Italie", "Pays-Bas", "Maroc",
-  "Sénégal", "Côte d'Ivoire", "Autre",
-];
+const DESTINATION_OPTIONS = POPULAR_DESTINATION_NAMES;
 
-const PROJECT_TYPE_OPTIONS = [
-  "Visa Étudiant", "Visa Travail", "Visa Tourisme", "Visa Famille",
-  "Résidence Permanente", "Visa Affaires", "Autre",
-];
+const PROJECT_TYPE_OPTIONS = [...ADMIN_PROCEDURE_TYPES];
 
 const ADMIN_GLOBAL_SEARCH_ITEMS = [
   { label: "Dossiers candidats", hint: "Rechercher et traiter les dossiers", tab: "candidates" },
@@ -366,6 +408,7 @@ export function CandidateDetailModal({
   const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
+  const [portraitPreviewOpen, setPortraitPreviewOpen] = useState(false);
   const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
     {
@@ -376,9 +419,28 @@ export function CandidateDetailModal({
   );
   const candidate = data?.candidate;
   const paymentSnapshot = (data as { payments?: Array<{ status?: string | null; validatedBy?: string | null; validatedAt?: string | Date | null; paidAt?: string | Date | null; amount?: number | null; currency?: string | null }> } | undefined)?.payments?.[0];
-  const paymentAlreadyConfirmed = paymentConfirmedOptimistically || ["SUCCESS", "success", "completed", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const paymentAlreadyConfirmed = paymentConfirmedOptimistically
+    || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String(paymentSnapshot?.status ?? ""))
+    || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String((candidate as Candidate | undefined)?.paymentStatus ?? ""));
   const nextAdminStatus = getNextAdminStatus(candidate?.status);
   const previousAdminStatus = getPreviousAdminStatus(candidate?.status);
+  const stageCoherence = (data as { stageCoherence?: {
+    procedureKind?: string;
+    employerSelected?: boolean;
+    guided?: GuidedNextAction;
+    stages?: Array<{ stage: string; label: string; detail: string; clientLabel: string; prerequisites: string[]; current: boolean }>;
+  } } | undefined)?.stageCoherence;
+  const guidedNext: GuidedNextAction = stageCoherence?.guided ?? resolveGuidedNextAdminAction({
+    currentStatus: candidate?.status,
+    paymentConfirmed: paymentAlreadyConfirmed,
+    protocolSigned: Boolean((candidate as any)?.agreementSigned),
+    procedureKind: (stageCoherence?.procedureKind as any) ?? null,
+    visaType: candidate?.projectType,
+    employerSelected: Boolean(stageCoherence?.employerSelected || (candidate as any)?.secondProtocolReady),
+    secondProtocolReady: Boolean((candidate as any)?.secondProtocolReady),
+    secondProtocolSigned: Boolean((candidate as any)?.secondProtocolSigned),
+    checklistPercent: (candidate as any)?.checklistPercent ?? null,
+  });
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
@@ -387,10 +449,33 @@ export function CandidateDetailModal({
   const archivePreDossierMutation = trpc.admin.archiveDuplicateRecord.useMutation({
     onError: (error) => toast({ title: "Nettoyage du pré-dossier impossible", description: `Le dossier lié reste consultable, mais l’ancien pré-dossier n’a pas pu être archivé : ${error.message}`, variant: "destructive" }),
   });
+  const requestPassportPhotoMutation = trpc.adminCandidateManagement.reviewPortrait.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Photo de profil", description: (result as any).message || "Demande enregistrée." });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Demande photo impossible", description: err.message, variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (candidate && openEvaluationEditor) setEvaluationEditorOpen(true);
   }, [candidate, openEvaluationEditor]);
+
+  useEffect(() => {
+    setPortraitPreviewOpen(false);
+  }, [candidateId]);
+
+  // EVAL-AG-{id} = miroir du dossier actif 3M-AGN-{id} : ouvrir uniquement le 3M.
+  useEffect(() => {
+    const redirectId = (data as { redirectToCanonicalAgencyId?: string | null } | undefined)?.redirectToCanonicalAgencyId;
+    if (!redirectId || redirectId === candidateId) return;
+    toast({
+      title: "Dossier actif 3M",
+      description: `${candidate?.folderCode || "EVAL-AG"} est un miroir de préparation. Ouverture du dossier actif ${redirectId.replace(/^agency_/, "3M-AGN-")}.`,
+    });
+    onNavigateToCandidate?.(redirectId);
+  }, [data, candidateId, candidate?.folderCode, onNavigateToCandidate]);
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -421,7 +506,17 @@ export function CandidateDetailModal({
     onSuccess: (result) => {
       setPreDossierActivationError(null);
       setPreDossierConfirmationOpen(false);
-      toast({ title: "Dossier activé", description: result.emailSent ? "Le dossier est actif dans l’espace client et la confirmation a été envoyée." : "Le dossier est actif dans l’espace client ; la confirmation e-mail devra être relancée." });
+      const passportNote = (result as { passportPhotoRequested?: boolean; passportPhotoEmailSent?: boolean }).passportPhotoRequested
+        ? ((result as { passportPhotoEmailSent?: boolean }).passportPhotoEmailSent
+          ? " Photo type passeport exigée : e-mail et notification envoyés (remplace la photo de profil)."
+          : " Photo type passeport exigée dans l’espace client (e-mail à relancer si besoin).")
+        : "";
+      toast({
+        title: "Dossier activé",
+        description: (result.emailSent
+          ? "Le dossier est actif dans l’espace client et la confirmation a été envoyée."
+          : "Le dossier est actif dans l’espace client ; la confirmation e-mail devra être relancée.") + passportNote,
+      });
       onStatusUpdated();
       onClose();
     },
@@ -459,6 +554,39 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Validation hors ligne impossible", description: err.message, variant: "destructive" }),
   });
+  const requestRegistrationInfoMutation = trpc.adminCandidateManagement.requestRegistrationSupplementaryInfo.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: result.alreadySent ? "Demande déjà envoyée" : "Demande d’informations envoyée",
+        description: result.message,
+      });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Demande d’informations impossible", description: err.message, variant: "destructive" }),
+  });
+  const detailUtils = trpc.useUtils();
+  const printReceiptA5 = async (candidateRef: string) => {
+    try {
+      const result = await detailUtils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId: candidateRef });
+      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      if (!printWindow) {
+        toast({ title: "Pop-up bloquée", description: "Autorisez les fenêtres pour imprimer le reçu A5.", variant: "destructive" });
+        return;
+      }
+      printWindow.document.write(result.html);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    } catch (error) {
+      toast({
+        title: "Reçu A5 indisponible",
+        description: error instanceof Error ? error.message : "Impossible de générer le reçu A5.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const confirmPaymentForCandidateMutation = trpc.adminCandidateManagement.confirmPaymentForCandidate.useMutation({
     onSuccess: (result) => {
       setPaymentConfirmedOptimistically(true);
@@ -470,6 +598,9 @@ export function CandidateDetailModal({
             ? `${result.dossierNumber} — paiement validé, mais le reçu et le protocole n’ont pas pu partir : ${result.packageError} Relancez « Envoyer reçu + protocole ».`
             : `${result.dossierNumber} — validation enregistrée pour ${result.fullName}.`,
       });
+      if (result.receiptA5Ready && candidate?.id) {
+        void printReceiptA5(candidate.id);
+      }
       void refetch();
       onStatusUpdated();
     },
@@ -482,8 +613,13 @@ export function CandidateDetailModal({
 
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
-    setPreDossierDestination(candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry);
-    setPreDossierVisaType(candidate.projectType === "À qualifier" ? "" : candidate.projectType);
+    const rawDestination = candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry;
+    setPreDossierDestination(rawDestination ? (getCandidateDestinationOption(rawDestination)?.name ?? rawDestination) : "");
+    setPreDossierVisaType(
+      !candidate.projectType || candidate.projectType === "À qualifier"
+        ? ""
+        : normalizeAdminProcedureType(candidate.projectType),
+    );
     setPreDossierNotes("");
   }, [candidate?.id, candidate?.destinationCountry, candidate?.projectType, isPreDossierAccount]);
 
@@ -505,7 +641,7 @@ export function CandidateDetailModal({
   return (
     <>
       <Dialog open={!evaluationEditorOpen} onOpenChange={onClose}>
-      <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
+      <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl transition-opacity duration-200 sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
         <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
           <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
             <Users className="h-5 w-5" />
@@ -515,47 +651,105 @@ export function CandidateDetailModal({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7" data-testid="candidate360-loading-skeleton" aria-busy="true" aria-live="polite">
+            <div className="space-y-5">
+              <div className="flex items-center gap-4 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-5">
+                <div className="h-16 w-16 animate-pulse rounded-full bg-blue-200" />
+                <div className="flex-1 space-y-3"><div className="h-5 w-56 animate-pulse rounded bg-blue-200" /><div className="h-3 w-32 animate-pulse rounded bg-blue-100" /><div className="h-8 w-44 animate-pulse rounded bg-blue-100" /></div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2"><div className="h-36 animate-pulse rounded-xl bg-white" /><div className="h-36 animate-pulse rounded-xl bg-white" /></div>
+              <div className="h-64 animate-pulse rounded-xl bg-white" />
+            </div>
+            <aside className="space-y-4"><div className="h-52 animate-pulse rounded-xl bg-white" /><div className="h-36 animate-pulse rounded-xl bg-white" /></aside>
+            <div className="col-span-full flex items-center justify-center gap-2 text-sm font-semibold text-blue-800"><RefreshCw className="h-4 w-4 animate-spin" />Synchronisation de la fiche 360°…</div>
           </div>
         ) : candidate ? (
-          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7">
+          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 transition-opacity duration-200 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7">
             <div className="min-w-0 space-y-5">
             {/* En-tête candidat avec avatar et actions */}
             <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
               <div className="flex items-center gap-4">
                 {candidate.avatarUrl ? (
-                  <img
-                    src={candidate.avatarUrl}
-                    alt={candidate.fullName}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-600 shadow-md"
-                  />
+                  <button
+                    type="button"
+                    className="group relative shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                    onClick={() => setPortraitPreviewOpen(true)}
+                    aria-label={`Agrandir la photo de ${candidate.fullName}`}
+                    data-testid="candidate-portrait-preview-trigger"
+                  >
+                    <img
+                      src={candidate.avatarUrl}
+                      alt={candidate.fullName}
+                      className="h-16 w-16 rounded-full border-2 border-blue-600 object-cover shadow-md transition group-hover:brightness-95"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/45 group-hover:opacity-100">
+                      <Eye className="h-5 w-5" />
+                    </span>
+                  </button>
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white shadow-md">
                     {candidate.fullName.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
                   <h3 className="text-lg font-bold text-blue-900">{candidate.fullName}</h3>
-                  <p className="text-sm text-blue-600 font-mono font-semibold">{candidate.folderCode}</p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <p className="text-sm font-mono font-semibold text-blue-600">{candidate.folderCode}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     {candidate.whatsapp && (
                       <a
-                        href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, '')}`}
+                        href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-green-700 text-white text-xs px-2.5 py-1 rounded-md hover:bg-green-800 transition"
+                        className="inline-flex items-center gap-1 rounded-md bg-green-700 px-2.5 py-1 text-xs text-white transition hover:bg-green-800"
                       >
-                        💬 WhatsApp
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                       </a>
                     )}
                     <a
                       href={`mailto:${candidate.email}`}
-                      className="inline-flex items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-md hover:bg-blue-700 transition"
+                      className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs text-white transition hover:bg-blue-700"
                     >
-                      ✉️ Email
+                      <Mail className="h-3.5 w-3.5" /> Email
                     </a>
+                    {candidate.avatarUrl && (
+                      <>
+                        <Button type="button" size="sm" variant="outline" className="h-7 border-blue-200 bg-white px-2 text-xs" onClick={() => setPortraitPreviewOpen(true)} data-testid="candidate-portrait-view">
+                          <Eye className="mr-1 h-3.5 w-3.5" />Voir
+                        </Button>
+                        <a
+                          href={candidate.avatarUrl}
+                          download={`photo-${String(candidate.fullName || "candidat").replace(/[^\w.-]+/g, "_")}.jpg`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-blue-200 bg-white px-2 text-xs font-medium text-slate-800 hover:bg-blue-50"
+                          data-testid="candidate-portrait-download"
+                        >
+                          <Download className="h-3.5 w-3.5" />Télécharger
+                        </a>
+                      </>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 border-amber-300 bg-amber-50 px-2 text-xs text-amber-950 hover:bg-amber-100"
+                      disabled={requestPassportPhotoMutation.isPending}
+                      onClick={() =>
+                        requestPassportPhotoMutation.mutate({
+                          sessionToken,
+                          candidateId,
+                          decision: "request_passport",
+                        })
+                      }
+                      data-testid="candidate-portrait-request-passport"
+                    >
+                      <ImagePlus className="mr-1 h-3.5 w-3.5" />
+                      {requestPassportPhotoMutation.isPending ? "Envoi…" : "Demander photo passeport"}
+                    </Button>
                   </div>
+                  <p className="mt-1.5 max-w-xl text-[11px] leading-4 text-slate-600">
+                    Après activation visa travail : photo type passeport obligatoire (remplace le profil) pour employeurs et agences de placement.
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5">
@@ -563,9 +757,95 @@ export function CandidateDetailModal({
                 <SourceBadge source={candidate.source} />
               </div>
             </div>
+            {portraitPreviewOpen && candidate.avatarUrl && (
+              <div
+                className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Photo de ${candidate.fullName}`}
+                onClick={() => setPortraitPreviewOpen(false)}
+                data-testid="candidate-portrait-modal"
+              >
+                <div className="relative max-h-[90vh] w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{candidate.fullName}</p>
+                      <p className="text-xs text-slate-500">Aperçu photo de profil · {candidate.folderCode}</p>
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setPortraitPreviewOpen(false)} aria-label="Fermer l’aperçu">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <img src={candidate.avatarUrl} alt={`Photo de ${candidate.fullName}`} className="max-h-[70vh] w-full rounded-xl bg-slate-100 object-contain" />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href={candidate.avatarUrl}
+                      download={`photo-${String(candidate.fullName || "candidat").replace(/[^\w.-]+/g, "_")}.jpg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-9 items-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"
+                    >
+                      <Download className="h-4 w-4" />Télécharger la photo
+                    </a>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-amber-300 text-amber-950"
+                      disabled={requestPassportPhotoMutation.isPending}
+                      onClick={() =>
+                        requestPassportPhotoMutation.mutate({
+                          sessionToken,
+                          candidateId,
+                          decision: "request_passport",
+                        })
+                      }
+                    >
+                      <ImagePlus className="mr-2 h-4 w-4" />Demander une photo type passeport
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isPreDossierAccount ? (
               <>
+                {(data as any)?.cockpit ? (
+                  <AdminCandidateCockpitStrip
+                    cockpit={(data as any).cockpit}
+                    onTreatNow={(target) => {
+                      if (target.tab === "evaluation" || target.key === "evaluation_missing" || target.key === "evaluation_pending" || target.key === "request_evaluation" || target.key === "review_evaluation" || target.key === "validate_evaluation") {
+                        setEvaluationEditorOpen(true);
+                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        toast({ title: "Évaluation", description: "Ouvrez ou validez l’évaluation pour lever ce bloqueur." });
+                        return;
+                      }
+                      if (target.tab === "payments" || target.key === "payment_missing" || target.key === "confirm_payment" || target.key === "receipt_missing") {
+                        onOpenOperations("payments", candidate.folderCode);
+                        toast({ title: "Paiements", description: `Module paiements ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "documents" || target.key === "documents_pending") {
+                        onOpenOperations("documents", candidate.folderCode);
+                        toast({ title: "Documents", description: `Module documents ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      if (target.tab === "messages") {
+                        onOpenOperations("emails", candidate.folderCode);
+                        toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
+                        return;
+                      }
+                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      toast({
+                        title: "Traitement pré-dossier",
+                        description:
+                          target.key === "confirm_email" || target.key === "email_unverified"
+                            ? "Confirmez l’e-mail puis poursuivez l’ouverture du dossier."
+                            : "Complétez destination et procédure, puis ouvrez le dossier pour activer le suivi.",
+                      });
+                    }}
+                  />
+                ) : null}
+                <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
@@ -578,8 +858,9 @@ export function CandidateDetailModal({
                   onOfflineValidate={(channel, note) => offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel, note })}
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
+                </div>
                 {candidate?.internalStatus === "nouveau" ? (
-                  <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
+                  <section id="predossier-treatment-panel" className="scroll-mt-24 rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
@@ -590,8 +871,31 @@ export function CandidateDetailModal({
                       <Badge className="w-fit bg-amber-100 text-amber-800">Pré-dossier</Badge>
                     </div>
                     <div className="mt-5 grid gap-4 md:grid-cols-2">
-                      <div><Label htmlFor="predossier-destination-modal">Destination confirmée</Label><Input id="predossier-destination-modal" className="mt-2" value={preDossierDestination} onChange={(event) => setPreDossierDestination(event.target.value)} placeholder="Ex. Canada" maxLength={100} /></div>
-                      <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" maxLength={50} /></div>
+                      <div>
+                        <Label htmlFor="predossier-destination-modal">Pays de destination confirmé</Label>
+                        <div className="mt-2">
+                          <CountrySelect
+                            id="predossier-destination-modal"
+                            value={preDossierDestination}
+                            onChange={setPreDossierDestination}
+                            placeholder="Choisir le pays exact…"
+                            ariaLabel="Pays de destination confirmé"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="predossier-procedure-modal">Type de visa / procédure</Label>
+                        <Select value={preDossierVisaType} onValueChange={setPreDossierVisaType}>
+                          <SelectTrigger id="predossier-procedure-modal" className="mt-2">
+                            <SelectValue placeholder="Choisir la procédure…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROJECT_TYPE_OPTIONS.map((option) => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" maxLength={2000} className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
                     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p></div>
@@ -644,6 +948,18 @@ export function CandidateDetailModal({
               <Candidate360Workspace
                 sessionToken={sessionToken}
                 candidate={candidate as any}
+                siblingProcedures={((candidate as Candidate).siblingProcedures ?? []).map((sibling) => ({
+                  id: sibling.id,
+                  folderCode: sibling.folderCode,
+                  projectType: sibling.projectType,
+                  destinationCountry: sibling.destinationCountry,
+                  paymentStatus: sibling.paymentStatus,
+                  status: sibling.status,
+                  procedureLabel: sibling.procedureLabel,
+                }))}
+                onSelectSibling={(siblingId) => {
+                  onNavigateToCandidate?.(siblingId);
+                }}
                 onRefresh={() => {
                   void refetch();
                   onStatusUpdated();
@@ -668,21 +984,52 @@ export function CandidateDetailModal({
                   <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
                 </div>
               </section>
-              <AdminRegistrationProfile profile={(candidate as any).registrationProfile} />
+              <AdminRegistrationProfile
+                profile={(candidate as any).registrationProfile}
+                fullName={candidate.fullName}
+                email={candidate.email}
+                cvDocument={(data as any)?.cvDocument ?? null}
+                hasCv={Boolean((candidate as any).hasCv || (data as any)?.cvDocument?.documentUrl)}
+                infoRequestAlreadySent={Boolean((candidate as any).registrationInfoRequestSentAt)}
+                isRequestingInfo={requestRegistrationInfoMutation.isPending}
+                onRequestInfo={({ destination, visaType }) =>
+                  requestRegistrationInfoMutation.mutate({
+                    sessionToken,
+                    candidateId,
+                    destination,
+                    visaType,
+                    forceResend: Boolean((candidate as any).registrationInfoRequestSentAt),
+                  })
+                }
+              />
 
-              {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
+              {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5" data-testid="pilotage-decision-panel">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Pilotage guidé</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{candidate.projectType || "Procédure à qualifier"}</p>
+                <p className="mt-1 font-mono text-xs text-blue-800">{candidate.folderCode}</p>
+                {Array.isArray((candidate as any).formerFolderCodes) && (candidate as any).formerFolderCodes.length > 0 && (
+                  <p className="mt-1 text-[11px] text-slate-500">Variante : {(candidate as any).formerFolderCodes.join(" · ")}</p>
+                )}
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Validation manuelle guidée</p>
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3" data-testid="guided-next-action">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Prochaine action utile</p>
                     {paymentAlreadyConfirmed ? (
-                      <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status">
+                      <div className="mt-2 rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900" role="status" data-testid="payment-already-confirmed">
                         <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Paiement déjà confirmé</div>
                         <p className="mt-1 text-xs font-normal text-emerald-800">
-                          {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Le paiement Frais de dossier est déjà au statut SUCCESS."}
+                          {paymentSnapshot?.validatedBy ? `Validé par ${paymentSnapshot.validatedBy}` : "Frais d’ouverture au statut SUCCESS."}
                           {paymentSnapshot?.validatedAt ? ` · ${new Date(paymentSnapshot.validatedAt).toLocaleString("fr-FR")}` : ""}
                         </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 border-emerald-400 bg-white text-emerald-900 hover:bg-emerald-50"
+                          data-testid="print-receipt-a5"
+                          onClick={() => void printReceiptA5(candidate.id)}
+                        >
+                          Imprimer reçu A5 (caisse)
+                        </Button>
                       </div>
                     ) : (
                       <Button
@@ -690,48 +1037,127 @@ export function CandidateDetailModal({
                         onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
                         disabled={confirmPaymentForCandidateMutation.isPending}
                         className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
+                        data-testid="confirm-payment-button"
                       >
                         {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
                       </Button>
                     )}
-                    <p className="mt-1 text-xs leading-5 text-amber-900">Un paiement au statut SUCCESS est automatiquement considéré comme déjà confirmé. Aucune seconde validation ni saisie de code secret n’est requise.</p>
-                    {nextAdminStatus ? (
-                      <Button type="button" onClick={handleAdvanceToNextStep} disabled={updateStatusMutation.isPending} className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800">
-                        <CheckCircle className="mr-2 h-4 w-4" />Valider l’étape suivante : {STATUS_CONFIG[nextAdminStatus].label}
+                    {guidedNext.canAdvance && guidedNext.nextStage ? (
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          updateStatusMutation.mutate({ sessionToken, candidateId, newStatus: guidedNext.nextStage as AdminStatus, notifyClient });
+                        }}
+                        disabled={updateStatusMutation.isPending}
+                        className="mt-2 w-full bg-emerald-700 hover:bg-emerald-800"
+                        data-testid="advance-guided-stage"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />{guidedNext.buttonLabel}
                       </Button>
-                    ) : (
-                      <p className="mt-2 text-sm font-semibold text-emerald-900">Toutes les étapes prévues sont validées.</p>
+                    ) : guidedNext.code === "employer_selection" || guidedNext.code === "protocol_two" ? (
+                      <Button
+                        type="button"
+                        onClick={() => setCandidate360Tab(guidedNext.focusTab || "evaluation")}
+                        className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
+                        data-testid="guided-employer-selection"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />{guidedNext.buttonLabel}
+                      </Button>
+                    ) : paymentAlreadyConfirmed && guidedNext.code === "done" ? (
+                      <p className="mt-2 text-sm font-semibold text-emerald-900">Parcours guidé à jour pour ce dossier.</p>
+                    ) : null}
+                    <p className="mt-2 text-xs leading-5 text-emerald-900" data-testid="guided-next-reason">{guidedNext.reason}</p>
+                    {guidedNext.subStage === "employer_placement" && (
+                      <div className="mt-3">
+                        <AdminEmployerSelectionPanel
+                          sessionToken={sessionToken}
+                          candidateId={candidate.id}
+                          onSaved={() => { void refetch(); onStatusUpdated(); }}
+                        />
+                      </div>
                     )}
-                    {previousAdminStatus && (
-                      <Button type="button" variant="outline" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
+                    {guidedNext.approvalChecklist && (
+                      <ul className="mt-3 space-y-1.5 rounded-lg border border-emerald-100 bg-white/80 p-3" data-testid="approval-prerequisites-checklist">
+                        {guidedNext.approvalChecklist.items.map((item) => (
+                          <li key={item.key} className="flex items-start gap-2 text-xs text-slate-700">
+                            <span className={item.ok ? "text-emerald-700" : item.required ? "text-amber-700" : "text-slate-400"}>
+                              {item.ok ? "✓" : "○"}
+                            </span>
+                            <span>
+                              <span className="font-semibold">{item.label}</span>
+                              {!item.required ? <span className="text-slate-400"> · optionnel</span> : null}
+                              <span className="mt-0.5 block text-slate-500">{item.detail}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {previousAdminStatus && paymentAlreadyConfirmed && (
+                      <Button type="button" variant="outline" data-testid="cancel-last-kanban-step" onClick={() => setRollbackDialogOpen(true)} disabled={revertStatusMutation.isPending} className="mt-2 w-full border-red-300 text-red-700 hover:bg-red-50">
                         <X className="mr-2 h-4 w-4" />Annuler la dernière validation
                       </Button>
                     )}
-                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement et l’ordre des étapes avant toute progression.</p>
+                    <p className="mt-2 text-xs leading-5 text-emerald-900">Le serveur vérifie l’évaluation, le protocole, le paiement, la sélection employeur (visa travail) et l’ordre des étapes — sans réécrire les dossiers actifs hors action explicite.</p>
                   </div>
-                  <Label htmlFor="candidate-status">Statut général</Label>
-                  <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
-                    <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
-                    <SelectContent>{Object.entries(STATUS_CONFIG).map(([key, cfg]) => <SelectItem key={key} value={key}>{cfg.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <label className="flex items-start gap-2 text-sm text-slate-700">
-                    <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
-                    <span>Notifier le candidat par e-mail après la mise à jour.</span>
-                  </label>
-                  <p id="candidate-status-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{updateStatusMutation.isPending ? "Mise à jour du statut en cours." : selectedStatus ? "Le statut est prêt à être enregistré." : "Choisissez un statut pour activer l’enregistrement."}</p>
-                  <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} aria-describedby="candidate-status-guidance" className="w-full bg-blue-700 hover:bg-blue-800">
-                    {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer la décision"}
-                  </Button>
-                </div>
-              </section>}
-
-              {!isPreDossierAccount && <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Centres de traitement</p>
-                <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
-                <div className="mt-4 grid gap-2">
-                  <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
-                  <Button className="justify-start bg-amber-700 text-white hover:bg-amber-800" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4" />Valider le paiement en agence</Button>
-                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
+                  <div className="grid gap-2">
+                    <AdminClientSpacePreview
+                      sessionToken={sessionToken}
+                      candidateId={candidate.id}
+                      candidateName={candidate.fullName}
+                      compact
+                      triggerClassName="justify-start border-indigo-300 bg-indigo-50 text-indigo-950 hover:bg-indigo-100"
+                    />
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
+                      <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("payments")} data-testid="open-cancel-validated-payment">
+                      <FileText className="mr-2 h-4 w-4 text-amber-700" />Paiements et annulation
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("overview")} data-testid="open-360-summary">
+                      <FileText className="mr-2 h-4 w-4 text-indigo-700" />Synthèse & vue d’ensemble
+                    </Button>
+                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("messages")}>
+                      <Mail className="mr-2 h-4 w-4 text-blue-700" />Échanges candidat
+                    </Button>
+                  </div>
+                  <details className="rounded-lg border border-slate-200 bg-white p-3">
+                    <summary className="cursor-pointer text-xs font-semibold text-slate-700">Correction avancée du statut</summary>
+                    <div className="mt-3 space-y-2">
+                      <Label htmlFor="candidate-status">Étape admin (5 étapes · détail métier)</Label>
+                      <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
+                        <SelectTrigger id="candidate-status" className="bg-white" data-testid="admin-status-select"><SelectValue placeholder="Choisir une étape…" /></SelectTrigger>
+                        <SelectContent>
+                          {ADMIN_STATUS_SEQUENCE.map((key) => {
+                            const cfg = STATUS_CONFIG[key];
+                            const catalog = ADMIN_STAGE_CATALOG[key];
+                            return (
+                              <SelectItem key={key} value={key} textValue={cfg.label}>
+                                <div className="flex flex-col gap-0.5 py-0.5">
+                                  <span className="font-semibold">{cfg.label}</span>
+                                  <span className="text-[11px] leading-snug text-slate-500">{catalog.detail}</span>
+                                  <span className="text-[10px] text-indigo-700">Client : {catalog.clientLabel}</span>
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      {selectedStatus && (
+                        <ul className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600" data-testid="admin-status-prerequisites">
+                          {ADMIN_STAGE_CATALOG[selectedStatus].prerequisites.map((item) => (
+                            <li key={item}>• {item}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <label className="flex items-start gap-2 text-sm text-slate-700">
+                        <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
+                        <span>Notifier le candidat par e-mail (libellé phase client, sans jargon admin).</span>
+                      </label>
+                      <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} className="w-full bg-slate-800 hover:bg-slate-900">
+                        {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer l’étape"}
+                      </Button>
+                    </div>
+                  </details>
                 </div>
               </section>}
 
@@ -833,11 +1259,38 @@ function ImportAgencyModal({
     initialStatus: "DOCUMENTS_CHECK" as AdminStatus,
   });
 
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "" : "";
+  const checklistPreview = trpc.admin.previewCountryVisaChecklist.useQuery(
+    {
+      sessionToken,
+      destinationCountry: form.destinationCountry,
+      projectType: form.projectType,
+      documentsReceived: form.documentsReceived || undefined,
+    },
+    {
+      enabled: Boolean(sessionToken && form.destinationCountry && form.projectType),
+      staleTime: 30_000,
+    },
+  );
+
   const importMutation = trpc.admin.importAgencyDossier.useMutation({
     onSuccess: (result) => {
+      const checklistHint = result.procedure?.checklistAdded
+        ? ` Checklist ${result.procedure.checklistLabel || ""} : ${result.procedure.checklistAdded} pièce(s).`
+        : "";
+      const whatsappHint = result.whatsappSent ? " WhatsApp envoyé." : "";
+      const accessHint = result.clientInviteSent
+        ? " Lien d’activation espace client envoyé."
+        : result.clientAccountCreated
+          ? " Compte client créé."
+          : "";
       toast({
-        title: "Dossier créé",
-        description: `${result.message} — Un email de bienvenue a été envoyé.`,
+        title: result.clientAccountCreated
+          ? "Dossier + compte client créés"
+          : result.linkedCandidateId
+            ? "Dossier rattaché au compte client"
+            : "Dossier créé",
+        description: `${result.message}${checklistHint}${whatsappHint}${accessHint} ${result.nextStep || ""}`.trim(),
       });
       onImported();
       onClose();
@@ -853,7 +1306,20 @@ function ImportAgencyModal({
       toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
-    importMutation.mutate({ sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "" : "", ...form });
+    importMutation.mutate({
+      sessionToken,
+      fullName: form.fullName,
+      email: form.email,
+      whatsapp: form.whatsapp,
+      city: form.city,
+      destinationCountry: form.destinationCountry,
+      projectType: form.projectType,
+      documentsReceived: form.documentsReceived || undefined,
+      assignedToAdmin: form.assignedToAdmin || undefined,
+      depositDate: form.depositDate || undefined,
+      initialPaymentStatus: form.initialPaymentStatus,
+      initialStatus: form.initialStatus,
+    });
   };
 
   const setField = (key: keyof typeof form, value: string) =>
@@ -865,8 +1331,9 @@ function ImportAgencyModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-blue-900">
             <Building2 className="w-5 h-5" />
-            Saisir un dossier agence
+            Ajouter un dossier déjà inscrit en agence
           </DialogTitle>
+          <p className="text-sm text-slate-600">Crée le dossier dynamique (pays × visa), rattache le compte client s’il existe, puis vous pourrez scanner et publier les pièces dans son espace.</p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -894,6 +1361,7 @@ function ImportAgencyModal({
                 required
                 maxLength={320}
               />
+              <p className="mt-1 text-xs text-slate-500">Même e-mail que le compte client : le dossier et les documents scannés y seront rattachés.</p>
             </div>
 
             <div>
@@ -925,20 +1393,20 @@ function ImportAgencyModal({
 
             <div>
               <Label htmlFor="destination">Pays de destination *</Label>
-              <Select value={form.destinationCountry} onValueChange={(v) => setField("destinationCountry", v)}>
-                <SelectTrigger id="destination">
-                  <SelectValue placeholder="Choisir un pays..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {DESTINATION_OPTIONS.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <CountrySelect
+                  id="destination"
+                  value={form.destinationCountry}
+                  onChange={(v) => setField("destinationCountry", v)}
+                  placeholder="Choisir le pays exact…"
+                  ariaLabel="Pays de destination"
+                  priority={DESTINATION_OPTIONS}
+                />
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="projectType">Type de projet *</Label>
+              <Label htmlFor="projectType">Type de visa / procédure *</Label>
               <Select value={form.projectType} onValueChange={(v) => setField("projectType", v)}>
                 <SelectTrigger id="projectType">
                   <SelectValue placeholder="Choisir un type..." />
@@ -952,12 +1420,29 @@ function ImportAgencyModal({
             </div>
 
             <div>
-              <Label htmlFor="documentsReceived">Documents déjà remis</Label>
-              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme" maxLength={2000} className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+              <Label htmlFor="documentsReceived">Documents déjà remis en agence</Label>
+              <textarea id="documentsReceived" value={form.documentsReceived} onChange={(e) => setField("documentsReceived", e.target.value)} placeholder="Ex. CV, passeport, diplôme (séparés par des virgules)" maxLength={2000} className="min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" />
+              <p className="mt-1 text-xs text-slate-500">Ces pièces enrichissent la checklist dynamique. Scannez ensuite les fichiers dans le centre documentaire, puis publiez-les vers l’espace client.</p>
             </div>
 
+            {checklistPreview.data?.documents?.length ? (
+              <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3" data-testid="import-checklist-preview">
+                <p className="text-xs font-bold uppercase tracking-wide text-blue-800">
+                  Checklist dynamique · {checklistPreview.data.destination} · {checklistPreview.data.label}
+                </p>
+                <ul className="mt-2 max-h-36 space-y-1 overflow-y-auto text-xs text-slate-700">
+                  {checklistPreview.data.documents.slice(0, 12).map((item) => (
+                    <li key={`${item.source}-${item.documentType}`}>• {item.documentType}</li>
+                  ))}
+                  {checklistPreview.data.documents.length > 12 ? (
+                    <li className="text-slate-500">+ {checklistPreview.data.documents.length - 12} autre(s)</li>
+                  ) : null}
+                </ul>
+              </div>
+            ) : null}
+
             <div>
-              <Label htmlFor="initialPaymentStatus">Statut de paiement initial</Label>
+              <Label htmlFor="initialPaymentStatus">Statut de paiement initial (ce dossier uniquement)</Label>
               <Select value={form.initialPaymentStatus} onValueChange={(v) => setField("initialPaymentStatus", v)}>
                 <SelectTrigger id="initialPaymentStatus"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -966,6 +1451,7 @@ function ImportAgencyModal({
                   <SelectItem value="paid">Payé en agence</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-xs text-slate-500">1 dossier = 1 paiement : un second dossier pour le même client reste non payé tant que vous ne validez pas son propre règlement.</p>
             </div>
 
             <div>
@@ -1034,9 +1520,11 @@ export default function AdminDashboard() {
   const [destinationFilter, setDestinationFilter] = useState("ALL");
   const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
+  const [nextActionFilter, setNextActionFilter] = useState<"ALL" | "high" | "medium" | "low">("ALL");
+  const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState("candidates");
+  const [activeAdminTab, setActiveAdminTab] = useState("pilotage");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1223,12 +1711,13 @@ export default function AdminDashboard() {
     assignedToMe: assignedToMeFilter || undefined,
     sortBy,
   }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, assignedToMeFilter, sortBy]);
-  const { data, isLoading, error: candidateListError, refetch } = trpc.admin.listCandidates.useQuery(
+  const { data, isLoading, error: candidateListError, refetch, dataUpdatedAt, isFetching: isFetchingCandidates } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
       enabled: !!sessionToken,
       placeholderData: (previous) => previous,
       retry: 2,
+      refetchOnWindowFocus: false,
     }
   );
   useEffect(() => {
@@ -1284,10 +1773,10 @@ export default function AdminDashboard() {
   );
 
   useEffect(() => {
-    if (!isLoading && data !== undefined && !lastSyncedAt) {
-      setLastSyncedAt(new Date());
+    if (dataUpdatedAt) {
+      setLastSyncedAt(new Date(dataUpdatedAt));
     }
-  }, [data, isLoading, lastSyncedAt]);
+  }, [dataUpdatedAt]);
 
   const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
     onSuccess: (result) => {
@@ -1386,13 +1875,33 @@ export default function AdminDashboard() {
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
+  const displayCandidates = useMemo(() => {
+    const ranked = candidates.map((candidate) => {
+      const next = determineAdminListNextAction({
+        paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+        procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+        status: candidate.status,
+        activationStatus: candidate.activationStatus,
+        destination: candidate.destinationCountry,
+        visaType: candidate.projectType,
+      });
+      return { candidate, next };
+    }).filter(({ next }) => nextActionFilter === "ALL" || next.urgency === nextActionFilter);
+    if (nextActionSort === "urgency_desc") {
+      const rank = { high: 0, medium: 1, low: 2 } as const;
+      ranked.sort((a, b) => rank[a.next.urgency] - rank[b.next.urgency] || a.next.label.localeCompare(b.next.label, "fr"));
+    } else if (nextActionSort === "label") {
+      ranked.sort((a, b) => a.next.label.localeCompare(b.next.label, "fr"));
+    }
+    return ranked.map(({ candidate }) => candidate);
+  }, [candidates, nextActionFilter, nextActionSort, pendingInlineChanges]);
   const kanbanCandidates: KanbanCandidate[] = candidates.filter((candidate) => Boolean(candidate.id)).map((candidate) => {
     const status = (candidate.status ?? "PENDING_48H") as AdminStatus;
     const referenceDate = candidate.evaluationScheduledAt ?? candidate.lastStatusUpdateAt ?? candidate.updatedAt ?? candidate.createdAt;
     const slaHours = status === "PENDING_48H" ? 48 : status === "PUBLISHED" ? 72 : 120;
     const dueAt = candidate.dueAt ?? (referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null);
     const history = [{ status, label: STATUS_CONFIG[status]?.label ?? status, at: candidate.lastStatusUpdateAt ?? candidate.updatedAt }, ...(candidate.createdAt ? [{ status: "created", label: "Dossier créé", at: candidate.createdAt }] : [])];
-    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history };
+    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history, paymentStatus: candidate.paymentStatus ?? null, activationStatus: candidate.activationStatus ?? null, procedureStep: candidate.procedureStep ?? null, procedureJourney: candidate.procedureJourney ?? null };
   });
   const handleKanbanMove = (candidate: KanbanCandidate, newStatus: AdminStatus) => {
     if (!sessionToken || candidate.status === newStatus || updateKanbanStatusMutation.isPending) return;
@@ -1400,8 +1909,12 @@ export default function AdminDashboard() {
     if (!window.confirm(`Confirmer le déplacement de ${candidate.fullName} vers « ${statusLabel} » ? Le changement sera tracé et pourra déclencher une notification client.`)) return;
     updateKanbanStatusMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus, notifyClient: true });
   };
+  const handleKanbanAdvance = async (candidate: KanbanCandidate, requestedStatus: AdminStatus) => {
+    if (!sessionToken || updateKanbanStatusMutation.isPending || getNextKanbanStatus(candidate.status) !== requestedStatus) return;
+    await updateKanbanStatusMutation.mutateAsync({ sessionToken, candidateId: candidate.id, newStatus: requestedStatus, notifyClient: true });
+  };
   const availableDestinations = data?.availableDestinations || [];
-  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority");
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
   const resetCandidateFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
@@ -1410,6 +1923,8 @@ export default function AdminDashboard() {
     setDestinationFilter("ALL");
     setAssignedToMeFilter(false);
     setSortBy("priority");
+    setNextActionFilter("ALL");
+    setNextActionSort("default");
   };
 
   // Statistiques rapides
@@ -1506,14 +2021,15 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.2),_transparent_34rem),linear-gradient(180deg,_#f8fbff_0%,_#f1f6ff_100%)] text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <main className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
-      <div className="glass-admin-header bg-gradient-to-r from-[#071b3d]/95 via-[#0b2f6f]/95 to-[#123c86]/95 text-white sticky top-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
-        <div className="mx-auto w-full max-w-[1920px] px-4 py-4 sm:px-6 xl:px-8 2xl:px-10 space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="glass-admin-header sticky top-0 z-50 bg-gradient-to-r from-[#071b3d]/96 via-[#0b2f6f]/96 to-[#123c86]/96 text-white shadow-lg backdrop-blur-xl transition-colors duration-300">
+        <div className="mx-auto w-full max-w-[1920px] space-y-3 px-4 py-4 sm:px-6 xl:px-8 2xl:px-10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
-              <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#efd38a]">Administration · 3M TRAVEL AGENCY</p>
+              <h1 className="mt-1 font-[family-name:Sora,Manrope,sans-serif] text-xl font-extrabold tracking-tight sm:text-2xl">Tableau de bord Admin</h1>
+              <p className="mt-1 text-sm text-blue-100/95">Bienvenue, {adminName} — pilotage unifié des dossiers et services.</p>
             </div>
             
             {/* Recherche globale + filtre dossiers */}
@@ -1551,9 +2067,11 @@ export default function AdminDashboard() {
                 {isRefreshing ? "Synchronisation..." : "Actualiser"}
               </Button>
               <span className="text-xs text-blue-100/90" aria-live="polite">
-                {lastSyncedAt
-                  ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
-                  : formatAdminSyncTime(null)}
+                {isFetchingCandidates && !isRefreshing
+                  ? "Synchronisation des dossiers…"
+                  : lastSyncedAt
+                    ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
+                    : formatAdminSyncTime(null)}
               </span>
               <Button
                 variant="outline"
@@ -1669,23 +2187,23 @@ export default function AdminDashboard() {
 
       <div className="mx-auto w-full max-w-[1920px] px-4 py-6 space-y-6 sm:px-6 xl:px-8 2xl:px-10">
         {/* Statistiques */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "Total", value: stats.total, icon: <Users className="w-4 h-4" />, color: "text-gray-700 bg-gray-100" },
-            { label: "Éval. 48h", value: stats.pending, icon: <Clock className="w-4 h-4" />, color: "text-amber-700 bg-amber-100" },
-            { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="w-4 h-4" />, color: "text-blue-700 bg-blue-100" },
-            { label: "Documents", value: stats.documents, icon: <Send className="w-4 h-4" />, color: "text-purple-700 bg-purple-100" },
-            { label: "Soumis", value: stats.submitted, icon: <Globe className="w-4 h-4" />, color: "text-indigo-700 bg-indigo-100" },
-            { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="w-4 h-4" />, color: "text-green-700 bg-green-100" },
+            { label: "Total", value: stats.total, icon: <Users className="h-4 w-4" />, color: "bg-slate-100 text-slate-800" },
+            { label: "Éval. 48h", value: stats.pending, icon: <Clock className="h-4 w-4" />, color: "bg-amber-100 text-amber-800" },
+            { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="h-4 w-4" />, color: "bg-blue-100 text-blue-800" },
+            { label: "Documents", value: stats.documents, icon: <Send className="h-4 w-4" />, color: "bg-violet-100 text-violet-800" },
+            { label: "Soumis", value: stats.submitted, icon: <Globe className="h-4 w-4" />, color: "bg-indigo-100 text-indigo-800" },
+            { label: "Décision favorable", value: stats.approved, icon: <CheckCircle className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-800" },
           ].map((s) => (
-            <Card key={s.label} className="border border-white/90 bg-white/90 shadow-[0_12px_30px_-24px_rgba(7,27,61,0.55)]">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
+            <Card key={s.label} className="premium-surface border-white/90">
+              <CardContent className="p-3.5">
+                <div className="flex items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs text-gray-500">{s.label}</p>
-                    <p className="text-2xl font-bold text-gray-800">{s.value}</p>
+                    <p className="text-xs font-semibold text-slate-600">{s.label}</p>
+                    <p className="mt-0.5 text-2xl font-black tracking-tight text-slate-950">{s.value}</p>
                   </div>
-                  <div className={`p-2 rounded-lg ${s.color}`}>{s.icon}</div>
+                  <div className={`rounded-xl p-2.5 ${s.color}`}>{s.icon}</div>
                 </div>
               </CardContent>
             </Card>
@@ -1693,14 +2211,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sources */}
-        <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
           <span className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-sky-500" />
+            <Globe className="h-3.5 w-3.5 text-sky-600" />
             <strong>{stats.web}</strong> dossiers en ligne
           </span>
-          <span className="text-gray-300">|</span>
+          <span className="text-slate-300">|</span>
           <span className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-orange-500" />
+            <Building2 className="h-3.5 w-3.5 text-orange-600" />
             <strong>{stats.agency}</strong> dossiers agence
           </span>
         </div>
@@ -1792,7 +2310,7 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} /></div>
+        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (
@@ -1895,7 +2413,14 @@ export default function AdminDashboard() {
         <SchedulerDryRunBanner />
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
-          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p><h2 className="text-xl font-black tracking-tight text-slate-950">Espaces de travail</h2></div><p className="text-xs font-medium text-slate-500">Sélectionnez une section pour traiter les demandes manuellement.</p></div>
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p>
+              <div className="premium-gold-rule mt-2" aria-hidden="true" />
+              <h2 className="premium-section-title mt-2 text-xl sm:text-2xl">Espaces de travail</h2>
+            </div>
+            <p className="premium-copy max-w-md text-sm">Sélectionnez une section pour traiter les demandes manuellement.</p>
+          </div>
           <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
             <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
@@ -1905,7 +2430,9 @@ export default function AdminDashboard() {
           </div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
 
-          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+          <TabsContent value="pilotage" className="space-y-6"><AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
+            <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+            <AdminCockpitControlBoard sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminDelayStats sessionToken={sessionToken} />
             <Card className="border-amber-200 bg-amber-50/70">
@@ -1917,7 +2444,7 @@ export default function AdminDashboard() {
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   {[...externalEvaluationCandidates, ...candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL")].slice(0, 8).map((candidate) => (
                     <div key={`declaration-${candidate.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-3">
-                      <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
+                      <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
                       <Button type="button" size="sm" variant="outline" onClick={() => setSelectedCandidateId(candidate.id)} aria-label={`Ouvrir le dossier de ${candidate.fullName}`}>Ouvrir</Button>
                     </div>
                   ))}
@@ -1925,7 +2452,7 @@ export default function AdminDashboard() {
                 {(externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length) === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
               </CardContent>
             </Card>
-            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
+            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onAdvance={handleKanbanAdvance} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
@@ -1997,7 +2524,7 @@ export default function AdminDashboard() {
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    Gestion Documentaire RAG (107 Destinations)
+                    Gestion Documentaire RAG (catalogue documenté)
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Téléchargez et mettez à jour les guides PDF officiels de chaque pays pour enrichir instantanément les connaissances d’Aureol.
@@ -2088,7 +2615,7 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500 text-sm border border-dashed rounded-xl bg-white">
-                    📚 107 guides pays indexés par défaut dans le moteur RAG d’Aureol.
+                    📚 Guides pays du catalogue documenté, indexés par défaut dans le moteur RAG d’Aureol.
                   </div>
                 )}
               </div>
@@ -2328,6 +2855,17 @@ export default function AdminDashboard() {
               <UserCheck className="h-4 w-4" />
               Mes dossiers
             </Button>
+            <Button
+              type="button"
+              variant={activationFilter === "active" ? "default" : "outline"}
+              className={`w-full gap-2 lg:w-auto ${activationFilter === "active" ? "bg-emerald-700 hover:bg-emerald-800" : "border-emerald-200 text-emerald-800 hover:bg-emerald-50"}`}
+              aria-pressed={activationFilter === "active"}
+              onClick={() => setActivationFilter((value) => value === "active" ? "ALL" : "active")}
+              title="Afficher uniquement les comptes activés, considérés comme comptes premium opérationnels"
+            >
+              <Sparkles className="h-4 w-4" />
+              Comptes premium / activés
+            </Button>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
               <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>
               <SelectContent>
@@ -2338,12 +2876,43 @@ export default function AdminDashboard() {
                 <SelectItem value="score_desc">Score décroissant</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={nextActionFilter} onValueChange={(value) => setNextActionFilter(value as typeof nextActionFilter)}>
+              <SelectTrigger className="w-full lg:w-56" aria-label="Filtrer par prochaine action"><Filter className="mr-2 h-4 w-4" /><SelectValue placeholder="Toutes les prochaines actions" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Toutes les prochaines actions</SelectItem>
+                <SelectItem value="high">Critiques / en retard</SelectItem>
+                <SelectItem value="medium">À surveiller</SelectItem>
+                <SelectItem value="low">Faible priorité</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={nextActionSort} onValueChange={(value) => setNextActionSort(value as typeof nextActionSort)}>
+              <SelectTrigger className="w-full lg:w-56" aria-label="Trier par prochaine action"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Ordre des actions" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Ordre des dossiers</SelectItem>
+                <SelectItem value="urgency_desc">Urgence décroissante</SelectItem>
+                <SelectItem value="label">Action par ordre alphabétique</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="sm"
+              variant={nextActionFilter === "high" && nextActionSort === "urgency_desc" ? "default" : "outline"}
+              className={`h-10 gap-2 ${nextActionFilter === "high" && nextActionSort === "urgency_desc" ? "bg-rose-700 hover:bg-rose-800" : "border-rose-200 text-rose-800 hover:bg-rose-50"}`}
+              aria-pressed={nextActionFilter === "high" && nextActionSort === "urgency_desc"}
+              onClick={() => {
+                const active = nextActionFilter === "high" && nextActionSort === "urgency_desc";
+                setNextActionFilter(active ? "ALL" : "high");
+                setNextActionSort(active ? "default" : "urgency_desc");
+              }}
+            >
+              <AlertCircle className="h-4 w-4" /> Urgents d’abord
+            </Button>
             {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
             <Button type="button" variant="outline" onClick={() => setShowArchiveView(true)} className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="h-4 w-4" />Corbeille / doublons</Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2" aria-label="Filtres rapides par étape">
             <span className="px-1 text-xs font-bold uppercase tracking-wide text-blue-800">Accès rapide :</span>
-            {[['PENDING_48H', 'Évaluations à traiter'], ['PUBLISHED', 'Bilans / paiement'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Soumission'], ['APPROVED', 'Visa accordé']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
+            {[['PENDING_48H', 'Évaluation'], ['PUBLISHED', 'Ouverture'], ['DOCUMENTS_CHECK', 'Documents'], ['SUBMITTED', 'Suivi & dépôt'], ['APPROVED', 'Décision favorable']].map(([value, label]) => <Button key={value} type="button" size="sm" variant={statusFilter === value ? "default" : "outline"} onClick={() => setStatusFilter(statusFilter === value ? "ALL" : value)} className="h-8 bg-white text-xs">{label}</Button>)}
           </div>
           {Object.keys(pendingInlineChanges).length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2" role="status"><div className="text-sm text-amber-950"><strong>{Object.keys(pendingInlineChanges).length}</strong> dossier(s) modifié(s) en attente d’enregistrement. Les badges marqués « à enregistrer » ne sont pas encore persistés.</div><div className="flex items-center gap-2"><Button type="button" variant="outline" onClick={() => setPendingInlineChanges({})} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending}>Annuler les changements</Button><Button type="button" onClick={() => setShowPendingSaveConfirm(true)} disabled={updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending} className="bg-amber-700 text-white hover:bg-amber-800">{updateDossierPaymentStateMutation.isPending || updateInlineProcedureMutation.isPending || confirmInlinePaymentMutation.isPending ? "Enregistrement…" : "Enregistrer les modifications"}</Button></div></div>}
         </div>
@@ -2357,7 +2926,7 @@ export default function AdminDashboard() {
             <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-lg border border-amber-200 bg-amber-50 p-3">
               {Object.entries(pendingInlineChanges).map(([candidateId, changes]) => {
                 const candidate = candidates.find((item) => String(item.id) === candidateId);
-                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep}</strong></p>}</div></div>;
+                return <div key={candidateId} className="rounded border border-amber-200 bg-white p-3 text-sm"><p className="font-semibold text-slate-900">{candidate?.folderCode ?? `Dossier ${candidateId}`}{candidate?.fullName ? ` — ${candidate.fullName}` : ""}</p><div className="mt-1 space-y-1 text-slate-700">{changes.paymentStatus && <p>Statut paiement : <strong>{PAYMENT_STATUS_LABELS[changes.paymentStatus] ?? changes.paymentStatus}</strong></p>}{changes.procedureStep && <p>Étape : <strong>{candidate ? procedureStageLabel(candidate, changes.procedureStep) : (PROCEDURE_STEP_LABELS[changes.procedureStep] ?? changes.procedureStep)}</strong></p>}</div></div>;
               })}
             </div>
             <DialogFooter>
@@ -2492,8 +3061,8 @@ export default function AdminDashboard() {
                       type="checkbox"
                       className="h-4 w-4 rounded border-gray-300"
                       aria-label="Sélectionner tous les dossiers affichés"
-                      checked={candidates.length > 0 && candidates.every((candidate) => selectedCandidateIds.has(candidate.id))}
-                      onChange={(event) => setSelectedCandidateIds(event.target.checked ? new Set(candidates.map((candidate) => candidate.id)) : new Set())}
+                      checked={displayCandidates.length > 0 && displayCandidates.every((candidate) => selectedCandidateIds.has(candidate.id))}
+                      onChange={(event) => setSelectedCandidateIds(event.target.checked ? new Set(displayCandidates.map((candidate) => candidate.id)) : new Set())}
                     />
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
@@ -2504,6 +3073,7 @@ export default function AdminDashboard() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Paiement</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Étape de la procédure</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Prochaine action</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</th>
@@ -2513,16 +3083,16 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 12 }).map((_, j) => (
+                      {Array.from({ length: 13 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
                       ))}
                     </tr>
                   ))
-                ) : candidates.length === 0 ? (
+                ) : displayCandidates.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={13} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>{candidateListError ? "Impossible de synchroniser la liste. Réessayez dans quelques secondes." : isLoading ? "Chargement des dossiers…" : "Aucun candidat trouvé"}</p>
                       {hasCandidateFilters && !candidateListError && (
@@ -2531,7 +3101,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  candidates.map((candidate) => (
+                  displayCandidates.map((candidate) => (
                     <tr
                       key={candidate.id}
                       className={`transition-colors cursor-pointer ${pendingInlineChanges[candidate.id] ? "bg-amber-50/90 hover:bg-amber-100/90 ring-1 ring-inset ring-amber-200" : "hover:bg-blue-50/40"}`}
@@ -2547,15 +3117,56 @@ export default function AdminDashboard() {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                          {candidate.folderCode}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
+                            {candidate.folderCode}
+                          </span>
+                          {candidate.isActiveDossier && (
+                            <span data-testid="admin-active-treatment-badge" data-active-dossier-badge="admin-active-dossier-badge" className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                              Dossier actif
+                            </span>
+                          )}
+                          <span className="text-[10px] font-semibold text-slate-700">
+                            {procedureLabelForDossier({ visaType: candidate.projectType, destination: candidate.destinationCountry, dossierNumber: candidate.folderCode })}
+                          </span>
+                          {(candidate.siblingProcedures?.length ?? 0) > 0 && (
+                            <div className="mt-1 space-y-0.5" data-testid="admin-sibling-dossiers">
+                              <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-800">
+                                {candidate.siblingCount ?? (candidate.siblingProcedures!.length + 1)} procédures · même client
+                              </span>
+                              {candidate.siblingProcedures!.slice(0, 3).map((sibling) => (
+                                <button
+                                  key={sibling.id}
+                                  type="button"
+                                  className="block max-w-[220px] truncate text-left text-[10px] font-semibold text-blue-800 underline-offset-2 hover:underline"
+                                  title={`Ouvrir ${sibling.folderCode}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setSelectedCandidateId(sibling.id);
+                                  }}
+                                >
+                                  Aussi : {procedureLabelForDossier({ visaType: sibling.projectType, destination: sibling.destinationCountry, dossierNumber: sibling.folderCode })} · {sibling.folderCode}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          <span className="text-[10px] text-slate-500 lg:hidden">
+                            {determineAdminListNextAction({
+                              paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+                              procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+                              status: candidate.status,
+                              activationStatus: candidate.activationStatus,
+                              destination: candidate.destinationCountry,
+                              visaType: candidate.projectType,
+                            }).label}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
-                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /></div>
+                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /></div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
@@ -2571,10 +3182,104 @@ export default function AdminDashboard() {
                         {(() => { const pendingPayment = pendingInlineChanges[candidate.id]?.paymentStatus; const paymentStatus = pendingPayment ?? candidate.paymentStatus ?? "NOT_PAID"; return <div className="flex min-w-[128px] flex-col items-start gap-1"><span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PAYMENT_STATUS_BADGE_CLASSES[paymentStatus] ?? PAYMENT_STATUS_BADGE_CLASSES.NOT_PAID}`}>{PAYMENT_STATUS_LABELS[paymentStatus] ?? "Non payé"}{pendingPayment && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={paymentStatus} onValueChange={(value) => queueInlineChange(candidate.id, "paymentStatus", value)}><SelectTrigger aria-label={`Modifier le statut du paiement de ${candidate.fullName}`} className="h-8 w-full min-w-[128px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
                       </td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        {(() => { const currentStep = candidate.procedureStep ?? candidate.status; const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep; const procedureStep = pendingStep ?? currentStep; return <div className="flex min-w-[160px] flex-col items-start gap-1"><span className={`inline-flex max-w-[180px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>{PROCEDURE_STEP_LABELS[procedureStep] ?? procedureStep}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}</span><Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}><SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold"><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className="z-[120]">{Object.entries(PROCEDURE_STEP_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>; })()}
+                        {(() => {
+                          const currentStep = candidate.procedureStep ?? candidate.status;
+                          const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep;
+                          const procedureStep = pendingStep ?? currentStep;
+                          const journey = candidate.procedureJourney;
+                          return (
+                            <div className="flex min-w-[180px] flex-col items-start gap-1" data-testid="admin-procedure-journey">
+                              {(journey?.country || journey?.visaType) && (
+                                <span className="max-w-[200px] text-[10px] font-bold leading-tight text-slate-900" data-testid="admin-journey-country-visa">
+                                  {[journey.country, journey.visaType].filter(Boolean).join(" · ")}
+                                </span>
+                              )}
+                              {journey?.phaseLabel && (
+                                <span className="max-w-[200px] text-[10px] font-semibold text-amber-800" data-testid="admin-journey-phase">
+                                  {journey.phaseLabel}
+                                  {typeof journey.agencyDone === "number"
+                                    ? ` · Agence ${journey.agencyDone}/${journey.agencyTotal} · Pays ${journey.countryDone}/${journey.countryTotal}`
+                                    : ""}
+                                </span>
+                              )}
+                              {journey?.stepLabel && (
+                                <span className="max-w-[200px] text-[10px] font-semibold leading-tight text-slate-700" title={journey.journeyTitle}>
+                                  {journey.stepNumber != null ? `${journey.stepNumber}/${journey.stepCount} · ` : ""}{journey.stepLabel}
+                                </span>
+                              )}
+                              {journey?.publishedGuide?.pdfUrl && (
+                                <a
+                                  href={journey.publishedGuide.pdfUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="max-w-[200px] truncate text-[10px] font-semibold text-blue-800 underline underline-offset-2"
+                                  title={journey.publishedGuide.summaryOverview || journey.publishedGuide.title}
+                                  data-testid="admin-published-guide-link"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  Guide PDF · {journey.publishedGuide.programLabel || journey.publishedGuide.title}
+                                </a>
+                              )}
+                              {journey?.publishedGuide?.summaryOverview && (
+                                <span className="max-w-[220px] line-clamp-2 text-[9px] leading-snug text-slate-500" data-testid="admin-guide-summary">
+                                  {journey.publishedGuide.summaryOverview}
+                                </span>
+                              )}
+                              {journey?.nextStepLabel && (
+                                <span className="max-w-[200px] text-[10px] text-slate-500">Suite : {journey.nextStepLabel}</span>
+                              )}
+                              {candidate.journeySla && (
+                                <span
+                                  className={`max-w-[200px] text-[10px] font-semibold ${
+                                    candidate.journeySla.tone === "overdue"
+                                      ? "text-rose-700"
+                                      : candidate.journeySla.tone === "soon"
+                                        ? "text-amber-700"
+                                        : "text-slate-500"
+                                  }`}
+                                  title={candidate.journeySla.explanation}
+                                  data-testid="admin-journey-sla"
+                                >
+                                  {candidate.journeySla.label}
+                                </span>
+                              )}
+                              <span className={`inline-flex max-w-[200px] items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${PROCEDURE_STEP_BADGE_CLASSES[procedureStep] ?? "border-slate-300 bg-slate-100 text-slate-700"}`}>
+                                {procedureStageLabel(candidate, procedureStep)}{pendingStep && <span className="ml-1 text-[9px] font-normal">· à enregistrer</span>}
+                              </span>
+                              <Select value={procedureStep} onValueChange={(value) => queueInlineChange(candidate.id, "procedureStep", value)}>
+                                <SelectTrigger aria-label={`Modifier l’étape de la procédure de ${candidate.fullName}`} className="h-8 w-full min-w-[160px] bg-white text-[11px] font-semibold">
+                                  <SelectValue placeholder="Choisir" />
+                                </SelectTrigger>
+                                <SelectContent className="z-[120]">
+                                  {ADMIN_OPERATIONAL_STAGES.map((value) => (
+                                    <SelectItem key={value} value={value}>{procedureStageLabel(candidate, value)}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        {(() => {
+                          const next = determineAdminListNextAction({
+                            paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+                            procedureStep: pendingInlineChanges[candidate.id]?.procedureStep ?? candidate.procedureStep ?? candidate.status,
+                            status: candidate.status,
+                            activationStatus: candidate.activationStatus,
+                            destination: candidate.destinationCountry,
+                            visaType: candidate.projectType,
+                          });
+                          return (
+                            <span className={`inline-flex max-w-[220px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight transition-colors duration-200 ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`} title={`Priorité ${next.urgency === "high" ? "critique / en retard" : next.urgency === "medium" ? "à surveiller" : "faible"}`}>
+                              {next.urgency === "high" ? <AlertCircle className="h-3.5 w-3.5 shrink-0" /> : next.urgency === "medium" ? <Clock className="h-3.5 w-3.5 shrink-0" /> : <CheckCircle className="h-3.5 w-3.5 shrink-0" />}
+                              {next.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
                         {candidate.scoringTotal !== null ? (
@@ -2646,6 +3351,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="pre-dossiers" className="space-y-6">
             <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
+            <AdminNoEvaluationOutreachPanel sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
@@ -2662,6 +3368,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
+            <AdminContractsReceiptsDesk sessionToken={sessionToken || ""} onOpenCandidate={(candidateId) => setSelectedCandidateId(candidateId)} />
             <AdminPaymentInstructions sessionToken={sessionToken || ""} />
             <AdminPaymentManagement
               sessionToken={sessionToken || ""}

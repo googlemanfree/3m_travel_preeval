@@ -62,11 +62,11 @@ ${methodDetailsHtml(input)}
 <li>Envoyez la preuve (capture d’écran ou reçu) sur WhatsApp au ${escapeHtml(input.agency.whatsappDisplay)}, avec la référence.</li>
 <li>L’agence confirme la réception, puis la suite de votre démarche est activée. Rien n’est activé avant cette confirmation.</li>
 </ol>
-<p style="margin:0 0 16px;font-size:12px;color:#475569">Sécurité : ne réglez que sur les coordonnées indiquées par 3M Travel &amp; Services (ce message et le site officiel), et vérifiez le nom du titulaire avant tout envoi. En cas de doute, appelez-nous.</p>
+<p style="margin:0 0 16px;font-size:12px;color:#475569">Sécurité : ne réglez que sur les coordonnées indiquées par 3M TRAVEL AGENCY (ce message et le site officiel), et vérifiez le nom du titulaire avant tout envoi. En cas de doute, appelez-nous.</p>
 <p style="margin:0 0 6px"><a href="${whatsappHref}" style="display:inline-block;background:#16a34a;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Contacter l’agence sur WhatsApp</a></p>
-<p style="margin:14px 0 0;font-size:12px;color:#94a3b8">3M Travel &amp; Services · ${escapeHtml(input.agency.address)} · ${escapeHtml(input.agency.whatsappDisplay)}${input.agency.phoneDisplay ? ` · ${escapeHtml(input.agency.phoneDisplay)}` : ""} · hello@3mtravelagency.com</p>
+<p style="margin:14px 0 0;font-size:12px;color:#94a3b8">3M TRAVEL AGENCY · ${escapeHtml(input.agency.address)} · ${escapeHtml(input.agency.whatsappDisplay)}${input.agency.phoneDisplay ? ` · ${escapeHtml(input.agency.phoneDisplay)}` : ""} · hello@3mtravelagency.com</p>
 </div>`;
-  return { subject: oneLine(`Régler votre dossier ${reference} — 3M Travel & Services`), html };
+  return { subject: oneLine(`Régler votre dossier ${reference} — 3M TRAVEL AGENCY`), html };
 }
 
 export function buildManualPaymentAgencyEmail(input: { reference: string; kind: "dossier" | "flight"; fullName: string; email: string; amount: number | null; currency: string; method: ManualMethodId; trigger: "chosen" | "online_failed"; adminUrl: string }): { subject: string; html: string } {
@@ -82,7 +82,7 @@ ${table([row("Référence", reference), row("Type", input.kind === "flight" ? "R
 </ol>
 <p style="margin:0"><a href="${escapeHtml(input.adminUrl)}" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Ouvrir l’administration</a></p>
 </div>`;
-  return { subject: oneLine(`[3M Travel] Paiement manuel à suivre — ${reference} — ${MANUAL_METHOD_LABELS[input.method]}`), html };
+  return { subject: oneLine(`[3M TRAVEL AGENCY] Paiement manuel à suivre — ${reference} — ${MANUAL_METHOD_LABELS[input.method]}`), html };
 }
 
 /** Alerte envoyée à l'agence à chaque modification des coordonnées de paiement affichées au public (détection de fraude interne ou de session volée). */
@@ -94,5 +94,5 @@ export function buildPaymentSettingsChangedEmail(input: { adminEmail: string; ch
 <p style="margin:0 0 12px;font-size:14px">Sections modifiées : ${escapeHtml(sections.join(", "))}.</p>
 <p style="margin:0;font-size:13px;color:#475569">Si vous n’êtes pas à l’origine de ce changement, connectez-vous immédiatement à l’administration, rétablissez les coordonnées exactes et changez les mots de passe : des clients pourraient être invités à payer sur un compte frauduleux.</p>
 </div>`;
-  return { subject: "[3M Travel] ALERTE — coordonnées de paiement modifiées", html };
+  return { subject: "[3M TRAVEL AGENCY] ALERTE — coordonnées de paiement modifiées", html };
 }

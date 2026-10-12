@@ -34,7 +34,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     category: "Agence",
-    question: "Comment contacter l'équipe 3M Travel en cas de besoin urgent ?",
+    question: "Comment contacter l'équipe 3M TRAVEL AGENCY en cas de besoin urgent ?",
     answer: "Notre support client est joignable 7j/7 par WhatsApp depuis les boutons flottants de la plateforme, ou par e-mail à hello@3mtravelagency.com. Notre assistant virtuel Aureol est également disponible pour répondre instantanément à vos questions 24h/24.",
   },
 ];
@@ -91,7 +91,7 @@ export function FlightBookingFAQ() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
           Tout ce que vous devez savoir sur nos services de voyage
         </h2>
-        <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
+        <p className="premium-section-lead mx-auto text-center text-base">
           Consultez les réponses aux questions les plus fréquentes concernant la recherche de vols, l'envoi de récapitulatifs et l'accompagnement par nos experts.
         </p>
 

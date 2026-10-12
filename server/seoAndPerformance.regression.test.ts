@@ -153,8 +153,8 @@ describe("référencement de la page d'accueil et des pages de service", () => {
     const organization = graph.find((node) => node["@type"] === "Organization");
     const website = graph.find((node) => node["@type"] === "WebSite");
     expect(organization?.logo?.url).toBe("https://www.3mtravelagency.com/icon-512.png");
-    expect(organization?.name).toBe("3M Travel & Services");
-    expect(website?.name).toBe("3M Travel & Services");
+    expect(organization?.name).toBe("3M TRAVEL AGENCY");
+    expect(website?.name).toBe("3M TRAVEL AGENCY");
     expect(JSON.stringify(graph)).not.toContain("/api/og");
   });
 

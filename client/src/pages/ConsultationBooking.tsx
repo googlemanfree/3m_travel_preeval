@@ -82,7 +82,7 @@ export default function ConsultationBooking() {
             <CheckCircle2 className="h-10 w-10 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-black text-slate-950">Demande envoyée !</h1>
-          <p className="mt-4 text-slate-600">Votre demande de consultation a été reçue. Un conseiller 3M Travel vous contactera à <strong>{form.email}</strong> dans les 24-48 heures ouvrées.</p>
+          <p className="mt-4 text-slate-600">Votre demande de consultation a été reçue. Un conseiller 3M TRAVEL AGENCY vous contactera à <strong>{form.email}</strong> dans les 24-48 heures ouvrées.</p>
           <a href="/" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-bold text-white hover:bg-blue-800">
             Retour à l'accueil
           </a>
@@ -97,7 +97,7 @@ export default function ConsultationBooking() {
         <div className="text-center mb-6">
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Prise de rendez-vous gratuite</span>
           <h1 className="mt-3 text-3xl font-black text-slate-950">Consultation personnalisée</h1>
-          <p className="mt-2 text-slate-500">Un conseiller 3M Travel analysera votre projet et vous guidera vers les meilleures options.</p>
+          <p className="mt-2 text-slate-500">Un conseiller 3M TRAVEL AGENCY analysera votre projet et vous guidera vers les meilleures options.</p>
         </div>
 
         <StepIndicator step={step} total={3} />

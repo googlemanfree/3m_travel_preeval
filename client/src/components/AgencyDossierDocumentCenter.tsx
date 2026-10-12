@@ -25,6 +25,11 @@ function statusClass(status: string): string {
   return "bg-amber-100 text-amber-700 border-amber-200";
 }
 
+function adminSessionToken(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "";
+}
+
 export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: number }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [documentType, setDocumentType] = useState("passport");
@@ -51,6 +56,15 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
     },
     onError: (error) => toast.error(error.message || "Impossible d’ajouter la correction."),
   });
+  const publishMutation = trpc.admin.publishAgencyScannedDocumentsToClient.useMutation({
+    onSuccess: (result) => {
+      const whatsappHint = (result as { whatsappSent?: boolean }).whatsappSent
+        ? " WhatsApp envoyé au client."
+        : "";
+      toast.success(`${result.message}${whatsappHint}`);
+    },
+    onError: (error) => toast.error(error.message || "Publication vers l’espace client impossible."),
+  });
 
   const handleUpload = async () => {
     const file = fileRef.current?.files?.[0];
@@ -72,7 +86,12 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
       if (!response.ok) throw new Error(payload.error || "Le dépôt du document a échoué.");
       if (fileRef.current) fileRef.current.value = "";
       await utils.agencyDossierDocuments.listForAdmin.invalidate({ dossierId });
-      toast.success("Document ajouté au dossier et synchronisé avec l’espace candidat.");
+      const published = Number(payload.publishedToClient || 0);
+      toast.success(
+        published > 0
+          ? "Document scanné et publié dans l’espace client."
+          : "Document ajouté au dossier et synchronisé avec l’espace candidat.",
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Le dépôt du document a échoué.");
     } finally {
@@ -80,16 +99,35 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
     }
   };
 
+  const scannedCount = documentsQuery.data?.documents?.length ?? 0;
+
   return (
-    <Card className="border-slate-700 bg-slate-900/60 text-white">
+    <Card className="border-slate-700 bg-slate-900/60 text-white" data-testid="agency-dossier-document-center">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ScanLine className="h-5 w-5 text-blue-400" />
           Centre documentaire du dossier
         </CardTitle>
-        <p className="text-xs text-slate-400">Les fichiers ajoutés ici sont privés, historisés et visibles par le candidat propriétaire.</p>
+        <p className="text-xs text-slate-400">Scannez les pièces remises en agence : elles sont historisées et publiées dans l’espace client du candidat (checklist dynamique pays × visa).</p>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-800/60 bg-blue-950/40 px-3 py-2">
+          <p className="text-xs text-blue-100">
+            {scannedCount === 0
+              ? "Aucune pièce scannée pour l’instant."
+              : `${scannedCount} pièce${scannedCount > 1 ? "s" : ""} scannée${scannedCount > 1 ? "s" : ""} — publiez-les vers l’espace client en un geste.`}
+          </p>
+          <Button
+            type="button"
+            onClick={() => publishMutation.mutate({ sessionToken: adminSessionToken(), agencyDossierId: dossierId })}
+            disabled={publishMutation.isPending || scannedCount === 0}
+            className="h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+            data-testid="publish-agency-docs-to-client"
+          >
+            {publishMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            {publishMutation.isPending ? "Publication…" : "Publier vers l’espace client"}
+          </Button>
+        </div>
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
           <label className="space-y-1 text-sm text-slate-300">
             <span>Type de pièce</span>

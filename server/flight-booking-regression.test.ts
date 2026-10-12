@@ -20,7 +20,7 @@ describe("flight booking regression contracts", () => {
 
     expect(checkout).toContain('sessionStorage.getItem("3m-selected-flight")');
     expect(checkout).toContain("parsed.flight?.id === params?.flightId");
-    expect(checkout).toContain("selectedFlight ? formatXaf(selectedFlight.totalPrice)");
+    expect(checkout).toContain("selectedFlight ? formatXaf(quotedTotalPrice ?? selectedFlight.totalPrice)");
     expect(checkout).toContain("Aucun vol sélectionné");
     expect(checkout).not.toContain("450 000 FCFA");
   });

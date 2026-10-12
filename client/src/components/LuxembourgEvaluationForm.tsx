@@ -144,7 +144,7 @@ export default function LuxembourgEvaluationForm() {
     let y = 20;
     pdf.setFontSize(18);
     pdf.setTextColor(102, 126, 234);
-    pdf.text("3M Travel Agency — Évaluation Luxembourg", 15, y);
+    pdf.text("3M TRAVEL AGENCY — Évaluation Luxembourg", 15, y);
     y += 10;
     pdf.setFontSize(11);
     pdf.setTextColor(10, 37, 64);

@@ -673,9 +673,9 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "luxembourg-travail",
-    "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html",
+    "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/salarie.html",
     "sourceTitle": "Séjourner au Luxembourg en tant que salarié ressortissant de pays tiers",
-    "consultedOn": "2026-08-27",
+    "consultedOn": "2026-10-10",
     "preparationPoints": [
       "Déclaration préalable du poste à l’ADEM par l’employeur",
       "Demande d’autorisation de séjour temporaire avant l’entrée sur le territoire",
@@ -685,9 +685,9 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "luxembourg-visiteur",
-    "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html",
-    "sourceTitle": "Demander un visa pour l’entrée au Luxembourg en tant que ressortissant de pays tiers",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html",
+    "sourceTitle": "Visiter le Luxembourg — séjour de courte durée",
+    "consultedOn": "2026-10-10",
     "preparationPoints": [
       "Possession d'un titre de voyage en cours de validité",
       "Demande auprès du consulat luxembourgeois ou de la mission représentative",

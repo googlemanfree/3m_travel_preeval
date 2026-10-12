@@ -1,7 +1,7 @@
 ﻿import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { insuranceRequests } from "../../drizzle/schema";
+import { digitalServiceRequests, insuranceRequests } from "../../drizzle/schema";
 import { caseActivityLogs, caseDocuments, cases, caseStatusHistory, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { storageGetSignedUrl } from "../storage";
@@ -94,6 +94,27 @@ export const caseTrackingRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     return db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, departureDate: insuranceRequests.departureDate, returnDate: insuranceRequests.returnDate, coveragePlan: insuranceRequests.coveragePlan, status: insuranceRequests.status, couponFileName: insuranceRequests.couponFileName, attestationFileName: insuranceRequests.attestationFileName, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, ctx.candidate.email)).orderBy(desc(insuranceRequests.createdAt)).limit(50);
+  }),
+
+  /** Demandes 3M Solutions (sites web / digital) — sync statut admin → espace client. */
+  getMyDigitalRequests: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    return db
+      .select({
+        id: digitalServiceRequests.id,
+        reference: digitalServiceRequests.reference,
+        service: digitalServiceRequests.service,
+        status: digitalServiceRequests.status,
+        organization: digitalServiceRequests.organization,
+        message: digitalServiceRequests.message,
+        createdAt: digitalServiceRequests.createdAt,
+        handledAt: digitalServiceRequests.handledAt,
+      })
+      .from(digitalServiceRequests)
+      .where(eq(digitalServiceRequests.email, ctx.candidate.email))
+      .orderBy(desc(digitalServiceRequests.createdAt))
+      .limit(50);
   }),
 
   downloadMyInsuranceCoupon: candidateProcedure.input(z.object({ insuranceRequestId: z.number().int().positive() })).query(async ({ ctx, input }) => {

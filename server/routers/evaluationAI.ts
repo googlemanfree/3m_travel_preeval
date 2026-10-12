@@ -57,7 +57,7 @@ async function analyzeCV(
   weaknesses: string[];
   recommendations: string[];
 }> {
-  const prompt = `Tu es l'Expert Consulaire en Chef de 3M Travel Agency à Yaoundé.
+  const prompt = `Tu es l'Expert Consulaire en Chef de 3M TRAVEL AGENCY à Yaoundé.
 Analyse le profil et le CV du candidat pour un projet de : ${formData.projectType} vers : ${formData.destinationCountry}.
 
 --- PROFIL DU CANDIDAT ---
@@ -125,7 +125,7 @@ async function sendConfirmationEmail(
 ): Promise<void> {
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-      <h2 style="color: #0066cc;">3M Travel Agency</h2>
+      <h2 style="color: #0066cc;">3M TRAVEL AGENCY</h2>
       <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
       <p>Votre CV et votre formulaire d'évaluation ont été enregistrés sous le N° <strong>${esc(dossierNumber)}</strong>.</p>
       <p>Votre <strong>Bilan d'Admissibilité Officiel</strong> sera publié sur votre Espace Client et envoyé par mail dans <strong>48 heures</strong>.</p>
@@ -136,7 +136,7 @@ async function sendConfirmationEmail(
         </a>
       </p>
       <hr />
-      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
+      <p style="font-size: 12px; color: #888;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
     </div>
   `;
 
@@ -158,7 +158,7 @@ async function sendBilanEmail(
 ): Promise<void> {
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-      <h2 style="color: #0066cc;">3M Travel Agency - Bilan Consulaire</h2>
+      <h2 style="color: #0066cc;">3M TRAVEL AGENCY - Bilan Consulaire</h2>
       <p>Bonjour <strong>${esc(fullName)}</strong>,</p>
       <p>L'étude de votre CV est terminée.</p>
 
@@ -189,7 +189,7 @@ async function sendBilanEmail(
         </a>
       </p>
       <hr />
-      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
+      <p style="font-size: 12px; color: #888;">3M TRAVEL AGENCY — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
     </div>
   `;
 

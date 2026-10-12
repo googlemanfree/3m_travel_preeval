@@ -40,7 +40,7 @@ const services: Service[] = [
     name: "Assurance voyage",
     icon: "🛡️",
     color: "bg-green-600",
-    path: "#",
+    path: "/assurance",
     description: "Protection complète",
   },
   {
@@ -48,8 +48,16 @@ const services: Service[] = [
     name: "Traduction Certifiée",
     icon: "📄",
     color: "bg-purple-600",
-    path: "#",
+    path: "/traduction/order",
     description: "Documents officiels",
+  },
+  {
+    id: "digital",
+    name: "3M Solutions",
+    icon: "💻",
+    color: "bg-slate-700",
+    path: "/3m-solutions",
+    description: "Sites web & digital",
   },
   {
     id: "procedures",

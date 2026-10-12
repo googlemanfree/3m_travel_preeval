@@ -3,10 +3,12 @@ import { CreditCard, Building2, CheckCircle, Clock, AlertCircle, LoaderCircle } 
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { openingFeeLabelFromSearch } from '@shared/openingFee';
 import { Button } from '@/components/ui/button';
 import { COMPANY_CONTACTS } from '@/lib/companyContacts';
 
 export default function PaymentMethodSelection() {
+  const amountLabel = openingFeeLabelFromSearch(window.location.search);
   const [, navigate] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState<'online' | 'agency' | null>(null);
@@ -85,7 +87,7 @@ export default function PaymentMethodSelection() {
             Choisissez votre méthode de paiement
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Sélectionnez comment vous souhaitez payer les frais d'évaluation (65 000 XAF)
+            Sélectionnez comment vous souhaitez payer les frais d'ouverture ({amountLabel})
           </p>
         </motion.div>
 
@@ -178,7 +180,7 @@ export default function PaymentMethodSelection() {
 
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-700">
-                <span className="font-semibold">Montant :</span> 65 000 XAF
+                <span className="font-semibold">Montant :</span> {amountLabel}
               </p>
               <p className="text-xs text-gray-600 mt-2">
                 Cartes bancaires, Mobile Money (MTN, Orange)
@@ -246,7 +248,7 @@ export default function PaymentMethodSelection() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Paiement en personne</p>
-                  <p className="text-sm text-gray-600">Versez directement à l'agence 3M Travel</p>
+                  <p className="text-sm text-gray-600">Versez directement à l'agence 3M TRAVEL AGENCY</p>
                 </div>
               </div>
 
@@ -273,7 +275,7 @@ export default function PaymentMethodSelection() {
 
             <div className="bg-green-50 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-700">
-                <span className="font-semibold">Montant :</span> 65 000 XAF
+                <span className="font-semibold">Montant :</span> {amountLabel}
               </p>
               <p className="text-xs text-gray-600 mt-2">
                 Versement en espèces ou par virement bancaire

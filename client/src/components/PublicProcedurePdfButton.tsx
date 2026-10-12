@@ -69,7 +69,7 @@ export function PublicProcedurePdfButton({ destination, updatedAt, portal, langu
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(16);
         pdf.setTextColor(255, 255, 255);
-        pdf.text("3M Travel & Services", left, 13);
+        pdf.text("3M TRAVEL AGENCY", left, 13);
         pdf.setFontSize(10);
         pdf.text(copy.title, left, 20);
         pdf.setDrawColor(244, 185, 66);

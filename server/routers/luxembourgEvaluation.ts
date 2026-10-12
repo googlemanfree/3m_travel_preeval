@@ -82,7 +82,7 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
 
       ${altHtml}
 
-      <p style="margin-top:24px;">Frais d'ouverture de dossier : <strong>65 000 FCFA</strong> (non remboursables).</p>
+      <p style="margin-top:24px;">Frais d'ouverture de dossier : <strong>montant selon votre profil, confirmé par écrit avant paiement</strong> (non remboursables).</p>
 
       <p style="text-align:center;margin:28px 0;">
         <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Luxembourg (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"

@@ -85,7 +85,7 @@ export async function createFinalEvaluationPdf(application: Application, version
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("3M Travel & Services", 48, 16);
+  doc.text("3M TRAVEL AGENCY", 48, 16);
   doc.setFontSize(11);
   doc.text("Bilan d’évaluation préliminaire — document finalisé", 48, 25);
   doc.setTextColor(31, 41, 55);
@@ -118,7 +118,7 @@ export async function createFinalEvaluationPdf(application: Application, version
   if (y > 255) { doc.addPage(); y = 22; }
   doc.setDrawColor(203, 213, 225); doc.line(18, y, 192, y); y += 8;
   doc.setTextColor(100, 116, 139); doc.setFontSize(8);
-  writeParagraph(doc, "Ce bilan est une évaluation indicative établie par 3M Travel & Services. Il ne constitue ni une décision ni une garantie d’immigration délivrée par une autorité publique.", 18, y, 174);
+  writeParagraph(doc, "Ce bilan est une évaluation indicative établie par 3M TRAVEL AGENCY. Il ne constitue ni une décision ni une garantie d’immigration délivrée par une autorité publique.", 18, y, 174);
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(application.dossierNumber || application.id).replace(/[^a-zA-Z0-9_-]/g, "-");
   const stored = await storagePut(`evaluation-bilans/${reference}/bilan-final-v${versionNumber}.pdf`, bytes, "application/pdf");

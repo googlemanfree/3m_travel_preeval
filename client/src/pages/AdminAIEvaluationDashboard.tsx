@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
+import CvDraftPanel from "@/components/CvDraftPanel";
 import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
 import { computeWorkQueue, evaluationIdOf, type WorkQueueKey, type WorkQueueStatus } from "@/lib/adminWorkQueue";
 import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
@@ -179,7 +180,7 @@ function buildPdf(items: DashboardItem[]) {
 
   pdf.setFontSize(16);
   pdf.setTextColor(20, 58, 138);
-  pdf.text("3M Travel & Services — Évaluations complètes", margin, y);
+  pdf.text("3M TRAVEL AGENCY — Évaluations complètes", margin, y);
   y += 7;
   pdf.setFontSize(8);
   pdf.setTextColor(90, 100, 115);
@@ -266,7 +267,7 @@ function initialReviewDraft(item: DashboardItem) {
     "Cette réponse reste une orientation préparatoire. Les conditions applicables seront vérifiées avec vous sur les sources officielles avant toute démarche.",
     "",
     "Cordialement,",
-    "3M Travel & Services",
+    "3M TRAVEL AGENCY",
   ].join("\n");
 }
 
@@ -460,7 +461,7 @@ export default function AdminAIEvaluationDashboard() {
     setEmailPreview({
       fullName: item.fullName,
       email: item.email,
-      subject: `Votre évaluation 3M Travel & Services`,
+      subject: `Votre évaluation 3M TRAVEL AGENCY`,
       body: reviewDraft.trim(),
     });
   };
@@ -486,6 +487,7 @@ export default function AdminAIEvaluationDashboard() {
   const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
 
   const [validationOpenId, setValidationOpenId] = useState<string | null>(null);
+  const [cvDraftOpenId, setCvDraftOpenId] = useState<string | null>(null);
 
   const requestSecondValidation = (item: DashboardItem) => {
     const note = window.prompt("Note de seconde validation (8 caractères minimum) :")?.trim();
@@ -687,14 +689,18 @@ export default function AdminAIEvaluationDashboard() {
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-violet-300 text-violet-900 hover:bg-violet-50" aria-expanded={validationOpenId === item.id} onClick={() => setValidationOpenId(validationOpenId === item.id ? null : item.id)}>
                       <Sparkles className="h-3.5 w-3.5" /> {validationOpenId === item.id ? "Masquer la validation" : "Validation structurée"}
                     </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1 border-sky-300 text-sky-900 hover:bg-sky-50" aria-expanded={cvDraftOpenId === item.id} onClick={() => setCvDraftOpenId(cvDraftOpenId === item.id ? null : item.id)}>
+                      <FileText className="h-3.5 w-3.5" /> {cvDraftOpenId === item.id ? "Masquer le CV assisté" : "CV assisté"}
+                    </Button>
                   </div>
                   {validationOpenId === item.id && <EvaluationValidationPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} />}
+                  {cvDraftOpenId === item.id && <CvDraftPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} defaultCountry={item.destinationCountry} />}
                 </div>
               )}
               {item.type === "evaluation" && !validationStatusById.has(evaluationNumericId(item)) && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p>{item.preparationState === "ready" && <Badge className="bg-violet-100 text-violet-800">Brouillon IA disponible</Badge>}{item.preparationState === "unavailable" && <Badge className="bg-amber-100 text-amber-800">IA indisponible — revue manuelle</Badge>}</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={() => loadProjectTemplate(item)} disabled={Boolean(item.reviewedAt) || !item.projectType || applyResponseTemplate.isPending}>Charger un modèle</Button><Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => requestPreparationRestart(item)} disabled={Boolean(item.reviewedAt) || retryPreparation.isPending}><RefreshCw className={`h-3.5 w-3.5 ${retryPreparation.isPending ? "animate-spin" : ""}`} /> {item.preparationState === "ready" ? "Régénérer le brouillon IA" : "Générer le brouillon IA"}</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)}>Gérer les pièces</Button><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div></div>
                 {item.preparationState === "ready" && item.preparationDraft && <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-700"><p className="font-semibold text-slate-950">Contexte préparatoire interne</p><p className="mt-1 leading-5">{item.preparationDraft.summary}</p>{item.preparationDraft.gapsToClarify.length > 0 && <p className="mt-2 leading-5"><strong>À vérifier :</strong> {item.preparationDraft.gapsToClarify.join(" · ")}</p>}{item.preparationDraft.advisorQuestions.length > 0 && <p className="mt-2 leading-5"><strong>Questions préparées :</strong> {item.preparationDraft.advisorQuestions.join(" · ")}</p>}</div>}
-                {item.luxembourgReview && <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"><p className="font-semibold">Luxembourg — {item.luxembourgReview.label}</p><p className="mt-1 leading-5">{item.luxembourgReview.detail}</p><a href="https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/salarie/salarie-pays-tiers.html" target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">Vérifier la procédure officielle Guichet.lu ↗</a></div>}
+                {item.luxembourgReview && <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950"><p className="font-semibold">Luxembourg — {item.luxembourgReview.label}</p><p className="mt-1 leading-5">{item.luxembourgReview.detail}</p><a href="https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/salarie.html" target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">Vérifier la procédure officielle Guichet.lu ↗</a></div>}
                 {item.preparationState === "unavailable" && <p className="mt-2 text-xs text-amber-800">Le contexte préparatoire n’est pas disponible. La revue manuelle reste possible.</p>}
                 {preparationNotice?.itemId === item.id && <p role="status" className="mt-2 text-xs text-slate-700">{preparationNotice.message}</p>}
                 {item.reviewDeadline && !item.reviewedAt && <p className="mt-1 text-xs text-indigo-800">Échéance interne : {new Date(item.reviewDeadline).toLocaleString("fr-FR")}</p>}

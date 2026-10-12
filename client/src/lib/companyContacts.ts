@@ -14,8 +14,11 @@ export type CompanyOffice = {
   mapQuery: string;
 };
 
+/** Nom public unique affiché sur tout le site (UI, SEO, e-mails clients). */
+export const BRAND_PUBLIC_NAME = "3M TRAVEL AGENCY";
+
 export const COMPANY_PROFILE = {
-  publicName: "3M TRAVEL AGENCY",
+  publicName: BRAND_PUBLIC_NAME,
   legalName: "3M Travel Agency SARL",
   publicEmail: "hello@3mtravelagency.com",
   website: "https://www.3mtravelagency.com",
@@ -38,7 +41,7 @@ export const COMPANY_PROFILE = {
       mapQuery: "Avenue Marché Biyem-Assi, Yaoundé, Cameroun",
     },
     ottawa: {
-      label: "Bureau 3M Travel d’Ottawa, Canada",
+      label: "Bureau 3M TRAVEL AGENCY d’Ottawa, Canada",
       shortLabel: "Ottawa, Canada",
       flag: "🇨🇦",
       whatsappNumber: "16728972999",

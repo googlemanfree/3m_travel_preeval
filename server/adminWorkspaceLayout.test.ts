@@ -12,10 +12,11 @@ describe("poste de pilotage administrateur", () => {
     expect(source).toContain('w-[calc(100vw-1rem)]');
     expect(source).toContain('max-w-[1920px]');
     expect(source).toContain("Poste de pilotage dossier 360°");
-    expect(source).toContain("Décision de procédure");
-    expect(source).toContain("Contrôler les documents");
-    expect(source).toContain("Valider le paiement en agence");
-    expect(source).toContain("Suivre les envois e-mail");
+    expect(source).toContain("Pilotage guidé");
+    expect(source).toContain("Documents du dossier 360°");
+    expect(source).toContain("Synthèse & vue d’ensemble");
+    expect(source).toContain("Échanges candidat");
+    expect(source).toContain("Correction avancée du statut");
   });
 
   it("conserve les six domaines opérationnels de gestion des dossiers", () => {

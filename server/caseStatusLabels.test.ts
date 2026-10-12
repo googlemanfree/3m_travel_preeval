@@ -28,12 +28,10 @@ describe("libellés d'état affichés au candidat", () => {
     }
   });
 
-  it("le libellé opérationnel reste cohérent avec celui de l'administrateur, sauf la formulation à la deuxième personne", () => {
+  it("le libellé opérationnel reste cohérent avec les phases client (catalogue admin)", () => {
     for (const [status, mapped] of Object.entries(CANDIDATE360_LEGACY_STATUS_MAP)) {
-      if (status === "waiting_customer") continue; // « Action attendue du candidat » côté équipe, « de votre part » côté candidat
       expect(clientCaseStatusLabel(status), status).toBe(mapped.label);
     }
-    expect(clientCaseStatusLabel("waiting_customer")).toBe("Action attendue de votre part");
   });
 
   it("couvrent les e-Visa et les assurances", () => {
@@ -44,12 +42,12 @@ describe("libellés d'état affichés au candidat", () => {
   it("une valeur inconnue ou vide devient un texte lisible, jamais un identifiant brut ni une erreur", () => {
     expect(clientCaseStatusLabel("en_attente_de_quelque_chose")).toBe("En attente de quelque chose");
     expect(clientCaseStatusLabel("")).toBe("");
-    expect(clientCaseStatusLabel("  refuse ")).toBe("Dossier à revoir");
+    expect(clientCaseStatusLabel("  refuse ")).toBe("Décision défavorable");
     expect(humanizeStatus("a-b_c")).toBe("A b c");
   });
 
-  it("un refus est formulé sans dureté", () => {
-    expect(clientCaseStatusLabel("refuse")).toBe("Dossier à revoir");
-    expect(clientCaseStatusLabel("rejected")).toBe("Dossier à revoir");
+  it("un refus est formulé clairement sans jargon admin", () => {
+    expect(clientCaseStatusLabel("refuse")).toBe("Décision défavorable");
+    expect(clientCaseStatusLabel("rejected")).toBe("Décision défavorable");
   });
 });

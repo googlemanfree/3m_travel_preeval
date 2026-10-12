@@ -117,11 +117,11 @@ export const adminDashboardStatsRouter = router({
       return {
         success: true,
         data: [
-          { name: "Évaluation 48h", value: stats.pending48h },
-          { name: "Bilan Disponible", value: stats.published },
-          { name: "Collecte Documents", value: stats.documentsCheck },
-          { name: "Soumission Consulaire", value: stats.submitted },
-          { name: "Approuvé", value: stats.approved },
+          { name: "Évaluation", value: stats.pending48h },
+          { name: "Ouverture", value: stats.published },
+          { name: "Documents", value: stats.documentsCheck },
+          { name: "Suivi & dépôt", value: stats.submitted },
+          { name: "Décision favorable", value: stats.approved },
         ],
       };
     } catch (error) {

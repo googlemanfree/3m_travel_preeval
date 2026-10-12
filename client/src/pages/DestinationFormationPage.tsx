@@ -18,10 +18,10 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
 
   useEffect(() => {
     if (!destination) return;
-    document.title = `${destination.name} : formation & travail qualifié | 3M Travel & Services`;
+    document.title = `${destination.name} : formation & travail qualifié | 3M TRAVEL AGENCY`;
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      `${destination.dispositif} Repères sur le visa, les secteurs porteurs et l'accompagnement 3M Travel & Services depuis Yaoundé pour ${destination.name}.`,
+      `${destination.dispositif} Repères sur le visa, les secteurs porteurs et l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé pour ${destination.name}.`,
     );
   }, [destination]);
 
@@ -132,7 +132,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
         </section>
 
         <section className="mt-8 rounded-2xl bg-blue-900 p-6 text-white sm:p-10">
-          <h2 className="text-xl font-black">3M Travel &amp; Services vous accompagne</h2>
+          <h2 className="text-xl font-black">3M TRAVEL AGENCY vous accompagne</h2>
           <p className="mt-3 text-sm leading-6 text-blue-100">
             Évaluation de votre profil, orientation vers la destination la plus réaliste, préparation du dossier et suivi jusqu'à votre installation.
           </p>
@@ -160,7 +160,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
 
         <footer className="mt-8 rounded-2xl bg-amber-50 p-6">
           <p className="text-sm leading-6 text-amber-900">
-            Les niveaux de sélectivité, seuils de salaire et exigences linguistiques évoluent régulièrement selon la politique migratoire de chaque pays. 3M Travel &amp; Services accompagne la préparation des dossiers ; la décision finale relève exclusivement des autorités, employeurs ou établissements de formation du pays visé.
+            Les niveaux de sélectivité, seuils de salaire et exigences linguistiques évoluent régulièrement selon la politique migratoire de chaque pays. 3M TRAVEL AGENCY accompagne la préparation des dossiers ; la décision finale relève exclusivement des autorités, employeurs ou établissements de formation du pays visé.
           </p>
         </footer>
       </div>

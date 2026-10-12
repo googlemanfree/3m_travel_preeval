@@ -222,6 +222,58 @@ export const adminActivationRouter = router({
       return { success: true, candidateId: candidate.id, expiresAt };
     }),
 
+  /**
+   * Confirmation manuelle de l’e-mail côté administration (candidat bloqué sur le lien / OTP).
+   * Trace l’action dans payment_audit_logs pour transparence.
+   */
+  forceConfirmEmail: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      reason: z.string().trim().min(8).max(500),
+      confirmed: z.literal(true),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [candidate] = await db.select({
+        id: candidates.id,
+        fullName: candidates.fullName,
+        email: candidates.email,
+        emailVerified: candidates.emailVerified,
+      }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
+      if (candidate.emailVerified) {
+        throw new TRPCError({ code: "CONFLICT", message: "Cette adresse e-mail est déjà confirmée." });
+      }
+
+      await db.update(candidates).set({
+        emailVerified: true,
+        verificationToken: null,
+        verificationExpiresAt: null,
+        emailOtp: null,
+        emailOtpExpiresAt: null,
+      }).where(eq(candidates.id, candidate.id));
+
+      await db.insert(emailDeliveryLogs).values({
+        recipientEmail: candidate.email,
+        subject: `Confirmation e-mail manuelle — ${candidate.fullName}`,
+        status: "sent",
+        providerMessageId: `admin-force-confirm:${admin.email}:${Date.now()}`,
+        errorDetails: `Confirmé manuellement par ${admin.email}. Motif : ${input.reason.trim()}`,
+      }).catch(() => undefined);
+
+      return {
+        success: true,
+        candidateId: candidate.id,
+        email: candidate.email,
+        confirmedBy: admin.email,
+        reason: input.reason.trim(),
+      };
+    }),
+
   checkAlerts: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
     .query(async ({ input }) => {

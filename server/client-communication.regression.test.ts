@@ -9,7 +9,7 @@ describe("client communication wording", () => {
   it("replaces technical AI wording with human adviser wording", () => {
     const cleaned = sanitizeClientCommunicationText("Rapport généré par IA. Analyse par intelligence artificielle.");
     expect(cleaned).not.toMatch(/\bIA\b|intelligence artificielle/i);
-    expect(cleaned).toContain("conseiller 3M Travel");
+    expect(cleaned).toContain("conseiller 3M TRAVEL AGENCY");
   });
 
   it("sanitizes outgoing report emails (the direct CV-to-email flow evaluateCVWithAI was removed)", () => {

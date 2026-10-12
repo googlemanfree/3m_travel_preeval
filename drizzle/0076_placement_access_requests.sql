@@ -1,0 +1,26 @@
+-- Demandes d'accès structurées (agences de placement + employeurs internationaux)
+CREATE TABLE IF NOT EXISTS placement_access_requests (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  organization_type ENUM('placement_partner', 'employer') NOT NULL,
+  legal_name VARCHAR(255) NOT NULL,
+  registration_number VARCHAR(120) NULL,
+  country VARCHAR(120) NOT NULL,
+  city VARCHAR(120) NULL,
+  website VARCHAR(320) NULL,
+  contact_full_name VARCHAR(255) NOT NULL,
+  contact_email VARCHAR(320) NOT NULL,
+  contact_phone VARCHAR(64) NOT NULL,
+  contact_role VARCHAR(160) NOT NULL,
+  sectors VARCHAR(255) NULL,
+  target_markets VARCHAR(255) NULL,
+  message TEXT NOT NULL,
+  status ENUM('pending', 'under_review', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  organization_id INT NULL,
+  reviewed_at TIMESTAMP NULL,
+  reviewed_by_admin_id INT NULL,
+  review_note TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_placement_access_requests_status (status, organization_type, created_at),
+  INDEX idx_placement_access_requests_email (contact_email, status)
+);

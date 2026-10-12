@@ -42,7 +42,7 @@ export function FloatingActionMenu() {
         onMouseLeave={() => setIsHovered(false)}
         whileHover={prefersReducedMotion ? undefined : { scale: 1.06 }}
         whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
-        aria-label="Contacter 3M Travel sur WhatsApp"
+        aria-label="Contacter 3M TRAVEL AGENCY sur WhatsApp"
         data-testid="floating-whatsapp"
         className="touch-target group relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-green-900/20 ring-2 ring-white/90 transition-shadow hover:shadow-xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 md:h-14 md:w-14"
       >

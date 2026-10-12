@@ -262,6 +262,8 @@ export const candidates = mysqlTable("candidates", {
     "approuve",
     "refuse",
   ]).default("nouveau").notNull(),
+  // Un seul dossier de traitement actif à la fois ; les autres procédures restent inchangées.
+  activeDossierNumber: varchar("activeDossierNumber", { length: 80 }),
   // Déclaration faite par le candidat à la création du compte. Elle indique
   // qu’un résultat d’évaluation existe déjà, sans le présenter comme validé
   // tant que l’équipe n’a pas rapproché le dossier.
@@ -271,6 +273,7 @@ export const candidates = mysqlTable("candidates", {
   evaluationReviewedBy: varchar("evaluationReviewedBy", { length: 320 }),
   evaluationReviewNote: text("evaluationReviewNote"),
   dossierNote: text("dossierNote"),         // Note interne du conseiller
+  activeDossierSetAt: timestamp("activeDossierSetAt"),
   formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
   // Scoring
   scoreResult: varchar("scoreResult", { length: 50 }),
@@ -584,6 +587,16 @@ export const applications = mysqlTable("applications", {
   agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
   agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
   agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
+  // ─── Protocole N°02 — post-sélection (employeur / partenaire) ───
+  secondAgreementReadyAt: timestamp("secondAgreementReadyAt"),
+  secondAgreementReadyBy: varchar("secondAgreementReadyBy", { length: 320 }),
+  secondAgreementEmployer: varchar("secondAgreementEmployer", { length: 255 }),
+  secondAgreementPosition: varchar("secondAgreementPosition", { length: 255 }),
+  secondAgreementFormula: varchar("secondAgreementFormula", { length: 20 }),
+  secondAgreementSigned: boolean("secondAgreementSigned").default(false).notNull(),
+  secondAgreementSignedAt: int("secondAgreementSignedAt"),
+  secondAgreementSignatureName: varchar("secondAgreementSignatureName", { length: 255 }),
+  secondAgreementIpAddress: varchar("secondAgreementIpAddress", { length: 64 }),
   // Processus d'evaluation 48h
   evaluationStartedAt: timestamp("evaluationStartedAt"),
   evaluationCompletedAt: timestamp("evaluationCompletedAt"),

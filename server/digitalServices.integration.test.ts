@@ -87,9 +87,9 @@ describe("cycle complet des demandes 3M Digital", () => {
     sendEmail.mockResolvedValue(undefined);
   });
 
-  it("enregistre une grille de cadrage administrable sans créer de tarif contractuel", async () => {
+  it("refuse les grilles multi-millions et enregistre les packs Afrique 50–600k", async () => {
     const caller = digitalServicesRouter.createCaller(ctx);
-    const pricingJson = JSON.stringify([
+    const oversizedPricingJson = JSON.stringify([
       { title: "Vitrine évolutive", subtitle: "Demande et validation humaine.", launchRange: "3 600 000 – 14 500 000 XAF", annualRange: "1 150 000 – 7 200 000 XAF / an", delivery: "6 à 12 semaines", points: ["Formulaires", "Suivi"] },
       { title: "Plateforme transactionnelle", subtitle: "Services standardisés.", launchRange: "17 500 000 – 66 000 000 XAF", annualRange: "8 100 000 – 47 000 000 XAF / an", delivery: "4 à 9 mois", points: ["Catalogue", "Paiement"] },
     ]);
@@ -106,10 +106,14 @@ describe("cycle complet des demandes 3M Digital", () => {
           { title: "Support", description: "Fiabilité", points: ["Assistance"] },
           { title: "Formation", description: "Compétences", points: ["Ateliers"] },
         ]),
-        pricingJson,
+        pricingJson: oversizedPricingJson,
       },
     });
     expect(outcome).toEqual({ success: true });
-    expect(inserted.at(-1)).toMatchObject({ pricingJson, updatedByAdminEmail: "admin@3mtravelagency.com" });
+    const saved = inserted.at(-1) as { pricingJson: string; updatedByAdminEmail: string };
+    expect(saved.updatedByAdminEmail).toBe("admin@3mtravelagency.com");
+    expect(saved.pricingJson).toContain("50 000");
+    expect(saved.pricingJson).toContain("600 000");
+    expect(saved.pricingJson).not.toContain("14 500 000");
   });
 });

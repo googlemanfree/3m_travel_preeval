@@ -10,10 +10,10 @@ describe("communications client neutres", () => {
     const widget = readProjectFile("client/src/components/AiCopilotWidgetEnhanced.tsx");
     const copilot = readProjectFile("server/routers/aiCopilot.ts");
 
-    expect(widget).toContain("votre guide 3M Travel");
+    expect(widget).toContain("votre guide 3M TRAVEL AGENCY");
     expect(widget).not.toMatch(/assistant IA|assistant virtuel/i);
     expect(copilot).toContain("Ne mentionne jamais l'utilisation d'un outil automatisé");
-    expect(copilot).not.toContain('Tu es le "Copilote IA 3M Travel"');
+    expect(copilot).not.toContain('Tu es le "Copilote IA 3M TRAVEL AGENCY"');
   });
 
   it("emploie des intitulés de rapports et d’évaluation non techniques", () => {

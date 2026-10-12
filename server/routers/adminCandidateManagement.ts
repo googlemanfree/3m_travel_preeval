@@ -2,24 +2,56 @@
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
-import { and, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
-import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
+import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
-import { accountReference, agencyDossierReference, referenceChangeSentence } from "../../shared/caseReference";
+import { accountReference, agencyDossierReference, referenceChangeSentence, resolveClientReference } from "../../shared/caseReference";
+import { buildAdminReferenceView } from "../../shared/adminReferenceDisplay";
+import { buildNoEvaluationOutreachDraft } from "../../shared/noEvaluationOutreach";
+import {
+  buildCandidateCockpit,
+  cockpitQueueCategory,
+  COCKPIT_QUEUE_LABELS,
+  type CockpitQueueCategory,
+} from "../../shared/candidateCockpit";
+import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
+import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
-import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
+import { buildProtocolOneRichText, buildProtocolTwoRichText } from "../../shared/agreementProtocolCountryTemplates";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
+import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
+import { ensureAgencyActiveReference } from "../services/canonicalizeActiveDossier";
+import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
+import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
+import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
+import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
+import {
+  notifyAgreementSignatureReminderWhatsApp,
+  notifyPaymentReceiptApprovedWhatsApp,
+} from "../services/clientWhatsAppNotify";
+import { resendClientAccessLink as issueClientAccessLinkResend } from "../services/resendClientAccessLink";
+import {
+  loadAgencyAgreementSignature,
+  loadAgencyAgreementSignaturesByIds,
+  loadAgencyProtocolSignedDocIds,
+} from "../services/agencyAgreementSignature";
+
+// Contrat partagé de la notification passport_photo_request, utilisé par le service
+// pour publier la demande dans l’espace client et envoyer l’e-mail correspondant.
+const PASSPORT_PHOTO_REQUEST_TITLE = "Photo de profil type passeport requise";
+const PASSPORT_PHOTO_REQUEST_BODY = "Pour une exploitation optimale de votre dossier dans les espaces employeur et agences de placement, merci de déposer une photo de profil type passeport.";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -200,6 +232,11 @@ async function isOpeningPaymentValidated(db: NonNullable<Awaited<ReturnType<type
 async function resolveCandidateIdForAdmin(candidateId: string) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  const accountMatch = /^account_(\d+)$/.exec(candidateId.trim());
+  if (accountMatch) {
+    const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, Number(accountMatch[1]))).limit(1);
+    return candidate?.id ?? null;
+  }
   const reference = parseAdminCandidateReference(candidateId);
   if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
 
@@ -316,6 +353,178 @@ export const adminCandidateManagementRouter = router({
     }),
 
   /**
+   * Tableau de contrôle total : files actionnables dérivées du cockpit
+   * (e-mail, évaluation, paiement, activation, protocole, documents).
+   */
+  listCockpitControlBoard: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const [accountRows, evaluationRows, paidApps, receiptRows, pendingDocs, openingPaymentRows] = await Promise.all([
+        db.select({
+          id: candidates.id,
+          fullName: candidates.fullName,
+          email: candidates.email,
+          emailVerified: candidates.emailVerified,
+          evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+          destination: candidates.destination,
+          visaType: candidates.visaType,
+          preferredDestinations: candidates.preferredDestinations,
+          dossierStatus: candidates.dossierStatus,
+          createdAt: candidates.createdAt,
+          updatedAt: candidates.updatedAt,
+        }).from(candidates).where(isNull(candidates.deletedAt)).orderBy(desc(candidates.updatedAt)).limit(1500),
+        db.select({ email: evaluations.email }).from(evaluations).limit(10000),
+        db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          visaType: applications.visaType,
+          agreementSigned: applications.agreementSigned,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          candidateId: applications.candidateId,
+          dossierStatus: applications.dossierStatus,
+        }).from(applications).where(and(eq(applications.paymentStatus, "SUCCESS"), isNull(applications.deletedAt))).orderBy(desc(applications.paymentValidatedAt)).limit(800),
+        db.select({
+          dossierNumber: paymentReceiptApprovals.dossierNumber,
+          candidateEmail: paymentReceiptApprovals.candidateEmail,
+        }).from(paymentReceiptApprovals).limit(3000),
+        db.select({
+          candidateId: candidateFiles.candidateId,
+          uploadedAt: candidateFiles.uploadedAt,
+        }).from(candidateFiles).where(eq(candidateFiles.status, "uploaded")).limit(5000),
+        // Batch unique des paiements d'ouverture — évite N× getOpeningPaymentRecord.
+        db.select({
+          settingKey: agencySettings.settingKey,
+        }).from(agencySettings).where(like(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}%`)).limit(5000),
+      ]);
+
+      const evaluatedEmails = new Set(evaluationRows.map((row) => row.email.trim().toLowerCase()));
+      const receiptByDossier = new Set(receiptRows.map((row) => row.dossierNumber.trim().toUpperCase()));
+      const receiptByEmail = new Set(receiptRows.map((row) => row.candidateEmail.trim().toLowerCase()));
+      const openingPaidIds = new Set<number>();
+      for (const row of openingPaymentRows) {
+        const id = Number(String(row.settingKey).slice(OPENING_PAYMENT_KEY_PREFIX.length));
+        if (Number.isFinite(id) && id > 0) openingPaidIds.add(id);
+      }
+      const pendingDocCount = new Map<number, number>();
+      const oldestPendingDoc = new Map<number, Date>();
+      for (const doc of pendingDocs) {
+        pendingDocCount.set(doc.candidateId, (pendingDocCount.get(doc.candidateId) ?? 0) + 1);
+        const prev = oldestPendingDoc.get(doc.candidateId);
+        if (!prev || new Date(doc.uploadedAt).getTime() < prev.getTime()) {
+          oldestPendingDoc.set(doc.candidateId, new Date(doc.uploadedAt));
+        }
+      }
+
+      const activeEmails = await loadEmailsWithActiveDossier(db);
+      const items: Array<{
+        id: string;
+        openId: string;
+        reference: string;
+        fullName: string;
+        email: string;
+        category: CockpitQueueCategory;
+        categoryLabel: string;
+        stageLabel: string;
+        nextActionLabel: string;
+        urgency: "high" | "normal" | "low";
+        blockers: string[];
+        progressPercent: number;
+      }> = [];
+
+      for (const account of accountRows) {
+        const emailKey = account.email.trim().toLowerCase();
+        const paymentConfirmed = account.dossierStatus !== "nouveau" || openingPaidIds.has(account.id);
+        const cockpit = buildCandidateCockpit({
+          emailVerified: account.emailVerified,
+          evaluationStatus: account.evaluationDeclarationStatus,
+          hasEvaluationRecord: evaluatedEmails.has(emailKey),
+          paymentConfirmed,
+          receiptApproved: receiptByEmail.has(emailKey),
+          protocolSigned: false,
+          dossierActivated: account.dossierStatus !== "nouveau" || activeEmails.has(emailKey),
+          pendingDocuments: pendingDocCount.get(account.id) ?? 0,
+          destination: account.destination,
+          visaType: account.visaType,
+          workflowStatus: account.dossierStatus,
+        });
+        const category = cockpitQueueCategory(cockpit.stage);
+        if (!category) continue;
+        items.push({
+          id: `account:${account.id}:${category}`,
+          openId: `account_${account.id}`,
+          reference: accountReference(account.id),
+          fullName: account.fullName,
+          email: account.email,
+          category,
+          categoryLabel: COCKPIT_QUEUE_LABELS[category],
+          stageLabel: cockpit.stageLabel,
+          nextActionLabel: cockpit.nextAction.label,
+          urgency: cockpit.nextAction.urgency,
+          blockers: cockpit.blockers.map((item) => item.message),
+          progressPercent: cockpit.progressPercent,
+        });
+      }
+
+      for (const app of paidApps) {
+        const emailKey = app.email.trim().toLowerCase();
+        const receiptApproved = receiptByDossier.has(app.dossierNumber.trim().toUpperCase()) || receiptByEmail.has(emailKey);
+        const cockpit = buildCandidateCockpit({
+          emailVerified: true,
+          evaluationStatus: "validated",
+          hasEvaluationRecord: true,
+          paymentConfirmed: true,
+          receiptApproved,
+          protocolSigned: Boolean(app.agreementSigned),
+          dossierActivated: true,
+          pendingDocuments: app.candidateId ? (pendingDocCount.get(app.candidateId) ?? 0) : 0,
+          destination: app.destination,
+          visaType: app.visaType,
+          workflowStatus: app.dossierStatus,
+        });
+        const category = cockpitQueueCategory(cockpit.stage);
+        if (!category || category === "no_evaluation" || category === "email_unverified") continue;
+        items.push({
+          id: `online:${app.id}:${category}`,
+          openId: `online_${app.id}`,
+          reference: app.dossierNumber,
+          fullName: app.fullName,
+          email: app.email,
+          category,
+          categoryLabel: COCKPIT_QUEUE_LABELS[category],
+          stageLabel: cockpit.stageLabel,
+          nextActionLabel: cockpit.nextAction.label,
+          urgency: cockpit.nextAction.urgency,
+          blockers: cockpit.blockers.map((item) => item.message),
+          progressPercent: cockpit.progressPercent,
+        });
+      }
+
+      const urgencyRank = { high: 0, normal: 1, low: 2 } as const;
+      items.sort((left, right) => urgencyRank[left.urgency] - urgencyRank[right.urgency] || left.fullName.localeCompare(right.fullName, "fr"));
+
+      const counts = {
+        email_unverified: 0,
+        no_evaluation: 0,
+        payment_pending: 0,
+        ready_to_activate: 0,
+        protocol_pending: 0,
+        documents_pending: 0,
+        high: items.filter((item) => item.urgency === "high").length,
+        total: items.length,
+      } as Record<CockpitQueueCategory | "high" | "total", number>;
+      for (const item of items) counts[item.category] += 1;
+
+      return { counts, items: items.slice(0, 200), labels: COCKPIT_QUEUE_LABELS };
+    }),
+
+  /**
    * Pré-comptes redondants : pré-dossiers ou comptes sans dossier propre dont la personne a déjà un dossier actif.
    * Lecture seule (aperçu) : rien n'est modifié tant que l'administrateur n'a pas confirmé la mise en corbeille.
    */
@@ -351,15 +560,25 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
-      const [allAccounts, files, activeEmails] = await Promise.all([
+      const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
         db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
-        db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).limit(5000),
+        db.select({ candidateId: candidateFiles.candidateId, fileType: candidateFiles.fileType }).from(candidateFiles).limit(5000),
+        db.select({ email: evaluations.email, cvFileUrl: evaluations.cvFileUrl }).from(evaluations).limit(10000),
         loadEmailsWithActiveDossier(db),
       ]);
       const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
       const coveredByActiveDossier = allAccounts.length - accounts.length;
       const documentsByCandidate = new Map<number, number>();
-      files.forEach((file) => documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1));
+      const cvByCandidate = new Set<number>();
+      files.forEach((file) => {
+        documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1);
+        if (file.fileType === "cv") cvByCandidate.add(file.candidateId);
+      });
+      const cvByEmail = new Set(
+        evaluationRows
+          .filter((row) => Boolean(row.cvFileUrl?.trim()))
+          .map((row) => row.email.trim().toLowerCase()),
+      );
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
       const openingPaymentByCandidate = new Map<number, OpeningPaymentRecord | null>();
@@ -369,28 +588,351 @@ export const adminCandidateManagementRouter = router({
       return {
         total: filtered.length,
         coveredByActiveDossier,
-        accounts: filtered.map((account) => ({
-          id: account.id,
-          fullName: account.fullName,
-          email: account.email,
-          phone: account.phone,
-          destinationPreference: account.destination,
-          dossierStatus: account.dossierStatus,
-          emailVerified: account.emailVerified,
-          createdAt: account.createdAt,
-          lastLoginAt: account.lastLoginAt,
-          documentsCount: documentsByCandidate.get(account.id) ?? 0,
-          pendingEvaluationReference: account.evaluationDeclarationStatus === "pending_validation" ? "Évaluation externe à valider" : null,
-          evaluationDeclarationStatus: account.evaluationDeclarationStatus,
-          evaluationReviewedAt: account.evaluationReviewedAt,
-          evaluationReviewedBy: account.evaluationReviewedBy,
-          evaluationReviewNote: account.evaluationReviewNote,
-          evaluationValidated: account.evaluationDeclarationStatus === "validated",
-          paymentValidated: Boolean(openingPaymentByCandidate.get(account.id)),
-          paymentProofUrl: openingPaymentByCandidate.get(account.id)?.proofFileUrl ?? null,
-          paymentReference: openingPaymentByCandidate.get(account.id)?.reference ?? null,
-          paymentValidatedAt: openingPaymentByCandidate.get(account.id)?.validatedAt ?? null,
+        accounts: filtered.map((account) => {
+          const emailKey = account.email.trim().toLowerCase();
+          const hasCv = cvByCandidate.has(account.id) || cvByEmail.has(emailKey);
+          const evaluationValidated = account.evaluationDeclarationStatus === "validated";
+          const evaluationPending = account.evaluationDeclarationStatus === "pending_validation";
+          return {
+            id: account.id,
+            fullName: account.fullName,
+            email: account.email,
+            phone: account.phone,
+            destinationPreference: account.destination,
+            dossierStatus: account.dossierStatus,
+            emailVerified: account.emailVerified,
+            createdAt: account.createdAt,
+            lastLoginAt: account.lastLoginAt,
+            documentsCount: documentsByCandidate.get(account.id) ?? 0,
+            hasCv,
+            /** Déclaration / validation hors ligne sans CV en fichier — dossier à ouvrir ensuite selon pays + visa. */
+            evaluationWithoutCv: (evaluationValidated || evaluationPending) && !hasCv,
+            pendingEvaluationReference: evaluationPending ? (hasCv ? "Évaluation externe à valider" : "Évaluation sans CV à valider") : null,
+            evaluationDeclarationStatus: account.evaluationDeclarationStatus,
+            evaluationReviewedAt: account.evaluationReviewedAt,
+            evaluationReviewedBy: account.evaluationReviewedBy,
+            evaluationReviewNote: account.evaluationReviewNote,
+            evaluationValidated,
+            paymentValidated: Boolean(openingPaymentByCandidate.get(account.id)),
+            paymentProofUrl: openingPaymentByCandidate.get(account.id)?.proofFileUrl ?? null,
+            paymentReference: openingPaymentByCandidate.get(account.id)?.reference ?? null,
+            paymentValidatedAt: openingPaymentByCandidate.get(account.id)?.validatedAt ?? null,
+            accountReference: accountReference(account.id),
+            referenceView: buildAdminReferenceView({ candidateId: account.id }),
+            preferredDestinations: (() => {
+              try {
+                const parsed = JSON.parse(account.preferredDestinations || "[]");
+                return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+              } catch {
+                return [] as string[];
+              }
+            })(),
+            visaType: account.visaType,
+          };
+        }),
+      };
+    }),
+
+  /**
+   * Comptes inscrits sans évaluation (ni déclaration validée, ni ligne evaluations).
+   * Sert le brouillon d’e-mail intelligent pays + type d’accompagnement.
+   */
+  listCandidatesWithoutEvaluation: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      search: z.string().trim().max(120).optional().default(""),
+      onlyUnverifiedEmail: z.boolean().optional().default(false),
+    }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const [accountRows, evaluationRows] = await Promise.all([
+        db.select({
+          id: candidates.id,
+          fullName: candidates.fullName,
+          email: candidates.email,
+          phone: candidates.phone,
+          destination: candidates.destination,
+          preferredDestinations: candidates.preferredDestinations,
+          visaType: candidates.visaType,
+          emailVerified: candidates.emailVerified,
+          evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+          dossierStatus: candidates.dossierStatus,
+          createdAt: candidates.createdAt,
+          lastLoginAt: candidates.lastLoginAt,
+        }).from(candidates).where(and(
+          isNull(candidates.deletedAt),
+          eq(candidates.evaluationDeclarationStatus, "not_declared"),
+        )).orderBy(desc(candidates.createdAt)).limit(2000),
+        db.select({ email: evaluations.email }).from(evaluations).limit(10000),
+      ]);
+
+      const evaluatedEmails = new Set(evaluationRows.map((row) => row.email.trim().toLowerCase()));
+      const query = input.search.toLowerCase();
+      const rows = accountRows
+        .filter((account) => !evaluatedEmails.has(account.email.trim().toLowerCase()))
+        .filter((account) => !input.onlyUnverifiedEmail || !account.emailVerified)
+        .filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? "", account.visaType ?? ""].some((value) => value.toLowerCase().includes(query)))
+        .map((account) => {
+          let preferredDestinations: string[] = [];
+          try {
+            const parsed = JSON.parse(account.preferredDestinations || "[]");
+            preferredDestinations = Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+          } catch {
+            preferredDestinations = [];
+          }
+          const accountRef = accountReference(account.id);
+          const draft = buildNoEvaluationOutreachDraft({
+            fullName: account.fullName,
+            accountReference: accountRef,
+            preferredDestinations,
+            destinationPreference: account.destination,
+            visaType: account.visaType,
+            emailVerified: account.emailVerified,
+          });
+          return {
+            id: account.id,
+            fullName: account.fullName,
+            email: account.email,
+            phone: account.phone,
+            emailVerified: account.emailVerified,
+            dossierStatus: account.dossierStatus,
+            createdAt: account.createdAt,
+            lastLoginAt: account.lastLoginAt,
+            accountReference: accountRef,
+            preferredDestinations,
+            destinationPreference: account.destination,
+            visaType: account.visaType,
+            draft,
+          };
+        });
+
+      return { total: rows.length, candidates: rows };
+    }),
+
+  sendNoEvaluationOutreach: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      subject: z.string().trim().min(5).max(255),
+      message: z.string().trim().min(40).max(12_000),
+      confirmed: z.literal(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+
+      const body = input.message.trim();
+      const notificationResult = await db.insert(clientNotifications).values({
+        candidateId: candidate.id,
+        type: "admin_remark",
+        title: input.subject.trim(),
+        body,
+        actionUrl: "/evaluation",
+        isRead: false,
+      });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId: candidate.id,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: body,
+        isRead: false,
+      });
+
+      const emailSent = await sendClientNotificationEmail({
+        to: candidate.email,
+        fullName: candidate.fullName,
+        title: input.subject.trim(),
+        body,
+        actionUrl: "/evaluation",
+        sourceLabel: "3M TRAVEL AGENCY",
+      });
+      if (emailSent && notificationId > 0) {
+        await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+      }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "no_evaluation_outreach_sent",
+        paymentId: candidate.id,
+        candidateEmail: candidate.email,
+        amount: "0",
+        details: `Relance « sans évaluation » envoyée (${emailSent ? "e-mail OK" : "e-mail en échec"}) — objet : ${input.subject.trim()}`,
+      });
+
+      return { success: true, emailSent, sentBy: admin.email, accountReference: accountReference(candidate.id) };
+    }),
+
+  /** Tableau de bord reçus + protocoles pour un pilotage transparent. */
+  contractsReceiptsDesk: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const [awaitingProtocol, paidApps, receiptApprovals, recentAudit] = await Promise.all([
+        db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          destination: applications.destination,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          paymentAmount: applications.paymentAmount,
+          agreementSigned: applications.agreementSigned,
+        }).from(applications).where(and(
+          eq(applications.paymentStatus, "SUCCESS"),
+          eq(applications.agreementSigned, false),
+          isNull(applications.deletedAt),
+        )).orderBy(desc(applications.paymentValidatedAt)).limit(200),
+        db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          agreementSigned: applications.agreementSigned,
+          paymentValidatedAt: applications.paymentValidatedAt,
+          candidateId: applications.candidateId,
+        }).from(applications).where(and(
+          eq(applications.paymentStatus, "SUCCESS"),
+          isNull(applications.deletedAt),
+        )).orderBy(desc(applications.paymentValidatedAt)).limit(300),
+        db.select({
+          dossierNumber: paymentReceiptApprovals.dossierNumber,
+          candidateEmail: paymentReceiptApprovals.candidateEmail,
+          approvedAt: paymentReceiptApprovals.approvedAt,
+        }).from(paymentReceiptApprovals).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(2000),
+        db.select({
+          id: paymentAuditLogs.id,
+          action: paymentAuditLogs.action,
+          candidateEmail: paymentAuditLogs.candidateEmail,
+          adminEmail: paymentAuditLogs.adminEmail,
+          details: paymentAuditLogs.details,
+          createdAt: paymentAuditLogs.createdAt,
+        }).from(paymentAuditLogs).orderBy(desc(paymentAuditLogs.createdAt)).limit(40),
+      ]);
+
+      const receiptByDossier = new Set(receiptApprovals.map((row) => row.dossierNumber.trim().toUpperCase()));
+      const receiptByEmail = new Set(receiptApprovals.map((row) => row.candidateEmail.trim().toLowerCase()));
+
+      const agencyByEmail = new Map<string, { id: number; status: string | null }>();
+      const agencyRows = await db.select({
+        id: agencyDossiers.id,
+        email: agencyDossiers.email,
+        status: agencyDossiers.status,
+      }).from(agencyDossiers).where(isNull(agencyDossiers.deletedAt)).orderBy(desc(agencyDossiers.updatedAt)).limit(2000);
+      for (const row of agencyRows) {
+        const key = row.email.trim().toLowerCase();
+        if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status });
+      }
+
+      const onlinePipeline = paidApps.map((app) => {
+        const agency = agencyByEmail.get(app.email.trim().toLowerCase()) ?? null;
+        const reference = app.candidateId
+          ? resolveClientReference({
+            candidateId: app.candidateId,
+            agencyDossier: agency,
+            onlineApplication: {
+              dossierNumber: app.dossierNumber,
+              paymentStatus: "SUCCESS",
+              paymentValidatedAt: app.paymentValidatedAt,
+            },
+          })
+          : { reference: app.dossierNumber, kind: "active_dossier" as const, formerAccountReference: null, activated: true };
+        const receiptAvailable = receiptByDossier.has(app.dossierNumber.trim().toUpperCase())
+          || receiptByEmail.has(app.email.trim().toLowerCase());
+        return {
+          candidateId: `online_${app.id}`,
+          dossierNumber: app.dossierNumber,
+          workingReference: reference.reference,
+          formerAccountReference: reference.formerAccountReference,
+          fullName: app.fullName,
+          email: app.email,
+          paymentConfirmed: true,
+          receiptAvailable,
+          protocolSigned: Boolean(app.agreementSigned),
+          stage: (!receiptAvailable
+            ? "receipt_pending"
+            : !app.agreementSigned
+              ? "protocol_pending"
+              : "complete") as "receipt_pending" | "protocol_pending" | "complete",
+        };
+      });
+
+      // Dossiers agence payés (walk-in) : même chaîne reçu → protocole, sans rewrite de statut.
+      const paidAgency = await db.select({
+        id: agencyDossiers.id,
+        fullName: agencyDossiers.fullName,
+        email: agencyDossiers.email,
+        status: agencyDossiers.status,
+        updatedAt: agencyDossiers.updatedAt,
+        createdAt: agencyDossiers.createdAt,
+      }).from(agencyDossiers).where(and(
+        eq(agencyDossiers.initialPaymentStatus, "paid"),
+        isNull(agencyDossiers.deletedAt),
+      )).orderBy(desc(agencyDossiers.updatedAt)).limit(200);
+
+      const onlineEmails = new Set(onlinePipeline.map((row) => row.email.trim().toLowerCase()));
+      const agencyOnly = paidAgency.filter((dossier) => !onlineEmails.has(dossier.email.trim().toLowerCase()));
+      const agencyIds = agencyOnly.map((dossier) => dossier.id);
+      const [agencySignatures, agencySignedDocs] = await Promise.all([
+        loadAgencyAgreementSignaturesByIds(db, agencyIds),
+        loadAgencyProtocolSignedDocIds(db, agencyIds),
+      ]);
+      const agencyPipeline = agencyOnly.map((dossier) => {
+        const dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        const receiptAvailable = receiptByDossier.has(dossierNumber.trim().toUpperCase())
+          || receiptByEmail.has(dossier.email.trim().toLowerCase());
+        const protocolSigned = agencySignatures.has(dossier.id) || agencySignedDocs.has(dossier.id);
+        return {
+          candidateId: `agency_${dossier.id}`,
+          dossierNumber,
+          workingReference: dossierNumber,
+          formerAccountReference: null as string | null,
+          fullName: dossier.fullName,
+          email: dossier.email,
+          paymentConfirmed: true,
+          receiptAvailable,
+          protocolSigned,
+          stage: (!receiptAvailable
+            ? "receipt_pending"
+            : !protocolSigned
+              ? "protocol_pending"
+              : "complete") as "receipt_pending" | "protocol_pending" | "complete",
+        };
+      });
+
+      const pipeline = [...onlinePipeline, ...agencyPipeline]
+        .sort((a, b) => Number(a.receiptAvailable) - Number(b.receiptAvailable) || a.fullName.localeCompare(b.fullName, "fr"));
+
+      return {
+        counts: {
+          awaitingProtocol: awaitingProtocol.length + agencyPipeline.filter((row) => !row.receiptAvailable || !row.protocolSigned).length,
+          receiptPending: pipeline.filter((row) => row.stage === "receipt_pending").length,
+          protocolPending: pipeline.filter((row) => row.stage === "protocol_pending").length,
+          complete: pipeline.filter((row) => row.stage === "complete").length,
+        },
+        awaitingProtocol: awaitingProtocol.map((row) => ({
+          candidateId: `online_${row.id}`,
+          dossierNumber: row.dossierNumber,
+          fullName: row.fullName,
+          email: row.email,
+          destination: row.destination,
+          paymentConfirmedAt: row.paymentValidatedAt,
+          paymentAmount: row.paymentAmount,
+          receiptAvailable: receiptByDossier.has(row.dossierNumber.trim().toUpperCase())
+            || receiptByEmail.has(row.email.trim().toLowerCase()),
         })),
+        pipeline: pipeline.slice(0, 80),
+        recentAudit: recentAudit.filter((row) => /receipt|protocol|agreement|no_evaluation|force|reference/i.test(row.action)),
       };
     }),
 
@@ -443,7 +985,7 @@ export const adminCandidateManagementRouter = router({
           evaluationReviewedBy: admin.email,
           evaluationReviewNote: traceNote,
         }).where(eq(candidates.id, candidate.id));
-        const visibleMessage = "Votre évaluation a été validée par un conseiller 3M Travel. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
+        const visibleMessage = "Votre évaluation a été validée par un conseiller 3M TRAVEL AGENCY. Les prochaines étapes de votre dossier sont maintenant accessibles selon votre parcours.";
         const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "evaluation_delivered", title: "Évaluation validée", body: visibleMessage, actionUrl: "/mon-espace", isRead: false });
         const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
         await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: visibleMessage, isRead: false });
@@ -559,7 +1101,7 @@ export const adminCandidateManagementRouter = router({
         title: input.subject.trim(),
         body,
         actionUrl: "/mon-espace",
-        sourceLabel: "3M Travel & Services",
+        sourceLabel: "3M TRAVEL AGENCY",
       });
       if (emailSent && notificationId > 0) {
         await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
@@ -731,6 +1273,28 @@ export const adminCandidateManagementRouter = router({
       if (input.additionalProcedure && !openingPayment?.additionalPayment) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le second paiement d'ouverture doit être validé avant d'ajouter la seconde procédure." });
       }
+      const primaryProcedure = resolveDossierProcedureSelection({
+        destination: input.destination,
+        visaType: input.visaType,
+      });
+      if (!primaryProcedure.recognized || !primaryProcedure.destination) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choisissez un pays de destination reconnu (ex. Canada, France, Luxembourg). Les catégories larges (europe, golfe…) ne suffisent plus pour créer un dossier dynamique.",
+        });
+      }
+      const additionalProcedure = input.additionalProcedure
+        ? resolveDossierProcedureSelection({
+          destination: input.additionalProcedure.destination,
+          visaType: input.additionalProcedure.visaType,
+        })
+        : null;
+      if (additionalProcedure && !additionalProcedure.recognized) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "La seconde destination doit aussi être un pays reconnu du catalogue.",
+        });
+      }
       // Un seul pré-dossier actif est rattaché : comparaison insensible à la casse,
       // exclusion de la corbeille et sélection du plus récent pour éviter un ancien doublon.
       const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
@@ -739,20 +1303,43 @@ export const adminCandidateManagementRouter = router({
         .limit(1);
       const linkedExistingDossier = existing.length > 0;
       let agencyDossierId: number;
+      // 1 dossier = 1 paiement : le frais d’ouverture déjà validé est reporté
+      // sur la ligne agence créée/liée (jamais hérité « par compte » côté client).
       if (linkedExistingDossier) {
         agencyDossierId = existing[0].id;
         await db.update(agencyDossiers).set({
-          destination: input.destination,
-          visaType: input.visaType,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
           status: "en_cours",
+          initialPaymentStatus: "paid",
           assignedToAdmin: admin.email,
           ...(input.adminNotes ? { adminNotes: input.adminNotes } : {}),
         }).where(eq(agencyDossiers.id, agencyDossierId));
       } else {
-        const inserted = await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+        const inserted = await db.insert(agencyDossiers).values({
+          fullName: candidate.fullName,
+          email: candidate.email,
+          phone: candidate.phone ?? "Non renseigné",
+          dateOfBirth: candidate.dateOfBirth,
+          nationality: candidate.nationality,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          status: "nouveau",
+          initialPaymentStatus: "paid",
+          createdByAdmin: admin.email,
+          assignedToAdmin: admin.email,
+          adminNotes: input.adminNotes ?? null,
+          source: "manual_admin",
+        });
         agencyDossierId = Number((inserted as any)[0]?.insertId || 0);
       }
-      await db.update(candidates).set({ dossierStatus: "documents", destination: input.destination as any, visaType: input.visaType, dossierNote: input.adminNotes ?? null }).where(eq(candidates.id, candidate.id));
+      await db.update(candidates).set({
+        dossierStatus: "documents",
+        destination: primaryProcedure.coarseCategory,
+        visaType: primaryProcedure.visaType,
+        preferredDestinations: JSON.stringify(primaryProcedure.preferredDestinations),
+        dossierNote: input.adminNotes ?? null,
+      }).where(eq(candidates.id, candidate.id));
       await db.insert(agencyDossierHistory).values({
         dossierId: agencyDossierId,
         action: "account_linked",
@@ -774,19 +1361,25 @@ export const adminCandidateManagementRouter = router({
       });
       let additionalAgencyDossierId: number | null = null;
       let additionalDossierReference: string | null = null;
-      if (input.additionalProcedure) {
+      if (additionalProcedure) {
+        // Statut « en_cours » (pas « nouveau ») : procédure parallèle intentionnelle,
+        // jamais traitée comme pré-dossier redondant à mettre en corbeille.
+        // Second dossier = second paiement déjà exigé plus haut (additionalPayment).
         const additionalInserted = await db.insert(agencyDossiers).values({
           fullName: candidate.fullName,
           email: candidate.email,
           phone: candidate.phone ?? "Non renseigné",
           dateOfBirth: candidate.dateOfBirth,
           nationality: candidate.nationality,
-          destination: input.additionalProcedure.destination,
-          visaType: input.additionalProcedure.visaType,
-          status: "nouveau",
+          destination: additionalProcedure.destination,
+          visaType: additionalProcedure.visaType,
+          status: "en_cours",
+          initialPaymentStatus: "paid",
           createdByAdmin: admin.email,
           assignedToAdmin: admin.email,
-          adminNotes: input.adminNotes ?? null,
+          adminNotes: input.adminNotes
+            ? `${input.adminNotes}\n[Procédure parallèle intentionnelle · second frais d’ouverture validé]`
+            : "Procédure parallèle intentionnelle (traitement simultané avec le dossier principal) · second frais d’ouverture validé.",
           source: "manual_admin",
         });
         additionalAgencyDossierId = Number((additionalInserted as any)[0]?.insertId || 0);
@@ -796,9 +1389,38 @@ export const adminCandidateManagementRouter = router({
           action: "account_linked",
           changedBy: admin.email || "unknown",
           oldValue: null,
-          newValue: JSON.stringify({ candidateId: candidate.id, email: candidate.email, procedure: 2 }),
-          details: "Seconde procédure rattachée au compte candidat après validation de son second frais d’ouverture",
+          newValue: JSON.stringify({
+            candidateId: candidate.id,
+            email: candidate.email,
+            procedure: 2,
+            parallelWith: dossierReference,
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+          }),
+          details: `Seconde procédure parallèle (${additionalProcedure.destination} · ${additionalProcedure.visaType}) — traitement simultané avec ${dossierReference}`,
         });
+      }
+      // Case opérationnel + checklist pays/procédure dès l’activation (pilotage dynamique immédiat).
+      let checklistSeed: { caseId: number; added: number; label: string } | null = null;
+      try {
+        checklistSeed = await seedCountryProcedureChecklist(db, {
+          source: "agency",
+          id: agencyDossierId,
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          actorAdminId: admin.id ?? null,
+        });
+        if (additionalAgencyDossierId && additionalProcedure) {
+          await seedCountryProcedureChecklist(db, {
+            source: "agency",
+            id: additionalAgencyDossierId,
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+            actorAdminId: admin.id ?? null,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Seed checklist pays/procédure non effectué:", err);
       }
       try {
         await db.insert(clientNotifications).values({
@@ -814,7 +1436,7 @@ export const adminCandidateManagementRouter = router({
       }
       let emailSent = false;
       try {
-        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, input.destination, 0, previousAccountReference);
+        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, dossierReference, primaryProcedure.destination, 0, previousAccountReference);
       } catch (err) {
         console.error("[activatePreDossierAccount] Échec de l'e-mail de confirmation d'activation:", err);
         emailSent = false;
@@ -824,7 +1446,15 @@ export const adminCandidateManagementRouter = router({
       // Jamais bloquant : l'activation est déjà faite, un échec ici est seulement consigné.
       let archivedDuplicates: string[] = [];
       try {
-        const duplicates = (await loadRedundantPreAccounts(db)).filter((item) => item.kind === "agency_pre_dossier" && item.confidence === "certain" && item.activeDossierReference === dossierReference && item.id !== agencyDossierId);
+        const protectedIds = new Set(
+          [agencyDossierId, additionalAgencyDossierId].filter((id): id is number => typeof id === "number" && id > 0),
+        );
+        const duplicates = (await loadRedundantPreAccounts(db)).filter((item) => (
+          item.kind === "agency_pre_dossier"
+          && item.confidence === "certain"
+          && item.activeDossierReference === dossierReference
+          && !protectedIds.has(item.id)
+        ));
         if (duplicates.length > 0) {
           const archivedResult = await archiveRedundantPreAccounts(db, { items: duplicates.map((item) => ({ kind: item.kind, id: item.id })), adminEmail: admin.email || "unknown" });
           archivedDuplicates = archivedResult.archived.map((item) => item.reference);
@@ -832,7 +1462,74 @@ export const adminCandidateManagementRouter = router({
       } catch (err) {
         console.error("[activatePreDossierAccount] Nettoyage des doublons non effectué:", err);
       }
-      return { success: true, emailSent, linkedExistingDossier, agencyDossierId, dossierReference, previousAccountReference, archivedDuplicates, additionalAgencyDossierId, additionalDossierReference };
+      // Dossier activé → référence 3M-AGN obligatoire + suppression du miroir EVAL-AG.
+      try {
+        await ensureAgencyActiveReference(db, {
+          agencyDossierId,
+          email: candidate.email,
+          adminEmail: admin.email,
+        });
+        if (additionalAgencyDossierId) {
+          await ensureAgencyActiveReference(db, {
+            agencyDossierId: additionalAgencyDossierId,
+            email: candidate.email,
+            adminEmail: admin.email,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Canonicalisation 3M-AGN non effectuée:", err);
+      }
+      // Visa travail (tous pays) : photo type passeport obligatoire → remplace le profil.
+      let passportPhotoRequested = false;
+      let passportPhotoEmailSent = false;
+      if (
+        isWorkVisaForPassportPhoto(primaryProcedure.visaType)
+        || isWorkVisaForPassportPhoto(input.visaType)
+        || (additionalProcedure && isWorkVisaForPassportPhoto(additionalProcedure.visaType))
+      ) {
+        try {
+          const passportResult = await flagPassportPhotoRequirement(db, {
+            candidateId: candidate.id,
+            email: candidate.email,
+            fullName: candidate.fullName,
+            currentReason: candidate.avatarVerificationReason,
+            sendEmail: true,
+          });
+          passportPhotoRequested = passportResult.flagged;
+          passportPhotoEmailSent = passportResult.emailSent;
+        } catch (err) {
+          console.error("[activatePreDossierAccount] Exigence photo passeport non enregistrée:", err);
+        }
+      }
+      return {
+        success: true,
+        emailSent,
+        passportPhotoRequested,
+        passportPhotoEmailSent,
+        linkedExistingDossier,
+        agencyDossierId,
+        dossierReference,
+        previousAccountReference,
+        archivedDuplicates,
+        additionalAgencyDossierId,
+        additionalDossierReference,
+        simultaneousProcedures: Boolean(additionalAgencyDossierId),
+        procedure: {
+          destination: primaryProcedure.destination,
+          visaType: primaryProcedure.visaType,
+          checklistKey: primaryProcedure.checklistKey,
+          checklistAdded: checklistSeed?.added ?? 0,
+          checklistLabel: checklistSeed?.label ?? null,
+        },
+        additionalProcedure: additionalProcedure && additionalDossierReference
+          ? {
+            destination: additionalProcedure.destination,
+            visaType: additionalProcedure.visaType,
+            dossierReference: additionalDossierReference,
+            agencyDossierId: additionalAgencyDossierId,
+          }
+          : null,
+      };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
@@ -863,29 +1560,84 @@ export const adminCandidateManagementRouter = router({
 
   reviewPortrait: publicProcedure
     .input(z.object({
-      candidateId: z.string().regex(/^(online|agency)_\d+$/),
-      decision: z.enum(["approve", "reject", "request_new"]),
-      reason: z.string().trim().max(500).optional(),
+      sessionToken: z.string().min(1).max(512).optional(),
+      candidateId: z.string().min(1).max(80),
+      decision: z.enum(["approve", "reject", "request_new", "request_passport"]),
+      reason: z.string().trim().max(1000).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        if (!input.sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte candidat lié à ce dossier." });
-      const [candidate] = await db.select({ id: candidates.id, avatarUrl: candidates.avatarUrl }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      const [candidate] = await db.select({
+        id: candidates.id,
+        avatarUrl: candidates.avatarUrl,
+        email: candidates.email,
+        fullName: candidates.fullName,
+      }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (input.decision === "approve" && !candidate.avatarUrl) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de valider un portrait absent." });
       }
-      const status = input.decision === "approve" ? "verified" : input.decision === "reject" ? "rejected" : "pending";
-      const reason = input.reason || (input.decision === "approve" ? `Portrait validé manuellement par ${admin.email}.` : "Merci de reprendre votre portrait selon les consignes.");
+      if (input.decision === "request_passport") {
+        const result = await flagPassportPhotoRequirement(db, {
+          candidateId,
+          email: candidate.email,
+          fullName: candidate.fullName,
+          currentReason: null,
+          sendEmail: true,
+          customReason: input.reason?.trim() || PASSPORT_PHOTO_REQUEST_BODY,
+        });
+        return {
+          success: true,
+          status: "pending" as const,
+          candidateId,
+          emailSent: result.emailSent,
+          message: result.emailSent
+            ? "Demande de photo type passeport envoyée par e-mail et publiée dans l’espace client."
+            : "Demande publiée dans l’espace client ; l’e-mail n’a pas pu partir.",
+        };
+      }
+      if (input.decision === "request_new") {
+        const reason = input.reason?.trim() || "Merci de reprendre votre portrait selon les consignes (fond uni, visage de face).";
+        await db.update(candidates).set({
+          avatarVerificationStatus: "pending",
+          avatarVerificationReason: reason,
+          avatarVerifiedAt: null,
+        }).where(eq(candidates.id, candidateId));
+        return {
+          success: true,
+          status: "pending" as const,
+          candidateId,
+          emailSent: false,
+          message: "Demande de nouvelle photo enregistrée.",
+        };
+      }
+      const status = input.decision === "approve" ? "verified" : "rejected";
+      const reason = input.reason?.trim()
+        || (input.decision === "approve"
+          ? `Portrait validé manuellement par ${admin.email}.`
+          : "Merci de reprendre votre portrait selon les consignes.");
       await db.update(candidates).set({
         avatarVerificationStatus: status,
         avatarVerificationReason: reason,
         avatarVerifiedAt: input.decision === "approve" ? new Date() : null,
       }).where(eq(candidates.id, candidateId));
-      return { success: true, status, candidateId };
+      return {
+        success: true,
+        status,
+        candidateId,
+        emailSent: false,
+        message: input.decision === "approve" ? "Portrait validé." : "Décision enregistrée.",
+      };
     }),
 
   updateCandidate: publicProcedure
@@ -1205,8 +1957,87 @@ export const adminCandidateManagementRouter = router({
         console.error("[Payment] receipt + protocol package failed", { dossierNumber, error });
       }
 
-      return { success: true, alreadyConfirmed, dossierNumber, candidateEmail, fullName, validatedBy: admin.email || "Administrateur", validatedAt, packageSent, packageError };
+      return {
+        success: true,
+        alreadyConfirmed,
+        dossierNumber,
+        candidateEmail,
+        fullName,
+        validatedBy: admin.email || "Administrateur",
+        validatedAt,
+        packageSent,
+        packageError,
+        receiptA5Ready: true,
+        amount,
+        currency: "XAF",
+      };
     }),
+
+  /** HTML imprimable du reçu A5 (caisse) pour un paiement déjà confirmé. */
+  getPaymentReceiptA5Html: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+    }))
+    .query(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+      let fullName = "";
+      let dossierNumber = "";
+      let amount = "65000";
+      let paymentMethod = "Paiement en agence";
+      let paid = false;
+      let paidAt = new Date();
+
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        paid = application.paymentStatus === "SUCCESS";
+        fullName = application.fullName;
+        dossierNumber = application.dossierNumber;
+        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
+        paymentMethod = application.paymentMethod || "Validation administrative";
+        paidAt = application.paymentDate ?? application.paymentValidatedAt ?? new Date();
+      } else {
+        const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        paid = dossier.initialPaymentStatus === "paid";
+        fullName = dossier.fullName;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        const [latestAudit] = await db.select().from(paymentAuditLogs)
+          .where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email)))
+          .orderBy(desc(paymentAuditLogs.createdAt))
+          .limit(1);
+        const audited = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") : "";
+        amount = audited || "65000";
+        paymentMethod = "Espèces / Mobile Money — agence";
+        paidAt = dossier.lastStatusChangeAt ?? dossier.updatedAt ?? new Date();
+      }
+
+      if (!paid) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant d’imprimer le reçu A5." });
+      }
+
+      const html = generateReceiptA5HTML({
+        receiptNumber: `REC-A5-${dossierNumber.replace(/[^A-Z0-9-]/gi, "")}`,
+        date: paidAt,
+        time: paidAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" }),
+        candidateName: fullName,
+        amount,
+        currency: "XAF",
+        paymentMethod,
+        agentName: admin.fullName || admin.email || "Conseiller 3M",
+        agencyLocation: "Yaoundé — Biyem-Assi",
+        description: `Frais de dossier ${dossierNumber}`,
+      });
+
+      return { success: true, dossierNumber, html };
+    }),
+
   /** Envoie (ou renvoie) le reçu et le Protocole d'accord N°01 ensemble, dans un seul e-mail, pour un paiement déjà confirmé. */
   sendReceiptAndProtocol: publicProcedure
     .input(z.object({
@@ -1236,6 +2067,8 @@ export const adminCandidateManagementRouter = router({
 
       let dossierNumber = input.candidateId;
       let candidateEmail = "";
+      let fullName = "";
+      let phone: string | null = null;
       let amount = "65000";
       let currency = "XAF";
       if (reference.source === "agency") {
@@ -1244,6 +2077,8 @@ export const adminCandidateManagementRouter = router({
         if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
         dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
         candidateEmail = dossier.email;
+        fullName = dossier.fullName;
+        phone = dossier.phone || null;
         const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
         amount = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") || amount : amount;
       } else {
@@ -1252,19 +2087,105 @@ export const adminCandidateManagementRouter = router({
         if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord le paiement avant de signer le reçu." });
         dossierNumber = application.dossierNumber;
         candidateEmail = application.email;
+        fullName = application.fullName;
+        phone = application.whatsappNumber || null;
         amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
         currency = application.paymentCurrency ?? currency;
       }
       if (!candidateEmail) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
 
+      const [linkedCandidate] = await db.select({ id: candidates.id, phone: candidates.phone, fullName: candidates.fullName }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1);
+      if (!phone) phone = linkedCandidate?.phone || null;
+      if (!fullName) fullName = linkedCandidate?.fullName || candidateEmail;
+
       const approvedAt = new Date();
       const approvedByEmail = admin.email || "Administrateur";
       const approvedByName = approvedByEmail;
-      const signatureLabel = `3M Travel & Services · ${approvedByName}`;
+      const signatureLabel = `3M TRAVEL AGENCY · ${approvedByName}`;
       const signatureHash = createReceiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount, currency, approvedByEmail, approvedAt });
       const [approval] = await db.insert(paymentReceiptApprovals).values({ source: reference.source, paymentId: reference.id, dossierNumber, candidateEmail, amount: `${amount} ${currency}`, currency, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash }).$returningId();
       await db.insert(paymentAuditLogs).values({ adminName: approvedByName, adminEmail: approvedByEmail, action: "receipt_approved_signed", paymentId: reference.id, candidateEmail, amount: `${amount} ${currency}`, details: `Reçu validé et signé électroniquement pour ${dossierNumber}. Empreinte ${signatureHash}.` });
-      return { success: true, approvalId: Number(approval?.id ?? 0), dossierNumber, approvedByName, approvedByEmail, approvedAt, signatureLabel, signatureHash };
+      // Notification durable + WhatsApp « au mieux » — n’écrit pas le statut du dossier.
+      let whatsappSent = false;
+      let whatsappSkippedReason: string | null = null;
+      try {
+        if (linkedCandidate?.id) {
+          await db.insert(clientNotifications).values({
+            candidateId: linkedCandidate.id,
+            type: "payment_receipt_approved",
+            title: "Reçu de paiement validé",
+            body: `Votre reçu pour le dossier ${dossierNumber} a été signé par l’agence (${amount} ${currency}). Consultez votre e-mail ou demandez le reçu caisse A5 au comptoir.`,
+            actionUrl: "/mon-espace?section=overview",
+            isRead: false,
+          });
+        }
+        const wa = await notifyPaymentReceiptApprovedWhatsApp({
+          phone,
+          candidateName: fullName,
+          dossierNumber,
+          amount,
+          currency,
+        });
+        whatsappSent = wa.sent;
+        whatsappSkippedReason = wa.sent ? null : (wa.error || "WhatsApp non envoyé");
+        if (wa.sent) {
+          await db.insert(paymentAuditLogs).values({
+            adminName: approvedByName,
+            adminEmail: approvedByEmail,
+            action: "receipt_approved_whatsapp",
+            paymentId: reference.id,
+            candidateEmail,
+            amount: `${amount} ${currency}`,
+            details: `WhatsApp reçu signé envoyé pour ${dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+          });
+        }
+      } catch (notifyError) {
+        console.warn("[approvePaymentReceipt] client notification / WhatsApp skipped", notifyError);
+        whatsappSkippedReason = notifyError instanceof Error ? notifyError.message : "Notification ignorée";
+      }
+      return {
+        success: true,
+        approvalId: Number(approval?.id ?? 0),
+        dossierNumber,
+        approvedByName,
+        approvedByEmail,
+        approvedAt,
+        signatureLabel,
+        signatureHash,
+        whatsappSent,
+        whatsappSkippedReason,
+      };
+    }),
+
+  /** Renvoie le lien d’accès espace client (48 h) — e-mail + WhatsApp au mieux. Aucun rewrite de statut dossier. */
+  resendClientAccessLink: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^(account|online|agency)_\d+$/),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      try {
+        return await issueClientAccessLinkResend(db, {
+          candidateId: input.candidateId,
+          adminEmail: admin.email || "",
+          adminName: admin.email || "Administrateur",
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Renvoi d’accès impossible.";
+        if (message.includes("60 secondes")) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message });
+        }
+        if (message.includes("introuvable") || message.includes("invalide") || message.includes("lié")) {
+          throw new TRPCError({ code: "BAD_REQUEST", message });
+        }
+        if (message.includes("e-mail")) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+      }
     }),
 
   sendPaymentReceiptForCandidate: publicProcedure
@@ -1362,6 +2283,7 @@ export const adminCandidateManagementRouter = router({
       let agencyDossierId: number | null = null;
       let applicationId: number | null = null;
       let destination = "";
+      let visaType = "";
       let whatsapp = "";
       let paymentMethodLabel = "";
       let paymentTimestamp: Date | null = null;
@@ -1374,6 +2296,7 @@ export const adminCandidateManagementRouter = router({
         paymentConfirmed = dossier.initialPaymentStatus === "paid";
         agencyDossierId = dossier.id;
         destination = dossier.destination || "";
+        visaType = dossier.visaType || "";
         whatsapp = dossier.phone || "";
       } else {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
@@ -1384,13 +2307,13 @@ export const adminCandidateManagementRouter = router({
         paymentConfirmed = application.paymentStatus === "SUCCESS";
         applicationId = application.id;
         destination = application.destination || "";
+        visaType = application.visaType || "";
         whatsapp = application.whatsappNumber || "";
         paymentMethodLabel = application.paymentMethod || "";
         paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
-      // Le protocole est genere automatiquement selon le pays de destination du candidat
-      // (COUNTRY_PROTOCOL_PROFILES) sauf si l'administrateur a fourni un texte personnalise.
+      // Protocole généré selon pays + type de visa (guides PDF publiés / COUNTRY_PROTOCOL_PROFILES).
       const empreinteSha = crypto.createHash("sha256").update(`${dossierNumber}|${email}|${destination}|${Date.now()}`).digest("hex").slice(0, 24);
       const protocolVariables = {
         clientNomComplet: fullName,
@@ -1405,7 +2328,7 @@ export const adminCandidateManagementRouter = router({
         clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
         dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
       };
-      const autoProtocolText = buildProtocolOneRichText(protocolVariables, destination);
+      const autoProtocolText = buildProtocolOneRichText(protocolVariables, destination, visaType);
       const protocolText = input.content.trim().length >= 50 ? input.content : autoProtocolText;
       const protocolPdf = await createAgreementProtocolOnePdf({
         dossierNumber,
@@ -1422,9 +2345,9 @@ export const adminCandidateManagementRouter = router({
 <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; background: #eef2f7; padding: 24px;">
   <div style="background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15,36,96,0.12);">
     <div style="background: linear-gradient(135deg, #0f2460 0%, #1E3A8A 55%, #2563EB 100%); padding: 36px 30px 28px; text-align: center;">
-      <img src="${logoUrl}" alt="3M Travel & Services" width="72" height="72" style="width:72px;height:72px;border-radius:50%;background:#ffffff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,0.25);" />
+      <img src="${logoUrl}" alt="3M TRAVEL AGENCY" width="72" height="72" style="width:72px;height:72px;border-radius:50%;background:#ffffff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,0.25);" />
       <p style="display:inline-block;margin:18px 0 0;background:rgba(255,255,255,0.15);color:#dbeafe;font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:999px;">Protocole d’accord officiel</p>
-      <h1 style="color:#ffffff;font-size:24px;margin:14px 0 0;">3M Travel &amp; Services</h1>
+      <h1 style="color:#ffffff;font-size:24px;margin:14px 0 0;">3M TRAVEL AGENCY</h1>
       <div style="width:60px;height:3px;background:#c9972b;margin:14px auto 0;border-radius:2px;"></div>
     </div>
     <div style="padding: 32px 30px;">
@@ -1445,7 +2368,7 @@ export const adminCandidateManagementRouter = router({
     </div>
     <div style="border-top:2px solid #f1f5f9;padding:20px 30px;text-align:center;background:#fafbfc;">
       <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">Ce document est une preuve officielle de votre engagement. Conservez-le précieusement.</p>
-      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M Travel &amp; Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
       <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">Yaoundé, Cameroun • hello@3mtravelagency.com</p>
       <p style="margin:0;font-size:11px;color:#c7cdd6;">Document généré le ${generatedOn}</p>
     </div>
@@ -1473,6 +2396,234 @@ export const adminCandidateManagementRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le protocole a été déposé dans l’espace client, mais l’e-mail n’a pas pu être envoyé. Relancez l’envoi après vérification SMTP." });
       }
       return { success: true, emailSent: true, documentUrl: stored.url, dossierNumber, preparedBy: admin.email };
+    }),
+
+  /**
+   * Valide la sélection candidat et débloque le Protocole N°02 dans l’espace client.
+   * Employeur + poste obligatoires ; notification e-mail avec lien mon-espace.
+   */
+  activateSecondAgreementProtocol: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().regex(/^online_\d+$/),
+      employerName: z.string().trim().min(2).max(255),
+      positionTitle: z.string().trim().min(2).max(255),
+      notifyClient: z.boolean().default(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference || reference.source !== "online") throw new TRPCError({ code: "BAD_REQUEST", message: "Dossier en ligne requis." });
+      const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Paiement confirmé requis avant le Protocole N°02." });
+      if (!application.agreementSigned) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le Protocole N°01 doit être signé avant d’activer le Protocole N°02." });
+      if (application.secondAgreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Le Protocole N°02 est déjà signé." });
+
+      const readyAt = new Date();
+      await db.update(applications).set({
+        secondAgreementReadyAt: readyAt,
+        secondAgreementReadyBy: admin.email,
+        secondAgreementEmployer: input.employerName.trim(),
+        secondAgreementPosition: input.positionTitle.trim(),
+        recruitmentPartnerName: input.employerName.trim(),
+        dossierStatus: application.dossierStatus === "visa_approuve" ? application.dossierStatus : "contrat_obtenu",
+        lastStatusUpdateAt: readyAt,
+        lastStatusUpdatedBy: admin.fullName || admin.email,
+      }).where(eq(applications.id, application.id));
+
+      const protocolPreview = buildProtocolTwoRichText({
+        clientNomComplet: application.fullName,
+        clientTelephoneWhatsapp: application.whatsappNumber || undefined,
+        clientEmail: application.email,
+        dossierRef: application.dossierNumber,
+        employeurNom: input.employerName.trim(),
+        posteRetenu: input.positionTitle.trim(),
+        systemTimestamp: readyAt.toISOString(),
+        clientIpAddress: "Signature à venir dans l’espace client",
+        dateDuJour: readyAt.toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+      }, application.destination);
+
+      const siblingOnline = await db.select({
+        id: applications.id,
+        dossierNumber: applications.dossierNumber,
+        visaType: applications.visaType,
+        destination: applications.destination,
+      }).from(applications).where(and(eq(applications.email, application.email), isNull(applications.deletedAt))).limit(10);
+      const handoff = dualOpportunityHandoffMessage({
+        currentProcedure: application.visaType,
+        siblingProcedures: siblingOnline
+          .filter((row) => row.id !== application.id)
+          .map((row) => ({ projectType: row.visaType, folderCode: row.dossierNumber, destinationCountry: row.destination })),
+      });
+
+      if (input.notifyClient && application.email) {
+        const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+        const safeName = escapeAgreementHtml(application.fullName);
+        const safeDossier = escapeAgreementHtml(application.dossierNumber);
+        const safeEmployer = escapeAgreementHtml(input.employerName.trim());
+        const safePosition = escapeAgreementHtml(input.positionTitle.trim());
+        const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:640px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Sélection confirmée — Protocole N°02</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre dossier <strong>${safeDossier}</strong> a été retenu pour une proposition concrète :</p><ul><li>Employeur / partenaire : <strong>${safeEmployer}</strong></li><li>Poste / projet : <strong>${safePosition}</strong></li></ul><p>Connectez-vous à votre espace client pour lire et signer le Protocole d’accord N°02 (formules tarifaires selon destination, sans garantie de résultat).</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl}/mon-espace" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Signer le Protocole N°02</a></p><p style="font-size:12px;color:#64748b">Version ${SECOND_AGREEMENT_PROTOCOL_VERSION}. Les décisions finales restent celles des autorités et partenaires compétents.</p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY — Yaoundé · hello@3mtravelagency.com</div></div></body></html>`;
+        try {
+          await sendGenericEmail({ to: application.email, subject: `Sélection confirmée — Protocole N°02 · ${application.dossierNumber}`, html });
+        } catch (error) {
+          console.error("[Protocol02] Email delivery failed", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Sélection enregistrée, mais l’e-mail n’a pas pu être envoyé. Relancez la notification." });
+        }
+      }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "second_agreement_activated",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: "",
+        details: `Protocole N°02 activé pour ${application.dossierNumber} · ${input.employerName.trim()} / ${input.positionTitle.trim()}.`,
+      });
+
+      return {
+        success: true,
+        dossierNumber: application.dossierNumber,
+        employerName: input.employerName.trim(),
+        positionTitle: input.positionTitle.trim(),
+        protocolPreview,
+        dualOpportunityHandoff: handoff,
+        version: SECOND_AGREEMENT_PROTOCOL_VERSION,
+      };
+    }),
+
+  resendAgreementSignatureReminder: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide pour cette relance." });
+
+      // Relance e-mail + WhatsApp — n’écrit jamais applications.status / agency_dossiers.status.
+      let paymentId: number;
+      let dossierNumber: string;
+      let fullName: string;
+      let email: string;
+      let phone: string | null = null;
+
+      if (reference.source === "online") {
+        const [application] = await db.select({
+          id: applications.id,
+          dossierNumber: applications.dossierNumber,
+          fullName: applications.fullName,
+          email: applications.email,
+          paymentStatus: applications.paymentStatus,
+          agreementSigned: applications.agreementSigned,
+          whatsappNumber: applications.whatsappNumber,
+        }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
+        if (application.agreementSigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
+        if (!application.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+        paymentId = application.id;
+        dossierNumber = application.dossierNumber;
+        fullName = application.fullName;
+        email = application.email;
+        phone = application.whatsappNumber || null;
+      } else {
+        const [dossier] = await db.select({
+          id: agencyDossiers.id,
+          fullName: agencyDossiers.fullName,
+          email: agencyDossiers.email,
+          phone: agencyDossiers.phone,
+          initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+        }).from(agencyDossiers).where(and(eq(agencyDossiers.id, reference.id), isNull(agencyDossiers.deletedAt))).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La relance n’est possible qu’après confirmation du paiement." });
+        const alreadySigned = await loadAgencyAgreementSignature(db, dossier.id);
+        if (alreadySigned) throw new TRPCError({ code: "CONFLICT", message: "Ce protocole est déjà signé. La relance est désactivée." });
+        if (!dossier.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
+        paymentId = dossier.id;
+        dossierNumber = `3M-AGN-${String(dossier.id).padStart(4, "0")}`;
+        fullName = dossier.fullName;
+        email = dossier.email;
+        phone = dossier.phone || null;
+      }
+
+      const siteUrl = process.env.SITE_URL || "https://www.3mtravelagency.com";
+      const safeName = escapeAgreementHtml(fullName);
+      const safeDossier = escapeAgreementHtml(dossierNumber);
+      const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Rappel : signature de votre protocole d’accord</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre paiement est confirmé, mais votre protocole d’accord n’est pas encore signé. Pour poursuivre votre dossier <strong>${safeDossier}</strong>, connectez-vous à votre espace client et finalisez la signature.</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl}/mon-espace" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Ouvrir mon espace client</a></p><p style="font-size:12px;color:#64748b">Ne répondez pas avec des informations bancaires. L’équipe 3M TRAVEL AGENCY reste disponible pour vous accompagner.</p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY — Yaoundé, Cameroun · hello@3mtravelagency.com</div></div></body></html>`;
+      try {
+        await sendGenericEmail({ to: email, subject: `Rappel — signature du protocole ${dossierNumber}`, html });
+      } catch (error) {
+        console.error("[Agreement reminder] Email delivery failed", { dossierNumber, source: reference.source, error });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La relance n’a pas pu être envoyée. Vérifiez le service e-mail et réessayez." });
+      }
+      const adminName = admin.email || "Administrateur";
+      const adminEmail = admin.email || "";
+      await db.insert(paymentAuditLogs).values({
+        adminName,
+        adminEmail,
+        action: "agreement_signature_reminder_sent",
+        paymentId,
+        candidateEmail: email,
+        amount: "",
+        details: `Relance de signature du protocole envoyée pour ${dossierNumber} (${reference.source}).`,
+      });
+
+      // Notification durable + WhatsApp « au mieux » — n’écrit pas le statut du dossier.
+      let whatsappSent = false;
+      let whatsappSkippedReason: string | null = null;
+      try {
+        const emailKey = email.trim().toLowerCase();
+        const [linkedCandidate] = await db
+          .select({ id: candidates.id, phone: candidates.phone })
+          .from(candidates)
+          .where(and(sql`LOWER(TRIM(${candidates.email})) = ${emailKey}`, isNull(candidates.deletedAt)))
+          .limit(1);
+        if (linkedCandidate?.id) {
+          await db.insert(clientNotifications).values({
+            candidateId: linkedCandidate.id,
+            type: "agreement_signature_reminder",
+            title: "Protocole d’accord à signer",
+            body: `Votre paiement est confirmé pour le dossier ${dossierNumber}. Connectez-vous pour finaliser la signature du protocole.`,
+            actionUrl: "/mon-espace?section=dossier",
+            isRead: false,
+          });
+        }
+        const waPhone = phone || linkedCandidate?.phone || null;
+        const wa = await notifyAgreementSignatureReminderWhatsApp({
+          phone: waPhone,
+          candidateName: fullName,
+          dossierNumber,
+        });
+        whatsappSent = wa.sent;
+        whatsappSkippedReason = wa.sent ? null : (wa.error || "WhatsApp non envoyé");
+        if (wa.sent) {
+          await db.insert(paymentAuditLogs).values({
+            adminName,
+            adminEmail,
+            action: "agreement_signature_reminder_whatsapp",
+            paymentId,
+            candidateEmail: email,
+            amount: "",
+            details: `WhatsApp relance protocole envoyé pour ${dossierNumber}${wa.phoneE164 ? ` → ${wa.phoneE164}` : ""}.`,
+          });
+        }
+      } catch (notifyError) {
+        console.warn("[resendAgreementSignatureReminder] client notification / WhatsApp skipped", notifyError);
+        whatsappSkippedReason = notifyError instanceof Error ? notifyError.message : "Notification ignorée";
+      }
+
+      return {
+        success: true,
+        dossierNumber,
+        email,
+        source: reference.source,
+        whatsappSent,
+        whatsappSkippedReason,
+      };
     }),
   // Liste de rattrapage : dossiers en ligne dont le paiement est confirme mais dont le
   // Protocole d'Accord N01 n'a pas encore ete signe (bug historique corrige cote candidat.ts :
@@ -1569,6 +2720,156 @@ export const adminCandidateManagementRouter = router({
         duplicates: duplicates.map((row) => ({ dossierNumber: row.dossierNumber, fullName: row.fullName, email: row.email, createdAt: row.createdAt })),
       };
     }),
+  requestRegistrationSupplementaryInfo: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+      destination: z.string().trim().min(2).max(120).optional(),
+      visaType: z.string().trim().min(2).max(120).optional(),
+      forceResend: z.boolean().optional().default(false),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      } catch {
+        admin = await requireValidAdminSession(input.sessionToken);
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const accountMatch = /^account_(\d+)$/.exec(input.candidateId.trim());
+      let candidateId: number | null = null;
+      let fullName = "";
+      let email = "";
+      let destination = input.destination?.trim() || "";
+      let visaType = input.visaType?.trim() || "";
+      let hasCv = false;
+
+      if (accountMatch) {
+        const id = Number(accountMatch[1]);
+        const [account] = await db.select().from(candidates).where(eq(candidates.id, id)).limit(1);
+        if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+        candidateId = account.id;
+        fullName = account.fullName;
+        email = account.email;
+        if (!destination) {
+          try {
+            const parsed = JSON.parse(account.preferredDestinations || "[]");
+            destination = Array.isArray(parsed) && typeof parsed[0] === "string" ? parsed[0] : (account.destination || "");
+          } catch {
+            destination = account.destination || "";
+          }
+        }
+        if (!visaType) visaType = account.visaType || "";
+        const [fileCv] = await db.select({ id: candidateFiles.id }).from(candidateFiles)
+          .where(and(eq(candidateFiles.candidateId, account.id), eq(candidateFiles.fileType, "cv")))
+          .limit(1);
+        const [evalCv] = await db.select({ cvFileUrl: evaluations.cvFileUrl }).from(evaluations)
+          .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+          .orderBy(desc(evaluations.createdAt))
+          .limit(1);
+        hasCv = Boolean(fileCv || evalCv?.cvFileUrl?.trim());
+      } else {
+        const reference = parseAdminCandidateReference(input.candidateId);
+        if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+        if (reference.source === "online") {
+          const [app] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+          if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+          fullName = app.fullName;
+          email = app.email;
+          destination = destination || app.destination || "";
+          visaType = visaType || app.visaType || "";
+          hasCv = Boolean(app.cvUrl?.trim());
+          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          candidateId = linked?.id ?? null;
+        } else {
+          const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+          if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+          fullName = dossier.fullName;
+          email = dossier.email;
+          destination = destination || dossier.destination || "";
+          visaType = visaType || dossier.visaType || "";
+          hasCv = Boolean(dossier.cvFileUrl?.trim() || dossier.cvFileName?.trim());
+          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+          candidateId = linked?.id ?? null;
+        }
+      }
+
+      if (!email) throw new TRPCError({ code: "BAD_REQUEST", message: "Adresse e-mail candidat introuvable." });
+      if (!destination || !visaType) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Destination et type de visa sont requis pour générer la demande d’informations." });
+      }
+
+      if (candidateId && !input.forceResend) {
+        const [existing] = await db.select({ id: clientNotifications.id }).from(clientNotifications)
+          .where(and(eq(clientNotifications.candidateId, candidateId), eq(clientNotifications.type, "registration_info_request")))
+          .orderBy(desc(clientNotifications.createdAt))
+          .limit(1);
+        if (existing) {
+          return {
+            success: true,
+            alreadySent: true,
+            emailSent: false,
+            itemCount: 0,
+            message: "Une demande d’informations a déjà été envoyée pour ce compte. Utilisez « Renvoyer » pour forcer un nouvel envoi.",
+          };
+        }
+      }
+
+      const request = buildRegistrationInfoRequest({ destination, visaType, hasCv });
+      const portalUrl = "/mon-espace?section=documents";
+      const html = registrationInfoRequestEmailHtml({
+        fullName,
+        destination: request.destination,
+        visaType: request.visaType,
+        items: request.items,
+        portalUrl,
+      });
+      let emailSent = false;
+      try {
+        await sendGenericEmail({ to: email, subject: request.subject, html });
+        emailSent = true;
+      } catch (error) {
+        console.error("[registrationInfoRequest] email failed", error);
+      }
+
+      const bodyLines = request.items
+        .map((item) => `• ${item.label}${item.priority === "required" ? " (prioritaire)" : ""} — ${item.detail}`)
+        .join("\n");
+      const messageBody = `Pour votre projet ${request.destination} · ${request.visaType}, merci de compléter :\n\n${bodyLines}\n\nDéposez les pièces depuis votre espace candidat (Documents).`;
+
+      if (candidateId) {
+        const notificationResult = await db.insert(clientNotifications).values({
+          candidateId,
+          type: "registration_info_request",
+          title: `Informations à compléter — ${request.destination}`,
+          body: `${request.items.length} élément(s) demandé(s) selon votre pays et votre type de visa. Consultez votre espace.`,
+          actionUrl: portalUrl,
+          isRead: false,
+        });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({
+          candidateId,
+          notificationId: notificationId || null,
+          senderRole: "advisor",
+          content: messageBody,
+          isRead: false,
+        });
+      }
+
+      return {
+        success: true,
+        alreadySent: false,
+        emailSent,
+        itemCount: request.items.length,
+        requiresCv: evaluationRequiresCv(visaType),
+        message: emailSent
+          ? `Demande envoyée par e-mail et publiée dans l’espace client (${request.items.length} élément(s)).`
+          : `Demande publiée dans l’espace client (${request.items.length} élément(s)), mais l’e-mail n’a pas pu partir.`,
+      };
+    }),
+
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

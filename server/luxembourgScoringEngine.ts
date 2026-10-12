@@ -1,7 +1,7 @@
 /**
  * Moteur de scoring — Évaluation d'éligibilité Luxembourg
  * Grille de points fixe (algorithme déclaratif, pas d'IA), telle que
- * spécifiée par 3M Travel & Services.
+ * spécifiée par 3M TRAVEL AGENCY.
  */
 
 export type EducationLevel = "master_dual" | "licence_cert" | "bac_cqp";
@@ -114,7 +114,7 @@ export function computeLuxembourgScore(input: ScoringInput): ScoringResult {
   if (total >= 80) {
     eligibilityStatus = "tres_eligible";
     statusLabel = "✅✅✅ TRÈS ÉLIGIBLE Luxembourg";
-    recommendationText = "Profil Excellent — Votre profil est très attractif pour le Luxembourg. Placement immédiat recommandé avec frais d'ouverture de 65 000 FCFA.";
+    recommendationText = "Profil Excellent — Votre profil est très attractif pour le Luxembourg. Placement immédiat recommandé ; frais d'ouverture selon votre profil, confirmés par écrit avant paiement.";
   } else if (total >= 70) {
     eligibilityStatus = "eligible";
     statusLabel = "✅✅ ÉLIGIBLE Luxembourg";

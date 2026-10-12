@@ -1,4 +1,8 @@
 import { useState, useMemo } from 'react';
+
+// Nombre de destinations affichées d'un coup ; le reste s'ouvre avec « Afficher plus » (la page faisait 73 000 px sur mobile).
+const PROCEDURES_PAGE_SIZE = 18;
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'wouter';
 import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink, X } from 'lucide-react';
@@ -51,6 +55,7 @@ export default function ProceduresAdvanced() {
   const [showBudgetCalculator, setShowBudgetCalculator] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'cost' | 'time' | 'salary'>('name');
   const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  const [pageState, setPageState] = useState({ key: '', limit: PROCEDURES_PAGE_SIZE });
   
   // Advanced filters
   const [minSalaryFilter, setMinSalaryFilter] = useState(0);
@@ -124,6 +129,11 @@ export default function ProceduresAdvanced() {
     return filtered;
   }, [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter, verifiedPortalOnly]);
 
+  // Toute modification de la recherche, d'un filtre ou du tri revient à la première page.
+  const filterKey = [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter, verifiedPortalOnly].join('|');
+  const visibleLimit = pageState.key === filterKey ? pageState.limit : PROCEDURES_PAGE_SIZE;
+  const visibleCountries = filteredCountries.slice(0, visibleLimit);
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'facile':
@@ -174,10 +184,10 @@ export default function ProceduresAdvanced() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            📋 Procédures Avancées - {PUBLIC_PROCEDURES.length} Destinations
+          <h1 className="premium-section-title mb-4 text-4xl md:text-5xl">
+            Procédures avancées — {PUBLIC_PROCEDURES.length} destinations
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="premium-section-lead mx-auto text-center text-lg">
             Filtres avancés, comparaisons interactives et calculateur de budget pour trouver la meilleure destination.
           </p>
         </motion.div>
@@ -187,19 +197,19 @@ export default function ProceduresAdvanced() {
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇨🇦</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Canada : Résidence & Emploi</h2>
-            <p className="mt-2 text-sm text-slate-600">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
+            <p className="premium-copy mt-2 text-sm">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
             <Link href="/canada" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Canada →</Link>
           </Card>
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇪🇺</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Visa Schengen & Court Séjour</h2>
-            <p className="mt-2 text-sm text-slate-600">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
+            <p className="premium-copy mt-2 text-sm">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
             <Link href="/schengen" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Schengen →</Link>
           </Card>
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🎓</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Études Internationales</h2>
-            <p className="mt-2 text-sm text-slate-600">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
+            <p className="premium-copy mt-2 text-sm">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
             <Link href="/etudes" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer les 10 destinations →</Link>
           </Card>
         </div>
@@ -207,12 +217,12 @@ export default function ProceduresAdvanced() {
         {/* Outils d’orientation : le simulateur CRS reste volontairement dans la section Canada pour éviter toute confusion. */}
         <section className="mb-12 grid gap-6 lg:grid-cols-2" aria-label="Outils de préparation du dossier">
           <Card className="border-blue-200 !bg-gradient-to-br !from-blue-700 !to-indigo-800 p-6 text-white shadow-lg">
-            <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="mt-2 max-w-xl text-sm leading-6 text-blue-50">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="premium-copy-on-dark mt-2 max-w-xl text-base">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
             <Link href="/canada" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-black text-blue-800 hover:bg-blue-50">Ouvrir le calculateur CRS <ExternalLink className="h-4 w-4" /></Link>
           </Card>
           <Card className="border-emerald-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="mt-2 text-sm leading-6 text-slate-600">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
-            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M Travel et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="premium-copy mt-2 text-[0.95rem]">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
+            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M TRAVEL AGENCY et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
           </Card>
         </section>
 
@@ -290,7 +300,7 @@ export default function ProceduresAdvanced() {
             {/* Search Bar */}
             <div role="search" className="relative">
               <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
-              <label htmlFor="procedure-country-search" className="sr-only">Rechercher parmi les 107 procédures pays</label>
+              <label htmlFor="procedure-country-search" className="sr-only">Rechercher parmi les procédures du catalogue</label>
               <Input
                 id="procedure-country-search"
                 type="search"
@@ -356,6 +366,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Salaire minimum (EUR)</label>
                 <Input
+                  aria-label="Salaire minimum (EUR)"
                   type="range"
                   min="0"
                   max="7000"
@@ -370,6 +381,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Coût max (EUR)</label>
                 <Input
+                  aria-label="Coût max (EUR)"
                   type="range"
                   min="0"
                   max="10000"
@@ -384,6 +396,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Délai max (semaines)</label>
                 <Input
+                  aria-label="Délai max (semaines)"
                   type="range"
                   min="0"
                   max="52"
@@ -398,6 +411,7 @@ export default function ProceduresAdvanced() {
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">Difficulté</label>
                 <select
+                  aria-label="Difficulté"
                   value={difficultyFilter}
                   onChange={(e) => setDifficultyFilter(e.target.value as any)}
                   className="w-full px-3 py-2 rounded border border-slate-200 text-sm bg-white"
@@ -414,6 +428,7 @@ export default function ProceduresAdvanced() {
             <div className="flex flex-wrap gap-3 justify-between items-center">
               <div className="flex gap-2">
                 <select
+                  aria-label="Trier les procédures"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium hover:border-blue-500 transition-colors"
@@ -473,6 +488,7 @@ export default function ProceduresAdvanced() {
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-3">Sélectionner un pays</label>
                     <select
+                      aria-label="Sélectionner un pays"
                       value={selectedCountryForBudget || ''}
                       onChange={(e) => setSelectedCountryForBudget(e.target.value)}
                       className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm"
@@ -489,6 +505,7 @@ export default function ProceduresAdvanced() {
                   <div>
                     <label className="text-sm font-semibold text-slate-700 block mb-3">Frais de services 3M (EUR)</label>
                     <Input
+                      aria-label="Frais de services 3M (EUR)"
                       type="number"
                       value={servicesFee}
                       onChange={(e) => setServicesFee(parseInt(e.target.value) || 0)}
@@ -569,7 +586,7 @@ export default function ProceduresAdvanced() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <AnimatePresence>
-            {filteredCountries.map((country) => {
+            {visibleCountries.map((country) => {
               const isExpanded = expandedCountry === country.id;
               const isSelected = selectedForComparison.includes(country.id);
               const destinationMedia = mediaByDestination.get(country.id);
@@ -584,6 +601,7 @@ export default function ProceduresAdvanced() {
               return (
                 <motion.div
                   key={country.id}
+                  data-testid="procedure-card"
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -809,6 +827,14 @@ export default function ProceduresAdvanced() {
             })}
           </AnimatePresence>
         </motion.div>
+
+        {filteredCountries.length > visibleCountries.length && (
+          <div className="mt-8 text-center">
+            <Button variant="outline" className="min-h-11 px-8" data-testid="procedures-show-more" onClick={() => setPageState({ key: filterKey, limit: visibleLimit + PROCEDURES_PAGE_SIZE })}>
+              Afficher plus de destinations ({filteredCountries.length - visibleCountries.length} restantes)
+            </Button>
+          </div>
+        )}
 
         {/* Empty State */}
         {filteredCountries.length === 0 && (

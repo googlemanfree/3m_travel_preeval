@@ -1,4 +1,4 @@
-# 3M TRAVEL AGENCY SARL
+# 3M Travel Agency SARL
 **Société à Responsabilité Limitée au capital enregistré**  
 **Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M112417203369H  
 **Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
@@ -10,7 +10,7 @@
 ```
 ====================================================================================================
                         RÉPUBLIQUE DU CAMEROUN — PAIX - TRAVAIL - PATRIE
-                                  3M TRAVEL AGENCY SARL
+                                  3M Travel Agency SARL
                     DÉPARTEMENT IMMIGRATION & MOBILITÉ PROFESSIONNELLE INTERNATIONALE
 ====================================================================================================
 ```
@@ -24,7 +24,7 @@
 ### IDENTIFICATION DES PARTIES CONTRACTANTES
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
-* **Dénomination :** 3M TRAVEL AGENCY SARL
+* **Dénomination :** 3M Travel Agency SARL
 * **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M112417203369H
 * **Représentée par :** La Direction Générale des Opérations et de la Mobilité Internationale,  
 ci-après désignée **« L'AGENCE »**.
@@ -108,7 +108,7 @@ Toutes les pièces contractuelles, décisions administratives (avis ADEM, avis f
 
 Fait à Yaoundé, sous forme de contrat électronique opposable, le `{{DATE_DU_JOUR}}`.
 
-| Pour la Société 3M TRAVEL AGENCY SARL | Pour LE CANDIDAT TITULAIRE |
+| Pour la Société 3M Travel Agency SARL | Pour LE CANDIDAT TITULAIRE |
 | :--- | :--- |
 | **Direction Générale & Département Juridique** | **Mention obligatoire :** *« Bon pour accord, lu et approuvé »* |
 | *(Signature électronique certifiée & Sceau officiel)* | *(Signature électronique / Validation sécurisée Espace Client)* |

@@ -1,5 +1,5 @@
 /**
- * Routeur tRPC — Copilote IA 3M Travel (chatbot flottant)
+ * Routeur tRPC — Copilote IA 3M TRAVEL AGENCY (chatbot flottant)
  *
  * Assistant conversationnel présent sur toutes les pages, pour répondre aux
  * questions générales sur les démarches d'évaluation, les visas, et les destinations.
@@ -16,9 +16,9 @@ import { desc, sql, count } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
 import { searchDestinationKnowledge } from "../destinationDocumentService";
 
-const SYSTEM_PROMPT = `Tu es "Aureol", le guide d'information de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
+const SYSTEM_PROMPT = `Tu es "Aureol", le guide d'information de 3M TRAVEL AGENCY, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
-Ne mentionne jamais l'utilisation d'un outil automatisé, d'un modèle, d'une IA ou d'une analyse technique. Présente-toi seulement comme le guide d'information 3M Travel et privilégie la formulation « notre équipe vérifie votre dossier ».
+Ne mentionne jamais l'utilisation d'un outil automatisé, d'un modèle, d'une IA ou d'une analyse technique. Présente-toi seulement comme le guide d'information 3M TRAVEL AGENCY et privilégie la formulation « notre équipe vérifie votre dossier ».
 
 Ton rôle : répondre brièvement et clairement aux questions générales des visiteurs sur :
 - Les évaluations d'éligibilité pour les visas
@@ -28,7 +28,7 @@ Ton rôle : répondre brièvement et clairement aux questions générales des vi
 - Le processus d'évaluation primaire
 
 Informations factuelles à utiliser si pertinentes :
-- Frais d'ouverture de dossier : 65 000 FCFA, dus après validation de l'évaluation
+- Frais d'ouverture de dossier : montant variable selon le type de profil, confirmé par écrit par l'agence avant tout paiement (n'annonce jamais de montant précis), dus après validation de l'évaluation
 - Destinations : 107 pays disponibles (Travail, Études, Visiteur)
 - Processus : Évaluation primaire (CV + informations) → Révision du dossier → Validation administrative → Paiement → Documents → Traitement
 - Documents généralement demandés : CV, diplômes, casier judiciaire, passeport valide, preuve de ressources
@@ -268,11 +268,11 @@ ${destinationContext}
 
       const questionsListText = topQuestions.map((q, i) => `${i + 1}. "${q.question}" (posée ${q.count} fois)`).join("\n");
 
-      const prompt = `Tu es l'expert en mobilité internationale de 3M Travel & Services à Yaoundé, Cameroun.
+      const prompt = `Tu es l'expert en mobilité internationale de 3M TRAVEL AGENCY à Yaoundé, Cameroun.
 Voici les questions les plus fréquentes posées par nos candidats au chatbot Aureol :
 ${questionsListText}
 
-Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +237 698 104 832, email hello@3mtravelagency.com) et les frais (65 000 FCFA pour l'ouverture de dossier).
+Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +237 698 104 832, email hello@3mtravelagency.com) et, si la question porte sur les frais, précisant que le montant d'ouverture de dossier dépend du type de profil et est confirmé par écrit avant tout paiement.
 
 Format de sortie attendu en JSON strict (sans markdown autour si possible, ou dans un bloc json) :
 [

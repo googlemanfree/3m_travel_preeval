@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
+  Building2,
   ChevronDown,
   FileText,
   FolderKanban,
@@ -43,6 +44,8 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
   { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
+  // Un seul lien B2B dans la barre : le hub évite 3 préchargements + un menu trop dense.
+  { href: "/partenaires", label: { fr: "Partenaires B2B", en: "B2B partners" }, icon: Building2 },
 ];
 
 const NAV_COPY = {
@@ -69,8 +72,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
-    : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-bold text-slate-800 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
+    ? "min-h-11 w-auto justify-start px-2 py-2.5 text-[13px] font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
+    : "min-h-11 w-auto justify-start px-2 py-2.5 text-[13px] font-bold text-slate-900 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
 const authButtonClass = "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -136,7 +139,7 @@ export default function Navbar() {
   }, [isMenuOpen, isProfileOpen]);
 
   return (
-    <header className="glass-nav tablet-compact-header sticky top-0 z-50 transition-all duration-200">
+    <header data-testid="site-header" className="glass-nav premium-header tablet-compact-header sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 flex-nowrap items-center gap-x-2 py-2.5 sm:gap-x-3 sm:py-3 lg:flex-wrap lg:gap-x-4 lg:gap-y-2">
           <a
@@ -144,18 +147,18 @@ export default function Navbar() {
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="order-1 flex min-w-0 shrink items-center gap-2 group hover:opacity-80 transition-opacity sm:gap-3"
+            className="order-1 flex w-16 shrink-0 items-center justify-start gap-2 group hover:opacity-80 transition-opacity sm:w-16 sm:gap-3 lg:w-20"
           >
             <img
               src="/logo-3m.webp"
-              alt="Logo 3M Travel Agency"
-              className="h-10 w-auto object-contain sm:h-12"
+              alt="Logo 3M TRAVEL AGENCY"
+              className="h-10 w-auto max-w-full object-contain sm:h-12"
             />
           </a>
 
           <nav
             aria-label={copy(NAV_COPY.mainNav)}
-            className="order-2 hidden min-w-0 flex-1 items-center justify-center space-x-0.5 rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 lg:flex"
+            className="order-2 hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex"
           >
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -195,7 +198,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('fr')}
                 aria-label="Français"
                 aria-pressed={language === 'fr'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
+                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'fr' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span>
               </button>
@@ -204,7 +207,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('en')}
                 aria-label="English"
                 aria-pressed={language === 'en'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
+                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'en' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span>
               </button>
@@ -224,7 +227,7 @@ export default function Navbar() {
                     {getInitial(candidate.fullName)}
                   </div>
                   <div className="text-left">
-                    <span className="block max-w-[120px] truncate text-xs font-bold text-[#0a2540]">
+                    <span className="block max-w-[120px] truncate text-sm font-bold text-[#0a2540]">
                       {candidate.fullName || copy(NAV_COPY.accountSpace)}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
@@ -309,8 +312,8 @@ export default function Navbar() {
 
           <div className="order-2 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
             <div className="flex items-center gap-0.5 rounded-xl border border-blue-200/60 bg-blue-50 p-0.5 dark:border-slate-600 dark:bg-slate-800" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
-              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "fr" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
-              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2 text-xs font-bold transition ${language === "en" ? "bg-white shadow-sm dark:bg-slate-700" : "opacity-60"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
+              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "fr" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
+              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "en" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button
@@ -323,7 +326,7 @@ export default function Navbar() {
               className="touch-target rounded-2xl bg-gray-50 p-2.5 text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               animate={isMenuOpen ? "open" : "closed"}
               variants={hamburgerVariants}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             >
               {isMenuOpen ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
             </motion.button>
@@ -340,7 +343,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
           >
             {candidate && (
               <motion.a

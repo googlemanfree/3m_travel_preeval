@@ -134,7 +134,7 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
       expect(rendered.status, path).toBe(200);
       expect(rendered.noindex, path).toBe(false);
       expect(rendered.html, path).toContain("<title>");
-      expect(rendered.html, path).toContain("e‑Visa | 3M Travel &amp; Services</title>");
+      expect(rendered.html, path).toContain("e‑Visa | 3M TRAVEL AGENCY</title>");
       expect(rendered.html, path).toContain("Détails e-Visa");
       expect(rendered.html, path).toContain('<meta property="og:type" content="website" />');
       expect(rendered.html, path).toContain(`<meta property="og:url" content="https://www.3mtravelagency.com${path}" />`);

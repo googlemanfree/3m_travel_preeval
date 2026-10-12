@@ -245,12 +245,12 @@ export default function CountryComparisonPage() {
             </div>
             <h3 className="text-2xl font-bold text-slate-900">Aucune destination en favori</h3>
             <p className="text-slate-600 max-w-md mx-auto text-sm">
-              Explorez l'annuaire de nos 107 destinations et cliquez sur le bouton cœur de n'importe quel pays pour l'ajouter à votre comparateur.
+              Explorez l'annuaire des procédures documentées et cliquez sur le bouton cœur de n'importe quel pays pour l'ajouter à votre comparateur.
             </p>
             <div className="pt-2">
               <a href="/procedures">
                 <Button className="bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 text-white font-bold px-6 py-3 rounded-xl">
-                  Explorer les 107 destinations
+                  Explorer le catalogue des procédures
                 </Button>
               </a>
             </div>

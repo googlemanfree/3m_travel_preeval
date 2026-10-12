@@ -1,5 +1,5 @@
 /**
- * Logger structuré — 3M Travel & Services
+ * Logger structuré — 3M TRAVEL AGENCY
  *
  * Émet des logs JSON sur une seule ligne (format standard pour les
  * plateformes d'hébergement modernes : elles capturent automatiquement

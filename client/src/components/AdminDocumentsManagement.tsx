@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle, RefreshCw } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
 import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
@@ -85,7 +85,7 @@ export function AdminDocumentsManagement() {
   const suggestDroppedDocumentMetadataMutation = trpc.admin.suggestDroppedDocumentMetadata.useMutation();
 
   // Récupérer les documents via tRPC
-  const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
+  const { data: documentsData, isLoading: isLoadingDocs, dataUpdatedAt: documentsUpdatedAt, isFetching: isFetchingDocs, refetch } = trpc.admin.listDocuments.useQuery(
     { 
       sessionToken,
       search: searchTerm, 
@@ -96,7 +96,15 @@ export function AdminDocumentsManagement() {
       limit: 100,
       offset: 0
     },
-    { enabled: !!sessionToken }
+    {
+      enabled: !!sessionToken,
+      // Sync live avec les dépôts client : onglet visible uniquement, pour éviter de saturer le serveur.
+      refetchInterval: 45_000,
+      refetchIntervalInBackground: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      staleTime: 20_000,
+    }
   );
 
   const { data: candidateDirectory } = trpc.admin.listCandidates.useQuery(
@@ -347,7 +355,7 @@ export function AdminDocumentsManagement() {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
     pdf.setTextColor(10, 37, 64);
-    pdf.text("3M Travel Agency", 105, 24, { align: "center" });
+    pdf.text("3M TRAVEL AGENCY", 105, 24, { align: "center" });
     pdf.setFontSize(14);
     pdf.text("DÉCHARGE DE REMISE EN MAIN PROPRE", 105, 40, { align: "center" });
     pdf.setDrawColor(255, 152, 0);
@@ -362,13 +370,13 @@ export function AdminDocumentsManagement() {
       `E-mail : ${target?.email || "Non renseigné"}`,
       `Document remis : ${file.name}`,
       "Origine : dépôt physique en agence",
-      "Déposé par : administration 3M Travel & Services",
+      "Déposé par : administration 3M TRAVEL AGENCY",
     ].forEach((line, index) => pdf.text(safe(line), 25, 68 + index * 10));
     pdf.setFontSize(10);
     pdf.text("Cette décharge confirme l’enregistrement du document remis physiquement au dossier.", 25, 155, { maxWidth: 160 });
     pdf.text("Le document reste soumis au contrôle et à la validation de l’agence.", 25, 168, { maxWidth: 160 });
     pdf.setFontSize(9);
-    pdf.text("Document généré automatiquement par la plateforme 3M Travel & Services.", 25, 220);
+    pdf.text("Document généré automatiquement par la plateforme 3M TRAVEL AGENCY.", 25, 220);
     const dataUri = pdf.output("datauristring");
     return `data:application/pdf;base64,${dataUri.split(",")[1] || ""}`;
   };
@@ -454,7 +462,7 @@ export function AdminDocumentsManagement() {
       const pdf = new jsPDF({ unit: "mm", format: "a4" });
       let y = 20;
       pdf.setFillColor(10, 47, 83); pdf.rect(0, 0, 210, 16, "F");
-      pdf.setTextColor(255, 255, 255); pdf.setFontSize(15); pdf.text("3M Travel & Services — Rapport documentaire", 14, 10);
+      pdf.setTextColor(255, 255, 255); pdf.setFontSize(15); pdf.text("3M TRAVEL AGENCY — Rapport documentaire", 14, 10);
       pdf.setTextColor(30, 41, 59); pdf.setFontSize(10); pdf.text(`Période : ${reportMonth} · Documents reçus : ${monthlyDocuments.length} · Validation : ${monthlyCompletionRate}%`, 14, y); y += 10;
       monthlyDossiers.forEach((dossier) => {
         if (y > 274) { pdf.addPage(); y = 18; }
@@ -463,7 +471,7 @@ export function AdminDocumentsManagement() {
         pdf.setTextColor(15, 23, 42); pdf.setFontSize(9); pdf.text(`${dossier.dossierNumber} — ${dossier.candidateName}`, 15, y);
         pdf.setTextColor(71, 85, 105); pdf.text(`${dossier.approved}/${dossier.total} validé(s) · ${dossier.pending} attente · ${dossier.rejected} rejeté(s) · ${rate}%`, 15, y + 4); y += 15;
       });
-      pdf.setTextColor(100, 116, 139); pdf.setFontSize(7); pdf.text("Document interne généré depuis le back-office 3M Travel.", 14, 289);
+      pdf.setTextColor(100, 116, 139); pdf.setFontSize(7); pdf.text("Document interne généré depuis le back-office 3M TRAVEL AGENCY.", 14, 289);
       pdf.save(`rapport-completude-${reportMonth}.pdf`);
       toast.success("Export PDF généré", { description: `${monthlyDossiers.length} dossier(s) inclus.` });
     } catch {
@@ -749,18 +757,30 @@ export function AdminDocumentsManagement() {
             documentUrl={previewingDoc?.documentUrl || ""}
           />
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-blue-600" />
                   Gestion des Documents
                 </CardTitle>
-                <CardDescription>Vérification et validation des pièces justificatives</CardDescription>
+                <CardDescription>
+                  Vérification et validation des pièces justificatives — sync auto avec l’espace client (30 s).
+                  {pendingDocuments > 0 ? ` ${pendingDocuments} pièce${pendingDocuments > 1 ? "s" : ""} en attente.` : ""}
+                </CardDescription>
+                <p className="mt-1 text-xs font-semibold text-slate-600" aria-live="polite">
+                  {isFetchingDocs ? "Synchronisation…" : documentsUpdatedAt ? `Dernière sync : ${new Date(documentsUpdatedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "En attente de sync"}
+                </p>
               </div>
-              <Button onClick={handleExportDocuments} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Exporter
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => void refetch()} variant="outline" size="sm" disabled={isFetchingDocs}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isFetchingDocs ? "animate-spin" : ""}`} />
+                  Actualiser
+                </Button>
+                <Button onClick={handleExportDocuments} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exporter
+                </Button>
+              </div>
             </div>
           </CardHeader>
 

@@ -39,7 +39,7 @@ describe("page Canada : photos et crédits", () => {
 
   it("n'utilise ni logo ni mot-symbole officiel du gouvernement du Canada ou d'IRCC", () => {
     expect(page).not.toMatch(/wordmark|logo[-_]?ircc|ircc[-_]?logo|canada[-_]?logo|fip[-_]?signature/i);
-    expect(page).toContain("3M Travel n’est pas affilié au gouvernement du Canada");
+    expect(page).toContain("3M TRAVEL AGENCY n’est pas affilié au gouvernement du Canada");
   });
 
   it("conserve les visuels existants et les textes protégés par les tests précédents", () => {

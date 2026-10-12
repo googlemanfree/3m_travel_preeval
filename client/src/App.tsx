@@ -76,22 +76,27 @@ const Accessibility = lazyWithTimeout(() => import("./pages/Accessibility"));
 const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
 const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
 const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
+const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
+const PartnersHub = lazyWithTimeout(() => import("./pages/PartnersHub"));
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 const Tourism = lazyWithTimeout(() => import("./pages/Tourism"));
-import { FloatingActionMenu } from "./components/FloatingActionMenu";
-import { SmartFlightAssistant } from "./components/SmartFlightAssistant";
+const FloatingActionMenu = lazyWithTimeout(() =>
+  import("./components/FloatingActionMenu").then((module) => ({ default: module.FloatingActionMenu })),
+);
+const SmartFlightAssistant = lazyWithTimeout(() =>
+  import("./components/SmartFlightAssistant").then((module) => ({ default: module.SmartFlightAssistant })),
+);
+const AiCopilotWidgetEnhanced = lazyWithTimeout(() => import("./components/AiCopilotWidgetEnhanced"));
 import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 const HowItWorks = lazyWithTimeout(() => import("./pages/HowItWorks"));
 const EvisaDetailPage = lazyWithTimeout(() => import("./pages/EvisaDetailPage"));
 const DocumentCompliancePage = lazyWithTimeout(() => import("./pages/DocumentCompliancePage"));
-const PaymentSuccessPage = lazyWithTimeout(() => import("./pages/PaymentSuccessPage"));
 const PaymentErrorPage = lazyWithTimeout(() => import("./pages/PaymentErrorPage"));
 const ConsultationBooking = lazyWithTimeout(() => import("./pages/ConsultationBooking"));
-import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
@@ -107,6 +112,7 @@ const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
+const AdminClientSpaceLivePreview = lazyWithTimeout(() => import("./pages/AdminClientSpaceLivePreview"));
 const AdminSecurityTotp = lazyWithTimeout(() => import("./pages/AdminSecurityTotp"));
 const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
 const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
@@ -130,7 +136,6 @@ import PwaStatusNotice from "./components/PwaStatusNotice";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
 const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAIEvaluationDashboard"));
-const CVGenerator = lazyWithTimeout(() => import("./pages/CVGenerator"));
 const Admin = lazyWithTimeout(() => import("./pages/Admin"));
 const ProceduresAdvanced = lazyWithTimeout(() => import("./pages/ProceduresAdvanced"));
 const CountryComparisonPage = lazyWithTimeout(() => import("./pages/CountryComparisonPage"));
@@ -177,13 +182,13 @@ function Router() {
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/payment/method-selection"} component={PaymentMethodSelection} />
       <Route path={"/payment/agency-confirmation"} component={PaymentAgencyConfirmation} />
-      <Route path={"/payment/success"} component={PaymentSuccessPage} />
+      <Route path={"/payment/success"}>{() => <Redirect to="/payment-success" />}</Route>
       <Route path={"/payment/error"} component={PaymentErrorPage} />
       <Route path={"/payment/flight/:requestId"} component={CinetPayFlightPayment} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
       <Route path={"/consultation"} component={ConsultationBooking} />
 
-      {/* Pages protégées — nécessitent un compte 3M Travel */}
+      {/* Pages protégées — nécessitent un compte 3M TRAVEL AGENCY */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/billets"}>{() => <Redirect to="/flights" />}</Route>
       <Route path={"/3m-booking"}>{() => <Redirect to="/flights#3m-booking" />}</Route>
@@ -200,6 +205,8 @@ function Router() {
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/etat-du-service"} component={ServiceStatus} />
+      <Route path={"/partenaires"} component={PartnersHub} />
+      <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
       {/* Entrée historique : l’espace client unique est désormais /mon-espace. */}
@@ -239,7 +246,7 @@ function Router() {
       <Route path={"/ambassador-program"} component={AmbassadorProgram} />
 
       {/* Générateur de CV */}
-      <Route path={"/cv-generator"} component={CVGenerator} />
+      <Route path={"/cv-generator"}>{() => <Redirect to="/services" />}</Route>
 
       {/* Résultat d'évaluation */}
       <Route path={"/evaluation-result"} component={EvaluationResult} />
@@ -380,12 +387,12 @@ function Router() {
         </AdminGuard>
       </Route>
       <Route path={"/admin/super-dashboard"}>
-        <AdminGuard message="Accès réservé aux administrateurs de 3M Travel Agency.">
+        <AdminGuard message="Accès réservé aux administrateurs de 3M TRAVEL AGENCY.">
           <SuperAdminDashboard />
         </AdminGuard>
       </Route>
       <Route path={"/admin/flight-requests"}>
-        <AdminGuard message="Accès réservé aux agents et administrateurs de 3M Travel Agency.">
+        <AdminGuard message="Accès réservé aux agents et administrateurs de 3M TRAVEL AGENCY.">
           <FlightAgentDashboard />
         </AdminGuard>
       </Route>
@@ -410,6 +417,11 @@ function Router() {
         </AdminGuard>
       </Route>
       {/* Redirection /admin → / pour masquer l'existence du panneau */}
+      <Route path={"/admin/apercu-espace-client"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminClientSpaceLivePreview />
+        </AdminGuard>
+      </Route>
       <Route path={"/admin"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
@@ -535,7 +547,37 @@ function AppShell() {
   );
   const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
+  /** Accueil : WhatsApp seul — Aureol / vols n’empilent pas 3 pastilles sur le sticky CTA. */
+  const isHomeRoute = pathnameOnly === "/" || pathnameOnly === "/en";
   const showPublicFooter = !isAdminRoute;
+  /** Widgets flottants après le premier paint : ils ne doivent pas concurrencer le hero / le LCP. */
+  const [floatingToolsReady, setFloatingToolsReady] = React.useState(false);
+  React.useEffect(() => {
+    if (!showFloatingTools) {
+      setFloatingToolsReady(false);
+      return;
+    }
+    let cancelled = false;
+    const enable = () => {
+      if (!cancelled) setFloatingToolsReady(true);
+    };
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      const idleId = idleWindow.requestIdleCallback(enable, { timeout: 2500 });
+      return () => {
+        cancelled = true;
+        idleWindow.cancelIdleCallback?.(idleId);
+      };
+    }
+    const timer = window.setTimeout(enable, 1200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [showFloatingTools]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -602,12 +644,13 @@ function AppShell() {
                         </PageTransition>
                       </div>
                       {showPublicFooter && <FooterLegal />}
-                      {/* Menu d'actions flottantes unifié */}
-                      {showFloatingTools && <FloatingActionMenu />}
-                      {/* Guide d’information flottant */}
-                      {showFloatingTools && <AiCopilotWidgetEnhanced />}
-                      {/* Assistant intelligent de réservation de vol */}
-                      {showFloatingTools && <SmartFlightAssistant />}
+                      {showFloatingTools && floatingToolsReady && (
+                        <React.Suspense fallback={null}>
+                          <FloatingActionMenu />
+                          {!isHomeRoute && <AiCopilotWidgetEnhanced />}
+                          {!isHomeRoute && <SmartFlightAssistant />}
+                        </React.Suspense>
+                      )}
                     </>
                   )}
                   </MultiServiceCartProvider>

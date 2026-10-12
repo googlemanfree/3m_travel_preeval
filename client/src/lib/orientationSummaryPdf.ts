@@ -38,7 +38,7 @@ export function downloadOrientationSummaryPdf(data: OrientationSummaryPdf) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text("3M Travel & Services", 15, 15);
+  doc.text("3M TRAVEL AGENCY", 15, 15);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text("Récapitulatif d’évaluation et pistes à vérifier", 15, 23);

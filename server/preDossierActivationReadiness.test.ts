@@ -29,6 +29,9 @@ vi.mock("./emailService", () => ({
   sendDossierConfirmationEmail: async (...args: any[]) => { state.emails.push(args); return true; },
 }));
 vi.mock("./storage", () => ({ storagePut: async () => ({ url: "/manus-storage/x", key: "x" }) }));
+vi.mock("./services/seedCountryProcedureCase", () => ({
+  seedCountryProcedureChecklist: async () => ({ added: 0, label: "Checklist QA" }),
+}));
 
 import { adminCandidateManagementRouter } from "./routers/adminCandidateManagement";
 
@@ -226,7 +229,8 @@ describe("confirmOpeningPaymentForAccount : valider le paiement directement sur 
     expect(result).toMatchObject({ success: true, additionalAgencyDossierId: 34, additionalDossierReference: "3M-AGN-0034" });
     const dossierInserts = state.inserts.filter(row => row.source === "manual_admin");
     expect(dossierInserts).toHaveLength(2);
-    expect(dossierInserts[1]).toMatchObject({ destination: "canada", visaType: "Travail" });
+    expect(dossierInserts[0]).toMatchObject({ initialPaymentStatus: "paid" });
+    expect(dossierInserts[1]).toMatchObject({ destination: "Canada", visaType: "Travail", initialPaymentStatus: "paid" });
   });
 
   it("refuse si ni référence ni preuve ne sont fournies, avant toute lecture", async () => {
@@ -294,6 +298,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
     state.reads = [
       [account(1, "a@example.com"), account(2, "B@Example.com"), account(3, "c@example.com"), account(4, "d@example.com")],
       [{ candidateId: 4 }, { candidateId: 4 }],
+      [],
       [{ email: "A@example.com" }],
       [{ email: "b@example.com" }],
     ];
@@ -307,7 +312,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
   });
 
   it("aucune personne couverte : rien n'est masqué", async () => {
-    state.reads = [[account(1, "a@example.com")], [], [], []];
+    state.reads = [[account(1, "a@example.com")], [], [], [], []];
     const result = await caller().listPreDossierAccounts({ ...base });
     expect(result).toMatchObject({ total: 1, coveredByActiveDossier: 0 });
   });

@@ -109,12 +109,12 @@ export function queryDestinationKnowledge(query: string): string {
   });
 
   if (matchedEntries.length === 0) {
-    return `[Base de Connaissances 3M Travel - 107 Destinations]
+    return `[Base de Connaissances 3M TRAVEL AGENCY - 107 Destinations]
 Pour votre recherche, nous disposons de guides officiels complets couvrant plus de 107 pays (Canada, France, Luxembourg, Belgique, Allemagne, USA, UK, etc.). 
 Nos experts et notre système d'évaluation analysent votre profil (CV, diplômes, expérience) pour vous orienter vers la procédure institutionnelle la plus adaptée (Campus France, IRCC, uni-assist, etc.).`;
   }
 
-  let result = `[Extraits officiels des guides de destination 3M Travel]\n`;
+  let result = `[Extraits officiels des guides de destination 3M TRAVEL AGENCY]\n`;
   for (const [key, data] of matchedEntries) {
     result += `\n--- ${data.country.toUpperCase()} (${data.region}) ---\n`;
     result += `• Types de visa : ${data.visaTypes.join(', ')}\n`;

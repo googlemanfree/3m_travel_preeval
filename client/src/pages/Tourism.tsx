@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import {
   BedDouble,
@@ -15,6 +15,9 @@ import {
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { initialTourismServices } from "@/lib/tourismService";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
+import { setPageSeo } from "@/lib/pageSeo";
 
 type Service = "hotel" | "vehicle" | "pack";
 
@@ -124,10 +127,33 @@ export default function Tourism() {
     });
   };
 
+  const heroTheme = useMemo(() => {
+    if (services.includes("vehicle") && !services.includes("hotel")) return "vehicules";
+    if (services.includes("hotel")) return "hotels";
+    return "travel";
+  }, [services]);
+  const heroVisual = getServiceVisual(heroTheme);
+
+  useEffect(() => {
+    setPageSeo({
+      title: "Tourisme, hôtels et séjours | 3M TRAVEL AGENCY",
+      description: "Préparez un séjour avec des repères de destination, des hébergements et une demande de devis accompagnée.",
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
+
   return (
     <main className="min-h-screen bg-slate-50 pb-16">
-      <section className="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900">
-        <div className="mx-auto max-w-6xl px-5 py-16">
+      <section className="relative overflow-hidden">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-950/92 via-blue-900/80 to-indigo-900/55" />
+        <div className="relative z-10 mx-auto max-w-6xl px-5 py-16">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-blue-100">
             <Sparkles className="h-4 w-4" /> Tourisme sur mesure 3M
           </p>
@@ -148,21 +174,25 @@ export default function Tourism() {
             {PACKS.map(item => {
               const Icon = item.icon;
               const active = pack === item.id && services.includes("pack");
+              const packVisual = getServiceVisual(item.services.includes("vehicle") && item.id === "business" ? "vehicules" : item.services.includes("hotel") ? "hotels" : "travel");
               return (
                 <button
                   type="button"
                   key={item.id}
                   onClick={() => selectPack(item.id, item.services)}
-                  className={`rounded-2xl border p-5 text-left ${
+                  className={`overflow-hidden rounded-2xl border text-left ${
                     active ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white"
                   }`}
                 >
-                  <Icon className="h-6 w-6 text-blue-700" />
-                  <h3 className="mt-3 font-bold">{item.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{item.text}</p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
-                    {active && <Check className="h-4 w-4" />}
-                    Sur devis
+                  <PremiumCoverImage visual={packVisual} className="aspect-[16/10]" imgClassName="h-full w-full object-cover" />
+                  <span className="block p-5">
+                    <Icon className="h-6 w-6 text-blue-700" />
+                    <h3 className="mt-3 font-bold">{item.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600">{item.text}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
+                      {active && <Check className="h-4 w-4" />}
+                      Sur devis
+                    </span>
                   </span>
                 </button>
               );

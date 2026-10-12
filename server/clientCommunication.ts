@@ -14,11 +14,11 @@ const TECHNICAL_TERMS = [
 export function sanitizeClientCommunicationText(value: string): string {
   let result = value;
   for (const pattern of TECHNICAL_TERMS) {
-    result = result.replace(pattern, "un conseiller 3M Travel");
+    result = result.replace(pattern, "un conseiller 3M TRAVEL AGENCY");
   }
   return result
-    .replace(/un conseiller 3M Travel\s+proposé/gi, "proposé par un conseiller 3M Travel")
-    .replace(/un conseiller 3M Travel\s+indisponible/gi, "votre conseiller est momentanément indisponible")
+    .replace(/un conseiller 3M TRAVEL AGENCY\s+proposé/gi, "proposé par un conseiller 3M TRAVEL AGENCY")
+    .replace(/un conseiller 3M TRAVEL AGENCY\s+indisponible/gi, "votre conseiller est momentanément indisponible")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

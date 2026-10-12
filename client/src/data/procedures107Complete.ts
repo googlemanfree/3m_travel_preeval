@@ -98,7 +98,15 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'Canada offre économie stable, système santé universel, qualité vie élevée. Salaires compétitifs (3000-5000 CAD/mois). Processus transparent avec perspectives résidence permanente.',
     '6-12 semaines', '155-275 CAD', '3000 CAD/mois', '3500-4500 CAD', 'moyen',
     ['Économie stable', 'Santé universel', 'Qualité vie', 'Tech & Services', 'Résidence permanente'],
-    ['Offre emploi', 'LMIA si applicable', 'Demande permis', 'Examen médical', 'Approbation'],
+    [
+      'Évaluation du profil et du métier visé',
+      'Offre d’emploi ou projet employeur',
+      'EIMT / LMIA ou exemption applicable',
+      'Demande de permis de travail IRCC',
+      'Biométrie et examens médicaux',
+      'Décision IRCC et conditions du permis',
+      'Arrivée et formalités au Canada',
+    ],
     [
       { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'Contrat', 'CV', 'Diplômes', 'Lettres'] },
@@ -658,11 +666,19 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'Canada offre universités réputées, frais modérés (8000-20000 CAD/an), qualité vie. Accès résidence permanente.',
     '4-8 semaines', '155-275 CAD', '1200 CAD/mois', '2000-3500 CAD/an', 'moyen',
     ['Universités réputées', 'Frais modérés', 'Qualité vie', 'Résidence permanente', 'Multiculturel'],
-    ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
+    [
+      'Évaluation du projet d’études et du budget',
+      'Admission dans un établissement désigné (DLI)',
+      'CAQ si le Québec est choisi',
+      'Preuve de fonds et dossier documentaire',
+      'Demande de permis d’études IRCC',
+      'Biométrie et examens éventuellement requis',
+      'Décision, arrivée et conditions du permis',
+    ],
     [
       { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
-      { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
-      { category: 'Financier', documents: ['Ressources', 'Relevés'] }
+      { category: 'Académique', documents: ['Lettre admission', 'Diplômes', 'Code DLI'] },
+      { category: 'Financier', documents: ['Ressources', 'Relevés', 'Preuve de fonds'] }
     ]
   ),
   createCountry(

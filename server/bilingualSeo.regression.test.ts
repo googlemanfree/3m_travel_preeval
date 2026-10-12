@@ -10,7 +10,7 @@ describe("SEO bilingue FR/EN", () => {
     const englishCatalog = read("client/src/data/procedures107English.ts");
     const home = read("client/src/pages/EnHome.tsx");
 
-    expect(home).toContain("3M Travel & Services supports");
+    expect(home).toContain("3M TRAVEL AGENCY supports");
     expect(app).toContain('path={"/en"}');
     expect(app).toContain('path="/en/procedures/:countryId"');
     expect(app).toContain('path="/en/destinations/:countryId"');

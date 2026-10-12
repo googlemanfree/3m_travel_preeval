@@ -70,7 +70,7 @@ export async function handlePassportPendingWeeklyAlertJob(_req: Request, res: Re
     }
 
     const weekKey = new Date().toISOString().slice(0, 10);
-    const subject = `[Alerte hebdomadaire] ${summary.total} passeport(s) en attente de vérification — 3M Travel & Services`;
+    const subject = `[Alerte hebdomadaire] ${summary.total} passeport(s) en attente de vérification — 3M TRAVEL AGENCY`;
     const typeRows = Object.entries(summary.byType)
       .sort(([left], [right]) => left.localeCompare(right, "fr"))
       .map(([type, count]) => `<li><strong>${escapeHtml(type)}</strong> : ${count}</li>`)
@@ -82,7 +82,7 @@ export async function handlePassportPendingWeeklyAlertJob(_req: Request, res: Re
       <ul>${typeRows}</ul>
       <p>La prévalidation automatique est désactivée. Ouvrez la section Documents pour approuver ou rejeter chaque document et laisser une trace de la décision.</p>
       <p><a href="https://www.3mtravelagency.com/admin/documents" style="display:inline-block;background:#1e3a8a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">Ouvrir les documents</a></p>
-      <p style="font-size:12px;color:#64748b">Notification générée automatiquement par 3M Travel & Services.</p>
+      <p style="font-size:12px;color:#64748b">Notification générée automatiquement par 3M TRAVEL AGENCY.</p>
     </div>`;
 
     let sentCount = 0;

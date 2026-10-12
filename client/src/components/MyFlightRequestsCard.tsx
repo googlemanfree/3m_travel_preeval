@@ -1,8 +1,9 @@
-import { CreditCard, Plane } from "lucide-react";
+import { CreditCard, Plane, Clock3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import FlightRequestExtras from "@/components/FlightRequestExtras";
 import PaymentProofUpload from "@/components/PaymentProofUpload";
+import FlightPaymentDeclareForm from "@/components/FlightPaymentDeclareForm";
 import { flightPaymentExpected, flightStatusLabel, flightStatusTone } from "@shared/flightRequestStatus";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 
@@ -38,6 +39,16 @@ export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boo
                 <p className="truncate text-xs text-slate-500"><span className="font-mono">{request.requestRef}</span>{flight.departureDate ? ` · départ ${flight.departureDate}` : ""}</p>
               </div>
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${flightStatusTone(request.status)}`}>{flightStatusLabel(request.status)}</span>
+              {request.onlinePaymentStatus === "PENDING" && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-900" data-testid="my-flight-online-pending">
+                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> Paiement en ligne en cours
+                </span>
+              )}
+              {request.onlinePaymentStatus === "SUCCESS" && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800" data-testid="my-flight-online-success">
+                  Paiement en ligne reçu
+                </span>
+              )}
               {flightPaymentExpected(request.status) && candidate?.email && (
                 <a href={`/payment/flight/${request.id}?email=${encodeURIComponent(candidate.email)}`} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-700 px-3 text-xs font-black text-white hover:bg-blue-800" data-testid="pay-flight-online-link">
                   <CreditCard className="h-4 w-4" aria-hidden="true" />Payer en ligne
@@ -50,6 +61,9 @@ export default function MyFlightRequestsCard({ enabled = true }: { enabled?: boo
               )}
               {request.status === "issued" && request.pnrReference && <span className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-emerald-800">PNR {request.pnrReference}</span>}
               {flightPaymentExpected(request.status) && <PaymentProofUpload reference={request.requestRef} className="w-full" />}
+              {flightPaymentExpected(request.status) && !request.clientValidated && request.onlinePaymentStatus !== "SUCCESS" && (
+                <FlightPaymentDeclareForm requestId={request.id} />
+              )}
               <FlightRequestExtras requestId={request.id} status={request.status} flightData={request.flightData} paymentExpected={flightPaymentExpected(request.status)} overview={overview.data?.find((item) => item.requestId === request.id)} />
             </li>
           );

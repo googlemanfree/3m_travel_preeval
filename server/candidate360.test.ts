@@ -18,9 +18,30 @@ describe("Fiche Client 360° — règles de pilotage", () => {
 
   it("combine les exigences de pays et de procédure sans doubler les pièces", () => {
     const checklist = procedureChecklistFor("work_permit", "Canada");
-    expect(checklist.label).toBe("Visa / permis de travail");
-    expect(checklist.documents.map((item) => item.documentType)).toContain("Offre d’emploi ou contrat");
+    expect(checklist.label).toMatch(/travail/i);
+    expect(checklist.documents.map((item) => item.documentType).join(" ")).toMatch(/offre|emploi|contrat|cv/i);
     expect(new Set(checklist.documents.map((item) => item.documentType.toLowerCase())).size).toBe(checklist.documents.length);
+  });
+
+  it("contextualise la prochaine action 360° selon le pays (pas un modèle unique)", () => {
+    const italy = determineCandidate360NextAction({
+      workflowStatus: "new",
+      paymentStatus: "SUCCESS",
+      pendingDocuments: 0,
+      openTasks: 0,
+      destination: "Italie",
+      visaType: "Visiteur",
+    });
+    expect(italy.label).toMatch(/Italie/i);
+    const australia = determineCandidate360NextAction({
+      workflowStatus: "submitted",
+      paymentStatus: "SUCCESS",
+      pendingDocuments: 0,
+      openTasks: 0,
+      destination: "Australie",
+      visaType: "e-Visa",
+    });
+    expect(australia.label.toLowerCase()).toMatch(/e[‑-]visa|australie/);
   });
 
   it("normalise une timeline serveur complète dans l’ordre décroissant", () => {

@@ -1,6 +1,6 @@
 /**
  * Service de Génération de Factures PDF
- * Génère des factures professionnelles avec numéros uniques et en-tête 3M Travel & Services
+ * Génère des factures professionnelles avec numéros uniques et en-tête 3M TRAVEL AGENCY
  */
 
 import { getDb } from "./db";
@@ -103,7 +103,7 @@ export function generateInvoiceHTML(invoice: {
         <!-- En-tête -->
         <div class="header">
           <div class="company-info">
-            <h1>3M Travel & Services</h1>
+            <h1>3M TRAVEL AGENCY</h1>
             <p>Votre mobilité, notre expertise</p>
             <p style="margin-top: 10px; font-size: 12px;">
               📧 hello@3mtravelagency.com<br>
@@ -185,7 +185,7 @@ export function generateInvoiceHTML(invoice: {
         <!-- Pied de page -->
         <div class="footer">
           <p>Merci de votre confiance ! Pour toute question, contactez-nous.</p>
-          <p>© 2026 3M Travel & Services. Tous droits réservés.</p>
+          <p>© 2026 3M TRAVEL AGENCY. Tous droits réservés.</p>
           <p>Cette facture a été générée automatiquement et est valide sans signature.</p>
         </div>
       </div>
@@ -306,7 +306,7 @@ export function generateReceiptHTML(receipt: {
       <div class="container">
         <!-- En-tête -->
         <div class="header">
-          <h1>3M Travel & Services</h1>
+          <h1>3M TRAVEL AGENCY</h1>
           <p>Votre mobilité, notre expertise</p>
         </div>
 
@@ -315,7 +315,7 @@ export function generateReceiptHTML(receipt: {
 
         <!-- Contenu -->
         <div class="content">
-          <p>Je soussigné(e), <strong>${esc(receipt.candidateName)}</strong>, reconnaît avoir remis à 3M Travel &amp; Services le document suivant :</p>
+          <p>Je soussigné(e), <strong>${esc(receipt.candidateName)}</strong>, reconnaît avoir remis à 3M TRAVEL AGENCY le document suivant :</p>
         </div>
 
         <!-- Détails -->
@@ -345,7 +345,7 @@ export function generateReceiptHTML(receipt: {
         <!-- Contenu supplémentaire -->
         <div class="content">
           <p>Je certifie que ce document est authentique et conforme à l'original. Je comprends que ce document sera utilisé dans le cadre de ma demande de visa/immigration.</p>
-          <p>3M Travel & Services s'engage à conserver ce document en toute confidentialité et conformément à la réglementation en vigueur.</p>
+          <p>3M TRAVEL AGENCY s'engage à conserver ce document en toute confidentialité et conformément à la réglementation en vigueur.</p>
         </div>
 
         <!-- Signatures -->
@@ -355,14 +355,14 @@ export function generateReceiptHTML(receipt: {
             <div class="signature-line"></div>
           </div>
           <div class="signature-box">
-            <p style="font-size: 12px;">Signature de 3M Travel & Services</p>
+            <p style="font-size: 12px;">Signature de 3M TRAVEL AGENCY</p>
             <div class="signature-line"></div>
           </div>
         </div>
 
         <!-- Pied de page -->
         <div class="footer">
-          <p>© 2026 3M Travel & Services. Tous droits réservés.</p>
+          <p>© 2026 3M TRAVEL AGENCY. Tous droits réservés.</p>
           <p>Cette décharge a été générée automatiquement et est valide sans signature supplémentaire.</p>
         </div>
       </div>

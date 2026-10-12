@@ -29,6 +29,6 @@ export async function downloadInsuranceQuotePdf(data: InsuranceQuotePdfData) {
   pdf.setDrawColor(203, 213, 225); pdf.line(18, y + 2, 192, y + 2); y += 15;
   pdf.setFontSize(10);
   pdf.text("Ce document est une demande de devis et ne constitue pas une attestation d'assurance.", 18, y);
-  pdf.text("Un conseiller 3M Travel & Services vous contactera pour confirmer la couverture et le tarif final.", 18, y + 7);
+  pdf.text("Un conseiller 3M TRAVEL AGENCY vous contactera pour confirmer la couverture et le tarif final.", 18, y + 7);
   pdf.save(`devis-assurance-${data.reference}.pdf`);
 }

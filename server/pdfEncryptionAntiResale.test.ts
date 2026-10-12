@@ -7,12 +7,12 @@ describe("PDF Encryption and Anti-Resale Protection", () => {
       encryptionAlgorithm: "AES-256",
       allowPrinting: true,
       allowCopying: false,
-      ownerMetadata: "Propriété exclusive de 3M Travel Agency - Interdit à la revente",
+      ownerMetadata: "Propriété exclusive de 3M TRAVEL AGENCY - Interdit à la revente",
     };
 
     expect(protectionPolicy.encrypted).toBe(true);
     expect(protectionPolicy.encryptionAlgorithm).toBe("AES-256");
     expect(protectionPolicy.allowCopying).toBe(false);
-    expect(protectionPolicy.ownerMetadata).toContain("3M Travel Agency");
+    expect(protectionPolicy.ownerMetadata).toContain("3M TRAVEL AGENCY");
   });
 });

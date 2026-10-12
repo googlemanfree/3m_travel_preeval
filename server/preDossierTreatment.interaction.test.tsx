@@ -108,7 +108,12 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
     render(<CandidateDetailModal candidateId="account_42" sessionToken="session-admin-valide" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
 
     expect(screen.getByRole("region", { name: "Actions de traitement du compte pré-dossier" })).toBeTruthy();
-    await user.type(screen.getByPlaceholderText("Ex. Études, travail, tourisme"), "Études");
+    const destination = screen.getByRole("combobox", { name: "Pays de destination confirmé" });
+    await user.clear(destination);
+    await user.type(destination, "Canada");
+    await user.click(screen.getByRole("option", { name: /Canada/ }));
+    await user.click(screen.getByRole("combobox", { name: "Type de visa / procédure" }));
+    await user.click(screen.getByRole("option", { name: "Études" }));
     await user.type(screen.getByPlaceholderText("Pièces déposées, suite attendue, décision de l’agence…"), "Pièces vérifiées en agence.");
     await user.click(screen.getByRole("button", { name: "Ouvrir le dossier et activer le suivi" }));
     await user.click(await screen.findByRole("button", { name: "Confirmer l’activation" }));
@@ -127,7 +132,12 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
     const user = userEvent.setup();
     render(<CandidateDetailModal candidateId="account_42" sessionToken="session-admin-valide" onClose={vi.fn()} onStatusUpdated={vi.fn()} onOpenOperations={vi.fn()} />);
 
-    await user.type(screen.getByPlaceholderText("Ex. Études, travail, tourisme"), "Travail");
+    const destination = screen.getByRole("combobox", { name: "Pays de destination confirmé" });
+    await user.clear(destination);
+    await user.type(destination, "Canada");
+    await user.click(screen.getByRole("option", { name: /Canada/ }));
+    await user.click(screen.getByRole("combobox", { name: "Type de visa / procédure" }));
+    await user.click(screen.getByRole("option", { name: "Travail" }));
     await user.click(screen.getByRole("button", { name: "Ouvrir le dossier et activer le suivi" }));
     await user.click(await screen.findByRole("button", { name: "Confirmer l’activation" }));
 

@@ -142,7 +142,6 @@ describe("contraste du texte et des boutons (axe : « color-contrast »)", () =>
       "client/src/pages/PaymentFailed.tsx",
       "client/src/pages/PaymentMethodSelection.tsx",
       "client/src/pages/PaymentSuccess.tsx",
-      "client/src/pages/PaymentSuccessPage.tsx",
       "client/src/pages/ProcedureAllemagneFormation.tsx",
       "client/src/pages/ProceduresAdvanced.tsx",
     ];

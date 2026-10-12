@@ -117,7 +117,7 @@ export function ThreeMBookingExperience() {
 
   function submitRequest() {
     if (!isAuthenticated || !candidate) {
-      toast({ title: "Compte requis", description: "Créez votre compte 3M Travel pour transmettre une demande 3M Booking." });
+      toast({ title: "Compte requis", description: "Créez votre compte 3M TRAVEL AGENCY pour transmettre une demande 3M Booking." });
       setLocation("/register?returnTo=%2Fflights%3Fmode%3Dbooking");
       return;
     }

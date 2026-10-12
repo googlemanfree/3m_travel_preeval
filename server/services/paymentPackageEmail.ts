@@ -9,7 +9,7 @@ export function buildPaymentPackageEmail(input: { fullName: string; dossierNumbe
   const dossier = oneLine(input.dossierNumber, 60);
   const site = input.siteUrl.replace(/\/+$/, "");
   const html = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:22px;color:#172554">
-<div style="background:#1e3a8a;padding:24px;text-align:center;border-radius:14px 14px 0 0"><h1 style="color:#ffffff;font-size:20px;margin:0">3M Travel &amp; Services</h1><p style="color:#bfdbfe;font-size:13px;margin:6px 0 0">Paiement confirmé — reçu et Protocole d’accord N°01</p></div>
+<div style="background:#1e3a8a;padding:24px;text-align:center;border-radius:14px 14px 0 0"><h1 style="color:#ffffff;font-size:20px;margin:0">3M TRAVEL AGENCY</h1><p style="color:#bfdbfe;font-size:13px;margin:6px 0 0">Paiement confirmé — reçu et Protocole d’accord N°01</p></div>
 <div style="border:1px solid #e2e8f0;border-top:0;padding:24px;border-radius:0 0 14px 14px">
 <p>Bonjour${input.fullName ? ` <strong>${escapeHtml(oneLine(input.fullName, 120))}</strong>` : ""},</p>
 <p>Nous confirmons la réception de votre paiement de <strong>${escapeHtml(input.amountLabel)}</strong> pour le dossier <strong>${escapeHtml(dossier)}</strong>. Vous recevez ci-joint, <strong>en même temps</strong> :</p>
@@ -21,7 +21,7 @@ export function buildPaymentPackageEmail(input: { fullName: string; dossierNumbe
 <p style="text-align:center;margin:20px 0"><a href="${escapeHtml(site)}/mon-espace?section=signatures" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:13px 28px;border-radius:10px;text-decoration:none;font-weight:bold">Lire et signer le protocole</a></p>
 <p style="font-size:12px;color:#64748b">Conservez ces deux documents. Une question ? Répondez à ce message ou écrivez-nous sur WhatsApp au +237 6 98 10 48 32.</p>
 </div>
-<p style="text-align:center;font-size:11px;color:#94a3b8;margin:12px 0 0">3M Travel &amp; Services — RC/YAO/2019/A/2567 · NIU : M112417203369H · Yaoundé, Cameroun</p>
+<p style="text-align:center;font-size:11px;color:#94a3b8;margin:12px 0 0">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 · NIU : M112417203369H · Yaoundé, Cameroun</p>
 </div>`;
   return { subject: oneLine(`Reçu de paiement et Protocole d’accord N°01 — Dossier ${dossier}`), html };
 }

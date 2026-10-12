@@ -10,6 +10,8 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { PortraitCapture, PortraitCaptureResult } from "@/components/PortraitCapture";
 import { toast } from "sonner";
 import { MAX_PREFERRED_DESTINATIONS, REGISTRATION_PROJECT_TYPES, getCandidateDestinationOption, getDestinationFormProfile, type RegistrationProjectField } from "@shared/candidateDestinationOptions";
+import { CV_ACCEPT_ATTRIBUTE, CV_REQUIRED_AT_REGISTRATION, cvProblemForFile } from "@shared/evaluationCv";
+import { evaluationRequiresCv } from "@shared/evaluationVisaCv";
 import { DestinationPicker } from "@/components/CountryPicker";
 
 const LOGO_URL = "/logo-3m.webp";
@@ -53,6 +55,8 @@ export default function Register() {
   const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
   const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
   const [duplicateConflict, setDuplicateConflict] = useState<string | null>(null);
+  const [registrationCv, setRegistrationCv] = useState<File | null>(null);
+  const [registrationCvError, setRegistrationCvError] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -88,12 +92,14 @@ export default function Register() {
       .map((field) => [field, projectFields[field].trim()] as const)
       .filter(([, value]) => value.length > 0),
   ) as Partial<Record<RegistrationProjectField, string>>;
+  const workVisaRequiresCv = evaluationRequiresCv(form.visaType);
   const missingRegistrationRequirements = [
     !form.fullName.trim() ? "votre nom complet" : null,
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "une adresse e-mail valide" : null,
     form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password) ? "un mot de passe conforme" : null,
     form.password !== form.confirmPassword ? "la confirmation du mot de passe" : null,
     form.preferredDestinations.length === 0 ? "au moins une destination" : null,
+    workVisaRequiresCv && !registrationCv ? "votre CV (obligatoire pour visa travail)" : null,
     !portrait ? "un portrait vérifié" : null,
   ].filter((value): value is string => Boolean(value));
 
@@ -202,6 +208,20 @@ export default function Register() {
       return;
     }
 
+    if (evaluationRequiresCv(form.visaType)) {
+      if (!registrationCv) {
+        setRegistrationCvError(CV_REQUIRED_AT_REGISTRATION);
+        toast.error(CV_REQUIRED_AT_REGISTRATION);
+        return;
+      }
+      const cvProblem = cvProblemForFile(registrationCv);
+      if (cvProblem) {
+        setRegistrationCvError(cvProblem);
+        toast.error(cvProblem);
+        return;
+      }
+    }
+
     setIsUploadingPortrait(true);
     try {
       const uploadForm = new FormData();
@@ -215,6 +235,17 @@ export default function Register() {
         throw new Error(result.error || "La vérification sécurisée du portrait a échoué.");
       }
       sessionStorage.setItem("registrationAvatarUrl", result.fileUrl);
+      let cvBase64: string | undefined;
+      let cvFileName: string | undefined;
+      if (registrationCv) {
+        cvBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error("Lecture du CV impossible"));
+          reader.readAsDataURL(registrationCv);
+        });
+        cvFileName = registrationCv.name;
+      }
       registerMutation.mutate({
         fullName: form.fullName,
         email: form.email,
@@ -225,6 +256,8 @@ export default function Register() {
         phone: form.phone || undefined,
         nationality: form.nationality || undefined,
         ...visibleProjectFields,
+        cvBase64,
+        cvFileName,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
@@ -242,7 +275,7 @@ export default function Register() {
           <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
         </div>
         <div className="relative z-10 text-center max-w-md">
-          <img src={LOGO_URL} alt="3M Travel" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
+          <img src={LOGO_URL} alt="3M TRAVEL AGENCY" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
           <h1 className="text-4xl font-black mb-4">Votre Espace Candidat</h1>
           <p className="text-blue-200 text-lg mb-8">Créez votre compte et suivez l'avancement de votre dossier d'immigration en temps réel.</p>
           <div className="space-y-4 text-left">
@@ -281,7 +314,7 @@ export default function Register() {
               <UserPlus className="w-7 h-7 text-white" />
             </div>
             <h2 className="text-2xl font-black text-gray-900">Inscription</h2>
-            <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M Travel</p>
+            <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M TRAVEL AGENCY</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4" aria-busy={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}>
@@ -541,7 +574,19 @@ export default function Register() {
                     {destinationProfile.extraFields.includes("visaType") && (
                       <div>
                         <Label htmlFor="register-visa-type" className="text-xs font-semibold text-slate-700">Type de projet</Label>
-                        <select id="register-visa-type" value={form.visaType} onChange={(event) => setForm((prev) => ({ ...prev, visaType: event.target.value }))} disabled={registrationBusy} className={PROJECT_SELECT_CLASS}>
+                        <select
+                          id="register-visa-type"
+                          value={form.visaType}
+                          onChange={(event) => {
+                            setForm((prev) => ({ ...prev, visaType: event.target.value }));
+                            if (!evaluationRequiresCv(event.target.value)) {
+                              setRegistrationCv(null);
+                              setRegistrationCvError(null);
+                            }
+                          }}
+                          disabled={registrationBusy}
+                          className={PROJECT_SELECT_CLASS}
+                        >
                           <option value="">Je ne sais pas encore</option>
                           {REGISTRATION_PROJECT_TYPES.map((option) => <option key={option} value={option}>{option}</option>)}
                         </select>
@@ -572,6 +617,34 @@ export default function Register() {
                       </div>
                     )}
                   </div>
+                  {workVisaRequiresCv && (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3" data-testid="registration-cv-required">
+                      <Label htmlFor="register-cv" className="text-xs font-bold uppercase tracking-wide text-amber-900">CV obligatoire — visa travail</Label>
+                      <p className="mt-1 text-xs leading-5 text-amber-950">Quel que soit le pays, le CV est la pièce clé pour finaliser votre évaluation. PDF, JPG ou PNG, 5 Mo maximum.</p>
+                      <Input
+                        id="register-cv"
+                        type="file"
+                        accept={CV_ACCEPT_ATTRIBUTE}
+                        disabled={registrationBusy}
+                        className="mt-2 bg-white"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          if (!file) {
+                            setRegistrationCv(null);
+                            setRegistrationCvError(CV_REQUIRED_AT_REGISTRATION);
+                            return;
+                          }
+                          const problem = cvProblemForFile(file);
+                          setRegistrationCvError(problem);
+                          setRegistrationCv(problem ? null : file);
+                        }}
+                      />
+                      {registrationCv && !registrationCvError && (
+                        <p className="mt-2 text-xs font-semibold text-emerald-800">CV sélectionné : {registrationCv.name}</p>
+                      )}
+                      {registrationCvError && <p className="mt-2 text-xs font-medium text-rose-700" role="alert">{registrationCvError}</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </fieldset>
@@ -579,7 +652,7 @@ export default function Register() {
             {/* Portrait humain obligatoire */}
             <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
               <legend className="px-1 text-sm font-bold text-slate-800">Évaluation déjà effectuée ?</legend>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M Travel par e-mail ou directement en agence ?</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M TRAVEL AGENCY par e-mail ou directement en agence ?</p>
               <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Évaluation déjà effectuée">
                 {([
                   ["yes", "Oui, reçue par e-mail ou en agence"],

@@ -31,8 +31,8 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
     onSuccess: () => {
       setSent(true);
       const whatsappText = watching
-        ? "Bonjour 3M Travel, je viens de demander le suivi d'un tarif de vol. Merci de me prévenir en cas de baisse."
-        : "Bonjour 3M Travel, je viens d'envoyer une demande de devis vol. Merci de me contacter.";
+        ? "Bonjour 3M TRAVEL AGENCY, je viens de demander le suivi d'un tarif de vol. Merci de me prévenir en cas de baisse."
+        : "Bonjour 3M TRAVEL AGENCY, je viens d'envoyer une demande de devis vol. Merci de me contacter.";
       window.open(`https://wa.me/237698104832?text=${encodeURIComponent(whatsappText)}`, "_blank", "noopener,noreferrer");
       toast({ title: "Demande envoyée", description: "Notre équipe reçoit votre besoin et vous contactera avec des options adaptées." });
     },
@@ -96,7 +96,7 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
           <QuoteField label="Nombre de passagers" name="quoteTravelers" type="number" min="1" defaultValue="1" required />
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700">Classe de voyage</label>
-            <select name="quoteCabin" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" defaultValue="Économique">
+            <select aria-label="Classe de voyage" name="quoteCabin" className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm" defaultValue="Économique">
               <option>Économique</option>
               <option>Premium Economy</option>
               <option>Affaires</option>
@@ -129,7 +129,7 @@ function QuoteField({ label, name, type = "text", required, min, defaultValue, m
   return (
     <div>
       <label className="mb-1 block text-sm font-semibold text-gray-700">{label}</label>
-      <input name={name} type={type} required={required} min={min} defaultValue={defaultValue} maxLength={maxLength} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500" />
+      <input aria-label={label} name={name} type={type} required={required} min={min} defaultValue={defaultValue} maxLength={maxLength} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500" />
     </div>
   );
 }

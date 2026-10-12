@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { Building2, CheckCircle, Clock, FileText, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { openingFeeLabelFromSearch } from '@shared/openingFee';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 
 export default function PaymentAgencyConfirmation() {
+  const amountLabel = openingFeeLabelFromSearch(window.location.search);
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
 
@@ -89,7 +91,7 @@ export default function PaymentAgencyConfirmation() {
             {/* Montant */}
             <div className="pb-6 border-b border-gray-200">
               <p className="text-sm text-gray-500 font-semibold mb-2">MONTANT À PAYER</p>
-              <p className="text-4xl font-bold text-green-600">65 000 XAF</p>
+              <p className="text-4xl font-bold text-green-600">{amountLabel}</p>
               <p className="text-sm text-gray-600 mt-2">Frais d'évaluation primaire</p>
             </div>
 
@@ -116,7 +118,7 @@ export default function PaymentAgencyConfirmation() {
                     <span className="text-sm font-bold text-green-600">1</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Versez 65 000 XAF à l'agence</p>
+                    <p className="font-semibold text-gray-900">Versez {amountLabel === openingFeeLabelFromSearch("") ? "le montant confirmé" : amountLabel} à l'agence</p>
                     <p className="text-sm text-gray-600">En espèces ou par virement bancaire</p>
                   </div>
                 </div>
@@ -164,7 +166,7 @@ export default function PaymentAgencyConfirmation() {
         >
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
             <Building2 className="w-6 h-6 text-blue-600" />
-            Coordonnées de l'Agence 3M Travel
+            Coordonnées de l'Agence 3M TRAVEL AGENCY
           </h3>
 
           <div className="space-y-4">

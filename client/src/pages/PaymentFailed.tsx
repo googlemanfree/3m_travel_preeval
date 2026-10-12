@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
 import { XCircle, RefreshCw, MessageCircle, Home } from "lucide-react";
 import PaymentFallbackPanel from "@/components/PaymentFallbackPanel";
 
@@ -9,7 +8,7 @@ export default function PaymentFailed() {
   const dossierNumber = params.get("dossier") ?? "";
 
   const whatsappMsg = encodeURIComponent(
-    `Bonjour 3M Travel Agency, j'ai rencontré un problème lors du paiement de mon dossier.\n\n` +
+    `Bonjour 3M TRAVEL AGENCY, j'ai rencontré un problème lors du paiement de mon dossier.\n\n` +
     `📋 Numéro de dossier : ${dossierNumber}\n\n` +
     `Pouvez-vous m'aider à finaliser le paiement ?`
   );
@@ -86,7 +85,6 @@ export default function PaymentFailed() {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }

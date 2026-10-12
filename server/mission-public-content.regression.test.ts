@@ -33,8 +33,8 @@ describe("mission public and workflow coverage", () => {
     const digital = read("../client/src/pages/Community.tsx");
 
     expect(digital).toContain("Exemples de livrables");
-    expect(digital).toContain("150 000–450 000 FCFA");
-    expect(digital).toContain("2–4 semaines");
-    expect(digital).toContain("6–12 semaines");
+    expect(digital).toContain("150 000 – 350 000 FCFA");
+    expect(digital).toContain("2 à 4 semaines");
+    expect(digital).toContain("4 à 8 semaines");
   });
 });

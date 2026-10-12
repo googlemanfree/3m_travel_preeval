@@ -16,4 +16,12 @@ describe("repli de session administrateur", () => {
     expect(guardSource).toContain('sessionStorage.getItem("adminSessionToken")');
     expect(guardSource).toContain("sessionToken ? { sessionToken } : undefined");
   });
+
+  it("ne masque pas durablement le tableau lorsqu’un jeton local existe mais que le réseau échoue", () => {
+    expect(guardSource).toContain("retry: 3");
+    expect(guardSource).toContain("retryDelay: 1500");
+    expect(guardSource).toContain("Boolean(sessionToken) && adminSession.isError");
+    expect(guardSource).toContain("sessionTemporarilyUnavailable && !sessionToken");
+    expect(guardSource).toContain("adminSession.refetch()");
+  });
 });

@@ -46,7 +46,8 @@ describe("blocage réel de l'espace candidat tant que l'évaluation n'est pas so
 
   it("la checklist documentaire et l'affichage de destination utilisent le pays précis déclaré (pas seulement la catégorie large historique)", () => {
     const source = read("client/src/pages/EvaluationSpace.tsx");
-    expect(source).toContain("preferredDestinationsList[0] || cProfile.destination");
+    // Le dossier actif puis le dossier agence passent d'abord ; le pays précis déclaré garde la priorité sur la catégorie large du profil.
+    expect(source).toMatch(/\|\| preferredDestinationsList\[0\]\s+\|\| cProfile\.destination/);
     expect(source).toContain("destination={primaryDestination}");
     // le parcours par pays et le lien d'évaluation reçoivent aussi le pays précis (jamais « europe » ou « autre »)
     expect(source).not.toContain("<CandidateCountryJourney destination={cProfile.destination}");

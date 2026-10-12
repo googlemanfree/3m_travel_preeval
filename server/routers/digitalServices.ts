@@ -3,6 +3,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { adminNotifications, digitalServiceContent, digitalServiceRequests } from "../../drizzle/schema";
+import { AFRICA_DIGITAL_PRICING_JSON, sanitizeDigitalPricingJson } from "../../shared/digitalServicePricing";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendEmail } from "../_core/email";
@@ -24,7 +25,7 @@ const makeReference = () => `DGT-${new Date().getFullYear()}-${randomInt(100000,
 
 const defaultContent = {
   heroTitle: "Le digital qui fait avancer vos projets.",
-  heroDescription: "3M Solutions est le pôle de services numériques de 3M Travel Agency : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
+  heroDescription: "3M Solutions est le pôle de services numériques de 3M TRAVEL AGENCY : plateformes web, croissance digitale, support IT et formation professionnelle pour les particuliers, agences et entreprises.",
   serviceIntro: "Le pôle 3M Solutions met en relation les compétences nécessaires pour rendre vos activités plus visibles, mieux organisées et plus simples à développer.",
   requestIntro: "Chaque demande reçoit une référence, entre dans la file de traitement du back-office et peut être suivie par nos conseillers avant toute proposition.",
   serviceDefinitionsJson: JSON.stringify([
@@ -33,24 +34,7 @@ const defaultContent = {
     { title: "Infrastructure & support IT", description: "Un environnement de travail connecté, maintenu et mieux protégé au quotidien.", points: ["Maintenance et assistance utilisateurs", "Réseaux, Wi-Fi et télécoms", "Cybersécurité et sauvegarde", "Audit digital et accompagnement"] },
     { title: "Formation professionnelle", description: "Des sessions pratiques autour du digital, de la mobilité et des opérations de voyage.", points: ["Marketing digital et création de contenu", "Mobilité internationale et orientation", "Galileo Smartpoint et billetterie", "Relation client et gestion des dossiers"] },
   ]),
-  pricingJson: JSON.stringify([
-    {
-      title: "Vitrine évolutive",
-      subtitle: "Présenter l’offre, recevoir les demandes et garder la validation humaine.",
-      launchRange: "3 600 000 – 14 500 000 XAF",
-      annualRange: "1 150 000 – 7 200 000 XAF / an",
-      delivery: "6 à 12 semaines",
-      points: ["Cadrage, identité visuelle et contenus", "Formulaires intelligents et suivi des demandes", "Administration légère et accompagnement au lancement"],
-    },
-    {
-      title: "Plateforme transactionnelle",
-      subtitle: "Standardiser certains parcours de recherche, réservation et paiement.",
-      launchRange: "17 500 000 – 66 000 000 XAF",
-      annualRange: "8 100 000 – 47 000 000 XAF / an",
-      delivery: "4 à 9 mois",
-      points: ["Catalogue, comptes, paiements et notifications", "Intégrations fournisseurs et règles opérationnelles", "Gestion des exceptions, annulations et rapprochements"],
-    },
-  ]),
+  pricingJson: AFRICA_DIGITAL_PRICING_JSON,
 };
 
 async function resolveDigitalAdminSession(cookieHeader: string | undefined, sessionToken: string) {
@@ -92,16 +76,22 @@ function withDefaultContent(row: typeof digitalServiceContent.$inferSelect | und
     ...defaultContent,
     ...(row || {}),
     serviceDefinitionsJson: row?.serviceDefinitionsJson || defaultContent.serviceDefinitionsJson,
-    pricingJson: row?.pricingJson || defaultContent.pricingJson,
+    // Remplace automatiquement les anciennes grilles multi-millions par les packs Afrique 50–600k.
+    pricingJson: sanitizeDigitalPricingJson(row?.pricingJson || defaultContent.pricingJson),
   };
 }
 
 export const digitalServicesRouter = router({
   getContent: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return defaultContent;
-    const rows = await db.select().from(digitalServiceContent).where(eq(digitalServiceContent.id, 1)).limit(1);
-    return withDefaultContent(rows[0]);
+    try {
+      const db = await getDb();
+      if (!db) return defaultContent;
+      const rows = await db.select().from(digitalServiceContent).where(eq(digitalServiceContent.id, 1)).limit(1);
+      return withDefaultContent(rows[0]);
+    } catch (err) {
+      logger.error("digital_services.get_content_failed", {}, err);
+      return defaultContent;
+    }
   }),
   createRequest: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
     const db = await getDb();
@@ -125,7 +115,7 @@ export const digitalServicesRouter = router({
     } catch (err) { logger.error("digital_services.team_notification_failed", { reference }, err); }
 
     try {
-      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Solutions — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Solutions vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Solutions — 3M Travel Agency</p>` });
+      await sendEmail({ to: input.email, subject: `Confirmation de votre demande 3M Solutions — ${reference}`, html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de service <strong>${esc(serviceLabel)}</strong>.</p><p>Votre référence est : <strong>${esc(reference)}</strong>.<br>Notre équipe 3M Solutions vous recontactera à l'adresse <strong>${esc(input.email)}</strong> pour vous proposer un devis adapté.</p><p>Cordialement,<br>L'équipe 3M Solutions — 3M TRAVEL AGENCY</p>` });
     } catch (err) { logger.error("digital_services.candidate_confirmation_failed", { reference }, err); }
 
     return { reference };
@@ -178,7 +168,12 @@ export const digitalServicesRouter = router({
     const admin = await resolveDigitalAdminSession(ctx.req.headers.cookie, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    await db.insert(digitalServiceContent).values({ id: 1, ...input.content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M" }).onDuplicateKeyUpdate({ set: { ...input.content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M", updatedAt: new Date() } });
+    const content = {
+      ...input.content,
+      pricingJson: sanitizeDigitalPricingJson(input.content.pricingJson),
+    };
+    await db.insert(digitalServiceContent).values({ id: 1, ...content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M" }).onDuplicateKeyUpdate({ set: { ...content, updatedByAdminEmail: admin.email || admin.fullName || "Administrateur 3M", updatedAt: new Date() } });
     return { success: true };
   }),
+
 });

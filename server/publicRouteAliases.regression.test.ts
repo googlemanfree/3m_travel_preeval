@@ -21,7 +21,10 @@ describe("routes publiques historiques", () => {
     expect(appSource).toContain('<Route path={"/candidate/login"}>{() => <Redirect to="/login" />}</Route>');
   });
 
-  it("place le pied de page après les résultats et le parcours 3M Booking", () => {
-    expect(flightsSource).toContain('<div className="order-6"><Footer /></div>');
+  it("ne duplique pas le pied de page sur /flights (footer global App uniquement)", () => {
+    expect(flightsSource).not.toContain("<Footer");
+    expect(flightsSource).not.toContain('import Footer from');
+    expect(appSource).toContain("{showPublicFooter && <FooterLegal />}");
   });
 });
+

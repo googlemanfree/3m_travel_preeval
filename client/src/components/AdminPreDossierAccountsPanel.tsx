@@ -42,6 +42,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { ADMIN_PROCEDURE_TYPES } from "@shared/dossierProcedureSelection";
+import { CountrySelect } from "@/components/CountryPicker";
 
 type PreDossierAccount = {
   id: number;
@@ -54,12 +58,18 @@ type PreDossierAccount = {
   createdAt: string | Date;
   lastLoginAt: string | Date | null;
   documentsCount: number;
+  hasCv?: boolean;
+  evaluationWithoutCv?: boolean;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
   paymentValidated?: boolean;
   paymentProofUrl?: string | null;
   paymentReference?: string | null;
   paymentValidatedAt?: string | null;
+  accountReference?: string;
+  referenceView?: { label: string; secondaryLabel: string | null; activated: boolean };
+  preferredDestinations?: string[];
+  visaType?: string | null;
 };
 
 function formatDate(value: string | Date | null) {
@@ -100,7 +110,7 @@ export default function AdminPreDossierAccountsPanel({
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [additionalProcedureEnabled, setAdditionalProcedureEnabled] = useState(false);
-  const [additionalDestination, setAdditionalDestination] = useState("europe");
+  const [additionalDestination, setAdditionalDestination] = useState("france");
   const [additionalVisaType, setAdditionalVisaType] = useState("Études");
   const [additionalPaymentReference, setAdditionalPaymentReference] = useState("");
   const [additionalPaymentAmount, setAdditionalPaymentAmount] = useState("");
@@ -115,6 +125,13 @@ export default function AdminPreDossierAccountsPanel({
     previousAccountReference: string;
     dossierReference: string;
     linkedExistingDossier?: boolean;
+    additionalDossierReference?: string | null;
+    simultaneousProcedures?: boolean;
+    additionalProcedure?: {
+      destination: string;
+      visaType: string;
+      dossierReference: string;
+    } | null;
   } | null>(null);
   const [copiedDossierReference, setCopiedDossierReference] = useState(false);
   const activationSuccessTimer = useRef<number | null>(null);
@@ -158,7 +175,7 @@ export default function AdminPreDossierAccountsPanel({
   );
   const query = trpc.adminCandidateManagement.listPreDossierAccounts.useQuery(
     queryInput,
-    { enabled: Boolean(sessionToken), retry: false }
+    { enabled: Boolean(sessionToken), retry: false, ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS) }
   );
   // Conditions d'ouverture (évaluation validée + paiement validé) : affichées AVANT le clic, jamais découvertes par un refus muet.
   const readiness =
@@ -318,10 +335,14 @@ export default function AdminPreDossierAccountsPanel({
       onSuccess: result => {
         setActivationSuccess(result);
         toast({
-          title: result.linkedExistingDossier
-            ? "Dossier rattaché et activé"
-            : "Dossier activé",
-          description: `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
+          title: result.additionalDossierReference
+            ? "Deux procédures activées en parallèle"
+            : result.linkedExistingDossier
+              ? "Dossier rattaché et activé"
+              : "Dossier activé",
+          description: result.additionalDossierReference
+            ? `${result.dossierReference} et ${result.additionalDossierReference} sont actifs — traitez-les simultanément dans le back-office.`
+            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
         });
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
@@ -369,20 +390,21 @@ export default function AdminPreDossierAccountsPanel({
     if (activationSuccessTimer.current !== null)
       window.clearTimeout(activationSuccessTimer.current);
     setSelected(account);
-    setDestination(
-      account.destinationPreference && account.destinationPreference !== "autre"
-        ? account.destinationPreference
-        : "canada"
-    );
-    setVisaType("Études");
+    const preferred = account.preferredDestinations?.[0];
+    const fromPreferred = preferred ? getCandidateDestinationOption(preferred)?.name : undefined;
+    const fromCoarse = account.destinationPreference
+      ? getCandidateDestinationOption(account.destinationPreference)?.name
+      : undefined;
+    setDestination(fromPreferred || fromCoarse || "Canada");
+    setVisaType(account.visaType?.trim() || "Études");
     setAdminNotes("");
     setOfflineNote("");
     setOfflineChannel("agence");
     setPaymentReference("");
     setPaymentAmount("");
     setAdditionalProcedureEnabled(false);
-    setAdditionalDestination("europe");
-    setAdditionalVisaType("Études");
+    setAdditionalDestination("France");
+    setAdditionalVisaType("Travail");
     setAdditionalPaymentReference("");
     setAdditionalPaymentAmount("");
     setProofFile(null);
@@ -412,8 +434,12 @@ export default function AdminPreDossierAccountsPanel({
     readiness.data && (!readiness.data.paymentValidated || (additionalProcedureEnabled && !readiness.data.openingPayment?.additionalPayment))
   );
   const additionalPaymentBlocked = additionalProcedureEnabled && Boolean(
-    readiness.data?.paymentValidated && !readiness.data.openingPayment?.additionalPayment
+    readiness.data?.paymentValidated && !readiness.data?.openingPayment?.additionalPayment
   );
+  const parallelActivationReady = additionalProcedureEnabled
+    && evaluationOk
+    && Boolean(readiness.data?.paymentValidated)
+    && Boolean(readiness.data?.openingPayment?.additionalPayment);
   const busy =
     activateMutation.isPending ||
     reviewMutation.isPending ||
@@ -448,18 +474,27 @@ export default function AdminPreDossierAccountsPanel({
               dossier après réception des pièces en agence.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void query.refetch()}
-            disabled={query.isFetching}
-            className="gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
-            />{" "}
-            Actualiser
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void query.refetch()}
+              disabled={query.isFetching}
+              className="gap-2"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
+              />{" "}
+              Actualiser
+            </Button>
+            <p className="text-xs text-slate-500" aria-live="polite" data-testid="predossier-sync">
+              {query.isFetching
+                ? "Synchronisation…"
+                : query.dataUpdatedAt
+                  ? `Dernière sync : ${formatAdminSyncTime(new Date(query.dataUpdatedAt))}`
+                  : formatAdminSyncTime(null)}
+            </p>
+          </div>
         </div>
         {Boolean(query.data?.coveredByActiveDossier) && (
           <p
@@ -556,6 +591,16 @@ export default function AdminPreDossierAccountsPanel({
                           {account.email}
                           {account.phone ? ` · ${account.phone}` : ""}
                         </p>
+                        {(account.accountReference || account.referenceView?.label) && (
+                          <p className="mt-1 font-mono text-[11px] text-blue-800">
+                            {account.referenceView?.label || account.accountReference}
+                            {account.referenceView?.secondaryLabel ? (
+                              <span className="ml-1 text-slate-500">· {account.referenceView.secondaryLabel}</span>
+                            ) : (
+                              <span className="ml-1 text-slate-500">· Compte (dossier non activé)</span>
+                            )}
+                          </p>
+                        )}
                         {account.emailVerified ? (
                           <Badge
                             variant="outline"
@@ -583,6 +628,15 @@ export default function AdminPreDossierAccountsPanel({
                             · {account.pendingEvaluationReference}
                             </Badge>
                         )}
+                        {account.evaluationWithoutCv ? (
+                          <Badge
+                            variant="outline"
+                            className="ml-1 mt-1 border-rose-200 bg-rose-50 text-rose-800"
+                            title="Déclaration ou validation hors ligne sans CV déposé — le dossier s’ouvrira selon le pays et le type de visa choisis"
+                          >
+                            Sans CV
+                          </Badge>
+                        ) : null}
                         {account.paymentValidated && (
                           <button
                             type="button"
@@ -595,8 +649,14 @@ export default function AdminPreDossierAccountsPanel({
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 capitalize text-slate-700">
-                        {account.destinationPreference || "À préciser"}
+                      <td className="px-4 py-3 text-slate-700">
+                        {account.preferredDestinations?.[0]
+                          || getCandidateDestinationOption(account.destinationPreference || "")?.name
+                          || account.destinationPreference
+                          || "À préciser"}
+                        {account.visaType ? (
+                          <span className="mt-0.5 block text-xs text-slate-500">{account.visaType}</span>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3">
                         <p className="flex items-center gap-1 text-slate-700">
@@ -702,10 +762,14 @@ export default function AdminPreDossierAccountsPanel({
                 <Check className="h-9 w-9" strokeWidth={3} />
               </div>
               <h3 className="mt-4 text-xl font-black text-emerald-950">
-                Dossier activé avec succès
+                {activationSuccess.simultaneousProcedures || activationSuccess.additionalDossierReference
+                  ? "Deux procédures activées en parallèle"
+                  : "Dossier activé avec succès"}
               </h3>
               <p className="mt-2 text-sm text-emerald-800">
-                L’espace client est maintenant opérationnel.
+                {activationSuccess.simultaneousProcedures || activationSuccess.additionalDossierReference
+                  ? "Les deux dossiers sont actifs et doivent être traités simultanément dans le back-office."
+                  : "L’espace client est maintenant opérationnel."}
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm font-bold">
                 <span className="rounded-lg bg-slate-100 px-3 py-2 font-mono text-slate-600 line-through">
@@ -736,10 +800,31 @@ export default function AdminPreDossierAccountsPanel({
                     <Copy className="h-4 w-4" aria-hidden="true" />
                   )}
                 </button>
+                {activationSuccess.additionalDossierReference ? (
+                  <button
+                    type="button"
+                    data-testid="copy-additional-dossier-reference"
+                    onClick={() =>
+                      void copyDossierReference(
+                        activationSuccess.additionalDossierReference!
+                      )
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 font-mono text-white shadow-sm transition hover:bg-indigo-700"
+                  >
+                    <span>{activationSuccess.additionalDossierReference}</span>
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
               </div>
+              {activationSuccess.additionalProcedure ? (
+                <p className="mt-3 text-xs text-indigo-900" data-testid="dual-activation-summary">
+                  {activationSuccess.dossierReference} + {activationSuccess.additionalProcedure.dossierReference}
+                  {" · "}
+                  {activationSuccess.additionalProcedure.destination} / {activationSuccess.additionalProcedure.visaType}
+                </p>
+              ) : null}
               <p className="mt-4 text-xs text-slate-500">
-                Cliquez sur la nouvelle référence pour la copier dans le
-                presse-papiers.
+                Cliquez sur une référence pour la copier dans le presse-papiers.
               </p>
               <p data-testid="copy-dossier-reference-status" role="status" aria-live="polite" className="sr-only">
                 {copiedDossierReference
@@ -1024,39 +1109,41 @@ export default function AdminPreDossierAccountsPanel({
                     </Button>
                   </div>
                 )}
+              {selected?.evaluationWithoutCv ? (
+                <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900">
+                  Évaluation sans CV : le parcours et la checklist du dossier seront créés à partir du <strong>pays</strong> et du <strong>type de visa</strong> choisis ci-dessous (pas d’un modèle générique).
+                </p>
+              ) : null}
               <div>
-                <Label>Destination confirmée</Label>
-                <Select value={destination} onValueChange={setDestination}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="canada">Canada</SelectItem>
-                    <SelectItem value="luxembourg">Luxembourg</SelectItem>
-                    <SelectItem value="europe">Europe / Schengen</SelectItem>
-                    <SelectItem value="pologne">Pologne</SelectItem>
-                    <SelectItem value="golfe">Golfe</SelectItem>
-                    <SelectItem value="France">France</SelectItem>
-                    <SelectItem value="Allemagne">Allemagne</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="predossier-destination">Pays de destination confirmé</Label>
+                <div className="mt-1">
+                  <CountrySelect
+                    id="predossier-destination"
+                    value={destination}
+                    onChange={setDestination}
+                    placeholder="Choisir le pays exact…"
+                    ariaLabel="Pays de destination confirmé"
+                  />
+                </div>
               </div>
               <div>
-                <Label htmlFor="predossier-visa">Procédure</Label>
-                <Input
-                  id="predossier-visa"
-                  value={visaType}
-                  onChange={event => setVisaType(event.target.value)}
-                  className="mt-1"
-                  placeholder="Études, travail, tourisme…"
-                  maxLength={100}
-                />
+                <Label htmlFor="predossier-visa">Type de visa / procédure</Label>
+                <Select value={visaType} onValueChange={setVisaType}>
+                  <SelectTrigger id="predossier-visa" className="mt-1">
+                    <SelectValue placeholder="Choisir la procédure…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ADMIN_PROCEDURE_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
                 <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                   <div>
                     <p className="text-sm font-semibold text-blue-950">Deux procédures en parallèle</p>
-                    <p className="text-xs leading-5 text-blue-800">Chaque procédure doit avoir son propre frais d’ouverture et sa propre référence de transaction.</p>
+                    <p className="text-xs leading-5 text-blue-800">Règle : 1 dossier = 1 paiement. Le second dossier exige un second frais d’ouverture et une seconde référence de transaction — le premier paiement ne débloque pas la seconde procédure.</p>
                   </div>
                   <Button
                     type="button"
@@ -1071,25 +1158,57 @@ export default function AdminPreDossierAccountsPanel({
                   </Button>
                 </div>
                 {additionalProcedureEnabled && (
+                  <div
+                    data-testid="parallel-activation-readiness"
+                    role="status"
+                    aria-live="polite"
+                    className={`mt-3 flex items-start gap-2 rounded-lg border p-3 text-xs leading-5 ${
+                      parallelActivationReady
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                        : "border-amber-300 bg-amber-50 text-amber-900"
+                    }`}
+                  >
+                    <span aria-hidden="true" className="mt-0.5 text-sm font-black">
+                      {parallelActivationReady ? "✓" : "!"}
+                    </span>
+                    <span>
+                      <strong>
+                        {parallelActivationReady
+                          ? "Activation parallèle prête"
+                          : "Activation parallèle en attente"}
+                      </strong>
+                      <span className="block">
+                        {parallelActivationReady
+                          ? "Évaluation et deux paiements validés : les deux dossiers seront créés et suivis séparément."
+                          : "Validez l’évaluation, le premier paiement et le second frais d’ouverture avant de confirmer. Aucun dossier ne sera créé avant ces validations."}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {additionalProcedureEnabled && (
                   <div data-testid="additional-procedure-fields" className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
-                      <Label>Seconde destination</Label>
-                      <Select value={additionalDestination} onValueChange={setAdditionalDestination}>
-                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="canada">Canada</SelectItem>
-                          <SelectItem value="luxembourg">Luxembourg</SelectItem>
-                          <SelectItem value="europe">Europe / Schengen</SelectItem>
-                          <SelectItem value="pologne">Pologne</SelectItem>
-                          <SelectItem value="golfe">Golfe</SelectItem>
-                          <SelectItem value="France">France</SelectItem>
-                          <SelectItem value="Allemagne">Allemagne</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="predossier-additional-destination">Seconde destination</Label>
+                      <div className="mt-1">
+                        <CountrySelect
+                          id="predossier-additional-destination"
+                          value={additionalDestination}
+                          onChange={setAdditionalDestination}
+                          placeholder="Choisir le second pays…"
+                          ariaLabel="Seconde destination"
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="predossier-additional-visa">Seconde procédure</Label>
-                      <Input id="predossier-additional-visa" value={additionalVisaType} onChange={event => setAdditionalVisaType(event.target.value)} className="mt-1" placeholder="Travail, études…" maxLength={100} />
+                      <Select value={additionalVisaType} onValueChange={setAdditionalVisaType}>
+                        <SelectTrigger id="predossier-additional-visa" className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ADMIN_PROCEDURE_TYPES.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="predossier-additional-payment-reference">Référence du second paiement</Label>

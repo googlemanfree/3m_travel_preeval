@@ -29,7 +29,7 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
       return;
     }
     const formattedDate = new Date(`${preferredDate}T00:00:00`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    const message = `Bonjour 3M Travel, je demande un rappel pour la procédure ${procedure} vers ${destination}.\nNom : ${name.trim()}\nTéléphone : ${phone.trim()}\nDate souhaitée : ${formattedDate}\nCréneau souhaité : ${preferredTimeSlot}`;
+    const message = `Bonjour 3M TRAVEL AGENCY, je demande un rappel pour la procédure ${procedure} vers ${destination}.\nNom : ${name.trim()}\nTéléphone : ${phone.trim()}\nDate souhaitée : ${formattedDate}\nCréneau souhaité : ${preferredTimeSlot}`;
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
     setOpen(false);
   };
@@ -44,7 +44,7 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Demander un rappel</DialogTitle>
-          <DialogDescription>Un conseiller 3M Travel pourra vous rappeler au sujet de {destination}.</DialogDescription>
+          <DialogDescription>Un conseiller 3M TRAVEL AGENCY pourra vous rappeler au sujet de {destination}.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">

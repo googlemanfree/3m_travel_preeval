@@ -415,7 +415,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               <div className="max-h-80 space-y-3 overflow-y-auto rounded-xl border bg-white p-4" aria-live="polite">
                 {messagesQuery.isLoading ? <p className="text-sm text-gray-500">Chargement des messages…</p> : messagesQuery.isError ? <p className="text-sm text-red-600">Impossible de charger les messages de ce dossier.</p> : messagesQuery.data?.length ? messagesQuery.data.map((message) => (
                   <div key={message.id} className={`rounded-xl p-3 text-sm ${message.senderRole === "advisor" ? "ml-8 bg-blue-50 text-blue-950" : "mr-8 bg-gray-50 text-gray-800"}`}>
-                    <div className="mb-1 flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-wide text-gray-500"><span>{message.senderRole === "advisor" ? "Équipe 3M Travel" : "Candidat"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></div>
+                    <div className="mb-1 flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-wide text-gray-500"><span>{message.senderRole === "advisor" ? "Équipe 3M TRAVEL AGENCY" : "Candidat"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></div>
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
                 )) : <p className="text-sm text-gray-500">Aucun message pour ce dossier.</p>}

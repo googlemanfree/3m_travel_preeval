@@ -19,7 +19,7 @@ const outro = [
   "Cette réponse est préparatoire : les conditions applicables et les pièces seront vérifiées avec vous sur les sources officielles avant toute démarche.",
   "",
   "Cordialement,",
-  "3M Travel & Services",
+  "3M TRAVEL AGENCY",
 ];
 
 export const EVALUATION_RESPONSE_TEMPLATES: EvaluationResponseTemplate[] = [

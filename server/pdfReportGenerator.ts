@@ -44,7 +44,7 @@ export function generateReportPDF(data: ReportData): jsPDF {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("3M Travel & Services", margin, 12);
+  doc.text("3M TRAVEL AGENCY", margin, 12);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -231,7 +231,7 @@ export function generateReportPDF(data: ReportData): jsPDF {
   doc.text("Aureol DONFACK", margin, pageHeight - 18);
 
   doc.setFontSize(8);
-  doc.text("PDG - 3M Travel & Services", margin, pageHeight - 13);
+  doc.text("PDG - 3M TRAVEL AGENCY", margin, pageHeight - 13);
 
   doc.setTextColor(153, 153, 153); // #999999
   doc.text(`Généré le: ${new Date().toLocaleString("fr-FR")}`, margin, pageHeight - 8);

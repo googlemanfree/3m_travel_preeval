@@ -33,11 +33,11 @@ export const SmartFlightAssistant = () => {
 
   const translations = {
     fr: {
-      title: "Assistant 3M Travel",
+      title: "Assistant 3M TRAVEL AGENCY",
       subtitle: "En ligne • Réservations & Vols",
       placeholder: "Posez votre question sur un vol...",
       tooltip: "Besoin d'aide pour votre vol ? ✈️",
-      greeting: "Bonjour ! Je suis votre assistant virtuel 3M Travel. Comment puis-je vous aider dans votre recherche de vol, choix de siège ou réservation aujourd'hui ?",
+      greeting: "Bonjour ! Je suis votre assistant virtuel 3M TRAVEL AGENCY. Comment puis-je vous aider dans votre recherche de vol, choix de siège ou réservation aujourd'hui ?",
       quick: [
         "Comment réserver un vol ?",
         "Quelles sont les franchises bagages ?",
@@ -51,11 +51,11 @@ export const SmartFlightAssistant = () => {
       contact: "Nos conseillers experts sont joignables directement sur WhatsApp au +237 698 10 48 32 ou par e-mail à hello@3mtravelagency.com pour vous assister."
     },
     en: {
-      title: "3M Travel Assistant",
+      title: "3M TRAVEL AGENCY Assistant",
       subtitle: "Online • Bookings & Flights",
       placeholder: "Ask your question about a flight...",
       tooltip: "Need help with your flight? ✈️",
-      greeting: "Hello! I am your 3M Travel virtual assistant. How can I help you with your flight search, seat selection, or booking today?",
+      greeting: "Hello! I am your 3M TRAVEL AGENCY virtual assistant. How can I help you with your flight search, seat selection, or booking today?",
       quick: [
         "How to book a flight?",
         "What are baggage allowances?",
@@ -69,11 +69,11 @@ export const SmartFlightAssistant = () => {
       contact: "Our expert advisors can be reached directly via WhatsApp at +237 698 10 48 32 or by email at hello@3mtravelagency.com to assist you."
     },
     es: {
-      title: "Asistente 3M Travel",
+      title: "Asistente 3M TRAVEL AGENCY",
       subtitle: "En línea • Reservas y Vuelos",
       placeholder: "Haz tu pregunta sobre un vuelo...",
       tooltip: "¿Necesitas ayuda con tu vuelo? ✈️",
-      greeting: "¡Hola! Soy tu asistente virtual de 3M Travel. ¿Cómo puedo ayudarte hoy con tu búsqueda de vuelos, selección de asientos o reserva?",
+      greeting: "¡Hola! Soy tu asistente virtual de 3M TRAVEL AGENCY. ¿Cómo puedo ayudarte hoy con tu búsqueda de vuelos, selección de asientos o reserva?",
       quick: [
         "¿Cómo reservar un vuelo?",
         "¿Franquicia de equipaje?",
@@ -87,11 +87,11 @@ export const SmartFlightAssistant = () => {
       contact: "Nuestros asesores expertos están disponibles por WhatsApp en el +237 698 10 48 32 o por correo en hello@3mtravelagency.com para ayudarte."
     },
     de: {
-      title: "3M Travel Assistent",
+      title: "3M TRAVEL AGENCY Assistent",
       subtitle: "Online • Buchungen & Flüge",
       placeholder: "Stellen Sie Ihre Frage zu einem Flug...",
       tooltip: "Hilfe bei Ihrem Flug benötigt? ✈️",
-      greeting: "Hallo! Ich bin Ihr virtueller Assistent von 3M Travel. Wie kann ich Ihnen heute bei Ihrer Flugsuche, Sitzplatzauswahl oder Buchung helfen?",
+      greeting: "Hallo! Ich bin Ihr virtueller Assistent von 3M TRAVEL AGENCY. Wie kann ich Ihnen heute bei Ihrer Flugsuche, Sitzplatzauswahl oder Buchung helfen?",
       quick: [
         "Wie buche ich einen Flug?",
         "Was sind die Freigepäckmengen?",

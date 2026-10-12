@@ -18,6 +18,8 @@ describe("portrait review and recovery workflow", () => {
   it("provides a profile action to retake the portrait using the secured upload flow", () => {
     const source = read("client/src/components/CandidateAvatar.tsx");
     expect(source).toContain("Reprendre ma photo");
+    expect(source).toContain("Déposer ma photo type passeport");
+    expect(source).toContain("passportPhotoRequired");
     expect(source).toContain("verifyHumanPortrait");
     expect(source).toContain("/api/candidate/upload-public");
     expect(source).toContain("portraitVerificationToken");
@@ -40,10 +42,12 @@ describe("portrait review and recovery workflow", () => {
     const panel = read("client/src/components/AdminPortraitReviewPanel.tsx");
     expect(router).toContain("reviewPortrait:");
     expect(router).toContain("requireAdminSessionFromCookie(ctx.req.headers.cookie)");
-    expect(router).toContain('z.enum(["approve", "reject", "request_new"])');
+    expect(router).toContain('z.enum(["approve", "reject", "request_new", "request_passport"])');
+    expect(router).toContain("flagPassportPhotoRequirement");
     expect(router).toContain("avatarVerificationStatus: status");
     expect(panel).toContain("adminCandidateManagement.reviewPortrait.useMutation");
     expect(panel).toContain('review(candidate, "request_new")');
+    expect(panel).toContain('review(candidate, "request_passport")');
     expect(panel).toContain('review(candidate, "reject")');
   });
 });

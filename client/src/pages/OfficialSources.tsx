@@ -3,6 +3,8 @@ import { ExternalLink, Landmark, MailWarning, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { OFFICIAL_CONSULAR_PORTALS } from "@/data/officialConsularPortals";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const DESTINATIONS = [
   ["canada", "Canada", "Immigration, Réfugiés et Citoyenneté Canada"],
@@ -27,6 +29,7 @@ const formatVerifiedDate = (value: string) => {
 
 export default function OfficialSources() {
   const [destination, setDestination] = useState("all");
+  const visual = getServiceVisual("visas");
   const visibleDestinations = useMemo(
     () => DESTINATIONS.filter(([key]) => destination === "all" || destination === key),
     [destination],
@@ -35,12 +38,16 @@ export default function OfficialSources() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <header className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence documentaire</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Sources officielles par destination</h1>
-          <p className="mt-5 text-base leading-7 text-slate-600">
+        <header className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl px-6 py-10 text-center text-white shadow-xl sm:px-10">
+          <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/90 via-[#0a3264]/78 to-[#0e5b9f]/50" />
+          <div className="relative z-10">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">Transparence documentaire</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Sources officielles par destination</h1>
+          <p className="mt-5 text-base leading-7 text-blue-50">
             Consultez les portails institutionnels avant toute démarche. Les conditions, frais et délais relèvent des autorités compétentes et peuvent évoluer.
           </p>
+          </div>
         </header>
 
         <section className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6 sm:p-8" aria-label="Limites des informations">

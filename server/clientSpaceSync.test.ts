@@ -22,9 +22,9 @@ const snap = (input: Parameters<typeof buildClientSpaceSnapshot>[0]) => buildCli
 
 describe("rafraîchissement automatique", () => {
   it("interroge le serveur régulièrement, seulement onglet visible, et au retour sur l'onglet", () => {
-    expect(clientSpacePolling()).toEqual({ refetchInterval: CLIENT_SPACE_POLL_MS, refetchIntervalInBackground: false, refetchOnWindowFocus: true, refetchOnReconnect: true });
+    expect(clientSpacePolling()).toEqual({ refetchInterval: CLIENT_SPACE_POLL_MS, refetchIntervalInBackground: false, refetchOnWindowFocus: false, refetchOnReconnect: true, staleTime: 20_000 });
     expect(clientSpacePolling(60_000).refetchInterval).toBe(60_000);
-    expect(CLIENT_SPACE_POLL_MS).toBeGreaterThanOrEqual(15_000); // borne la charge serveur
+    expect(CLIENT_SPACE_POLL_MS).toBe(45_000); // borne la charge serveur
   });
 });
 
@@ -122,6 +122,16 @@ describe("ce qui est annoncé au candidat", () => {
     expect(diffClientSpace(before, snap({ evisa: item({ status: "processing" }) }))[0].description).toBe("Nouvel état : En cours de traitement.");
   });
 
+  it("annonce l’évolution du statut de procédure du dossier actif (admin → client)", () => {
+    const before = snap({ procedure: { status: "nouveau", label: "Nouveau dossier", number: "3M-2026-0042" } });
+    const after = snap({ procedure: { status: "documents", label: "Documents requis", number: "3M-2026-0042" } });
+    const changes = diffClientSpace(before, after);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].title).toContain("3M-2026-0042");
+    expect(changes[0].description).toMatch(/Documents/i);
+    expect(diffClientSpace(null, after)).toEqual([]);
+  });
+
   it("une facette pas encore chargée n'est pas comparée, et la fusion garde ce qui est déjà connu", () => {
     const partial: ClientSpaceSnapshot = snap({ evaluation: evaluation("pending") });
     const merged = mergeClientSpaceSnapshots(partial, snap({ cases: caseData() }));
@@ -145,7 +155,7 @@ describe("page « espace client » : branchement", () => {
   const page = readFileSync(resolve(import.meta.dirname, "../client/src/pages/EvaluationSpace.tsx"), "utf8").replace(/\r\n/g, "\n");
 
   it("toutes les requêtes que l'administrateur fait évoluer utilisent le rafraîchissement automatique", () => {
-    expect(page.match(/\.\.\.clientSpacePolling\(/g)?.length).toBe(6); // résumé, évaluation, e-Visa, dossiers, assurances, précisions
+    expect(page.match(/\.\.\.clientSpacePolling\(/g)?.length).toBe(9); // résumé, évaluation, e-Visa, dossiers, assurances, services, paiements et précisions
     expect(page).not.toMatch(/refetchOnWindowFocus: false/);
     expect(page).not.toContain("refetchInterval: 30_000");
   });

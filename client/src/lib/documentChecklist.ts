@@ -203,3 +203,63 @@ export function buildWelcomeSteps(input: { evaluationRequired: boolean; checklis
     { id: "payment", title: "Régler puis signer le protocole", detail: "Le reçu et le protocole d’accord vous arrivent ensemble après confirmation du paiement.", done: input.paymentConfirmed && input.agreementSigned },
   ];
 }
+
+type LooseCaseRequirement = {
+  id?: number;
+  documentType?: string | null;
+  status?: CustomRequirement["status"] | string | null;
+  dueAt?: Date | string | null;
+  adminComment?: string | null;
+};
+
+type CaseWithRequirements = {
+  caseNumber?: string | null;
+  requirements?: LooseCaseRequirement[] | null;
+  updatedAt?: Date | string | null;
+};
+
+const VALID_REQUIREMENT_STATUSES = new Set<CustomRequirement["status"]>([
+  "pending",
+  "received",
+  "approved",
+  "rejected",
+  "waived",
+]);
+
+/**
+ * Choisit les exigences du dossier actif (pays × visa) plutôt que celles
+ * d’une ancienne évaluation EVAL-… lorsque le client a un dossier 3M-AGN / en ligne.
+ */
+export function pickActiveCaseRequirements(
+  cases: CaseWithRequirements[] | null | undefined,
+  preferredCaseNumbers: Array<string | null | undefined>,
+): CustomRequirement[] {
+  const list = Array.isArray(cases) ? cases : [];
+  if (!list.length) return [];
+  const normalizeRequirements = (requirements: CaseWithRequirements["requirements"]): CustomRequirement[] =>
+    (Array.isArray(requirements) ? requirements : [])
+      .filter((item) => Boolean(item?.documentType && item?.status && VALID_REQUIREMENT_STATUSES.has(item.status as CustomRequirement["status"])))
+      .map((item, index) => ({
+        id: typeof item.id === "number" ? item.id : index + 1,
+        documentType: String(item.documentType),
+        status: item.status as CustomRequirement["status"],
+        dueAt: item.dueAt ?? null,
+        adminComment: item.adminComment ?? null,
+      }));
+
+  for (const preferred of preferredCaseNumbers) {
+    const key = String(preferred || "").trim();
+    if (!key) continue;
+    const matched = list.filter((item) => String(item.caseNumber || "").trim() === key);
+    if (matched.length) {
+      return matched.flatMap((item) => normalizeRequirements(item.requirements));
+    }
+  }
+  const withRequirements = list
+    .filter((item) => Array.isArray(item.requirements) && item.requirements.length > 0)
+    .sort((left, right) => new Date(String(right.updatedAt ?? 0)).getTime() - new Date(String(left.updatedAt ?? 0)).getTime());
+  if (withRequirements.length) {
+    return normalizeRequirements(withRequirements[0].requirements);
+  }
+  return list.flatMap((item) => normalizeRequirements(item.requirements));
+}

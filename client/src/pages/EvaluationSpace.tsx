@@ -22,7 +22,12 @@ import {
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  Bell,
+  Building2,
+  MessageCircle,
 } from "lucide-react";
+import ClientAdvisorWhatsApp, { clientAdvisorWhatsAppHref } from "@/components/ClientAdvisorWhatsApp";
+import { COMPANY_CONTACTS } from "@/lib/companyContacts";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
@@ -33,6 +38,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel, describeDossierProgress } from "@shared/dossierProgress";
+import ClientPhaseGauge from "@/components/ClientPhaseGauge";
 import { accountReference } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
@@ -47,14 +53,23 @@ import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
+import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
+import ClientDossierStepAlert from "@/components/ClientDossierStepAlert";
+import ClientUploadedDocumentsStatus from "@/components/ClientUploadedDocumentsStatus";
+import ClientPhaseGuide from "@/components/ClientPhaseGuide";
 import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
+import { PlacementConsentCard } from "@/components/PlacementConsentCard";
+import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
+import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
+import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
+import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
 export type ClientDossierStatusSummary = {
   label: string;
@@ -79,7 +94,7 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const validSections = ["overview", "dossier", "signatures", "documents", "profile", "messages"] as const;
+  const validSections = ["overview", "dossier", "signatures", "documents", "notifications", "profile", "messages"] as const;
   type ClientSection = (typeof validSections)[number];
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
@@ -91,15 +106,46 @@ export default function EvaluationSpace() {
   const [clarificationDocument, setClarificationDocument] = useState<string | null>(null);
   const [clarificationDetails, setClarificationDetails] = useState("");
   const [uploadClarification, setUploadClarification] = useState<{ id: number; documentLabel: string } | null>(null);
+  const [stepAdvanceAlert, setStepAdvanceAlert] = useState<import("@/lib/clientSpaceSync").ClientSpaceChange | null>(null);
   const seenAnsweredClarificationIds = useRef<Set<number> | null>(null);
 
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [agreementSignatureName, setAgreementSignatureName] = useState("");
   const [agreementSignatureDataUrl, setAgreementSignatureDataUrl] = useState<string | null>(null);
+  const [agreementPreviewOpen, setAgreementPreviewOpen] = useState(false);
+  const [agreementPreviewConfirmed, setAgreementPreviewConfirmed] = useState(false);
+  const [protocolTwoAccepted, setProtocolTwoAccepted] = useState(false);
+  const [protocolTwoSignatureName, setProtocolTwoSignatureName] = useState("");
+  const [protocolTwoSignatureDataUrl, setProtocolTwoSignatureDataUrl] = useState<string | null>(null);
+  const [protocolTwoFormula, setProtocolTwoFormula] = useState<"integral" | "echelonne" | "garanti" | "">("");
+
   // Un candidat peut ouvrir plusieurs dossiers en ligne pour des projets différents (ex. Études puis
   // Travail) : ce choix sélectionne lequel afficher. null = comportement par défaut du serveur (le
   // dossier payé, sinon le plus récent).
   const [selectedDossierNumber, setSelectedDossierNumber] = useState<string | null>(null);
+  const setActiveDossierMutation = trpc.candidate.setActiveDossier.useMutation({
+    onSuccess: async (result) => {
+      setSelectedDossierNumber(result.activeDossierNumber);
+      await trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      toast.success("Dossier actif mis à jour", {
+        description: `${result.activeDossierNumber} est maintenant le dossier traité (espace client et administration).`,
+      });
+    },
+    onError: (activateError) => toast.error(activateError.message || "Impossible d’activer ce dossier."),
+  });
+  const activateDossier = (dossierNumber: string | null | undefined) => {
+    if (!dossierNumber) return;
+    const current =
+      selectedDossierNumber
+      || (dashboardData as { activeTreatmentDossierNumber?: string | null } | undefined)?.activeTreatmentDossierNumber
+      || null;
+    setSelectedDossierNumber(dossierNumber);
+    if (current === dossierNumber) return;
+    setActiveDossierMutation.mutate({ dossierNumber });
+  };
+  const [secondaryDossierOpen, setSecondaryDossierOpen] = useState(false);
+  const [secondaryProject, setSecondaryProject] = useState<SecondaryProjectType>("etudes");
+  const [secondaryDestination, setSecondaryDestination] = useState("");
 
   // Requête unique pour le résumé complet du tableau de bord client
   // Les données que l'administrateur fait évoluer se rafraîchissent seules (onglet visible) : voir clientSpaceSync.
@@ -127,6 +173,21 @@ export default function EvaluationSpace() {
     retry: 2,
   });
   const { data: insuranceRequests } = trpc.caseTracking.getMyInsuranceRequests.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
+  const { data: digitalRequests } = trpc.caseTracking.getMyDigitalRequests.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
+  const { data: consultationRequests } = trpc.consultationRequest.getMyConsultations.useQuery(undefined, {
+    enabled: isAuthenticated,
+    ...clientSpacePolling(),
+    retry: false,
+  });
+  const { data: translationRequests } = trpc.translation.getMyRequests.useQuery(undefined, {
     enabled: isAuthenticated,
     ...clientSpacePolling(),
     retry: false,
@@ -160,14 +221,27 @@ export default function EvaluationSpace() {
     ...clientSpacePolling(),
   });
   const signAgreementMutation = trpc.candidate.signAgreementProtocol.useMutation({
-    onSuccess: () => {
-      toast.success("Protocole d’accord signé et enregistré.");
+    onSuccess: (result) => {
+      toast.success(result.message || "Protocole d’accord signé. Un exemplaire PDF signé vous a été envoyé par e-mail.");
       void trpcUtils.candidate.getClientDashboardSummary.invalidate();
       setAgreementAccepted(false);
       setAgreementSignatureName("");
       setAgreementSignatureDataUrl(null);
+      setAgreementPreviewOpen(false);
+      setAgreementPreviewConfirmed(false);
     },
     onError: (signError) => toast.error(signError.message || "La signature n’a pas pu être enregistrée."),
+  });
+  const signSecondAgreementMutation = trpc.candidate.signSecondAgreementProtocol.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message || "Protocole N°02 signé.");
+      void trpcUtils.candidate.getClientDashboardSummary.invalidate();
+      setProtocolTwoAccepted(false);
+      setProtocolTwoSignatureName("");
+      setProtocolTwoSignatureDataUrl(null);
+      setProtocolTwoFormula("");
+    },
+    onError: (signError) => toast.error(signError.message || "La signature du Protocole N°02 n’a pas pu être enregistrée."),
   });
   const clarificationMutation = trpc.candidate.requestDocumentClarification.useMutation({
     onSuccess: () => {
@@ -207,16 +281,28 @@ export default function EvaluationSpace() {
   // e-Visa, assurance, message) est annoncé au candidat ; la première lecture sert de référence, sans annonce.
   const previousSpaceSnapshot = useRef<ClientSpaceSnapshot | null>(null);
   useEffect(() => {
-    const next = buildClientSpaceSnapshot({ evaluation: structuredEvaluation, cases: caseTrackingData, insurance: insuranceRequests, evisa: evisaReqs });
+    const activeStatus = dashboardData?.candidate?.dossierStatus ?? dashboardData?.activeDossier?.dossierStatus;
+    const activeNumber = dashboardData?.activeDossier?.dossierNumber ?? (dashboardData?.candidate as { dossierNumber?: string | null } | undefined)?.dossierNumber ?? null;
+    const next = buildClientSpaceSnapshot({
+      evaluation: structuredEvaluation,
+      cases: caseTrackingData,
+      insurance: insuranceRequests,
+      evisa: evisaReqs,
+      procedure: activeStatus
+        ? { status: String(activeStatus), label: clientStatusLabel(String(activeStatus)), number: activeNumber ? String(activeNumber) : null }
+        : undefined,
+    });
     const changes = diffClientSpace(previousSpaceSnapshot.current, next);
     previousSpaceSnapshot.current = mergeClientSpaceSnapshots(previousSpaceSnapshot.current, next);
+    const procedureChange = changes.find((change) => change.id.startsWith("procedure-") || change.id.startsWith("case-"));
+    if (procedureChange) setStepAdvanceAlert(procedureChange);
     for (const change of limitAnnouncements(changes)) {
       const options = { id: change.id, description: change.description, duration: 8_000 };
       if (change.tone === "success") toast.success(change.title, options);
       else if (change.tone === "warning") toast.warning(change.title, options);
       else toast.info(change.title, options);
     }
-  }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs]);
+  }, [structuredEvaluation, caseTrackingData, insuranceRequests, evisaReqs, dashboardData]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -226,6 +312,12 @@ export default function EvaluationSpace() {
     const timeout = window.setTimeout(() => setLoadingTimeoutReached(true), 12_000);
     return () => window.clearTimeout(timeout);
   }, [isLoading]);
+
+  // Aligne l’UI sur le dossier de traitement persisté (sync admin) au premier chargement.
+  useEffect(() => {
+    const persisted = (dashboardData as { activeTreatmentDossierNumber?: string | null } | undefined)?.activeTreatmentDossierNumber;
+    if (!selectedDossierNumber && persisted) setSelectedDossierNumber(persisted);
+  }, [dashboardData, selectedDossierNumber]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -282,11 +374,23 @@ export default function EvaluationSpace() {
 
   if (isLoading && !loadingTimeoutReached) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
-        <Card className="max-w-md w-full p-8 text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
-          <p className="text-gray-500 text-sm">Vérification de votre espace en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center" aria-busy="true" aria-live="polite">
+        <Card className="w-full max-w-md p-8 text-center shadow-xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+            <Loader2 className="h-9 w-9 animate-spin" aria-hidden="true" />
+          </div>
+          <h2 className="mb-1 text-xl font-bold text-gray-900">Chargement de votre tableau de bord...</h2>
+          <p className="text-sm text-gray-500">Récupération sécurisée de vos dossiers, documents et messages.</p>
+          <div className="mt-6 space-y-3" aria-hidden="true">
+            <div className="h-3 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-3 w-5/6 animate-pulse rounded-full bg-slate-200" />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+            </div>
+          </div>
+          <p className="mt-5 text-xs text-slate-500">Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
         </Card>
       </main>
     );
@@ -312,13 +416,23 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: rawCProfile, activeDossier, onlineDossiers, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
-  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null }) =>
-    dossier.visaType || dossier.destination || dossier.dossierNumber || "";
+  const activeTreatmentDossierNumber =
+    (dashboardData as { activeTreatmentDossierNumber?: string | null }).activeTreatmentDossierNumber
+    || activeDossier?.dossierNumber
+    || null;
+  const activeAgencyDossier = (dashboardData as { activeAgencyDossier?: { dossierNumber?: string | null; paymentStatus?: string | null; initialPaymentStatus?: string | null; destination?: string | null; visaType?: string | null; status?: string | null; agreementSigned?: boolean; agreementSignedAt?: string | null; signedProtocolPdfUrl?: string | null } | null }).activeAgencyDossier ?? null;
+  const signedProtocolDocument = (agencyDocuments as any[]).find((document) => /protocole|accord/i.test(`${document.documentName ?? ""} ${document.documentType ?? ""}`) && /sign/i.test(`${document.documentName ?? ""} ${document.uploadedByAdmin ?? ""} ${document.uploadedBy ?? ""}`))
+    || (activeAgencyDossier?.signedProtocolPdfUrl
+      ? { documentUrl: activeAgencyDossier.signedProtocolPdfUrl, documentName: `Protocole-accord-01-signe-${activeAgencyDossier.dossierNumber}.pdf` }
+      : null);
+  const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
+    procedureLabelForDossier(dossier);
   const cProfile = {
     ...rawCProfile,
     dossierNumber: rawCProfile.dossierNumber && rawCProfile.dossierNumber !== "N/A"
       ? rawCProfile.dossierNumber
       : activeDossier?.dossierNumber
+        || activeAgencyDossier?.dossierNumber
         || ((rawCProfile.dossierStatus !== "nouveau" || rawCProfile.evaluationDeclarationStatus === "validated")
           ? accountReference(rawCProfile.id)
           : "N/A"),
@@ -327,7 +441,32 @@ export default function EvaluationSpace() {
   const displayReference: string = (rawCProfile as any).reference?.reference ?? cProfile.dossierNumber;
   const formerAccountReference: string | null = (rawCProfile as any).reference?.formerAccountReference ?? null;
   const workflow = dashboardData.workflow;
+  /** Dossier signable : en ligne ou agence (walk-in) — le protocole agence vit hors applications. */
+  const agreementDossier = activeDossier
+    ? {
+        dossierNumber: activeDossier.dossierNumber as string,
+        agreementSigned: Boolean(activeDossier.agreementSigned || workflow?.agreementSigned),
+      }
+    : activeAgencyDossier?.dossierNumber
+      ? {
+          dossierNumber: String(activeAgencyDossier.dossierNumber),
+          agreementSigned: Boolean(activeAgencyDossier.agreementSigned || workflow?.agreementSigned),
+        }
+      : null;
+  // Paiement / carte : toujours la procédure sélectionnée (en ligne ou agence), jamais un OR sur les sœurs.
+  const paymentDossierNumber = activeDossier?.dossierNumber
+    || activeAgencyDossier?.dossierNumber
+    || (selectedDossierNumber ?? null)
+    || cProfile.dossierNumber;
+  const procedurePaymentConfirmed = Boolean(workflow?.paymentConfirmed);
+  const hasSiblingUnpaidProcedure = onlineDossiers.length > 1
+    && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() === "SUCCESS")
+    && onlineDossiers.some((dossier) => String(dossier.paymentStatus).toUpperCase() !== "SUCCESS");
   const portraitIsMissing = !cProfile.avatarUrl;
+  const passportPhotoRequired = Boolean(
+    (dashboardData as { passportPhotoRequired?: boolean }).passportPhotoRequired
+    || (rawCProfile as { passportPhotoRequired?: boolean }).passportPhotoRequired,
+  );
   // Pays précis déclarés à l'inscription (jusqu'à 3). Prioritaire sur cProfile.destination, qui ne
   // reste qu'une catégorie large ("europe", "golfe"...) insuffisante pour la checklist et le score.
   const preferredDestinationsList: string[] = (() => {
@@ -338,7 +477,11 @@ export default function EvaluationSpace() {
       return [];
     }
   })();
-  const primaryDestination = preferredDestinationsList[0] || cProfile.destination;
+  const primaryDestination =
+    String(activeDossier?.destination || "").trim()
+    || String(activeAgencyDossier?.destination || "").trim()
+    || preferredDestinationsList[0]
+    || cProfile.destination;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
@@ -368,9 +511,15 @@ export default function EvaluationSpace() {
   const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
   const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
   const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
-  const customRequirements = (caseTrackingData?.cases ?? [])
-    .filter((item: any) => item.caseNumber === evaluationCaseNumber)
-    .flatMap((item: any) => item.requirements ?? []);
+  // Checklist dynamique du dossier actif (3M-AGN / en ligne), pas seulement l’ancienne EVAL-…
+  const customRequirements = pickActiveCaseRequirements(caseTrackingData?.cases as any, [
+    selectedDossierNumber,
+    activeTreatmentDossierNumber,
+    activeDossier?.dossierNumber,
+    activeAgencyDossier?.dossierNumber,
+    cProfile.dossierNumber,
+    evaluationCaseNumber,
+  ]);
   const finalReviewPending = Boolean(latestEvaluation?.secondReviewRequired && !latestEvaluation?.secondReviewedAt);
   const evaluationStatusLabel = cProfile.evaluationDeclarationStatus === "validated"
     ? "Évaluation validée"
@@ -410,14 +559,6 @@ export default function EvaluationSpace() {
       <Button type="button" onClick={openEvaluation} className="mt-5 h-12 bg-violet-700 px-6 text-white hover:bg-violet-800"><Sparkles className="mr-2 h-4 w-4" />Faire mon évaluation</Button>
     </Card>
   );
-  const priority = stats.unreadMessages > 0
-    ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
-    : cProfile.dossierStatus === "documents"
-      ? { title: "Compléter les documents demandés", detail: "Consultez la checklist : l’agence précise les pièces réellement nécessaires à votre dossier.", target: "documents" as const, label: "Voir mes documents", icon: FileText, tone: "bg-blue-50 border-blue-200 text-blue-950" }
-      : !latestEvaluation
-        ? { title: "Poursuivre votre évaluation", detail: "Votre dossier reste préparatoire tant que les informations et le CV requis ne sont pas transmis.", target: "dossier" as const, label: "Faire mon évaluation", icon: Sparkles, tone: "bg-violet-50 border-violet-200 text-violet-950" }
-        : { title: "Suivre l’avancement de votre dossier", detail: reviewDueLabel ? `Une revue est indiquée au plus tard le ${reviewDueLabel}.` : "Votre conseiller publiera la prochaine étape après vérification.", target: "dossier" as const, label: "Suivre mon dossier", icon: FolderOpen, tone: "bg-emerald-50 border-emerald-200 text-emerald-950" };
-  const PriorityIcon = priority.icon;
   const switchToSection = (nextSection: typeof activeTab) => {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
@@ -425,6 +566,15 @@ export default function EvaluationSpace() {
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
   const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
   const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
+  const documentsActionCount = checklistSummary.missing + checklistSummary.replace;
+  const unreadNotificationsCount = Math.max(0, Number(caseTrackingData?.unreadNotifications) || 0);
+  const signaturesPendingCount = agreementAfterPaymentRequired ? 1 : 0;
+  const agencyProofDocuments = agencyDepositedDocuments(caseTrackingData?.cases);
+  const paymentDue = Boolean(paymentDossierNumber) && !procedurePaymentConfirmed && Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested);
+  const paymentHref = paymentDossierNumber
+    ? `/paiement?ref=${encodeURIComponent(paymentDossierNumber)}${(activeDossier as any)?.paymentAmount ? `&montant=${encodeURIComponent(String((activeDossier as any).paymentAmount))}` : ""}`
+    : null;
+  const advisorWhatsAppUrl = clientAdvisorWhatsAppHref(paymentDossierNumber || displayReference, cProfile.fullName);
   // « Étape N sur M » : même calcul (et mêmes jalons) que le parcours affiché plus bas et que les e-mails de l'agence.
   const journeyProgress = describeDossierProgress({
     destination: primaryDestination,
@@ -434,22 +584,45 @@ export default function EvaluationSpace() {
     evaluationStatus: cProfile.evaluationDeclarationStatus,
     milestones: {
       evaluationClientConfirmed: Boolean((cProfile as any).evaluationClientConfirmedAt),
-      activationRequested: Boolean((cProfile as any).activationRequestedAt),
-      paymentConfirmed: String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid",
+      activationRequested: Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested),
+      paymentConfirmed: procedurePaymentConfirmed,
     },
   });
   const nextStep = computeNextStep({
     evaluationRequired,
     evaluationStage: structuredStage,
     cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
+    paymentDue,
+    paymentHref,
     agreementSignatureRequired: agreementAfterPaymentRequired,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
     checklist: checklistSummary,
+    unreadNotifications: unreadNotificationsCount,
+    unreadMessages: stats.unreadMessages,
+    advisorWhatsAppUrl,
   });
+  const priorityTone =
+    nextStep.tone === "action"
+      ? "bg-blue-50 border-blue-200 text-blue-950"
+      : nextStep.tone === "info"
+        ? "bg-slate-50 border-slate-200 text-slate-950"
+        : "bg-emerald-50 border-emerald-200 text-emerald-950";
+  const PriorityIcon =
+    nextStep.id.includes("message") ? MessageSquare
+      : nextStep.id.includes("notification") ? Bell
+        : nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
+          : nextStep.id.includes("payment") ? FolderOpen
+            : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
+              : nextStep.id.includes("agreement") ? ShieldCheck
+                : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
     else if (step.action.kind === "section") switchToSection(step.action.section);
     else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    else if (step.action.kind === "link") {
+      if (/^https?:\/\//i.test(step.action.href)) window.open(step.action.href, "_blank", "noopener,noreferrer");
+      else setLocation(step.action.href);
+    }
   };
   const openDocumentClarification = (documentLabel: string) => {
     setClarificationDocument(documentLabel);
@@ -461,23 +634,24 @@ export default function EvaluationSpace() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
+    <main className="premium-page-shell min-h-screen pb-28 md:pb-16">
       {/* En-tête du tableau de bord unifié */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-4 sm:px-6 md:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <div className="relative">
               <CandidateAvatar avatarUrl={cProfile.avatarUrl} fullName={cProfile.fullName} size="lg" />
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900">{cProfile.fullName}</h1>
-                <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h1 className="premium-section-title text-xl sm:text-2xl">{cProfile.fullName}</h1>
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
                   {formerAccountReference ? "Dossier" : "Compte"} {displayReference}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
+              <p className="mt-1 text-sm text-slate-600">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
             </div>
           </div>
 
@@ -486,16 +660,16 @@ export default function EvaluationSpace() {
               onClick={handleManualRefresh}
               variant="outline"
               size="sm"
-              className="h-11 gap-2 text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
               Actualiser
             </Button>
             <Button
               onClick={() => setLocation("/")}
               variant="outline"
               size="sm"
-              className="h-11 text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
             >
               Accueil
             </Button>
@@ -517,37 +691,53 @@ export default function EvaluationSpace() {
       {/* Sélecteur de dossier : les onglets n'apparaissent qu'à partir de 2 dossiers en ligne (ex. Études + Travail),
           mais le lien pour en ouvrir un second reste visible dès le premier dossier. */}
       {onlineDossiers.length >= 1 && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-2">
-            {onlineDossiers.length > 1 && <span className="text-xs font-semibold text-gray-500 mr-1">Mes dossiers :</span>}
-            {onlineDossiers.length > 1 && onlineDossiers.map((dossier) => {
-              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeDossier?.dossierNumber);
+        <div className="border-b border-slate-200 bg-white/95">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
+            <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
+            {onlineDossiers.map((dossier) => {
+              const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeTreatmentDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
                   type="button"
-                  onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)}
+                  onClick={() => activateDossier(dossier.dossierNumber)}
                   aria-pressed={isSelected}
-                  aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}
+                  aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}${isSelected ? " — dossier actif" : ""}`}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
-                    isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    isSelected ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
+                  data-testid={isSelected ? "client-active-dossier-tab" : undefined}
                 >
                   {dossierSwitcherLabel(dossier)}
-                  <span className="ml-1.5 opacity-75">{dossier.dossierNumber}</span>
+                  <span className="ml-1.5 font-mono opacity-75">{dossier.dossierNumber}</span>
+                  {isSelected && <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">Actif</span>}
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isSelected ? "bg-white/20 text-white" : status.tone}`}>
                     {status.label}
                   </span>
+                  <span className={`text-[10px] font-black ${isSelected ? "text-white/90" : "text-blue-800"}`}>{status.progress}%</span>
                 </button>
               );
             })}
-            <a
-              href="/evaluation"
-              className="ml-1 rounded-full border border-dashed border-blue-300 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-            >
-              + Ouvrir un dossier pour un autre projet
-            </a>
+            {onlineDossiers.length < 5 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const hasWork = onlineDossiers.some((dossier) => /travail|work/i.test(`${dossier.visaType || ""}`));
+                  setSecondaryProject(hasWork ? "etudes" : "travail");
+                  setSecondaryDestination(String(primaryDestination || activeDossier?.destination || "").trim());
+                  setSecondaryDossierOpen(true);
+                }}
+                className="ml-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                data-testid="add-secondary-dossier"
+              >
+                + Autre projet (optionnel)
+              </button>
+            ) : (
+              <span className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                Limite de 5 dossiers atteinte
+              </span>
+            )}
             {isFetching && selectedDossierNumber && (
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700" role="status" aria-live="polite">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Chargement du dossier sélectionné…
@@ -557,24 +747,39 @@ export default function EvaluationSpace() {
         </div>
       )}
       {onlineDossiers.length > 0 && (
-        <Card className="mt-4 border-blue-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5 shadow-sm" aria-labelledby="global-dossiers-summary-title">
+        <Card className="premium-surface mt-4 border-blue-100/80 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5" aria-labelledby="global-dossiers-summary-title">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Vue globale</p>
-              <h2 id="global-dossiers-summary-title" className="mt-1 text-lg font-black text-slate-950">Résumé de vos dossiers ouverts</h2>
-              <p className="mt-1 text-sm text-slate-600">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M Travel, avec la prochaine action à effectuer pour chacun.</p>
+              <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
+              <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " — un dossier = un paiement distinct" : " — votre dossier actif n’est pas modifié par cet écran"}. Prochaine action affichée pour chaque dossier.</p>
             </div>
             <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
+          {hasSiblingUnpaidProcedure && (
+            <p className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-950" data-testid="per-dossier-payment-reminder" role="status">
+              Chaque dossier a son propre frais d’ouverture. Le paiement d’un dossier ne règle pas les autres : sélectionnez le dossier encore « Paiement à confirmer » pour le régler.
+            </p>
+          )}
+          {stepAdvanceAlert && <div className="mt-3"><ClientDossierStepAlert change={stepAdvanceAlert} onDismiss={() => setStepAdvanceAlert(null)} /></div>}
+          <div className="mt-4"><ClientPhaseGuide /></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
               const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
-              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => setSelectedDossierNumber(dossier.dossierNumber ?? null)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => activateDossier(dossier.dossierNumber)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
                 <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
                 <p className="mt-2 text-xs font-semibold text-slate-600">Prochaine action : <span className="text-slate-900">{status.nextAction}</span></p>
               </button>;
             })}
+          </div>
+          <div className="mt-5">
+            <ClientPaymentStatusTable
+              dossiers={onlineDossiers}
+              selectedDossierNumber={selectedDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber ?? null}
+              onSelect={(dossierNumber) => activateDossier(dossierNumber)}
+              dossierLabel={dossierSwitcherLabel}
+            />
           </div>
         </Card>
       )}
@@ -582,17 +787,19 @@ export default function EvaluationSpace() {
       {/* Barre de navigation principale du tableau de bord */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <ClientSpaceNavigation compact />
-          <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-gray-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
+          <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-slate-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
           {[
-            { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
-            { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
-            { id: "signatures", label: "Documents à signer", icon: ShieldCheck },
-            { id: "documents", label: "Centre Documentaire", icon: FileText },
-            { id: "profile", label: "Mon Profil & Avatar", icon: User },
-            { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
+            { id: "overview", label: "Vue d'ensemble", icon: TrendingUp, badge: 0 },
+            { id: "dossier", label: "Dossier", icon: FolderOpen, badge: 0 },
+            { id: "signatures", label: "Signatures", icon: ShieldCheck, badge: signaturesPendingCount },
+            { id: "documents", label: "Documents", icon: FileText, badge: documentsActionCount },
+            { id: "notifications", label: "Notifications", icon: Bell, badge: unreadNotificationsCount },
+            { id: "profile", label: "Profil", icon: User, badge: 0 },
+            { id: "messages", label: "Messages", icon: MessageSquare, badge: stats.unreadMessages },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const badge = Number(tab.badge) || 0;
             return (
               <button
                 key={tab.id}
@@ -604,14 +811,26 @@ export default function EvaluationSpace() {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls="candidate-space-content"
-                className={`flex min-h-11 items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shrink-0 ${
+                className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-200 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                    ? "premium-action text-white shadow-md"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60"
                 }`}
+                data-testid={`client-tab-${tab.id}`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="h-4 w-4" />
                 {tab.label}
+                {badge > 0 ? (
+                  <span
+                    className={`ml-0.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                      isActive ? "bg-white/25 text-white" : "bg-amber-100 text-amber-900"
+                    }`}
+                    aria-label={`${badge} action${badge > 1 ? "s" : ""}`}
+                    data-testid={`client-tab-badge-${tab.id}`}
+                  >
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -622,12 +841,144 @@ export default function EvaluationSpace() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               <NextStepCard step={nextStep} onAct={actOnNextStep} />
-              <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={Boolean(workflow?.paymentConfirmed)} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
-              <DossierPaymentCard dossierNumber={activeDossier?.dossierNumber} amount={(activeDossier as any)?.paymentAmount} currency={(activeDossier as any)?.paymentCurrency} confirmed={Boolean(workflow?.paymentConfirmed)} requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)} />
+              {agencyProofDocuments.length > 0 ? (
+                <Card className="border-emerald-200 bg-emerald-50/60 p-5 shadow-sm" data-testid="client-agency-proofs" role="region" aria-labelledby="client-agency-proofs-title">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 gap-3">
+                      <span className="shrink-0 rounded-xl bg-emerald-700 p-3 text-white"><Building2 className="h-5 w-5" aria-hidden="true" /></span>
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-800">Preuves agence</p>
+                        <h3 id="client-agency-proofs-title" className="mt-1 text-lg font-black text-slate-950">{agencyProofDocuments.length} document{agencyProofDocuments.length > 1 ? "s" : ""} remis en agence</h3>
+                        <p className="mt-1 text-sm text-slate-700">Visible ici en lecture seule — votre dossier actif n’est pas modifié depuis cet écran.</p>
+                        <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                          {agencyProofDocuments.slice(0, 3).map((doc) => (
+                            <li key={doc.id} className="truncate">• {doc.documentType} — {doc.fileName}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" className="shrink-0 border-emerald-300 bg-white" onClick={() => switchToSection("documents")}>Voir les preuves</Button>
+                  </div>
+                </Card>
+              ) : null}
+              {procedurePaymentConfirmed && !(workflow as any)?.paymentReceiptApproved ? (
+                <Card className="border-amber-200 bg-amber-50/70 p-4 shadow-sm" data-testid="client-payment-receipt-note" role="status">
+                  <p className="text-sm font-semibold text-amber-950">Reçu en cours de validation agence</p>
+                  <p className="mt-1 text-xs text-amber-900">Dès signature, le reçu apparaît ici et dans vos notifications. Votre dossier actif n’est pas modifié depuis cet écran.</p>
+                </Card>
+              ) : null}
+              <ClientAdvisorWhatsApp dossierNumber={paymentDossierNumber || displayReference} fullName={cProfile.fullName} />
+              <WelcomeJourneyCard evaluationRequired={evaluationRequired} checklistMissing={checklistSummary.missing + checklistSummary.replace} checklistTotal={checklistSummary.total} paymentConfirmed={procedurePaymentConfirmed} agreementSigned={Boolean(workflow?.agreementSigned)} accountAgeDays={cProfile.createdAt ? Math.floor((Date.now() - new Date(cProfile.createdAt as any).getTime()) / 86_400_000) : 0} />
+              <DossierPaymentCard
+                dossierNumber={paymentDossierNumber}
+                amount={(activeDossier as any)?.paymentAmount}
+                currency={(activeDossier as any)?.paymentCurrency}
+                confirmed={procedurePaymentConfirmed}
+                requested={Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested)}
+                receiptApproved={Boolean((workflow as any)?.paymentReceiptApproved)}
+                receiptApprovedAt={(workflow as any)?.paymentReceiptApprovedAt ?? null}
+                receiptAmountLabel={(workflow as any)?.paymentReceiptAmount ?? null}
+              />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
+              <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Services en ligne</p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-950">Suivi synchronisé avec le back-office</h3>
+                    <p className="mt-1 text-sm text-slate-600">Chaque demande ouverte sur le site apparaît ici dès qu’elle est traitée ou mise à jour par l’équipe.</p>
+                  </div>
+                  <a href="/services" className="text-sm font-semibold text-blue-800 underline underline-offset-2">Voir tous les services</a>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { label: "Consultations", count: consultationRequests?.length ?? 0, href: "/consultation", empty: "Réserver" },
+                    { label: "Traductions", count: translationRequests?.length ?? 0, href: "/traduction/order", empty: "Commander" },
+                    { label: "3M Solutions", count: digitalRequests?.length ?? 0, href: "/3m-solutions", empty: "Demander" },
+                    { label: "Assurances", count: insuranceRequests?.length ?? 0, href: "/assurance", empty: "Souscrire" },
+                    { label: "e-Visa", count: Array.isArray(evisaReqs?.data) ? evisaReqs.data.length : 0, href: "/evisas", empty: "Explorer" },
+                  ].map((item) => (
+                    <a key={item.label} href={item.href} className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-300 hover:bg-blue-50/50">
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {item.count > 0 ? `${item.count} demande(s) en cours` : `Aucune demande — ${item.empty}`}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              </Card>
+              {(consultationRequests?.length || translationRequests?.length) ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {consultationRequests && consultationRequests.length > 0 && (
+                    <Card className="border-indigo-100 bg-white p-5 shadow-sm" data-testid="client-consultation-requests">
+                      <h3 className="text-base font-bold text-slate-950">Mes consultations</h3>
+                      <div className="mt-3 space-y-2">
+                        {consultationRequests.slice(0, 5).map((item) => (
+                          <div key={item.id} className="rounded-lg border border-slate-200 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-slate-900">{item.targetCountry || "Consultation"}</p>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{item.status}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("fr-FR") : ""}</p>
+                            {item.finalReportContent ? <p className="mt-2 line-clamp-3 text-xs text-emerald-800">Rapport conseiller disponible</p> : null}
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                  {translationRequests && translationRequests.length > 0 && (
+                    <Card className="border-violet-100 bg-white p-5 shadow-sm" data-testid="client-translation-requests">
+                      <h3 className="text-base font-bold text-slate-950">Mes traductions</h3>
+                      <div className="mt-3 space-y-2">
+                        {translationRequests.slice(0, 5).map((item) => (
+                          <div key={item.id} className="rounded-lg border border-slate-200 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-slate-900">{item.sourceDocumentName || item.documentType}</p>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{item.status}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">{item.sourceLanguageCode} → {item.targetLanguageCode}</p>
+                            {item.translatedDocumentUrl ? (
+                              <a href={item.translatedDocumentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs font-semibold text-blue-800 underline">Télécharger</a>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              ) : null}
               <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
-              {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
+              <SelectableProfileCard />
+              <PlacementConsentCard />
+              {passportPhotoRequired ? (
+                <Card className="border-amber-300 bg-amber-50 p-5" data-testid="passport-photo-required-overview" role="region" aria-labelledby="passport-photo-required-title">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p id="passport-photo-required-title" className="font-bold text-amber-950">Photo type passeport obligatoire</p>
+                      <p className="mt-1 text-sm text-amber-900">
+                        Dossier visa travail actif : déposez une photo type passeport. Elle remplace automatiquement votre photo de profil pour les employeurs et agences de placement.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }}
+                      className="bg-amber-700 text-white hover:bg-amber-800"
+                      data-testid="passport-photo-go-profile"
+                    >
+                      Déposer ma photo
+                    </Button>
+                  </div>
+                </Card>
+              ) : portraitIsMissing ? (
+                <Card className="border-amber-200 bg-amber-50 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-amber-950">Complétez votre profil</p>
+                      <p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p>
+                    </div>
+                    <Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button>
+                  </div>
+                </Card>
+              ) : null}
               <ProfileCompletionBar completion={dashboardData.profileCompletion} onEditClick={() => switchToSection("profile")} />
               <PrivacyDataCard />
               {/* Widgets statistiques et progression */}
@@ -748,31 +1099,47 @@ export default function EvaluationSpace() {
                 </Card>
               </div>
 
-              {/* Timeline de progression du dossier */}
-              <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-blue-600" />
-                  Avancement de votre procédure
-                </h3>
-                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
+              {/* Jauge unique : phase client + prochaine action (sans micro-statuts techniques) */}
+              <Card className="border-blue-100 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-slate-950">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                    Avancement de votre procédure
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-600" aria-live="polite">
+                    Sync agence {lastSyncedAt ? `· ${new Date(lastSyncedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "· en cours"}
+                  </p>
+                </div>
+                <ClientPhaseGauge
+                  dossierStatus={cProfile.dossierStatus}
+                  destination={primaryDestination}
+                  visaType={journeyVisaType}
+                  procedureLabel={journeyProcedureLabel}
+                  evaluationStatus={cProfile.evaluationDeclarationStatus}
+                  paymentConfirmed={procedurePaymentConfirmed}
+                />
+                <Button type="button" variant="outline" className="mt-4" onClick={() => switchToSection("dossier")}>
+                  Voir le parcours détaillé<ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
               </Card>
-              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
 
               <section aria-labelledby="client-priority-title">
-                <Card className={`border p-5 shadow-sm ${priority.tone}`}>
+                <Card className={`border p-5 shadow-sm ${priorityTone}`} data-testid="client-priority-mirror">
                   <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                     <div className="flex min-w-0 gap-3">
                       <span className="shrink-0 rounded-xl bg-white/80 p-3 shadow-sm"><PriorityIcon className="h-5 w-5" aria-hidden="true" /></span>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">Priorité du dossier</p>
-                        <h3 id="client-priority-title" className="mt-1 text-lg font-black">{priority.title}</h3>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{priority.detail}</p>
-                        <p className="mt-2 text-xs leading-5 opacity-80">Les statuts et demandes sont synchronisés depuis l’agence. Aucune décision n’est prise automatiquement dans cet espace.</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">À faire maintenant</p>
+                        <h3 id="client-priority-title" className="mt-1 text-lg font-black">{nextStep.title}</h3>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{nextStep.description}</p>
+                        <p className="mt-2 text-xs leading-5 opacity-80">Lecture seule des dossiers actifs : les statuts restent ceux validés par l’agence. Aucune réécriture automatique ici.</p>
                       </div>
                     </div>
-                    <Button type="button" onClick={() => evaluationRequired ? openEvaluation() : switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
-                      {priority.label}<ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {nextStep.actionLabel ? (
+                      <Button type="button" onClick={() => actOnNextStep(nextStep)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
+                        {nextStep.actionLabel}<ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    ) : null}
                   </div>
                   <div className="mt-5 grid gap-2 border-t border-current/15 pt-4 sm:grid-cols-2 xl:grid-cols-4">
                     <button type="button" onClick={() => switchToSection("dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
@@ -864,7 +1231,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt)} paymentConfirmed={String((cProfile as any).paymentStatus ?? "").toUpperCase() === "SUCCESS" || (cProfile as any).initialPaymentStatus === "paid"} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
+              <CandidateCountryJourney destination={primaryDestination} visaType={journeyVisaType} procedureLabel={journeyProcedureLabel} dossierStatus={cProfile.dossierStatus} evaluationStatus={cProfile.evaluationDeclarationStatus} evaluationClientConfirmed={Boolean((cProfile as any).evaluationClientConfirmedAt)} activationRequested={Boolean((cProfile as any).activationRequestedAt) || Boolean(workflow?.activationRequested)} paymentConfirmed={procedurePaymentConfirmed} documents={[...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({ documentName: document.documentName ?? document.fileName, documentType: document.documentType ?? document.fileType, documentUrl: document.documentUrl ?? document.url, verificationStatus: document.verificationStatus }))} />
               {evaluationRequired && (
                 <Card className="border-2 border-violet-300 bg-violet-50 p-6 shadow-sm" role="region" aria-labelledby="dossier-evaluation-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -879,24 +1246,26 @@ export default function EvaluationSpace() {
                   <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
                 </CardHeader>
                 <CardContent>
-                  {!activeDossier ? (
+                  {!agreementDossier ? (
                     <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
-                  ) : activeDossier?.agreementSigned ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4" role="status"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700" /><div><p className="font-semibold text-emerald-900">Protocole signé et enregistré</p><p className="text-sm text-emerald-800">La signature est enregistrée dans votre dossier. Vous pouvez poursuivre les étapes autorisées.</p></div></div>
+                  ) : agreementDossier.agreementSigned ? (
+                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4" data-testid="agency-agreement-sign-panel">
                       <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
                       <div className="flex items-start gap-3 rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-sm text-rose-950" role="alert"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" /><p><strong>Important :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire. Lisez le protocole ci-dessus avant de signer.</p></div>
                       <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
-                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => setAgreementSignatureName(event.target.value)} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={setAgreementSignatureDataUrl} /></div></div>
-                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber || signAgreementMutation.isPending} onClick={() => activeDossier?.dossierNumber && signAgreementMutation.mutate({ dossierNumber: activeDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl ?? undefined })}>{signAgreementMutation.isPending ? "Enregistrement…" : "Signer le protocole d’accord"}</Button>
-                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !activeDossier?.dossierNumber) && (
+                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
+                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber || signAgreementMutation.isPending} onClick={() => agreementDossier.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: agreementDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
+                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber) && (
                         <p className="text-xs text-slate-500" role="status">
                           Bouton inactif tant que : {[
                             !agreementAccepted && "la case à cocher n’est pas validée",
                             !agreementSignatureName.trim() && "le nom du signataire n’est pas renseigné",
                             !agreementSignatureDataUrl && "aucune signature n’a été dessinée ci-dessus",
-                            !activeDossier?.dossierNumber && "aucun dossier actif n’est associé à ce compte",
+                            !agreementPreviewConfirmed && "la prévisualisation du PDF signé n’est pas confirmée",
+                            !agreementDossier.dossierNumber && "aucun dossier actif n’est associé à ce compte",
                           ].filter(Boolean).join(" · ")}.
                         </p>
                       )}
@@ -904,6 +1273,71 @@ export default function EvaluationSpace() {
                   )}
                 </CardContent>
               </Card>
+
+              {Boolean(workflow?.showSecondAgreement) && (
+                <Card className="border-emerald-200 bg-white shadow-sm" aria-labelledby="client-protocol-two-title" data-testid="client-protocol-two">
+                  <CardHeader>
+                    <CardTitle id="client-protocol-two-title" className="flex items-center gap-2 text-emerald-950">
+                      <ShieldCheck className="h-5 w-5 text-emerald-700" /> Protocole N°02 — post-sélection
+                    </CardTitle>
+                    <p className="text-sm leading-6 text-slate-600">
+                      Votre sélection a été validée
+                      {workflow?.secondAgreementEmployer ? ` auprès de ${workflow.secondAgreementEmployer}` : ""}
+                      {workflow?.secondAgreementPosition ? ` pour le poste « ${workflow.secondAgreementPosition} »` : ""}.
+                      Lisez le second protocole, choisissez la formule si un barème est publié pour votre destination, puis signez.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 text-sm text-emerald-950">
+                      <p className="font-semibold">Employeur / partenaire : {workflow?.secondAgreementEmployer || "À confirmer"}</p>
+                      <p className="mt-1">Poste / projet : {workflow?.secondAgreementPosition || "À confirmer"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-slate-800">Formule tarifaire (si proposée pour votre destination)</p>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        {([
+                          ["integral", "Règlement intégral"],
+                          ["echelonne", "Échelonné"],
+                          ["garanti", "Sortie visa"],
+                        ] as const).map(([value, label]) => (
+                          <label key={value} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm ${protocolTwoFormula === value ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+                            <input type="radio" name="protocol-two-formula" checked={protocolTwoFormula === value} onChange={() => setProtocolTwoFormula(value)} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500">Pour les destinations sans barème publié, le texte reste générique : aucun montant n’est inventé.</p>
+                    </div>
+                    <label className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
+                      <input type="checkbox" className="mt-1 h-4 w-4" checked={protocolTwoAccepted} onChange={(event) => setProtocolTwoAccepted(event.target.checked)} disabled={signSecondAgreementMutation.isPending} />
+                      <span>J’ai lu le Protocole N°02, compris qu’il ne garantit ni visa ni emploi, et j’accepte de poursuivre l’accompagnement post-sélection.</span>
+                    </label>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label htmlFor="client-protocol-two-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label>
+                        <input id="client-protocol-two-signature" value={protocolTwoSignatureName} onChange={(event) => setProtocolTwoSignatureName(event.target.value)} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signSecondAgreementMutation.isPending} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Signature</p>
+                        <SignatureCanvas onSignatureChange={setProtocolTwoSignatureDataUrl} />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className="w-full bg-emerald-800 text-white hover:bg-emerald-900"
+                      disabled={!protocolTwoAccepted || !protocolTwoSignatureName.trim() || !protocolTwoSignatureDataUrl || !activeDossier?.dossierNumber || signSecondAgreementMutation.isPending}
+                      onClick={() => activeDossier?.dossierNumber && protocolTwoSignatureDataUrl && signSecondAgreementMutation.mutate({
+                        dossierNumber: activeDossier.dossierNumber,
+                        signatureName: protocolTwoSignatureName.trim(),
+                        signatureDataUrl: protocolTwoSignatureDataUrl,
+                        formulaChosen: protocolTwoFormula || undefined,
+                      })}
+                    >
+                      {signSecondAgreementMutation.isPending ? "Signature du Protocole N°02…" : "Signer le Protocole N°02"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Suivi e-Visa en direct */}
               <Card className="p-6 border-blue-200 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 shadow-sm">
@@ -1015,6 +1449,28 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
+              {digitalRequests && digitalRequests.length > 0 && (
+                <Card className="p-6 border-slate-200 bg-white shadow-sm" data-testid="client-digital-requests">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">Mes demandes 3M Solutions</h3>
+                    <a href="/3m-solutions" className="text-sm font-semibold text-blue-800 underline underline-offset-2">Nouvelle demande</a>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {digitalRequests.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{item.reference}</p>
+                            <p className="text-xs text-slate-500">{item.service}{item.organization ? ` · ${item.organization}` : ""}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-700">{item.status}</span>
+                        </div>
+                        <p className="mt-2 line-clamp-3 text-xs text-slate-600">{item.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
             </div>
           ))}
 
@@ -1029,14 +1485,16 @@ export default function EvaluationSpace() {
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
               <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
+              <ClientUploadedDocumentsStatus documents={[...(candidateFiles ?? []), ...(agencyDocuments ?? [])] as any[]} />
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />
               {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetch()]); }} /></Card>}
               <CaseDocumentsPanel documents={agencyDepositedDocuments(caseTrackingData?.cases)} onDownload={(documentId) => { void downloadCaseDocument(documentId); }} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
-              <Card className="p-6 border-blue-100 bg-white shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Téléverser de nouveaux documents</h3>
+              <Card className="p-6 border-blue-100 bg-white shadow-sm" data-testid="client-document-dropzone">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces directement</h3>
+                <p className="mb-4 text-sm text-slate-600">Ajoutez les documents demandés pour ce dossier. Chaque dépôt est transmis de façon sécurisée à l’agence et reste en attente de vérification humaine.</p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
                   requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
@@ -1056,6 +1514,15 @@ export default function EvaluationSpace() {
             </div>
           ))}
 
+          {activeTab === "notifications" && (
+            <div className="space-y-6" data-testid="notifications-section">
+              <ClientNotificationsInbox
+                notifications={(caseTrackingData?.notifications ?? []) as any[]}
+                onChanged={() => { void refetchCaseTracking(); }}
+              />
+            </div>
+          )}
+
           {activeTab === "profile" && (
             <div className="space-y-6">
               <ClientProfilePanel />
@@ -1064,23 +1531,25 @@ export default function EvaluationSpace() {
 
           {activeTab === "messages" && (
             <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-slate-900 p-4 rounded-xl border border-blue-200 dark:border-slate-800 mb-6 flex items-center justify-between">
+              <div className="premium-surface mb-2 flex flex-col gap-4 rounded-2xl border-blue-100/80 bg-blue-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    💬 Messagerie avec votre conseiller 3M Travel
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client</p>
+                  <h3 className="premium-section-title mt-1 text-lg sm:text-xl">
+                    Messagerie avec votre conseiller 3M TRAVEL AGENCY
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Posez vos questions à notre équipe 3M Travel ou échangez directement avec votre conseiller attitré.
+                  <p className="premium-copy mt-1 text-sm">
+                    Posez vos questions à l’équipe ou écrivez directement sur WhatsApp ({COMPANY_CONTACTS.yaounde.whatsappNumber}).
                   </p>
                 </div>
+                <ClientAdvisorWhatsApp dossierNumber={paymentDossierNumber || displayReference} fullName={cProfile.fullName} compact />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Assistance 3M Travel</h4>
+                  <h4 className="mb-3 text-sm font-bold text-slate-900">Assistance 3M TRAVEL AGENCY</h4>
                   <AureolAssistantChat />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Messages Agence & Conseiller</h4>
+                  <h4 className="mb-3 text-sm font-bold text-slate-900">Messages Agence & Conseiller</h4>
                   <ClientMessagesPanel />
                 </div>
               </div>
@@ -1088,7 +1557,43 @@ export default function EvaluationSpace() {
           )}
 	        </div>
 	      </div>
-	      <Dialog open={Boolean(clarificationDocument)} onOpenChange={(open) => { if (!open && !clarificationMutation.isPending) setClarificationDocument(null); }}>
+      {nextStep.actionLabel ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
+          <div className="mx-auto flex max-w-7xl items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">À faire maintenant</p>
+              <p className="truncate text-sm font-bold text-slate-950">{nextStep.title}</p>
+            </div>
+            <Button type="button" onClick={() => actOnNextStep(nextStep)} className="h-11 shrink-0 bg-blue-800 text-white hover:bg-blue-900">
+              {nextStep.action.kind === "link" && /wa\.me\//i.test(nextStep.action.href) ? <MessageCircle className="mr-2 h-4 w-4" /> : null}
+              {nextStep.actionLabel}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      <Dialog open={agreementPreviewOpen} onOpenChange={(open) => { if (!open) setAgreementPreviewOpen(false); }}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-950"><FileText className="h-5 w-5 text-indigo-700" />Aperçu du PDF signé</DialogTitle>
+            <DialogDescription>Vérifiez le contenu, votre nom et votre signature avant la validation finale et l’envoi par e-mail.</DialogDescription>
+          </DialogHeader>
+          <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-slate-300 bg-slate-100 p-3" data-testid="signed-agreement-preview">
+            <div className="bg-white p-6 shadow-sm">
+              <div className="rounded-t-lg bg-[#0f2460] px-5 py-4 text-white"><p className="text-lg font-black tracking-wide">3M TRAVEL AGENCY</p><p className="text-xs text-blue-100">Protocole d’accord N°01 — exemplaire signé</p></div>
+              <div className="border-b border-amber-500 px-5 py-4 text-xs text-slate-600"><p>Dossier : <strong>{activeDossier?.dossierNumber ?? "—"}</strong></p><p>Candidat : <strong>{cProfile.fullName}</strong></p></div>
+              <div className="max-h-64 overflow-y-auto whitespace-pre-line px-5 py-5 text-sm leading-6 text-slate-700">{INITIAL_AGREEMENT_PROTOCOL}</div>
+              <div className="mt-3 border-t border-slate-200 px-5 pt-4"><p className="font-bold text-blue-950">Signature électronique du candidat</p><p className="mt-2 text-sm text-slate-700">Signataire : <strong>{agreementSignatureName || "—"}</strong></p>{agreementSignatureDataUrl && <img src={agreementSignatureDataUrl} alt="Aperçu de votre signature" className="mt-3 h-20 max-w-[220px] rounded border border-slate-200 bg-white object-contain p-2" />}<p className="mt-3 text-xs text-slate-500">La date et l’adresse IP seront ajoutées automatiquement lors de la validation sécurisée.</p></div>
+              <div className="mt-5 border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAgreementPreviewOpen(false)}>Modifier</Button>
+            <Button type="button" className="bg-blue-800 text-white hover:bg-blue-900" onClick={() => { setAgreementPreviewConfirmed(true); setAgreementPreviewOpen(false); }}>J’ai vérifié, poursuivre la signature</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(clarificationDocument)} onOpenChange={(open) => { if (!open && !clarificationMutation.isPending) setClarificationDocument(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Demander une clarification</DialogTitle>
@@ -1104,6 +1609,56 @@ export default function EvaluationSpace() {
           <DialogFooter>
             <Button type="button" variant="outline" disabled={clarificationMutation.isPending} onClick={() => setClarificationDocument(null)}>Annuler</Button>
             <Button type="button" disabled={clarificationMutation.isPending} onClick={submitDocumentClarification}>{clarificationMutation.isPending ? "Envoi…" : "Envoyer ma demande"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={secondaryDossierOpen} onOpenChange={setSecondaryDossierOpen}>
+        <DialogContent data-testid="secondary-dossier-dialog">
+          <DialogHeader>
+            <DialogTitle>Ajouter une seconde opportunité</DialogTitle>
+            <DialogDescription>
+              Ouvrez un dossier distinct (visa travail et visa études) pour maximiser vos chances. Règle : 1 dossier = 1 paiement d’ouverture — le second dossier exige un second règlement, avec son propre numéro et son propre suivi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3" role="radiogroup" aria-label="Type de seconde procédure">
+            {SECONDARY_PROJECT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={secondaryProject === option.value}
+                onClick={() => setSecondaryProject(option.value)}
+                className={`rounded-xl border p-3 text-left transition ${secondaryProject === option.value ? "border-blue-700 bg-blue-50 ring-2 ring-blue-700" : "border-slate-200 bg-white hover:border-blue-300"}`}
+              >
+                <p className="text-sm font-bold text-slate-950">{option.label}</p>
+                <p className="mt-1 text-xs text-slate-600">{option.description}</p>
+              </button>
+            ))}
+          </div>
+          <label className="grid gap-2 text-sm font-medium text-slate-800" htmlFor="secondary-dossier-destination">
+            Destination souhaitée
+            <input
+              id="secondary-dossier-destination"
+              value={secondaryDestination}
+              onChange={(event) => setSecondaryDestination(event.target.value.slice(0, 100))}
+              maxLength={100}
+              placeholder="Ex. Canada, Luxembourg, France…"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <p className="text-xs text-slate-500">Vous serez redirigé vers le formulaire d’évaluation prérempli pour cette seconde procédure. L’équipe verra ensuite les deux dossiers côté administration.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSecondaryDossierOpen(false)}>Annuler</Button>
+            <Button
+              type="button"
+              className="bg-blue-800 text-white hover:bg-blue-900"
+              onClick={() => {
+                setSecondaryDossierOpen(false);
+                setLocation(secondaryDossierEvaluationPath({ project: secondaryProject, destination: secondaryDestination || primaryDestination }));
+              }}
+            >
+              Continuer vers l’évaluation
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

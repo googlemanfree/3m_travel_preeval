@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
+import HomeSearchBar from "@/components/HomeSearchBar";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
@@ -21,6 +22,20 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
+import { PRESENTATION_JOURNEY_INTRO, PRESENTATION_JOURNEY_STEPS } from "@shared/presentationJourney";
+
+const EMPLOYER_PROFILE_DELIVERABLES = [
+  { fr: "Un CV actualisé.", en: "An updated CV." },
+  { fr: "Une synthèse de l’expérience pertinente pour votre poste.", en: "A summary of experience relevant to your role." },
+  { fr: "Les qualifications et justificatifs disponibles.", en: "Available qualifications and supporting documents." },
+  { fr: "L’état des vérifications effectuées.", en: "The status of checks already completed." },
+  { fr: "Les points restant à confirmer.", en: "Points still to be confirmed." },
+  { fr: "La disponibilité du candidat.", en: "The candidate’s availability." },
+  { fr: "Un interlocuteur 3M pour organiser les échanges et les entretiens.", en: "A 3M contact to organise exchanges and interviews." },
+] as const;
 
 const registrationYear = COMPANY_PROFILE.legalIdentifiers.registration.match(/\b(19|20)\d{2}\b/)?.[0];
 const yaoundeOffice = COMPANY_PROFILE.offices.cameroon;
@@ -38,18 +53,41 @@ const fadeUp = {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
+  const { t, language } = useLanguage();
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showStickyCta, setShowStickyCta] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const lang = language === "en" ? "en" : "fr";
 
   useEffect(() => {
-    document.title = "3M Travel & Services | Voyages, Visas, Études & Mobilité Internationale";
+    document.title = "3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale";
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setShowBackToTop(window.scrollY > 520);
+    const isNearSection = (id: string) => {
+      const el = document.getElementById(id);
+      if (!el) return false;
+      const rect = el.getBoundingClientRect();
+      // Masquer la barre si la section cible occupe déjà le viewport (évite le doublon).
+      return rect.top < window.innerHeight * 0.72 && rect.bottom > window.innerHeight * 0.28;
+    };
+
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 520);
+      const pastHero = window.scrollY > Math.min(480, window.innerHeight * 0.55);
+      const nearFormOrFinal = isNearSection("evaluation-multi") || isNearSection("home-final-cta");
+      setShowStickyCta(pastHero && !nearFormOrFinal);
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(scrollableHeight > 0 ? Math.min(100, Math.max(0, (window.scrollY / scrollableHeight) * 100)) : 0);
+    };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -72,6 +110,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white font-sans">
+      <div
+        className="fixed inset-x-0 top-0 z-[70] h-1 bg-white/20"
+        role="progressbar"
+        aria-label="Progression du défilement de la page"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(scrollProgress)}
+        data-testid="mobile-scroll-progress"
+      >
+        <div className="h-full origin-left bg-gradient-to-r from-[#d5a84b] via-[#f3c969] to-[#165dff] transition-[width] duration-150 ease-out" style={{ width: `${scrollProgress}%` }} />
+      </div>
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
 
@@ -82,15 +131,177 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
-      {/* ─── QUE VOULEZ-VOUS FAIRE ? : accès direct aux démarches selon l'intention du visiteur ── */}
-      <QuickActionsSection />
+      <HomeSearchBar />
 
-      {/* ─── PREUVES + AVIS : réassurance tôt pour convaincre avant le catalogue de services ── */}
-      <ProofGallerySection />
+      <nav
+        id="mobile-home-nav"
+        aria-label={t("Accès rapides mobile", "Mobile quick links")}
+        className="sticky top-0 z-30 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur sm:hidden"
+      >
+        <a href="#quick-actions-title" className="touch-target inline-flex shrink-0 items-center rounded-full bg-blue-900 px-4 text-xs font-bold text-white transition-transform active:scale-[0.97]">
+          {t("Démarrer", "Start")}
+        </a>
+        <a href="#approved-reviews-title" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          {t("Avis clients", "Reviews")}
+        </a>
+        <a href="#home-search" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          {t("Rechercher", "Search")}
+        </a>
+        <a href="/procedures" className="touch-target inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800">
+          {t("Procédures", "Procedures")}
+        </a>
+      </nav>
 
-      <ReviewsErrorBoundary>
-        <ApprovedReviewsSection />
-      </ReviewsErrorBoundary>
+      {/* Corridor léger — détails B2B plus bas, après preuves/avis. */}
+      <section
+        id="home-talent-corridor"
+        aria-labelledby="home-b2b-title"
+        className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-10 md:py-12"
+        data-testid="home-talent-corridor"
+      >
+        <div className="mx-auto max-w-6xl px-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">{t("Préparation de dossier · canaux autorisés", "File preparation · authorised channels")}</p>
+          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100">
+            {t(
+              "Dossiers préparés et suivis par 3M. Agences et employeurs vérifiés : canaux de recrutement autorisés.",
+              "Files prepared and followed by 3M. Verified agencies and employers: authorised recruitment channels.",
+            )}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Hub partenaires", "Partners hub")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
+            </a>
+            <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Agences de placement", "Placement agencies")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Canal autorisé : recevoir des profils consentants et documentés.", "Authorised channel: receive consenting, documented profiles.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Portail agence →", "Agency portal →")}</span>
+            </a>
+            <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Employeurs internationaux", "International employers")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.", "Select, decide, return feedback into the correct 3M file.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
+            </a>
+          </div>
+          <p className="mt-5 text-center sm:text-left">
+            <a href="#home-employer-b2b" className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-200 underline-offset-4 hover:text-white hover:underline">
+              {t("Ce que les employeurs reçoivent →", "What employers receive →")}
+            </a>
+          </p>
+        </div>
+      </section>
+
+      {/* Intentions dossier / mobilité — vols & annexes en second rang. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <QuickActionsSection />
+      </motion.div>
+
+      {/* Preuves + avis tôt : confiance avant le détail B2B. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ProofGallerySection />
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <ReviewsErrorBoundary>
+          <ApprovedReviewsSection />
+        </ReviewsErrorBoundary>
+      </motion.div>
+
+      {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
+      <section
+        id="home-employer-b2b"
+        className="border-y border-amber-100 bg-gradient-to-b from-slate-50 to-white py-12 md:py-14"
+        data-testid="home-employer-b2b"
+        aria-labelledby="home-employer-deliverables-title"
+      >
+        <div className="mx-auto max-w-6xl px-4">
+          <div
+            className="min-w-0 rounded-2xl border border-amber-200/70 bg-white p-4 shadow-sm sm:p-6 md:p-8"
+            data-testid="home-employer-deliverables"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{t("Pour les employeurs", "For employers")}</p>
+            <h2 id="home-employer-deliverables-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
+              {t("Ce que vous recevez pour chaque profil", "What you receive for each profile")}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              {t(
+                "Avant toute présentation, un administrateur 3M examine le dossier. Vous ne recevez que des profils préparés, consentants et alignés sur vos critères.",
+                "Before any presentation, a 3M administrator reviews the file. You only receive prepared, consenting profiles aligned with your criteria.",
+              )}
+            </p>
+            <ul className="mt-4 grid min-w-0 gap-2.5 sm:mt-5 sm:grid-cols-2">
+              {EMPLOYER_PROFILE_DELIVERABLES.map((item) => (
+                <li key={item.fr} className="flex items-start gap-2.5 text-sm font-medium leading-6 text-slate-800">
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <span>{item[lang]}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-700">
+              {t(
+                "Transmettez-nous vos critères : notre équipe examine les profils correspondants avant toute présentation.",
+                "Send us your criteria: our team reviews matching profiles before any presentation.",
+              )}
+            </p>
+            <div className="mt-5 flex min-w-0 flex-col gap-3 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center">
+              <a
+                href={CORRIDOR_ROUTES.employersRegister}
+                data-testid="home-employer-need-cta"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-center text-sm font-black text-[#071b3d] transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 sm:w-auto sm:px-5"
+              >
+                {t("Transmettre un besoin de recrutement", "Submit a recruitment need")}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <a
+                href={CORRIDOR_ROUTES.employersLogin}
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold text-slate-800 transition hover:border-indigo-300 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 sm:w-auto sm:px-5"
+              >
+                {t("Déjà vérifié ? Accéder au portail", "Already verified? Open the portal")}
+              </a>
+            </div>
+          </div>
+
+          <div
+            className="mt-6 min-w-0 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 sm:mt-8 sm:p-6 md:p-8"
+            data-testid="home-presentation-journey"
+            aria-labelledby="home-presentation-journey-title"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">{PRESENTATION_JOURNEY_INTRO.badge[lang]}</p>
+            <h3 id="home-presentation-journey-title" className="mt-2 text-xl font-black text-slate-950 md:text-2xl">
+              {PRESENTATION_JOURNEY_INTRO.title[lang]}
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
+            <ol className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5">
+              {PRESENTATION_JOURNEY_STEPS.map((step) => (
+                <li key={step.id} className="min-w-0 rounded-xl border border-white bg-white p-3.5 shadow-sm sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-700 text-xs font-black text-white">{step.n}</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                          aria-label={lang === "fr" ? `Explication : ${step.short.fr}` : `Explanation: ${step.short.en}`}
+                        >
+                          <Info className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" sideOffset={8} className="max-w-[min(18rem,calc(100vw-2rem))]">
+                        <span className="font-bold">{step.short[lang]}</span>
+                        <span className="mt-1 block">{step.body[lang]}</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="mt-3 text-sm font-black text-slate-950">{step.title[lang]}</p>
+                  <p className="mt-1.5 text-xs leading-5 text-slate-600">{step.body[lang]}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
 
       <ProfileVerificationModule />
 
@@ -100,8 +311,8 @@ export default function Home() {
       {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
       <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
         <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Les parcours les plus demandés depuis Yaoundé</h2>
-          <p className="mb-6 text-center text-sm text-slate-600 md:text-base">Commencez par la destination qui correspond à votre projet — chaque fiche détaille les étapes et les documents à préparer.</p>
+          <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Depuis l’Afrique vers le monde — parcours les plus demandés</h2>
+          <p className="premium-section-lead mx-auto mb-6 text-center">Candidats de tous les pays africains : commencez par la destination qui correspond à votre projet. Chaque fiche détaille les étapes et les documents à préparer.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {[
               { href: "/procedures/canada-travail", flag: "🇨🇦", label: "Canada — Travail" },
@@ -121,7 +332,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-4 text-center">
-            <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Voir les 107 procédures par destination →</a>
+            <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Consulter le catalogue des procédures documentées →</a>
           </p>
         </div>
       </section>
@@ -130,7 +341,7 @@ export default function Home() {
       <DestinationsShowcaseSection />
 
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
-      <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
+      <section id="evaluation-multi" className="scroll-mt-24 bg-gradient-to-b from-white to-blue-50 py-14 md:py-20">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Sans engagement · réponse structurée</p>
@@ -163,22 +374,22 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 focus-within:-translate-y-1 focus-within:border-blue-500 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Canada · Simulateur CRS</p>
-              <p className="mt-1 text-sm text-slate-600">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
+              <p className="premium-copy mt-1.5 text-sm">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Procédures par destination</p>
-              <p className="mt-1 text-sm text-slate-600">Comparer les pays, visas et sources officielles.</p>
+              <p className="premium-copy mt-1.5 text-sm">Comparer les pays, visas et sources officielles.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/ressources" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
-              <p className="text-sm font-black text-slate-950">Ressources et actualités</p>
-              <p className="mt-1 text-sm text-slate-600">Guides, informations pratiques et mises à jour.</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Consulter les ressources <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+            <a href="/guide-procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg" data-testid="home-guide-procedures">
+              <p className="text-sm font-black text-slate-950">Guide PDF des procédures</p>
+              <p className="premium-copy mt-1.5 text-sm">Bibliothèque travail / études / visiteur — même source que le traitement admin.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le guide des procédures <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
             <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
               <p className="text-sm font-black text-slate-950">Services et accompagnement</p>
-              <p className="mt-1 text-sm text-slate-600">Parler à l’agence pour un besoin précis.</p>
+              <p className="premium-copy mt-1.5 text-sm">Parler à l’agence pour un besoin précis.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Nous contacter <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
           </div>
@@ -189,9 +400,9 @@ export default function Home() {
       <section aria-labelledby="why-3m-title" className="py-16 bg-white" data-testid="why-3m-section">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M Travel</p>
-            <h2 id="why-3m-title" className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Des preuves concrètes, pas des promesses vagues</h2>
-            <p className="mx-auto max-w-2xl text-sm text-slate-600 md:text-base">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
+            <h2 id="why-3m-title" className="premium-section-title mb-3 text-3xl md:text-4xl">Des preuves concrètes, pas des promesses vagues</h2>
+            <p className="premium-section-lead mx-auto text-center">
               Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
@@ -243,7 +454,7 @@ export default function Home() {
                   <item.icon className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-base font-black text-slate-950">{item.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{item.desc}</p>
+                <p className="premium-copy mt-2 flex-1 text-[0.95rem]">{item.desc}</p>
                 <a
                   href={item.href}
                   className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
@@ -253,9 +464,9 @@ export default function Home() {
               </motion.article>
             ))}
           </div>
-          <p className="mt-8 text-center text-sm text-slate-600">
+          <p className="premium-copy mx-auto mt-8 max-w-2xl text-center text-base">
             Besoin d’échanger avant de démarrer ?{" "}
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite en savoir plus sur votre accompagnement.")}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline-offset-4 hover:underline">
               Écrire sur WhatsApp
             </a>
             {" · "}
@@ -275,7 +486,7 @@ export default function Home() {
       <section className="py-16" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 id="home-final-cta-title" className="text-3xl font-extrabold text-white md:text-4xl">Prêt à avancer sur votre projet ?</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
+          <p className="premium-copy-on-dark mx-auto mt-4 max-w-2xl text-lg md:text-xl">
             Évaluez gratuitement votre parcours ou écrivez directement à un conseiller 3M — sans engagement de résultat.
           </p>
           <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -285,7 +496,7 @@ export default function Home() {
               </Button>
             </a>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M Travel Agency, je souhaite parler à un conseiller.")}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full max-w-[22rem] sm:w-auto"
@@ -295,7 +506,7 @@ export default function Home() {
               </Button>
             </a>
           </div>
-          <p className="mt-5 text-sm text-blue-200/90">
+          <p className="mt-5 text-sm text-blue-50">
             <a href="/sources-officielles" className="font-semibold underline-offset-4 hover:underline">Sources officielles</a>
             {" · "}
             <a href="/contact" className="font-semibold underline-offset-4 hover:underline">Contact agence</a>
@@ -307,13 +518,35 @@ export default function Home() {
 
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
+      {showStickyCta && (
+        <div
+          className="safe-bottom-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-blue-100 bg-white/95 px-3 pt-2 shadow-[0_-8px_30px_-12px_rgba(15,47,111,0.28)] backdrop-blur md:hidden"
+          data-testid="home-sticky-cta"
+          role="region"
+          aria-label={t("Action rapide d’évaluation", "Quick evaluation action")}
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <a
+              href="#evaluation-multi"
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-3 text-center text-sm font-black text-white shadow-md shadow-orange-900/20 transition active:scale-[0.98]"
+            >
+              {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
+            </a>
+          </div>
+        </div>
+      )}
+
       {showBackToTop && (
         <button
           type="button"
           aria-label="Retour en haut de la page"
           title="Retour en haut"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6"
+          className={`fixed left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6 ${
+            showStickyCta
+              ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-6"
+              : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"
+          }`}
         >
           <ChevronUp className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -410,7 +643,7 @@ function PricingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
+            className="premium-section-title mb-4 text-3xl md:text-4xl text-[#1e3a8a]"
           >
             Honoraires d’agence — en toute clarté
           </motion.h2>
@@ -419,7 +652,7 @@ function PricingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-gray-500 max-w-2xl mx-auto text-base"
+            className="premium-section-lead mx-auto text-center"
           >
             Ces formules concernent uniquement nos honoraires d’accompagnement. Les frais gouvernementaux, consulaires, médicaux ou biométriques sont distincts et dépendent des autorités.
           </motion.p>
@@ -454,7 +687,7 @@ function PricingSection() {
 
               {/* Corps */}
               <div className="bg-white flex flex-col flex-1 p-7">
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">{plan.description}</p>
+                <p className="premium-copy mb-6 text-[0.95rem]">{plan.description}</p>
 
                 {/* Features */}
                 <ul className="space-y-3 mb-8 flex-1">
@@ -468,7 +701,7 @@ function PricingSection() {
 
                 {/* CTA */}
                 <a
-                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
@@ -502,4 +735,3 @@ function PricingSection() {
     </section>
   );
 }
-

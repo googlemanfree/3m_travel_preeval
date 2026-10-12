@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { CheckCircle2, Download, FileUp, Plus, RotateCcw, Send, XCircle } from "lucide-react";
+import { CheckCircle2, Download, FileUp, MessageSquarePlus, Plus, RotateCcw, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -48,12 +48,13 @@ type Props = {
   reminding?: boolean;
 };
 
-type Dialogs = { kind: "deposit" | "reject" | "add" | null; requirement?: CrmRequirement };
+type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirement?: CrmRequirement };
 
 /** Pièces du dossier : une ligne par pièce, une action principale par état. */
 export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding }: Props) {
   const [filter, setFilter] = useState<CrmFilter>("all");
   const [dialog, setDialog] = useState<Dialogs>({ kind: null });
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const summary = useMemo(() => summarizeRequirements(requirements), [requirements]);
   const rows = useMemo(() => filterRequirements(requirements, filter), [requirements, filter]);
   const now = Date.now();
@@ -68,6 +69,16 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
   const decide = trpc.adminCaseDesk.setRequirementStatus.useMutation({ onSuccess: (_result, variables) => { const status = (variables as { status?: string } | undefined)?.status; done(status === "approved" ? "Pièce validée : le candidat est prévenu." : status === "rejected" ? "Pièce à corriger : le candidat est prévenu." : status === "waived" ? "Pièce marquée non requise." : "Pièce rouverte."); }, onError: failed });
   const deposit = trpc.adminCaseDesk.depositDocument.useMutation({ onSuccess: (_result, variables) => done((variables as { validate?: boolean } | undefined)?.validate ? "Document déposé et validé : visible dans l’espace du candidat." : "Document déposé : visible dans l’espace du candidat, à vérifier."), onError: failed });
   const add = trpc.adminCaseDesk.addRequirement.useMutation({ onSuccess: () => done("Pièce ajoutée à la checklist."), onError: failed });
+  const request = trpc.admin.requestCandidate360Document.useMutation({ onSuccess: () => done("Demande de pièce envoyée au candidat."), onError: failed });
+  const bulkApprove = trpc.adminCaseDesk.approveRequirementsBulk.useMutation({ onSuccess: (result) => { setSelectedIds(new Set()); done(`${result.validatedCount} pièce${result.validatedCount > 1 ? "s" : ""} validée${result.validatedCount > 1 ? "s" : ""}.`); }, onError: failed });
+  const selectableRows = rows.filter((requirement) => { const status = normalizeStatus(requirement.status); return status !== "approved" && status !== "waived"; });
+  const allSelectableSelected = selectableRows.length > 0 && selectableRows.every((requirement) => selectedIds.has(requirement.id));
+  const toggleAll = () => setSelectedIds((current) => {
+    const next = new Set(current);
+    if (allSelectableSelected) selectableRows.forEach((requirement) => next.delete(requirement.id));
+    else selectableRows.forEach((requirement) => next.add(requirement.id));
+    return next;
+  });
 
   const act = (action: RowAction, requirement: CrmRequirement) => {
     if (action === "deposit") setDialog({ kind: "deposit", requirement });
@@ -91,6 +102,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "request" })}><MessageSquarePlus className="mr-1.5 h-4 w-4" aria-hidden="true" />Demander une pièce</Button>
           <Button type="button" size="sm" onClick={() => setDialog({ kind: "add" })}><Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />Ajouter une pièce</Button>
         </div>
       </header>
@@ -103,6 +115,13 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
         ))}
       </div>
 
+      {selectableRows.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-slate-50 px-4 py-3" data-testid="bulk-document-actions">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={allSelectableSelected} onChange={toggleAll} aria-label="Sélectionner toutes les pièces à valider" className="h-4 w-4 rounded border-slate-300" />Sélectionner les pièces à valider</label>
+          <Button type="button" size="sm" disabled={selectedIds.size === 0 || bulkApprove.isPending} onClick={() => bulkApprove.mutate({ sessionToken, candidateId, requirementIds: Array.from(selectedIds) })}>{bulkApprove.isPending ? "Validation…" : `Valider la sélection (${selectedIds.size})`}</Button>
+        </div>
+      )}
+
       {requirements.length === 0 ? (
         <p className="p-6 text-center text-sm text-slate-500">Aucune pièce demandée pour l’instant. Ajoutez une pièce, ou créez la checklist de la procédure dans « Outils du dossier » plus bas.</p>
       ) : rows.length === 0 ? (
@@ -114,13 +133,17 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
             const file = latestFileFor(requirement, documents);
             const due = dueLabel(requirement, now);
             const actions = rowActions(status);
+            const selectable = status !== "approved" && status !== "waived";
             return (
               <li key={requirement.id} className="space-y-2.5 p-4" data-testid={`crm-row-${requirement.id}`} data-status={status}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-1 items-start gap-2">
+                    {selectable && <input type="checkbox" checked={selectedIds.has(requirement.id)} onChange={() => setSelectedIds((current) => { const next = new Set(current); if (next.has(requirement.id)) next.delete(requirement.id); else next.add(requirement.id); return next; })} aria-label={`Sélectionner ${requirement.documentType} pour validation`} className="mt-0.5 h-4 w-4 rounded border-slate-300" />}
+                    <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-900">{requirement.documentType}</p>
                     {requirement.adminComment && <p className="mt-0.5 text-xs text-slate-500">{requirement.adminComment}</p>}
                     {due && <p className={`mt-0.5 text-xs font-semibold ${due.overdue ? "text-rose-700" : "text-slate-500"}`}>{due.text}</p>}
+                    </div>
                   </div>
                   <span className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[status]}`}>{REQUIREMENT_STATUS_LABELS[status]}</span>
                 </div>
@@ -162,6 +185,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
       }} />
       <RejectDialog open={dialog.kind === "reject"} requirement={dialog.requirement} busy={decide.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(comment) => dialog.requirement && decide.mutate({ sessionToken, candidateId, requirementId: dialog.requirement.id, status: "rejected", comment })} />
       <AddDialog open={dialog.kind === "add"} busy={add.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(values) => add.mutate({ sessionToken, candidateId, documentType: values.documentType, comment: values.comment || undefined, dueAt: values.dueAt || undefined })} />
+      <RequestDialog open={dialog.kind === "request"} busy={request.isPending} onClose={() => setDialog({ kind: null })} onSubmit={(values) => request.mutate({ sessionToken, candidateId, documentLabel: values.documentLabel, details: values.details || undefined })} />
     </section>
   );
 }
@@ -228,6 +252,26 @@ function AddDialog({ open, busy, onClose, onSubmit }: { open: boolean; busy: boo
           {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
         </div>
         <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Annuler</Button><Button type="button" disabled={busy} onClick={() => { if (documentType.trim().length < 2) return setError("Indiquez la pièce à demander."); setError(null); onSubmit({ documentType: documentType.trim(), comment: comment.trim(), dueAt }); }}>{busy ? "Ajout…" : "Ajouter"}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RequestDialog({ open, busy, onClose, onSubmit }: { open: boolean; busy: boolean; onClose: () => void; onSubmit: (values: { documentLabel: string; details: string }) => void }) {
+  const [documentLabel, setDocumentLabel] = useState("");
+  const [details, setDetails] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const reset = () => { setDocumentLabel(""); setDetails(""); setError(null); };
+  return (
+    <Dialog open={open} onOpenChange={(next) => { if (!next) { reset(); onClose(); } }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Demander une pièce précise</DialogTitle><DialogDescription>La demande sera enregistrée dans le dossier, affichée dans l’espace client et transmise au candidat par notification et e-mail.</DialogDescription></DialogHeader>
+        <div className="space-y-3">
+          <div><Label htmlFor="request-document-label">Pièce demandée</Label><Input id="request-document-label" value={documentLabel} onChange={(event) => setDocumentLabel(event.target.value)} maxLength={180} placeholder="Ex. Attestation d’emploi signée" className="mt-1" /></div>
+          <div><Label htmlFor="request-document-details">Consigne au candidat</Label><Textarea id="request-document-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={1500} rows={4} className="mt-1" placeholder="Précisez le format, la période ou les éléments à vérifier." /></div>
+          {error && <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p>}
+        </div>
+        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>Annuler</Button><Button type="button" disabled={busy} onClick={() => { if (documentLabel.trim().length < 2) return setError("Indiquez le nom de la pièce demandée."); setError(null); onSubmit({ documentLabel: documentLabel.trim(), details: details.trim() }); }}>{busy ? "Envoi…" : "Envoyer la demande"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

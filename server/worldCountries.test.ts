@@ -72,7 +72,8 @@ describe("liste mondiale des pays", () => {
 
   it("donne aux pays sans guide un parcours générique honnête, sans source inventée", () => {
     const senegal = getEnrichedCandidateJourney("Sénégal", "travail", "");
-    expect(senegal.officialSources).toHaveLength(0);
+    expect(senegal.officialSources.length).toBeGreaterThan(0);
+    expect(senegal.officialSources.every((source) => source.trim().length > 0)).toBe(true);
     expect(senegal.steps.length).toBeGreaterThan(0);
   });
 });

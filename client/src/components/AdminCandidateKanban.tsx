@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle, Clock, FileCheck, Globe, GripVertical, History, Send } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle, Clock, FileCheck, Globe, GripVertical, History, Loader2, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ADMIN_NEXT_ACTION_URGENCY_CLASS, determineAdminListNextAction } from "@shared/adminDossierNextAction";
 
 export type KanbanStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
 type HistoryEntry = { status: string; label: string; at?: Date | string | null };
@@ -19,15 +20,32 @@ export interface KanbanCandidate {
   advisorName?: string | null;
   dueAt?: Date | string | null;
   history?: HistoryEntry[];
+  paymentStatus?: string | null;
+  activationStatus?: string | null;
+  procedureStep?: string | null;
+  procedureJourney?: {
+    journeyTitle?: string;
+    stepLabel?: string | null;
+    nextStepLabel?: string | null;
+    stepNumber?: number | null;
+    stepCount?: number;
+    stageLabels?: Partial<Record<KanbanStatus, string>>;
+  } | null;
 }
 
+/** Colonnes opérationnelles stables ; le libellé précis pays/procédure est sur chaque carte. */
 const columns: Array<{ status: KanbanStatus; label: string; tone: string; icon: typeof Clock }> = [
-  { status: "PENDING_48H", label: "Évaluation 48h", tone: "border-amber-200 bg-amber-50/70", icon: Clock },
-  { status: "PUBLISHED", label: "Bilan disponible", tone: "border-blue-200 bg-blue-50/70", icon: FileCheck },
-  { status: "DOCUMENTS_CHECK", label: "Collecte documents", tone: "border-violet-200 bg-violet-50/70", icon: Send },
-  { status: "SUBMITTED", label: "Soumission consulaire", tone: "border-indigo-200 bg-indigo-50/70", icon: Globe },
-  { status: "APPROVED", label: "Visa accordé", tone: "border-emerald-200 bg-emerald-50/70", icon: CheckCircle },
+  { status: "PENDING_48H", label: "Évaluation / qualification", tone: "border-amber-200 bg-amber-50/70", icon: Clock },
+  { status: "PUBLISHED", label: "Bilan & paiement", tone: "border-blue-200 bg-blue-50/70", icon: FileCheck },
+  { status: "DOCUMENTS_CHECK", label: "Documents procédure", tone: "border-violet-200 bg-violet-50/70", icon: Send },
+  { status: "SUBMITTED", label: "Dépôt / soumission", tone: "border-indigo-200 bg-indigo-50/70", icon: Globe },
+  { status: "APPROVED", label: "Décision finale", tone: "border-emerald-200 bg-emerald-50/70", icon: CheckCircle },
 ];
+
+export function getNextKanbanStatus(status: string): KanbanStatus | null {
+  const index = columns.findIndex((column) => column.status === status);
+  return index >= 0 && index < columns.length - 1 ? columns[index + 1].status : null;
+}
 
 export function filterKanbanCandidates(candidates: KanbanCandidate[], destination: string, advisor: string) {
   return candidates.filter((candidate) => (destination === "ALL" || candidate.destinationCountry === destination) && (advisor === "ALL" || (candidate.advisorName || "Non attribué") === advisor));
@@ -63,8 +81,9 @@ function deadlineState(dueAt?: Date | string | null) {
   return { label: `Avant le ${due.toLocaleDateString("fr-FR")}`, explanation: getDeadlineExplanation(dueAt), className: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: Clock };
 }
 
-export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidates: KanbanCandidate[]; onMove: (candidate: KanbanCandidate, status: KanbanStatus) => void; onOpen: (candidate: KanbanCandidate) => void }) {
+export function AdminCandidateKanban({ candidates, onMove, onAdvance, onOpen }: { candidates: KanbanCandidate[]; onMove: (candidate: KanbanCandidate, status: KanbanStatus) => void; onAdvance: (candidate: KanbanCandidate, status: KanbanStatus) => Promise<void>; onOpen: (candidate: KanbanCandidate) => void }) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [advancingId, setAdvancingId] = useState<string | null>(null);
   const [destinationFilter, setDestinationFilter] = useState("ALL");
   const [advisorFilter, setAdvisorFilter] = useState("ALL");
   const destinations = useMemo(() => Array.from(new Set(candidates.map((candidate) => candidate.destinationCountry).filter(Boolean))).sort(), [candidates]);
@@ -75,7 +94,7 @@ export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidate
   return (
     <section aria-labelledby="candidate-kanban-title" className="space-y-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div><h2 id="candidate-kanban-title" className="text-xl font-black text-slate-950">Kanban des dossiers</h2><p className="text-sm text-slate-600">Déplacez un dossier vers une nouvelle étape. Chaque changement est soumis aux contrôles et à la traçabilité habituels.</p></div>
+        <div><h2 id="candidate-kanban-title" className="text-xl font-black text-slate-950">Kanban des dossiers</h2><p className="text-sm text-slate-600">Colonnes opérationnelles communes ; chaque carte affiche l’étape réelle du parcours pays / procédure. Les changements restent tracés et contrôlés.</p></div>
         <div className="flex flex-wrap items-center gap-2" aria-label="Filtres Kanban">
           <Select value={destinationFilter} onValueChange={setDestinationFilter}><SelectTrigger className="w-48 bg-white text-xs" aria-label="Filtrer par destination"><SelectValue placeholder="Toutes destinations" /></SelectTrigger><SelectContent><SelectItem value="ALL">Toutes destinations</SelectItem>{destinations.map((destination) => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}</SelectContent></Select>
           <Select value={advisorFilter} onValueChange={setAdvisorFilter}><SelectTrigger className="w-48 bg-white text-xs" aria-label="Filtrer par conseiller"><SelectValue placeholder="Tous les conseillers" /></SelectTrigger><SelectContent><SelectItem value="ALL">Tous les conseillers</SelectItem>{advisors.map((advisor) => <SelectItem key={advisor} value={advisor}>{advisor}</SelectItem>)}</SelectContent></Select>
@@ -90,9 +109,11 @@ export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidate
               {grouped[status].map((candidate) => {
                 const deadline = deadlineState(candidate.dueAt);
                 const DeadlineIcon = deadline.icon;
+                const nextStatus = getNextKanbanStatus(candidate.status);
+                const isAdvancing = advancingId === candidate.id;
                 return <Card key={candidate.id} draggable onDragStart={(event) => { event.dataTransfer.setData("text/plain", candidate.id); event.dataTransfer.effectAllowed = "move"; setDraggedId(candidate.id); }} onDragEnd={() => setDraggedId(null)} className={`border-slate-200 bg-white shadow-sm ${draggedId === candidate.id ? "opacity-50" : ""}`}>
-                  <CardHeader className="space-y-2 pb-2"><CardTitle className="flex items-start gap-2 text-sm"><GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /><button type="button" className="min-w-0 text-left font-bold text-blue-950 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" onClick={() => onOpen(candidate)}>{candidate.fullName}</button></CardTitle><p className="pl-6 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{candidate.folderCode}</p></CardHeader>
-                  <CardContent className="space-y-3 text-xs text-slate-600"><p>{candidate.destinationCountry || "Destination à confirmer"} · {candidate.projectType || "Procédure à qualifier"}</p><p className="text-[11px] text-slate-500">Origine : {candidate.source === "AGENCY_PHYSICAL" ? "Agence" : candidate.source === "ACCOUNT_ONLY" ? "Compte créé" : "En ligne"} · Conseiller : {candidate.advisorName || "Non attribué"}</p><Tooltip><TooltipTrigger asChild><div tabIndex={0} role="status" aria-label={`Alerte SLA : ${deadline.label}`} className={`flex cursor-help items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${deadline.className}`}><DeadlineIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>{deadline.label}</span></div></TooltipTrigger><TooltipContent side="top" className="max-w-xs">{deadline.explanation}</TooltipContent></Tooltip><div className="rounded-md border border-slate-200 bg-slate-50/70 p-2"><p className="flex items-center gap-1 text-[11px] font-bold text-slate-700"><History className="h-3.5 w-3.5" aria-hidden="true" />Historique récent</p>{candidate.history?.length ? <ol className="mt-1.5 space-y-1 border-l border-slate-300 pl-2.5">{candidate.history.slice(0, 3).map((entry, index) => <li key={`${entry.status}-${index}`} className="text-[10px] text-slate-600"><span className="font-semibold text-slate-800">{entry.label}</span>{entry.at ? ` · ${new Date(entry.at).toLocaleDateString("fr-FR")}` : ""}</li>)}</ol> : <p className="mt-1 text-[10px] text-slate-500">Les changements apparaîtront ici.</p>}</div><Select value={candidate.status} onValueChange={(value) => onMove(candidate, value as KanbanStatus)}><SelectTrigger className="h-8 bg-white text-xs" aria-label={`Déplacer ${candidate.fullName}`}><SelectValue placeholder="Déplacer vers…" /></SelectTrigger><SelectContent>{columns.map((option) => <SelectItem key={option.status} value={option.status}>{option.label}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="sm" className="w-full" onClick={() => onOpen(candidate)}>Ouvrir la fiche</Button></CardContent>
+                  <CardHeader className="space-y-2 pb-2"><CardTitle className="flex items-start gap-2 text-sm"><GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /><button type="button" className="min-w-0 text-left font-bold text-blue-950 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" onClick={() => onOpen(candidate)}>{candidate.fullName}</button></CardTitle><p className="pl-6 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{candidate.folderCode}</p>{candidate.procedureJourney?.stepLabel ? <p className="ml-6 text-[10px] font-semibold leading-tight text-slate-700" data-testid="kanban-country-step" title={candidate.procedureJourney.journeyTitle}>{candidate.procedureJourney.stepNumber != null && candidate.procedureJourney.stepCount ? `${candidate.procedureJourney.stepNumber}/${candidate.procedureJourney.stepCount} · ` : ""}{candidate.procedureJourney.stepLabel}</p> : null}{(() => { const next = determineAdminListNextAction({ paymentStatus: candidate.paymentStatus, procedureStep: candidate.procedureStep ?? candidate.status, status: candidate.status, activationStatus: candidate.activationStatus, destination: candidate.destinationCountry, visaType: candidate.projectType }); return <p className={`ml-6 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold ${ADMIN_NEXT_ACTION_URGENCY_CLASS[next.urgency]}`} data-testid="kanban-next-action">{candidate.procedureJourney?.nextStepLabel ? `Suite : ${candidate.procedureJourney.nextStepLabel}` : next.label}</p>; })()}</CardHeader>
+                  <CardContent className="space-y-3 text-xs text-slate-600"><p>{candidate.destinationCountry || "Destination à confirmer"} · {candidate.projectType || "Procédure à qualifier"}</p><p className="text-[11px] text-slate-500">Origine : {candidate.source === "AGENCY_PHYSICAL" ? "Agence" : candidate.source === "ACCOUNT_ONLY" ? "Compte créé" : "En ligne"} · Conseiller : {candidate.advisorName || "Non attribué"}</p><Tooltip><TooltipTrigger asChild><div tabIndex={0} role="status" aria-label={`Alerte SLA : ${deadline.label}`} className={`flex cursor-help items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${deadline.className}`}><DeadlineIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>{deadline.label}</span></div></TooltipTrigger><TooltipContent side="top" className="max-w-xs">{deadline.explanation}</TooltipContent></Tooltip><div className="rounded-md border border-slate-200 bg-slate-50/70 p-2"><p className="flex items-center gap-1 text-[11px] font-bold text-slate-700"><History className="h-3.5 w-3.5" aria-hidden="true" />Historique récent</p>{candidate.history?.length ? <ol className="mt-1.5 space-y-1 border-l border-slate-300 pl-2.5">{candidate.history.slice(0, 3).map((entry, index) => <li key={`${entry.status}-${index}`} className="text-[10px] text-slate-600"><span className="font-semibold text-slate-800">{entry.label}</span>{entry.at ? ` · ${new Date(entry.at).toLocaleDateString("fr-FR")}` : ""}</li>)}</ol> : <p className="mt-1 text-[10px] text-slate-500">Les changements apparaîtront ici.</p>}</div><Select value={candidate.status} onValueChange={(value) => onMove(candidate, value as KanbanStatus)}><SelectTrigger className="h-8 bg-white text-xs" aria-label={`Déplacer ${candidate.fullName}`}><SelectValue placeholder="Déplacer vers…" /></SelectTrigger><SelectContent>{columns.map((option) => <SelectItem key={option.status} value={option.status}>{candidate.procedureJourney?.stageLabels?.[option.status] || option.label}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="sm" className="w-full" disabled={!nextStatus || isAdvancing} data-testid="kanban-advance-button" aria-label={nextStatus ? `Passer ${candidate.fullName} à l’étape suivante` : `${candidate.fullName} est à l’étape finale`} onClick={async () => { if (!nextStatus || isAdvancing) return; setAdvancingId(candidate.id); try { await onAdvance(candidate, nextStatus); } finally { setAdvancingId(null); } }}>{isAdvancing ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />Mise à jour…</> : nextStatus ? <><ArrowRight className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{candidate.procedureJourney?.stageLabels?.[nextStatus] || "Étape suivante"}</> : <><CheckCircle className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />Étape finale atteinte</>}</Button><Button type="button" variant="outline" size="sm" className="w-full" onClick={() => onOpen(candidate)}>Ouvrir la fiche</Button></CardContent>
                 </Card>;
               })}
               {grouped[status].length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-white/60 p-4 text-center text-xs text-slate-500">Aucun dossier dans cette étape.</p>}
@@ -105,4 +126,3 @@ export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidate
 }
 
 export default AdminCandidateKanban;
-

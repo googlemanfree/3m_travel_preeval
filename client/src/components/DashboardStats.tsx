@@ -105,7 +105,7 @@ export function DashboardStats({
           <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(paymentStatus)}`}>
             {getStatusLabel(paymentStatus)}
           </div>
-          <p className="text-xs text-gray-500 mt-2">65 000 FCFA</p>
+          <p className="text-xs text-gray-500 mt-2">Montant confirmé par l'agence selon votre profil</p>
         </CardContent>
       </Card>
 

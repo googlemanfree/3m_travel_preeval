@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs, paymentReceiptApprovals, ambassadors } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals, ambassadors } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -28,6 +28,8 @@ const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 6
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
+import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -162,6 +164,16 @@ export const applicationRouter = router({
       if (input.email.trim().toLowerCase() !== ctx.candidate.email.trim().toLowerCase()) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Le dossier doit être créé avec l’adresse e-mail de votre compte." });
       }
+
+      // Plafond opérationnel : jusqu’à 5 procédures actives par compte (chacune avec activation + numéro).
+      const openDossiers = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(and(eq(applications.candidateId, ctx.candidate.id), isNull(applications.deletedAt)));
+      if (openDossiers.length >= MAX_CLIENT_DOSSIERS) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: MAX_CLIENT_DOSSIERS_MESSAGE });
+      }
+
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
       const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
@@ -347,6 +359,12 @@ export const applicationRouter = router({
         ]);
       }
 
+      // Ce nouveau dossier devient immédiatement le dossier de traitement actif (sync admin).
+      await db
+        .update(candidates)
+        .set({ activeDossierNumber: dossierNumber, activeDossierSetAt: new Date() })
+        .where(eq(candidates.id, ctx.candidate.id));
+
       return {
         applicationId: newApp?.id ?? 0,
         dossierNumber,
@@ -354,6 +372,7 @@ export const applicationRouter = router({
         requiresEmailVerification: true,
         paymentUrl: null, // Sera généré après vérification OTP
         message: "Dossier créé — vérification email requise avant paiement",
+        activeDossierNumber: dossierNumber,
       };
     }),
 
@@ -450,7 +469,7 @@ export const applicationRouter = router({
           transactionId: app.paymentTransactionId ?? "",
           amount: 65000,
           currency: "XAF",
-          description: `Ouverture dossier immigration 3M Travel — ${input.dossierNumber}`,
+          description: `Ouverture dossier immigration 3M TRAVEL AGENCY — ${input.dossierNumber}`,
           customerName: app.fullName,
           customerEmail: app.email,
           customerPhone: app.whatsappNumber,
@@ -515,7 +534,7 @@ export const applicationRouter = router({
           transactionId,
           amount,
           currency: "XAF",
-          description: `Paiement dossier immigration 3M Travel — ${input.dossierNumber}`,
+          description: `Paiement dossier immigration 3M TRAVEL AGENCY — ${input.dossierNumber}`,
           customerName: app.fullName,
           customerEmail: input.email,
           customerPhone: app.whatsappNumber,
@@ -710,6 +729,59 @@ export const applicationRouter = router({
       }));
     }),
 
+  /**
+   * Fixer le montant des frais d'ouverture d'un dossier : il dépend du type de profil et doit être confirmé par écrit
+   * au candidat avant tout paiement. Impossible une fois le paiement validé (annuler d'abord la validation).
+   */
+  adminSetOpeningFee: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      amount: z.number().int().min(MIN_OPENING_FEE_XAF).max(MAX_OPENING_FEE_XAF),
+      reason: z.string().trim().min(3).max(500),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.paymentStatus === "SUCCESS") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le paiement de ce dossier est déjà validé : le montant ne peut plus être modifié. Annulez d’abord la validation si une correction est nécessaire." });
+      }
+
+      const previous = application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      if (previous === input.amount && application.paymentExpectedAmount === input.amount) {
+        return { id: application.id, amount: input.amount, previousAmount: previous, changed: false as const };
+      }
+
+      // Une transaction en ligne déjà ouverte l'a été à l'ancien montant : on la libère pour que le prochain paiement
+      // parte au bon montant. Les références saisies à la main (Orange Money, virement…) ne sont jamais effacées.
+      const transactionId = application.paymentTransactionId ?? "";
+      const releaseOnlineTransaction = application.paymentStatus === "PENDING" && /^(TX-)?3M-/.test(transactionId);
+      await db.update(applications)
+        .set({
+          paymentAmount: input.amount,
+          paymentExpectedAmount: input.amount,
+          ...(releaseOnlineTransaction ? { paymentTransactionId: null } : {}),
+        })
+        .where(eq(applications.id, application.id));
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: ctx.user.name || "Administrateur",
+        adminEmail: ctx.user.email || "",
+        action: "opening_fee_set",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: formatXaf(input.amount, application.paymentCurrency ?? "XAF"),
+        details: `Frais d'ouverture du dossier ${application.dossierNumber} : ${formatXaf(previous)} → ${formatXaf(input.amount)}. Motif : ${input.reason}${releaseOnlineTransaction ? " (transaction en ligne précédente libérée)" : ""}`,
+      });
+
+      return { id: application.id, amount: input.amount, previousAmount: previous, changed: true as const };
+    }),
+
   /** Valider ou annuler un paiement depuis le tableau de bord administrateur. */
   adminUpdatePaymentStatus: protectedProcedure
     .input(z.object({
@@ -731,15 +803,24 @@ export const applicationRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
       const isValidated = input.paymentStatus === "SUCCESS";
+      const isCancelValidated = input.paymentStatus === "CANCELLED" && application.paymentStatus === "SUCCESS";
       if (isValidated && application.paymentStatus === "SUCCESS" && application.paymentValidatedAt) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `Le paiement est déjà confirmé par ${application.paymentValidatedBy || "un conseiller"} le ${new Date(application.paymentValidatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n’est nécessaire.` });
+      }
+      if (isCancelValidated && (!input.adminNotes || input.adminNotes.trim().length < 5)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Un motif d’au moins 5 caractères est obligatoire pour annuler un paiement déjà validé." });
       }
       if (isValidated) {
         // La validation conseiller peut être faite sans référence saisie : cela couvre les paiements en agence et les validations manuelles documentées.
         // Une référence Orange Money déjà connue est conservée lorsqu’elle existe ; sinon la trace VALIDATION_MANUELLE est enregistrée.
       }
-      const validatedAt = isValidated ? new Date() : application.paymentValidatedAt;
+      const validatedAt = isValidated ? new Date() : isCancelValidated ? null : application.paymentValidatedAt;
       const canStartTreatment = isValidated && application.agreementSigned && application.evaluationDeliveryStatus === "sent";
+      const nextDossierStatus = isCancelValidated && ["paye", "en_attente_documents", "documents_recus"].includes(application.dossierStatus)
+        ? "en_attente_paiement"
+        : canStartTreatment
+          ? "paye"
+          : application.dossierStatus;
       await db.update(applications)
         .set({
           paymentStatus: input.paymentStatus,
@@ -747,10 +828,10 @@ export const applicationRouter = router({
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
           paymentTransactionId: input.paymentReference?.trim() || application.paymentTransactionId || "VALIDATION_MANUELLE",
           paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
-          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : application.paymentConfirmedAmount,
+          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : isCancelValidated ? null : application.paymentConfirmedAmount,
           paymentValidatedAt: validatedAt,
-          paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : application.paymentValidatedBy,
-          dossierStatus: canStartTreatment ? "paye" : application.dossierStatus,
+          paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : isCancelValidated ? null : application.paymentValidatedBy,
+          dossierStatus: nextDossierStatus as typeof application.dossierStatus,
           ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
         })
         .where(eq(applications.id, input.id));
@@ -758,7 +839,7 @@ export const applicationRouter = router({
       await db.insert(paymentAuditLogs).values({
         adminName: ctx.user.name || "Administrateur",
         adminEmail: ctx.user.email || "",
-        action: input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
+        action: isCancelValidated ? "cancelled_validated" : input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
         paymentId: application.id,
         candidateEmail: application.email,
         amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
@@ -774,10 +855,16 @@ export const applicationRouter = router({
           candidateId: application.candidateId,
           caseId: caseRow?.id,
           type: isValidated ? "payment_validated" : "payment_action_required",
-          title: isValidated ? "Paiement validé — quittance disponible" : "Votre paiement nécessite une correction",
+          title: isValidated
+            ? "Paiement validé — quittance disponible"
+            : isCancelValidated
+              ? "Paiement annulé — dossier remis en attente"
+              : "Votre paiement nécessite une correction",
           body: isValidated
             ? `Votre versement de ${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"} pour le dossier ${application.dossierNumber} a été validé. Votre quittance PDF est maintenant disponible dans l’espace client.`
-            : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
+            : isCancelValidated
+              ? `Le paiement validé du dossier ${application.dossierNumber} a été annulé par l’administration. Motif : ${input.adminNotes || "Correction administrative."} Un nouveau règlement est nécessaire pour poursuivre.`
+              : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
           actionUrl: "/mon-espace",
         });
       }

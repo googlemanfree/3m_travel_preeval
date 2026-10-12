@@ -55,7 +55,7 @@ export default function VerifyEmail() {
           emailVerified: true,
         });
       }
-      toast.success("Email vérifié ! Bienvenue dans votre espace 3M Travel.");
+      toast.success("Email vérifié ! Bienvenue dans votre espace 3M TRAVEL AGENCY.");
       setTimeout(() => navigate("/dashboard"), 2000);
     },
     onError: (err) => {
@@ -136,7 +136,7 @@ export default function VerifyEmail() {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100">
-            <img src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
+            <img src={LOGO_URL} alt="3M TRAVEL AGENCY" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
             {verified ? (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />

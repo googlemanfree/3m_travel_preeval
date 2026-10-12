@@ -2,7 +2,7 @@
 // Protocoles d'Accord N01 et N02, parametres par pays de destination. Le modele complet
 // et les montants reels ne sont aujourd'hui disponibles que pour le Luxembourg (procedure
 // de placement salarie via agences partenaires) : c'est la seule destination du site ou
-// 3M Travel facture un second protocole avec un bareme de paiement chiffre (voir
+// 3M TRAVEL AGENCY facture un second protocole avec un bareme de paiement chiffre (voir
 // client/src/data/countryProcedures/luxembourg.ts, memes montants). Pour toute autre
 // destination, tant qu'aucun bareme reel n'a ete communique par l'agence, le modele par
 // defaut reste volontairement generique et n'invente aucun chiffre.
@@ -30,6 +30,10 @@ export interface CountryProtocolProfile {
   secondProtocolFormulas?: [CountryProtocolFormula, CountryProtocolFormula, CountryProtocolFormula];
   /** Estimation des frais consulaires officiels (hors honoraires agence) */
   consularFeesEstimate?: string;
+  /** Libellé du programme / type de procédure (travail, études, visiteur…) */
+  procedureProgramLabel?: string;
+  /** Phrase d’objet adaptée au type de visa (Article 1) */
+  procedureObjectClause?: string;
 }
 
 const GENERIC_PROFILE: CountryProtocolProfile = {
@@ -175,6 +179,9 @@ export const COUNTRY_PROTOCOL_PROFILES: Record<string, CountryProtocolProfile> =
     consulate: "le Centre de réception des demandes de visa (CRDV) compétent pour le pays de résidence du candidat",
     reorientationDelayDays: 90,
     reorientationAlternatives: "une autre destination internationale adaptée au profil du candidat",
+    procedureProgramLabel: "Procédure Canada",
+    procedureObjectClause: "la préparation et la soumission du dossier auprès des partenaires et autorités compétentes pour le Canada, selon le programme retenu (travail, études ou séjour temporaire)",
+    consularFeesEstimate: "frais IRCC / biométrie selon le type de demande (montants officiels à confirmer sur le portail Canada.ca)",
   },
   australie: {
     destinationLabel: "Australie",
@@ -234,11 +241,71 @@ export const COUNTRY_PROTOCOL_PROFILES: Record<string, CountryProtocolProfile> =
   },
 };
 
-export function getCountryProtocolProfile(destinationSlugOrLabel?: string | null): CountryProtocolProfile {
+function foldProtocolKey(value: string | null | undefined): string {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/** Variantes Canada selon le type de visa / programme sélectionné dès le départ. */
+function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string | null): CountryProtocolProfile {
+  const visa = foldProtocolKey(visaType);
+  if (/etud|study|student|academ/.test(visa)) {
+    return {
+      ...base,
+      procedureProgramLabel: "Permis d’études — Canada",
+      employmentAuthority: "l’établissement d’enseignement désigné (DLI) et, le cas échéant, le ministère de l’Immigration du Québec pour le CAQ",
+      immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) — permis d’études",
+      procedureObjectClause: "la préparation du dossier d’études (admission DLI, CAQ si Québec, preuve de fonds) et la soumission de la demande de permis d’études auprès d’IRCC, conformément au guide Visa Études Canada publié sur le site",
+      reorientationAlternatives: "une autre destination d’études internationale adaptée au profil du candidat",
+    };
+  }
+  if (/visiteur|visitor|touris|ave|eta/.test(visa)) {
+    return {
+      ...base,
+      procedureProgramLabel: "Visa visiteur / séjour temporaire — Canada",
+      employmentAuthority: "non applicable pour un séjour temporaire sans autorisation de travail",
+      immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) — visa de visiteur ou AVE",
+      procedureObjectClause: "la préparation et le dépôt de la demande de séjour temporaire (visa de visiteur ou AVE selon le cas) auprès d’IRCC, sans promesse d’emploi ni de permis de travail",
+      reorientationAlternatives: "une autre destination de séjour temporaire adaptée au profil du candidat",
+    };
+  }
+  if (/express|pnp|arrima|quebec|resident/.test(visa)) {
+    return {
+      ...base,
+      procedureProgramLabel: "Sélection permanente / Entrée Express / PNP — Canada",
+      employmentAuthority: "le programme fédéral ou provincial de sélection applicable (Entrée Express, PNP ou Arrima)",
+      immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) et, le cas échéant, le ministère de l’Immigration du Québec",
+      procedureObjectClause: "la préparation du profil de sélection et du dossier fédéral/provincial selon le programme retenu, sans garantie d’invitation ni de résidence permanente",
+    };
+  }
+  return {
+    ...base,
+    procedureProgramLabel: "Permis de travail — Canada",
+    procedureObjectClause: "la préparation du dossier de travail (offre, EIMT/LMIA ou exemption, demande de permis) et la soumission auprès d’IRCC / EDSC, conformément au guide Visa Travail Canada publié sur le site",
+  };
+}
+
+export function getCountryProtocolProfile(
+  destinationSlugOrLabel?: string | null,
+  visaType?: string | null,
+): CountryProtocolProfile {
   if (!destinationSlugOrLabel) return GENERIC_PROFILE;
-  const key = destinationSlugOrLabel.toLowerCase();
-  const match = Object.entries(COUNTRY_PROTOCOL_PROFILES).find(([slug, profile]) => key.includes(slug) || key.includes(profile.destinationLabel.toLowerCase()));
-  return match ? match[1] : GENERIC_PROFILE;
+  const key = foldProtocolKey(destinationSlugOrLabel);
+  const match = Object.entries(COUNTRY_PROTOCOL_PROFILES).find(
+    ([slug, profile]) => key.includes(slug) || key.includes(foldProtocolKey(profile.destinationLabel)),
+  );
+  if (!match) return GENERIC_PROFILE;
+  const [, profile] = match;
+  if (match[0] === "canada") return canadaProtocolForVisa(profile, visaType);
+  return {
+    ...profile,
+    procedureProgramLabel: profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`,
+    procedureObjectClause:
+      profile.procedureObjectClause
+      ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l’éligibilité constatée du candidat`,
+  };
 }
 
 export interface ProtocolOneVariables {
@@ -271,7 +338,7 @@ export interface ProtocolTwoVariables {
   dateDuJour: string;
 }
 
-const LETTERHEAD = `3M TRAVEL AGENCY SARL — Société à Responsabilité Limitée au capital enregistré
+const LETTERHEAD = `3M Travel Agency SARL — Société à Responsabilité Limitée au capital enregistré
 Registre du Commerce : RC/YAO/2019/A/2567 | Numéro d'Identifiant Unique (NIU) : M112417203369H
 Siège social : Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
 Téléphones / WhatsApp : +237 698 104 832 / +237 620 996 045 | Courriel : hello@3mtravelagency.com | www.3mtravelagency.com
@@ -279,23 +346,30 @@ Téléphones / WhatsApp : +237 698 104 832 / +237 620 996 045 | Courriel : hello
 RÉPUBLIQUE DU CAMEROUN — PAIX - TRAVAIL - PATRIE
 DÉPARTEMENT IMMIGRATION & MOBILITÉ PROFESSIONNELLE INTERNATIONALE`;
 
-export function buildProtocolOneRichText(vars: ProtocolOneVariables, destinationSlugOrLabel?: string | null): string {
-  const profile = getCountryProtocolProfile(destinationSlugOrLabel || vars.destinationProjet);
+export function buildProtocolOneRichText(
+  vars: ProtocolOneVariables,
+  destinationSlugOrLabel?: string | null,
+  visaType?: string | null,
+): string {
+  const profile = getCountryProtocolProfile(destinationSlugOrLabel || vars.destinationProjet, visaType);
+  const program = profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`;
+  const objectClause = profile.procedureObjectClause
+    ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l'éligibilité constatée du candidat`;
   return `${LETTERHEAD}
 
 PROTOCOLE D'ACCORD CONTRACTUEL N° 01
 MANDAT D'OUVERTURE DE DOSSIER, DE TRAITEMENT ADMINISTRATIF ET DE SOUMISSION PARTENAIRES
-(Destination : ${profile.destinationLabel})
+(Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE MANDATAIRE : 3M TRAVEL AGENCY SARL, RC/YAO/2019/A/2567, NIU M112417203369H, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
-D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
+D'une part, L'AGENCE MANDATAIRE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
+D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
-LE CLIENT a souscrit à une évaluation via la plateforme www.3mtravelagency.com. Suite à la notification du bilan d'évaluation dans son Espace Client, LE CLIENT a validé le projet ${profile.destinationLabel} et s'est acquitté des frais d'ouverture et de traitement. Le présent protocole donne pleine valeur contractuelle aux mentions du Reçu de Confirmation de Paiement délivré par L'AGENCE.
+LE CLIENT a souscrit à une évaluation via la plateforme www.3mtravelagency.com. Suite à la notification du bilan d'évaluation dans son Espace Client, LE CLIENT a validé le projet ${profile.destinationLabel} (${program}) et s'est acquitté des frais d'ouverture et de traitement. Le présent protocole donne pleine valeur contractuelle aux mentions du Reçu de Confirmation de Paiement délivré par L'AGENCE. Les étapes de traitement suivent le guide de procédure publié pour ce programme sur www.3mtravelagency.com, synchronisé avec l'Espace Client.
 
 Article 1 — Objet des frais et nature de la prestation
-Conformément au Reçu Officiel de paiement, les frais confirmés d'un montant de 65 000 (soixante-cinq mille) FCFA/XAF couvrent exclusivement : (1) l'ouverture administrative du dossier du CLIENT au sein des registres de L'AGENCE et sur sa plateforme numérique ; (2) le traitement administratif, la vérification d'authenticité et la mise en conformité des pièces documentaires ; (3) la préparation technique et la soumission active du profil auprès des partenaires compétents (agences de placement, établissements ou organismes concernés selon la procédure) pour ${profile.destinationLabel}, selon le projet et l'éligibilité constatée du candidat.
+Conformément au Reçu Officiel de paiement, les frais confirmés d'un montant de 65 000 (soixante-cinq mille) FCFA/XAF couvrent exclusivement : (1) l'ouverture administrative du dossier du CLIENT au sein des registres de L'AGENCE et sur sa plateforme numérique ; (2) le traitement administratif, la vérification d'authenticité et la mise en conformité des pièces documentaires ; (3) ${objectClause}.
 
 Article 2 — Modalités de règlement, traçabilité et reçu officiel
 Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : 65 000 XAF. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.
@@ -304,7 +378,7 @@ Article 3 — Caractère strictement non remboursable des frais
 Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant la soumission. La recherche auprès des partenaires peut aboutir ou non ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.
 
 Article 4 — Obligation de moyens et absence de garantie de résultat
-Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M TRAVEL AGENCY SARL.
+Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.
 
 Article 5 — Clause de réorientation sans frais complémentaires
 Si la prospection menée pour ${profile.destinationLabel} n'aboutit pas à une sélection dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une réorientation sans aucun frais d'ouverture supplémentaire vers ${profile.reorientationAlternatives}.
@@ -319,12 +393,16 @@ Article 8 — Valeur probante de la signature électronique
 L'acceptation numérique du présent protocole dans l'Espace Client, combinée aux données du Reçu de Confirmation de Paiement horodaté, constitue un contrat bilatéral parfait et juridiquement opposable.
 
 Fait à Yaoundé, sous format numérique certifié, le ${vars.dateDuJour}.
-Pour 3M TRAVEL AGENCY SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
+Pour 3M Travel Agency SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
 Pour LE CLIENT : ${vars.clientNomComplet} — Statut : Lu et approuvé — IP : ${vars.clientIpAddress}`;
 }
 
-export function buildProtocolTwoRichText(vars: ProtocolTwoVariables, destinationSlugOrLabel?: string | null): string {
-  const profile = getCountryProtocolProfile(destinationSlugOrLabel);
+export function buildProtocolTwoRichText(
+  vars: ProtocolTwoVariables,
+  destinationSlugOrLabel?: string | null,
+  visaType?: string | null,
+): string {
+  const profile = getCountryProtocolProfile(destinationSlugOrLabel, visaType ?? vars.posteRetenu);
   const formulas = profile.secondProtocolFormulas;
   const formulasBlock = formulas
     ? formulas.map((formula, index) => {
@@ -340,7 +418,7 @@ MANDAT D'ACCOMPAGNEMENT CONTRACTUEL ET PROCÉDURE DE VISA
 (Procédure Post-Sélection — Destination : ${profile.destinationLabel})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE : 3M TRAVEL AGENCY SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
+D'une part, L'AGENCE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
 D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, Employeur/Partenaire d'accueil : ${vars.employeurNom}, Poste/Projet retenu : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
 
 PRÉAMBULE

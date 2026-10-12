@@ -10,7 +10,7 @@ import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDelive
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, agencySettings, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals, placementCandidateProfiles, placementProfileSubmissions, placementOrganizations, candidatePlacementConsents } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -24,6 +24,53 @@ import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/cand
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
+import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
+import {
+  collapseEvalAgencyShellRows,
+  parseEvalAgencyShellId,
+  canonicalAgencyCandidateId,
+  canonicalAgencyFolderCode,
+} from "../../shared/evalAgencyShell";
+import {
+  purgeAllOrphanEvalAgencyShells,
+  purgeEvalAgencyShell,
+  setAdminActiveDossierReference,
+} from "../services/canonicalizeActiveDossier";
+import { buildCandidateCockpit } from "../../shared/candidateCockpit";
+import { resolveDossierProcedureSelection } from "../../shared/dossierProcedureSelection";
+import { seedCountryProcedureChecklist } from "../services/seedCountryProcedureCase";
+import {
+  parseDocumentsReceivedList,
+  previewCountryVisaChecklist,
+  publishAgencyDocumentsToCase,
+} from "../services/publishAgencyDocumentsToCase";
+import {
+  notifyDossierCreatedWhatsApp,
+  notifyProcedureStageWhatsApp,
+} from "../services/clientWhatsAppNotify";
+import { ensureAgencyClientAccess } from "../services/ensureAgencyClientAccess";
+import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
+import { attachSiblingProcedures, procedureLabelForDossier, retainSiblingGroupsInFilteredList } from "../../shared/clientMultiDossier";
+import { buildAdminProcedureSnapshot } from "../../shared/adminProcedureJourney";
+import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDynamicCandidate360NextAction } from "../../shared/adminDynamicPilotage";
+import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
+import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
+import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
+import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
+import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
+import {
+  employerSelectionSettingKey,
+  isEmployerSelected,
+  parseEmployerSelectionSetting,
+  type EmployerSelectionRecord,
+} from "../../shared/employerSelection";
+import {
+  CLIENT_PREVIEW_TTL_MS,
+  clientPreviewSettingKey,
+  isClientPreviewTokenFresh,
+  parseClientPreviewToken,
+} from "../../shared/clientPreviewToken";
+import { randomBytes } from "node:crypto";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -64,6 +111,34 @@ function parseAdminChecklistStepIds(value: string | null | undefined): string[] 
   } catch {
     return [];
   }
+}
+
+/**
+ * Clés de progression checklist pour un dossier.
+ * Historiquement l’admin écrivait `3M-AG-0001` (espace client) alors que la fiche 360°
+ * relisait `operationalCase.caseNumber` (`3M-AGN-0001`) — le déverrouillage semblait
+ * réussi puis le bouton « Déverrouiller » restait actif. On lit/écrit toutes les clés.
+ */
+export function checklistProgressKeysForDossier(input: {
+  caseNumber?: string | null;
+  source: "online" | "agency";
+  sourceId: number;
+  onlineDossierNumber?: string | null;
+}): string[] {
+  const keys: string[] = [];
+  const push = (value?: string | null) => {
+    const trimmed = String(value ?? "").trim();
+    if (trimmed && !keys.includes(trimmed)) keys.push(trimmed);
+  };
+  push(input.caseNumber);
+  if (input.source === "agency") {
+    push(`3M-AG-${input.sourceId.toString().padStart(4, "0")}`);
+    push(`3M-AGN-${input.sourceId.toString().padStart(4, "0")}`);
+  } else {
+    push(input.onlineDossierNumber);
+    push(`online-${input.sourceId}`);
+  }
+  return keys;
 }
 
 /** Masque les coordonnées dans les aperçus de remise consultés au back-office. */
@@ -182,14 +257,14 @@ const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "
 export const CANDIDATE360_LEGACY_STATUS_MAP = {
   new: { application: "nouveau", agency: "nouveau", label: "Dossier créé" },
   qualifying: { application: "en_evaluation", agency: "en_cours", label: "Évaluation en cours" },
-  waiting_customer: { application: "en_attente_documents", agency: "documents_requis", label: "Action attendue du candidat" },
+  waiting_customer: { application: "en_attente_documents", agency: "documents_requis", label: "Ouverture du dossier" },
   documents_review: { application: "en_attente_documents", agency: "documents_requis", label: "Documents à compléter" },
-  payment_review: { application: "en_attente_paiement", agency: "en_cours", label: "Paiement à confirmer" },
-  processing: { application: "en_cours_recrutement", agency: "en_cours", label: "Dossier en traitement" },
-  submitted: { application: "soumis_agences", agency: "soumis", label: "Dossier soumis" },
-  completed: { application: "visa_approuve", agency: "approuve", label: "Dossier approuvé" },
-  closed: { application: "visa_approuve", agency: "approuve", label: "Dossier clôturé" },
-  rejected: { application: "refuse", agency: "refuse", label: "Dossier à revoir" },
+  payment_review: { application: "en_attente_paiement", agency: "en_cours", label: "Ouverture du dossier" },
+  processing: { application: "en_cours_recrutement", agency: "en_cours", label: "Traitement en cours" },
+  submitted: { application: "soumis_agences", agency: "soumis", label: "Traitement en cours" },
+  completed: { application: "visa_approuve", agency: "approuve", label: "Décision favorable" },
+  closed: { application: "visa_approuve", agency: "approuve", label: "Décision favorable" },
+  rejected: { application: "refuse", agency: "refuse", label: "Décision défavorable" },
 } as const;
 
 export function mapCandidate360Status(status: (typeof candidate360WorkflowStatuses)[number], source: "online" | "agency") {
@@ -239,18 +314,12 @@ export function countryChecklistFor(destination?: string | null) {
 }
 
 export function procedureChecklistFor(procedureType?: string | null, destination?: string | null) {
-  const countryDocuments = countryChecklistFor(destination);
-  const normalizedProcedure = String(procedureType || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const procedureKey = normalizedProcedure.includes("travail") || normalizedProcedure.includes("work") || normalizedProcedure.includes("worker") ? "work_permit"
-    : normalizedProcedure.includes("etude") || normalizedProcedure.includes("study") ? "study_permit"
-      : normalizedProcedure.includes("visiteur") || normalizedProcedure.includes("visitor") || normalizedProcedure.includes("touris") ? "visitor_visa"
-        : normalizedProcedure.includes("permanent") || normalizedProcedure.includes("residence") || normalizedProcedure.includes("residence permanente") ? "permanent_residence"
-          : normalizedProcedure.includes("famille") || normalizedProcedure.includes("family") ? "family_reunification"
-            : normalizedProcedure.includes("evisa") || normalizedProcedure.includes("electronique") || normalizedProcedure.includes("electronic") ? "evisa"
-              : procedureType && procedureType in PROCEDURE_DOCUMENT_CHECKLISTS ? procedureType : undefined;
-  const template = procedureKey ? PROCEDURE_DOCUMENT_CHECKLISTS[procedureKey] : undefined;
-  const unique = new Map([...countryDocuments, ...(template?.documents ?? [])].map((item) => [item.documentType.toLowerCase(), item]));
-  return { label: template?.label ?? (procedureType?.trim() || "Procédure standard"), documents: Array.from(unique.values()) };
+  // Source unique : pays + procédure + pièces du parcours (catalogue journey).
+  const unified = buildCountryProcedureDocumentChecklist({ destination, procedureType });
+  return {
+    label: unified.label,
+    documents: unified.documents.map((item) => ({ documentType: item.documentType, comment: item.comment })),
+  };
 }
 
 export function parseCandidate360Labels(value: string | null | undefined) {
@@ -327,23 +396,17 @@ export function buildCandidate360Timeline(input: {
   ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 100);
 }
 
-export function determineCandidate360NextAction(input: { workflowStatus: string; paymentStatus?: string | null; pendingDocuments: number; openTasks: number; dueAt?: Date | null }) {
-  if (input.paymentStatus && !["SUCCESS", "success", "completed", "paye"].includes(input.paymentStatus)) {
-    return { key: "payment", label: "Vérifier le paiement", description: "Le paiement ou son justificatif doit être contrôlé avant la suite du dossier.", urgency: "high" as const };
-  }
-  if (input.pendingDocuments > 0) {
-    return { key: "documents", label: "Contrôler les documents", description: `${input.pendingDocuments} pièce(s) requise(s) restent à recevoir ou valider.`, urgency: "high" as const };
-  }
-  if (input.workflowStatus === "new" || input.workflowStatus === "qualifying") {
-    return { key: "evaluation", label: "Préparer l’évaluation", description: "Qualifier le projet, compléter le bilan puis choisir l’envoi immédiat ou programmé.", urgency: "normal" as const };
-  }
-  if (input.openTasks > 0) {
-    return { key: "task", label: "Terminer les actions ouvertes", description: `${input.openTasks} action(s) opérationnelle(s) restent à traiter.`, urgency: "normal" as const };
-  }
-  if (input.workflowStatus === "submitted") {
-    return { key: "partner", label: "Suivre la soumission", description: "Relancer le partenaire ou consigner la décision reçue.", urgency: "normal" as const };
-  }
-  return { key: "follow_up", label: "Planifier le suivi", description: "Le dossier est à jour. Programmez la prochaine relance ou clôturez le traitement.", urgency: "low" as const };
+export function determineCandidate360NextAction(input: {
+  workflowStatus: string;
+  paymentStatus?: string | null;
+  pendingDocuments: number;
+  openTasks: number;
+  dueAt?: Date | null;
+  destination?: string | null;
+  visaType?: string | null;
+  procedureLabel?: string | null;
+}) {
+  return determineDynamicCandidate360NextAction(input);
 }
 
 export async function ensureOperationalCase(db: any, reference: { source: "online" | "agency"; id: number }) {
@@ -390,8 +453,40 @@ export async function ensureOperationalCase(db: any, reference: { source: "onlin
 }
 
 function serializeAdminCandidateDetails<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  try {
+    return JSON.parse(
+      JSON.stringify(value, (_key, current) => (typeof current === "bigint" ? Number(current) : current)),
+    ) as T;
+  } catch (error) {
+    console.error("[serializeAdminCandidateDetails] serialization failed", error);
+    throw error;
+  }
 }
+
+/** Champs candidats nécessaires à la fiche admin — évite un SELECT * fragile (colonnes récentes). */
+const candidateDetailsSelect = {
+  id: candidates.id,
+  email: candidates.email,
+  fullName: candidates.fullName,
+  phone: candidates.phone,
+  avatarUrl: candidates.avatarUrl,
+  visaType: candidates.visaType,
+  destination: candidates.destination,
+  preferredDestinations: candidates.preferredDestinations,
+  nationality: candidates.nationality,
+  educationLevel: candidates.educationLevel,
+  employmentStatus: candidates.employmentStatus,
+  languageLevel: candidates.languageLevel,
+  dossierStatus: candidates.dossierStatus,
+  emailVerified: candidates.emailVerified,
+  evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+  evaluationDeclaredAt: candidates.evaluationDeclaredAt,
+  evaluationReviewedAt: candidates.evaluationReviewedAt,
+  evaluationReviewedBy: candidates.evaluationReviewedBy,
+  evaluationReviewNote: candidates.evaluationReviewNote,
+  createdAt: candidates.createdAt,
+  updatedAt: candidates.updatedAt,
+} as const;
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -897,9 +992,9 @@ export const adminRouter = router({
               .join("");
             await sendGenericEmail({
               to: document.candidateEmail,
-              subject: "Action requise : votre document doit être corrigé — 3M Travel & Services",
+              subject: "Action requise : votre document doit être corrigé — 3M TRAVEL AGENCY",
               html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1f2937">
-                <div style="background:#1E3A8A;padding:24px;text-align:center;color:#fff"><h1 style="margin:0;font-size:22px">3M Travel &amp; Services</h1></div>
+                <div style="background:#1E3A8A;padding:24px;text-align:center;color:#fff"><h1 style="margin:0;font-size:22px">3M TRAVEL AGENCY</h1></div>
                 <div style="padding:28px"><p>Bonjour,</p><p>Votre document <strong>${esc(document.documentName)}</strong> nécessite une nouvelle version avant validation.</p>
                 <div style="background:#fff7ed;border-left:4px solid #f97316;padding:14px;margin:18px 0"><strong>Commentaire du conseiller :</strong><br/>${esc(input.comment)}</div>
                 ${annotationItems ? `<p><strong>Zones à corriger :</strong></p><ul>${annotationItems}</ul>` : ""}
@@ -1283,6 +1378,35 @@ export const adminRouter = router({
       return { success: true, status: input.status, validatedBy: admin.email || admin.fullName || "Admin" };
     }),
 
+  cancelValidatedDossierPayment: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
+      reason: z.string().trim().min(8).max(2000),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence dossier invalide." });
+      const actor = admin.fullName || admin.email || "Admin";
+      if (reference.source === "online") {
+        const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+        if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (application.paymentStatus !== "SUCCESS") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement de ce dossier n’est pas validé." });
+        await db.update(applications).set({ paymentStatus: "PENDING", dossierStatus: "en_attente_paiement", lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: actor }).where(eq(applications.id, reference.id));
+        await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(reference.id), oldStatus: "SUCCESS", newStatus: "PENDING", details: JSON.stringify({ event: "payment_cancelled", reason: input.reason, dossierNumber: application.dossierNumber }) });
+        return { success: true, dossierNumber: application.dossierNumber, status: "PENDING" as const };
+      }
+      const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+      if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+      if (dossier.initialPaymentStatus !== "paid") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement de ce dossier n’est pas validé." });
+      await db.update(agencyDossiers).set({ initialPaymentStatus: "pending", lastStatusChangeAt: new Date(), lastStatusChangeBy: actor }).where(eq(agencyDossiers.id, reference.id));
+      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(reference.id), oldStatus: "paid", newStatus: "pending", details: JSON.stringify({ event: "payment_cancelled", reason: input.reason, dossierNumber: `3M-AGN-${reference.id.toString().padStart(4, "0")}` }) });
+      return { success: true, dossierNumber: `3M-AGN-${reference.id.toString().padStart(4, "0")}`, status: "PENDING" as const };
+    }),
+
   /**
    * Modifier les donnees d'une application (par l'admin)
    */
@@ -1554,39 +1678,111 @@ export const adminRouter = router({
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(sourceLimit);
         const caseRows = await db
-          .select({ legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
+          .select({ id: cases.id, legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
           .from(cases)
           .limit(input.limit * 2);
         const dueAtByLegacyReference = new Map<string, Date | null>();
+        const caseIdByLegacyReference = new Map<string, number>();
         for (const item of caseRows) {
-          if (item.legacyApplicationId) dueAtByLegacyReference.set(`online:${item.legacyApplicationId}`, item.dueAt);
-          if (item.legacyAgencyDossierId) dueAtByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.dueAt);
+          if (item.legacyApplicationId) {
+            dueAtByLegacyReference.set(`online:${item.legacyApplicationId}`, item.dueAt);
+            caseIdByLegacyReference.set(`online:${item.legacyApplicationId}`, item.id);
+          }
+          if (item.legacyAgencyDossierId) {
+            dueAtByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.dueAt);
+            caseIdByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.id);
+          }
         }
+        const requirementRows = await db
+          .select({ caseId: documentRequirements.caseId, isRequired: documentRequirements.isRequired, status: documentRequirements.status })
+          .from(documentRequirements)
+          .limit(20000);
+        const checklistByCaseId = new Map<number, { total: number; completed: number }>();
+        for (const requirement of requirementRows) {
+          if (!requirement.isRequired) continue;
+          const current = checklistByCaseId.get(requirement.caseId) ?? { total: 0, completed: 0 };
+          current.total += 1;
+          if (["received", "approved", "waived"].includes(requirement.status)) current.completed += 1;
+          checklistByCaseId.set(requirement.caseId, current);
+        }
+        const checklistPercentByLegacyReference = new Map<string, number>();
+        caseIdByLegacyReference.forEach((caseId, reference) => {
+          const progress = checklistByCaseId.get(caseId);
+          if (progress) checklistPercentByLegacyReference.set(reference, progress.total ? Math.round((progress.completed / progress.total) * 100) : 100);
+        });
 
-        const candidateRows = await db
+        const receiptApprovalRows = await db
           .select({
-            id: candidates.id,
-            email: candidates.email,
-            fullName: candidates.fullName,
-            phone: candidates.phone,
-            destination: candidates.destination,
-            preferredDestinations: candidates.preferredDestinations,
-            visaType: candidates.visaType,
-            dossierStatus: candidates.dossierStatus,
-            evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
-            evaluationDeclaredAt: candidates.evaluationDeclaredAt,
-            evaluationReviewedAt: candidates.evaluationReviewedAt,
-            evaluationReviewedBy: candidates.evaluationReviewedBy,
-            evaluationReviewNote: candidates.evaluationReviewNote,
-            createdAt: candidates.createdAt,
-            updatedAt: candidates.updatedAt,
-            emailVerified: candidates.emailVerified,
-            verificationToken: candidates.verificationToken,
-            verificationExpiresAt: candidates.verificationExpiresAt,
+            dossierNumber: paymentReceiptApprovals.dossierNumber,
+            candidateEmail: paymentReceiptApprovals.candidateEmail,
           })
-          .from(candidates)
-          .where(isNull(candidates.deletedAt))
-          .limit(10000);
+          .from(paymentReceiptApprovals)
+          .limit(4000);
+        const receiptByDossier = new Set(receiptApprovalRows.map((row) => row.dossierNumber.trim().toUpperCase()));
+        const receiptByEmail = new Set(receiptApprovalRows.map((row) => row.candidateEmail.trim().toLowerCase()));
+
+        let candidateRows: Array<{
+          id: number;
+          email: string;
+          fullName: string;
+          phone: string | null;
+          destination: string | null;
+          preferredDestinations: string | null;
+          visaType: string | null;
+          dossierStatus: string | null;
+          evaluationDeclarationStatus: string | null;
+          evaluationDeclaredAt: Date | null;
+          evaluationReviewedAt: Date | null;
+          evaluationReviewedBy: string | null;
+          evaluationReviewNote: string | null;
+          activeDossierNumber: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+          emailVerified: boolean | null;
+          verificationToken: string | null;
+          verificationExpiresAt: Date | null;
+        }> = [];
+        try {
+          candidateRows = await db
+            .select({
+              id: candidates.id,
+              email: candidates.email,
+              fullName: candidates.fullName,
+              phone: candidates.phone,
+              destination: candidates.destination,
+              preferredDestinations: candidates.preferredDestinations,
+              visaType: candidates.visaType,
+              dossierStatus: candidates.dossierStatus,
+              evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+              evaluationDeclaredAt: candidates.evaluationDeclaredAt,
+              evaluationReviewedAt: candidates.evaluationReviewedAt,
+              evaluationReviewedBy: candidates.evaluationReviewedBy,
+              evaluationReviewNote: candidates.evaluationReviewNote,
+              activeDossierNumber: candidates.activeDossierNumber,
+              createdAt: candidates.createdAt,
+              updatedAt: candidates.updatedAt,
+              emailVerified: candidates.emailVerified,
+              verificationToken: candidates.verificationToken,
+              verificationExpiresAt: candidates.verificationExpiresAt,
+            })
+            .from(candidates)
+            .where(isNull(candidates.deletedAt))
+            .limit(10000);
+        } catch (error) {
+          // Migration 0079 absente : recharger sans activeDossierNumber pour ne pas bloquer le cockpit.
+          console.warn("[listCandidates] fallback sans activeDossierNumber:", error instanceof Error ? error.message : error);
+          const fallbackRows = await db
+            .select(candidateDetailsSelect)
+            .from(candidates)
+            .where(isNull(candidates.deletedAt))
+            .limit(10000);
+          candidateRows = fallbackRows.map((row) => ({
+            ...row,
+            activeDossierNumber: null,
+            verificationToken: null,
+            verificationExpiresAt: null,
+          }));
+        }
         const activationLogs = await db
           .select({
             recipientEmail: emailDeliveryLogs.recipientEmail,
@@ -1649,6 +1845,16 @@ export const adminRouter = router({
         };
         const paymentStatusForAgency = (status: string): "NOT_PAID" | "PENDING" | "SUCCESS" => status === "paid" ? "SUCCESS" : status === "pending" ? "PENDING" : "NOT_PAID";
 
+        // Statut protocole agence (agency_settings / PDF signé) — lecture seule, aucun rewrite de status.
+        const { loadAgencyAgreementSignaturesByIds, loadAgencyProtocolSignedDocIds } = await import("../services/agencyAgreementSignature");
+        const agencyIdsForProtocol = agencyApps.map((app) => app.id);
+        const [agencyProtocolSignatures, agencyProtocolSignedDocs] = await Promise.all([
+          loadAgencyAgreementSignaturesByIds(db, agencyIdsForProtocol),
+          loadAgencyProtocolSignedDocIds(db, agencyIdsForProtocol),
+        ]);
+        const agencyProtocolSigned = (dossierId: number) =>
+          agencyProtocolSignatures.has(dossierId) || agencyProtocolSignedDocs.has(dossierId);
+
         // Normaliser les dossiers en ligne
         const normalizedOnline = onlineApps.map(app => ({
           id: `online_${app.id}`,
@@ -1664,6 +1870,8 @@ export const adminRouter = router({
           city: app.currentCity || "Non renseignée",
           destinationCountry: app.destination || "Non spécifiée",
           projectType: app.visaType || "Non spécifié",
+          isClientActiveTreatment: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === app.dossierNumber,
+          isActiveDossier: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === app.dossierNumber,
           status: mapDossierStatus(app.dossierStatus),
           internalStatus: app.dossierStatus,
           source: "WEB" as const,
@@ -1684,6 +1892,11 @@ export const adminRouter = router({
           evaluationScheduledAt: app.evaluationScheduledAt ?? null,
           dueAt: dueAtByLegacyReference.get(`online:${app.id}`) ?? null,
           paymentStatus: app.paymentStatus,
+          agreementSigned: Boolean(app.agreementSigned),
+          receiptApproved: receiptByDossier.has(app.dossierNumber.trim().toUpperCase()) || receiptByEmail.has(app.email.trim().toLowerCase()),
+          secondProtocolReady: Boolean(app.secondAgreementReadyAt),
+          secondProtocolSigned: Boolean(app.secondAgreementSigned),
+          checklistPercent: checklistPercentByLegacyReference.get(`online:${app.id}`) ?? null,
           procedureStep: mapDossierStatus(app.dossierStatus),
         }));
 
@@ -1698,6 +1911,7 @@ export const adminRouter = router({
           city: "Yaoundé",
           destinationCountry: app.destination || "Non spécifiée",
           projectType: app.visaType || "Non spécifié",
+          isActiveDossier: candidateByEmail.get(app.email.toLowerCase())?.activeDossierNumber === `3M-AGN-${app.id.toString().padStart(4, "0")}`,
           status: mapAgencyStatus(app.status),
           internalStatus: app.status,
           source: "AGENCY_PHYSICAL" as const,
@@ -1718,21 +1932,23 @@ export const adminRouter = router({
           evaluationScheduledAt: null,
           dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
           paymentStatus: paymentStatusForAgency(app.initialPaymentStatus),
+          agreementSigned: agencyProtocolSigned(app.id),
+          receiptApproved: receiptByDossier.has(`3M-AGN-${app.id.toString().padStart(4, "0")}`) || receiptByEmail.has(app.email.trim().toLowerCase()),
+          secondProtocolReady: false,
+          secondProtocolSigned: false,
+          checklistPercent: checklistPercentByLegacyReference.get(`agency:${app.id}`) ?? null,
           procedureStep: mapAgencyStatus(app.status),
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
-        const provisionalAccountEmails = new Set(
-          onlineApps
-            .filter((record) => record.dossierNumber?.startsWith("EVAL-DRAFT-"))
-            .map((record) => record.email.toLowerCase()),
-        );
         const normalizedAccounts = candidateRows
-          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()) || provisionalAccountEmails.has(candidate.email.toLowerCase()))
+          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()))
           .map((candidate) => ({
             id: `account_${candidate.id}`,
             internalId: candidate.id,
-            folderCode: `COMPTE-${String(candidate.id).padStart(5, "0")}`,
+            folderCode: accountReference(candidate.id),
+            formerAccountReference: null as string | null,
+            referenceKind: "account" as const,
             fullName: candidate.fullName,
             email: candidate.email,
             whatsapp: candidate.phone || "",
@@ -1740,8 +1956,9 @@ export const adminRouter = router({
             // Pays précis et projet déclarés à l'inscription (et non la catégorie large historique).
             destinationCountry: destinationLabelForStaff(candidate),
             preferredDestinations: parsePreferredDestinations(candidate.preferredDestinations),
-            projectType: candidate.visaType || "À qualifier",
-            status: mapDossierStatus(candidate.dossierStatus),
+          projectType: candidate.visaType || "À qualifier",
+          isActiveDossier: false,
+          status: mapDossierStatus(candidate.dossierStatus),
             internalStatus: candidate.dossierStatus,
             source: "ACCOUNT_ONLY" as const,
             scoringTotal: null,
@@ -1761,16 +1978,74 @@ export const adminRouter = router({
             evaluationScheduledAt: null,
             dueAt: null,
             paymentStatus: "NOT_PAID" as const,
+            agreementSigned: null,
+            receiptApproved: receiptByEmail.has(candidate.email.trim().toLowerCase()),
+            secondProtocolReady: false,
+            secondProtocolSigned: false,
+            checklistPercent: null,
             procedureStep: mapDossierStatus(candidate.dossierStatus),
           }));
 
+        // EVAL-AG-{id} est un miroir de préparation du dossier agence 3M-AGN-{id} :
+        // un seul dossier actif (3M). On retire le miroir de la liste principale
+        // mais on conserve EVAL-AG dans les codes recherchables du dossier 3M.
+        const agencyIdsPresent = new Set(
+          normalizedAgency.map((row) => Number(String(row.id).replace(/^agency_/, ""))).filter((id) => id > 0),
+        );
+        const onlineWithoutEvalShells = collapseEvalAgencyShellRows(normalizedOnline);
+        const agencyWithEvalSearch = normalizedAgency.map((row) => {
+          const agencyId = Number(String(row.id).replace(/^agency_/, ""));
+          const evalCode = agencyId > 0 ? `EVAL-AG-${agencyId}` : null;
+          const searchable = Array.from(
+            new Set([
+              row.folderCode,
+              ...(evalCode && agencyIdsPresent.has(agencyId) ? [evalCode] : []),
+            ].filter(Boolean)),
+          );
+          return { ...row, searchableFolderCodes: searchable };
+        });
+
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
-        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts];
+        // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
+        // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
+        let allCandidates = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]).map((row) => {
+          const procedureJourney = buildAdminProcedureSnapshot({
+            destination: row.destinationCountry,
+            visaType: row.projectType,
+            procedureLabel: row.projectType,
+            internalStatus: row.internalStatus,
+            paymentStatus: row.paymentStatus,
+            evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
+          });
+          const journeySla = buildJourneyStepSla({
+            destination: row.destinationCountry,
+            visaType: row.projectType,
+            procedureLabel: row.projectType,
+            internalStatus: row.internalStatus,
+            paymentConfirmed: row.paymentStatus === "SUCCESS",
+            evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
+            stepEnteredAt: row.lastStatusUpdateAt ?? row.updatedAt,
+            dueAtOverride: row.dueAt,
+          });
+          return {
+            ...row,
+            procedureJourney,
+            journeySla: {
+              label: journeySla.label,
+              tone: journeySla.tone,
+              slaDays: journeySla.slaDays,
+              stepLabel: journeySla.stepLabel,
+              explanation: journeySla.explanation,
+              dueAt: journeySla.dueAt?.toISOString() ?? null,
+            },
+          };
+        });
         const availableDestinations = Array.from(
           new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b, "fr"));
 
-        // Filtrer par statut
+        // Filtrer par statut — on conserve les procédures sœurs (travail + études) du même client.
+        const universeBeforeNarrowFilters = allCandidates;
         if (input.status && input.status !== "ALL") {
           allCandidates = allCandidates.filter(c => c.status === input.status);
         }
@@ -1788,6 +2063,7 @@ export const adminRouter = router({
           const adminEmail = admin.email.toLowerCase();
           allCandidates = allCandidates.filter(c => c.adminAssignedTo?.toLowerCase() === adminEmail);
         }
+        allCandidates = retainSiblingGroupsInFilteredList(allCandidates, universeBeforeNarrowFilters);
 
         // Filtrer par recherche
         if (input.search && input.search.trim()) {
@@ -1860,7 +2136,7 @@ export const adminRouter = router({
           "PUBLISHED": "Bilan Consulaire Disponible",
           "DOCUMENTS_CHECK": "Collecte des documents",
           "SUBMITTED": "Soumission consulaire",
-          "APPROVED": "Visa Accordé",
+          "APPROVED": "Décision favorable",
         };
 
         let candidateEmail = "";
@@ -1896,6 +2172,40 @@ export const adminRouter = router({
           }
           assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
 
+          const checklistSnapshot = summarizeCountryProcedureChecklist({
+            destination: app.destination,
+            procedureType: app.visaType,
+          });
+          const procedureKind = detectAdminProcedureKind(app.visaType, app.visaType);
+          const [employerSettingOnline] = await db
+            .select({ settingValue: agencySettings.settingValue })
+            .from(agencySettings)
+            .where(eq(agencySettings.settingKey, employerSelectionSettingKey("online", id)))
+            .limit(1);
+          const employerSelected = isEmployerSelected({
+            stored: parseEmployerSelectionSetting(employerSettingOnline?.settingValue),
+            secondAgreementReady: Boolean(app.secondAgreementReadyAt),
+            secondAgreementEmployer: app.secondAgreementEmployer,
+            recruitmentPartnerName: app.recruitmentPartnerName,
+          });
+          const transitionGuard = evaluateAdminStageTransition({
+            targetStage: input.newStatus,
+            paymentConfirmed: app.paymentStatus === "SUCCESS",
+            protocolSigned: Boolean(app.agreementSigned),
+            evaluationDelivered: app.evaluationDeliveryStatus === "sent",
+            evaluationClientConfirmed: Boolean(app.evaluationClientConfirmedAt),
+            checklistPercent: checklistSnapshot.percent,
+            pendingRequiredDocuments: 0,
+            secondProtocolReady: Boolean(app.secondAgreementReadyAt),
+            secondProtocolSigned: Boolean(app.secondAgreementSigned),
+            employerSelected,
+            procedureKind,
+          });
+          if (transitionGuard.ok === false) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
+          }
+
+          const nextDueAt = suggestedDueAtForAdminStage(input.newStatus);
           await db.update(applications)
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
@@ -1903,6 +2213,15 @@ export const adminRouter = router({
               lastStatusUpdatedBy: admin.fullName || "Admin",
             })
             .where(eq(applications.id, id));
+          // SLA étape : propose une échéance métier sur le dossier opérationnel si aucune n’existe.
+          try {
+            const operationalCase = await ensureOperationalCase(db, reference);
+            if (!operationalCase.dueAt) {
+              await db.update(cases).set({ dueAt: nextDueAt }).where(eq(cases.id, operationalCase.id));
+            }
+          } catch (slaError) {
+            console.warn("[updateCandidateStatus] SLA dueAt suggestion skipped", slaError);
+          }
 
           await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "candidate_workflow", evaluationId: String(id), oldStatus: currentStatus, newStatus: input.newStatus, details: JSON.stringify({ source: "online", dossierNumber: app.dossierNumber, manualValidation: true }) });
 
@@ -1937,6 +2256,35 @@ export const adminRouter = router({
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
           }
 
+          const procedureKind = detectAdminProcedureKind(dossier.visaType, dossier.visaType);
+          // Lecture seule du dossier + sélection additive (agency_settings) — pas d’écriture « fantôme » sur les notes.
+          const [employerSettingAgency] = await db
+            .select({ settingValue: agencySettings.settingValue })
+            .from(agencySettings)
+            .where(eq(agencySettings.settingKey, employerSelectionSettingKey("agency", id)))
+            .limit(1);
+          const employerSelected = isEmployerSelected({
+            stored: parseEmployerSelectionSetting(employerSettingAgency?.settingValue),
+          }) || ["validation_adem"].includes(dossier.status);
+          const agencyPaymentConfirmed = dossier.initialPaymentStatus === "paid";
+          const transitionGuard = evaluateAdminStageTransition({
+            targetStage: input.newStatus,
+            paymentConfirmed: agencyPaymentConfirmed,
+            protocolSigned: true,
+            evaluationDelivered: Boolean(dossier.evaluationValidatedAt),
+            evaluationClientConfirmed: true,
+            checklistPercent: 100,
+            pendingRequiredDocuments: 0,
+            secondProtocolReady: false,
+            secondProtocolSigned: false,
+            employerSelected,
+            procedureKind,
+          });
+          if (transitionGuard.ok === false) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: transitionGuard.message });
+          }
+
+          // Mise à jour statut uniquement sur action admin explicite (séquence n+1) — pas de rewrite parallèle.
           await db.update(agencyDossiers)
             .set({
               status: internalStatusMap[input.newStatus] as any,
@@ -1950,10 +2298,11 @@ export const adminRouter = router({
           candidateEmail = dossier.email;
           candidateName = dossier.fullName;
           folderCode = `3M-AGN-${id.toString().padStart(4, "0")}`;
-          dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: dossier.initialPaymentStatus === "paid" };
+          dossierContext = { destination: dossier.destination, visaType: dossier.visaType, paymentConfirmed: agencyPaymentConfirmed };
         }
 
-        // Envoyer une notification email au client si demandé : même statut et même « étape N sur M » que son espace client.
+        // Envoyer une notification email + WhatsApp au client si demandé : même statut et même « étape N sur M » que son espace client.
+        let whatsappSent = false;
         if (input.notifyClient && candidateEmail) {
           try {
             const internalStatus = (source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[input.newStatus];
@@ -1964,12 +2313,52 @@ export const adminRouter = router({
             console.error("[Admin Update Status] Email notification failed:", emailErr);
             // Ne pas bloquer la mise à jour si l'email échoue
           }
+
+          try {
+            let phone: string | null = null;
+            if (source === "online") {
+              const [appRow] = await db.select({
+                whatsappNumber: applications.whatsappNumber,
+              }).from(applications).where(eq(applications.id, id)).limit(1);
+              phone = appRow?.whatsappNumber || null;
+            } else {
+              const [dossierRow] = await db.select({ phone: agencyDossiers.phone }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+              phone = dossierRow?.phone || null;
+            }
+            if (!phone) {
+              const [candidateRow] = await db.select({ phone: candidates.phone }).from(candidates)
+                .where(sql`LOWER(TRIM(${candidates.email})) = LOWER(TRIM(${candidateEmail}))`)
+                .limit(1);
+              phone = candidateRow?.phone || null;
+            }
+            const internalStatus = (source === "online" ? ADMIN_STAGE_TO_ONLINE_STATUS : ADMIN_STAGE_TO_AGENCY_STATUS)[input.newStatus];
+            const progress = describeDossierProgress({ destination: dossierContext.destination, visaType: dossierContext.visaType, dossierStatus: internalStatus, milestones: { paymentConfirmed: dossierContext.paymentConfirmed } });
+            const stepLabel = progress.stepNumber != null
+              ? (progress.stepLabel
+                ? `Étape ${progress.stepNumber} sur ${progress.stepCount} : ${progress.stepLabel}`
+                : `Étape ${progress.stepNumber} sur ${progress.stepCount}`)
+              : progress.statusLabel;
+            const whatsapp = await notifyProcedureStageWhatsApp({
+              phone,
+              candidateName,
+              dossierNumber: folderCode,
+              stageLabel: statusLabels[input.newStatus] || input.newStatus,
+              stepLabel,
+            });
+            whatsappSent = whatsapp.sent;
+            if (whatsapp.attempted && !whatsapp.sent) {
+              console.warn("[Admin Update Status] WhatsApp:", whatsapp.error);
+            }
+          } catch (whatsappErr) {
+            console.error("[Admin Update Status] WhatsApp notification failed:", whatsappErr);
+          }
         }
 
         return {
           success: true,
           message: `Statut mis à jour : ${statusLabels[input.newStatus]}`,
           notificationSent: input.notifyClient,
+          whatsappSent,
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -2001,7 +2390,7 @@ export const adminRouter = router({
         PUBLISHED: "Bilan Consulaire Disponible",
         DOCUMENTS_CHECK: "Collecte des documents",
         SUBMITTED: "Soumission consulaire",
-        APPROVED: "Visa Accordé",
+        APPROVED: "Décision favorable",
       };
       let currentStatus: (typeof sequence)[number];
       let previousStatus: (typeof sequence)[number];
@@ -2202,7 +2591,7 @@ export const adminRouter = router({
             const htmlContent = `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
                 <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center;">
-                  <h1 style="color: #fff; font-size: 22px; margin: 0;">3M Travel Agency</h1>
+                  <h1 style="color: #fff; font-size: 22px; margin: 0;">3M TRAVEL AGENCY</h1>
                   <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Mise à jour du statut de votre document</p>
                 </div>
                 <div style="padding: 32px 28px;">
@@ -2221,7 +2610,7 @@ export const adminRouter = router({
                   <a href="https://3mtravelagency.com/mon-espace?section=documents" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mes documents</a>`}
                 </div>
                 <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-                  <p>3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+                  <p>3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
                   <p>Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
                 </div>
               </div>
@@ -2229,7 +2618,7 @@ export const adminRouter = router({
 
             await sendGenericEmail({
               to: candidateEmail,
-              subject: `📄 Document ${documentName} : ${info.badge} - 3M Travel Agency`,
+              subject: `📄 Document ${documentName} : ${info.badge} - 3M TRAVEL AGENCY`,
               html: htmlContent,
             });
           } catch (emailErr) {
@@ -2291,6 +2680,12 @@ export const adminRouter = router({
       city: z.string().max(100).default("Yaoundé"),
       destinationCountry: z.string().min(2).max(100),
       projectType: z.string().min(2).max(100),
+      /** Liste libre des pièces déjà remises au comptoir (enrichit la checklist dynamique). */
+      documentsReceived: z.string().max(2000).optional(),
+      assignedToAdmin: z.string().email().max(320).optional().or(z.literal("")),
+      depositDate: z.string().max(10).optional(),
+      // Paiement de CE dossier uniquement — ne jamais hériter du statut d’un dossier frère du même e-mail.
+      initialPaymentStatus: z.enum(["unknown", "pending", "paid"]).default("unknown"),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
     }))
     .mutation(async ({ input }) => {
@@ -2309,27 +2704,88 @@ export const adminRouter = router({
           "APPROVED": "approuve",
         };
 
+        const procedure = resolveDossierProcedureSelection({
+          destination: input.destinationCountry,
+          visaType: input.projectType,
+        });
+        if (!procedure.recognized || !procedure.destination) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Choisissez un pays de destination reconnu du catalogue pour créer un dossier dynamique.",
+          });
+        }
+
+        const receivedPieces = parseDocumentsReceivedList(input.documentsReceived);
+        const depositNote = input.depositDate ? ` · dépôt ${input.depositDate}` : "";
+        const assignedNote = input.assignedToAdmin ? ` · conseiller ${input.assignedToAdmin}` : "";
+        const piecesNote = receivedPieces.length
+          ? ` · pièces déjà remises : ${receivedPieces.join(", ")}`
+          : "";
+
         const result = await db.insert(agencyDossiers).values({
           fullName: input.fullName,
           email: input.email,
           phone: input.whatsapp,
-          destination: input.destinationCountry,
-          visaType: input.projectType,
+          destination: procedure.destination,
+          visaType: procedure.visaType,
           status: internalStatusMap[input.initialStatus] as any,
+          initialPaymentStatus: input.initialPaymentStatus,
           createdByAdmin: admin.email || "admin",
           source: "manual_admin" as any,
-          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")}`,
+          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")} · ${procedure.destination} · ${procedure.visaType} · paiement initial : ${input.initialPaymentStatus}${depositNote}${assignedNote}${piecesNote}`,
         });
 
         const dossierId = (result as any)[0]?.insertId || 0;
         const folderCode = `3M-AGN-${dossierId.toString().padStart(4, "0")}`;
 
-        // Envoyer un email de bienvenue
+        // Compte client : création si besoin + lien d’activation / accès dossier.
+        let linkedCandidateId: number | null = null;
+        let clientAccountCreated = false;
+        let clientInviteSent = false;
+        let clientAccessUrl = buildCandidateSpaceAccessUrl(folderCode);
         try {
-          const htmlContent = `
+          const access = await ensureAgencyClientAccess(db, {
+            email: input.email,
+            fullName: input.fullName,
+            phone: input.whatsapp,
+            destinationCoarse: procedure.coarseCategory,
+            visaType: procedure.visaType,
+            preferredDestinations: procedure.preferredDestinations,
+            dossierNumber: folderCode,
+            sendInviteEmail: true,
+          });
+          linkedCandidateId = access.candidateId;
+          clientAccountCreated = access.created;
+          clientInviteSent = access.inviteSent;
+          clientAccessUrl = access.setPasswordUrl || access.accessUrl;
+        } catch (linkErr) {
+          console.error("[Import Agency Dossier] Accès compte client:", linkErr);
+        }
+
+        let checklistAdded = 0;
+        let checklistLabel = procedure.visaType;
+        try {
+          const seeded = await seedCountryProcedureChecklist(db, {
+            source: "agency",
+            id: dossierId,
+            destination: procedure.destination,
+            visaType: procedure.visaType,
+            actorAdminId: admin.id ?? null,
+            customDocuments: receivedPieces,
+          });
+          checklistAdded = seeded.added;
+          checklistLabel = seeded.label;
+        } catch (seedErr) {
+          console.error("[Import Agency Dossier] Seed checklist:", seedErr);
+        }
+
+        // E-mail de bienvenue avec lien d’accès sécurisé (sauf si une invitation « activer mon espace » vient d’être envoyée).
+        if (!clientInviteSent) {
+          try {
+            const htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center;">
-                <h1 style="color: #fff; font-size: 22px; margin: 0;">3M Travel & Services</h1>
+                <h1 style="color: #fff; font-size: 22px; margin: 0;">3M TRAVEL AGENCY</h1>
                 <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Votre partenaire mobilité internationale</p>
               </div>
               <div style="padding: 32px 28px;">
@@ -2337,31 +2793,70 @@ export const adminRouter = router({
                 <p style="color: #374151;">Votre dossier a été créé avec succès dans notre système.</p>
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <p style="margin: 4px 0;"><strong>N° de dossier :</strong> ${esc(folderCode)}</p>
-                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(input.destinationCountry)}</p>
-                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(input.projectType)}</p>
+                  <p style="margin: 4px 0;"><strong>Destination :</strong> ${esc(procedure.destination)}</p>
+                  <p style="margin: 4px 0;"><strong>Type de projet :</strong> ${esc(procedure.visaType)}</p>
                 </div>
-                <p style="color: #374151;">Notre équipe vous contactera sous peu pour les prochaines étapes.</p>
-                <a href="https://3mtravelagency.com/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                <p style="color: #374151;">Connectez-vous pour consulter vos documents et suivre chaque étape.</p>
+                <a href="${esc(clientAccessUrl)}" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
               </div>
               <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-                <p>3M Travel & Services — Yaoundé, Cameroun | +237 620-996-045</p>
+                <p>3M TRAVEL AGENCY — Yaoundé, Cameroun | +237 620-996-045</p>
               </div>
             </div>
           `;
-          await sendGenericEmail({
-            to: input.email,
-            subject: `📋 Votre dossier ${folderCode} a été créé - 3M Travel & Services`,
-            html: htmlContent
+            await sendGenericEmail({
+              to: input.email,
+              subject: `📋 Votre dossier ${folderCode} a été créé - 3M TRAVEL AGENCY`,
+              html: htmlContent,
+            });
+          } catch (emailErr) {
+            console.error("[Import Agency Dossier] Email failed:", emailErr);
+          }
+        }
+
+        let whatsappSent = false;
+        try {
+          const whatsapp = await notifyDossierCreatedWhatsApp({
+            phone: input.whatsapp,
+            candidateName: input.fullName,
+            dossierNumber: folderCode,
+            destination: procedure.destination,
+            visaType: procedure.visaType,
           });
-        } catch (emailErr) {
-          console.error("[Import Agency Dossier] Email failed:", emailErr);
+          whatsappSent = whatsapp.sent;
+          if (whatsapp.attempted && !whatsapp.sent) {
+            console.warn("[Import Agency Dossier] WhatsApp:", whatsapp.error);
+          }
+        } catch (whatsappErr) {
+          console.error("[Import Agency Dossier] WhatsApp failed:", whatsappErr);
         }
 
         return {
           success: true,
           folderCode,
           dossierId,
-          message: `Dossier agence créé avec succès : ${folderCode}`,
+          linkedCandidateId,
+          clientAccountCreated,
+          clientInviteSent,
+          // Lien de connexion public seulement : le lien de définition du mot de passe (secret) part uniquement au client.
+          clientAccessUrl: buildCandidateSpaceAccessUrl(folderCode),
+          whatsappSent,
+          message: clientAccountCreated
+            ? `Dossier créé et compte client ouvert : ${folderCode}`
+            : linkedCandidateId
+              ? `Dossier agence créé et rattaché au compte client existant : ${folderCode}`
+              : `Dossier agence créé avec succès : ${folderCode}`,
+          procedure: {
+            destination: procedure.destination,
+            visaType: procedure.visaType,
+            checklistKey: procedure.checklistKey,
+            checklistLabel,
+            checklistAdded,
+            documentsReceived: receivedPieces,
+          },
+          nextStep: clientInviteSent
+            ? "Le client a reçu un lien pour activer son espace. Scannez ensuite les pièces et publiez-les."
+            : "Scannez les pièces remises puis publiez-les vers l’espace client depuis le centre documentaire du dossier.",
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -2369,6 +2864,81 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de l'importation du dossier agence",
+        });
+      }
+    }),
+
+  /** Aperçu de la checklist dynamique pays × visa avant création / publication. */
+  previewCountryVisaChecklist: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      destinationCountry: z.string().min(1).max(100),
+      projectType: z.string().min(1).max(100),
+      documentsReceived: z.string().max(2000).optional(),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const procedure = resolveDossierProcedureSelection({
+        destination: input.destinationCountry,
+        visaType: input.projectType,
+      });
+      const checklist = previewCountryVisaChecklist({
+        destination: procedure.destination || input.destinationCountry,
+        visaType: procedure.visaType || input.projectType,
+        documentsReceived: input.documentsReceived,
+      });
+      return {
+        recognized: procedure.recognized,
+        destination: procedure.destination,
+        visaType: procedure.visaType,
+        checklistKey: procedure.checklistKey,
+        label: checklist.label,
+        documents: checklist.documents.map((item) => ({
+          documentType: item.documentType,
+          comment: item.comment,
+          source: item.source,
+        })),
+      };
+    }),
+
+  /**
+   * Publie en masse les documents déjà scannés d’un dossier agence
+   * vers l’espace client (case_documents + notification).
+   */
+  publishAgencyScannedDocumentsToClient: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      agencyDossierId: z.number().int().positive(),
+      documentIds: z.array(z.number().int().positive()).max(100).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      try {
+        const result = await publishAgencyDocumentsToCase(db, {
+          agencyDossierId: input.agencyDossierId,
+          actorAdminId: admin.id ?? null,
+          actorEmail: admin.email || "admin",
+          documentIds: input.documentIds,
+          notify: true,
+        });
+        const baseMessage = result.published === 0
+          ? result.totalScanned === 0
+            ? "Aucun document scanné à publier pour ce dossier."
+            : "Tous les documents scannés sont déjà visibles dans l’espace client."
+          : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`;
+        return {
+          success: true,
+          ...result,
+          message: result.whatsappSent ? `${baseMessage} WhatsApp envoyé au client.` : baseMessage,
+        };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[publishAgencyScannedDocumentsToClient]", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err instanceof Error ? err.message : "Publication vers l’espace client impossible.",
         });
       }
     }),
@@ -2395,7 +2965,7 @@ export const adminRouter = router({
         const accountMatch = /^account_(\d+)$/.exec(input.candidateId.trim());
         if (accountMatch) {
           const candidateId = Number(accountMatch[1]);
-          const [account] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+          const [account] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
           if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
           const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
           const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
@@ -2406,29 +2976,48 @@ export const adminRouter = router({
           let linkedAgencyDossierReference: string | null = null;
           let linkedAgencyDossierDestination: string | null = null;
           let linkedAgencyDossierId: number | null = null;
+          let linkedAgencyDossierStatus: string | null = null;
           if (account.dossierStatus !== "nouveau") {
-            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination }).from(agencyDossiers)
+            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status }).from(agencyDossiers)
               .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
               .orderBy(desc(agencyDossiers.createdAt))
               .limit(1);
             if (linkedDossier) {
-              linkedAgencyDossierReference = `3M-AGN-${String(linkedDossier.id).padStart(4, "0")}`;
+              linkedAgencyDossierReference = agencyDossierReference(linkedDossier.id);
               linkedAgencyDossierDestination = linkedDossier.destination;
               linkedAgencyDossierId = linkedDossier.id;
+              linkedAgencyDossierStatus = linkedDossier.status ?? null;
             }
           }
+          const referenceStage = resolveClientReference({
+            candidateId: account.id,
+            agencyDossier: linkedAgencyDossierId
+              ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
+              : null,
+          });
+          const [evaluationRow] = await db.select({ id: evaluations.id, projectType: evaluations.projectType, destinationCountry: evaluations.destinationCountry }).from(evaluations)
+            .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+            .limit(1);
+          const [openingPaymentRow] = await db.select({ id: agencySettings.id }).from(agencySettings)
+            .where(eq(agencySettings.settingKey, `opening_payment:${account.id}`))
+            .limit(1);
+          const pendingDocuments = docs.filter((doc) => doc.status === "uploaded").length;
+          const dossierActivated = account.dossierStatus !== "nouveau" || Boolean(linkedAgencyDossierId);
+          const paymentConfirmed = dossierActivated || Boolean(openingPaymentRow);
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
               id: `account_${account.id}`,
               internalId: account.id,
-              folderCode: `COMPTE-${String(account.id).padStart(5, "0")}`,
+              folderCode: referenceStage.reference,
+              formerAccountReference: referenceStage.formerAccountReference,
+              referenceKind: referenceStage.kind,
               fullName: account.fullName,
               email: account.email,
               whatsapp: account.phone || "",
               city: "Compte en ligne",
-              destinationCountry: destinationLabelForStaff(account),
-              projectType: account.visaType || "À qualifier",
+              destinationCountry: destinationLabelForStaff(account) || evaluationRow?.destinationCountry || "Non spécifiée",
+              projectType: account.visaType || evaluationRow?.projectType || "À qualifier",
               // Tout ce que le candidat a déclaré à l'inscription, visible par l'équipe.
               registrationProfile: {
                 preferredDestinations: parsePreferredDestinations(account.preferredDestinations),
@@ -2460,6 +3049,19 @@ export const adminRouter = router({
               updatedAt: account.updatedAt,
             },
             documents: docs,
+            cockpit: buildCandidateCockpit({
+              emailVerified: account.emailVerified,
+              evaluationStatus: account.evaluationDeclarationStatus,
+              hasEvaluationRecord: Boolean(evaluationRow),
+              paymentConfirmed,
+              receiptApproved: false,
+              protocolSigned: false,
+              dossierActivated,
+              pendingDocuments,
+              workflowStatus: account.dossierStatus,
+              destination: account.destination,
+              visaType: account.visaType,
+            }),
           });
         }
         const reference = parseAdminCandidateReference(input.candidateId);
@@ -2470,7 +3072,7 @@ export const adminRouter = router({
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
-          const [candRec] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          const [candRec] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, app.email)).limit(1);
           const avatarUrl = candRec?.avatarUrl || null;
 
           const docs = await db.select().from(clientDocuments)
@@ -2501,8 +3103,33 @@ export const adminRouter = router({
             try { scoringData = JSON.parse(app.scoringDetails); } catch {}
           }
 
+          // Lecture seule : pas de purge ici (évite une erreur interne sur GET).
+          // La normalisation EVAL→3M se fait via le bouton admin ou canonicalizeActiveDossier.
+          const evalShellId = parseEvalAgencyShellId(app.dossierNumber);
+          let redirectToCanonicalAgencyId: string | null = null;
+          if (evalShellId != null) {
+            const [linkedAgency] = await db
+              .select({ id: agencyDossiers.id })
+              .from(agencyDossiers)
+              .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
+              .limit(1);
+            if (linkedAgency) {
+              redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+            }
+          }
+
+          const paymentSnapshot = {
+            status: app.paymentStatus,
+            amount: app.paymentAmount ?? null,
+            currency: app.paymentCurrency ?? "XAF",
+            paidAt: (app as any).paymentValidatedAt ?? null,
+            validatedAt: (app as any).paymentValidatedAt ?? null,
+            validatedBy: (app as any).paymentValidatedBy ?? null,
+          };
+
           return serializeAdminCandidateDetails({
             success: true,
+            redirectToCanonicalAgencyId,
             candidate: {
               id: `online_${app.id}`,
               internalId: app.id,
@@ -2522,6 +3149,7 @@ export const adminRouter = router({
               scoringBadge: app.scoringBadge,
               scoringData,
               avatarUrl,
+              paymentStatus: app.paymentStatus,
               evaluationDeclarationStatus: candRec?.evaluationDeclarationStatus ?? "not_declared",
               evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
               evaluationReviewedAt: candRec?.evaluationReviewedAt ?? null,
@@ -2532,15 +3160,24 @@ export const adminRouter = router({
               createdAt: app.createdAt,
               updatedAt: app.updatedAt,
             },
+            payments: [paymentSnapshot],
             documents: docs,
           });
         } else if (source === "agency") {
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
 
-          let avatarUrl = null;
+          let avatarUrl = null as string | null;
+          let candRec: {
+            avatarUrl?: string | null;
+            evaluationDeclarationStatus?: string | null;
+            evaluationDeclaredAt?: Date | null;
+            evaluationReviewedAt?: Date | null;
+            evaluationReviewedBy?: string | null;
+          } | null = null;
           if (dossier.email) {
-            const [candRec] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            const [row] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            candRec = row ?? null;
             avatarUrl = candRec?.avatarUrl || null;
           }
 
@@ -2556,12 +3193,34 @@ export const adminRouter = router({
             return mapping[status] || "PENDING_48H";
           };
 
+          const paymentStatus = dossier.initialPaymentStatus === "paid"
+            ? "SUCCESS"
+            : dossier.initialPaymentStatus === "pending"
+              ? "PENDING"
+              : "NOT_PAID";
+          const paymentSnapshot = {
+            status: paymentStatus,
+            amount: null as number | null,
+            currency: "XAF",
+            paidAt: null as Date | null,
+            validatedAt: null as Date | null,
+            validatedBy: null as string | null,
+          };
+          const agencyDocs = await db
+            .select()
+            .from(agencyDossierDocuments)
+            .where(eq(agencyDossierDocuments.dossierId, dossier.id))
+            .orderBy(desc(agencyDossierDocuments.createdAt))
+            .limit(100);
+
           return serializeAdminCandidateDetails({
             success: true,
+            redirectToCanonicalAgencyId: null,
             candidate: {
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
-              folderCode: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
+              folderCode: agencyDossierReference(dossier.id),
+              formerFolderCodes: [`EVAL-AG-${dossier.id}`],
               fullName: dossier.fullName,
               email: dossier.email,
               whatsapp: dossier.phone || "",
@@ -2576,17 +3235,26 @@ export const adminRouter = router({
               scoringBadge: null,
               scoringData: null,
               avatarUrl,
-              evaluationDeclarationStatus: dossier.evaluationValidatedAt ? "validated" : "not_declared",
-              evaluationDeclaredAt: null,
-              evaluationReviewedAt: dossier.evaluationValidatedAt ?? null,
-              evaluationReviewedBy: dossier.evaluationValidatedBy ?? null,
+              paymentStatus,
+              evaluationDeclarationStatus: dossier.evaluationValidatedAt ? "validated" : (candRec?.evaluationDeclarationStatus ?? "not_declared"),
+              evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
+              evaluationReviewedAt: dossier.evaluationValidatedAt ?? candRec?.evaluationReviewedAt ?? null,
+              evaluationReviewedBy: dossier.evaluationValidatedBy ?? candRec?.evaluationReviewedBy ?? null,
               evaluationReviewNote: null,
               evaluationValidatedAt: dossier.evaluationValidatedAt ?? null,
               evaluationValidatedBy: dossier.evaluationValidatedBy ?? null,
               createdAt: dossier.createdAt,
               updatedAt: dossier.updatedAt,
             },
-            documents: [],
+            payments: [paymentSnapshot],
+            documents: agencyDocs.map((doc) => ({
+              id: doc.id,
+              documentType: doc.documentType,
+              fileName: doc.documentName,
+              fileUrl: doc.documentUrl,
+              uploadedAt: doc.createdAt,
+              verificationStatus: doc.verificationStatus,
+            })),
           });
         }
 
@@ -2782,8 +3450,8 @@ export const adminRouter = router({
         try {
           await sendGenericEmail({
             to: file.candidateEmail,
-            subject: "Action requise : document à remplacer — 3M Travel & Services",
-            html: `<div><h1>3M Travel &amp; Services</h1><p>Bonjour,</p><p>Votre document <strong>${esc(file.fileName)}</strong> doit être remplacé.</p><p><strong>Motif :</strong> ${esc(input.comment.trim())}</p><p>Connectez-vous à votre espace candidat pour déposer une nouvelle version.</p></div>`,
+            subject: "Action requise : document à remplacer — 3M TRAVEL AGENCY",
+            html: `<div><h1>3M TRAVEL AGENCY</h1><p>Bonjour,</p><p>Votre document <strong>${esc(file.fileName)}</strong> doit être remplacé.</p><p><strong>Motif :</strong> ${esc(input.comment.trim())}</p><p>Connectez-vous à votre espace candidat pour déposer une nouvelle version.</p></div>`,
           });
           notificationSent = true;
         } catch (error) {
@@ -2932,7 +3600,20 @@ export const adminRouter = router({
           const [receipt] = await db.insert(agencyDossierDocuments).values({ dossierId: input.agencyDossierId, documentType: "decharge_remise_main_propre", documentName: input.receiptFileName || `Decharge-${safeName}.pdf`, documentUrl: receiptStored.url, fileSize: receiptBuffer.length, source: "admin_upload", uploadedBy: admin.email || "admin", verificationStatus: "pending" }).$returningId();
           await db.insert(agencyDossierHistory).values({ dossierId: input.agencyDossierId, action: "receipt_generated", changedBy: admin.email || "admin", oldValue: null, newValue: JSON.stringify({ documentId: receipt.id, sourceDocumentId: inserted.id }), details: "Décharge générée pour le document remis en agence" });
         }
-        return { success: true, url: stored.url, receiptUrl: null, target: "agency_dossier", agencyDossierId: input.agencyDossierId };
+        let publishedToClient = 0;
+        try {
+          const published = await publishAgencyDocumentsToCase(db, {
+            agencyDossierId: input.agencyDossierId,
+            actorAdminId: admin.id ?? null,
+            actorEmail: admin.email || "admin",
+            documentIds: [inserted.id],
+            notify: true,
+          });
+          publishedToClient = published.published;
+        } catch (publishErr) {
+          console.error("[uploadDocumentForCandidate] sync espace client:", publishErr);
+        }
+        return { success: true, url: stored.url, receiptUrl: null, target: "agency_dossier", agencyDossierId: input.agencyDossierId, publishedToClient };
       }
       if (!input.candidateId) throw new TRPCError({ code: "BAD_REQUEST", message: "Cible de dépôt manquante." });
       const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
@@ -3151,7 +3832,7 @@ export const adminRouter = router({
       if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Préparez d’abord le dossier de démonstration." });
       const recipientEmail = process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com";
       try {
-        await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M Travel préparé par ${esc(admin.email)}. Aucun client n’est concerné.</p>` });
+        await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M TRAVEL AGENCY préparé par ${esc(admin.email)}. Aucun client n’est concerné.</p>` });
         await db.update(emailDeliveryLogs).set({ status: "sent", errorDetails: `Remise interne déclenchée par ${admin.email}` }).where(eq(emailDeliveryLogs.id, demo.id));
       } catch (error) {
         await db.update(emailDeliveryLogs).set({ status: "failed", errorDetails: error instanceof Error ? error.message.slice(0, 1000) : "Échec de remise interne" }).where(eq(emailDeliveryLogs.id, demo.id));
@@ -3275,7 +3956,7 @@ export const adminRouter = router({
         await sendGenericEmail({
           to: log.recipientEmail,
           subject: log.subject,
-          html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après correction de vos coordonnées.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
+          html: "<p>Bonjour,</p><p>Votre message 3M TRAVEL AGENCY est renvoyé après correction de vos coordonnées.</p><p>Cordialement,<br>L’équipe 3M TRAVEL AGENCY</p>",
         });
         await db.insert(adminActivityLogs).values({
           adminEmail: admin.email,
@@ -3430,7 +4111,7 @@ export const adminRouter = router({
         : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
-      const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
+      const candidateRecord = (await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, email)).limit(1))[0];
       const agencyCandidateId = candidateRecord?.id ?? null;
       const linkedApplication = reference.source === "online"
         ? sourceRecord
@@ -3475,13 +4156,26 @@ export const adminRouter = router({
           )
         : [];
       const progressCandidateId = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).candidateId : agencyCandidateId;
-      const checklistProgressRows = progressCandidateId ? await safeCollection(
-        db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, operationalCase.caseNumber), eq(procedureChecklistProgress.candidateId, progressCandidateId))).limit(1),
-        [],
-        "procedureChecklistProgress",
-      ) : [];
-      const checklistProgress = checklistProgressRows[0] ?? null;
-      const persistedJourneyStepIds = new Set(parseAdminChecklistStepIds(checklistProgress?.completedStepIds));
+      const checklistKeys = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: reference.source,
+        sourceId: reference.id,
+        onlineDossierNumber: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierNumber : null,
+      });
+      const checklistProgressRows = progressCandidateId && checklistKeys.length
+        ? await safeCollection(
+            db.select().from(procedureChecklistProgress).where(and(
+              inArray(procedureChecklistProgress.dossierKey, checklistKeys),
+              eq(procedureChecklistProgress.candidateId, progressCandidateId),
+            )).limit(10),
+            [],
+            "procedureChecklistProgress",
+          )
+        : [];
+      const persistedJourneyStepIds = new Set<string>();
+      for (const row of checklistProgressRows) {
+        for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) persistedJourneyStepIds.add(stepId);
+      }
       let persistedJourneyIndex = 0;
       while (persistedJourneyStepIds.has(`checklist-${persistedJourneyIndex}`)) persistedJourneyIndex += 1;
       const agencyCvDocument = agencyDocuments.find((document) => normalizeAdminDocumentType(document.documentType, document.documentName) === "cv") ?? null;
@@ -3524,7 +4218,6 @@ export const adminRouter = router({
       const evaluationVersions = reference.source === "online"
         ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50)
         : [];
-      const nextAction = determineCandidate360NextAction({ workflowStatus: operationalCase.currentStatus, paymentStatus: paymentSnapshot?.status, pendingDocuments, openTasks, dueAt: operationalCase.dueAt });
       const latestEvaluation = latestEvaluations[0];
       const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
@@ -3538,6 +4231,160 @@ export const adminRouter = router({
         paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
       });
       const effectiveJourneyStep = Math.min(Math.max(currentJourneyStep, persistedJourneyIndex), Math.max(0, candidateJourney.steps.length - 1));
+      const nextAction = determineCandidate360NextAction({
+        workflowStatus: operationalCase.currentStatus,
+        paymentStatus: paymentSnapshot?.status,
+        pendingDocuments,
+        openTasks,
+        dueAt: operationalCase.dueAt,
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+      });
+      const dynamicPilotage = buildAdminDynamicPilotageContext({
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+        workflowStatus: operationalCase.currentStatus,
+        paymentStatus: paymentSnapshot?.status,
+        pendingDocuments,
+        openTasks,
+        dueAt: operationalCase.dueAt,
+        currentStepIndex: effectiveJourneyStep,
+      });
+      const documentMatches = [
+        ...operationalDocuments.map((document) => ({ documentType: document.documentType, documentName: document.fileName, verificationStatus: document.reviewStatus, status: document.reviewStatus })),
+        ...legacyDocuments.map((document) => ({ documentType: document.documentType, documentName: document.documentName, verificationStatus: document.verificationStatus, status: document.status })),
+        ...agencyDocuments.map((document) => ({ documentType: document.documentType, documentName: document.documentName, verificationStatus: document.verificationStatus, status: document.verificationStatus })),
+        ...requirements.map((requirement) => ({ documentType: requirement.documentType, documentName: requirement.documentType, verificationStatus: requirement.status, status: requirement.status })),
+      ];
+      const countryProcedureChecklist = summarizeCountryProcedureChecklist({
+        destination,
+        procedureType: procedureLabel ?? visaTypeForJourney,
+        documents: documentMatches,
+      });
+      const journeySla = buildJourneyStepSla({
+        destination,
+        visaType: visaTypeForJourney,
+        procedureLabel,
+        internalStatus: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierStatus : (sourceRecord as typeof agencyDossiers.$inferSelect).status,
+        paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+        evaluationStatus: latestEvaluation?.status ?? null,
+        stepEnteredAt: operationalCase.updatedAt ?? sourceRecord.updatedAt,
+        dueAtOverride: operationalCase.dueAt,
+      });
+      const onlineApp = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect) : null;
+      const { loadAgencyAgreementSignature } = await import("../services/agencyAgreementSignature");
+      const agencyAgreementSignature = reference.source === "agency"
+        ? await loadAgencyAgreementSignature(db, reference.id)
+        : null;
+      const protocolOneSigned = Boolean(onlineApp?.agreementSigned) || Boolean(agencyAgreementSignature);
+      const secondProtocol = describeSecondProtocolState({
+        destination: destination ?? onlineApp?.destination,
+        paymentConfirmed: paymentSnapshot?.status === "SUCCESS",
+        protocolOneSigned,
+        secondProtocolReady: Boolean(onlineApp?.secondAgreementReadyAt),
+        secondProtocolSigned: Boolean(onlineApp?.secondAgreementSigned),
+        employerName: onlineApp?.secondAgreementEmployer,
+        positionTitle: onlineApp?.secondAgreementPosition,
+        formulaChosen: (onlineApp?.secondAgreementFormula as "integral" | "echelonne" | "garanti" | null) ?? null,
+      });
+      // Sélection employeur additive (agency_settings) — lecture seule des dossiers actifs.
+      const employerSettingKey = employerSelectionSettingKey(reference.source, reference.id);
+      const [employerSettingRow] = await db
+        .select({ settingValue: agencySettings.settingValue })
+        .from(agencySettings)
+        .where(eq(agencySettings.settingKey, employerSettingKey))
+        .limit(1);
+      const storedEmployerSelection = parseEmployerSelectionSetting(employerSettingRow?.settingValue) as EmployerSelectionRecord | null;
+      const employerSelectedFlag = isEmployerSelected({
+        stored: storedEmployerSelection,
+        secondAgreementReady: Boolean(onlineApp?.secondAgreementReadyAt),
+        secondAgreementEmployer: onlineApp?.secondAgreementEmployer,
+        recruitmentPartnerName: onlineApp?.recruitmentPartnerName,
+      });
+      const siblingRows = await safeCollection(
+        Promise.all([
+          db.select({
+            id: applications.id,
+            dossierNumber: applications.dossierNumber,
+            destination: applications.destination,
+            visaType: applications.visaType,
+            dossierStatus: applications.dossierStatus,
+            paymentStatus: applications.paymentStatus,
+            agreementSigned: applications.agreementSigned,
+          }).from(applications).where(and(sql`LOWER(TRIM(${applications.email})) = LOWER(TRIM(${email}))`, isNull(applications.deletedAt))).limit(10),
+          db.select({
+            id: agencyDossiers.id,
+            destination: agencyDossiers.destination,
+            visaType: agencyDossiers.visaType,
+            status: agencyDossiers.status,
+            initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+          }).from(agencyDossiers).where(and(sql`LOWER(TRIM(${agencyDossiers.email})) = LOWER(TRIM(${email}))`, isNull(agencyDossiers.deletedAt))).limit(10),
+        ]).then(([onlineRows, agencyRows]) => {
+          const online = onlineRows.map((row) => ({
+            id: `online_${row.id}`,
+            folderCode: row.dossierNumber,
+            projectType: row.visaType,
+            destinationCountry: row.destination,
+            status: row.dossierStatus,
+            paymentStatus: row.paymentStatus,
+            agreementSigned: row.agreementSigned,
+            source: "online" as const,
+            procedureLabel: procedureLabelForDossier({
+              visaType: row.visaType,
+              destination: row.destination,
+              dossierNumber: row.dossierNumber,
+            }),
+          }));
+          const agency = agencyRows.map((row) => {
+            const folderCode = `3M-AGN-${String(row.id).padStart(4, "0")}`;
+            return {
+              id: `agency_${row.id}`,
+              folderCode,
+              projectType: row.visaType,
+              destinationCountry: row.destination,
+              status: row.status,
+              paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
+              agreementSigned: null,
+              source: "agency" as const,
+              procedureLabel: procedureLabelForDossier({
+                visaType: row.visaType,
+                destination: row.destination,
+                dossierNumber: folderCode,
+              }),
+            };
+          });
+          // Un seul dossier actif : masquer les miroirs EVAL-AG dès qu’un 3M-AGN existe.
+          return collapseEvalAgencyShellRows(
+            [...online, ...agency].filter((row) => row.id !== input.candidateId),
+          );
+        }),
+        [],
+        "siblingProcedures",
+      );
+      const dualOpportunityHandoff = dualOpportunityHandoffMessage({
+        currentProcedure: procedureLabel ?? visaTypeForJourney,
+        siblingProcedures: siblingRows,
+      });
+      const evalShellId = parseEvalAgencyShellId(
+        reference.source === "online"
+          ? (sourceRecord as typeof applications.$inferSelect).dossierNumber
+          : null,
+      );
+      // Lecture seule : redirection vers le 3M actif sans mutation (purge via bouton « Normaliser »).
+      let redirectToCanonicalAgencyId: string | null = null;
+      const evalShellPurged = false;
+      if (evalShellId != null) {
+        const [linkedAgency] = await db
+          .select({ id: agencyDossiers.id })
+          .from(agencyDossiers)
+          .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
+          .limit(1);
+        if (linkedAgency) {
+          redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
+        }
+      }
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         evaluationDeclarationStatus: reference.source === "agency"
@@ -3557,12 +4404,29 @@ export const adminRouter = router({
           ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedBy ?? null)
           : (candidateRecord?.evaluationReviewedBy ?? null),
         nextAction,
+        dynamicPilotage,
+        cockpit: buildCandidateCockpit({
+          emailVerified: candidateRecord?.emailVerified ?? true,
+          evaluationStatus: reference.source === "agency"
+            ? ((sourceRecord as typeof agencyDossiers.$inferSelect).evaluationValidatedAt ? "validated" : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"))
+            : (candidateRecord?.evaluationDeclarationStatus ?? "not_declared"),
+          hasEvaluationRecord: Boolean(latestEvaluation),
+          paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (sourceRecord as any).initialPaymentStatus === "paid",
+          receiptApproved: Boolean(paymentSnapshot?.receiptApproval),
+          protocolSigned: protocolOneSigned,
+          dossierActivated: true,
+          pendingDocuments,
+          workflowStatus: operationalCase.currentStatus,
+          destination: destination ?? undefined,
+          visaType: visaTypeForJourney ?? undefined,
+        }),
         candidateJourney: {
           country: candidateJourney.country,
           visaType: candidateJourney.visaType,
           title: candidateJourney.title,
           disclaimer: candidateJourney.disclaimer,
           officialSources: candidateJourney.officialSources,
+          publishedGuide: candidateJourney.publishedGuide ?? null,
           currentStepIndex: effectiveJourneyStep,
           completedStepIds: Array.from(persistedJourneyStepIds),
           steps: candidateJourney.steps.map((step, index) => ({ ...step, index, state: index < effectiveJourneyStep || persistedJourneyStepIds.has(`checklist-${index}`) ? "completed" : index === effectiveJourneyStep ? "current" : "locked" })),
@@ -3648,7 +4512,16 @@ export const adminRouter = router({
               agreementSignatureName: (sourceRecord as typeof applications.$inferSelect).agreementSignatureName ?? null,
               dossierNumber: (sourceRecord as typeof applications.$inferSelect).dossierNumber,
             }
-          : null,
+          : {
+              signed: Boolean(agencyAgreementSignature),
+              agreementSigned: Boolean(agencyAgreementSignature),
+              signedAt: agencyAgreementSignature?.signedAt ?? null,
+              agreementSignedAt: agencyAgreementSignature?.signedAt ?? null,
+              signatureName: agencyAgreementSignature?.signatureName ?? null,
+              agreementSignatureName: agencyAgreementSignature?.signatureName ?? null,
+              dossierNumber: agencyAgreementSignature?.dossierNumber || `3M-AGN-${String(reference.id).padStart(4, "0")}`,
+              pdfUrl: agencyAgreementSignature?.pdfUrl ?? null,
+            },
         tasks,
         notes,
         statusHistory,
@@ -3672,9 +4545,245 @@ export const adminRouter = router({
           submittedAt: latestEvaluation.createdAt,
           details: projectDetails,
         } : null,
+        countryProcedureChecklist,
+        journeySla: {
+          ...journeySla,
+          dueAt: journeySla.dueAt?.toISOString() ?? null,
+          suggestedFromNow: journeySla.suggestedFromNow.toISOString(),
+        },
+        secondProtocol,
+        employerSelection: storedEmployerSelection,
+        stageCoherence: (() => {
+          const procedureKind = detectAdminProcedureKind(visaTypeForJourney, procedureLabel);
+          const onlineStatus = onlineApp?.dossierStatus;
+          const agencyStatus = reference.source === "agency" ? (sourceRecord as typeof agencyDossiers.$inferSelect).status : null;
+          const adminStatus = reference.source === "online"
+            ? (["bilan_envoye", "en_attente_paiement"].includes(String(onlineStatus)) ? "PUBLISHED"
+              : ["paye", "en_attente_documents", "documents_recus"].includes(String(onlineStatus)) ? "DOCUMENTS_CHECK"
+              : ["soumis_agences", "en_cours_recrutement", "contrat_obtenu"].includes(String(onlineStatus)) ? "SUBMITTED"
+              : onlineStatus === "visa_approuve" ? "APPROVED" : "PENDING_48H")
+            : (agencyStatus === "en_cours" ? "PUBLISHED"
+              : ["documents_requis", "documents_recus"].includes(String(agencyStatus)) ? "DOCUMENTS_CHECK"
+              : ["soumis", "recherche_employeur", "validation_adem"].includes(String(agencyStatus)) ? "SUBMITTED"
+              : agencyStatus === "approuve" ? "APPROVED" : "PENDING_48H");
+          const guided = resolveGuidedNextAdminAction({
+            currentStatus: adminStatus,
+            paymentConfirmed: paymentSnapshot?.status === "SUCCESS" || (reference.source === "agency" && (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "paid"),
+            protocolSigned: protocolOneSigned,
+            documentsReady: ((countryProcedureChecklist?.missing ?? 0) + (countryProcedureChecklist?.replace ?? 0)) === 0,
+            checklistPercent: countryProcedureChecklist?.percent ?? null,
+            procedureKind,
+            visaType: visaTypeForJourney,
+            procedureLabel,
+            employerSelected: employerSelectedFlag,
+            secondProtocolReady: secondProtocol.ready,
+            secondProtocolSigned: secondProtocol.signed,
+          });
+          return {
+            adminStatus,
+            procedureKind,
+            employerSelected: employerSelectedFlag,
+            subStage: guided.subStage,
+            approvalChecklist: guided.approvalChecklist,
+            guided,
+            stages: ADMIN_STAGE_SEQUENCE.map((stage) => ({
+              stage,
+              label: ADMIN_STAGE_CATALOG[stage].label,
+              detail: ADMIN_STAGE_CATALOG[stage].detail,
+              clientLabel: ADMIN_STAGE_CATALOG[stage].clientLabel,
+              prerequisites: ADMIN_STAGE_CATALOG[stage].prerequisites,
+              current: stage === adminStatus,
+            })),
+          };
+        })(),
+        siblingProcedures: siblingRows,
+        dualOpportunityHandoff,
+        redirectToCanonicalAgencyId,
+        evalShellPurged,
+        evalShellFolderCode: evalShellId != null && !evalShellPurged ? `EVAL-AG-${evalShellId}` : null,
+        canonicalFolderCode: reference.source === "agency"
+          ? canonicalAgencyFolderCode(reference.id)
+          : (evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null),
+        placementSummary: candidateRecord ? await safeCollection((async () => {
+          const profile = (await db.select({
+            id: placementCandidateProfiles.id,
+            profileCode: placementCandidateProfiles.profileCode,
+            targetDestination: placementCandidateProfiles.targetDestination,
+            targetProcedure: placementCandidateProfiles.targetProcedure,
+          }).from(placementCandidateProfiles)
+            .where(and(eq(placementCandidateProfiles.candidateId, candidateRecord.id), isNull(placementCandidateProfiles.archivedAt)))
+            .orderBy(desc(placementCandidateProfiles.updatedAt))
+            .limit(1))[0];
+          if (!profile) return null;
+          const submission = (await db.select({
+            id: placementProfileSubmissions.id,
+            status: placementProfileSubmissions.status,
+            adminPipelineStage: placementProfileSubmissions.adminPipelineStage,
+            organizationId: placementProfileSubmissions.organizationId,
+            lastResponseAt: placementProfileSubmissions.lastResponseAt,
+          }).from(placementProfileSubmissions)
+            .where(eq(placementProfileSubmissions.profileId, profile.id))
+            .orderBy(desc(placementProfileSubmissions.lastResponseAt), desc(placementProfileSubmissions.id))
+            .limit(1))[0];
+          const organization = submission
+            ? (await db.select({ legalName: placementOrganizations.legalName, organizationType: placementOrganizations.organizationType }).from(placementOrganizations).where(eq(placementOrganizations.id, submission.organizationId)).limit(1))[0]
+            : null;
+          const consent = (await db.select({ status: candidatePlacementConsents.status }).from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateRecord.id)).limit(1))[0];
+          return {
+            consentStatus: consent?.status ?? "withdrawn",
+            profileCode: profile.profileCode,
+            targetDestination: profile.targetDestination,
+            targetProcedure: profile.targetProcedure,
+            submissionStatus: submission?.status ?? null,
+            postSelectionStage: submission
+              ? (submission.adminPipelineStage ?? (submission.status === "selected" || submission.status === "procedure_ready" ? submission.status : null))
+              : null,
+            organizationName: organization?.legalName ?? null,
+            organizationType: organization?.organizationType ?? null,
+            updatedAt: submission?.lastResponseAt ?? null,
+          };
+        })(), null, "placementSummary") : null,
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };
+    }),
+
+  /**
+   * Normalise un dossier : référence active 3M-AGN + suppression du miroir EVAL-AG.
+   * Applicable à agency_N ou online_* (si EVAL-AG-{id}).
+   */
+  canonicalizeActiveDossier: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const agencyMatch = /^agency_(\d+)$/i.exec(input.candidateId.trim());
+      const onlineMatch = /^online_(\d+)$/i.exec(input.candidateId.trim());
+      let agencyDossierId: number | null = agencyMatch ? Number(agencyMatch[1]) : null;
+      let email: string | null = null;
+      if (onlineMatch) {
+        const [app] = await db
+          .select({ dossierNumber: applications.dossierNumber, email: applications.email })
+          .from(applications)
+          .where(and(eq(applications.id, Number(onlineMatch[1])), isNull(applications.deletedAt)))
+          .limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        agencyDossierId = parseEvalAgencyShellId(app.dossierNumber);
+        email = app.email;
+        if (agencyDossierId == null) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Ce dossier en ligne n’est pas un miroir EVAL-AG. Utilisez « Modifier la référence » pour un numéro 3M-…",
+          });
+        }
+      }
+      if (agencyDossierId == null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ouvrez un dossier agence 3M-AGN ou un miroir EVAL-AG." });
+      }
+      const [agency] = await db
+        .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+        .from(agencyDossiers)
+        .where(and(eq(agencyDossiers.id, agencyDossierId), isNull(agencyDossiers.deletedAt)))
+        .limit(1);
+      if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence 3M introuvable." });
+      const result = await purgeEvalAgencyShell(db, {
+        agencyDossierId: agency.id,
+        candidateEmail: email || agency.email,
+        adminEmail: admin.email,
+      });
+      return {
+        success: true,
+        canonical: result.canonical,
+        purgedCount: result.purgedApplicationIds.length,
+        redirectToCandidateId: canonicalAgencyCandidateId(agency.id),
+        message: result.purgedApplicationIds.length
+          ? `Référence active ${result.canonical}. ${result.purgedApplicationIds.length} miroir(s) EVAL-AG placé(s) en corbeille.`
+          : `Référence active confirmée : ${result.canonical}.`,
+      };
+    }),
+
+  /** Purge globale des miroirs EVAL-AG encore visibles alors qu’un 3M-AGN existe. */
+  canonicalizeAllEvalAgencyShells: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      limit: z.number().int().min(1).max(500).default(200),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const result = await purgeAllOrphanEvalAgencyShells(db, { adminEmail: admin.email, limit: input.limit });
+      return {
+        success: true,
+        ...result,
+        message: `${result.purged} miroir(s) EVAL-AG normalisé(s) vers des dossiers 3M-AGN (${result.processed} examinés).`,
+      };
+    }),
+
+  /** L’admin corrige manuellement la référence active (doit rester un numéro 3M-…). */
+  updateActiveDossierReference: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1).max(80),
+      newReference: z.string().trim().min(4).max(80),
+      renameOnlineApplication: z.boolean().default(false),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const parsed = /^(online|agency)_(\d+)$/i.exec(input.candidateId.trim());
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const source = parsed[1].toLowerCase();
+      const id = Number(parsed[2]);
+      let email = "";
+      let renameOnlineApplicationId: number | null = null;
+      if (source === "online") {
+        const [app] = await db
+          .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
+          .from(applications)
+          .where(and(eq(applications.id, id), isNull(applications.deletedAt)))
+          .limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        email = app.email;
+        if (input.renameOnlineApplication) renameOnlineApplicationId = app.id;
+        // Si c’est encore un EVAL-AG, purger d’abord vers le 3M lié.
+        const shellId = parseEvalAgencyShellId(app.dossierNumber);
+        if (shellId != null) {
+          await purgeEvalAgencyShell(db, { agencyDossierId: shellId, candidateEmail: email, adminEmail: admin.email });
+        }
+      } else {
+        const [agency] = await db
+          .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+          .from(agencyDossiers)
+          .where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt)))
+          .limit(1);
+        if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        email = agency.email;
+        await purgeEvalAgencyShell(db, { agencyDossierId: agency.id, candidateEmail: email, adminEmail: admin.email });
+      }
+      try {
+        const result = await setAdminActiveDossierReference(db, {
+          candidateEmail: email,
+          newReference: input.newReference,
+          adminEmail: admin.email,
+          renameOnlineApplicationId,
+        });
+        return {
+          success: true,
+          ...result,
+          message: `Référence active mise à jour : ${result.activeDossierNumber}${result.renamedApplication ? " (dossier en ligne renommé)" : ""}.`,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : "Impossible de modifier la référence.",
+        });
+      }
     }),
 
   archiveDuplicateRecord: publicProcedure
@@ -3821,9 +4930,23 @@ export const adminRouter = router({
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });
-      const dossierKey = reference.source === "online" ? (source.dossierNumber || `online-${reference.id}`) : `3M-AG-${reference.id.toString().padStart(4, "0")}`;
-      const [existing] = await db.select().from(procedureChecklistProgress).where(and(eq(procedureChecklistProgress.dossierKey, dossierKey), eq(procedureChecklistProgress.candidateId, candidateId))).limit(1);
-      const completed = new Set(parseAdminChecklistStepIds(existing?.completedStepIds));
+      const checklistKeys = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: reference.source,
+        sourceId: reference.id,
+        onlineDossierNumber: reference.source === "online" ? source.dossierNumber : null,
+      });
+      const primaryDossierKey = checklistKeys[0] || operationalCase.caseNumber;
+      const existingRows = checklistKeys.length
+        ? await db.select().from(procedureChecklistProgress).where(and(
+          inArray(procedureChecklistProgress.dossierKey, checklistKeys),
+          eq(procedureChecklistProgress.candidateId, candidateId),
+        )).limit(10)
+        : [];
+      const completed = new Set<string>();
+      for (const row of existingRows) {
+        for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) completed.add(stepId);
+      }
       const baseIndex = journeyStepIndex(journey, source.dossierStatus || source.status || "nouveau", null, {
         evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
         activationRequested: Boolean(source.activationRequestedAt),
@@ -3847,12 +4970,332 @@ export const adminRouter = router({
         completed.delete(`checklist-${stepIndex}`);
       }
       const completedStepIds = JSON.stringify(Array.from(completed).sort((left, right) => Number(left.replace("checklist-", "")) - Number(right.replace("checklist-", ""))));
-      if (existing) await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
-      else await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+      // Écriture sur toutes les clés connues (caseNumber + legacy 3M-AG / online) pour que
+      // la fiche 360° et l’espace client voient immédiatement l’étape déverrouillée.
+      for (const dossierKey of checklistKeys.length ? checklistKeys : [primaryDossierKey]) {
+        const existing = existingRows.find((row) => row.dossierKey === dossierKey);
+        if (existing) {
+          await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
+        } else {
+          await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+        }
+      }
       const actionType = input.forceUnlock ? (input.checked ? "journey_step_force_completed" : "journey_step_force_reopened") : (input.checked ? "journey_step_completed" : "journey_step_reopened");
       const actionLabel = input.forceUnlock ? (input.checked ? "Étape déverrouillée et validée manuellement" : "Étape annulée manuellement") : (input.checked ? "Étape validée" : "Étape rouverte");
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType, entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${actionLabel} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` Motif : ${input.comment}` : ""}` });
       return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? (input.forceUnlock ? "Étape déverrouillée et validée manuellement." : "Étape validée et prochaine étape débloquée.") : "Étape annulée." };
+    }),
+
+  /**
+   * Prévisualisation lecture seule de l’espace client — ce que le candidat voit réellement
+   * (statut, étape, documents, messages, paiement, protocole, réponse d’évaluation).
+   */
+  previewClientSpace: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+    }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
+      const source = sourceRecord as any;
+      const email = String(source.email ?? "").trim().toLowerCase();
+      const [candidateRow] = email
+        ? await db.select().from(candidates).where(eq(candidates.email, email)).limit(1)
+        : [];
+      const candidateId = reference.source === "online"
+        ? (source.candidateId ?? candidateRow?.id ?? null)
+        : (candidateRow?.id ?? null);
+      const dossierNumber = reference.source === "online"
+        ? (source.dossierNumber || operationalCase.caseNumber)
+        : (operationalCase.caseNumber || `3M-AGN-${reference.id.toString().padStart(4, "0")}`);
+      const destination = source.destination || candidateRow?.destination || null;
+      const visaType = source.visaType || candidateRow?.visaType || null;
+      const dossierStatus = reference.source === "online"
+        ? (source.dossierStatus || candidateRow?.dossierStatus || "nouveau")
+        : (source.status || candidateRow?.dossierStatus || "nouveau");
+      const paymentConfirmed = reference.source === "online"
+        ? source.paymentStatus === "SUCCESS"
+        : source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid";
+      const agreementSigned = Boolean(source.agreementSigned || source.agreementSignedAt);
+      const progress = describeDossierProgress({
+        destination,
+        visaType,
+        procedureLabel: visaType,
+        dossierStatus,
+        evaluationStatus: candidateRow?.evaluationDeclarationStatus === "validated" ? "validated" : "pending",
+        milestones: {
+          evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
+          activationRequested: Boolean(source.activationRequestedAt),
+          paymentConfirmed,
+        },
+      });
+      const [requirements, notifications, messages, files, latestEvals, receiptApprovals] = await Promise.all([
+        db.select({
+          id: documentRequirements.id,
+          documentType: documentRequirements.documentType,
+          status: documentRequirements.status,
+          adminComment: documentRequirements.adminComment,
+          dueAt: documentRequirements.dueAt,
+        }).from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt)).limit(40),
+        candidateId
+          ? db.select({
+            id: clientNotifications.id,
+            title: clientNotifications.title,
+            body: clientNotifications.body,
+            isRead: clientNotifications.isRead,
+            createdAt: clientNotifications.createdAt,
+            actionUrl: clientNotifications.actionUrl,
+          }).from(clientNotifications).where(eq(clientNotifications.candidateId, candidateId)).orderBy(desc(clientNotifications.createdAt)).limit(8)
+          : Promise.resolve([]),
+        candidateId
+          ? db.select({
+            id: candidateMessages.id,
+            senderRole: candidateMessages.senderRole,
+            content: candidateMessages.content,
+            isRead: candidateMessages.isRead,
+            createdAt: candidateMessages.createdAt,
+          }).from(candidateMessages).where(eq(candidateMessages.candidateId, candidateId)).orderBy(desc(candidateMessages.createdAt)).limit(8)
+          : Promise.resolve([]),
+        candidateId
+          ? db.select({
+            id: candidateFiles.id,
+            fileType: candidateFiles.fileType,
+            fileName: candidateFiles.fileName,
+            status: candidateFiles.status,
+            uploadedAt: candidateFiles.uploadedAt,
+          }).from(candidateFiles).where(eq(candidateFiles.candidateId, candidateId)).orderBy(desc(candidateFiles.uploadedAt)).limit(20)
+          : Promise.resolve([]),
+        db.select({
+          id: evaluations.id,
+          referenceCode: evaluations.referenceCode,
+          projectType: evaluations.projectType,
+          destinationCountry: evaluations.destinationCountry,
+          reviewDraft: evaluations.reviewDraft,
+          finalResponseSentAt: evaluations.finalResponseSentAt,
+          secondReviewRequired: evaluations.secondReviewRequired,
+          secondReviewedAt: evaluations.secondReviewedAt,
+          status: evaluations.status,
+        }).from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(3),
+        db.select({
+          id: paymentReceiptApprovals.id,
+          approvedAt: paymentReceiptApprovals.approvedAt,
+        }).from(paymentReceiptApprovals).where(and(
+          eq(paymentReceiptApprovals.source, reference.source),
+          eq(paymentReceiptApprovals.paymentId, reference.id),
+          eq(paymentReceiptApprovals.candidateEmail, email),
+        )).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1),
+      ]);
+      const pendingRequirements = requirements.filter((item) => ["pending", "rejected"].includes(String(item.status)));
+      const latestEval = latestEvals[0] ?? null;
+      const evaluationResponseVisible = Boolean(
+        latestEval?.finalResponseSentAt
+        && latestEval.reviewDraft
+        && (!latestEval.secondReviewRequired || latestEval.secondReviewedAt),
+      );
+      const unreadMessages = messages.filter((item) => !item.isRead && item.senderRole !== "candidate").length;
+      const unreadNotifications = notifications.filter((item) => !item.isRead).length;
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "client_space_previewed",
+        entityType: "case",
+        entityId: String(operationalCase.id),
+        description: `Prévisualisation espace client · ${dossierNumber} · ${source.fullName || candidateRow?.fullName || email}`,
+      }).catch(() => undefined);
+      return {
+        previewMode: true as const,
+        previewedAt: new Date().toISOString(),
+        previewedBy: admin.email,
+        candidate: {
+          fullName: source.fullName || candidateRow?.fullName || "Candidat",
+          email,
+          phone: source.whatsappNumber || source.phone || candidateRow?.phone || null,
+          dossierNumber,
+          destination,
+          visaType,
+          dossierStatus,
+          statusLabel: progress.statusLabel,
+          statusDetail: progress.statusDetail,
+          phase: progress.phase,
+          evaluationDeclarationStatus: candidateRow?.evaluationDeclarationStatus ?? null,
+          emailVerified: candidateRow?.emailVerified !== false,
+        },
+        progress: {
+          percent: progress.percent,
+          stepNumber: progress.stepNumber,
+          stepCount: progress.stepCount,
+          stepLabel: progress.stepLabel,
+          nextStepLabel: progress.nextStepLabel,
+          refused: progress.refused,
+        },
+        payment: {
+          confirmed: paymentConfirmed,
+          receiptApproved: Boolean(receiptApprovals[0]?.approvedAt),
+          protocolSigned: agreementSigned,
+        },
+        documents: {
+          total: requirements.length,
+          pending: pendingRequirements.length,
+          checklist: requirements.slice(0, 12).map((item) => ({
+            label: item.documentType,
+            status: item.status,
+            comment: item.adminComment,
+            dueAt: item.dueAt,
+          })),
+          uploadedFiles: files.slice(0, 10).map((file) => ({
+            name: file.fileName,
+            type: file.fileType,
+            status: file.status,
+            uploadedAt: file.uploadedAt,
+          })),
+        },
+        evaluation: latestEval ? {
+          referenceCode: latestEval.referenceCode,
+          projectType: latestEval.projectType,
+          destinationCountry: latestEval.destinationCountry,
+          responsePublished: evaluationResponseVisible,
+          responseHtml: evaluationResponseVisible ? sanitizeRichTextHtml(String(latestEval.reviewDraft)) : null,
+          status: latestEval.status,
+        } : null,
+        communications: {
+          unreadMessages,
+          unreadNotifications,
+          recentNotifications: notifications.slice(0, 5).map((item) => ({
+            title: item.title,
+            body: item.body,
+            isRead: item.isRead,
+            createdAt: item.createdAt,
+          })),
+          recentMessages: messages.slice(0, 5).map((item) => ({
+            senderRole: item.senderRole,
+            content: richTextToPlainText(sanitizeRichTextHtml(String(item.content ?? ""))).slice(0, 400),
+            isRead: item.isRead,
+            createdAt: item.createdAt,
+          })),
+        },
+        nextClientAction: unreadMessages > 0
+          ? { label: "Lire les messages du conseiller", detail: `${unreadMessages} message(s) non lu(s).`, section: "messages" }
+          : pendingRequirements.length > 0
+            ? { label: "Compléter les documents demandés", detail: `${pendingRequirements.length} pièce(s) encore en attente.`, section: "documents" }
+            : paymentConfirmed && !agreementSigned
+              ? { label: "Signer le protocole d’accord", detail: "Le paiement est confirmé ; la signature est la prochaine étape visible.", section: "signatures" }
+              : evaluationResponseVisible
+                ? { label: "Consulter la réponse d’évaluation", detail: "Une réponse validée est publiée dans l’espace.", section: "dossier" }
+                : { label: "Suivre l’avancement du dossier", detail: progress.nextStepLabel ? `Prochaine étape : ${progress.nextStepLabel}` : "Aucune action bloquante côté client.", section: "dossier" },
+      };
+    }),
+
+  /**
+   * Enregistre la sélection employeur hors table dossier (agency_settings uniquement).
+   * Ne modifie jamais le statut ni les champs d’un dossier actif.
+   */
+  recordEmployerSelection: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+      employerName: z.string().trim().min(2).max(255),
+      positionTitle: z.string().trim().min(2).max(255),
+      note: z.string().trim().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const key = employerSelectionSettingKey(reference.source, reference.id);
+      const record: EmployerSelectionRecord = {
+        employerName: input.employerName.trim(),
+        positionTitle: input.positionTitle.trim(),
+        selectedAt: new Date().toISOString(),
+        selectedBy: admin.email,
+        source: reference.source,
+        sourceId: reference.id,
+        note: input.note?.trim() || undefined,
+      };
+      const [existing] = await db.select({ id: agencySettings.id }).from(agencySettings).where(eq(agencySettings.settingKey, key)).limit(1);
+      if (existing) {
+        await db.update(agencySettings).set({ settingValue: JSON.stringify(record), updatedAt: new Date() }).where(eq(agencySettings.id, existing.id));
+      } else {
+        await db.insert(agencySettings).values({ settingKey: key, settingValue: JSON.stringify(record) });
+      }
+      const operationalCase = await ensureOperationalCase(db, reference);
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "employer_selection_recorded",
+        entityType: "employer_selection",
+        entityId: key,
+        description: `Sélection employeur enregistrée (hors statut dossier) : ${record.employerName} · ${record.positionTitle}`,
+      }).catch(() => undefined);
+      return {
+        success: true,
+        employerSelection: record,
+        message: "Employeur enregistré sans modifier le statut du dossier actif.",
+      };
+    }),
+
+  /**
+   * Jeton court pour ouvrir l’aperçu plein écran — stocké dans agency_settings, TTL 15 min.
+   */
+  mintClientSpacePreviewToken: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const token = randomBytes(24).toString("hex");
+      const createdAt = new Date();
+      const expiresAt = new Date(createdAt.getTime() + CLIENT_PREVIEW_TTL_MS);
+      const payload = {
+        token,
+        candidateId: input.candidateId,
+        adminEmail: admin.email,
+        expiresAt: expiresAt.toISOString(),
+        createdAt: createdAt.toISOString(),
+      };
+      const key = clientPreviewSettingKey(token);
+      await db.insert(agencySettings).values({ settingKey: key, settingValue: JSON.stringify(payload) });
+      return {
+        success: true,
+        token,
+        expiresAt: payload.expiresAt,
+        previewPath: `/admin/apercu-espace-client?candidateId=${encodeURIComponent(input.candidateId)}&previewToken=${token}`,
+      };
+    }),
+
+  resolveClientSpacePreviewToken: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      previewToken: z.string().min(16).max(128),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const key = clientPreviewSettingKey(input.previewToken);
+      const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings).where(eq(agencySettings.settingKey, key)).limit(1);
+      const payload = parseClientPreviewToken(row?.settingValue);
+      if (!payload || !isClientPreviewTokenFresh(payload)) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Jeton d’aperçu expiré ou invalide." });
+      }
+      return { success: true, candidateId: payload.candidateId, expiresAt: payload.expiresAt, adminEmail: payload.adminEmail };
     }),
 
   updateCandidate360Workflow: publicProcedure
@@ -4055,6 +5498,56 @@ export const adminRouter = router({
       return { success: true, added: missing.length, country: input.destination || "Standard", procedure: template.label };
     }),
 
+  requestCandidate360Document: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+      documentLabel: z.string().trim().min(2).max(180),
+      details: z.string().trim().max(1_500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select({ email: applications.email, fullName: applications.fullName, dossierNumber: applications.dossierNumber }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, dossierNumber: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
+      const candidateRecord = (await db.select({ id: candidates.id, email: candidates.email }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
+      if (!candidateRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cette demande." });
+      const documentLabel = input.documentLabel.replace(/\s+/g, " ").trim();
+      const requestMessage = (input.details?.replace(/\s+/g, " ").trim() || `Merci de déposer la pièce « ${documentLabel} » dans votre espace candidat.`).slice(0, 1_500);
+      const existing = (await db.select({ id: documentClarificationRequests.id }).from(documentClarificationRequests).where(and(
+        eq(documentClarificationRequests.candidateId, candidateRecord.id),
+        eq(documentClarificationRequests.documentLabel, documentLabel),
+        eq(documentClarificationRequests.status, "pending"),
+      )).limit(1))[0];
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Une demande identique est déjà en attente pour ce candidat." });
+      const dueAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const [created] = await db.insert(documentClarificationRequests).values({ candidateId: candidateRecord.id, documentLabel, requestMessage, status: "pending", dueAt });
+      const requestId = Number((created as any).insertId || 0);
+      const [notification] = await db.insert(clientNotifications).values({ candidateId: candidateRecord.id, caseId: operationalCase.id, type: "document_clarification_requested", title: "Pièce demandée pour votre dossier", body: requestMessage, actionUrl: "/mon-espace?section=documents", isRead: false });
+      const notificationId = Number((notification as any).insertId || 0) || null;
+      const [message] = await db.insert(candidateMessages).values({ candidateId: candidateRecord.id, notificationId, senderRole: "advisor", content: `Demande de pièce — ${documentLabel}\n\n${requestMessage}`, isRead: false });
+      const candidateMessageId = Number((message as any).insertId || 0) || null;
+      if (requestId) {
+        await db.update(documentClarificationRequests).set({ candidateMessageId, notificationId }).where(eq(documentClarificationRequests.id, requestId));
+        await db.insert(documentClarificationEvents).values({ clarificationRequestId: requestId, candidateId: candidateRecord.id, actorRole: "advisor", eventType: "request_created", message: requestMessage, candidateMessageId, actorAdminId: admin.id });
+      }
+      let emailSent = false;
+      try {
+        await sendGenericEmail({ to: sourceRecord.email, subject: `Pièce demandée — Dossier ${String(sourceRecord.dossierNumber ?? input.candidateId)}`, html: `<p>Bonjour ${esc(sourceRecord.fullName || "Candidat")},</p><p>${esc(requestMessage)}</p><p>Connectez-vous à votre espace 3M TRAVEL AGENCY pour déposer cette pièce.</p>` });
+        emailSent = true;
+      } catch (emailError) {
+        console.error("[Candidate360] Envoi demande de pièce impossible", emailError);
+      }
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "document_clarification_requested", entityType: "document_clarification", entityId: String(requestId || documentLabel), description: `Demande de pièce « ${documentLabel} » créée${emailSent ? " et envoyée par e-mail" : ""}.` });
+      return { success: true, requestId: requestId || null, emailSent, documentLabel };
+    }),
+
   sendCandidate360DocumentReminder: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1) }))
     .mutation(async ({ input }) => {
@@ -4072,7 +5565,7 @@ export const adminRouter = router({
         : (await db.select({ fullName: agencyDossiers.fullName, email: agencyDossiers.email, dossierNumber: agencyDossiers.id, candidateId: candidates.id }).from(agencyDossiers).leftJoin(candidates, eq(candidates.email, agencyDossiers.email)).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!record?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
       const documentList = missing.map((item) => `<li><strong>${esc(item.documentType)}</strong>${item.adminComment ? ` — ${esc(item.adminComment)}` : ""}</li>`).join("");
-      await sendGenericEmail({ to: record.email, subject: `Documents à compléter — Dossier ${String(record.dossierNumber)}`, html: `<p>Bonjour ${esc(record.fullName)},</p><p>Votre dossier nécessite encore les pièces suivantes :</p><ul>${documentList}</ul><p>Connectez-vous à votre espace 3M Travel pour déposer les documents ou répondre à votre conseiller.</p>` });
+      await sendGenericEmail({ to: record.email, subject: `Documents à compléter — Dossier ${String(record.dossierNumber)}`, html: `<p>Bonjour ${esc(record.fullName)},</p><p>Votre dossier nécessite encore les pièces suivantes :</p><ul>${documentList}</ul><p>Connectez-vous à votre espace 3M TRAVEL AGENCY pour déposer les documents ou répondre à votre conseiller.</p>` });
       if (record.candidateId) await db.insert(clientNotifications).values({ candidateId: record.candidateId, caseId: operationalCase.id, type: "documents_reminder", title: "Documents manquants à compléter", body: `${missing.length} pièce(s) restent à déposer ou à corriger. Consultez votre espace candidat.`, actionUrl: "/mon-espace?section=documents", isRead: false });
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "documents_reminder_sent", entityType: "case", entityId: String(operationalCase.id), description: `Relance envoyée pour ${missing.length} document(s) manquant(s).` });
       return { success: true, count: missing.length };
@@ -4183,7 +5676,7 @@ export const adminRouter = router({
           candidateId: candidateRecord.id,
           caseId: operationalCase.id,
           type: clarificationNotification?.type ?? "admin_message",
-          title: clarificationNotification?.title ?? "Nouveau message de 3M Travel Agency",
+          title: clarificationNotification?.title ?? "Nouveau message de 3M TRAVEL AGENCY",
           body: clarificationNotification?.body ?? messageBody,
           actionUrl: clarificationNotification?.actionUrl ?? "/mon-espace",
           isRead: false,
@@ -4231,8 +5724,8 @@ export const adminRouter = router({
           : "";
         await sendGenericEmail({
           to: sourceRecord.email,
-        subject: clarification ? "Réponse à votre demande concernant une pièce justificative" : "Nouveau message concernant votre dossier 3M Travel",
-          html: `<p>Bonjour ${esc(sourceRecord.fullName)},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
+        subject: clarification ? "Réponse à votre demande concernant une pièce justificative" : "Nouveau message concernant votre dossier 3M TRAVEL AGENCY",
+          html: `<p>Bonjour ${esc(sourceRecord.fullName)},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M TRAVEL AGENCY pour consulter votre dossier et répondre à votre conseiller.</p>`,
         });
         emailSent = true;
       } catch (error) {
@@ -4276,21 +5769,21 @@ export const adminRouter = router({
 // ─── Générateurs HTML des modèles ─────────────────────────────────────────────
 
 function generateVerificationEmailHtml(fullName: string, verifyUrl: string): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.header h1{font-size:28px;margin:12px 0 0;font-weight:900}.body{padding:40px 32px}.greeting{font-size:16px;color:#1f2937;margin-bottom:24px;line-height:1.6}.cta-section{background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border-left:4px solid #2563EB;padding:20px;border-radius:8px;margin:28px 0}.cta-text{color:#1f2937;font-size:15px;line-height:1.6;margin-bottom:16px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px}.btn-center{text-align:center}.security-badge{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:6px;margin:20px 0;font-size:13px;color:#92400e}.footer{background:linear-gradient(to bottom,#f9fafb,#f3f4f6);padding:32px 32px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Votre partenaire mobilité internationale</p></div><div class="body"><p class="greeting">Bonjour <strong>${fullName}</strong>,</p><p class="cta-text">Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p><p class="cta-text">Pour finaliser votre inscription, confirmez votre email :</p><div class="cta-section"><div class="btn-center"><a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a></div></div><div class="security-badge">🔒 <strong>Sécurité :</strong> Ce lien est personnel et valable 24 heures.</div><p class="cta-text">Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.header h1{font-size:28px;margin:12px 0 0;font-weight:900}.body{padding:40px 32px}.greeting{font-size:16px;color:#1f2937;margin-bottom:24px;line-height:1.6}.cta-section{background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border-left:4px solid #2563EB;padding:20px;border-radius:8px;margin:28px 0}.cta-text{color:#1f2937;font-size:15px;line-height:1.6;margin-bottom:16px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px}.btn-center{text-align:center}.security-badge{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:6px;margin:20px 0;font-size:13px;color:#92400e}.footer{background:linear-gradient(to bottom,#f9fafb,#f3f4f6);padding:32px 32px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M TRAVEL AGENCY</h1><p>Votre partenaire mobilité internationale</p></div><div class="body"><p class="greeting">Bonjour <strong>${fullName}</strong>,</p><p class="cta-text">Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong> ! 🎉</p><p class="cta-text">Pour finaliser votre inscription, confirmez votre email :</p><div class="cta-section"><div class="btn-center"><a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a></div></div><div class="security-badge">🔒 <strong>Sécurité :</strong> Ce lien est personnel et valable 24 heures.</div><p class="cta-text">Cordialement,<br><strong>L'équipe 3M TRAVEL AGENCY</strong></p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.</p></div></div></div></body></html>`;
 }
 
 function generateOtpEmailHtml(fullName: string, otp: string): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.otp-box{background:#eff6ff;border:2px dashed #2563EB;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.otp-code{font-size:40px;font-weight:900;color:#1E3A8A;letter-spacing:12px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Code de Vérification</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Voici votre code de vérification :</p><div class="otp-box"><div class="otp-code">${otp}</div><div style="font-size:13px;color:#6b7280;margin-top:8px;">Ce code expire dans 15 minutes</div></div><p style="font-size:13px;color:#6b7280;">Pour votre sécurité, ne partagez jamais ce code.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.otp-box{background:#eff6ff;border:2px dashed #2563EB;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.otp-code{font-size:40px;font-weight:900;color:#1E3A8A;letter-spacing:12px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M TRAVEL AGENCY</h1><p>Code de Vérification</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Voici votre code de vérification :</p><div class="otp-box"><div class="otp-code">${otp}</div><div style="font-size:13px;color:#6b7280;margin-top:8px;">Ce code expire dans 15 minutes</div></div><p style="font-size:13px;color:#6b7280;">Pour votre sécurité, ne partagez jamais ce code.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY</p></div></div></div></body></html>`;
 }
 
 function generatePasswordResetEmailHtml(fullName: string, resetUrl: string): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Réinitialisation de Mot de Passe</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez ci-dessous :</p><div class="btn-center" style="margin:24px 0"><a href="${resetUrl}" class="btn">🔑 Réinitialiser mon mot de passe</a></div><p style="font-size:13px;color:#6b7280;">Ce lien est valable 1 heure.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M TRAVEL AGENCY</h1><p>Réinitialisation de Mot de Passe</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez ci-dessous :</p><div class="btn-center" style="margin:24px 0"><a href="${resetUrl}" class="btn">🔑 Réinitialiser mon mot de passe</a></div><p style="font-size:13px;color:#6b7280;">Ce lien est valable 1 heure.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY</p></div></div></div></body></html>`;
 }
 
 function generateWelcomeEmailHtml(fullName: string, destination: string): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Bienvenue!</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>🎉 Votre compte 3M Travel est maintenant <strong>activé</strong> !</p><p>Vous pouvez maintenant :</p><ul style="margin:16px 0;padding-left:20px;color:#374151;line-height:2"><li>📁 Uploader vos documents</li><li>💬 Contacter votre conseiller</li><li>📊 Suivre votre dossier</li></ul><div class="btn-center" style="margin:24px 0"><a href="https://3mtravelagency.com/dashboard" class="btn">🚀 Accéder à mon espace</a></div></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M TRAVEL AGENCY</h1><p>Bienvenue!</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>🎉 Votre compte 3M TRAVEL AGENCY est maintenant <strong>activé</strong> !</p><p>Vous pouvez maintenant :</p><ul style="margin:16px 0;padding-left:20px;color:#374151;line-height:2"><li>📁 Uploader vos documents</li><li>💬 Contacter votre conseiller</li><li>📊 Suivre votre dossier</li></ul><div class="btn-center" style="margin:24px 0"><a href="https://3mtravelagency.com/dashboard" class="btn">🚀 Accéder à mon espace</a></div></div><div class="footer"><p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY</p></div></div></div></body></html>`;
 }
 
 function generateDossierConfirmationEmailHtml(fullName: string, dossierNumber: string, destination: string, amount: number): string {
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.dossier-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.dossier-number{font-size:32px;font-weight:900;color:#15803d;letter-spacing:6px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Confirmation de Dossier</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>✅ Votre dossier a été <strong>créé avec succès</strong> !</p><div class="dossier-box"><div style="font-size:13px;color:#6b7280;margin-bottom:6px">NUMÉRO DE DOSSIER</div><div class="dossier-number">${dossierNumber}</div></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Destination</td><td style="padding:8px;font-weight:700">${destination}</td></tr><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Montant</td><td style="padding:8px;font-weight:700">${amount.toLocaleString("fr-FR")} FCFA</td></tr></table><p style="font-size:13px;color:#6b7280">Un conseiller vous contactera sous 24h.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M Travel & Services</p></div></div></div></body></html>`;
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.dossier-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.dossier-number{font-size:32px;font-weight:900;color:#15803d;letter-spacing:6px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M TRAVEL AGENCY</h1><p>Confirmation de Dossier</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>✅ Votre dossier a été <strong>créé avec succès</strong> !</p><div class="dossier-box"><div style="font-size:13px;color:#6b7280;margin-bottom:6px">NUMÉRO DE DOSSIER</div><div class="dossier-number">${dossierNumber}</div></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Destination</td><td style="padding:8px;font-weight:700">${destination}</td></tr><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Montant</td><td style="padding:8px;font-weight:700">${amount.toLocaleString("fr-FR")} FCFA</td></tr></table><p style="font-size:13px;color:#6b7280">Un conseiller vous contactera sous 24h.</p></div><div class="footer"><p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY</p></div></div></div></body></html>`;
 }

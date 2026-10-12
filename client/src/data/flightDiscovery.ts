@@ -16,6 +16,8 @@ export type FlightRouteGroup = {
   id: string;
   title: string;
   intro: string;
+  /** Slug visuel premium (canada, france, emirats, maroc…). */
+  visualSlug: string;
   routes: FlightRoute[];
 };
 
@@ -34,29 +36,40 @@ export const FLIGHT_ROUTE_GROUPS: FlightRouteGroup[] = [
     id: "canada",
     title: "Vers le Canada",
     intro: "Études, travail, immigration ou visite de proches.",
+    visualSlug: "canada",
     routes: [route(YAOUNDE, ["YUL", "Montréal"]), route(DOUALA, ["YUL", "Montréal"]), route(DOUALA, ["YYZ", "Toronto"])],
   },
   {
     id: "europe",
     title: "Vers l’Europe",
     intro: "Espace Schengen, Royaume-Uni et correspondances.",
+    visualSlug: "france",
     routes: [route(YAOUNDE, ["CDG", "Paris"]), route(DOUALA, ["CDG", "Paris"]), route(DOUALA, ["BRU", "Bruxelles"]), route(DOUALA, ["IST", "Istanbul"])],
   },
   {
     id: "asie",
     title: "Vers la Chine et le Golfe",
     intro: "Affaires, études et escales vers l’Asie.",
+    visualSlug: "emirats",
     routes: [route(DOUALA, ["CAN", "Canton"]), route(DOUALA, ["PEK", "Pékin"]), route(YAOUNDE, ["DXB", "Dubaï"])],
   },
   {
     id: "afrique",
     title: "Au Cameroun et en Afrique",
     intro: "Vols intérieurs et liaisons régionales.",
+    visualSlug: "maroc",
     routes: [route(YAOUNDE, DOUALA, "ONE_WAY"), route(DOUALA, ["ABJ", "Abidjan"]), route(DOUALA, ["CMN", "Casablanca"]), route(DOUALA, ["ADD", "Addis-Abeba"])],
   },
 ];
 
 export const ALL_FLIGHT_ROUTES: FlightRoute[] = FLIGHT_ROUTE_GROUPS.flatMap((group) => group.routes);
+
+/** Raccourcis empty state : Yaoundé → Paris / Montréal / Dubaï. Aucun tarif ici. */
+export const FLIGHT_EMPTY_STATE_ROUTES: FlightRoute[] = [
+  route(YAOUNDE, ["CDG", "Paris"]),
+  route(YAOUNDE, ["YUL", "Montréal"]),
+  route(YAOUNDE, ["DXB", "Dubaï"]),
+];
 
 /** Liens de recherche par ville de départ (maillage interne) : mêmes parcours, regroupés autrement. */
 export const FLIGHT_ROUTES_BY_DEPARTURE: Array<{ city: string; routes: FlightRoute[] }> = ["NSI", "DLA"].map((iata) => {
@@ -90,11 +103,28 @@ export const FLIGHT_ADVANTAGES: Array<{ title: string; text: string }> = [
   { title: "Un seul interlocuteur pour tout le voyage", text: "Visa, assurance, hôtel et billet : votre dossier reste au même endroit." },
 ];
 
-export const FLIGHT_COMPANION_SERVICES: Array<{ title: string; text: string; href: string; cta: string }> = [
-  { title: "Assurance voyage", text: "Une assurance voyage est exigée pour un visa Schengen : demandez-la en même temps que votre billet.", href: "/assurance", cta: "Demander une assurance" },
-  { title: "e-Visa", text: "Pour les pays qui délivrent un e-Visa, préparez votre demande en ligne avant de partir.", href: "/evisas", cta: "Voir les e-Visa" },
-  { title: "Hôtels et séjours", text: "Réservez votre hébergement avec 3M Booking et gardez un seul interlocuteur.", href: "#3m-booking", cta: "Voir 3M Booking" },
-  { title: "Procédures de visa", text: "Études, travail, tourisme : les étapes et les sources officielles, par destination.", href: "/procedures", cta: "Consulter les procédures" },
+export const FLIGHT_COMPANION_SERVICES: Array<{ title: string; text: string; href: string; cta: string; visualId: string }> = [
+  { title: "Assurance voyage", text: "Une assurance voyage est exigée pour un visa Schengen : demandez-la en même temps que votre billet.", href: "/assurance", cta: "Demander une assurance", visualId: "assurance" },
+  { title: "e-Visa", text: "Pour les pays qui délivrent un e-Visa, préparez votre demande en ligne avant de partir.", href: "/evisas", cta: "Voir les e-Visa", visualId: "evisa" },
+  { title: "Hôtels et séjours", text: "Réservez votre hébergement avec 3M Booking et gardez un seul interlocuteur.", href: "#3m-booking", cta: "Voir 3M Booking", visualId: "hotels" },
+  { title: "Procédures de visa", text: "Études, travail, tourisme : les étapes et les sources officielles, par destination.", href: "/procedures", cta: "Consulter les procédures", visualId: "visas" },
+];
+
+/**
+ * Compagnies fréquemment relevées depuis le Cameroun / l’Afrique centrale.
+ * Logos via domaine officiel (Clearbit) — repli icône côté UI si le CDN échoue. Aucun tarif ici.
+ */
+export const FEATURED_AFRICA_CARRIERS: Array<{ code: string; name: string; logo: string; hub: string; corridor: string }> = [
+  { code: "QC", name: "Camair-Co", logo: "https://logo.clearbit.com/camair-co.cm", hub: "Yaoundé · Douala", corridor: "Afrique centrale" },
+  { code: "ET", name: "Ethiopian Airlines", logo: "https://logo.clearbit.com/ethiopianairlines.com", hub: "Addis-Abeba", corridor: "Afrique → monde" },
+  { code: "KP", name: "ASKY Airlines", logo: "https://logo.clearbit.com/flyasky.com", hub: "Lomé", corridor: "Afrique de l’Ouest" },
+  { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", hub: "Casablanca", corridor: "Afrique → Europe" },
+  { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", hub: "Nairobi", corridor: "Afrique de l’Est" },
+  { code: "AF", name: "Air France", logo: "https://logo.clearbit.com/airfrance.com", hub: "Paris", corridor: "Cameroun → Europe" },
+  { code: "TK", name: "Turkish Airlines", logo: "https://logo.clearbit.com/turkishairlines.com", hub: "Istanbul", corridor: "Correspondances Asie" },
+  { code: "HF", name: "Air Côte d’Ivoire", logo: "https://logo.clearbit.com/aircotedivoire.com", hub: "Abidjan", corridor: "Afrique de l’Ouest" },
+  { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", hub: "Kigali", corridor: "Afrique → Europe" },
+  { code: "MS", name: "EgyptAir", logo: "https://logo.clearbit.com/egyptair.com", hub: "Le Caire", corridor: "Afrique → Moyen-Orient" },
 ];
 
 /** Options d'escales proposées avant la recherche ; null = pas de limite. */
@@ -122,6 +152,49 @@ export const LAST_FLIGHT_SEARCH_KEY = "3m-last-flight-search";
 export type RecentFlightSearch = LastFlightSearch & { savedAt: number };
 export const RECENT_FLIGHT_SEARCHES_KEY = "3m-recent-flight-searches";
 export const MAX_RECENT_FLIGHT_SEARCHES = 5;
+
+/** Dernière demande de réservation créée sur cet appareil (suivi + paiement en attente). */
+export const LAST_FLIGHT_BOOKING_KEY = "3m-last-flight-booking";
+export type LastFlightBookingSnapshot = {
+  requestId: number;
+  requestRef: string;
+  email: string;
+  status: string;
+  createdAt: number;
+  routeLabel: string;
+  quotedTotalPrice?: number;
+};
+
+export function parseLastFlightBooking(raw: string | null): LastFlightBookingSnapshot | null {
+  if (!raw || raw.length > 800) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return null;
+    const requestId = typeof parsed.requestId === "number" && Number.isInteger(parsed.requestId) && parsed.requestId > 0 ? parsed.requestId : null;
+    const requestRef = typeof parsed.requestRef === "string" && /^3M-FL-/i.test(parsed.requestRef) ? parsed.requestRef : null;
+    const email = typeof parsed.email === "string" && parsed.email.includes("@") ? parsed.email.trim().slice(0, 320) : null;
+    const status = typeof parsed.status === "string" ? parsed.status.slice(0, 40) : "pending_review";
+    const createdAt = typeof parsed.createdAt === "number" && Number.isFinite(parsed.createdAt) ? parsed.createdAt : null;
+    const routeLabel = typeof parsed.routeLabel === "string" ? parsed.routeLabel.slice(0, 120) : "";
+    const quotedTotalPrice = typeof parsed.quotedTotalPrice === "number" && Number.isFinite(parsed.quotedTotalPrice) && parsed.quotedTotalPrice > 0
+      ? parsed.quotedTotalPrice
+      : undefined;
+    if (!requestId || !requestRef || !email || !createdAt) return null;
+    // Expire après 14 jours : au-delà, le suivi passe par e-mail / espace client.
+    if (Date.now() - createdAt > 14 * 24 * 60 * 60 * 1000) return null;
+    return { requestId, requestRef, email, status, createdAt, routeLabel, quotedTotalPrice };
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastFlightBooking(snapshot: LastFlightBookingSnapshot): void {
+  try {
+    sessionStorage.setItem(LAST_FLIGHT_BOOKING_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Navigation privée : le suivi reste possible via e-mail de confirmation.
+  }
+}
 
 const CABINS = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;

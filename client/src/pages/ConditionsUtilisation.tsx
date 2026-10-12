@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 
 export default function ConditionsUtilisation() {
   return (
@@ -32,7 +31,7 @@ export default function ConditionsUtilisation() {
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-900 font-semibold">
-                ⚠️ 3M Travel Agency ne délivre aucun visa ni permis de travail. La décision finale d'octroi appartient exclusivement aux autorités consulaires et administratives compétentes de chaque pays.
+                ⚠️ 3M TRAVEL AGENCY ne délivre aucun visa ni permis de travail. La décision finale d'octroi appartient exclusivement aux autorités consulaires et administratives compétentes de chaque pays.
               </p>
             </div>
           </div>
@@ -57,7 +56,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Obligations du client</h2>
             <p className="text-gray-700 leading-relaxed">
-              Le client s'engage à fournir des informations et documents exacts, complets et authentiques. 3M Travel Agency ne saurait être tenue responsable des conséquences liées à des informations erronées ou falsifiées fournies par le client.
+              Le client s'engage à fournir des informations et documents exacts, complets et authentiques. 3M TRAVEL AGENCY ne saurait être tenue responsable des conséquences liées à des informations erronées ou falsifiées fournies par le client.
             </p>
           </div>
 
@@ -106,7 +105,6 @@ export default function ConditionsUtilisation() {
         </div>
       </section>
 
-      <Footer />
     </main>
   );
 }

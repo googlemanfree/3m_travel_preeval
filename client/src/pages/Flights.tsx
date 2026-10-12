@@ -8,17 +8,17 @@ import {
   Plane, ArrowLeftRight, Calendar, Users, ChevronDown, Search,
   Filter, X, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
-  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2,
+  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble, History, Trash2, Share2,
 } from "lucide-react";
 import { Link } from "wouter";
-import Footer from "@/components/Footer";
 import { Mail, Check, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
-import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import { FlightBestOffers, FlightClientReviews, FlightLowerSections, FlightPopularRoutes, FlightSearchEmptyState, FlightSearchSkeleton, FlightServiceTabs, type BestOffer } from "@/components/FlightDiscoverySections";
+import FlightReservationPendingBand from "@/components/FlightReservationPendingBand";
 import { prefillFromOffer, type QuoteIntent, type QuotePrefill } from "@/data/flightQuote";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
@@ -100,7 +100,7 @@ function EmailSummaryButton({ flight, compact = false }: { flight: Flight; compa
               <input
                 type="email"
                 required
-                placeholder="votre.email@exemple.com"
+                aria-label="Adresse e-mail" placeholder="votre.email@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={320}
@@ -243,6 +243,7 @@ export function AirportInput({
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
+          aria-label={label}
           placeholder={placeholder}
           maxLength={200}
           className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors"
@@ -374,7 +375,7 @@ export function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void }) {
+export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = false, onChooseReturn, staggerIndex = 0 }: { flight: Flight; searchParams: any; servedFromCache: boolean; roundTrip?: boolean; onChooseReturn?: (flight: Flight) => void; staggerIndex?: number }) {
   const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
@@ -389,6 +390,7 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
     try {
       sessionStorage.setItem("3m-selected-flight", JSON.stringify({
         flight,
+        quotedTotalPrice: flight.totalPrice,
         searchParams,
         selectedAt: Date.now(),
       }));
@@ -430,7 +432,7 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
   };
 
   function buildWhatsAppMsg() {
-    const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Tarif relevé : ${formatXAF(flight.totalPrice)}\n\nMerci de vérifier la disponibilité et le tarif, puis de me contacter pour finaliser la réservation.`;
+    const msg = `Bonjour 3M TRAVEL AGENCY, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Tarif relevé : ${formatXAF(flight.totalPrice)}\n\nMerci de vérifier la disponibilité et le tarif, puis de me contacter pour finaliser la réservation.`;
     return `https://wa.me/237698104832?text=${encodeURIComponent(msg)}`;
   }
 
@@ -439,15 +441,16 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative"
+      transition={{ duration: 0.35, delay: Math.min(staggerIndex, 10) * 0.045, ease: [0.22, 1, 0.36, 1] }}
+      className="premium-card-enter bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative motion-reduce:animate-none"
     >
       {/* Provenance : dans le fil normal de la carte (jamais en survol du tarif, comme quand elles flottaient par-dessus). */}
       {(flight.isLiveGoogleFlights || servedFromCache) && (
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-slate-50/70 px-4 py-1.5 md:px-5">
           {flight.isLiveGoogleFlights && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white">✨ En direct de Google Flights</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-700 to-[#0B2A52] px-2.5 py-0.5 text-[10px] font-bold text-white">En direct de Google Flights</span>
           )}
           {servedFromCache && (
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700"><RefreshCw className="w-3 h-3" /> Résultat en cache</span>
@@ -508,12 +511,15 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
                   <Plane className="w-4 h-4 mr-1" /> Choisir le retour
                 </Button>
               ) : (
-                <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
+                <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout} data-testid="flight-reserve-online">
                   <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
                     <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
                   </Button>
                 </a>
               )}
+              <p className="text-[10px] leading-4 text-slate-500 md:text-right" data-testid="flight-reserve-microcopy">
+                Tarif relevé → revalidation agence → paiement en attente → billet
+              </p>
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
@@ -612,6 +618,12 @@ export function FlightCard({ flight, searchParams, servedFromCache, roundTrip = 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Flights() {
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Titre lisible (jamais JSON-encodé) — évite « \u0026 » dans les barres d’aperçu.
+    document.title = "Billets d'avion internationaux | 3M TRAVEL AGENCY";
+  }, []);
+
   const initialParams = new URLSearchParams(window.location.search);
   const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">(
     (initialParams.get("tripType") as "ONE_WAY" | "ROUND_TRIP") || "ROUND_TRIP"
@@ -797,32 +809,48 @@ export default function Flights() {
   const quotePrefillNonce = useRef(1);
 
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
+  const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
 
   useEffect(() => {
-    if (searchEnabled) {
-      try {
-        let email = undefined;
-        const userStr = localStorage.getItem("manus_user") || sessionStorage.getItem("manus_user");
-        if (userStr) {
-          const u = JSON.parse(userStr);
-          if (u?.email) email = u.email;
-        }
-        saveSearchHistoryMutation({
-          userEmail: email,
-          origin,
-          destination,
-          departureDate,
-          returnDate: tripType === "ROUND_TRIP" ? returnDate : undefined,
-          adults: passengers.adults,
-          cabinClass: passengers.cabinClass,
-        });
-      } catch {
-        // ignore
+    if (!searchEnabled) return;
+    try {
+      let email: string | undefined;
+      const userStr = localStorage.getItem("manus_user") || sessionStorage.getItem("manus_user");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        if (u?.email) email = u.email;
       }
+      saveSearchHistoryMutation({
+        userEmail: email,
+        origin,
+        destination,
+        departureDate,
+        returnDate: tripType === "ROUND_TRIP" ? returnDate : undefined,
+        adults: passengers.adults,
+        cabinClass: passengers.cabinClass,
+      });
+    } catch {
+      // Historique serveur facultatif : la recherche reste utilisable.
     }
-  }, [searchEnabled, origin, destination, departureDate]);
+  }, [searchEnabled, origin, destination, departureDate, returnDate, tripType, passengers.adults, passengers.cabinClass, saveSearchHistoryMutation]);
 
-  const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
+  // Écrit l’URL pour refresh / partage WhatsApp (lue au mount, mais jamais réécrite auparavant).
+  useEffect(() => {
+    if (!searchEnabled) return;
+    const params = new URLSearchParams({
+      origin,
+      destination,
+      date: departureDate,
+      tripType,
+      adults: String(passengers.adults),
+      cabinClass: passengers.cabinClass,
+    });
+    if (tripType === "ROUND_TRIP") params.set("returnDate", returnDate);
+    const next = `?${params.toString()}`;
+    if (window.location.search !== next) {
+      window.history.replaceState(null, "", `${window.location.pathname}${next}`);
+    }
+  }, [searchEnabled, origin, destination, departureDate, returnDate, tripType, passengers.adults, passengers.cabinClass]);
 
   function handleDepartureDateChange(value: string) {
     const nextDeparture = isValidIsoDate(value) && value >= today() ? value : minDate(7);
@@ -842,12 +870,36 @@ export default function Flights() {
 
   // Recherche personnalisée par un conseiller (aucun vol trouvé, moteur indisponible ou simple préférence).
   const searchWhatsAppMessage = [
-    "Bonjour 3M Travel, je souhaite une recherche personnalisée de vol.",
+    "Bonjour 3M TRAVEL AGENCY, je souhaite une recherche personnalisée de vol.",
     `Itinéraire : ${airportLabel(origin)} → ${airportLabel(destination)}`,
     `Départ : ${departureDate}${tripType === "ROUND_TRIP" ? ` ; retour : ${returnDate}` : " (aller simple)"}`,
     `Passagers : ${passengers.adults} adulte(s)${passengers.children > 0 ? `, ${passengers.children} enfant(s)` : ""}${passengers.infants > 0 ? `, ${passengers.infants} bébé(s)` : ""}`,
     `Classe : ${CABIN_LABELS[passengers.cabinClass] || passengers.cabinClass}`,
   ].join("\n");
+
+  async function shareSearch() {
+    const url = window.location.href;
+    const title = `Vols ${airportLabel(origin)} → ${airportLabel(destination)}`;
+    const text = `Recherche 3M TRAVEL AGENCY : ${airportLabel(origin)} → ${airportLabel(destination)} · ${departureDate}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title, text, url });
+        trackEvent("flight_search_shared", { method: "web_share" });
+        return;
+      }
+    } catch {
+      // Annulation utilisateur : ne pas forcer le fallback.
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Lien copié", description: "Collez-le dans WhatsApp ou un message." });
+      trackEvent("flight_search_shared", { method: "clipboard" });
+    } catch {
+      window.open(digitalWhatsAppUrl(`${text}\n${url}`), "_blank", "noopener,noreferrer");
+      trackEvent("flight_search_shared", { method: "whatsapp_fallback" });
+    }
+  }
 
   function handleSearch() {
     if (!isValidIsoDate(departureDate) || departureDate < today()) {
@@ -868,28 +920,39 @@ export default function Flights() {
     }
   }
 
-  // Derived filtered/sorted results
+  // Derived filtered/sorted results — accès compagnie/prix défensif (évite un crash = page blanche).
   const outbound: Flight[] = data?.outbound ?? [];
   const servedFromCache = Boolean(data?.cache?.servedFromCache);
+  const airlineCodeOf = (flight: Flight) => flight.airline?.code ?? "";
   const filtered = outbound
     .filter((f) => maxStops === null || f.stops <= maxStops)
-    .filter((f) => selectedAirlines.length === 0 || selectedAirlines.includes(f.airline.code))
-    .filter((f) => f.totalPrice >= priceRange[0] && f.totalPrice <= priceRange[1])
+    .filter((f) => {
+      const code = airlineCodeOf(f);
+      return selectedAirlines.length === 0 || (code !== "" && selectedAirlines.includes(code));
+    })
+    .filter((f) => Number.isFinite(f.totalPrice) && f.totalPrice >= priceRange[0] && f.totalPrice <= priceRange[1])
     .sort((a, b) => {
       if (sortBy === "price") return a.totalPrice - b.totalPrice;
       if (sortBy === "duration") return a.durationMinutes - b.durationMinutes;
       return a.stops - b.stops;
     });
 
-  const allAirlines = Array.from(new Set(outbound.map((f) => f.airline.code))).map((code) => outbound.find((f) => f.airline.code === code)!.airline);
-  const maxPrice = Math.max(...outbound.map((f) => f.totalPrice), 10000000);
-  const minPrice = Math.min(...outbound.map((f) => f.totalPrice), 0);
+  const allAirlines = Array.from(
+    new Map(
+      outbound
+        .filter((flight) => flight.airline?.code)
+        .map((flight) => [flight.airline.code, flight.airline] as const),
+    ).values(),
+  );
+  const pricedOutbound = outbound.map((f) => f.totalPrice).filter((price) => Number.isFinite(price) && price >= 0);
+  const minPrice = pricedOutbound.length > 0 ? Math.min(...pricedOutbound) : 0;
+  const maxPrice = pricedOutbound.length > 0 ? Math.max(...pricedOutbound) : 10_000_000;
 
   useEffect(() => {
-    if (outbound.length > 0) {
+    if (pricedOutbound.length > 0) {
       setPriceRange([minPrice, maxPrice]);
     }
-  }, [outbound.length]);
+  }, [outbound.length, minPrice, maxPrice, pricedOutbound.length]);
 
   const swapAirports = () => {
     const tmp = origin;
@@ -941,17 +1004,38 @@ export default function Flights() {
     <main className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
 
-      {/* Search Panel */}
-      <div className="bg-white px-4 pb-10 pt-10 md:pt-14" data-testid="flight-hero">
-        <div className="max-w-5xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <h1 className="mx-auto max-w-3xl text-3xl font-medium leading-tight text-[#0B1B4D] md:text-5xl">
-              Rechercher des <span className="text-amber-500">billets d’avion</span> pas chers et des bons plans voyages
+      {/* Hero atmosphère mobilité — image réelle, marque d’abord, puis recherche */}
+      <section className="relative overflow-hidden" data-testid="flight-hero" aria-labelledby="flights-hero-title">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img
+            src="/manus-storage/3m-home-mobility-hero_f9957244.webp"
+            alt=""
+            className="flights-hero-media h-full w-full object-cover object-center"
+            width={1600}
+            height={900}
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020C3B]/88 via-[#0B1F55]/78 to-[#061a36]/92" />
+        </div>
+        <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-12 md:pb-12 md:pt-16">
+          <motion.div
+            initial={false}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 text-center text-white"
+          >
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-amber-200 md:text-base" data-testid="flights-hero-brand">
+              3M TRAVEL AGENCY
+            </p>
+            <h1 id="flights-hero-title" className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight text-white md:text-5xl">
+              Billets d’avion internationaux
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600">Comparez les tarifs de plusieurs compagnies au départ de Yaoundé, Douala et du monde entier. Un conseiller 3M confirme le tarif avant toute réservation.</p>
+            <p className="premium-copy-on-dark mx-auto mt-4 max-w-2xl text-base md:text-lg">
+              Comparez les compagnies pour vos vols internationaux — et poursuivez avec visas, e-Visa, assurance, hôtels et accompagnement. Un conseiller 3M TRAVEL AGENCY confirme le tarif relevé avant toute réservation.
+            </p>
           </motion.div>
 
-          <div className="rounded-3xl bg-gradient-to-br from-[#0F2A6B] via-[#0B1F55] to-[#020C3B] p-4 shadow-2xl md:p-6">
+          <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-[#0F2A6B]/95 via-[#0B1F55]/95 to-[#020C3B]/95 p-4 shadow-2xl backdrop-blur-sm md:p-6">
           <FlightServiceTabs />
           {recentSearches.length > 0 && !searchEnabled && (
             <section aria-label="Recherches récentes" className="mb-5 rounded-2xl border border-white/15 bg-white/10 p-3 text-white backdrop-blur-sm">
@@ -1005,11 +1089,11 @@ export default function Flights() {
 
           {/* Search form */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
             aria-busy={isSearchBusy}
+            data-testid="flight-search-panel"
           >
             {/* Départ / arrivée : sur leur propre ligne, chacun avec toute la largeur disponible. */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1036,7 +1120,7 @@ export default function Flights() {
                 <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Départ</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                  <input type="date" value={departureDate} min={today()}
+                  <input type="date" aria-label="Date de départ" value={departureDate} min={today()}
                     onChange={(e) => handleDepartureDateChange(e.target.value)}
                     className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                 </div>
@@ -1046,7 +1130,7 @@ export default function Flights() {
                   <label className="block text-xs font-semibold text-[#1E3A8A] mb-1 uppercase tracking-wide">Retour</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
-                    <input type="date" value={returnDate} min={departureDate}
+                    <input type="date" aria-label="Date de retour" value={returnDate} min={departureDate}
                       onChange={(e) => handleReturnDateChange(e.target.value)}
                       className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-base sm:text-sm font-medium bg-white transition-colors" />
                   </div>
@@ -1118,6 +1202,10 @@ export default function Flights() {
           </motion.div>
           </div>
         </div>
+      </section>
+
+      <div className="order-3" data-testid="flight-social-proof">
+        <FlightClientReviews reviews={reviewsQuery.data ?? []} />
       </div>
 
       <section id="3m-booking" className="order-5 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
@@ -1182,25 +1270,16 @@ export default function Flights() {
         </motion.div>
       </div>
 
-      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightClientReviews reviews={reviewsQuery.data ?? []} /><FlightBookingFAQ /></div>
+      <div className="order-3"><FlightLowerSections onPick={pickRoute} /><FlightBookingFAQ /></div>
 
       {/* Results */}
       <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8">
+        <FlightReservationPendingBand />
         {!searchEnabled && offersQuery.data?.status === "live" && <FlightBestOffers offers={offersQuery.data.offers} retrievedAt={offersQuery.data.retrievedAt} onPick={pickOffer} onAdvisor={askAdvisor} />}
         {!searchEnabled && <FlightPopularRoutes onPick={pickRoute} />}
 
         {isFetching && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24 bg-white rounded-3xl border border-blue-100 shadow-xl max-w-xl mx-auto my-12 p-8">
-            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-blue-50 rounded-full">
-              <div className="absolute inset-0 border-4 border-blue-200 border-t-[#2563EB] rounded-full animate-spin"></div>
-              <Plane className="w-8 h-8 text-[#2563EB] animate-pulse" />
-            </div>
-            <h3 className="text-xl font-black text-[#1E3A8A] mb-2">Recherche en temps réel...</h3>
-            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-4">Interrogation des compagnies aériennes et agrégation des grilles tarifaires officielles.</p>
-            <div className="w-48 h-1.5 bg-gray-100 rounded-full mx-auto overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 animate-[pulse_1s_infinite]"></div>
-            </div>
-          </motion.div>
+          <FlightSearchSkeleton routeLabel={`${airportLabel(origin)} → ${airportLabel(destination)}`} />
         )}
 
         {searchEnabled && !isFetching && !error && outbound.length > 0 && (
@@ -1220,6 +1299,7 @@ export default function Flights() {
                 <div className="mb-5">
                   <div className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Alliance aérienne</div>
                   <select
+                    aria-label="Alliance aérienne"
                     value={selectedAlliance}
                     onChange={(e) => setSelectedAlliance(e.target.value)}
                     className="w-full bg-slate-50 border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
@@ -1284,9 +1364,17 @@ export default function Flights() {
                 <div className="text-sm font-semibold text-gray-600">
                   <span className="text-[#1E3A8A] font-black text-lg">{filtered.length}</span> vol{filtered.length > 1 ? "s" : ""} trouvé{filtered.length > 1 ? "s" : ""}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => void shareSearch()}
+                    data-testid="flight-share-search"
+                    className="touch-target inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#1E3A8A] transition hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    <Share2 className="h-4 w-4" aria-hidden="true" /> Partager
+                  </button>
                   <button onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden flex items-center gap-1 text-sm font-semibold text-[#2563EB] border border-[#2563EB] px-3 py-1.5 rounded-lg">
+                    className="lg:hidden flex items-center gap-1 text-sm font-semibold text-[#2563EB] border border-[#2563EB] px-3 py-1.5 rounded-lg min-h-10">
                     <Filter className="w-4 h-4" /> Filtres
                   </button>
                   <div className="flex items-center gap-1 text-xs">
@@ -1303,15 +1391,32 @@ export default function Flights() {
 
               {/* Flight cards */}
               <div className="space-y-4">
-                {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
+                {filtered.map((flight, index) => (
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} servedFromCache={servedFromCache} roundTrip={tripType === "ROUND_TRIP"} staggerIndex={index} onChooseReturn={(flight) => { trackEvent("booking_request_started", { flightId: flight.id }); setPendingOutbound(flight); }} />
                 ))}
                 {filtered.length === 0 && (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 px-4" data-testid="flight-filters-empty">
                     <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 font-semibold">Aucun vol ne correspond à vos filtres.</p>
-                    <button onClick={() => { setMaxStops(null); setSelectedAirlines([]); setPriceRange([minPrice, maxPrice]); }}
-                      className="mt-3 text-[#2563EB] text-sm font-semibold hover:underline">Réinitialiser les filtres</button>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setMaxStops(null); setSelectedAirlines([]); setPriceRange([minPrice, maxPrice]); }}
+                        className="touch-target min-h-10 rounded-xl bg-[#1E3A8A] px-4 text-sm font-black text-white"
+                      >
+                        Réinitialiser les filtres
+                      </button>
+                      <a
+                        href={digitalWhatsAppUrl(searchWhatsAppMessage)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackEvent("whatsapp_clicked", { context: "filters_empty" })}
+                        data-testid="search-whatsapp-filters_empty"
+                        className="touch-target inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white hover:bg-emerald-800"
+                      >
+                        <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp conseiller
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1332,28 +1437,70 @@ export default function Flights() {
         )}
 
         {searchEnabled && !isFetching && error && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 bg-rose-50 border border-rose-200 rounded-3xl max-w-2xl mx-auto my-8 p-8">
-            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-            <h3 className="text-lg font-black text-rose-800 mb-2">La recherche n’a pas abouti</h3>
-            <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })} data-testid="search-whatsapp-search_error" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Faire chercher par un conseiller</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1, y: 0 }}>
+            <FlightSearchEmptyState
+              reason="error"
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id, context: "search_error" });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "search_error" })}
+              whatsappTestId="search-whatsapp-search_error"
+            />
           </motion.div>
         )}
 
         {searchEnabled && !isFetching && !error && outbound.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-            <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">{data?.providerNotice ? "La recherche en direct est momentanément indisponible." : "Aucun vol trouvé pour cette recherche."}</p>
-            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">{data?.providerNotice ?? "Essayez d’autres dates ou élargissez votre destination."}</p>
-            <div className="mt-5 flex justify-center">
-              <a href={digitalWhatsAppUrl(searchWhatsAppMessage)} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })} data-testid="search-whatsapp-no_results" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800"><MessageCircle className="w-4 h-4" aria-hidden="true" /> Demander une recherche personnalisée</a>
-            </div>
+          <motion.div initial={false} animate={{ opacity: 1 }}>
+            <FlightSearchEmptyState
+              reason={data?.providerNotice ? "unavailable" : "no_results"}
+              notice={data?.providerNotice}
+              whatsappUrl={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              onPickRoute={(route) => {
+                trackEvent("flight_empty_shortcut", { route: route.id });
+                pickRoute(route);
+              }}
+              onRetry={handleSearch}
+              onWhatsAppClick={() => trackEvent("whatsapp_clicked", { context: "no_results" })}
+              whatsappTestId="search-whatsapp-no_results"
+            />
           </motion.div>
         )}
       </div>
+
+      {searchEnabled && !isFetching && outbound.length > 0 && (
+        <div
+          className="safe-bottom-sticky-cta fixed inset-x-0 bottom-0 z-40 border-t border-blue-100 bg-white/95 px-3 pt-2 shadow-[0_-8px_30px_-12px_rgba(15,47,111,0.28)] backdrop-blur md:hidden"
+          data-testid="flights-sticky-cta"
+          role="region"
+          aria-label="Actions rapides vols"
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={() => {
+                document.querySelector('[data-testid="flight-search-panel"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-center text-sm font-bold text-[#1E3A8A] transition active:scale-[0.98]"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" /> Modifier
+            </button>
+            <a
+              href={digitalWhatsAppUrl(searchWhatsAppMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent("whatsapp_clicked", { context: "flights_sticky_cta" })}
+              data-testid="flights-sticky-whatsapp"
+              className="touch-target inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3 text-center text-sm font-black text-white transition hover:bg-emerald-800 active:scale-[0.98]"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
       {pendingOutbound && (
         <ReturnFlightModal
           outboundFlight={pendingOutbound}
@@ -1367,7 +1514,6 @@ export default function Flights() {
         />
       )}
 
-      <div className="order-6"><Footer /></div>
     </main>
   );
 }
@@ -1402,25 +1548,25 @@ function AIPlannerForm() {
         <form onSubmit={(e) => { e.preventDefault(); planMutation.mutate({ origin, destination, dates, budget, preferences }); }} className="space-y-3">
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Ville de départ</label>
-            <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" aria-label="Ville de départ" value={origin} onChange={(e) => setOrigin(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Destination</label>
-            <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
+            <input type="text" aria-label="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Période / Dates</label>
-              <input type="text" value={dates} onChange={(e) => setDates(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" aria-label="Période / Dates" value={dates} onChange={(e) => setDates(e.target.value)} maxLength={100} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Budget</label>
-              <input type="text" value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={50} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+              <input type="text" aria-label="Budget" value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={50} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
             </div>
           </div>
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Préférences particulières</label>
-            <input type="text" value={preferences} onChange={(e) => setPreferences(e.target.value)} maxLength={500} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
+            <input type="text" aria-label="Préférences particulières" value={preferences} onChange={(e) => setPreferences(e.target.value)} maxLength={500} className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white" />
           </div>
 
           <button type="submit" disabled={planMutation.isPending} className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2">

@@ -7,8 +7,8 @@ const readProjectFile = (relativePath: string) => readFileSync(resolve(process.c
 describe("client communication and report previews", () => {
   it("does not expose AI wording in the client messaging surface", () => {
     const space = readProjectFile("client/src/pages/EvaluationSpace.tsx");
-    expect(space).toContain("Messagerie avec votre conseiller 3M Travel");
-    expect(space).toContain("Assistance 3M Travel");
+    expect(space).toContain("Messagerie avec votre conseiller 3M TRAVEL AGENCY");
+    expect(space).toContain("Assistance 3M TRAVEL AGENCY");
     expect(space).not.toContain("Assistant Aureol IA");
     expect(space).not.toContain("Posez vos questions à notre IA");
   });

@@ -24,7 +24,7 @@ describe("résilience du rechargement de l’espace client", () => {
     expect(dashboard).toContain("portraitIsMissing");
     expect(dashboard).toContain("Complétez votre profil");
     expect(dashboard).toContain("sessionConfirmedInvalid");
-    expect(dashboard).toContain("Vérification de votre espace en cours");
+    expect(dashboard).toContain("Chargement de votre tableau de bord...");
   });
 
   it("ne redirige pas une session admin présente lors d’un délai temporaire", () => {

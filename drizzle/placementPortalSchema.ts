@@ -1,4 +1,32 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, tinyint, varchar } from "drizzle-orm/mysql-core";
+
+/** Demande d’accès structurée avant vérification humaine et remise d’identifiants. */
+export const placementAccessRequests = mysqlTable("placement_access_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationType: mysqlEnum("organization_type", ["placement_partner", "employer"]).notNull(),
+  legalName: varchar("legal_name", { length: 255 }).notNull(),
+  registrationNumber: varchar("registration_number", { length: 120 }),
+  country: varchar("country", { length: 120 }).notNull(),
+  city: varchar("city", { length: 120 }),
+  website: varchar("website", { length: 320 }),
+  contactFullName: varchar("contact_full_name", { length: 255 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 320 }).notNull(),
+  contactPhone: varchar("contact_phone", { length: 64 }).notNull(),
+  contactRole: varchar("contact_role", { length: 160 }).notNull(),
+  sectors: varchar("sectors", { length: 255 }),
+  targetMarkets: varchar("target_markets", { length: 255 }),
+  message: text("message").notNull(),
+  status: mysqlEnum("status", ["pending", "under_review", "approved", "rejected"]).notNull().default("pending"),
+  organizationId: int("organization_id"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedByAdminId: int("reviewed_by_admin_id"),
+  reviewNote: text("review_note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_placement_access_requests_status").on(table.status, table.organizationType, table.createdAt),
+  index("idx_placement_access_requests_email").on(table.contactEmail, table.status),
+]);
 
 /** Organismes de placement ou employeurs, créés et vérifiés exclusivement par 3M. */
 export const placementOrganizations = mysqlTable("placement_organizations", {
@@ -36,6 +64,8 @@ export const candidatePlacementConsents = mysqlTable("candidate_placement_consen
   id: int("id").autoincrement().primaryKey(),
   candidateId: int("candidate_id").notNull().unique(),
   status: mysqlEnum("status", ["granted", "withdrawn"]).notNull().default("withdrawn"),
+  pdfShareConsent: tinyint("pdf_share_consent").notNull().default(0),
+  photoShareConsent: tinyint("photo_share_consent").notNull().default(0),
   consentedAt: timestamp("consented_at"),
   withdrawnAt: timestamp("withdrawn_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
@@ -52,6 +82,14 @@ export const placementCandidateProfiles = mysqlTable("placement_candidate_profil
   sector: varchar("sector", { length: 160 }),
   yearsExperience: varchar("years_experience", { length: 32 }),
   languagesSummary: varchar("languages_summary", { length: 255 }),
+  summaryStatus: mysqlEnum("summary_status", ["draft", "approved", "rejected", "needs_revalidation"]).notNull().default("draft"),
+  summaryDraft: text("summary_draft"),
+  summaryPdfKey: varchar("summary_pdf_key", { length: 512 }),
+  summaryFingerprint: varchar("summary_fingerprint", { length: 128 }),
+  summaryReviewNote: text("summary_review_note"),
+  summaryValidatedAt: timestamp("summary_validated_at"),
+  summaryValidatedByAdminId: int("summary_validated_by_admin_id"),
+  summaryUpdatedAt: timestamp("summary_updated_at"),
   createdByAdminId: int("created_by_admin_id").notNull(),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -64,6 +102,11 @@ export const placementProfileSubmissions = mysqlTable("placement_profile_submiss
   profileId: int("profile_id").notNull(),
   organizationId: int("organization_id").notNull(),
   status: mysqlEnum("status", ["submitted", "under_review", "shortlisted", "selected", "not_selected", "documents_requested", "procedure_ready", "withdrawn"]).notNull().default("submitted"),
+  /** Étape admin après sélection : contrat/invitation → N°02 → procédure. */
+  adminPipelineStage: mysqlEnum("admin_pipeline_stage", ["selected", "contract_invitation", "protocol_two", "procedure_ready"]),
+  contractConfirmedAt: timestamp("contract_confirmed_at"),
+  invitationConfirmedAt: timestamp("invitation_confirmed_at"),
+  protocolTwoOpenedAt: timestamp("protocol_two_opened_at"),
   submittedByAdminId: int("submitted_by_admin_id").notNull(),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   lastResponseAt: timestamp("last_response_at"),

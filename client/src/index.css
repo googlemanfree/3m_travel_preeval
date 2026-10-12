@@ -43,7 +43,7 @@
 }
 
 :root {
-  /* ── Palette 3M Travel & Services ─────────────────────────────────────────
+  /* ── Palette 3M TRAVEL AGENCY ─────────────────────────────────────────
      Bleu royal foncé  : #1E3A8A  (anneau extérieur du logo)
      Bleu moyen        : #2563EB  (couleur principale des éléments)
      Bleu ciel         : #7CB9E8  (anneau intérieur / texte 3M clair)
@@ -70,11 +70,10 @@
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
-  --muted-foreground: #40516a; /* Accessible institutional slate */
+  --muted-foreground: #334155; /* Contraste AA sur fond clair */
   --secondary: #eef3f9; /* Cool mist */
   --secondary-foreground: #1f2937; /* Darker Gray for better contrast */
   --muted: #e3eaf3; /* Cool gray */
-  --muted-foreground: #40516a; /* Accessible institutional slate */
   --accent: #d5a84b;
   --accent-foreground: #10213b; /* Ink on gold */
   --destructive: #dc2626; /* Red-600 */
@@ -134,6 +133,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-padding-top: 6rem;
+    text-rendering: optimizeLegibility;
   }
   * {
     @apply border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
@@ -142,6 +142,17 @@
     @apply bg-background text-foreground;
     min-width: 320px;
     overflow-x: hidden;
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Sora", "Manrope", sans-serif;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -238,6 +249,70 @@
       radial-gradient(circle at 8% 0%, rgba(213, 168, 75, 0.08), transparent 26rem),
       radial-gradient(circle at 94% 8%, rgba(22, 93, 255, 0.08), transparent 30rem),
       var(--background);
+  }
+
+  .reveal-on-scroll {
+    animation: reveal-on-scroll 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  @keyframes reveal-on-scroll {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-on-scroll { animation: none; }
+  }
+
+  /* Texte d’accompagnement lisible (contraste + interligne) — à utiliser hors badges/labels */
+  .premium-copy {
+    color: #334155;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+  }
+
+  .premium-copy-on-dark {
+    color: rgba(241, 245, 249, 0.92);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .premium-section-title {
+    font-family: "Sora", "Manrope", sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #0f1f36;
+  }
+
+  .premium-section-lead {
+    margin-top: 0.75rem;
+    max-width: 42rem;
+    color: #334155;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  /* Formulaires publics : labels et champs plus lisibles */
+  .premium-form-surface label,
+  [data-slot="label"] {
+    color: #1e293b;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .premium-form-surface input,
+  .premium-form-surface select,
+  .premium-form-surface textarea,
+  [data-slot="input"],
+  [data-slot="select-trigger"] {
+    color: #0f172a;
+  }
+
+  .premium-form-surface input::placeholder,
+  [data-slot="input"]::placeholder {
+    color: #64748b;
+    opacity: 1;
   }
 
   @media (min-width: 640px) {
@@ -433,10 +508,19 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .mobile-section-transition {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .page-transition-shell {
   isolation: isolate;
+}
+
+.mobile-section-transition {
+  will-change: opacity, transform;
 }
 
 /* ── Tables admin glassmorphism & préférence de mouvement ───────────────────── */
@@ -472,6 +556,44 @@
 @keyframes adminSkeletonShimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
+}
+
+/* Barre de progression du chargement /flights (cartes fantômes) */
+@keyframes flight-skeleton-slide {
+  0% { transform: translateX(-30%); }
+  50% { transform: translateX(180%); }
+  100% { transform: translateX(-30%); }
+}
+
+.flight-skeleton-progress {
+  width: 40%;
+  animation: flight-skeleton-slide 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-skeleton-progress {
+    animation: none !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+}
+
+/* Hero /flights : présence légère sans page blanche (pas de opacity:0 initiale). */
+.flights-hero-media {
+  transform: scale(1.04);
+  animation: flights-hero-ken 18s ease-in-out infinite alternate;
+}
+
+@keyframes flights-hero-ken {
+  from { transform: scale(1.04) translate3d(0, 0, 0); }
+  to { transform: scale(1.1) translate3d(0, -1.5%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flights-hero-media {
+    animation: none !important;
+    transform: scale(1.04) !important;
+  }
 }
 
 @keyframes acknowledgementToastCountdown {
@@ -549,6 +671,26 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 
+/* Barre CTA sticky mobile : remonte la pile WhatsApp / Aureol au-dessus (téléphone uniquement). */
+@media (max-width: 767px) {
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-whatsapp {
+    bottom: calc(8.25rem + env(safe-area-inset-bottom));
+  }
+
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-flight,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-flight {
+    bottom: calc(12.25rem + env(safe-area-inset-bottom));
+  }
+
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-chat,
+  body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-panel,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-chat,
+  body:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-panel {
+    bottom: calc(16.25rem + env(safe-area-inset-bottom));
+  }
+}
+
 .safe-bottom-floating-flight {
   bottom: calc(8.5rem + env(safe-area-inset-bottom));
 }
@@ -608,6 +750,44 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
   outline-offset: 3px;
 }
 
+/* Header premium : repère hover discret, fond sticky translucide et focus clavier. */
+.premium-header {
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow: 0 10px 30px -24px rgba(6, 26, 54, 0.78);
+}
+
+.premium-header nav[aria-label] > a {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-header nav[aria-label] > a::after {
+  content: "";
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.22rem;
+  left: 0.65rem;
+  height: 2px;
+  border-radius: 9999px;
+  background: #c39231;
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1), transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.premium-header nav[aria-label] > a:hover::after,
+.premium-header nav[aria-label] > a:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.dark .premium-header {
+  background: rgba(7, 20, 38, 0.84);
+  box-shadow: 0 10px 30px -24px rgba(0, 0, 0, 0.9);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tablet-compact-header,
   .tablet-compact-header img,
@@ -651,6 +831,43 @@ html.text-size-xlarge {
   font-size: 20px;
 }
 
+/**
+ * Remonte d’un cran les gris Tailwind trop pâles (textes « presque illisibles »).
+ * slate-400 → slate-500, slate-500 → slate-600, slate-600 → slate-700.
+ * Les icônes restent lisibles ; le corps de texte gagne en contraste AA.
+ */
+@layer utilities {
+  .text-slate-400 {
+    --tw-text-opacity: 1;
+    color: rgb(100 116 139 / var(--tw-text-opacity, 1)); /* slate-500 */
+  }
+  .text-slate-500 {
+    --tw-text-opacity: 1;
+    color: rgb(71 85 105 / var(--tw-text-opacity, 1)); /* slate-600 */
+  }
+  .text-slate-600 {
+    --tw-text-opacity: 1;
+    color: rgb(51 65 85 / var(--tw-text-opacity, 1)); /* slate-700 */
+  }
+  .text-gray-500 {
+    --tw-text-opacity: 1;
+    color: rgb(75 85 99 / var(--tw-text-opacity, 1)); /* gray-600 */
+  }
+  .text-gray-600 {
+    --tw-text-opacity: 1;
+    color: rgb(55 65 81 / var(--tw-text-opacity, 1)); /* gray-700 */
+  }
+  /* Micro-textes trop petits pour la lecture courante */
+  .text-\[10px\] {
+    font-size: 0.75rem; /* 12px */
+    line-height: 1.4;
+  }
+  .text-\[11px\] {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.45;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a, button, [role="button"] {
     transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
@@ -675,8 +892,18 @@ html.text-size-xlarge {
   .secondary-page-surface h1,
   .secondary-page-surface h2,
   .secondary-page-surface h3 {
-    color: #10233f;
+    font-family: "Sora", "Manrope", sans-serif;
     letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  /* AUCUNE déclaration `color` sur les titres, paragraphes et listes : la couleur vient de la classe de l'élément (text-white,
+     .premium-copy-on-dark…) ou, à défaut, du conteneur (un bandeau sombre qui pose text-white). Même `color: inherit` ici suffisait
+     à battre les classes de la couche components (spécificité plus faible) et laissait du bleu nuit sur fond sombre.
+     Le défaut sombre est posé une seule fois, sur .secondary-page-surface ci-dessus. */
+  .secondary-page-surface p,
+  .secondary-page-surface li {
+    line-height: 1.7;
   }
 
   .secondary-page-surface input,
@@ -696,6 +923,20 @@ html.text-size-xlarge {
 
   .secondary-page-surface a:not([class*="text-"]) {
     color: #1559b7;
+  }
+
+  /* Un lien sans classe de couleur posé dans un bandeau sombre (texte clair) reste lisible : il reprend la couleur claire du
+     texte et se souligne, au lieu du bleu #1559b7 (contraste 1,3 sur fond bleu nuit). */
+  .secondary-page-surface :is(
+    [class~="text-white"],
+    [class~="text-sky-50"], [class~="text-sky-100"], [class~="text-sky-200"],
+    [class~="text-blue-50"], [class~="text-blue-100"], [class~="text-blue-200"],
+    [class~="text-slate-50"], [class~="text-slate-100"], [class~="text-slate-200"],
+    .premium-copy-on-dark
+  ) a:not([class*="text-"]) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .secondary-page-surface button:not(:disabled),

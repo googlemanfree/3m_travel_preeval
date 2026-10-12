@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
  * Barre de recherche multi-services façon ease.travel — un point d'entrée
  * unique avec des onglets par service. Contrairement à ease.travel (qui
  * vend aussi hôtels, appartements et voitures), les onglets reflètent
- * uniquement les vrais services de 3M Travel — pas de service fictif
+ * uniquement les vrais services de 3M TRAVEL AGENCY — pas de service fictif
  * affiché juste pour "faire pareil".
  */
 

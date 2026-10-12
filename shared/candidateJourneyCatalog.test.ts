@@ -27,7 +27,7 @@ describe("candidate journey official sources", () => {
   it("uses ADEM for Luxembourg worker journeys", () => {
     const journey = getCandidateJourney("Luxembourg", "Travail");
     expect(journey.steps.map((step) => step.id)).toEqual(expect.arrayContaining(["employer", "adem", "residence"]));
-    expect(journey.officialSources).toContain("https://adem.public.lu/en/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html");
+    expect(journey.officialSources).toContain("https://adem.public.lu/fr/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html");
   });
 
   it("does not invent an official source for an uncovered destination", () => {

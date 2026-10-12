@@ -28,6 +28,8 @@ export const LEGACY_PUBLIC_REDIRECTS = {
   "/visa-types": "/procedures",
   "/procedures/schengen": "/schengen",
   "/simple-signup": "/register",
+  "/cv-generator": "/services",
+  "/payment/success": "/payment-success",
   "/schedule-agency": "/contact",
   "/candidate/login": "/login",
   "/dashboard": "/mon-espace",

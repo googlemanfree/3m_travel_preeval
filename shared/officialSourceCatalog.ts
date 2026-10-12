@@ -6,7 +6,8 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "Allemagne",
     "verificationStatus": "verified",
     "sources": [
-      { "label": "Auswärtiges Amt — Visa et séjour", "url": "https://www.auswaertiges-amt.de/en/visa-service/215870-215870" },
+      { "label": "Auswärtiges Amt — Service des visas", "url": "https://www.auswaertiges-amt.de/en/visa-service" },
+      { "label": "Make it in Germany — Portail officiel mobilité", "url": "https://www.make-it-in-germany.com/fr/" },
       { "label": "Federal Foreign Office — Informations visas", "url": "https://www.germany.info/us-en/service/visa" },
       { "label": "Federal Foreign Office — Emploi en Allemagne", "url": "https://www.germany.info/us-en/service/visa/employment-visa-922292" }
     ]
@@ -138,8 +139,24 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "verificationStatus": "verified",
     "sources": [
       {
-        "label": "Immigration, Réfugiés et Citoyenneté Canada (IRCC) — Général —",
-        "url": "https://www.canada.ca/en/services/immigration-citizenship.html"
+        "label": "IRCC — Immigration et citoyenneté (portail)",
+        "url": "https://www.canada.ca/fr/services/immigration-citoyennete.html"
+      },
+      {
+        "label": "IRCC — Travailler au Canada (permis temporaire)",
+        "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada.html"
+      },
+      {
+        "label": "IRCC — Étudier au Canada (permis d’études)",
+        "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/etudier-canada.html"
+      },
+      {
+        "label": "IRCC — Visiter le Canada",
+        "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/visiter-canada.html"
+      },
+      {
+        "label": "EDSC — Embaucher un travailleur étranger (EIMT)",
+        "url": "https://www.canada.ca/fr/emploi-developpement-social/services/travailleurs-etrangers.html"
       }
     ]
   },
@@ -239,10 +256,10 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "country": "France",
     "verificationStatus": "verified",
     "sources": [
-      { "label": "France-Visas — Portail officiel", "url": "https://france-visas.gouv.fr/en/" },
+      { "label": "France-Visas — Portail officiel", "url": "https://france-visas.gouv.fr/" },
       { "label": "France-Visas — Étudiant", "url": "https://france-visas.gouv.fr/en/etudiant" },
       { "label": "France-Visas — Motif professionnel", "url": "https://france-visas.gouv.fr/en/motif-professionnel" },
-      { "label": "Diplomatie française — Demande de visa", "url": "https://us.diplomatie.gouv.fr/en/applying-for-a-visa" }
+      { "label": "Diplomatie française — Visiter la France", "url": "https://www.diplomatie.gouv.fr/fr/services-aux-etrangers/visiter-la-france" }
     ]
   },
   "gabon": {
@@ -434,8 +451,24 @@ export const OFFICIAL_SOURCE_CATALOG: Record<string, OfficialSourceRecord> = {
     "verificationStatus": "verified",
     "sources": [
       {
-        "label": "Guichet.lu (Gouvernement du Luxembourg) — visiteur (court séjour / entrée) —",
-        "url": "https://guichet.public.lu/en/citoyens/immigration/moins-3-mois/ressortissant-tiers/entree-visa.html"
+        "label": "Guichet.lu — Immigration (portail)",
+        "url": "https://guichet.public.lu/fr/citoyens/immigration.html"
+      },
+      {
+        "label": "Guichet.lu — Autorisation de séjour salarié (pays tiers)",
+        "url": "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/salarie.html"
+      },
+      {
+        "label": "Guichet.lu — Autorisation de séjour étudiant (pays tiers)",
+        "url": "https://guichet.public.lu/fr/citoyens/immigration/vivre/non-luxembourg/immigration/pays-tiers/etudiant.html"
+      },
+      {
+        "label": "Guichet.lu — Visite / court séjour",
+        "url": "https://guichet.public.lu/fr/citoyens/immigration/visite/loisir.html"
+      },
+      {
+        "label": "ADEM — Embaucher un ressortissant de pays tiers",
+        "url": "https://adem.public.lu/fr/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html"
       }
     ]
   },

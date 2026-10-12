@@ -75,8 +75,8 @@ export const consultationRequestRouter = router({
       try {
         await sendEmail({
           to: input.email,
-          subject: "Confirmation de votre demande — 3M Travel & Services",
-          html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de consultation${input.targetCountry ? ` pour ${esc(input.targetCountry)}` : ""}.</p><p>Notre équipe va l’examiner et vous recontactera à l’adresse <strong>${esc(input.email)}</strong>. Vous pouvez conserver cet e-mail comme confirmation de réception.</p><p>Cordialement,<br>L’équipe 3M Travel &amp; Services</p>`,
+          subject: "Confirmation de votre demande — 3M TRAVEL AGENCY",
+          html: `<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p><p>Nous avons bien reçu votre demande de consultation${input.targetCountry ? ` pour ${esc(input.targetCountry)}` : ""}.</p><p>Notre équipe va l’examiner et vous recontactera à l’adresse <strong>${esc(input.email)}</strong>. Vous pouvez conserver cet e-mail comme confirmation de réception.</p><p>Cordialement,<br>L’équipe 3M TRAVEL AGENCY</p>`,
         });
         emailSent = true;
       } catch (err) {
@@ -217,7 +217,7 @@ export const consultationRequestRouter = router({
       </div>`;
 
       try {
-        await sendEmail({ to: request.email, subject: `📋 Votre consultation ${request.targetCountry || ""} — 3M Travel`, html: emailHtml });
+        await sendEmail({ to: request.email, subject: `📋 Votre consultation ${request.targetCountry || ""} — 3M TRAVEL AGENCY`, html: emailHtml });
       } catch (err) {
         logger.error("consultation_request.send_to_client_failed", { requestId: input.requestId }, err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Échec de l'envoi de l'email au candidat." });

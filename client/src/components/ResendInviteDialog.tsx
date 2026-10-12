@@ -36,10 +36,10 @@ interface ResendInviteDialogProps {
 
 const emailTemplates = {
   professional: {
-    subject: "Invitation - Accès Administrateur 3M Travel",
+    subject: "Invitation - Accès Administrateur 3M TRAVEL AGENCY",
     body: `Bonjour {name},
 
-Vous êtes invité à rejoindre l'équipe administrative de 3M Travel & Services en tant qu'administrateur.
+Vous êtes invité à rejoindre l'équipe administrative de 3M TRAVEL AGENCY en tant qu'administrateur.
 
 Cliquez sur le lien ci-dessous pour accepter cette invitation et créer votre compte :
 {inviteLink}
@@ -47,26 +47,26 @@ Cliquez sur le lien ci-dessous pour accepter cette invitation et créer votre co
 Ce lien expire dans 7 jours.
 
 Cordialement,
-L'équipe 3M Travel & Services`,
+L'équipe 3M TRAVEL AGENCY`,
   },
   friendly: {
-    subject: "Bienvenue dans l'équipe 3M Travel ! 🎉",
+    subject: "Bienvenue dans l'équipe 3M TRAVEL AGENCY ! 🎉",
     body: `Salut {name},
 
-Super ! Vous avez été sélectionné pour rejoindre notre équipe administrative chez 3M Travel & Services.
+Super ! Vous avez été sélectionné pour rejoindre notre équipe administrative chez 3M TRAVEL AGENCY.
 
 Cliquez ici pour commencer : {inviteLink}
 
 N'oubliez pas que ce lien est valide pendant 7 jours seulement.
 
 À bientôt !
-L'équipe 3M Travel`,
+L'équipe 3M TRAVEL AGENCY`,
   },
   urgent: {
     subject: "Action requise : Activation du compte administrateur",
     body: `Bonjour {name},
 
-Votre compte administrateur 3M Travel & Services a été créé et attend votre activation.
+Votre compte administrateur 3M TRAVEL AGENCY a été créé et attend votre activation.
 
 Veuillez cliquer sur le lien suivant pour finaliser votre inscription :
 {inviteLink}
@@ -74,7 +74,7 @@ Veuillez cliquer sur le lien suivant pour finaliser votre inscription :
 Délai d'activation : 7 jours
 
 Merci,
-Support 3M Travel & Services`,
+Support 3M TRAVEL AGENCY`,
   },
 };
 

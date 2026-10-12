@@ -24,7 +24,8 @@ function makeRows() {
     select: () => ({
       from: (table: unknown) => ({
         orderBy: () => ({ limit: async () => [] }),
-        limit: async () => table ? [state.account] : [],
+        // Les reçus approuvés (table lue par la liste admin depuis la synchro reçus) : aucun dans ce scénario.
+        limit: async () => (table === paymentReceiptApprovals ? [] : table ? [state.account] : []),
           where: () => ({
           orderBy: () => ({ limit: async () => [] }),
           limit: async () => [state.account],
@@ -41,6 +42,7 @@ vi.mock("./routers/adminAuth", () => ({
 }));
 vi.mock("./emailService", () => ({ sendGenericEmail: vi.fn(async () => undefined) }));
 
+import { paymentReceiptApprovals } from "../drizzle/schema";
 import { adminRouter } from "./routers/admin";
 
 describe("back-office — compte pré-dossier avec évaluation déclarée", () => {

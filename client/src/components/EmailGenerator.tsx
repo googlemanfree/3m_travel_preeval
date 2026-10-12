@@ -99,7 +99,7 @@ PROCHAINES ÉTAPES :
 Veuillez prendre connaissance de nos recommandations et nous contacter si vous avez des questions. Notre équipe reste à votre disposition pour vous accompagner dans votre démarche.
 
 Cordialement,
-L'équipe 3M Travel & Services`,
+L'équipe 3M TRAVEL AGENCY`,
       },
       chaleureux: {
         subject: `Merci pour votre candidature pour ${candidate.destination} ! 🌟`,
@@ -118,7 +118,7 @@ ${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. P
 Nous serions heureux de discuter davantage de votre projet lors d'un entretien. N'hésitez pas à nous contacter si vous avez des questions !
 
 Cordialement,
-L'équipe 3M Travel & Services 🌍`,
+L'équipe 3M TRAVEL AGENCY 🌍`,
       },
       concis: {
         subject: `Candidature ${candidate.visaType} - ${candidate.destination}`,
@@ -136,7 +136,7 @@ Prochaines étapes :
 ${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. Soumettre les documents\n2. Planifier un entretien"}
 
 Cordialement,
-3M Travel & Services`,
+3M TRAVEL AGENCY`,
       },
       encourageant: {
         subject: `Bonne nouvelle concernant votre candidature pour ${candidate.destination} ! 🎉`,
@@ -158,7 +158,7 @@ ${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. C
 Nous sommes vraiment enthousiaste à l'idée de vous accompagner dans cette belle aventure ! N'hésitez pas à nous contacter pour toute question.
 
 Cordialement,
-L'équipe 3M Travel & Services 🌍`,
+L'équipe 3M TRAVEL AGENCY 🌍`,
       },
     };
 

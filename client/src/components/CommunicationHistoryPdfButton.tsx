@@ -27,7 +27,7 @@ export function CommunicationHistoryPdfButton({ sessionToken, candidateId, candi
       let y = 38;
       const drawHeader = () => {
         pdf.setFillColor(15, 48, 95); pdf.rect(0, 0, 210, 26, "F");
-        pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold"); pdf.setFontSize(14); pdf.text("3M Travel & Services — Historique de communication", 14, 16);
+        pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold"); pdf.setFontSize(14); pdf.text("3M TRAVEL AGENCY — Historique de communication", 14, 16);
         pdf.setTextColor(31, 41, 55); pdf.setFontSize(8); pdf.setFont("helvetica", "normal");
         pdf.text("DOCUMENT INTERNE CONFIDENTIEL — Traçabilité administrative", 105, 289, { align: "center" });
         pdf.setTextColor(224, 231, 255); pdf.setFontSize(26); pdf.text("3M TRAVEL", 105, 145, { align: "center", angle: 45 });

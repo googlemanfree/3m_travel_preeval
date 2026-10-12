@@ -3,6 +3,17 @@ import { Check, ChevronDown, LockKeyhole, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { buildStepperView, lockedReason, type ProcedureStep, type StepGroup } from "@/lib/procedureStepper";
+import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
+import { AGENCY_PHASE_STEP_COUNT } from "@shared/dossierPhaseTransparency";
+
+type PublishedGuideProp = {
+  title?: string | null;
+  pdfUrl?: string | null;
+  programLabel?: string | null;
+  summaryHeadline?: string | null;
+  summaryOverview?: string | null;
+  summaryStepHighlights?: string[] | null;
+};
 
 type Props = {
   title: string;
@@ -10,6 +21,9 @@ type Props = {
   currentStepIndex: number;
   internalCount: number;
   officialSources?: string[];
+  publishedGuide?: PublishedGuideProp | null;
+  country?: string | null;
+  visaType?: string | null;
   busy?: boolean;
   onValidate: (step: ProcedureStep) => void;
   onUnlock: (step: ProcedureStep) => void;
@@ -26,8 +40,36 @@ function StepRow({ step, currentStepIndex, busy, onUnlock, onUndo }: { step: Pro
       </span>
       <span className={`min-w-0 flex-1 truncate text-sm ${current ? "font-semibold text-slate-900" : done ? "text-slate-700" : "text-slate-500"}`}>{step.index + 1}. {step.label}</span>
       {step.state === "locked" && <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Verrouillé</span>}
-      {done && <button type="button" disabled={busy} onClick={() => onUndo(step)} className="text-xs font-semibold text-rose-700 hover:underline disabled:opacity-50" aria-label={`Annuler la validation de l’étape ${step.index + 1}`}>Annuler</button>}
-      {step.state === "locked" && <button type="button" disabled={busy} onClick={() => onUnlock(step)} title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`} className="text-xs font-semibold text-amber-700 hover:underline disabled:opacity-50" aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}>Déverrouiller</button>}
+      {done && (
+        <>
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-emerald-700" data-testid={`step-unlocked-${step.index}`}>
+            Déverrouillé
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onUndo(step)}
+            className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+            aria-label={`Annuler la validation de l’étape ${step.index + 1}`}
+            data-testid={`cancel-past-step-${step.index}`}
+          >
+            Annuler l’étape
+          </button>
+        </>
+      )}
+      {step.state === "locked" && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onUnlock(step)}
+          title={`Étape bloquée : ${lockedReason(step, currentStepIndex)}`}
+          className="text-xs font-semibold text-amber-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
+          aria-label={`Déverrouiller l’étape ${step.index + 1} hors séquence`}
+          data-testid={`unlock-step-${step.index}`}
+        >
+          Déverrouiller
+        </button>
+      )}
     </li>
   );
 }
@@ -42,34 +84,132 @@ function Group({ group, currentStepIndex, busy, onUnlock, onUndo }: { group: Ste
 }
 
 /** Parcours du dossier : l'étape en cours en grand, les suivantes en une ligne, la liste complète repliée. */
-export default function ProcedureStepper({ title, steps, currentStepIndex, internalCount, officialSources, busy, onValidate, onUnlock, onUndo }: Props) {
+export default function ProcedureStepper({
+  title,
+  steps,
+  currentStepIndex,
+  internalCount,
+  officialSources,
+  publishedGuide,
+  country,
+  visaType,
+  busy,
+  onValidate,
+  onUnlock,
+  onUndo,
+}: Props) {
   const view = buildStepperView({ steps, currentStepIndex, internalCount });
+  const agencyTotal = Math.min(internalCount || AGENCY_PHASE_STEP_COUNT, steps.length);
+  const countryTotal = Math.max(0, steps.length - agencyTotal);
+  const agencyDone = Math.min(agencyTotal, view.done);
+  const countryDone = Math.max(0, view.done - agencyTotal);
+  const inCountryPhase = !view.finished && currentStepIndex >= agencyTotal;
+  const phaseLabel = view.finished
+    ? "Parcours terminé"
+    : inCountryPhase
+      ? `Phase pays / visa${country ? ` · ${country}` : ""}`
+      : "Phase agence 3M";
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-5" aria-labelledby="stepper-title" data-testid="procedure-stepper">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Parcours du dossier</p>
           <h4 id="stepper-title" className="mt-0.5 text-lg font-bold text-slate-950">{title}</h4>
-          <p className="mt-0.5 text-xs text-slate-500">Même séquence que dans l’espace candidat : chaque validation y est synchronisée.</p>
+          <div className="mt-2 flex flex-wrap gap-2" data-testid="stepper-context-badges">
+            {country ? (
+              <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white">{country}</span>
+            ) : null}
+            {visaType ? (
+              <span className="rounded-full bg-blue-700 px-2.5 py-1 text-[11px] font-bold text-white">{visaType}</span>
+            ) : null}
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-900">
+              {phaseLabel}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Même séquence que l’espace candidat. L’affichage change selon le pays et le type de visa du dossier ;
+            chaque validation y est synchronisée.
+          </p>
         </div>
         <div className="w-full sm:w-56">
-          <p className="flex items-baseline justify-between text-sm font-semibold text-slate-900" data-testid="stepper-position"><span>{view.finished ? "Parcours terminé" : `Étape ${view.position} sur ${view.total}`}</span><span className="text-blue-700">{view.percent}%</span></p>
+          <p className="flex items-baseline justify-between text-sm font-semibold text-slate-900" data-testid="stepper-position">
+            <span>{view.finished ? "Parcours terminé" : `Étape ${view.position} sur ${view.total}`}</span>
+            <span className="text-blue-700">{view.percent}%</span>
+          </p>
           <Progress className="mt-1.5 h-2 bg-blue-100" value={view.percent} aria-label={`Avancement du parcours : ${view.percent}%`} />
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]" data-testid="stepper-phase-meters">
+            <p className="rounded-lg bg-slate-50 px-2 py-1.5 font-semibold text-slate-700">
+              Agence {agencyDone}/{agencyTotal}
+            </p>
+            <p className="rounded-lg bg-blue-50 px-2 py-1.5 font-semibold text-blue-900">
+              Pays/visa {countryDone}/{countryTotal}
+            </p>
+          </div>
         </div>
       </div>
 
+      {publishedGuide?.summaryOverview || publishedGuide?.pdfUrl ? (
+        <div className="mt-4">
+          <div data-testid="stepper-published-guide">
+            <PublishedGuideSummaryPanel
+              tone="admin"
+              headline={publishedGuide.summaryHeadline || publishedGuide.programLabel}
+              overview={publishedGuide.summaryOverview}
+              stepHighlights={publishedGuide.summaryStepHighlights}
+              programLabel={publishedGuide.programLabel}
+              pdfUrl={publishedGuide.pdfUrl}
+              pdfTitle={publishedGuide.title}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {view.current ? (
         <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/70 p-4" data-testid="stepper-current">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Étape en cours</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Étape en cours · {phaseLabel}</p>
           <p className="mt-1 text-base font-bold text-slate-950">{view.current.index + 1}. {view.current.label}</p>
           {view.current.description && <p className="mt-1 text-sm leading-6 text-slate-700">{view.current.description}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" className="bg-blue-700 hover:bg-blue-800" disabled={busy} onClick={() => onValidate(view.current as ProcedureStep)}>{busy ? "Validation…" : "Marquer l’étape comme faite"}</Button>
+            {view.done > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-rose-300 text-rose-800 hover:bg-rose-50"
+                disabled={busy}
+                onClick={() => {
+                  const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+                  if (lastDone) onUndo(lastDone);
+                }}
+                data-testid="cancel-last-past-step"
+              >
+                Annuler l’étape passée
+              </Button>
+            )}
             {view.current.sourceUrl && <a href={view.current.sourceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-700 underline">Source officielle</a>}
           </div>
+          <p className="mt-2 text-xs text-slate-600">Les annulations portent uniquement sur ce dossier ; les procédures sœurs du même client restent inchangées.</p>
         </div>
       ) : view.finished ? (
-        <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900" data-testid="stepper-finished">Toutes les étapes du parcours sont validées.</p>
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4" data-testid="stepper-finished">
+          <p className="text-sm font-semibold text-emerald-900">Toutes les étapes du parcours sont validées.</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-3 border-rose-300 text-rose-800 hover:bg-rose-50"
+            disabled={busy}
+            onClick={() => {
+              const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+              if (lastDone) onUndo(lastDone);
+            }}
+            data-testid="cancel-last-past-step-finished"
+          >
+            Annuler la dernière étape
+          </Button>
+        </div>
       ) : null}
 
       {view.upcoming.length > 0 && (

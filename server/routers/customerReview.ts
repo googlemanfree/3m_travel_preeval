@@ -8,6 +8,7 @@ import { requireValidAdminSession } from "./adminAuth";
 import { invokeLLM } from "../_core/llm";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyAdmins } from "./adminNotifications";
+import { logger } from "../_core/logger";
 
 const displayNameChoiceSchema = z.enum(["full_name", "first_name_only", "initials"]);
 type DisplayNameChoice = z.infer<typeof displayNameChoiceSchema>;
@@ -158,15 +159,23 @@ export const customerReviewRouter = router({
     }),
 
   listApproved: publicProcedure.query(async () => {
-    const db = await requireDb();
-    const rows = await db
-      .select()
-      .from(customerReviews)
-      .where(and(eq(customerReviews.status, "approved"), eq(customerReviews.consentToPublish, true)))
-      .orderBy(desc(customerReviews.createdAt), asc(customerReviews.id))
-      .limit(40);
+    try {
+      const db = await requireDb();
+      const rows = await db
+        .select()
+        .from(customerReviews)
+        .where(and(eq(customerReviews.status, "approved"), eq(customerReviews.consentToPublish, true)))
+        .orderBy(desc(customerReviews.createdAt), asc(customerReviews.id))
+        .limit(40);
 
-    return rows.map(toPublicApprovedReview);
+      return rows.map(toPublicApprovedReview);
+    } catch (error) {
+      // Les avis sont une preuve sociale facultative : une indisponibilité DB
+      // ne doit jamais faire tomber l’accueil ni produire une réponse tRPC
+      // impossible à transformer côté navigateur.
+      logger.error("customer_review.list_approved_failed", {}, error);
+      return [];
+    }
   }),
 
   translateApproved: publicProcedure

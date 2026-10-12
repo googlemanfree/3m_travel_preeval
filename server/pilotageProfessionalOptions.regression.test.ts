@@ -26,7 +26,7 @@ const adminRouter = readFileSync(resolve(process.cwd(), "server/routers/admin.ts
 
   it("propose des filtres rapides par étape dans la liste des dossiers", () => {
     expect(dashboard).toContain("Filtres rapides par étape");
-    for (const label of ["Évaluations à traiter", "Bilans / paiement", "Documents", "Soumission", "Visa accordé"]) {
+    for (const label of ["Évaluation", "Ouverture", "Documents", "Suivi & dépôt", "Décision favorable"]) {
       expect(dashboard).toContain(label);
     }
   });

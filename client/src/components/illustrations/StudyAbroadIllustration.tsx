@@ -1,6 +1,6 @@
 /**
  * Illustration originale — Études à l'étranger (diplôme + livre + globe)
- * Création propre pour 3M Travel & Services, aucune ressource externe.
+ * Création propre pour 3M TRAVEL AGENCY, aucune ressource externe.
  */
 export default function StudyAbroadIllustration({ className }: { className?: string }) {
   return (

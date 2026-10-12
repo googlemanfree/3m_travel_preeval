@@ -156,8 +156,8 @@ export const contactRouter = router({
 
         await sendEmail({
           to: input.email,
-          subject: "Confirmation de votre demande - 3M Travel & Services",
-          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${esc(input.name)},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M Travel &amp; Services</p>`,
+          subject: "Confirmation de votre demande - 3M TRAVEL AGENCY",
+          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${esc(input.name)},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M TRAVEL AGENCY</p>`,
         });
 
         return {

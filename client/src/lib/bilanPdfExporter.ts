@@ -132,7 +132,7 @@ export async function exportBilanToPDF(bilanData: BilanData) {
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
     pdf.text(
-      `© 2026 3M Travel & Services | Dossier: ${bilanData.dossierNumber}`,
+      `© 2026 3M TRAVEL AGENCY | Dossier: ${bilanData.dossierNumber}`,
       margin,
       yPosition
     );

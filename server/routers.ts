@@ -8,6 +8,7 @@ import { evaluationRouter } from "./routers/evaluation";
 import { flightsRouter } from "./routers/flights";
 import { candidateProcedure, candidateRouter } from "./routers/candidate";
 import { evaluationValidationRouterFor } from "./routers/evaluationValidation";
+import { cvDraftRouter } from "./routers/cvDraft";
 import { applicationRouter } from "./routers/application";
 import { heartbeatRouter } from "./routers/heartbeat";
 import { profileEvaluationRouter } from "./routers/profileEvaluation";
@@ -226,6 +227,8 @@ export const appRouter = router({
   aiEvaluationManagement: aiEvaluationManagementRouter,
   // Évaluation IA à validation administrateur obligatoire (brouillon interne → rapport publié)
   evaluationValidation: evaluationValidationRouterFor(candidateProcedure),
+  // Générateur de CV assisté par IA (back-office) : part du CV envoyé par le candidat, avec ses deux consentements
+  cvDraft: cvDraftRouter,
   studyVisaEvaluation: studyVisaEvaluationRouter,
   procedures: proceduresRouter,
   evaluationEngine: router(evaluationEngineRouter),

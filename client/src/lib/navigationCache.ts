@@ -83,8 +83,27 @@ export function addPrefetchHint(href: string): void {
 }
 
 export function prefetchNavigation(href: string): void {
-  addPrefetchHint(href);
-  prefetchRoute(href);
+  if (typeof navigator !== "undefined") {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (connection?.saveData) return;
+    if (connection?.effectiveType && /^(slow-)?2g$/i.test(connection.effectiveType)) return;
+  }
+
+  const warm = () => {
+    addPrefetchHint(href);
+    prefetchRoute(href);
+  };
+
+  const idleWindow = typeof window !== "undefined"
+    ? (window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    })
+    : null;
+  if (idleWindow?.requestIdleCallback) {
+    idleWindow.requestIdleCallback(() => warm(), { timeout: 1500 });
+    return;
+  }
+  warm();
 }
 
 export function clearNavigationCache(): void {

@@ -14,7 +14,7 @@ import { registerLegacyAliasRedirects } from "../legacyPublicRedirects";
 
 function registerSeoAssetRoutes(app: Express) {
   app.get("/api/og", (req, res) => {
-    const title = typeof req.query.title === "string" ? req.query.title : "3M Travel Agency";
+    const title = typeof req.query.title === "string" ? req.query.title : "3M TRAVEL AGENCY";
     const pagePath = typeof req.query.path === "string" ? req.query.path : "/";
     res.status(200).set({ "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderOgImageSvg(title, pagePath));
   });

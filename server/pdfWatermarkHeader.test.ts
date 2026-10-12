@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 describe("PDF Watermark and Formal Header Anti-Plagiarism", () => {
   it("includes official agency watermark and formal header structure for exported documents", () => {
     const pdfMetadata = {
-      agencyName: "3M Travel Agency SARL",
+      agencyName: "3M TRAVEL AGENCY — 3M Travel Agency SARL",
       watermarkText: "3M TRAVEL AGENCY - DOCUMENT OFFICIEL & CONFIDENTIEL",
       header: {
         title: "Rapport Officiel & Bilan Consulaire",
@@ -12,7 +12,7 @@ describe("PDF Watermark and Formal Header Anti-Plagiarism", () => {
       },
     };
 
-    expect(pdfMetadata.agencyName).toContain("3M Travel");
+    expect(pdfMetadata.agencyName).toContain("3M TRAVEL AGENCY");
     expect(pdfMetadata.watermarkText).toContain("3M TRAVEL AGENCY");
     expect(pdfMetadata.header.securityNotice).toContain("protégé");
   });

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
 import {
   Search, Download, FileText, Briefcase, GraduationCap,
   Globe, BookOpen, X, ExternalLink, Filter,
@@ -173,9 +172,9 @@ export default function Ressources() {
               {language === 'en' ? 'Resource Library' : 'Bibliothèque de ressources'}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              {language === 'en' ? '3M Travel Guides & Procedures' : 'Guides & Procédures 3M Travel'}
+              {language === 'en' ? '3M TRAVEL AGENCY Guides & Procedures' : 'Guides & Procédures 3M TRAVEL AGENCY'}
             </h1>
-            <p className="text-blue-100 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="premium-copy-on-dark mx-auto max-w-2xl text-base md:text-lg">
               {language === 'en'
                 ? `Download our official procedure sheets for ${totalAll} destinations — Work, Study, Visitor Visas and specialized guides.`
                 : `Téléchargez nos fiches de procédures officielles pour ${totalAll} destinations — Visa Travail, Études, Visiteur et guides spécialisés.`}
@@ -191,6 +190,7 @@ export default function Ressources() {
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
+                aria-label={language === 'en' ? 'Search by country or visa type' : 'Rechercher par pays ou type de visa'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={language === 'en' ? 'Search country, visa type...' : 'Rechercher un pays, un type de visa…'}
@@ -307,7 +307,6 @@ export default function Ressources() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

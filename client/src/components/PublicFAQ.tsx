@@ -24,7 +24,7 @@ export function PublicFAQ() {
               <AccordionTrigger className="text-left text-base font-bold text-slate-900 hover:no-underline">
                 {item.question}
               </AccordionTrigger>
-              <AccordionContent className="pb-5 text-sm leading-6 text-slate-600">{item.answer}</AccordionContent>
+              <AccordionContent className="premium-copy pb-5 text-base">{item.answer}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

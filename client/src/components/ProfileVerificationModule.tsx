@@ -8,14 +8,14 @@ const verificationSteps = {
     { icon: FileCheck2, title: "Pièces documentées", text: "Les documents déposés en ligne ou en agence sont rattachés avec leur origine et leur statut." },
     { icon: BadgeCheck, title: "Évaluation humaine", text: "Un conseiller habilité vérifie l’évaluation avant toute activation ou remise au candidat." },
     { icon: BriefcaseBusiness, title: "Soumission contrôlée", text: "Un profil n’est partagé avec un partenaire ou un employeur vérifié qu’après les validations prévues." },
-    { icon: ShieldCheck, title: "Retour et procédure", text: "Les retours sont consignés dans le dossier ; les décisions externes restent indépendantes de 3M Travel & Services." },
+    { icon: ShieldCheck, title: "Retour et procédure", text: "Les retours sont consignés dans le dossier ; les décisions externes restent indépendantes de 3M TRAVEL AGENCY." },
   ],
   en: [
     { icon: UserCheck, title: "Consent and project", text: "The candidate chooses a project and explicitly authorises the uses required for the case file." },
     { icon: FileCheck2, title: "Documented documents", text: "Documents submitted online or in an agency are linked with their source and status." },
     { icon: BadgeCheck, title: "Human review", text: "An authorised adviser verifies the assessment before any activation or delivery to the candidate." },
     { icon: BriefcaseBusiness, title: "Controlled submission", text: "A profile is shared with a partner or verified employer only after the required reviews." },
-    { icon: ShieldCheck, title: "Feedback and procedure", text: "Feedback is logged in the case file; external decisions remain independent from 3M Travel & Services." },
+    { icon: ShieldCheck, title: "Feedback and procedure", text: "Feedback is logged in the case file; external decisions remain independent from 3M TRAVEL AGENCY." },
   ],
 } as const;
 

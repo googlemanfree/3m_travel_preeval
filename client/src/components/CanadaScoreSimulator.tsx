@@ -399,7 +399,7 @@ export default function CanadaScoreSimulator() {
   const handleShareWhatsApp = () => {
     const link = shareLink || shareProfile();
     trackEvent("crs_share_whatsapp");
-    const message = `Bonjour, voici ma simulation CRS Canada 3M Travel Agency : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
+    const message = `Bonjour, voici ma simulation CRS Canada 3M TRAVEL AGENCY : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
@@ -545,7 +545,7 @@ export default function CanadaScoreSimulator() {
       doc.setFontSize(11);
       doc.text("Besoin d’un accompagnement personnalisé ?", 21, afterRecommendations + 22);
       doc.setFontSize(10);
-      doc.textWithLink("Prendre rendez-vous en ligne avec 3M Travel", 21, afterRecommendations + 32, { url: appointmentUrl });
+      doc.textWithLink("Prendre rendez-vous en ligne avec 3M TRAVEL AGENCY", 21, afterRecommendations + 32, { url: appointmentUrl });
 
       return doc;
   };
@@ -598,7 +598,7 @@ export default function CanadaScoreSimulator() {
       const filename = `simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`;
       const file = new File([blob], filename, { type: "application/pdf" });
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        await navigator.share({ title: "Simulation CRS Canada — 3M Travel Agency", text: `Bonjour ${fullName || ""}, voici votre simulation CRS Canada.`, files: [file] });
+        await navigator.share({ title: "Simulation CRS Canada — 3M TRAVEL AGENCY", text: `Bonjour ${fullName || ""}, voici votre simulation CRS Canada.`, files: [file] });
         setEmailSendSuccess(true);
         window.setTimeout(() => setEmailSendSuccess(false), 5000);
         toast.success("Le PDF est prêt à être envoyé par e-mail depuis le menu de partage.");
@@ -609,7 +609,7 @@ export default function CanadaScoreSimulator() {
         anchor.download = filename;
         anchor.click();
         URL.revokeObjectURL(downloadUrl);
-        const subject = encodeURIComponent("Votre simulation CRS Canada — 3M Travel Agency");
+        const subject = encodeURIComponent("Votre simulation CRS Canada — 3M TRAVEL AGENCY");
         const body = encodeURIComponent(`Bonjour ${fullName || ""},\n\nVotre PDF de simulation CRS vient d’être téléchargé. Joignez-le à ce courriel avant l’envoi.\n\nScore indicatif : ${scores.total}/1200 points.`);
         window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
         setEmailSendSuccess(true);
@@ -660,7 +660,7 @@ export default function CanadaScoreSimulator() {
     setIsCopying(true);
     trackEvent("crs_copy_detailed_results");
       const summary = [
-      "Simulation CRS Canada — 3M Travel & Services",
+      "Simulation CRS Canada — 3M TRAVEL AGENCY",
       `Programme visé : ${selectedProgramData.label}`,
       `Volet : ${selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}`,
       `Score estimé : ${scores.total} / 1200 points`,
@@ -669,7 +669,7 @@ export default function CanadaScoreSimulator() {
       `Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} points`,
       "Rondes comparées :",
       ...filteredRounds.map((round) => `${round.roundNum} — ${round.type} — ${round.minScore} pts (${round.date})`),
-      "Résultat indicatif : à confirmer avec un conseiller 3M Travel.",
+      "Résultat indicatif : à confirmer avec un conseiller 3M TRAVEL AGENCY.",
     ].join("\n");
 
     try {
@@ -693,8 +693,8 @@ export default function CanadaScoreSimulator() {
 
   const getWhatsappMessage = () => {
     const text = language === 'fr'
-      ? `Bonjour 3M Travel, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Écart vs dernier seuil ${latestThreshold} pts: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). Je souhaite être accompagné par un conseiller.`
-      : `Hello 3M Travel, I have evaluated my profile for Canada. My estimated score is ${scores.total} points (Diff vs threshold ${latestThreshold}: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). I would like to get advisor support.`;
+      ? `Bonjour 3M TRAVEL AGENCY, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Écart vs dernier seuil ${latestThreshold} pts: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). Je souhaite être accompagné par un conseiller.`
+      : `Hello 3M TRAVEL AGENCY, I have evaluated my profile for Canada. My estimated score is ${scores.total} points (Diff vs threshold ${latestThreshold}: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). I would like to get advisor support.`;
     return encodeURIComponent(text);
   };
 
@@ -766,7 +766,7 @@ export default function CanadaScoreSimulator() {
         <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-slate-50 to-blue-50 p-4 md:p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Évaluation guidée 3M Travel</p>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Évaluation guidée 3M TRAVEL AGENCY</p>
               <p className="text-sm text-slate-600 mt-1">Répondez à chaque bloc pour obtenir une synthèse plus utile à votre conseiller.</p>
             </div>
             <span className="text-sm font-extrabold text-blue-900">Étape {wizardStep}/4</span>

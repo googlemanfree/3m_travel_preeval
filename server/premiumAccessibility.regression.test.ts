@@ -30,7 +30,7 @@ describe("passe accessibilité et style premium", () => {
   it("évite le débordement du QR footer et préserve ses libellés", () => {
     expect(qrWidget).toContain("max-w-[10rem]");
     expect(qrWidget).toContain("break-all");
-    expect(footer).toContain('aria-label="Informations et contacts 3M Travel"');
+    expect(footer).toContain('aria-label="Informations et contacts 3M TRAVEL AGENCY"');
   });
 
   it("applique une hiérarchie premium au tableau de bord sans retirer les contrôles", () => {

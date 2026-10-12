@@ -19,7 +19,7 @@ export async function generateBilan(candidateData: {
   previousRefusal?: boolean;
   socialTies?: string;
 }) {
-  const prompt = `Tu es l'expert consulaire en chef de 3M Travel Agency à Yaoundé.
+  const prompt = `Tu es l'expert consulaire en chef de 3M TRAVEL AGENCY à Yaoundé.
 Analyse le profil suivant pour un projet de type : ${candidateData.projectType} vers ${candidateData.destinationCountry}.
 
 INFORMATIONS DU CANDIDAT :

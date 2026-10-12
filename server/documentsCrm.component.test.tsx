@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 
 (globalThis as any).React = React;
 
-const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[] }));
+const calls = vi.hoisted(() => ({ decide: [] as any[], deposit: [] as any[], add: [] as any[], request: [] as any[], bulk: [] as any[] }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -13,6 +13,10 @@ vi.mock("@/lib/trpc", () => ({
       setRequirementStatus: { useMutation: () => ({ mutate: (value: any) => calls.decide.push(value), isPending: false }) },
       depositDocument: { useMutation: () => ({ mutate: (value: any) => calls.deposit.push(value), isPending: false }) },
       addRequirement: { useMutation: () => ({ mutate: (value: any) => calls.add.push(value), isPending: false }) },
+      approveRequirementsBulk: { useMutation: () => ({ mutate: (value: any) => calls.bulk.push(value), isPending: false }) },
+    },
+    admin: {
+      requestCandidate360Document: { useMutation: () => ({ mutate: (value: any) => calls.request.push(value), isPending: false }) },
     },
   },
 }));
@@ -36,7 +40,7 @@ const documents = [
 ];
 
 afterEach(cleanup);
-beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; });
+beforeEach(() => { calls.decide.length = 0; calls.deposit.length = 0; calls.add.length = 0; calls.request.length = 0; calls.bulk.length = 0; });
 
 describe("logique de la vue CRM", () => {
   it("les statuts sont lisibles en français et un statut inconnu vaut « à fournir »", () => {
@@ -120,6 +124,14 @@ describe("vue CRM des pièces", () => {
     expect(screen.getAllByTestId(/crm-row-/)).toHaveLength(6);
   });
 
+  it("sélectionne plusieurs pièces, exclut les pièces déjà validées et envoie une seule validation groupée", () => {
+    renderCrm();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Sélectionner toutes les pièces à valider" }));
+    fireEvent.click(screen.getByRole("button", { name: "Valider la sélection (4)" }));
+    expect(calls.bulk).toEqual([{ sessionToken: "tok", candidateId: "online-12", requirementIds: [1, 2, 3, 6] }]);
+    expect(screen.queryByRole("checkbox", { name: "Sélectionner Assurance médicale pour validation" })).toBeNull();
+  });
+
   it("valider, non requise et rouvrir envoient la bonne décision au serveur", () => {
     renderCrm();
     fireEvent.click(within(row(2)).getByRole("button", { name: /Valider — Passeport/ }));
@@ -190,6 +202,18 @@ describe("vue CRM des pièces", () => {
     expect(props.onRemind).toHaveBeenCalledTimes(1);
   });
 
+  it("demande une pièce précise depuis la vue globale et envoie les détails au serveur", async () => {
+    renderCrm();
+    fireEvent.click(screen.getByRole("button", { name: "Demander une pièce" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Envoyer la demande" }));
+    expect(within(dialog).getByRole("alert").textContent).toMatch(/nom de la pièce/);
+    fireEvent.change(within(dialog).getByLabelText("Pièce demandée"), { target: { value: "Attestation d’emploi signée" } });
+    fireEvent.change(within(dialog).getByLabelText("Consigne au candidat"), { target: { value: "Joindre une version datée et lisible." } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Envoyer la demande" }));
+    expect(calls.request).toEqual([{ sessionToken: "tok", candidateId: "online-12", documentLabel: "Attestation d’emploi signée", details: "Joindre une version datée et lisible." }]);
+  });
+
   it("aucune relance proposée quand tout est en règle, et message clair sans pièce", () => {
     cleanup();
     renderCrm({ requirements: [{ id: 1, documentType: "CV", status: "approved" }] });
@@ -231,6 +255,6 @@ describe("espace client : documents enregistrés par l'agence", () => {
 
   it("ne s'affiche pas sans document d'agence", () => {
     const { container } = render(<CaseDocumentsPanel documents={[]} onDownload={vi.fn()} />);
-    expect(container.textContent).toBe("");
+    expect(screen.getByText("Aucune pièce déposée en agence pour le moment")).toBeTruthy();
   });
 });

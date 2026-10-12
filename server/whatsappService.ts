@@ -4,10 +4,14 @@
  */
 
 import axios from "axios";
+import { toE164WhatsApp } from "../shared/whatsappPhone";
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || "";
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || "";
 const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || "";
+const CLIENT_SPACE_URL = process.env.SITE_URL
+  ? `${process.env.SITE_URL.replace(/\/$/, "")}/mon-espace`
+  : "https://www.3mtravelagency.com/mon-espace";
 
 /**
  * Envoyer un message WhatsApp via Twilio
@@ -15,36 +19,35 @@ const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || "";
 export async function sendWhatsAppMessage(
   toPhoneNumber: string,
   message: string,
-  templateName?: string,
-  templateParams?: Record<string, string>
+  _templateName?: string,
+  _templateParams?: Record<string, string>
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    // Valider le numéro de téléphone
-    if (!toPhoneNumber || !toPhoneNumber.match(/^\+?[1-9]\d{1,14}$/)) {
+    const formattedPhone = toE164WhatsApp(toPhoneNumber);
+    if (!formattedPhone) {
       return { success: false, error: "Numéro de téléphone invalide" };
     }
 
-    // Formater le numéro avec le préfixe +
-    const formattedPhone = toPhoneNumber.startsWith("+") ? toPhoneNumber : `+${toPhoneNumber}`;
+    const body = String(message || "").trim().slice(0, 1500);
+    if (!body) {
+      return { success: false, error: "Message WhatsApp vide" };
+    }
 
-    // Si Twilio n'est pas configuré, retourner un succès simulé
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      console.log(`[WhatsApp Mock] Message envoyé à ${formattedPhone}: ${message}`);
+    // Si Twilio n'est pas configuré, retourner un succès simulé (dev / CI)
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
+      console.log(`[WhatsApp Mock] Message envoyé à ${formattedPhone}: ${body}`);
       return { success: true, messageId: `mock-${Date.now()}` };
     }
 
-    // Construire le payload
-    const payload = {
-      From: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
-      To: `whatsapp:${formattedPhone}`,
-      Body: message,
-    };
+    const params = new URLSearchParams();
+    params.set("From", `whatsapp:${TWILIO_WHATSAPP_NUMBER.startsWith("+") ? TWILIO_WHATSAPP_NUMBER : `+${TWILIO_WHATSAPP_NUMBER}`}`);
+    params.set("To", `whatsapp:${formattedPhone}`);
+    params.set("Body", body);
 
-    // Envoyer via Twilio
     const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64");
     const response = await axios.post(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-      payload,
+      params.toString(),
       {
         headers: {
           Authorization: `Basic ${auth}`,
@@ -62,6 +65,149 @@ export async function sendWhatsAppMessage(
   }
 }
 
+/** Messages purs — testables sans Twilio. */
+export function buildAgencyDocumentsPublishedWhatsApp(params: {
+  candidateName: string;
+  documentCount: number;
+  dossierNumber?: string | null;
+}): string {
+  const count = Math.max(1, params.documentCount);
+  const dossier = params.dossierNumber ? `\n📋 *Dossier :* ${params.dossierNumber}` : "";
+  return `
+✅ *Documents disponibles dans votre espace*
+
+Bonjour ${params.candidateName},
+
+${count === 1
+    ? "Votre conseiller a publié un document scanné en agence dans votre espace client."
+    : `Votre conseiller a publié ${count} documents scannés en agence dans votre espace client.`}
+${dossier}
+
+Consultez-les ici : ${CLIENT_SPACE_URL}?section=documents
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildDossierCreatedWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  destination: string;
+  visaType: string;
+}): string {
+  return `
+📁 *Dossier ouvert en agence*
+
+Bonjour ${params.candidateName},
+
+Votre dossier a été créé chez 3M TRAVEL AGENCY.
+
+📋 *N° :* ${params.dossierNumber}
+🌍 *Destination :* ${params.destination}
+🛂 *Procédure :* ${params.visaType}
+
+Suivez l’avancement et vos pièces ici :
+${CLIENT_SPACE_URL}
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildProcedureStageWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  stageLabel: string;
+  stepLabel?: string | null;
+}): string {
+  const step = params.stepLabel ? `\n📌 *Progression :* ${params.stepLabel}` : "";
+  return `
+📢 *Mise à jour de votre dossier*
+
+Bonjour ${params.candidateName},
+
+Votre dossier *${params.dossierNumber}* avance.
+
+✅ *Statut :* ${params.stageLabel}${step}
+
+Détails dans votre espace :
+${CLIENT_SPACE_URL}
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildPaymentReceiptApprovedWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  amount: string;
+  currency: string;
+}): string {
+  const amountLabel = `${params.amount} ${params.currency}`.trim();
+  return `
+🧾 *Reçu de paiement validé*
+
+Bonjour ${params.candidateName},
+
+Votre reçu pour le dossier *${params.dossierNumber}* a été signé par 3M TRAVEL AGENCY.
+💰 *Montant :* ${amountLabel}
+
+Il est visible dans votre espace (et remis au comptoir en A5 si paiement en agence) :
+${CLIENT_SPACE_URL}?section=overview
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildClientAccessLinkWhatsApp(params: { candidateName: string; dossierNumber: string; accessUrl: string }): string {
+  return `
+🔑 *Accès à votre espace client*
+
+Bonjour ${params.candidateName},
+
+Voici votre lien pour ouvrir l’espace client du dossier *${params.dossierNumber}* :
+
+${params.accessUrl}
+
+Le lien est valable 48 heures. Ensuite, utilisez « Mot de passe oublié » sur la page de connexion.
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildAgreementSignatureReminderWhatsApp(params: { candidateName: string; dossierNumber: string }): string {
+  return `
+✍️ *Rappel — protocole à signer*
+
+Bonjour ${params.candidateName},
+
+Votre paiement est confirmé pour le dossier *${params.dossierNumber}*, mais le protocole d’accord n’est pas encore signé.
+
+Finalisez la signature ici :
+${CLIENT_SPACE_URL}?section=dossier
+
+Sans cette signature, le traitement humain ne peut pas démarrer.
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildAgreementSignedWhatsApp(params: { candidateName: string; dossierNumber: string }): string {
+  return `
+✅ *Protocole d’accord signé*
+
+Bonjour ${params.candidateName},
+
+Votre protocole d’accord pour le dossier *${params.dossierNumber}* est bien enregistré.
+
+Un exemplaire PDF signé vous a été envoyé par e-mail. Retrouvez-le aussi dans votre espace :
+${CLIENT_SPACE_URL}?section=documents
+
+L’équipe 3M TRAVEL AGENCY peut maintenant poursuivre le traitement de votre dossier.
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
 /**
  * Envoyer le bilan d'admissibilité par WhatsApp
  */
@@ -74,7 +220,7 @@ export async function sendAdmissibilityReportWhatsApp(params: {
   recommendation: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const message = `
-🌟 *3M Travel & Services - Bilan d'Admissibilité*
+🌟 *3M TRAVEL AGENCY - Bilan d'Admissibilité*
 
 Bonjour ${params.candidateName},
 
@@ -89,7 +235,7 @@ ${params.recommendation}
 Pour toute question, contactez-nous via WhatsApp ou email.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -121,7 +267,7 @@ Votre rendez-vous a été confirmé :
 Veuillez arriver 10 minutes avant l'heure prévue.
 
 À bientôt !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -160,7 +306,7 @@ Votre paiement a été enregistré :
 Un reçu détaillé vous a été envoyé par email.
 
 Merci !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -184,7 +330,7 @@ Votre visa ${params.visaType} pour ${params.destinationCountry} a été approuv�
 Consultez votre espace candidat pour les détails et les prochaines étapes.
 
 Merci de votre confiance !
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -212,7 +358,7 @@ Finalisez votre dossier en procédant au paiement dès maintenant.
 ${params.paymentLink ? `Lien de paiement : ${params.paymentLink}` : 'Consultez votre email pour le lien de paiement'}
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -238,7 +384,7 @@ Prochaine étape : Soumission aux agences partenaires.
 Nous vous tiendrons informé de l'avancement.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -263,7 +409,7 @@ Votre dossier pour ${params.destinationCountry} a été soumis à ${params.agenc
 Nous vous tiendrons informé de la progression du recrutement.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -293,7 +439,7 @@ Excellente nouvelle ! Vous avez obtenu un contrat de travail ! 🎉
 Consultez votre espace candidat pour les détails et les prochaines étapes.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);
@@ -319,7 +465,7 @@ Malheureusement, votre dossier n'a pas pu être approuvé.
 Nous vous invitons à nous contacter pour discuter des options disponibles.
 
 Cordialement,
-3M Travel & Services
+3M TRAVEL AGENCY
 `.trim();
 
   return sendWhatsAppMessage(params.phoneNumber, message);

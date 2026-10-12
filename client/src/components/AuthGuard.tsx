@@ -28,7 +28,7 @@ function getRequestedInternalPath(location: string): string {
 
 export default function AuthGuard({
   children,
-  message = "Vous devez disposer d’un compte ou vous connecter pour accéder aux outils de 3M Travel.",
+  message = "Vous devez disposer d’un compte ou vous connecter pour accéder aux outils de 3M TRAVEL AGENCY.",
   autoRedirect = false,
   publicAlternative,
 }: AuthGuardProps) {
@@ -107,7 +107,7 @@ export default function AuthGuard({
         <div className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] ring-1 ring-white/20">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-5 py-5 text-center text-white sm:px-8 sm:py-6">
-            <img src={LOGO_URL} alt="Logo 3M Travel Agency" className="mx-auto mb-3 h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
+            <img src={LOGO_URL} alt="Logo 3M TRAVEL AGENCY" className="mx-auto mb-3 h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
             <h1 className="text-lg font-black sm:text-xl">Accès Réservé aux Membres</h1>
           </div>
 
@@ -184,7 +184,7 @@ export default function AuthGuard({
 
             {/* Avantages */}
             <div className="rounded-xl bg-blue-50 p-3 text-left sm:p-4">
-              <p className="text-sm font-semibold text-blue-800 mb-2">Avec votre compte 3M Travel :</p>
+              <p className="text-sm font-semibold text-blue-800 mb-2">Avec votre compte 3M TRAVEL AGENCY :</p>
               <ul className="space-y-1.5 text-sm text-blue-700">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />

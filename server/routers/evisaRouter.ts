@@ -628,7 +628,7 @@ export const evisaRouter = router({
         try {
           await sendEmail({
           to: req.email,
-          subject: `[3M Travel] Votre e-Visa pour ${req.countryName} est disponible - Dossier #${req.id}`,
+          subject: `[3M TRAVEL AGENCY] Votre e-Visa pour ${req.countryName} est disponible - Dossier #${req.id}`,
           html: `
             <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff;">
               <h2 style="color: #1e3a8a; margin-top: 0;">Votre e-Visa est approuvé et disponible !</h2>
@@ -643,7 +643,7 @@ export const evisaRouter = router({
                 <a href="${stored.url}" target="_blank" style="background: #16a34a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Télécharger mon e-Visa officiel (PDF)</a>
               </p>
               <p>Vous pouvez également retrouver ce document à tout moment dans votre espace personnel sur notre site.</p>
-              <p style="margin-top: 30px; font-size: 13px; color: #64748b;">Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+              <p style="margin-top: 30px; font-size: 13px; color: #64748b;">Cordialement,<br/><strong>L'équipe 3M TRAVEL AGENCY</strong></p>
             </div>
           `,
           });

@@ -127,8 +127,8 @@ export default function SubmitDocuments() {
             <p className="text-gray-600 mb-6">
               Vos documents ont deja ete soumis. Nous les verifierons et vous contacterons sous peu.
             </p>
-            <Button onClick={() => (window.location.href = "/client-dashboard")} className="w-full">
-              Retour au tableau de bord
+            <Button onClick={() => (window.location.href = "/mon-espace")} className="w-full">
+              Retour à mon espace
             </Button>
           </Card>
         </div>
@@ -239,9 +239,10 @@ export default function SubmitDocuments() {
                 Veuillez vous presenter a notre agence avec vos documents originaux:
               </p>
               <div className="bg-white p-4 rounded-lg border border-blue-200">
-                <p className="font-semibold text-gray-900">3M Travel & Services</p>
-                <p className="text-gray-600">Yaoundé, Cameroun</p>
-                <p className="text-gray-600">Tel: +237 XXX XXX XXX</p>
+                <p className="font-semibold text-gray-900">3M TRAVEL AGENCY</p>
+                <p className="text-gray-600">Biyem-Assi, Montée Chapelle Obili — Yaoundé, Cameroun</p>
+                <p className="text-gray-600">Tél. : +237 620 996 045</p>
+                <p className="text-gray-600">WhatsApp : +237 698 104 832</p>
               </div>
             </Card>
           )}

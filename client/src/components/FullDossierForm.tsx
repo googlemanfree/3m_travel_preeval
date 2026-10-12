@@ -690,7 +690,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
 
                 <div className="pt-4 border-t flex items-center justify-between">
                   <div className="text-xs text-slate-500">
-                    <p className="font-semibold text-slate-700">Portail Agence 3M Travel</p>
+                    <p className="font-semibold text-slate-700">Portail Agence 3M TRAVEL AGENCY</p>
                     <p>hello@3mtravelagency.com • +237 698 104 832</p>
                   </div>
                   <div className="w-16 h-16 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-xs font-bold text-blue-900 text-center p-1">
