@@ -2533,6 +2533,23 @@ export const adminRouter = router({
           const [cand] = candidateEmail ? await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, candidateEmail)).limit(1) : [];
           candidateId = cand?.id ?? null;
           await db.insert(agencyDossierHistory).values({ dossierId: fileRec.dossierId, action: "document_status_updated", changedBy: admin.email || "Admin", oldValue: fileRec.verificationStatus, newValue: input.status, details: input.comment || "Statut documentaire mis à jour" });
+
+          // Automatisation : aligner le coffre sans créer de dossier ni notifier.
+          try {
+            await publishAgencyDocumentsToCase(db, {
+              agencyDossierId: fileRec.dossierId,
+              documentIds: [input.documentId],
+              actorAdminId: admin.id ?? null,
+              actorEmail: admin.email || "admin",
+              notify: false,
+              createCaseIfMissing: false,
+            });
+          } catch (syncErr) {
+            console.warn(
+              "[Admin updateDocumentStatus] sync agency case_documents:",
+              syncErr instanceof Error ? syncErr.message.slice(0, 300) : syncErr,
+            );
+          }
         } else if (input.source === "case") {
           const [fileRec] = await db.select({ id: caseDocuments.id, fileName: caseDocuments.fileName, candidateId: caseDocuments.candidateId }).from(caseDocuments).where(eq(caseDocuments.id, input.documentId)).limit(1);
           if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Document du dossier introuvable" });
@@ -2940,11 +2957,16 @@ export const adminRouter = router({
           documentIds: input.documentIds,
           notify: true,
         });
-        const baseMessage = result.published === 0
-          ? result.totalScanned === 0
-            ? "Aucun document scanné à publier pour ce dossier."
-            : "Tous les documents scannés sont déjà visibles dans l’espace client."
-          : `${result.published} document(s) publié(s) dans l’espace client (${result.caseNumber}).`;
+        const baseMessage = result.reason === "no_case"
+          ? "Aucun dossier opérationnel lié : rien à publier (aucun dossier créé)."
+          : result.published === 0 && result.updated === 0
+            ? result.totalScanned === 0
+              ? "Aucun document scanné à publier pour ce dossier."
+              : "Tous les documents scannés sont déjà visibles dans l’espace client."
+            : [
+                result.published > 0 ? `${result.published} document(s) publié(s)` : null,
+                result.updated > 0 ? `${result.updated} statut(s) aligné(s)` : null,
+              ].filter(Boolean).join(", ") + ` dans l’espace client (${result.caseNumber}).`;
         return {
           success: true,
           ...result,

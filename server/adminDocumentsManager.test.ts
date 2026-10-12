@@ -17,4 +17,9 @@ describe("gestionnaire de fichiers administrateur", () => {
     expect(source).toContain("updateDocumentStatusMutation.mutateAsync");
     expect(source).toContain("Chaque candidat concerné sera notifié");
   });
+
+  it("transmet la source agency à l’approbation et à la remise en attente", () => {
+    expect(source).toContain('doc.source === "agency" ? "agency" : "client"');
+    expect(source).not.toMatch(/source:\s*doc\.source === "candidate" \? "candidate" : "client"/);
+  });
 });

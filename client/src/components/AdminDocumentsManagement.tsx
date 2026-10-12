@@ -118,7 +118,7 @@ export function AdminDocumentsManagement() {
       await updateDocumentStatusMutation.mutateAsync({
         sessionToken,
         documentId: doc.id,
-        source: doc.source === "candidate" ? "candidate" : "client",
+        source: doc.source === "candidate" ? "candidate" : doc.source === "agency" ? "agency" : "client",
         status: "approved",
       });
       toast.success("✓ Document approuvé", {
@@ -145,7 +145,7 @@ export function AdminDocumentsManagement() {
       await updateDocumentStatusMutation.mutateAsync({
         sessionToken,
         documentId: doc.id,
-        source: doc.source === "candidate" ? "candidate" : "client",
+        source: doc.source === "candidate" ? "candidate" : doc.source === "agency" ? "agency" : "client",
         status: "pending",
         comment: "Document replacé en attente de vérification par l'administration.",
       });

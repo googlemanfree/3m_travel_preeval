@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
@@ -7,11 +7,19 @@ import {
   mapAgencyVerificationToReviewStatus,
   parseDocumentsReceivedList,
   previewCountryVisaChecklist,
+  publishAgencyDocumentsToCase,
 } from "./services/publishAgencyDocumentsToCase";
 import { pickActiveCaseRequirements } from "../client/src/lib/documentChecklist";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+
+vi.mock("./services/seedCountryProcedureCase", () => ({
+  seedCountryProcedureChecklist: vi.fn(async () => ({ added: 0, label: "Procédure standard" })),
+}));
+vi.mock("./services/clientWhatsAppNotify", () => ({
+  notifyAgencyDocumentsPublishedWhatsApp: vi.fn(async () => ({ sent: false, attempted: false })),
+}));
 
 describe("publishAgencyDocumentsToCase helpers", () => {
   it("normalise les types scannés vers des libellés client lisibles", () => {
@@ -82,7 +90,139 @@ describe("pickActiveCaseRequirements — dossier actif vs EVAL", () => {
   });
 });
 
-describe("branchement admin / upload / UI", () => {
+describe("publishAgencyDocumentsToCase — sync statut sans création", () => {
+  it("sans dossier ops et createCaseIfMissing:false : no-op (ne crée pas de case)", async () => {
+    const db = {
+      select: vi.fn()
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              limit: async () => [{
+                id: 12,
+                email: "client@example.com",
+                phone: null,
+                fullName: "Client Test",
+                destination: "Canada",
+                visaType: "Études",
+                status: "documents_review",
+                createdAt: new Date("2026-10-01"),
+              }],
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              limit: async () => [{ id: 42, phone: null }],
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              limit: async () => [],
+            }),
+          }),
+        }),
+      insert: vi.fn(),
+      update: vi.fn(),
+    } as any;
+
+    const result = await publishAgencyDocumentsToCase(db, {
+      agencyDossierId: 12,
+      documentIds: [7],
+      notify: false,
+      createCaseIfMissing: false,
+    });
+    expect(result).toMatchObject({ reason: "no_case", published: 0, updated: 0, caseId: null });
+    expect(db.insert).not.toHaveBeenCalled();
+  });
+
+  it("aligne reviewStatus quand la pièce existe déjà et passe en verified", async () => {
+    const values = vi.fn(async () => undefined);
+    const insert = vi.fn(() => ({ values }));
+    const whereUpdate = vi.fn(async () => undefined);
+    const setUpdate = vi.fn(() => ({ where: whereUpdate }));
+    const update = vi.fn(() => ({ set: setUpdate }));
+    const requirement = {
+      id: 55,
+      documentType: "Passeport valide",
+      status: "received",
+    };
+    const operational = {
+      id: 9,
+      caseNumber: "3M-AGN-0012",
+      candidateId: 42,
+      legacyAgencyDossierId: 12,
+      countryTarget: "Canada",
+      visaType: "Études",
+    };
+    const dossier = {
+      id: 12,
+      email: "client@example.com",
+      phone: null,
+      fullName: "Client Test",
+      destination: "Canada",
+      visaType: "Études",
+      status: "documents_review",
+      createdAt: new Date("2026-10-01"),
+    };
+    const db = {
+      select: vi.fn()
+        .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: async () => [dossier] }) }) })
+        .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: async () => [{ id: 42, phone: null }] }) }) })
+        .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: async () => [operational] }) }) })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              orderBy: async () => [{
+                id: 7,
+                dossierId: 12,
+                documentType: "passeport",
+                documentName: "passeport.pdf",
+                documentUrl: "/manus-storage/agency-dossiers/12/documents/passeport.pdf",
+                fileSize: 12,
+                source: "agency_scan",
+                verificationStatus: "verified",
+                verificationComment: null,
+                createdAt: new Date("2026-10-12T11:00:00.000Z"),
+              }],
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: async () => [{
+              id: 1,
+              fileName: "passeport.pdf",
+              fileKey: "agency-dossiers/12/documents/passeport.pdf",
+              documentType: "Passeport",
+              reviewStatus: "received",
+            }],
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({ where: async () => [requirement] }),
+        }),
+      insert,
+      update,
+    } as any;
+
+    const result = await publishAgencyDocumentsToCase(db, {
+      agencyDossierId: 12,
+      documentIds: [7],
+      notify: false,
+      createCaseIfMissing: false,
+      actorEmail: "admin@3mtravelagency.com",
+    });
+    expect(result).toMatchObject({ published: 0, updated: 1, skipped: 0, reason: "ok" });
+    expect(update).toHaveBeenCalled();
+    expect(requirement.status).toBe("approved");
+    expect(values).toHaveBeenCalled(); // activity log
+  });
+});
+
+describe("branchement admin / upload / UI + sync à l’approbation", () => {
   it("expose publication, seed custom et sync upload", () => {
     const admin = read("server/routers/admin.ts");
     expect(admin).toContain("publishAgencyScannedDocumentsToClient");
@@ -90,6 +230,13 @@ describe("branchement admin / upload / UI", () => {
     expect(admin).toContain("publishAgencyDocumentsToCase");
     expect(admin).toContain("customDocuments: receivedPieces");
     expect(admin).toContain("documentsReceived");
+    expect(admin).toContain("[Admin updateDocumentStatus] sync agency case_documents:");
+    expect(admin).toContain("createCaseIfMissing: false");
+
+    const agencyDocs = read("server/routers/agencyDossierDocuments.ts");
+    expect(agencyDocs).toContain("publishAgencyDocumentsToCase");
+    expect(agencyDocs).toContain("[agencyDossierDocuments.updateVerificationStatus] sync case_documents:");
+    expect(agencyDocs).toContain("createCaseIfMissing: false");
 
     const upload = read("server/routers/agencyDossierUpload.ts");
     expect(upload).toContain("publishAgencyDocumentsToCase");
@@ -109,5 +256,8 @@ describe("branchement admin / upload / UI", () => {
     expect(modal).toContain("previewCountryVisaChecklist");
     expect(modal).toContain("import-checklist-preview");
     expect(modal).toContain("Ajouter un dossier déjà inscrit en agence");
+
+    const docsUi = read("client/src/components/AdminDocumentsManagement.tsx");
+    expect(docsUi).toContain('doc.source === "agency" ? "agency" : "client"');
   });
 });
