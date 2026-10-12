@@ -99,3 +99,10 @@
 - [x] PR89 sortie du brouillon et squash-mergée sur `main` au commit `bc1835bd`.
 - [x] Checkout local synchronisé sur `user_github/main` (`bc1835bd`); conflit de suivi résolu sans modifier le code.
 - [x] WebDev synchronisé et checkpoint final PR89 créé : version `69ab7111`.
+
+
+## Optimisation anti-écran blanc — pages publiques prioritaires
+- [x] Routes publiques critiques identifiées; le mécanisme commun `app-ready`/`app-boot-slow` est conservé.
+- [x] Pages conversion/procédures rendues synchrones pour éviter les écrans blancs liés aux chunks différés.
+- [x] Régression ciblée ajoutée; **5 suites / 20 tests verts**, `pnpm run check` et build production verts.
+- [x] WebDev synchronisé; contrôle non destructif réussi sur **8 pages desktop** et **5 pages mobile** sans écran blanc, avec navigation mobile lisible.
