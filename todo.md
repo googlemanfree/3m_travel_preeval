@@ -1,6 +1,8 @@
 
-## Correctif tRPC — erreurs transform/fetch accueil
-- [x] Procédure suspecte identifiée : `customerReview.listApproved`, appelée par `ApprovedReviewsSection` et renvoyant désormais du JSON sûr. Les journaux disponibles ne prouvent pas directement que cette procédure est l’origine exacte de l’erreur du 12/10 à 09:05; ils prouvent des redémarrages serveur autour de la période.
-- [x] Correctif déjà présent sur `main` : contrat JSON-only (`id`, dates ISO, nombres normalisés) et fallback `[]` avec journalisation; aucune modification supplémentaire inutile.
-- [x] Endpoint vérifié localement, sur l’aperçu et sur le domaine public; accueil chargé sans erreur. Régression ciblée, typecheck et build verts.
-- [x] Checkpoint WebDev créé après validation : version `28d15339`; aucun dossier, paiement ou compte n’a été modifié.
+## PR80 — bouton reset password dans l’e-mail
+- [x] PR80 sortie du draft; validation locale du commit `9f5a68c7` : régression ciblée 2/2, typecheck et build verts.
+- [x] PR80 squash-mergée sur `main` au commit `d9589c82`.
+- [x] WebDev synchronisé et redémarré sur `d9589c82`.
+- [x] Vérification du rendu admin : bouton à couleur solide, texte « Réinitialiser mon mot de passe », lien texte de secours et URL `/admin/reset-password?token=…`; smoke template 4/4 contrôles verts. Aucun token réel utilisé et aucun e-mail envoyé.
+- [x] Fournisseur d’envoi vérifié : service SMTP configuré avec expéditeur par défaut `hello@3mtravelagency.com`; aucun secret affiché.
+- [ ] Redemander un e-mail réel de réinitialisation après identification explicite du compte administrateur cible.
