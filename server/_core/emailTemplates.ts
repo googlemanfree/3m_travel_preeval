@@ -285,13 +285,14 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
           .reset-button {
             display: inline-block;
             background-color: #ff9800;
-            color: white;
+            color: #ffffff !important;
             padding: 14px 40px;
             text-decoration: none;
             border-radius: 4px;
             margin: 20px 0;
             font-weight: 600;
             text-align: center;
+            border: 1px solid #ff9800;
           }
           .reset-button:hover {
             background-color: #f57c00;
@@ -371,12 +372,16 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
               <strong>⏰ Important :</strong> Ce lien expire dans <strong>${params.expiresIn}</strong>. Agissez rapidement.
             </div>
 
-            <!-- Reset Button -->
-            <div style="text-align: center;">
-              <a href="${params.resetLink}" class="reset-button">
-                Réinitialiser mon mot de passe
-              </a>
-            </div>
+            <!-- Reset Button (couleurs solides + lien texte de secours) -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 20px auto;">
+              <tr>
+                <td align="center" bgcolor="#ff9800" style="background-color: #ff9800; border-radius: 4px;">
+                  <a href="${params.resetLink}" class="reset-button" style="display: inline-block; background-color: #ff9800; color: #ffffff !important; padding: 14px 40px; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ff9800;">
+                    <span style="color: #ffffff !important;">Réinitialiser mon mot de passe</span>
+                  </a>
+                </td>
+              </tr>
+            </table>
 
             <!-- Alternative Link -->
             <div class="info-section">
