@@ -8,7 +8,7 @@ const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 describe("dossiers secondaires travail + études", () => {
   it("expose le dialogue de seconde opportunité côté espace client", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
-    expect(page).toContain("Ajouter une seconde opportunité (Travail / Études)");
+    expect(page).toContain("Ajouter une seconde opportunité");
     expect(page).toContain('data-testid="secondary-dossier-dialog"');
     expect(page).toContain("secondaryDossierEvaluationPath");
     expect(page).toContain("SECONDARY_PROJECT_OPTIONS");

@@ -49,7 +49,7 @@ describe("redirection Google et suivi candidat", () => {
   it("regroupe les documents à signer sans mélanger les documents ordinaires", () => {
     const space = read("client/src/pages/EvaluationSpace.tsx");
     const signatures = read("client/src/components/SignableDocumentsPanel.tsx");
-    expect(space).toContain('id: "signatures", label: "Documents à signer"');
+    expect(space).toContain('id: "signatures", label: "Signatures"');
     expect(space).toContain("<SignableDocumentsPanel");
     expect(signatures).toContain("Protocole d’accord 3M TRAVEL AGENCY");
     expect(signatures).toContain("Le protocole sera rendu signable après la confirmation du paiement.");

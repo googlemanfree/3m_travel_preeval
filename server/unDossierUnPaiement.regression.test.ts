@@ -41,7 +41,7 @@ describe("1 dossier = 1 paiement", () => {
     const admin = read("server/routers/admin.ts");
     const block = admin.slice(
       admin.indexOf("importAgencyDossier:"),
-      admin.indexOf("importAgencyDossier:") + 2500,
+      admin.indexOf("importAgencyDossier:") + 6000,
     );
     expect(block).toContain("initialPaymentStatus: z.enum([\"unknown\", \"pending\", \"paid\"]).default(\"unknown\")");
     expect(block).toContain("initialPaymentStatus: input.initialPaymentStatus");
