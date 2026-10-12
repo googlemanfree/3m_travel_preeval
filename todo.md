@@ -106,3 +106,11 @@
 - [x] Pages conversion/procédures rendues synchrones pour éviter les écrans blancs liés aux chunks différés.
 - [x] Régression ciblée ajoutée; **5 suites / 20 tests verts**, `pnpm run check` et build production verts.
 - [x] WebDev synchronisé; contrôle non destructif réussi sur **8 pages desktop** et **5 pages mobile** sans écran blanc, avec navigation mobile lisible.
+
+
+## PR90 — sync coffre agence à l’approbation
+- [x] Audit effectué : miroir idempotent `agency_dossier_documents` → `case_documents`, `createCaseIfMissing:false`, `notify:false`, sans création de dossier ni réécriture de statut.
+- [x] Correctif de typage minimal poussé; **2 suites / 13 tests verts**, `pnpm run check` et build production verts.
+- [x] PR90 sortie du brouillon et squash-mergée sur `main` au commit `1deb3b83`.
+- [x] Checkout local et WebDev synchronisés sur `1deb3b83`; serveur actif, dépendances/LSP/TypeScript OK.
+- [ ] Smoke test authentifié d’approbation/refus d’une pièce agence à effectuer séparément avec un compte admin QA; aucune mutation métier réelle exécutée ici.
