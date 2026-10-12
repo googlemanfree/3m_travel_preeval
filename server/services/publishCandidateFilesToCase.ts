@@ -209,7 +209,7 @@ export async function publishCandidateFilesToCase(
     const key = String(item.fileKey || "").trim();
     if (key) existingKeys.set(key, item);
   }
-  const existingNames = new Map(
+  const existingNames = new Map<string, (typeof existing)[number]>(
     existing.map((item) => [`${fold(item.documentType)}::${fold(item.fileName)}`, item] as const),
   );
 
