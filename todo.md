@@ -98,4 +98,4 @@
 - [x] Commit exact `6872c75c` validé : **6 suites / 31 tests verts**, `pnpm run check` vert et build production vert.
 - [x] PR89 sortie du brouillon et squash-mergée sur `main` au commit `bc1835bd`.
 - [x] Checkout local synchronisé sur `user_github/main` (`bc1835bd`); conflit de suivi résolu sans modifier le code.
-- [ ] Synchroniser WebDev et créer le checkpoint final PR89.
+- [x] WebDev synchronisé et checkpoint final PR89 créé : version `69ab7111`.
