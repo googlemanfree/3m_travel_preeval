@@ -52,7 +52,7 @@ interface SecureDocumentUploadWithAIProps {
 
 const ALLOWED_FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 10;
+const MAX_FILES = 16;
 
 export function SecureDocumentUploadWithAI({
   dossierNumber,

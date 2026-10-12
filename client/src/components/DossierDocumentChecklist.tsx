@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
+import { assembleChecklistRequirements, buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, MAX_CHECKLIST_DOCUMENTS, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
 import RequirementQuickUpload from "@/components/RequirementQuickUpload";
 
 type DocumentClarification = {
@@ -27,8 +27,9 @@ function documentState(requirement: Requirement, documents: ChecklistDocument[])
   return { kind, ...STATE_VIEW[kind] };
 }
 
-export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[]) {
-  return getRequirements(destination, projectType).map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
+export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
+  const { catalogue } = assembleChecklistRequirements(destination, projectType, customRequirements);
+  return catalogue.map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
 }
 
 export function calculateChecklistProgress(states: Array<{ state: { kind: string } }>) {
@@ -77,9 +78,9 @@ export default function DossierDocumentChecklist({
   customRequirements?: CustomRequirement[];
   clarifications?: DocumentClarification[];
 }) {
-  const requirements = getRequirements(destination, projectType);
-  const states = deriveChecklistStates(destination, projectType, documents);
-  const manualStates = customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType, detail: requirement.adminComment ?? undefined }, state: customRequirementState(requirement, documents), dueAt: requirement.dueAt }));
+  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements);
+  const states = deriveChecklistStates(destination, projectType, documents, customRequirements);
+  const manualStates = assembled.customs.map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType, detail: requirement.adminComment ?? undefined }, state: customRequirementState(requirement, documents), dueAt: requirement.dueAt }));
   const allStates = [...states, ...manualStates];
   const progress = calculateChecklistProgress(allStates);
   const receivedCount = progress.completed;
@@ -97,12 +98,15 @@ export default function DossierDocumentChecklist({
             Checklist documentaire
           </CardTitle>
           <p className="mt-1 text-sm text-gray-600">
-            Pièces à préparer pour <strong>{destinationLabel}</strong>. Cette liste s’adapte à votre projet et se met à jour après chaque dépôt ou vérification.
+            Pièces à préparer pour <strong>{destinationLabel}</strong> — jusqu’à <strong>{MAX_CHECKLIST_DOCUMENTS}</strong> documents. Cette liste s’adapte à votre projet et se met à jour après chaque dépôt ou vérification par l’agence.
           </p>
         </div>
-        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold tabular-nums text-indigo-700" aria-label={`${progress.percentage}% de la checklist documentaire est prête`}>
-          {progress.percentage}% prêt
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold tabular-nums text-indigo-700" aria-label={`${progress.percentage}% de la checklist documentaire est prête`}>
+            {progress.percentage}% prêt
+          </span>
+          <span className="text-[11px] font-semibold tabular-nums text-slate-500" data-testid="checklist-capacity">{progress.total}/{MAX_CHECKLIST_DOCUMENTS} pièces</span>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="mb-2 flex items-baseline justify-between gap-3 text-sm" aria-live="polite">
@@ -118,31 +122,49 @@ export default function DossierDocumentChecklist({
           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-900">{pendingCount} à compléter</span>
           {pendingClarificationCount > 0 && <span className="rounded-full bg-violet-50 px-2.5 py-1 text-violet-900">{pendingClarificationCount} précision{pendingClarificationCount > 1 ? "s" : ""} en attente</span>}
         </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {allStates.map(({ requirement, state, dueAt }, index) => {
-            const StateIcon = state.Icon;
-            const matchingClarifications = clarifications.filter((item) => item.documentLabel && normalize(item.documentLabel) === normalize(requirement.label));
-            const pendingClarification = matchingClarifications.find((item) => item.status === "pending");
-            const answeredClarification = matchingClarifications.find((item) => item.status === "answered" && item.responseMessage?.trim());
-            return (
-              <div key={`${requirement.category}-${requirement.label}-${index}`} className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${state.tone}`}>
-                <StateIcon className="mt-0.5 h-4 w-4 shrink-0 text-current" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <span className="block font-semibold text-gray-900">{requirement.label}</span>
-                  <span className="text-xs text-gray-600">{requirement.category} · {state.label}</span>
-                  {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
-                  {(() => { const due = dueInfo(dueAt); return due ? <span data-testid="checklist-due" data-tone={due.tone} className={`mt-1 block text-xs font-semibold ${due.tone === "overdue" ? "text-rose-700" : due.tone === "soon" ? "text-amber-800" : "text-slate-700"}`}>{due.label}</span> : null; })()}
-                  {pendingClarification && <span className="mt-2 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">En attente de réponse</span>}
-                  {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}{answeredClarification.canUpload && answeredClarification.id && answeredClarification.documentLabel && onUploadClarification && <Button type="button" size="sm" className="mt-2 h-8 bg-emerald-700 text-xs hover:bg-emerald-800" onClick={() => onUploadClarification({ id: answeredClarification.id!, documentLabel: answeredClarification.documentLabel! })}>Déposer cette pièce maintenant</Button>}{answeredClarification.hasSubmittedDocument && <span className="mt-2 block font-semibold text-emerald-800">Pièce transmise — vérification en cours.</span>}</div>}
-                  {(state.kind === "missing" || state.kind === "replace") && (onUploaded
-                    ? <RequirementQuickUpload label={requirement.label} replace={state.kind === "replace"} onUploaded={onUploaded} />
-                    : onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>)}
-                  {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" disabled={Boolean(pendingClarification)} onClick={() => onRequestClarification(requirement.label)} aria-label={pendingClarification ? `Une clarification est en attente pour ${requirement.label}` : `Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />{pendingClarification ? "Précision demandée" : "Demander une précision"}</Button>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {(() => {
+          const categories: string[] = [];
+          for (const row of allStates) {
+            if (!categories.includes(row.requirement.category)) categories.push(row.requirement.category);
+          }
+          return (
+            <div className="space-y-5">
+              {categories.map((category) => {
+                const rows = allStates.filter((row) => row.requirement.category === category);
+                return (
+                  <section key={category} aria-label={`Catégorie ${category}`}>
+                    <h4 className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">{category}</h4>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {rows.map(({ requirement, state, dueAt }, index) => {
+                        const StateIcon = state.Icon;
+                        const matchingClarifications = clarifications.filter((item) => item.documentLabel && normalize(item.documentLabel) === normalize(requirement.label));
+                        const pendingClarification = matchingClarifications.find((item) => item.status === "pending");
+                        const answeredClarification = matchingClarifications.find((item) => item.status === "answered" && item.responseMessage?.trim());
+                        return (
+                          <div key={`${requirement.category}-${requirement.label}-${index}`} className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${state.tone}`}>
+                            <StateIcon className="mt-0.5 h-4 w-4 shrink-0 text-current" aria-hidden="true" />
+                            <div className="min-w-0 flex-1">
+                              <span className="block font-semibold text-gray-900">{requirement.label}</span>
+                              <span className="text-xs text-gray-600">{state.label}</span>
+                              {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
+                              {(() => { const due = dueInfo(dueAt); return due ? <span data-testid="checklist-due" data-tone={due.tone} className={`mt-1 block text-xs font-semibold ${due.tone === "overdue" ? "text-rose-700" : due.tone === "soon" ? "text-amber-800" : "text-slate-700"}`}>{due.label}</span> : null; })()}
+                              {pendingClarification && <span className="mt-2 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">En attente de réponse</span>}
+                              {answeredClarification && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Réponse de l’agence :</strong> {answeredClarification.responseMessage}{answeredClarification.canUpload && answeredClarification.id && answeredClarification.documentLabel && onUploadClarification && <Button type="button" size="sm" className="mt-2 h-8 bg-emerald-700 text-xs hover:bg-emerald-800" onClick={() => onUploadClarification({ id: answeredClarification.id!, documentLabel: answeredClarification.documentLabel! })}>Déposer cette pièce maintenant</Button>}{answeredClarification.hasSubmittedDocument && <span className="mt-2 block font-semibold text-emerald-800">Pièce transmise — vérification en cours.</span>}</div>}
+                              {(state.kind === "missing" || state.kind === "replace") && (onUploaded
+                                ? <RequirementQuickUpload label={requirement.label} replace={state.kind === "replace"} onUploaded={onUploaded} />
+                                : onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>)}
+                              {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" disabled={Boolean(pendingClarification)} onClick={() => onRequestClarification(requirement.label)} aria-label={pendingClarification ? `Une clarification est en attente pour ${requirement.label}` : `Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />{pendingClarification ? "Précision demandée" : "Demander une précision"}</Button>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

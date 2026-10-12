@@ -325,7 +325,7 @@ export function procedureChecklistFor(procedureType?: string | null, destination
 export function parseCandidate360Labels(value: string | null | undefined) {
   try {
     const labels = JSON.parse(value ?? "[]");
-    return Array.isArray(labels) ? labels.filter((label): label is string => typeof label === "string").slice(0, 12) : [];
+    return Array.isArray(labels) ? labels.filter((label): label is string => typeof label === "string").slice(0, 16) : [];
   } catch {
     return [];
   }
@@ -5163,13 +5163,13 @@ export const adminRouter = router({
         documents: {
           total: requirements.length,
           pending: pendingRequirements.length,
-          checklist: requirements.slice(0, 12).map((item) => ({
+          checklist: requirements.slice(0, 16).map((item) => ({
             label: item.documentType,
             status: item.status,
             comment: item.adminComment,
             dueAt: item.dueAt,
           })),
-          uploadedFiles: files.slice(0, 10).map((file) => ({
+          uploadedFiles: files.slice(0, 16).map((file) => ({
             name: file.fileName,
             type: file.fileType,
             status: file.status,
@@ -5495,7 +5495,7 @@ export const adminRouter = router({
       candidateId: z.string().min(1),
       destination: z.string().trim().min(2).max(100).optional(),
       procedureType: z.string().trim().max(120).optional(),
-      customDocuments: z.array(z.string().trim().min(2).max(120)).max(12).optional(),
+      customDocuments: z.array(z.string().trim().min(2).max(120)).max(16).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -5506,7 +5506,8 @@ export const adminRouter = router({
       const operationalCase = await ensureOperationalCase(db, reference);
       const template = procedureChecklistFor(input.procedureType, input.destination);
       const customDocuments = (input.customDocuments ?? []).map((documentType) => ({ documentType, comment: "Pièce ajoutée spécifiquement par l’administration pour cette procédure." }));
-      const checklist = [...template.documents, ...customDocuments];
+      // Capacité partagée client ↔ admin : 16 pièces max (demandes custom prioritaires).
+      const checklist = [...customDocuments, ...template.documents].slice(0, 16);
       const existing = await db.select({ documentType: documentRequirements.documentType }).from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id));
       const existingTypes = new Set(existing.map((item) => item.documentType.toLowerCase()));
       const missing = checklist.filter((item) => !existingTypes.has(item.documentType.toLowerCase()));

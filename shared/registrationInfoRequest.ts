@@ -43,7 +43,7 @@ export function buildRegistrationInfoRequest(input: {
   });
 
   const workCvRequired = evaluationRequiresCv(visaType, projectKind);
-  const items: RegistrationInfoItem[] = checklist.documents.slice(0, 12).map((line) => {
+  const items: RegistrationInfoItem[] = checklist.documents.slice(0, 16).map((line) => {
     const isCv = /cv|curriculum/i.test(line.documentType);
     const priority: RegistrationInfoItem["priority"] =
       isCv
