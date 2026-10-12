@@ -1,6 +1,6 @@
 
-## PR76 — cockpit 360 barre reçu
-- [x] PR76 sortie du draft; validation locale du commit `ae8af907` : 1 suite / 2 tests verts, typecheck et build verts.
-- [x] PR76 squash-mergée sur `main` au commit `13b94ed3`.
-- [x] WebDev synchronisé et redémarré sur `13b94ed3`. Le cockpit cible `candidate360-receipt-actions` pour `receipt_missing`/`approve_receipt` et expose Valider et signer, A5 et PDF via les mutations existantes, sans rewrite de statut. Le jeu courant ne permettait pas d’ouvrir une fiche paiement réelle; aucun paiement ni reçu n’a été muté.
-- [x] Checkpoint WebDev final PR76 créé : version `91478d3a`.
+## Correctif tRPC — erreurs transform/fetch accueil
+- [x] Procédure suspecte identifiée : `customerReview.listApproved`, appelée par `ApprovedReviewsSection` et renvoyant désormais du JSON sûr. Les journaux disponibles ne prouvent pas directement que cette procédure est l’origine exacte de l’erreur du 12/10 à 09:05; ils prouvent des redémarrages serveur autour de la période.
+- [x] Correctif déjà présent sur `main` : contrat JSON-only (`id`, dates ISO, nombres normalisés) et fallback `[]` avec journalisation; aucune modification supplémentaire inutile.
+- [x] Endpoint vérifié localement, sur l’aperçu et sur le domaine public; accueil chargé sans erreur. Régression ciblée, typecheck et build verts.
+- [ ] Créer le checkpoint WebDev après validation; aucun dossier, paiement ou compte n’a été modifié.
