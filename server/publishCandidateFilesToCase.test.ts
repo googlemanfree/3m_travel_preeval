@@ -64,9 +64,10 @@ describe("publishCandidateFilesToCase — idempotence et no-op", () => {
     expect(db.insert).not.toHaveBeenCalled();
   });
 
-  it("ignore un fichier déjà présent (même fileKey)", async () => {
+  it("ignore un fichier déjà présent (même fileKey) sans changement de statut", async () => {
     const values = vi.fn(async () => undefined);
     const insert = vi.fn(() => ({ values }));
+    const update = vi.fn();
     const db = {
       select: vi.fn()
         .mockReturnValueOnce({
@@ -101,6 +102,7 @@ describe("publishCandidateFilesToCase — idempotence et no-op", () => {
                 mimeType: "application/pdf",
                 status: "uploaded",
                 correctionComment: null,
+                rejectionReason: null,
                 uploadedAt: new Date("2026-10-12T11:00:00.000Z"),
               }],
             }),
@@ -113,6 +115,7 @@ describe("publishCandidateFilesToCase — idempotence et no-op", () => {
               fileName: "passeport.pdf",
               fileKey: "candidates/42/passeport.pdf",
               documentType: "Passeport",
+              reviewStatus: "received",
             }],
           }),
         })
@@ -122,12 +125,94 @@ describe("publishCandidateFilesToCase — idempotence et no-op", () => {
           }),
         }),
       insert,
-      update: vi.fn(),
+      update,
     } as any;
 
     const result = await publishCandidateFilesToCase(db, { candidateId: 42, fileIds: [7] });
-    expect(result).toMatchObject({ published: 0, skipped: 1, reason: "ok", caseNumber: "3M-AGN-0012" });
+    expect(result).toMatchObject({ published: 0, updated: 0, skipped: 1, reason: "ok", caseNumber: "3M-AGN-0012" });
     expect(values).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("aligne reviewStatus quand la pièce existe déjà et passe en verified", async () => {
+    const values = vi.fn(async () => undefined);
+    const insert = vi.fn(() => ({ values }));
+    const whereUpdate = vi.fn(async () => undefined);
+    const setUpdate = vi.fn(() => ({ where: whereUpdate }));
+    const update = vi.fn(() => ({ set: setUpdate }));
+    const requirement = {
+      id: 55,
+      documentType: "Passeport valide",
+      status: "received",
+    };
+    const db = {
+      select: vi.fn()
+        .mockReturnValueOnce({
+          from: () => ({ where: () => ({ limit: async () => [{ id: 42 }] }) }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              orderBy: () => ({
+                limit: async () => [{
+                  id: 9,
+                  caseNumber: "3M-AGN-0012",
+                  updatedAt: "2026-10-12T10:00:00.000Z",
+                  currentStatus: "documents_review",
+                  candidateId: 42,
+                }],
+              }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: () => ({
+              orderBy: async () => [{
+                id: 7,
+                candidateId: 42,
+                fileType: "passeport",
+                fileName: "passeport.pdf",
+                fileUrl: "/manus-storage/candidates/42/passeport.pdf",
+                fileKey: "candidates/42/passeport.pdf",
+                fileSizeBytes: 12,
+                mimeType: "application/pdf",
+                status: "verified",
+                correctionComment: null,
+                rejectionReason: null,
+                uploadedAt: new Date("2026-10-12T11:00:00.000Z"),
+              }],
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({
+            where: async () => [{
+              id: 1,
+              fileName: "passeport.pdf",
+              fileKey: "candidates/42/passeport.pdf",
+              documentType: "Passeport",
+              reviewStatus: "received",
+            }],
+          }),
+        })
+        .mockReturnValueOnce({
+          from: () => ({ where: async () => [requirement] }),
+        }),
+      insert,
+      update,
+    } as any;
+
+    const result = await publishCandidateFilesToCase(db, {
+      candidateId: 42,
+      fileIds: [7],
+      actorRole: "admin",
+      actorAdminId: 3,
+    });
+    expect(result).toMatchObject({ published: 0, updated: 1, skipped: 0, reason: "ok" });
+    expect(values).toHaveBeenCalled(); // activity log
+    expect(update).toHaveBeenCalled();
+    expect(requirement.status).toBe("approved");
   });
 
   it("publie une nouvelle pièce et aligne une exigence checklist", async () => {
@@ -199,8 +284,8 @@ describe("publishCandidateFilesToCase — idempotence et no-op", () => {
   });
 });
 
-describe("branchement dépôt candidat + réparation admin", () => {
-  it("branche saveDocument et expose la mutation admin de sync", () => {
+describe("branchement dépôt candidat + réparation admin + sync à l’approbation", () => {
+  it("branche saveDocument, sync admin et validation/refus pièce candidat", () => {
     const candidate = read("server/routers/candidate.ts");
     const oauth = read("server/routers/oauthUserDashboard.ts");
     const admin = read("server/routers/admin.ts");
@@ -208,5 +293,8 @@ describe("branchement dépôt candidat + réparation admin", () => {
     expect(oauth).toContain("publishCandidateFilesToCase");
     expect(admin).toContain("syncCandidateFilesToCase");
     expect(admin).toContain("publishCandidateFilesToCase");
+    expect(admin).toContain("[Admin updateDocumentStatus] sync case_documents:");
+    expect(admin).toContain("[Admin approveCandidateFile] sync case_documents:");
+    expect(admin).toContain("[Admin rejectCandidateFile] sync case_documents:");
   });
 });
