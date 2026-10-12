@@ -97,6 +97,14 @@ type DashboardItem = {
   familyAbroad?: boolean | null;
   acquisitionSource?: "facebook" | "whatsapp" | "direct" | "other" | null;
   acquisitionCampaign?: string | null;
+  applicationPackSummary?: {
+    saved: boolean;
+    hasLetter: boolean;
+    readyToApply: boolean;
+    style: string;
+    language: string;
+    savedAt: string;
+  } | null;
 };
 
 type ReviewEvent = { id: number; adminEmail: string; action: string; note?: string | null; createdAt: Date | string };
@@ -692,6 +700,16 @@ export default function AdminAIEvaluationDashboard() {
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-sky-300 text-sky-900 hover:bg-sky-50" aria-expanded={cvDraftOpenId === item.id} onClick={() => setCvDraftOpenId(cvDraftOpenId === item.id ? null : item.id)}>
                       <FileText className="h-3.5 w-3.5" /> {cvDraftOpenId === item.id ? "Masquer le CV assisté" : "CV assisté"}
                     </Button>
+                    {item.applicationPackSummary?.saved && (
+                      <Badge
+                        data-testid="cv-pack-dashboard-badge"
+                        className={item.applicationPackSummary.readyToApply ? "bg-emerald-100 text-emerald-900" : "bg-sky-100 text-sky-900"}
+                        title={`Pack ${item.applicationPackSummary.style} · ${item.applicationPackSummary.language.toUpperCase()}${item.applicationPackSummary.hasLetter ? " · lettre" : ""}`}
+                      >
+                        {item.applicationPackSummary.readyToApply ? "Pack prêt à postuler" : "Pack CV enregistré"}
+                        {item.applicationPackSummary.hasLetter ? " · lettre" : ""}
+                      </Badge>
+                    )}
                   </div>
                   {validationOpenId === item.id && <EvaluationValidationPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} />}
                   {cvDraftOpenId === item.id && <CvDraftPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} defaultCountry={item.destinationCountry} />}

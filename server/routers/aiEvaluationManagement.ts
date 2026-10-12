@@ -27,6 +27,7 @@ import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from 
 import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { parseApplicationPack } from "../../shared/applicationPack";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -95,6 +96,15 @@ interface UnifiedItem {
     state: "ready_to_verify" | "needs_human_review" | "missing_information";
     label: string;
     detail: string;
+  } | null;
+  /** Résumé pack candidature admin (CV international) — jamais exposé au candidat. */
+  applicationPackSummary?: {
+    saved: boolean;
+    hasLetter: boolean;
+    readyToApply: boolean;
+    style: string;
+    language: string;
+    savedAt: string;
   } | null;
 }
 
@@ -386,6 +396,17 @@ export const aiEvaluationManagementRouter = router({
         const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
         const preparationDraft = parsePreparationDraft(e.aiReportContent);
         const luxembourgReview = internalLuxembourgReview(e);
+        const pack = parseApplicationPack(e.projectDetailsJson);
+        const applicationPackSummary = pack
+          ? {
+              saved: true,
+              hasLetter: Boolean(pack.motivationLetter?.trim()),
+              readyToApply: Boolean(e.cvFileUrl) && Boolean(pack.draft),
+              style: pack.style,
+              language: pack.language,
+              savedAt: pack.savedAt,
+            }
+          : null;
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue || Boolean(e.secondReviewRequired && !e.secondReviewedAt) });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
@@ -398,6 +419,7 @@ export const aiEvaluationManagementRouter = router({
           preparationState: preparationDraft ? "ready" : e.aiProcessingError ? "unavailable" : "not_requested",
           preparationDraft,
           luxembourgReview,
+          applicationPackSummary,
         });
       }
 

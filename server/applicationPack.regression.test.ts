@@ -102,6 +102,12 @@ describe("application pack — documents fournis + candidature", () => {
     const read = (path: string) => readFileSync(resolve(root, path), "utf8");
     expect(read("client/src/components/CvDraftPanel.tsx")).toContain("faire postuler le client");
     expect(read("client/src/components/CvDraftPanel.tsx")).toContain("Enregistrer le pack (admin)");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("getApplicationPack");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("cv-application-readiness");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("downloadMotivationLetterPdf");
+    expect(read("client/src/pages/AdminAIEvaluationDashboard.tsx")).toContain("cv-pack-dashboard-badge");
+    expect(read("client/src/pages/AdminAIEvaluationDashboard.tsx")).toContain("applicationPackSummary");
+    expect(read("server/routers/aiEvaluationManagement.ts")).toContain("applicationPackSummary");
     expect(read("client/src/pages/EvaluationSpace.tsx")).not.toContain("ClientApplicationPackPanel");
     expect(read("server/routers/candidate.ts")).not.toContain("getApplicationPack");
     expect(read("server/routers/cvDraft.ts")).toContain("saveApplicationPack");

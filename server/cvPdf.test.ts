@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CvDraft, CvIdentity } from "../shared/cvDraft";
-import { cvPdfFileName, renderCvPdf } from "../client/src/lib/cvPdf";
+import { cvPdfFileName, motivationLetterPdfFileName, renderCvPdf, renderMotivationLetterPdf } from "../client/src/lib/cvPdf";
 
 const identity: CvIdentity = { fullName: "Aïcha Nkolo", email: "aicha@example.com", phone: "+237600000000", city: "Yaoundé", nationality: "Camerounaise" };
 const emptyDraft: CvDraft = { headline: null, summary: null, experiences: [], education: [], skills: [], languages: [], certifications: [], missing: [] };
@@ -75,5 +75,35 @@ describe("export PDF du CV (back-office)", () => {
     expect(cvPdfFileName("Aïcha Nkolo")).toBe("CV_Aicha_Nkolo.pdf");
     expect(cvPdfFileName("  ../../etc/passwd ")).toBe("CV_etc_passwd.pdf");
     expect(cvPdfFileName("")).toBe("CV_candidat.pdf");
+  });
+});
+
+describe("export PDF de la lettre de motivation (admin)", () => {
+  it("imprime le nom, le poste et le corps relu", async () => {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const text = vi.spyOn(pdf, "text");
+    renderMotivationLetterPdf(pdf, {
+      identity,
+      letter: "Madame, Monsieur,\n\nJe souhaite postuler au poste de logisticien.",
+      language: "fr",
+      includeContact: true,
+      targetRole: "Logisticien entrepôt",
+    });
+    const printed = text.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(printed).toContain("Aïcha Nkolo");
+    expect(printed).toContain("Poste visé : Logisticien entrepôt");
+    expect(printed).toContain("LETTRE DE MOTIVATION");
+    expect(printed).toContain("Je souhaite postuler");
+    expect(printed).toContain("aicha@example.com");
+    expect(motivationLetterPdfFileName("Aïcha Nkolo")).toBe("Lettre_Aicha_Nkolo.pdf");
+  });
+
+  it("n'imprime rien si la lettre est vide", async () => {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const text = vi.spyOn(pdf, "text");
+    renderMotivationLetterPdf(pdf, { identity, letter: "   ", language: "fr", includeContact: false });
+    expect(text).not.toHaveBeenCalled();
   });
 });
