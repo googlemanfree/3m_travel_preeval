@@ -216,33 +216,47 @@ export async function sendVerificationLink(
     ? options.redirect
     : undefined;
   const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}${allowedRedirect ? `&redirect=${encodeURIComponent(allowedRedirect)}` : ""}`;
+  const safeName = escapeEmailHtml(fullName);
+  const safeVerifyUrl = escapeEmailHtml(verifyUrl);
   const priorEvaluationNotice = options.priorEvaluationRecognized
-    ? `<p>Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour déposer les pièces justificatives indiquées dans votre communication.</p>`
+    ? `<p style="margin: 0 0 16px; color: #111827;">Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour déposer les pièces justificatives indiquées dans votre communication.</p>`
     : "";
   try {
     await sendGenericEmail({
       to,
-      subject: "✓ Confirmez votre email - 3M TRAVEL AGENCY",
+      subject: "Confirmez votre email — 3M TRAVEL AGENCY",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Confirmez votre email</h1>
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Confirmez votre email</h1>
           </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong> ! 🎉</p>
-            <p>Pour finaliser votre inscription et activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
+          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
+            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${safeName}</strong>,</p>
+            <p style="margin: 0 0 16px; color: #111827;">Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong>.</p>
+            <p style="margin: 0 0 24px; color: #111827;">Pour finaliser votre inscription et activer votre compte, confirmez votre adresse email en cliquant sur le bouton ci-dessous :</p>
             ${priorEvaluationNotice}
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${verifyUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                ✓ Confirmer mon email
-              </a>
+
+            <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
+              <tr>
+                <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
+                  <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer"
+                     style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
+                    <span style="color: #ffffff !important; text-decoration: none;">Confirmer mon email</span>
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
+            <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
+              <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeVerifyUrl}</a>
             </p>
-            
-            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #92400e;">
-              🔒 <strong>Sécurité :</strong> Ce lien est personnel et valable 24 heures. Ne le partagez avec personne.
-            </div>
+
+            <p style="margin: 0; font-size: 13px; color: #4b5563;">Ce lien est personnel et valable <strong>24 heures</strong>. Ne le partagez avec personne.</p>
+          </div>
+          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
+            3M TRAVEL AGENCY — Espace client
           </div>
         </div>
       `,
@@ -343,6 +357,7 @@ type EmailChangeConfirmationInput = {
  */
 export async function sendEmailChangeConfirmation(input: EmailChangeConfirmationInput): Promise<void> {
   const safeName = escapeEmailHtml(input.fullName || "Candidat");
+  const safeConfirmUrl = escapeEmailHtml(input.confirmationUrl);
   const isCurrentAddress = input.recipientRole === "current";
   const title = isCurrentAddress ? "Confirmez le changement de votre adresse e-mail" : "Confirmez votre nouvelle adresse e-mail";
   const explanation = isCurrentAddress
@@ -353,19 +368,37 @@ export async function sendEmailChangeConfirmation(input: EmailChangeConfirmation
     to: input.to,
     subject: `3M TRAVEL AGENCY — ${title}`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#172033;">
-        <div style="background:#0B2A52;padding:28px 32px;color:#fff;">
-          <p style="margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85;">3M TRAVEL AGENCY</p>
-          <h1 style="margin:0;font-size:24px;">${title}</h1>
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; color: #172033;">
+        <div style="background-color: #0B2A52; padding: 28px 32px;">
+          <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff; opacity: .85;">3M TRAVEL AGENCY</p>
+          <h1 style="margin: 0; font-size: 24px; color: #ffffff; line-height: 1.3;">${title}</h1>
         </div>
-        <div style="padding:28px 32px;background:#f8fafc;">
-          <p>Bonjour <strong>${safeName}</strong>,</p>
-          <p>${explanation}</p>
-          <p style="text-align:center;margin:28px 0 18px;">
-            <a href="${input.confirmationUrl}" style="display:inline-block;background:#B98932;color:#172033;padding:13px 22px;border-radius:7px;text-decoration:none;font-weight:700;">Confirmer l’adresse</a>
+        <div style="padding: 28px 32px; background-color: #f8fafc; color: #172033;">
+          <p style="margin: 0 0 16px;">Bonjour <strong>${safeName}</strong>,</p>
+          <p style="margin: 0 0 24px;">${explanation}</p>
+
+          <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
+            <tr>
+              <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
+                <a href="${input.confirmationUrl}" target="_blank" rel="noopener noreferrer"
+                   style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
+                  <span style="color: #ffffff !important; text-decoration: none;">Confirmer l’adresse</span>
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
+          <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
+            <a href="${input.confirmationUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeConfirmUrl}</a>
           </p>
-          <p style="font-size:13px;line-height:1.6;color:#475569;">Le lien expire dans une heure. Pour finaliser le changement, la confirmation de l’autre adresse est également requise.</p>
-          <p style="font-size:13px;line-height:1.6;color:#475569;">Si vous n’avez pas demandé ce changement, ne cliquez pas sur le lien et contactez l’agence par les coordonnées officielles.</p>
+
+          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #475569;">Le lien expire dans une heure. Pour finaliser le changement, la confirmation de l’autre adresse est également requise.</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #475569;">Si vous n’avez pas demandé ce changement, ne cliquez pas sur le lien et contactez l’agence par les coordonnées officielles.</p>
+        </div>
+        <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
+          3M TRAVEL AGENCY — Espace client
         </div>
       </div>
     `,
