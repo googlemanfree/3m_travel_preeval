@@ -7,6 +7,7 @@ import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
 import { getEnrichedCandidateJourney, journeyStepIndex, type JourneyDocument } from "@shared/candidateJourneyCatalog";
 import { buildDossierPhaseTransparency } from "@shared/dossierPhaseTransparency";
+import { resourceLibraryPathForCountry } from "@shared/countryResourceCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "@shared/officialSourceCatalog";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
@@ -192,16 +193,18 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
           <Badge className="bg-white/15 text-white hover:bg-white/15">{progress}% préparé</Badge>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Avancement du parcours" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full rounded-full bg-amber-300" style={{ width: `${progress}%` }} /></div>
-        {(journey.publishedGuide?.summaryOverview || journey.publishedGuide?.pdfUrl) ? (
+        {(journey.publishedGuide?.summaryOverview || journey.publishedGuide?.pdfUrl || resourceLibraryPathForCountry(destination || phase.country)) ? (
           <div className="mt-4" data-testid="client-published-guide">
             <PublishedGuideSummaryPanel
               tone="client"
-              headline={journey.publishedGuide.summaryHeadline || journey.publishedGuide.programLabel}
-              overview={journey.publishedGuide.summaryOverview}
-              stepHighlights={journey.publishedGuide.summaryStepHighlights}
-              programLabel={journey.publishedGuide.programLabel}
-              pdfUrl={journey.publishedGuide.pdfUrl}
-              pdfTitle={journey.publishedGuide.title}
+              headline={journey.publishedGuide?.summaryHeadline || journey.publishedGuide?.programLabel}
+              overview={journey.publishedGuide?.summaryOverview}
+              stepHighlights={journey.publishedGuide?.summaryStepHighlights}
+              programLabel={journey.publishedGuide?.programLabel}
+              pdfUrl={journey.publishedGuide?.pdfUrl}
+              pdfTitle={journey.publishedGuide?.title}
+              resourceLibraryHref={resourceLibraryPathForCountry(destination || phase.country)}
+              resourceLibraryLabel={`Guides ${phase.country || destination || "pays"}`}
             />
           </div>
         ) : null}

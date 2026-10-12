@@ -9,6 +9,9 @@ export type PublishedGuideSummaryPanelProps = {
   pdfTitle?: string | null;
   officialPortalUrl?: string | null;
   officialPortalLabel?: string | null;
+  /** Lien vers /ressources/:slug — sync bibliothèque publique / admin / candidat. */
+  resourceLibraryHref?: string | null;
+  resourceLibraryLabel?: string | null;
   tone?: "admin" | "client" | "public";
   testId?: string;
 };
@@ -23,10 +26,12 @@ export function PublishedGuideSummaryPanel({
   pdfTitle,
   officialPortalUrl,
   officialPortalLabel,
+  resourceLibraryHref,
+  resourceLibraryLabel,
   tone = "public",
   testId = "published-guide-summary",
 }: PublishedGuideSummaryPanelProps) {
-  if (!overview && !stepHighlights?.length && !pdfUrl) return null;
+  if (!overview && !stepHighlights?.length && !pdfUrl && !resourceLibraryHref) return null;
 
   const shell =
     tone === "admin"
@@ -100,6 +105,20 @@ export function PublishedGuideSummaryPanel({
           >
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             {officialPortalLabel || "Portail officiel"}
+          </a>
+        ) : null}
+        {resourceLibraryHref ? (
+          <a
+            href={resourceLibraryHref}
+            className={
+              tone === "client"
+                ? "inline-flex items-center gap-1 text-amber-100 underline underline-offset-2 hover:text-white"
+                : "inline-flex items-center gap-1 text-indigo-800 underline underline-offset-2"
+            }
+            data-testid={`${testId}-resource-library`}
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            {resourceLibraryLabel || "Bibliothèque pays"}
           </a>
         ) : null}
       </div>
