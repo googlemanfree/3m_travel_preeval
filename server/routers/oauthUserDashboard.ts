@@ -16,6 +16,7 @@ import { getDb } from "../db";
 import { candidates, candidateFiles, candidateMessages, Candidate, CandidateFile, CandidateMessage } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getOrCreateCandidateForPlatformUser } from "./candidate";
+import { publishCandidateFilesToCase } from "../services/publishCandidateFilesToCase";
 
 export const oauthUserDashboardRouter = router({
   // ── Profil utilisateur OAuth (lié à un vrai dossier candidat) ──────────────
@@ -113,7 +114,7 @@ export const oauthUserDashboardRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      await db.insert(candidateFiles).values({
+      const insertResult = await db.insert(candidateFiles).values({
         candidateId: c.id,
         fileType: input.fileType,
         fileName: input.fileName,
@@ -123,12 +124,28 @@ export const oauthUserDashboardRouter = router({
         mimeType: input.mimeType ?? null,
         status: "uploaded",
       });
+      const documentId = Number((insertResult as any)[0]?.insertId || 0);
 
       if (c.dossierStatus === "nouveau") {
         await db.update(candidates).set({ dossierStatus: "evaluation" }).where(eq(candidates.id, c.id));
       }
 
-      return { success: true, message: "Document enregistré." };
+      if (documentId > 0) {
+        try {
+          await publishCandidateFilesToCase(db, {
+            candidateId: c.id,
+            fileIds: [documentId],
+            actorRole: "candidate",
+          });
+        } catch (error) {
+          console.warn(
+            "[oauthUserDashboard.saveDocument] sync case_documents:",
+            error instanceof Error ? error.message.slice(0, 300) : error,
+          );
+        }
+      }
+
+      return { success: true, message: "Document enregistré.", documentId };
     }),
 
   // ── Supprimer un document (réellement supprimé) ─────────────────────────────

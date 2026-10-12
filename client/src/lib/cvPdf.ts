@@ -133,3 +133,71 @@ export async function downloadCvPdf(input: CvPdfInput): Promise<string> {
   pdf.save(fileName);
   return fileName;
 }
+
+export type MotivationLetterPdfInput = {
+  identity: CvIdentity;
+  letter: string;
+  language: CvLanguage;
+  includeContact: boolean;
+  targetRole?: string | null;
+};
+
+/** Nom de fichier sûr : « Lettre_Aicha_Nkolo.pdf ». */
+export function motivationLetterPdfFileName(fullName: string): string {
+  const safe = fullName.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  return `Lettre_${safe || "candidat"}.pdf`;
+}
+
+/** Dessine la lettre de motivation (admin) — contenu relu uniquement, sans inventer. */
+export function renderMotivationLetterPdf(pdf: JsPdf, input: MotivationLetterPdfInput): void {
+  const { identity, language, includeContact, targetRole } = input;
+  const letter = clean(input.letter).replace(/\r\n/g, "\n");
+  if (!letter) return;
+  let y = MARGIN;
+
+  const ensureSpace = (height: number) => {
+    if (y + height > BOTTOM) {
+      pdf.addPage();
+      y = MARGIN;
+    }
+  };
+  const paragraph = (text: string, options: { size?: number; bold?: boolean; color?: [number, number, number]; gap?: number } = {}) => {
+    const size = options.size ?? 11;
+    pdf.setFont("helvetica", options.bold ? "bold" : "normal");
+    pdf.setFontSize(size);
+    const color = options.color ?? [30, 41, 59];
+    pdf.setTextColor(color[0], color[1], color[2]);
+    const lineHeight = size * 0.48;
+    for (const line of pdf.splitTextToSize(text, CONTENT_WIDTH) as string[]) {
+      ensureSpace(lineHeight + 1);
+      pdf.text(line, MARGIN, y);
+      y += lineHeight;
+    }
+    y += options.gap ?? 2;
+  };
+
+  const title = language === "en" ? "Cover letter" : "Lettre de motivation";
+  paragraph(clean(identity.fullName), { size: 16, bold: true, color: [15, 36, 96], gap: 1 });
+  if (includeContact) {
+    const contact = [identity.city, identity.email, identity.phone].map(clean).filter(Boolean).join("  ·  ");
+    if (contact) paragraph(contact, { size: 9.5, color: [71, 85, 105], gap: 1 });
+  }
+  if (clean(targetRole)) {
+    paragraph(language === "en" ? `Position: ${clean(targetRole)}` : `Poste visé : ${clean(targetRole)}`, { size: 10.5, color: [51, 65, 85], gap: 2 });
+  }
+  paragraph(title.toUpperCase(), { size: 11.5, bold: true, color: [15, 36, 96], gap: 3 });
+  for (const block of letter.split(/\n{2,}/)) {
+    const body = block.split("\n").map(clean).filter(Boolean).join("\n");
+    if (body) paragraph(body, { gap: 3 });
+  }
+}
+
+/** Génère et télécharge le PDF de lettre ; renvoie le nom du fichier. */
+export async function downloadMotivationLetterPdf(input: MotivationLetterPdfInput): Promise<string> {
+  const { jsPDF } = await import("jspdf");
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  renderMotivationLetterPdf(pdf, input);
+  const fileName = motivationLetterPdfFileName(input.identity.fullName);
+  pdf.save(fileName);
+  return fileName;
+}

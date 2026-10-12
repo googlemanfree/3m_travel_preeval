@@ -1431,7 +1431,7 @@ function ImportAgencyModal({
                   Checklist dynamique · {checklistPreview.data.destination} · {checklistPreview.data.label}
                 </p>
                 <ul className="mt-2 max-h-36 space-y-1 overflow-y-auto text-xs text-slate-700">
-                  {checklistPreview.data.documents.slice(0, 12).map((item) => (
+                  {checklistPreview.data.documents.slice(0, 16).map((item) => (
                     <li key={`${item.source}-${item.documentType}`}>• {item.documentType}</li>
                   ))}
                   {checklistPreview.data.documents.length > 12 ? (

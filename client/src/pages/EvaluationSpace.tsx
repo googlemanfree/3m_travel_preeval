@@ -64,7 +64,7 @@ import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
-import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
+import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
@@ -482,7 +482,18 @@ export default function EvaluationSpace() {
     || String(activeAgencyDossier?.destination || "").trim()
     || preferredDestinationsList[0]
     || cProfile.destination;
-  const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
+  // Synchro bidirectionnelle : pièces agence + dépôts candidat + case_documents opérationnels.
+  const caseVaultDocuments = allCaseDocuments(caseTrackingData?.cases);
+  const checklistDocuments = [
+    ...(agencyDocuments ?? []),
+    ...(candidateFiles ?? []),
+    ...caseVaultDocuments.map((document) => ({
+      documentType: document.documentType,
+      documentName: document.fileName,
+      verificationStatus: document.reviewStatus,
+      status: document.reviewStatus,
+    })),
+  ].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
     verificationStatus: document.verificationStatus,
@@ -491,9 +502,10 @@ export default function EvaluationSpace() {
   // Après l'envoi d'une pièce depuis la checklist : la liste, les compteurs et l'état de chaque pièce se rafraîchissent.
   const refreshDocuments = () => {
     void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
+    void refetchCaseTracking();
     void refetch();
   };
-  const agencyDocumentCount = (agencyDocuments ?? []).length;
+  const agencyDocumentCount = (agencyDocuments ?? []).length + agencyDepositedDocuments(caseTrackingData?.cases).length;
   const candidateDocumentCount = (candidateFiles ?? []).length;
   // Même libellé que les e-mails et les notifications : source unique dans shared/dossierProgress.ts.
   const currentDossierStatusLabel = clientStatusLabel(cProfile.dossierStatus);
@@ -1500,27 +1512,52 @@ export default function EvaluationSpace() {
           )}
 
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
-            <div className="space-y-6">
-              <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
-              <ClientUploadedDocumentsStatus documents={[...(candidateFiles ?? []), ...(agencyDocuments ?? [])] as any[]} />
+            <div className="space-y-6" data-testid="client-document-center">
+              <Card className="border-blue-200 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-6 text-white shadow-md" aria-labelledby="document-center-title">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Espace candidat · centre documentaire</p>
+                <h2 id="document-center-title" className="mt-2 text-2xl font-black">Préparez et suivez vos pièces</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Jusqu’à 16 documents par dossier. Chaque pièce déposée ici est visible côté agence ; chaque pièce enregistrée par l’agence apparaît automatiquement dans votre espace.</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">Checklist</p><p className="mt-1 text-xl font-black tabular-nums">{checklistSummary.total}<span className="text-sm font-semibold text-blue-200">/16</span></p></div>
+                  <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">À compléter</p><p className="mt-1 text-xl font-black tabular-nums">{documentsActionCount}</p></div>
+                  <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">Depuis votre espace</p><p className="mt-1 text-xl font-black tabular-nums">{candidateDocumentCount}</p></div>
+                  <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">Par l’agence</p><p className="mt-1 text-xl font-black tabular-nums">{agencyDocumentCount}</p></div>
+                </div>
+              </Card>
+
+              <section aria-label="Checklist documentaire à préparer">
+                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
+              </section>
+
+              <section aria-label="Statut de vos dépôts">
+                <ClientUploadedDocumentsStatus documents={[...(candidateFiles ?? []), ...(agencyDocuments ?? []), ...caseVaultDocuments.map((document) => ({ documentName: document.fileName, documentType: document.documentType, verificationStatus: document.reviewStatus, status: document.reviewStatus }))] as any[]} />
+              </section>
+
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />
-              {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetch()]); }} /></Card>}
-              <CaseDocumentsPanel documents={agencyDepositedDocuments(caseTrackingData?.cases)} onDownload={(documentId) => { void downloadCaseDocument(documentId); }} />
+              {uploadClarification && <Card className="border-violet-200 bg-violet-50/40 p-6 shadow-sm"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-950">Déposer la pièce après clarification</h3><p className="mt-1 text-sm text-slate-600">La pièce sera liée à l’échange « {uploadClarification.documentLabel} » et restera en vérification jusqu’au contrôle humain.</p></div><Button type="button" variant="outline" size="sm" onClick={() => setUploadClarification(null)}>Fermer</Button></div><DocumentUploader dossierNumber={cProfile.dossierNumber} clarificationRequestId={uploadClarification.id} clarificationDocumentLabel={uploadClarification.documentLabel} singleFile onUploadSuccess={() => { setUploadClarification(null); void Promise.all([trpcUtils.candidate.getDocumentClarifications.invalidate(), trpcUtils.candidate.getMyAgencyDocuments.invalidate(), refetchCaseTracking(), refetch()]); }} /></Card>}
+
+              <section aria-label="Documents synchronisés agence et client">
+                <CaseDocumentsPanel documents={caseVaultDocuments} onDownload={(documentId) => { void downloadCaseDocument(documentId); }} />
+              </section>
+
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
+
               <Card className="p-6 border-blue-100 bg-white shadow-sm" data-testid="client-document-dropzone">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces directement</h3>
-                <p className="mb-4 text-sm text-slate-600">Ajoutez les documents demandés pour ce dossier. Chaque dépôt est transmis de façon sécurisée à l’agence et reste en attente de vérification humaine.</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces maintenant</h3>
+                <p className="mb-4 text-sm text-slate-600">Choisissez la pièce de votre checklist (jusqu’à 16), puis déposez le fichier. Chaque dépôt est transmis de façon sécurisée à l’agence et reste visible des deux côtés jusqu’à la vérification humaine.</p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
                   requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
                   onUploadSuccess={() => {
                     void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
+                    void refetchCaseTracking();
                     void refetch();
                   }}
                 />
               </Card>
+
               <section aria-labelledby="client-history-title">
                 <h3 id="client-history-title" className="mb-3 text-base font-bold text-gray-900">Historique des évaluations et comparaisons</h3>
                 <div className="space-y-4">

@@ -334,7 +334,7 @@ export function AdminDocumentsManagement() {
     const valid = Array.from(incoming).filter((file) => supportedTypes.has(file.type) && file.size <= 10 * 1024 * 1024);
     const rejected = Array.from(incoming).length - valid.length;
     if (rejected) toast.error(`${rejected} fichier(s) ignoré(s)`, { description: "Seuls les PDF, images et documents Word de 10 Mo maximum sont acceptés." });
-    setDroppedFiles((current) => [...current, ...valid].slice(0, 10));
+    setDroppedFiles((current) => [...current, ...valid].slice(0, 16));
     valid.forEach((file) => { void recognizeDroppedFile(file); });
   };
 

@@ -22,18 +22,24 @@ const row = (overrides: Partial<CvDraftRow> = {}): CvDraftRow => ({
 function setup(overrides: Partial<CvDraftRouterPorts> = {}) {
   const generate = vi.fn(async () => okOutcome);
   const logExport = vi.fn(async () => {});
+  const loadSupportingFacts = vi.fn(async () => ["Diplôme — Licence logistique", "Attestation employeur"]);
+  const saveProjectDetails = vi.fn(async () => {});
+  const logRelease = vi.fn(async () => {});
   const ports: CvDraftRouterPorts = {
     requireAdmin: async (token) => {
       if (token !== "valid") throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur invalide." });
       return { email: "agent@3mtravelagency.com" };
     },
-    loadRow: async (id) => (id === 7 ? row() : null),
+    loadRow: async (id) => (id === 7 ? row({ projectDetailsJson: JSON.stringify({ preparatoryAnalysisConsent: true, preparatoryCvAnalysisConsent: true }) }) : null),
+    loadSupportingFacts,
     generate,
+    saveProjectDetails,
     logExport,
+    logRelease,
     now: () => 1_700_000_000_000,
     ...overrides,
   };
-  return { caller: createCvDraftRouter(ports).createCaller({} as never), generate, logExport };
+  return { caller: createCvDraftRouter(ports).createCaller({} as never), generate, logExport, loadSupportingFacts, saveProjectDetails, logRelease };
 }
 
 describe("routeur cvDraft : accès administrateur", () => {
@@ -58,7 +64,7 @@ describe("routeur cvDraft : génération", () => {
     const { caller, generate } = setup();
     const result = await caller.generate({ sessionToken: "valid", evaluationId: 7 });
     expect(generate).toHaveBeenCalledTimes(1);
-    expect(generate.mock.calls[0]).toEqual([expect.objectContaining({ id: 7 }), { style: "canada", language: "fr" }]);
+    expect(generate.mock.calls[0]).toEqual([expect.objectContaining({ id: 7 }), { style: "canada", language: "fr", targetRole: undefined, supportingFacts: ["Diplôme — Licence logistique", "Attestation employeur"] }]);
     expect(result.style).toBe("canada");
     expect(result.language).toBe("fr");
     expect(result.identity).toEqual({ fullName: "Aïcha Nkolo", email: "aicha@example.com", phone: "+237600000000", city: "Yaoundé", nationality: "Camerounaise" });
@@ -68,7 +74,7 @@ describe("routeur cvDraft : génération", () => {
   it("le style et la langue choisis par l'administrateur l'emportent sur la destination", async () => {
     const { caller, generate } = setup();
     await caller.generate({ sessionToken: "valid", evaluationId: 7, style: "international", language: "en" });
-    expect(generate.mock.calls[0][1]).toEqual({ style: "international", language: "en" });
+    expect(generate.mock.calls[0][1]).toEqual({ style: "international", language: "en", targetRole: undefined, supportingFacts: ["Diplôme — Licence logistique", "Attestation employeur"] });
   });
 
   it("un refus du service (consentement manquant) est renvoyé tel quel, sans exception, pour être affiché à l'écran", async () => {
@@ -111,5 +117,101 @@ describe("routeur cvDraft : export", () => {
     const { caller, logExport } = setup();
     await expect(caller.logExport({ sessionToken: "valid", evaluationId: 7, style: "canada" })).resolves.toEqual({ ok: true });
     expect(logExport).toHaveBeenCalledWith({ adminEmail: "agent@3mtravelagency.com", evaluationId: 7, style: "canada" });
+  });
+});
+
+describe("routeur cvDraft : pack candidature admin", () => {
+  const richDraft: CvDraft = {
+    headline: "Logisticien",
+    summary: "Professionnel de la logistique.",
+    experiences: [{ role: "Logisticien", employer: "TRANSCAM", location: null, start: "2018", end: "2022", bullets: ["Suivi"] }],
+    education: [],
+    skills: ["Logistique"],
+    languages: [],
+    certifications: [],
+    missing: [],
+  };
+
+  it("enregistre le pack admin dans projectDetailsJson", async () => {
+    const { caller, saveProjectDetails, logRelease } = setup();
+    const result = await caller.saveApplicationPack({
+      sessionToken: "valid",
+      evaluationId: 7,
+      style: "canada",
+      language: "fr",
+      includeContact: true,
+      targetRole: "Logisticien entrepôt",
+      draft: richDraft,
+      motivationLetter: "Madame, Monsieur,\n\nJe souhaite postuler au poste de logisticien.",
+    });
+    expect(result.ok).toBe(true);
+    expect(result.savedAt).toBeTruthy();
+    expect(saveProjectDetails).toHaveBeenCalledTimes(1);
+    const json = saveProjectDetails.mock.calls[0][1] as string;
+    expect(json).toContain("applicationPack");
+    expect(json).toContain("Logisticien entrepôt");
+    expect(logRelease).toHaveBeenCalledWith(expect.objectContaining({ action: "saved", style: "canada" }));
+  });
+
+  it("refuse un pack trop incomplet", async () => {
+    const { caller, saveProjectDetails } = setup();
+    await expect(caller.saveApplicationPack({
+      sessionToken: "valid",
+      evaluationId: 7,
+      style: "canada",
+      language: "fr",
+      includeContact: false,
+      draft,
+    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(saveProjectDetails).not.toHaveBeenCalled();
+  });
+
+  it("recharge le pack enregistré avec le score de préparation", async () => {
+    const packJson = JSON.stringify({
+      preparatoryAnalysisConsent: true,
+      applicationPack: {
+        savedAt: "2026-10-12T12:00:00.000Z",
+        savedBy: "agent@3mtravelagency.com",
+        style: "canada",
+        language: "fr",
+        includeContact: true,
+        targetRole: "Logisticien",
+        draft: richDraft,
+        motivationLetter: "Madame, Monsieur…",
+      },
+    });
+    const { caller, loadSupportingFacts } = setup({
+      loadRow: async () => row({ projectDetailsJson: packJson, cvFileUrl: "/manus-storage/cv.pdf" }),
+    });
+    const result = await caller.getApplicationPack({ sessionToken: "valid", evaluationId: 7 });
+    expect(result.pack?.style).toBe("canada");
+    expect(result.pack?.motivationLetter).toContain("Madame");
+    expect(result.readiness.readyToApply).toBe(true);
+    expect(result.readiness.score).toBeGreaterThanOrEqual(50);
+    expect(result.identity.fullName).toBe("Aïcha Nkolo");
+    expect(loadSupportingFacts).toHaveBeenCalled();
+  });
+
+  it("retire le pack sans toucher aux autres clés projectDetailsJson", async () => {
+    const packJson = JSON.stringify({
+      preparatoryCvAnalysisConsent: true,
+      applicationPack: {
+        savedAt: "2026-10-12T12:00:00.000Z",
+        savedBy: "agent@3mtravelagency.com",
+        style: "europe",
+        language: "fr",
+        includeContact: false,
+        draft: richDraft,
+        motivationLetter: null,
+      },
+    });
+    const { caller, saveProjectDetails, logRelease } = setup({
+      loadRow: async () => row({ projectDetailsJson: packJson }),
+    });
+    await expect(caller.clearApplicationPack({ sessionToken: "valid", evaluationId: 7 })).resolves.toEqual({ ok: true });
+    const next = JSON.parse(saveProjectDetails.mock.calls[0][1] as string);
+    expect(next.applicationPack).toBeUndefined();
+    expect(next.preparatoryCvAnalysisConsent).toBe(true);
+    expect(logRelease).toHaveBeenCalledWith(expect.objectContaining({ action: "cleared" }));
   });
 });

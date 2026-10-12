@@ -1,5 +1,6 @@
 import { getCountryById, procedures107Complete, type CountryProcedureComplete } from "../data/procedures107Complete";
 import { getEvaluationDocumentRequirements, type EvaluationProjectType } from "../data/evaluationDocumentCatalogue";
+import { MAX_CHECKLIST_DOCUMENTS, capDocumentList } from "@shared/documentLimits";
 
 /**
  * Logique pure de la checklist documentaire (pièces attendues selon le pays et le type de visa, état de chaque pièce) :
@@ -21,12 +22,24 @@ export type CustomRequirement = {
   adminComment?: string | null;
 };
 
+/** Socle de préparation (≤ 16) lorsque destination/projet ne sont pas encore précisés. */
 export const FALLBACK_REQUIREMENTS: Requirement[] = [
-  { category: "Identité", label: "Passeport valide" },
-  { category: "Identité", label: "Photo d’identité" },
-  { category: "État civil", label: "Acte de naissance" },
-  { category: "Domicile", label: "Justificatif de domicile" },
-  { category: "Financier", label: "Justificatifs de ressources" },
+  { category: "Identité", label: "Passeport valide", detail: "Page d’identité lisible, validité couvrant le séjour prévu." },
+  { category: "Identité", label: "Photo d’identité", detail: "Photo récente aux normes du pays de destination." },
+  { category: "Identité", label: "Pièce d’identité nationale", detail: "CNI ou document d’identité en cours de validité." },
+  { category: "État civil", label: "Acte de naissance", detail: "Copie lisible ; traduction si exigée plus tard." },
+  { category: "État civil", label: "Acte de mariage ou célibat", detail: "Selon votre situation familiale et la procédure." },
+  { category: "Domicile", label: "Justificatif de domicile", detail: "Facture, bail ou attestation d’hébergement récente." },
+  { category: "Financier", label: "Justificatifs de ressources", detail: "Relevés bancaires ou preuves de moyens adaptés au projet." },
+  { category: "Financier", label: "Relevés bancaires récents", detail: "Généralement les 3 derniers mois, selon le pays." },
+  { category: "Profil", label: "CV à jour", detail: "Parcours, expériences et dates cohérents avec le projet." },
+  { category: "Profil", label: "Diplômes et attestations", detail: "Copies des diplômes et certificats utiles." },
+  { category: "Profil", label: "Justificatifs d’expérience", detail: "Attestations d’emploi ou références professionnelles." },
+  { category: "Voyage", label: "Itinéraire et motif de séjour", detail: "Calendrier réaliste et motif du séjour." },
+  { category: "Voyage", label: "Assurance voyage", detail: "Couverture médicale lorsque la procédure l’exige." },
+  { category: "Sécurité", label: "Casier judiciaire / extrait", detail: "À préparer uniquement si le pays le demande." },
+  { category: "Santé", label: "Certificat médical / biométrie", detail: "Uniquement lorsque l’autorité compétente le demande." },
+  { category: "Projet", label: "Coordonnées et résumé du projet", detail: "Destination, objectif et éléments déjà disponibles." },
 ];
 
 export function normalize(value: string): string {
@@ -99,7 +112,25 @@ export function getRequirements(destination?: string | null, projectType?: strin
   });
 
   const merged = [...generic, ...filteredCountrySpecific];
-  return merged.length ? merged : FALLBACK_REQUIREMENTS;
+  const base = merged.length ? merged : FALLBACK_REQUIREMENTS;
+  return capDocumentList(base, MAX_CHECKLIST_DOCUMENTS);
+}
+
+/**
+ * Assemble catalogue + demandes conseiller sans dépasser 16 lignes.
+ * Les demandes du conseiller sont prioritaires (jamais évincées par le catalogue).
+ */
+export function assembleChecklistRequirements(
+  destination?: string | null,
+  projectType?: string | null,
+  customRequirements: CustomRequirement[] = [],
+): { catalogue: Requirement[]; customs: CustomRequirement[]; total: number } {
+  const customs = customRequirements
+    .filter((requirement) => requirement.status !== "waived")
+    .slice(0, MAX_CHECKLIST_DOCUMENTS);
+  const catalogueBudget = Math.max(0, MAX_CHECKLIST_DOCUMENTS - customs.length);
+  const catalogue = getRequirements(destination, projectType).slice(0, catalogueBudget);
+  return { catalogue, customs, total: catalogue.length + customs.length };
 }
 
 export function documentsForRequirement(requirement: Requirement, documents: ChecklistDocument[]): ChecklistDocument[] {
@@ -146,9 +177,10 @@ export function customRequirementKind(requirement: CustomRequirement, documents:
 
 /** Résumé pour « Votre prochaine étape » et les relances : pièces manquantes ou à remplacer, et laquelle en premier. */
 export function summarizeChecklist(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
+  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements);
   const lines = [
-    ...getRequirements(destination, projectType).map((requirement) => ({ label: requirement.label, kind: requirementKind(requirement, documents) })),
-    ...customRequirements.filter((requirement) => requirement.status !== "waived").map((requirement) => ({ label: requirement.documentType, kind: customRequirementKind(requirement, documents) })),
+    ...assembled.catalogue.map((requirement) => ({ label: requirement.label, kind: requirementKind(requirement, documents) })),
+    ...assembled.customs.map((requirement) => ({ label: requirement.documentType, kind: customRequirementKind(requirement, documents) })),
   ];
   const missing = lines.filter((line) => line.kind === "missing");
   const replace = lines.filter((line) => line.kind === "replace");
@@ -165,12 +197,13 @@ export function buildRequirementOptions(destination?: string | null, projectType
   const options: Array<{ label: string; group: string }> = [];
   const add = (label: string, group: string) => {
     const key = normalize(label);
-    if (!key || seen.has(key)) return;
+    if (!key || seen.has(key) || options.length >= MAX_CHECKLIST_DOCUMENTS) return;
     seen.add(key);
     options.push({ label: label.trim(), group });
   };
-  for (const requirement of getRequirements(destination, projectType)) add(requirement.label, requirement.category);
+  // Demandes conseiller d’abord, puis catalogue (capacité 16).
   for (const requirement of customRequirements) if (requirement.status !== "waived") add(requirement.documentType, "Demande de votre conseiller");
+  for (const requirement of getRequirements(destination, projectType)) add(requirement.label, requirement.category);
   return options;
 }
 
@@ -263,3 +296,5 @@ export function pickActiveCaseRequirements(
   }
   return list.flatMap((item) => normalizeRequirements(item.requirements));
 }
+
+export { MAX_CHECKLIST_DOCUMENTS } from "@shared/documentLimits";

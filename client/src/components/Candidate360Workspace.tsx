@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
   FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Printer, Save, Send, ShieldAlert, UserCheck, Loader2,
-  ArrowRight, CircleAlert, Gauge, LockKeyhole, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
+  ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -403,6 +403,17 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const documentReminderMutation = trpc.admin.sendCandidate360DocumentReminder.useMutation({
     onSuccess: async (result) => { unlockAction("documentReminder"); toast.success("Relance envoyée", { description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
     onError: (mutationError) => { unlockAction("documentReminder"); toast.error("Relance impossible", { description: mutationError.message }); },
+  });
+  const syncCandidateFilesMutation = trpc.admin.syncCandidateFilesToCase.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("syncCandidateFiles");
+      toast.success("Synchronisation documentaire terminée", { description: result.message });
+      await refresh();
+    },
+    onError: (mutationError) => {
+      unlockAction("syncCandidateFiles");
+      toast.error("Synchronisation documentaire impossible", { description: mutationError.message });
+    },
   });
   const resendAccessMutation = trpc.adminCandidateManagement.resendClientAccessLink.useMutation({
     onSuccess: async (result) => {
@@ -1431,8 +1442,28 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
         <TabsContent value="documents" className="space-y-3 pt-4">
           <section id="candidate360-documents-panel" className="scroll-mt-24 rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="candidate360-documents-hub">
-            <h4 className="font-semibold text-violet-950">Poste documents — tout au même endroit</h4>
-            <p className="mt-1 text-sm text-violet-900">Télécharger, ouvrir, valider, demander une correction ou déposer une pièce : le CRM ci-dessous regroupe les dépôts candidat et administrateur pour ce dossier actif.</p>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h4 className="font-semibold text-violet-950">Poste documents — tout au même endroit</h4>
+                <p className="mt-1 text-sm text-violet-900">Télécharger, ouvrir, valider, demander une correction ou déposer une pièce : le CRM ci-dessous regroupe les dépôts candidat et administrateur pour ce dossier actif.</p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                data-testid="candidate360-sync-candidate-files"
+                className="shrink-0 border-violet-300 bg-white text-violet-900 hover:bg-violet-100"
+                disabled={candidate.internalId <= 0 || syncCandidateFilesMutation.isPending || actionLocks.syncCandidateFiles}
+                onClick={() => {
+                  lockAction("syncCandidateFiles");
+                  syncCandidateFilesMutation.mutate({ sessionToken, candidateId: candidate.internalId });
+                }}
+              >
+                <RefreshCw className={`mr-1 h-4 w-4 ${syncCandidateFilesMutation.isPending ? "animate-spin" : ""}`} aria-hidden="true" />
+                {syncCandidateFilesMutation.isPending ? "Synchronisation…" : "Synchroniser les fichiers candidat"}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-violet-800" aria-live="polite">Action ciblée et idempotente : les pièces déjà présentes restent inchangées et aucun dossier n’est créé.</p>
           </section>
           {data.communications.documentClarifications?.length > 0 && (
             <section className="rounded-xl border border-violet-200 bg-violet-50 p-4" aria-labelledby="admin-document-clarifications-title">

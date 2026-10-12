@@ -8,7 +8,9 @@ import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
 import CvDraftPanel from "@/components/CvDraftPanel";
 import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
+import ApplicationPackWorkQueue from "@/components/ApplicationPackWorkQueue";
 import { computeWorkQueue, evaluationIdOf, type WorkQueueKey, type WorkQueueStatus } from "@/lib/adminWorkQueue";
+import { computePackWorkQueue, type PackQueueKey } from "@/lib/adminPackWorkQueue";
 import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
 import {
   AlertTriangle,
@@ -97,6 +99,15 @@ type DashboardItem = {
   familyAbroad?: boolean | null;
   acquisitionSource?: "facebook" | "whatsapp" | "direct" | "other" | null;
   acquisitionCampaign?: string | null;
+  applicationPackSummary?: {
+    saved: boolean;
+    hasLetter: boolean;
+    hasCvFile: boolean;
+    readyToApply: boolean;
+    style: string | null;
+    language: string | null;
+    savedAt: string | null;
+  } | null;
 };
 
 type ReviewEvent = { id: number; adminEmail: string; action: string; note?: string | null; createdAt: Date | string };
@@ -389,6 +400,9 @@ export default function AdminAIEvaluationDashboard() {
     () => computeWorkQueue({ items, statuses: validationStatusById as ReadonlyMap<number, WorkQueueStatus>, now: Date.now() }),
     [items, validationStatusById, validationStatusesQuery.dataUpdatedAt],
   );
+  // Packs candidature : priorisation admin (manquant / incomplet / prêt) — filtre exclusif avec la file échéances.
+  const [packQueueFilter, setPackQueueFilter] = useState<PackQueueKey | null>(null);
+  const packWorkQueue = useMemo(() => computePackWorkQueue({ items }), [items]);
 
   const visibleItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -407,7 +421,8 @@ export default function AdminAIEvaluationDashboard() {
       // seules les évaluations ont un dossier de validation structurée : un filtre actif écarte les autres types
       const matchesValidation = validationFilter === "all" || (item.type === "evaluation" && matchesValidationFilter(validationFilter, validationStatusById.get(Number(item.id.split("-").at(-1)))?.status));
       const matchesWorkQueue = workQueueFilter === null || workQueue.ids[workQueueFilter].has(evaluationIdOf(item) ?? -1);
-      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource && matchesValidation && matchesWorkQueue;
+      const matchesPackQueue = packQueueFilter === null || packWorkQueue.ids[packQueueFilter].has(evaluationIdOf(item) ?? -1);
+      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource && matchesValidation && matchesWorkQueue && matchesPackQueue;
     });
     if (scoreSort === "default") return filtered;
     return [...filtered].sort((a, b) => {
@@ -415,14 +430,14 @@ export default function AdminAIEvaluationDashboard() {
       const bScore = typeof b.score === "number" ? b.score : -1;
       return scoreSort === "desc" ? bScore - aScore : aScore - bScore;
     });
-  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, validationStatusById, workQueueFilter, workQueue]);
+  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, validationStatusById, workQueueFilter, workQueue, packQueueFilter, packWorkQueue]);
 
   const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
   const pagedItems = useMemo(() => visibleItems.slice((currentPage - 1) * pageSize, currentPage * pageSize), [visibleItems, currentPage]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, workQueueFilter]);
+  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, workQueueFilter, packQueueFilter]);
 
   useEffect(() => {
     if (currentPage > pageCount) setCurrentPage(pageCount);
@@ -648,7 +663,23 @@ export default function AdminAIEvaluationDashboard() {
         {isTemplateManagerOpen && <Card className="mb-6 border-t-4 border-[#C8A451] p-5 print:hidden"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-800">Bibliothèque interne</p><h2 className="mt-1 text-xl font-black text-[#0B2A52]">Modèles de réponses d’évaluation</h2><p className="mt-1 max-w-3xl text-sm text-slate-600">Les modèles facilitent la relecture, mais ne constituent jamais une réponse automatique : chaque contenu reste modifiable et doit être validé par un conseiller avant toute diffusion.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => { setIsTemplateManagerOpen(false); clearManagedTemplateForm(); }}>Fermer</Button></div><div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]"><div className="space-y-2"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Modèles enregistrés</h3><Button type="button" variant="outline" size="sm" onClick={clearManagedTemplateForm}>Nouveau modèle</Button></div>{managedTemplatesQuery.isLoading ? <p className="text-sm text-slate-500">Chargement des modèles…</p> : managedTemplates.length === 0 ? <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">Aucun modèle enregistré pour le moment.</p> : <div className="space-y-2">{managedTemplates.map((template) => <div key={template.id} className="rounded-md border border-slate-200 bg-white p-3"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-slate-900">{template.name}</p><p className="mt-1 text-xs text-slate-500">{template.language === "fr" ? "Français" : "English"} · mis à jour le {new Date(template.updatedAt).toLocaleString("fr-FR")}</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => editManagedTemplate(template)}>Modifier</Button><Button type="button" size="sm" variant="outline" className="text-red-700 hover:text-red-800" onClick={() => removeManagedTemplate(template)} disabled={deleteManagedTemplate.isPending}>Supprimer</Button></div></div></div>)}</div>}</div><div className="rounded-md border border-slate-200 bg-slate-50/70 p-4"><h3 className="text-sm font-bold text-slate-900">{managedTemplateId === null ? "Créer un modèle" : "Modifier le modèle"}</h3><div className="mt-3 grid gap-3"><label className="text-xs font-medium text-slate-700">Nom du modèle<input value={managedTemplateName} onChange={(event) => setManagedTemplateName(event.target.value)} maxLength={120} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900" placeholder="Ex. Réponse initiale — projet professionnel" /></label><label className="text-xs font-medium text-slate-700">Langue<select value={managedTemplateLanguage} onChange={(event) => setManagedTemplateLanguage(event.target.value as "fr" | "en")} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"><option value="fr">Français</option><option value="en">English</option></select></label><label className="text-xs font-medium text-slate-700">Contenu du modèle<textarea value={managedTemplateContent} onChange={(event) => setManagedTemplateContent(event.target.value)} rows={9} maxLength={12000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-900" placeholder="Rédigez une information factuelle, sans score, décision d’éligibilité, garantie ou réorientation automatique." /></label>{managedTemplateId !== null && <label className="text-xs font-medium text-slate-700">Motif de modification<input value={managedTemplateReason} onChange={(event) => setManagedTemplateReason(event.target.value)} maxLength={500} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900" placeholder="Ex. mise à jour après revue interne" /></label>}<div className="flex flex-wrap gap-2"><Button type="button" onClick={saveManagedTemplate} disabled={createManagedTemplate.isPending || updateManagedTemplate.isPending}>{managedTemplateId === null ? "Créer le modèle" : "Enregistrer les modifications"}</Button>{managedTemplateId !== null && <Button type="button" variant="ghost" onClick={clearManagedTemplateForm}>Annuler</Button>}</div>{managedTemplateNotice && <p role="status" className="text-xs text-slate-700">{managedTemplateNotice}</p>}</div></div></div></Card>}
 
         <div className="print:hidden">
-          <EvaluationWorkQueue queue={workQueue} active={workQueueFilter} onSelect={setWorkQueueFilter} loading={validationStatusesQuery.isLoading} />
+          <EvaluationWorkQueue
+            queue={workQueue}
+            active={workQueueFilter}
+            onSelect={(key) => {
+              setWorkQueueFilter(key);
+              if (key !== null) setPackQueueFilter(null);
+            }}
+            loading={validationStatusesQuery.isLoading}
+          />
+          <ApplicationPackWorkQueue
+            queue={packWorkQueue}
+            active={packQueueFilter}
+            onSelect={(key) => {
+              setPackQueueFilter(key);
+              if (key !== null) setWorkQueueFilter(null);
+            }}
+          />
         </div>
 
         <Card className="mb-6 p-4 print:hidden">
@@ -692,6 +723,16 @@ export default function AdminAIEvaluationDashboard() {
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-sky-300 text-sky-900 hover:bg-sky-50" aria-expanded={cvDraftOpenId === item.id} onClick={() => setCvDraftOpenId(cvDraftOpenId === item.id ? null : item.id)}>
                       <FileText className="h-3.5 w-3.5" /> {cvDraftOpenId === item.id ? "Masquer le CV assisté" : "CV assisté"}
                     </Button>
+                    {item.applicationPackSummary?.saved && (
+                      <Badge
+                        data-testid="cv-pack-dashboard-badge"
+                        className={item.applicationPackSummary.readyToApply ? "bg-emerald-100 text-emerald-900" : "bg-sky-100 text-sky-900"}
+                        title={`Pack ${item.applicationPackSummary.style ?? "—"} · ${(item.applicationPackSummary.language ?? "").toUpperCase() || "—"}${item.applicationPackSummary.hasLetter ? " · lettre" : ""}`}
+                      >
+                        {item.applicationPackSummary.readyToApply ? "Pack prêt à postuler" : "Pack CV enregistré"}
+                        {item.applicationPackSummary.hasLetter ? " · lettre" : ""}
+                      </Badge>
+                    )}
                   </div>
                   {validationOpenId === item.id && <EvaluationValidationPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} />}
                   {cvDraftOpenId === item.id && <CvDraftPanel evaluationId={evaluationNumericId(item)} sessionToken={sessionToken} defaultCountry={item.destinationCountry} />}
