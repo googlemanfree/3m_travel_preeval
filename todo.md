@@ -1,4 +1,3 @@
-
 ## PR82 — centre documentaire candidat jusqu’à 16 pièces
 - [x] PR82 sortie du draft; commit exact `301c12c4` validé : 2 suites / 8 tests verts et `pnpm run check` vert.
 - [x] PR82 squash-mergée sur `main` au commit `8d7f099e`.
@@ -93,3 +92,10 @@
 ## PR88 — correctif TypeScript ciblé
 - [x] Corriger le type des clés `existingNames`/`nameKey` sans modifier le comportement métier; commit `54a279be` poussé sur la branche PR88.
 - [x] Relancer les 10 tests, le typecheck et le build; tout est vert avant fusion.
+
+## PR89 — anti-écran blanc /canada
+- [x] Audit du diff et des garde-fous effectué; aucun dossier actif ni donnée métier touché.
+- [x] Commit exact `6872c75c` validé : **6 suites / 31 tests verts**, `pnpm run check` vert et build production vert.
+- [x] PR89 sortie du brouillon et squash-mergée sur `main` au commit `bc1835bd`.
+- [x] Checkout local synchronisé sur `user_github/main` (`bc1835bd`); conflit de suivi résolu sans modifier le code.
+- [ ] Synchroniser WebDev et créer le checkpoint final PR89.
