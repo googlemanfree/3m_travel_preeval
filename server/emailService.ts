@@ -271,20 +271,23 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
   try {
     await sendGenericEmail({
       to,
-      subject: "🔐 Votre code de vérification 3M TRAVEL AGENCY",
+      subject: "Votre code de vérification 3M TRAVEL AGENCY",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Vérification de votre email</h1>
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Vérification de votre email</h1>
           </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Voici votre code de vérification :</p>
-            <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-              <div style="font-size: 32px; font-weight: bold; color: #1E3A8A; letter-spacing: 4px;">${otp}</div>
+          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
+            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+            <p style="margin: 0 0 16px; color: #111827;">Voici votre code de vérification :</p>
+            <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 0 0 20px; border: 1px solid #e5e7eb;">
+              <div style="font-size: 32px; font-weight: bold; color: #1E3A8A; letter-spacing: 4px;">${escapeEmailHtml(otp)}</div>
               <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">Ce code expire dans 15 minutes</div>
             </div>
-            <p style="font-size: 13px; color: #6b7280;">Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.</p>
+            <p style="margin: 0; font-size: 13px; color: #4b5563;">Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.</p>
+          </div>
+          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
+            3M TRAVEL AGENCY — Espace client
           </div>
         </div>
       `,

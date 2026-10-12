@@ -50,4 +50,17 @@ describe("confirm email CTA visible", () => {
     expect(fn).toContain("/confirm-email?token=");
     expect(fn).not.toContain("linear-gradient(135deg,#1E3A8A,#2563EB)");
   });
+
+  it("OTP : en-tête solide sans dégradé (lisibilité Gmail/Outlook)", () => {
+    const email = read("server/emailService.ts");
+    const fn = email.slice(
+      email.indexOf("export async function sendVerificationOtp"),
+      email.indexOf("export async function sendPasswordResetEmail"),
+    );
+    expect(fn).toContain("background-color: #1E3A8A");
+    expect(fn).toContain("color: #ffffff");
+    expect(fn).toContain("Ce code expire dans 15 minutes");
+    expect(fn).not.toContain("linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)");
+    expect(fn).not.toContain("🔐");
+  });
 });
