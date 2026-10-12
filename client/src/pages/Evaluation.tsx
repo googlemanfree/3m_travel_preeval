@@ -536,30 +536,41 @@ export default function Evaluation() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <section className="relative overflow-hidden px-4 pb-12 pt-16 text-white sm:px-6">
+      <section className="relative flex min-h-[72svh] items-end overflow-hidden px-4 pb-14 pt-28 text-white sm:min-h-[80svh] sm:items-center sm:px-6 sm:pb-20 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
-        <div className="relative z-10 mx-auto max-w-2xl text-center">
-          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-100">3M TRAVEL AGENCY</p>
-          <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-50 ring-1 ring-white/25">
-            <Sparkles className="w-3 h-3" /> Évaluation structurée du profil
-          </span>
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">Évaluation complète de votre profil</h1>
-          <p className="mt-3 text-base leading-7 text-blue-50">Ces informations nous permettent d&apos;évaluer votre éligibilité pour n&apos;importe quelle destination — Canada RP, Europe, et bien d&apos;autres.</p>
-          {acquisitionSource !== "direct" && (
-            <div className="mx-auto mt-4 max-w-xl rounded-xl border border-cyan-200/40 bg-cyan-950/40 px-4 py-3 text-left text-sm text-cyan-50" role="status" aria-live="polite">
-              <strong>Parcours identifié :</strong> {acquisitionSource === "whatsapp" ? "WhatsApp Business" : "Facebook"}{acquisitionCampaign ? ` — campagne « ${acquisitionCampaign} »` : ""}. Votre demande sera rattachée à ce contexte pour faciliter le suivi par notre équipe.
-            </div>
-          )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/90 via-[#0a2748]/48 to-[#061018]/25 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-[#061018]/15" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
+          <div className="max-w-xl sm:max-w-lg lg:max-w-xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
+              3M TRAVEL AGENCY
+            </h1>
+            <p className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              Évaluation gratuite de votre profil
+            </p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Remplissez le formulaire ci-dessous : un conseiller à Yaoundé oriente votre projet — études, travail, visas — sans engagement de procédure.
+            </p>
+            <a
+              href="#evaluation-formulaire"
+              className="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400"
+            >
+              Commencer l’évaluation
+            </a>
+            {acquisitionSource !== "direct" && (
+              <div className="mt-6 max-w-xl rounded-xl border border-cyan-200/40 bg-cyan-950/40 px-4 py-3 text-left text-sm text-cyan-50" role="status" aria-live="polite">
+                <strong>Parcours identifié :</strong> {acquisitionSource === "whatsapp" ? "WhatsApp Business" : "Facebook"}{acquisitionCampaign ? ` — campagne « ${acquisitionCampaign} »` : ""}. Votre demande sera rattachée à ce contexte pour faciliter le suivi par notre équipe.
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div id="evaluation-formulaire" className="mx-auto max-w-2xl scroll-mt-24 px-4 py-12">
 
         {/* Barre de progression multi-étapes */}
         <div className="mb-6">
