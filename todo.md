@@ -77,3 +77,9 @@
 - [x] Ajouter l’action dans le panneau Documents de Candidate360.
 - [x] Ajouter les états verrouillé, succès et erreur sans réécriture de statut.
 - [x] Ajouter et exécuter la régression, le typecheck et le build : **2 suites / 13 tests verts**.
+
+## PR81 — CTA confirmation e-mail
+- [x] Auditer le diff et valider le commit exact `d6194738` : **2 suites / 6 tests verts**, typecheck et build verts.
+- [x] PR81 squash-mergée sur `main` au commit `7ce053ed`; checkout local et WebDev explicitement alignés sur `7ce053ed`, serveur redémarré.
+- [x] Aucun dossier actif ni e-mail réel modifié pendant la validation.
+- [x] Vérifier le checkout WebDev sur `7ce053ed`, redémarrer si nécessaire et créer le checkpoint final PR81.
