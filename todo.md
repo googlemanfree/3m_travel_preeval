@@ -1,8 +1,8 @@
 
-## PR80 — bouton reset password dans l’e-mail
-- [x] PR80 sortie du draft; validation locale du commit `9f5a68c7` : régression ciblée 2/2, typecheck et build verts.
-- [x] PR80 squash-mergée sur `main` au commit `d9589c82`.
-- [x] WebDev synchronisé et redémarré sur `d9589c82`.
-- [x] Vérification du rendu admin : bouton à couleur solide, texte « Réinitialiser mon mot de passe », lien texte de secours et URL `/admin/reset-password?token=…`; smoke template 4/4 contrôles verts. Aucun token réel utilisé et aucun e-mail envoyé.
-- [x] Fournisseur d’envoi vérifié : service SMTP configuré avec expéditeur par défaut `hello@3mtravelagency.com`; aucun secret affiché.
-- [x] Reset redemandé pour le compte administrateur Gmail confirmé; message reçu et vérifié dans la boîte : bouton « Réinitialiser mon mot de passe », lien texte de secours, expiration 1 heure et adresse de réinitialisation `/admin/reset-password` présents. Aucun token n’est recopié dans le suivi.
+## PR82 — centre documentaire candidat jusqu’à 16 pièces
+- [x] PR82 sortie du draft; commit exact `301c12c4` validé : 2 suites / 8 tests verts et `pnpm run check` vert.
+- [x] PR82 squash-mergée sur `main` au commit `8d7f099e`.
+- [x] Checkout local synchronisé sur `user_github/main` (`8d7f099e`) sans modification de dossier actif.
+- [x] WebDev redémarré sur `8d7f099e`; dépendances, LSP et TypeScript OK.
+- [x] Périmètre publié : checklist structurée jusqu’à 16 pièces, compteur X/16, demandes conseiller prioritaires, synchronisation documents agence/client via `case_documents`.
+- [ ] Smoke test métier authentifié dépôt agence/client à effectuer avec un compte et des pièces de test dédiés; aucun envoi ni mutation métier réel exécuté.
