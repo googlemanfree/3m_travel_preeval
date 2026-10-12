@@ -199,7 +199,20 @@ export default function Ressources() {
             >
               Tout ({totalPdfs})
             </button>
-            {PDF_CATEGORIES.map((cat: PdfCategory) => (
+            {PDF_CATEGORIES.map((cat: PdfCategory) => {
+              const shortLabel =
+                cat.id === "travail"
+                  ? "Travail"
+                  : cat.id === "etudes"
+                    ? "Études"
+                    : cat.id === "visiteur"
+                      ? "Visite"
+                      : cat.id === "guide"
+                        ? "Guides"
+                        : cat.id === "formulaire"
+                          ? "Formulaires"
+                          : cat.label;
+              return (
               <button
                 key={cat.id}
                 type="button"
@@ -208,9 +221,10 @@ export default function Ressources() {
                   activeCategory === cat.id ? "bg-blue-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
-                {cat.label.split(" ")[0]} ({cat.resources.length})
+                {shortLabel} ({cat.resources.length})
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
