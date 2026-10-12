@@ -72,3 +72,8 @@
 - [x] WebDev redémarré sur `7b4d01f2`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier opérationnel créé, aucun statut global réécrit, aucun e-mail ou WhatsApp envoyé.
 - [ ] Vérification métier séparée du bouton admin et du dépôt inverse `agency_*`.
+
+## Bouton admin — synchronisation manuelle candidate_files
+- [x] Ajouter l’action dans le panneau Documents de Candidate360.
+- [x] Ajouter les états verrouillé, succès et erreur sans réécriture de statut.
+- [x] Ajouter et exécuter la régression, le typecheck et le build : **2 suites / 13 tests verts**.

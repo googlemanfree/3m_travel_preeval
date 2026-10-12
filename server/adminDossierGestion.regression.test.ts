@@ -24,6 +24,15 @@ describe("gestion des dossiers côté admin (sans mutation des données client)"
     expect(workspace).toContain("candidate.folderCode");
   });
 
+  it("expose la synchronisation manuelle des fichiers candidat sans mutation de statut", () => {
+    const workspace = read("client/src/components/Candidate360Workspace.tsx");
+    expect(workspace).toContain("trpc.admin.syncCandidateFilesToCase.useMutation");
+    expect(workspace).toContain('data-testid="candidate360-sync-candidate-files"');
+    expect(workspace).toContain('actionLocks.syncCandidateFiles');
+    expect(workspace).toContain("candidateId: candidate.internalId");
+    expect(workspace).toContain("les pièces déjà présentes restent inchangées");
+  });
+
   it("actualise le pilotage à la demande et conserve la sync des pré-dossiers", () => {
     const pilotage = read("client/src/components/AdminPilotageQueue.tsx");
     expect(pilotage).not.toContain("adminDossierPolling(ADMIN_DOSSIER_POLL_MS)");
