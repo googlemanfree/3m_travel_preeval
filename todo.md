@@ -44,3 +44,17 @@
 - [x] WebDev redémarré sur `41f520db`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier actif modifié; aucune migration appliquée.
 - [ ] Smoke test métier CV/lettre/publication à réaliser séparément avec un compte admin approprié.
+
+## PR84 — ops pack candidature admin
+- [ ] Auditer le diff et valider le commit exact de PR84.
+- [ ] Fusionner PR84 si les tests, le typecheck et le build sont verts; synchroniser WebDev.
+- [ ] Smoke métier réel séparé, sans candidature automatique ni modification des dossiers actifs.
+
+## PR84 — fusion et synchronisation
+- [x] Audit du diff effectué : ops pack candidature réservé à l’admin, sans candidature automatique ni migration.
+- [x] Commit exact PR84 `64975327` validé : suites ciblées, typecheck et build verts.
+- [x] PR84 sortie du brouillon et squash-mergée sur `main`.
+- [x] Checkout local synchronisé sur `user_github/main` au commit `94b5ce9b`.
+- [x] WebDev redémarré sur `94b5ce9b`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
+- [x] Aucun dossier actif modifié et aucune migration appliquée.
+- [ ] Smoke test métier générer/sauver/postuler à réaliser séparément avec une session admin appropriée.
