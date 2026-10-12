@@ -123,10 +123,7 @@ export function parseDocumentsReceivedList(raw?: string | null): string[] {
   ).slice(0, 30);
 }
 
-async function ensureAgencyCaseWithCandidate(
-  db: Db,
-  agencyDossierId: number,
-): Promise<{
+type AgencyOperationalCase = {
   id: number;
   caseNumber: string;
   candidateId: number | null;
@@ -135,7 +132,14 @@ async function ensureAgencyCaseWithCandidate(
   fullName: string;
   phone: string | null;
   email: string;
-}> {
+};
+
+async function ensureAgencyCaseWithCandidate(
+  db: Db,
+  agencyDossierId: number,
+  options?: { createCaseIfMissing?: boolean },
+): Promise<AgencyOperationalCase | null> {
+  const createCaseIfMissing = options?.createCaseIfMissing !== false;
   const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, agencyDossierId)).limit(1);
   if (!dossier) throw new Error(`Dossier agence #${agencyDossierId} introuvable.`);
 
@@ -152,6 +156,7 @@ async function ensureAgencyCaseWithCandidate(
     .limit(1);
 
   if (!operational) {
+    if (!createCaseIfMissing) return null;
     const caseNumber = agencyDossierReference(agencyDossierId);
     await db.insert(cases).values({
       caseNumber,
@@ -188,20 +193,25 @@ async function ensureAgencyCaseWithCandidate(
 }
 
 export type PublishAgencyDocumentsResult = {
-  caseId: number;
-  caseNumber: string;
+  caseId: number | null;
+  caseNumber: string | null;
   candidateId: number | null;
   published: number;
+  /** Pièces déjà présentes dont le reviewStatus / exigence a été rafraîchi. */
+  updated: number;
   skipped: number;
   totalScanned: number;
   checklistAdded: number;
   checklistLabel: string;
   whatsappSent: boolean;
+  reason?: "ok" | "no_case" | "no_files";
 };
 
 /**
  * Miroir des pièces agency_dossier_documents → case_documents + alignement checklist.
- * Idempotent : ne republie pas un fichier déjà présent (même fileKey ou même nom+type).
+ * Idempotent : ne republie pas un fichier déjà présent (même fileKey ou même nom+type),
+ * mais rafraîchit le reviewStatus si la vérification admin a changé.
+ * Avec createCaseIfMissing:false : no-op si aucun dossier ops (n’écrit pas le statut dossier).
  */
 export async function publishAgencyDocumentsToCase(
   db: Db,
@@ -211,9 +221,27 @@ export async function publishAgencyDocumentsToCase(
     actorEmail?: string | null;
     documentIds?: number[];
     notify?: boolean;
+    /** Défaut true (upload / publication manuelle). false = sync statut sans créer de case. */
+    createCaseIfMissing?: boolean;
   },
 ): Promise<PublishAgencyDocumentsResult> {
-  const operational = await ensureAgencyCaseWithCandidate(db, input.agencyDossierId);
+  const createCaseIfMissing = input.createCaseIfMissing !== false;
+  const operational = await ensureAgencyCaseWithCandidate(db, input.agencyDossierId, { createCaseIfMissing });
+  if (!operational) {
+    return {
+      caseId: null,
+      caseNumber: null,
+      candidateId: null,
+      published: 0,
+      updated: 0,
+      skipped: 0,
+      totalScanned: 0,
+      checklistAdded: 0,
+      checklistLabel: "Procédure standard",
+      whatsappSent: false,
+      reason: "no_case",
+    };
+  }
 
   let checklistAdded = 0;
   let checklistLabel = "Procédure standard";
@@ -241,19 +269,40 @@ export async function publishAgencyDocumentsToCase(
     ? scanned.filter((doc) => input.documentIds!.includes(doc.id))
     : scanned;
 
+  if (!selected.length) {
+    return {
+      caseId: operational.id,
+      caseNumber: operational.caseNumber,
+      candidateId: operational.candidateId,
+      published: 0,
+      updated: 0,
+      skipped: 0,
+      totalScanned: 0,
+      checklistAdded,
+      checklistLabel,
+      whatsappSent: false,
+      reason: "no_files",
+    };
+  }
+
   const existing = await db
     .select({
       id: caseDocuments.id,
       fileName: caseDocuments.fileName,
       fileKey: caseDocuments.fileKey,
       documentType: caseDocuments.documentType,
+      reviewStatus: caseDocuments.reviewStatus,
     })
     .from(caseDocuments)
     .where(eq(caseDocuments.caseId, operational.id));
 
-  const existingKeys = new Set(existing.map((item) => String(item.fileKey || "").trim()).filter(Boolean));
-  const existingNames = new Set(
-    existing.map((item) => `${fold(item.documentType)}::${fold(item.fileName)}`),
+  const existingKeys = new Map<string, (typeof existing)[number]>();
+  for (const item of existing) {
+    const key = String(item.fileKey || "").trim();
+    if (key) existingKeys.set(key, item);
+  }
+  const existingNames = new Map(
+    existing.map((item) => [`${fold(item.documentType)}::${fold(item.fileName)}`, item] as const),
   );
 
   const requirements = await db
@@ -262,18 +311,68 @@ export async function publishAgencyDocumentsToCase(
     .where(eq(documentRequirements.caseId, operational.id));
 
   let published = 0;
+  let updated = 0;
   let skipped = 0;
 
   for (const doc of selected) {
     const displayType = agencyDocumentDisplayType(doc.documentType, doc.documentName);
     const fileKey = fileKeyFromDocumentUrl(doc.documentUrl);
     const nameKey = `${fold(displayType)}::${fold(doc.documentName)}`;
-    if ((fileKey && existingKeys.has(fileKey)) || existingNames.has(nameKey)) {
-      skipped += 1;
+    const matchedExisting = (fileKey && existingKeys.get(fileKey)) || existingNames.get(nameKey) || null;
+    const reviewStatus = mapAgencyVerificationToReviewStatus(doc.verificationStatus);
+
+    if (matchedExisting) {
+      const needsReviewRefresh = matchedExisting.reviewStatus !== reviewStatus
+        && (reviewStatus === "approved" || reviewStatus === "rejected" || reviewStatus === "pending");
+      if (needsReviewRefresh && matchedExisting.id > 0) {
+        const statusNote = doc.verificationComment
+          || (reviewStatus === "approved"
+            ? "Document validé en agence et aligné dans le coffre."
+            : reviewStatus === "rejected"
+              ? "Document refusé en agence et aligné dans le coffre."
+              : "Statut documentaire aligné depuis la pièce agence.");
+        await db
+          .update(caseDocuments)
+          .set({
+            reviewStatus,
+            reviewNote: statusNote,
+            reviewedAt: reviewStatus === "approved" || reviewStatus === "rejected" ? new Date() : null,
+          })
+          .where(eq(caseDocuments.id, matchedExisting.id));
+        matchedExisting.reviewStatus = reviewStatus;
+        updated += 1;
+
+        const matchedRequirement = requirements.find(
+          (requirement) =>
+            requirement.status !== "waived"
+            && requirementMatchesDocument(requirement.documentType, displayType),
+        );
+        if (matchedRequirement) {
+          const nextStatus = reviewStatus === "approved"
+            ? "approved"
+            : reviewStatus === "rejected"
+              ? "rejected"
+              : reviewStatus === "pending"
+                ? "pending"
+                : "received";
+          if (matchedRequirement.status !== nextStatus) {
+            await db
+              .update(documentRequirements)
+              .set({
+                status: nextStatus,
+                validatedAt: nextStatus === "approved" ? new Date() : null,
+                rejectedAt: nextStatus === "rejected" ? new Date() : null,
+              })
+              .where(eq(documentRequirements.id, matchedRequirement.id));
+            matchedRequirement.status = nextStatus;
+          }
+        }
+      } else {
+        skipped += 1;
+      }
       continue;
     }
 
-    const reviewStatus = mapAgencyVerificationToReviewStatus(doc.verificationStatus);
     const versionRows = existing.filter((item) => fold(item.documentType) === fold(displayType));
     await db.insert(caseDocuments).values({
       caseId: operational.id,
@@ -294,9 +393,16 @@ export async function publishAgencyDocumentsToCase(
       reviewedAt: reviewStatus === "approved" || reviewStatus === "rejected" ? new Date() : null,
     });
 
-    if (fileKey) existingKeys.add(fileKey);
-    existingNames.add(nameKey);
-    existing.push({ id: 0, fileName: doc.documentName, fileKey, documentType: displayType });
+    const inserted = {
+      id: 0,
+      fileName: doc.documentName,
+      fileKey,
+      documentType: displayType,
+      reviewStatus,
+    };
+    if (fileKey) existingKeys.set(fileKey, inserted);
+    existingNames.set(nameKey, inserted);
+    existing.push(inserted);
     published += 1;
 
     const matchedRequirement = requirements.find(
@@ -320,26 +426,33 @@ export async function publishAgencyDocumentsToCase(
   }
 
   let whatsappSent = false;
-  if (published > 0) {
+  if (published > 0 || updated > 0) {
+    const parts: string[] = [];
+    if (published > 0) parts.push(`${published} publié(s)`);
+    if (updated > 0) parts.push(`${updated} statut(s) aligné(s)`);
     await db.insert(caseActivityLogs).values({
       caseId: operational.id,
       actorRole: "admin",
       actorId: input.actorAdminId ?? null,
-      actionType: "agency_documents_published_to_client",
+      actionType: updated > 0 && published === 0
+        ? "agency_documents_status_synced_to_client"
+        : "agency_documents_published_to_client",
       entityType: "agency_dossier",
       entityId: String(input.agencyDossierId),
-      description: `${published} document(s) scanné(s) en agence publié(s) dans l’espace client (${operational.caseNumber}) · checklist ${checklistLabel}.`,
+      description: `Espace client ${operational.caseNumber} : ${parts.join(", ")} · checklist ${checklistLabel}.`,
     });
-    await db.insert(agencyDossierHistory).values({
-      dossierId: input.agencyDossierId,
-      action: "documents_published_to_client",
-      changedBy: input.actorEmail || "admin",
-      oldValue: null,
-      newValue: JSON.stringify({ published, skipped, caseNumber: operational.caseNumber }),
-      details: "Documents scannés envoyés vers l’espace client",
-    });
+    if (published > 0) {
+      await db.insert(agencyDossierHistory).values({
+        dossierId: input.agencyDossierId,
+        action: "documents_published_to_client",
+        changedBy: input.actorEmail || "admin",
+        oldValue: null,
+        newValue: JSON.stringify({ published, updated, skipped, caseNumber: operational.caseNumber }),
+        details: "Documents scannés envoyés vers l’espace client",
+      });
+    }
 
-    if (input.notify !== false) {
+    if (published > 0 && input.notify !== false) {
       if (operational.candidateId) {
         try {
           await db.insert(clientNotifications).values({
@@ -392,11 +505,13 @@ export async function publishAgencyDocumentsToCase(
     caseNumber: operational.caseNumber,
     candidateId: operational.candidateId,
     published,
+    updated,
     skipped,
     totalScanned: selected.length,
     checklistAdded,
     checklistLabel,
     whatsappSent,
+    reason: "ok",
   };
 }
 

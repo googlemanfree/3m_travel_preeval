@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { agencyDossierDocuments, agencyDossierDocumentAnnotations, agencyDossierHistory, agencyDossiers } from "../../drizzle/schema";
 import { getDb } from "../db";
+import { publishAgencyDocumentsToCase } from "../services/publishAgencyDocumentsToCase";
 import { storageGetSignedUrl } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -66,6 +67,22 @@ export const agencyDossierDocumentsRouter = router({
         newValue: input.verificationStatus,
         details: input.verificationComment || `Document ${document.documentName} : statut mis à jour`,
       });
+
+      // Automatisation : aligner le coffre (case_documents) sans créer de dossier ni notifier.
+      try {
+        await publishAgencyDocumentsToCase(db, {
+          agencyDossierId: document.dossierId,
+          documentIds: [input.documentId],
+          actorEmail: ctx.user?.email || "admin",
+          notify: false,
+          createCaseIfMissing: false,
+        });
+      } catch (syncErr) {
+        console.warn(
+          "[agencyDossierDocuments.updateVerificationStatus] sync case_documents:",
+          syncErr instanceof Error ? syncErr.message.slice(0, 300) : syncErr,
+        );
+      }
 
       return { success: true };
     }),
