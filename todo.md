@@ -58,3 +58,17 @@
 - [x] WebDev redémarré sur `94b5ce9b`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
 - [x] Aucun dossier actif modifié et aucune migration appliquée.
 - [ ] Smoke test métier générer/sauver/postuler à réaliser séparément avec une session admin appropriée.
+
+## PR85 — synchronisation candidate_files vers case_documents
+- [ ] Auditer le diff et valider le commit exact de PR85.
+- [ ] Fusionner PR85 si les tests, le typecheck et les garde-fous sont verts; synchroniser WebDev.
+- [ ] Vérifier séparément le bouton admin et le dépôt inverse agency_*; aucune mutation métier non nécessaire.
+
+## PR85 — fusion et synchronisation
+- [x] Audit du diff effectué : miroir idempotent `candidate_files` → `case_documents`, préférence dossier actif `3M-AGN` hors EVAL, réparation admin explicite.
+- [x] Commit exact `b9f36c49` validé : **1 suite / 7 tests verts**, `pnpm run check` vert et build production vert.
+- [x] PR85 sortie du brouillon et squash-mergée sur `main`.
+- [x] Checkout local synchronisé sur `user_github/main` au commit `7b4d01f2`.
+- [x] WebDev redémarré sur `7b4d01f2`; serveur actif, dépendances OK, LSP et TypeScript sans erreur.
+- [x] Aucun dossier opérationnel créé, aucun statut global réécrit, aucun e-mail ou WhatsApp envoyé.
+- [ ] Vérification métier séparée du bouton admin et du dépôt inverse `agency_*`.
