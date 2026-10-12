@@ -64,7 +64,6 @@ import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
-import ClientApplicationPackPanel from "@/components/ClientApplicationPackPanel";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
@@ -1502,7 +1501,6 @@ export default function EvaluationSpace() {
 
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6">
-              <ClientApplicationPackPanel destination={primaryDestination} />
               <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
               <ClientUploadedDocumentsStatus documents={[...(candidateFiles ?? []), ...(agencyDocuments ?? [])] as any[]} />
               <DocumentClarificationHistoryPanel clarifications={documentClarifications as any[]} onUpload={setUploadClarification} />

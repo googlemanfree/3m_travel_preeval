@@ -120,7 +120,7 @@ describe("routeur cvDraft : export", () => {
   });
 });
 
-describe("routeur cvDraft : publication pack candidat", () => {
+describe("routeur cvDraft : pack candidature admin", () => {
   const richDraft: CvDraft = {
     headline: "Logisticien",
     summary: "Professionnel de la logistique.",
@@ -132,9 +132,9 @@ describe("routeur cvDraft : publication pack candidat", () => {
     missing: [],
   };
 
-  it("publie le pack dans projectDetailsJson pour l’espace candidat", async () => {
+  it("enregistre le pack admin dans projectDetailsJson", async () => {
     const { caller, saveProjectDetails, logRelease } = setup();
-    const result = await caller.releaseToClient({
+    const result = await caller.saveApplicationPack({
       sessionToken: "valid",
       evaluationId: 7,
       style: "canada",
@@ -145,16 +145,17 @@ describe("routeur cvDraft : publication pack candidat", () => {
       motivationLetter: "Madame, Monsieur,\n\nJe souhaite postuler au poste de logisticien.",
     });
     expect(result.ok).toBe(true);
+    expect(result.savedAt).toBeTruthy();
     expect(saveProjectDetails).toHaveBeenCalledTimes(1);
     const json = saveProjectDetails.mock.calls[0][1] as string;
     expect(json).toContain("applicationPack");
     expect(json).toContain("Logisticien entrepôt");
-    expect(logRelease).toHaveBeenCalledWith(expect.objectContaining({ action: "released", style: "canada" }));
+    expect(logRelease).toHaveBeenCalledWith(expect.objectContaining({ action: "saved", style: "canada" }));
   });
 
   it("refuse un pack trop incomplet", async () => {
     const { caller, saveProjectDetails } = setup();
-    await expect(caller.releaseToClient({
+    await expect(caller.saveApplicationPack({
       sessionToken: "valid",
       evaluationId: 7,
       style: "canada",

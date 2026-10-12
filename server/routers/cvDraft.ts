@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { ApplicationPackSchema, draftHasMinimumContent, supportingFactsFromDocuments, writeApplicationPackJson } from "../../shared/applicationPack";
+import { ApplicationPackSchema, buildApplicationReadiness, draftHasMinimumContent, parseApplicationPack, supportingFactsFromDocuments, writeApplicationPackJson } from "../../shared/applicationPack";
 import { CV_LANGUAGES, CV_STYLES, CV_STYLE_KEYS, CvDraftSchema, styleForCountry, type CvIdentity, type CvLanguage, type CvStyleKey } from "../../shared/cvDraft";
 import { adminActivityLogs, agencyDossierDocuments, agencyDossiers, candidateFiles, candidates, evaluations } from "../../drizzle/schema";
 import { publicProcedure, router } from "../_core/trpc";
@@ -20,7 +20,7 @@ export type CvDraftRouterPorts = {
   generate: (row: CvDraftRow, options: { style: CvStyleKey; language: CvLanguage; targetRole?: string | null; supportingFacts?: string[] }) => Promise<CvDraftOutcome>;
   saveProjectDetails: (evaluationId: number, projectDetailsJson: string) => Promise<void>;
   logExport: (entry: { adminEmail: string; evaluationId: number; style: CvStyleKey }) => Promise<void>;
-  logRelease: (entry: { adminEmail: string; evaluationId: number; style: CvStyleKey; action: "released" | "revoked" }) => Promise<void>;
+  logRelease: (entry: { adminEmail: string; evaluationId: number; style: CvStyleKey; action: "saved" | "cleared" }) => Promise<void>;
   now: () => number;
 };
 
@@ -114,7 +114,7 @@ export const productionPorts: CvDraftRouterPorts = {
     if (!db) return;
     await db.insert(adminActivityLogs).values({
       adminEmail: entry.adminEmail,
-      action: entry.action === "released" ? "cv_pack_released" : "cv_pack_revoked",
+      action: entry.action === "saved" ? "cv_pack_saved" : "cv_pack_cleared",
       evaluationType: "cv_draft",
       evaluationId: String(entry.evaluationId),
       details: JSON.stringify({ style: entry.style }),
@@ -178,8 +178,8 @@ export function createCvDraftRouter(ports: CvDraftRouterPorts) {
         return { outcome };
       }),
 
-    /** Publie le pack (CV + lettre optionnelle) dans l’espace candidat. */
-    releaseToClient: publicProcedure
+    /** Enregistre le pack (CV + lettre) pour usage admin — faire postuler le client. Jamais exposé au candidat. */
+    saveApplicationPack: publicProcedure
       .input(adminInput.extend({
         style: z.enum(CV_STYLE_KEYS),
         language: z.enum(CV_LANGUAGES),
@@ -193,11 +193,11 @@ export function createCvDraftRouter(ports: CvDraftRouterPorts) {
         const row = await ports.loadRow(input.evaluationId);
         if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (!draftHasMinimumContent(input.draft)) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Le CV est trop incomplet pour être publié au candidat." });
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Le CV est trop incomplet pour être enregistré comme pack candidature." });
         }
         const pack = ApplicationPackSchema.parse({
-          releasedAt: new Date(ports.now()).toISOString(),
-          releasedBy: admin.email,
+          savedAt: new Date(ports.now()).toISOString(),
+          savedBy: admin.email,
           style: input.style,
           language: input.language,
           includeContact: input.includeContact,
@@ -207,17 +207,44 @@ export function createCvDraftRouter(ports: CvDraftRouterPorts) {
         });
         const nextJson = writeApplicationPackJson(row.projectDetailsJson, pack);
         await ports.saveProjectDetails(input.evaluationId, nextJson);
-        await ports.logRelease({ adminEmail: admin.email, evaluationId: input.evaluationId, style: input.style, action: "released" });
-        return { ok: true as const, releasedAt: pack.releasedAt };
+        await ports.logRelease({ adminEmail: admin.email, evaluationId: input.evaluationId, style: input.style, action: "saved" });
+        return { ok: true as const, savedAt: pack.savedAt };
       }),
 
-    revokeRelease: publicProcedure.input(adminInput).mutation(async ({ input }) => {
+    /** Recharge le pack enregistré (admin uniquement). */
+    getApplicationPack: publicProcedure.input(adminInput).query(async ({ input }) => {
+      await ports.requireAdmin(input.sessionToken);
+      const row = await ports.loadRow(input.evaluationId);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+      const pack = parseApplicationPack(row.projectDetailsJson);
+      const supportingFacts = await ports.loadSupportingFacts(input.evaluationId, row.email);
+      const readiness = buildApplicationReadiness({
+        destination: row.destinationCountry,
+        hasCvFile: Boolean(row.cvFileUrl),
+        documents: supportingFacts.map((label) => ({ documentType: label, status: "received" })),
+        pack,
+      });
+      return {
+        pack,
+        readiness,
+        identity: {
+          fullName: row.fullName,
+          email: row.email ?? null,
+          phone: row.phone ?? null,
+          city: row.cityOfResidence ?? null,
+          nationality: row.nationality ?? null,
+        },
+        supportingFacts,
+      };
+    }),
+
+    clearApplicationPack: publicProcedure.input(adminInput).mutation(async ({ input }) => {
       const admin = await ports.requireAdmin(input.sessionToken);
       const row = await ports.loadRow(input.evaluationId);
       if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
       const nextJson = writeApplicationPackJson(row.projectDetailsJson, null);
       await ports.saveProjectDetails(input.evaluationId, nextJson);
-      await ports.logRelease({ adminEmail: admin.email, evaluationId: input.evaluationId, style: "europe", action: "revoked" });
+      await ports.logRelease({ adminEmail: admin.email, evaluationId: input.evaluationId, style: "europe", action: "cleared" });
       return { ok: true as const };
     }),
 

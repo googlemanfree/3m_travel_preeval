@@ -57,7 +57,6 @@ import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVeri
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
-import { buildApplicationReadiness, parseApplicationPack, supportingFactsFromDocuments } from "../../shared/applicationPack";
 import { coarseCategoryForPreferredDestinations, isRecognizedCandidateDestination, MAX_PREFERRED_DESTINATIONS, normalizeCandidateDestinations } from "../../shared/candidateDestinationOptions";
 import { computeProfileCompletion } from "../../shared/profileCompletion";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
@@ -1155,65 +1154,6 @@ export const candidateRouter = router({
     }
 
     return actions;
-  }),
-
-  /** Pack candidature international publié par l’agence (CV ± lettre) + état de préparation. */
-  getApplicationPack: candidateProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    const email = ctx.candidate.email.toLowerCase();
-    const evaluation = (await db.select().from(evaluations)
-      .where(or(eq(evaluations.candidateId, ctx.candidate.id), sql`LOWER(${evaluations.email}) = ${email}`))
-      .orderBy(desc(evaluations.createdAt))
-      .limit(1))[0] ?? null;
-    const files = await db.select({
-      fileType: candidateFiles.fileType,
-      fileName: candidateFiles.fileName,
-      status: candidateFiles.status,
-    }).from(candidateFiles).where(eq(candidateFiles.candidateId, ctx.candidate.id)).orderBy(desc(candidateFiles.uploadedAt)).limit(40);
-    const agencyDocs = await db.select({
-      documentType: agencyDossierDocuments.documentType,
-      documentName: agencyDossierDocuments.documentName,
-      verificationStatus: agencyDossierDocuments.verificationStatus,
-    }).from(agencyDossierDocuments)
-      .innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id))
-      .where(sql`LOWER(${agencyDossiers.email}) = ${email}`)
-      .orderBy(desc(agencyDossierDocuments.uploadedAt))
-      .limit(40);
-    const documents = [
-      ...files.map((file) => ({ documentType: file.fileType, fileName: file.fileName, status: file.status })),
-      ...agencyDocs.map((doc) => ({ documentType: doc.documentType, documentName: doc.documentName, verificationStatus: doc.verificationStatus })),
-    ];
-    if (evaluation?.diplomaTitle) documents.unshift({ documentType: "Diplôme", documentName: evaluation.diplomaTitle, status: "received" });
-    const pack = parseApplicationPack(evaluation?.projectDetailsJson ?? null);
-    const destination = evaluation?.destinationCountry
-      || (() => {
-        try {
-          const preferred = JSON.parse(ctx.candidate.preferredDestinations || "[]");
-          return Array.isArray(preferred) && typeof preferred[0] === "string" ? preferred[0] : null;
-        } catch { return null; }
-      })()
-      || ctx.candidate.destination
-      || null;
-    const readiness = buildApplicationReadiness({
-      destination,
-      hasCvFile: Boolean(evaluation?.cvFileUrl) || documents.some((doc) => supportingFactsFromDocuments([doc]).some((fact) => fact.kind === "cv")),
-      documents,
-      pack,
-    });
-    return {
-      destination,
-      readiness,
-      pack,
-      identity: pack ? {
-        fullName: evaluation?.fullName || ctx.candidate.fullName,
-        email: pack.includeContact ? (evaluation?.email || ctx.candidate.email) : null,
-        phone: pack.includeContact ? (evaluation?.phone || ctx.candidate.phone || null) : null,
-        city: pack.includeContact ? (evaluation?.cityOfResidence || null) : null,
-        nationality: evaluation?.nationality || ctx.candidate.nationality || null,
-      } : null,
-      supportingFacts: supportingFactsFromDocuments(documents).map((fact) => fact.label),
-    };
   }),
 
   // ── Messagerie : lire les messages ────────────────────────────────────────

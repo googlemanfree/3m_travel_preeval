@@ -24,8 +24,8 @@ function errorMessage(error: unknown): string {
 const selectClass = "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900";
 
 /**
- * Générateur de CV assisté (back-office) : CV d’évaluation + libellés des pièces fournies.
- * Relu puis publiable dans l’espace candidat pour postuler.
+ * Outil ADMIN uniquement : préparer CV international + lettre pour faire postuler le client.
+ * Jamais exposé dans l’espace candidat.
  */
 export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountry }: { evaluationId: number; sessionToken: string; defaultCountry?: string | null }) {
   const initialStyle = styleForCountry(defaultCountry);
@@ -42,8 +42,8 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
   const [exporting, setExporting] = useState(false);
 
   const logExport = trpc.cvDraft.logExport.useMutation();
-  const release = trpc.cvDraft.releaseToClient.useMutation({
-    onSuccess: () => toast.success("Pack candidature publié dans l’espace du candidat."),
+  const savePack = trpc.cvDraft.saveApplicationPack.useMutation({
+    onSuccess: () => toast.success("Pack candidature enregistré (usage admin pour postuler)."),
     onError: (error) => toast.error(errorMessage(error)),
   });
   const generateMotivation = trpc.cvDraft.generateMotivation.useMutation({
@@ -53,7 +53,7 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
         return;
       }
       setMotivationLetter(result.outcome.letter);
-      toast.success("Lettre de motivation proposée — relisez avant publication.");
+      toast.success("Lettre de motivation proposée — relisez avant d’enregistrer le pack.");
     },
     onError: (error) => toast.error(errorMessage(error)),
   });
@@ -98,10 +98,10 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
   return (
     <section className="mt-3 space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4" aria-label="CV assisté par IA" data-testid="cv-draft-panel">
       <div>
-        <h3 className="flex items-center gap-2 text-sm font-bold text-sky-950"><FileText className="h-4 w-4" aria-hidden="true" /> Pack candidature — CV international + lettre</h3>
+        <h3 className="flex items-center gap-2 text-sm font-bold text-sky-950"><FileText className="h-4 w-4" aria-hidden="true" /> Pack candidature admin — faire postuler le client</h3>
         <p className="mt-1 text-xs leading-5 text-slate-700">
-          Brouillon établi à partir du CV d’évaluation et des libellés des pièces fournies (diplômes, attestations…). Coordonnées masquées avant l’IA.
-          Relisez, générez une lettre si besoin, puis publiez le pack dans l’espace candidat pour qu’il puisse postuler.
+          Outil réservé à l’administration. Brouillon établi à partir du CV d’évaluation et des pièces fournies (diplômes, attestations…).
+          Relisez, ajoutez une lettre si besoin, exportez le PDF, puis enregistrez le pack pour candidater au nom du client. Aucun accès candidat.
         </p>
       </div>
 
@@ -247,9 +247,9 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
               <Button
                 type="button"
                 className="gap-2 bg-emerald-700 text-white hover:bg-emerald-800"
-                disabled={release.isPending}
-                data-testid="cv-release-to-client"
-                onClick={() => release.mutate({
+                disabled={savePack.isPending}
+                data-testid="cv-save-application-pack"
+                onClick={() => savePack.mutate({
                   sessionToken,
                   evaluationId,
                   style,
@@ -260,7 +260,7 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
                   motivationLetter: motivationLetter.trim() || null,
                 })}
               >
-                {release.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />} Publier pour le candidat
+                {savePack.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />} Enregistrer le pack (admin)
               </Button>
             </div>
           </div>

@@ -32,7 +32,7 @@ export function buildMotivationPrompt(input: {
     input.draft.skills.slice(0, 8).length ? `Compétences : ${input.draft.skills.slice(0, 8).join(", ")}` : null,
   ].filter(Boolean);
 
-  return `Tu rédiges un BROUILLON de lettre de motivation pour un administrateur de 3M TRAVEL AGENCY. Il la relira avant de la publier dans l’espace candidat.
+  return `Tu rédiges un BROUILLON de lettre de motivation pour un administrateur de 3M TRAVEL AGENCY. Il la relira puis l’utilisera pour faire postuler le client (outil admin uniquement).
 
 Règles :
 - N’utilise QUE les faits listés ci-dessous (issus du CV relu). N’invente aucun employeur, diplôme, date ni résultat.

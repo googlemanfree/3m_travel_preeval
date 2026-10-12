@@ -38,10 +38,10 @@ describe("application pack — documents fournis + candidature", () => {
     expect(facts.map((f) => f.kind)).toEqual(["cv", "diploma"]);
   });
 
-  it("calcule la préparation candidat et le style recommandé Canada", () => {
+  it("calcule la préparation admin et le style recommandé Canada", () => {
     const pack = ApplicationPackSchema.parse({
-      releasedAt: "2026-10-12T12:00:00.000Z",
-      releasedBy: "agent@3mtravelagency.com",
+      savedAt: "2026-10-12T12:00:00.000Z",
+      savedBy: "agent@3mtravelagency.com",
       style: "canada",
       language: "fr",
       includeContact: true,
@@ -68,8 +68,8 @@ describe("application pack — documents fournis + candidature", () => {
   it("persiste le pack dans projectDetailsJson sans écraser les consentements", () => {
     const base = JSON.stringify({ preparatoryAnalysisConsent: true, preparatoryCvAnalysisConsent: true });
     const pack = ApplicationPackSchema.parse({
-      releasedAt: "2026-10-12T12:00:00.000Z",
-      releasedBy: "agent@3mtravelagency.com",
+      savedAt: "2026-10-12T12:00:00.000Z",
+      savedBy: "agent@3mtravelagency.com",
       style: "europe",
       language: "fr",
       includeContact: false,
@@ -97,13 +97,14 @@ describe("application pack — documents fournis + candidature", () => {
     expect(prompt).toContain("candidature internationale");
   });
 
-  it("branche client + admin + placement style destination", () => {
+  it("reste strictement admin : pas d’UI ni d’API candidat", () => {
     const root = resolve(import.meta.dirname, "..");
     const read = (path: string) => readFileSync(resolve(root, path), "utf8");
-    expect(read("client/src/components/ClientApplicationPackPanel.tsx")).toContain("Pack pour postuler");
-    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("Publier pour le candidat");
-    expect(read("client/src/pages/EvaluationSpace.tsx")).toContain("ClientApplicationPackPanel");
-    expect(read("server/routers/candidate.ts")).toContain("getApplicationPack");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("faire postuler le client");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("Enregistrer le pack (admin)");
+    expect(read("client/src/pages/EvaluationSpace.tsx")).not.toContain("ClientApplicationPackPanel");
+    expect(read("server/routers/candidate.ts")).not.toContain("getApplicationPack");
+    expect(read("server/routers/cvDraft.ts")).toContain("saveApplicationPack");
     expect(read("server/routers/placementPortal.ts")).toContain("styleForCountry(evaluation.destinationCountry");
   });
 });

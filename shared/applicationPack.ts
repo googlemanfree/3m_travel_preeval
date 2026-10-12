@@ -2,14 +2,15 @@ import { z } from "zod";
 import { CV_LANGUAGES, CV_STYLE_KEYS, CvDraftSchema, styleForCountry, type CvDraft, type CvLanguage, type CvStyleKey } from "./cvDraft";
 
 /**
- * Pack candidature international : CV relu par l’agence (+ lettre de motivation optionnelle),
- * publié dans l’espace candidat pour postuler. Stocké dans projectDetailsJson.applicationPack
- * (pas de migration) — jamais inventé côté modèle, seulement relu et validé par un admin.
+ * Pack candidature international — OUTIL ADMIN uniquement.
+ * L’administrateur prépare CV (+ lettre) à partir des documents fournis pour faire postuler
+ * le client. Stocké dans projectDetailsJson.applicationPack (pas de migration).
+ * Jamais exposé à l’espace candidat.
  */
 
 export const ApplicationPackSchema = z.object({
-  releasedAt: z.string().min(10).max(40),
-  releasedBy: z.string().trim().min(3).max(320),
+  savedAt: z.string().min(10).max(40),
+  savedBy: z.string().trim().min(3).max(320),
   style: z.enum(CV_STYLE_KEYS),
   language: z.enum(CV_LANGUAGES),
   includeContact: z.boolean(),
@@ -109,7 +110,7 @@ export type ApplicationReadiness = {
   checks: Array<{ key: string; label: string; done: boolean; detail: string }>;
 };
 
-/** Tableau de bord candidat : où en est le pack pour postuler. */
+/** Tableau de bord admin : préparation du pack pour postuler au nom du client. */
 export function buildApplicationReadiness(input: ApplicationReadinessInput): ApplicationReadiness {
   const recommendedStyle = styleForCountry(input.destination);
   const recommendedLanguage = recommendedStyle === "international" ? "en" : "fr";
@@ -121,12 +122,12 @@ export function buildApplicationReadiness(input: ApplicationReadinessInput): App
   const letterReady = Boolean(input.pack?.motivationLetter?.trim());
 
   const checks = [
-    { key: "cv_source", label: "CV source déposé", done: input.hasCvFile, detail: input.hasCvFile ? "Votre CV d’évaluation est enregistré." : "Déposez votre CV dans l’évaluation ou le centre documentaire." },
-    { key: "diploma", label: "Diplôme / relevé fourni", done: hasDiploma, detail: hasDiploma ? "Une pièce diplômante figure dans vos documents." : "Ajoutez diplôme ou relevé pour renforcer le pack." },
-    { key: "experience", label: "Preuve d’expérience", done: hasExperienceProof, detail: hasExperienceProof ? "Attestation ou contrat détecté parmi vos pièces." : "Ajoutez une attestation d’emploi si vous en avez une." },
+    { key: "cv_source", label: "CV source déposé", done: input.hasCvFile, detail: input.hasCvFile ? "CV d’évaluation enregistré." : "Le client doit avoir un CV d’évaluation exploitable." },
+    { key: "diploma", label: "Diplôme / relevé fourni", done: hasDiploma, detail: hasDiploma ? "Pièce diplômante présente dans le dossier." : "Ajouter diplôme ou relevé pour renforcer le pack." },
+    { key: "experience", label: "Preuve d’expérience", done: hasExperienceProof, detail: hasExperienceProof ? "Attestation ou contrat détecté." : "Joindre une attestation d’emploi si disponible." },
     { key: "language", label: "Preuve de langue (selon le cas)", done: hasLanguageProof, detail: hasLanguageProof ? "Résultat linguistique présent." : "Facultatif sauf si la destination l’exige." },
-    { key: "cv_pack", label: "CV international publié par l’agence", done: packReady, detail: packReady ? `Format ${input.pack!.style} · ${input.pack!.language.toUpperCase()} prêt à télécharger.` : "L’agence prépare puis publie votre CV international après relecture." },
-    { key: "letter", label: "Lettre de motivation", done: letterReady, detail: letterReady ? "Lettre jointe au pack." : "Optionnelle : l’agence peut en joindre une ciblée au poste." },
+    { key: "cv_pack", label: "CV international enregistré (admin)", done: packReady, detail: packReady ? `Format ${input.pack!.style} · ${input.pack!.language.toUpperCase()} prêt pour candidature.` : "Enregistrez le CV relu pour pouvoir postuler au nom du client." },
+    { key: "letter", label: "Lettre de motivation", done: letterReady, detail: letterReady ? "Lettre jointe au pack admin." : "Optionnelle : joindre une lettre ciblée au poste." },
   ];
 
   const weights = { cv_source: 25, diploma: 15, experience: 15, language: 10, cv_pack: 25, letter: 10 } as const;
