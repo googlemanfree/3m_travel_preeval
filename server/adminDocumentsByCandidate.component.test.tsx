@@ -35,7 +35,7 @@ describe("regroupement des pièces par candidat", () => {
     ]);
     expect(groups).toHaveLength(2);
     const aicha = groups.find((group) => group.dossierNumber === "3M-2026-0001")!;
-    expect(aicha).toMatchObject({ total: 3, approved: 1, pending: 1, rejected: 1, agencyCount: 1 });
+    expect(aicha).toMatchObject({ total: 3, approved: 1, pending: 1, rejected: 1, agencyCount: 1, onlineCount: 2, candidateId: 10 });
     expect(approvalRate(aicha)).toBe(33);
   });
 
@@ -77,11 +77,19 @@ describe("regroupement des pièces par candidat", () => {
 
 describe("affichage individuel par candidat", () => {
   const setup = () => {
-    const handlers = { onPreview: vi.fn(), onDownload: vi.fn(), onApprove: vi.fn(), onSetPending: vi.fn(), onReject: vi.fn(), onAddDocuments: vi.fn() };
+    const handlers = {
+      onPreview: vi.fn(),
+      onDownload: vi.fn(),
+      onApprove: vi.fn(),
+      onSetPending: vi.fn(),
+      onReject: vi.fn(),
+      onAddDocuments: vi.fn(),
+      onSyncToCase: vi.fn(),
+    };
     const groups = groupDocumentsByCandidate([
       doc({ id: 1 }),
       doc({ id: 2, documentType: "document_remis_main_propre", documentName: "remise-agence.pdf", verificationStatus: "approved" }),
-      doc({ id: 3, dossierNumber: "3M-2026-0002", candidateName: "Paul Mbarga", candidateEmail: "paul@example.com", documentName: "cv-paul.pdf", documentType: "cv" }),
+      doc({ id: 3, dossierNumber: "3M-2026-0002", candidateName: "Paul Mbarga", candidateEmail: "paul@example.com", documentName: "cv-paul.pdf", documentType: "cv", candidateId: 22 }),
     ]);
     render(<AdminDocumentsByCandidate groups={groups} busy={false} typeLabel={(type) => `Type ${type}`} {...handlers} />);
     return handlers;
@@ -124,6 +132,15 @@ describe("affichage individuel par candidat", () => {
     expect(handlers.onAddDocuments.mock.calls[0][0]).toMatchObject({ dossierNumber: "3M-2026-0002", candidateName: "Paul Mbarga" });
   });
 
+  it("« Sync coffre dossier » appelle la réparation pour le candidat de la fiche", () => {
+    const handlers = setup();
+    const card = screen.getAllByTestId("candidate-document-group")[0];
+    expect(within(card).getByTestId("group-online").textContent).toContain("1 en ligne");
+    fireEvent.click(within(card).getByTestId("sync-candidate-files-to-case"));
+    expect(handlers.onSyncToCase).toHaveBeenCalledTimes(1);
+    expect(handlers.onSyncToCase.mock.calls[0][0]).toMatchObject({ candidateId: 10, dossierNumber: "3M-2026-0001" });
+  });
+
   it("« Tout déplier » ouvre toutes les fiches", () => {
     setup();
     fireEvent.click(screen.getByText("Tout déplier"));
@@ -145,6 +162,8 @@ describe("intégration dans l'onglet Documents", () => {
     expect(source).toContain("<AdminDocumentsByCandidate<Document>");
     expect(source).toContain('setUploadDocumentType("document_remis_main_propre")');
     expect(source).toContain('id="admin-quick-upload"');
+    expect(source).toContain("syncCandidateFilesToCase");
+    expect(source).toContain("onSyncToCase={handleSyncCandidateFilesToCase}");
   });
 
   it("le mode liste garde la sélection groupée et les actions existantes", () => {
