@@ -3,7 +3,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { ApplicationPackSchema, buildApplicationReadiness, draftHasMinimumContent, parseApplicationPack, supportingFactsFromDocuments, writeApplicationPackJson } from "../../shared/applicationPack";
 import { CV_LANGUAGES, CV_STYLES, CV_STYLE_KEYS, CvDraftSchema, styleForCountry, type CvIdentity, type CvLanguage, type CvStyleKey } from "../../shared/cvDraft";
-import { adminActivityLogs, agencyDossierDocuments, agencyDossiers, candidateFiles, candidates, evaluations } from "../../drizzle/schema";
+import { adminAuditLogs, adminActivityLogs, agencyDossierDocuments, agencyDossiers, candidateFiles, candidates, evaluations } from "../../drizzle/schema";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { generateCvDraft, type CvDraftDeps, type CvDraftOutcome } from "../services/cvDraftGenerator";
@@ -75,7 +75,7 @@ async function loadSupportingFactsForEvaluation(evaluationId: number, email?: st
     }).from(agencyDossierDocuments)
       .innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id))
       .where(sql`LOWER(${agencyDossiers.email}) = ${resolvedEmail}`)
-      .orderBy(desc(agencyDossierDocuments.uploadedAt))
+      .orderBy(desc(agencyDossierDocuments.createdAt))
       .limit(40);
     for (const row of agencyRows) docs.push({ documentType: row.documentType, documentName: row.documentName, verificationStatus: row.verificationStatus });
   }
@@ -112,11 +112,13 @@ export const productionPorts: CvDraftRouterPorts = {
   async logRelease(entry) {
     const db = await getDb();
     if (!db) return;
-    await db.insert(adminActivityLogs).values({
+    await db.insert(adminAuditLogs).values({
       adminEmail: entry.adminEmail,
       action: entry.action === "saved" ? "cv_pack_saved" : "cv_pack_cleared",
-      evaluationType: "cv_draft",
-      evaluationId: String(entry.evaluationId),
+      category: "mutation",
+      resourceType: "cv_draft",
+      resourceId: String(entry.evaluationId),
+      outcome: "success",
       details: JSON.stringify({ style: entry.style }),
     });
   },
