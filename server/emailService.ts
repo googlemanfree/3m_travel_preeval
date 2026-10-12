@@ -283,27 +283,43 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
 export async function sendPasswordResetEmail(to: string, fullName: string, resetToken: string): Promise<void> {
   const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
+  const safeName = escapeEmailHtml(fullName);
+  const safeResetUrl = escapeEmailHtml(resetUrl);
   try {
     await sendGenericEmail({
       to,
-      subject: "🔑 Réinitialisation de votre mot de passe 3M TRAVEL AGENCY",
+      subject: "Réinitialisation de votre mot de passe — 3M TRAVEL AGENCY",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Réinitialisation de votre mot de passe</h1>
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Réinitialisation de votre mot de passe</h1>
           </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour le réinitialiser :</p>
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${resetUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                🔑 Réinitialiser mon mot de passe
-              </a>
+          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
+            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${safeName}</strong>,</p>
+            <p style="margin: 0 0 24px; color: #111827;">Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour le réinitialiser :</p>
+
+            <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
+              <tr>
+                <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
+                  <a href="${resetUrl}" target="_blank" rel="noopener noreferrer"
+                     style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
+                    <span style="color: #ffffff !important; text-decoration: none;">Réinitialiser mon mot de passe</span>
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
+            <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
+              <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeResetUrl}</a>
             </p>
-            
-            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">Ce lien est valable <strong>1 heure</strong>. Après ce délai, vous devrez faire une nouvelle demande.</p>
-            <p style="font-size: 13px; color: #6b7280;">Si vous n'avez pas demandé cette réinitialisation, ignorez cet email — votre mot de passe reste inchangé.</p>
+
+            <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Ce lien est valable <strong>1 heure</strong>. Après ce délai, vous devrez faire une nouvelle demande.</p>
+            <p style="margin: 0; font-size: 13px; color: #4b5563;">Si vous n’avez pas demandé cette réinitialisation, ignorez cet e-mail — votre mot de passe reste inchangé.</p>
+          </div>
+          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
+            3M TRAVEL AGENCY — Espace client
           </div>
         </div>
       `,
