@@ -170,26 +170,63 @@ export default function ProcedureStepper({
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Étape en cours · {phaseLabel}</p>
           <p className="mt-1 text-base font-bold text-slate-950">{view.current.index + 1}. {view.current.label}</p>
           {view.current.description && <p className="mt-1 text-sm leading-6 text-slate-700">{view.current.description}</p>}
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button type="button" size="sm" className="bg-blue-700 hover:bg-blue-800" disabled={busy} onClick={() => onValidate(view.current as ProcedureStep)}>{busy ? "Validation…" : "Marquer l’étape comme faite"}</Button>
-            {view.done > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="border-rose-300 text-rose-800 hover:bg-rose-50"
-                disabled={busy}
-                onClick={() => {
-                  const lastDone = [...steps].reverse().find((step) => step.state === "completed");
-                  if (lastDone) onUndo(lastDone);
-                }}
-                data-testid="cancel-last-past-step"
-              >
-                Annuler l’étape passée
-              </Button>
-            )}
-            {view.current.sourceUrl && <a href={view.current.sourceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-700 underline">Source officielle</a>}
-          </div>
+          {view.current.id === "candidate_confirmation" ? (
+            <div className="mt-3 space-y-3" data-testid="stepper-candidate-confirmation">
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-950">
+                Cette étape est confirmée <strong>par le candidat</strong> dans son espace (réception et compréhension du bilan). L’administration n’a pas à la marquer manuellement, sauf confirmation reçue hors ligne.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-300 text-amber-900 hover:bg-amber-50"
+                  disabled={busy}
+                  onClick={() => onUnlock(view.current as ProcedureStep)}
+                  data-testid="force-candidate-confirmation"
+                >
+                  Déverrouiller (confirmation hors ligne)
+                </Button>
+                {view.done > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-rose-300 text-rose-800 hover:bg-rose-50"
+                    disabled={busy}
+                    onClick={() => {
+                      const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+                      if (lastDone) onUndo(lastDone);
+                    }}
+                    data-testid="cancel-last-past-step"
+                  >
+                    Annuler l’étape passée
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button type="button" size="sm" className="bg-blue-700 hover:bg-blue-800" disabled={busy} onClick={() => onValidate(view.current as ProcedureStep)}>{busy ? "Validation…" : "Marquer l’étape comme faite"}</Button>
+              {view.done > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-rose-300 text-rose-800 hover:bg-rose-50"
+                  disabled={busy}
+                  onClick={() => {
+                    const lastDone = [...steps].reverse().find((step) => step.state === "completed");
+                    if (lastDone) onUndo(lastDone);
+                  }}
+                  data-testid="cancel-last-past-step"
+                >
+                  Annuler l’étape passée
+                </Button>
+              )}
+              {view.current.sourceUrl && <a href={view.current.sourceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-700 underline">Source officielle</a>}
+            </div>
+          )}
           <p className="mt-2 text-xs text-slate-600">Les annulations portent uniquement sur ce dossier ; les procédures sœurs du même client restent inchangées.</p>
         </div>
       ) : view.finished ? (

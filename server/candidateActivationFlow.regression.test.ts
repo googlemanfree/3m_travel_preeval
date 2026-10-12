@@ -24,14 +24,13 @@ describe("candidate activation flow", () => {
     expect(candidateRouter).toContain('if (application.paymentStatus === "SUCCESS") return');
   });
 
-  // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after MySpace.tsx removal — confirm intentionally dropped or re-add.
-  // Neither the "confirmEvaluationReceipt" nor "requestDossierActivation" mutations checked above are
-  // called from any client file anymore (grepped across client/src) — the manual confirm/request
-  // buttons this test expects appear to have been replaced by the automatic "evaluationRequired"
-  // gating flow in EvaluationSpace.tsx, and there is no "payments" tab in its validSections anymore.
-  it("exposes the client actions without making activation automatic", () => {
+  it("exposes the client confirmation action on the synchronized journey", () => {
+    const journey = readFileSync(resolve(process.cwd(), "client/src/components/CandidateCountryJourney.tsx"), "utf8");
+    expect(journey).toContain("confirmEvaluationReceipt");
+    expect(journey).toContain("Je confirme avoir reçu et compris le bilan");
+    expect(mySpace).toContain("CandidateCountryJourney");
+    expect(mySpace).toContain("bilanAvailable");
     expect(mySpace).toContain("evaluationRequired");
-    expect(mySpace).toContain("Évaluation rapide à compléter");
     expect(mySpace).toContain("openEvaluation()");
   });
 
