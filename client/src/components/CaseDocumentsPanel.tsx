@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, Download, FileText } from "lucide-react";
+import { Building2, Download, FileText, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -21,35 +21,62 @@ const STATUS_FR: Record<string, { label: string; tone: string }> = {
   correction_required: { label: "À corriger", tone: "bg-rose-50 text-rose-900 border-rose-200" },
 };
 
-/** Documents que l'équipe a enregistrés pour le candidat (pièces remises en agence) : visibles avec leur état. */
-export function agencyDepositedDocuments(cases: unknown): ClientCaseDocument[] {
+function collectCaseDocuments(cases: unknown): ClientCaseDocument[] {
   const list = Array.isArray(cases) ? cases : [];
   return list
     .flatMap((item) => (Array.isArray((item as { documents?: unknown })?.documents) ? ((item as { documents: ClientCaseDocument[] }).documents) : []))
-    .filter((document) => document && document.uploadedByRole && document.uploadedByRole !== "candidate")
+    .filter((document) => document && typeof document.id === "number")
     .sort((a, b) => new Date(String(b.uploadedAt ?? 0)).getTime() - new Date(String(a.uploadedAt ?? 0)).getTime());
 }
 
-export default function CaseDocumentsPanel({ documents, onDownload }: { documents: ClientCaseDocument[]; onDownload: (documentId: number) => void }) {
+/** Documents que l'équipe a enregistrés pour le candidat (pièces remises en agence). */
+export function agencyDepositedDocuments(cases: unknown): ClientCaseDocument[] {
+  return collectCaseDocuments(cases).filter((document) => document.uploadedByRole && document.uploadedByRole !== "candidate");
+}
+
+/** Tous les documents du dossier opérationnel (agence + candidat) — synchro bidirectionnelle. */
+export function allCaseDocuments(cases: unknown): ClientCaseDocument[] {
+  return collectCaseDocuments(cases);
+}
+
+function originLabel(role?: string | null): { label: string; Icon: typeof Building2 } {
+  if (role && role !== "candidate") return { label: "Déposé par l’agence", Icon: Building2 };
+  return { label: "Déposé depuis votre espace", Icon: UserRound };
+}
+
+export default function CaseDocumentsPanel({
+  documents,
+  onDownload,
+  title = "Documents synchronisés du dossier",
+  description = "Toutes les pièces enregistrées par vous ou par l’agence apparaissent ici avec leur statut — accessibles des deux côtés.",
+}: {
+  documents: ClientCaseDocument[];
+  onDownload: (documentId: number) => void;
+  title?: string;
+  description?: string;
+}) {
   return (
     <Card className="premium-surface border-blue-100/80 p-6" aria-labelledby="agency-deposits-title" data-testid="agency-deposits">
-      <h3 id="agency-deposits-title" className="flex items-center gap-2 text-lg font-bold text-slate-950"><Building2 className="h-5 w-5 text-blue-700" aria-hidden="true" /> Documents enregistrés par l’agence</h3>
-      <p className="mt-1 text-sm leading-6 text-slate-600">Ces documents ont été remis à l’agence puis ajoutés à votre dossier par un conseiller — synchronisés automatiquement avec votre espace.</p>
+      <h3 id="agency-deposits-title" className="flex items-center gap-2 text-lg font-bold text-slate-950"><Building2 className="h-5 w-5 text-blue-700" aria-hidden="true" /> {title}</h3>
+      <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       {documents.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5 text-center">
           <FileText className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
-          <p className="mt-2 text-sm font-bold text-slate-800">Aucune pièce déposée en agence pour le moment</p>
-          <p className="mt-1 text-sm text-slate-600">Dès qu’un conseiller enregistre un document, il apparaîtra ici avec son statut de vérification.</p>
+          <p className="mt-2 text-sm font-bold text-slate-800">Aucune pièce synchronisée pour le moment</p>
+          <p className="mt-1 text-sm text-slate-600">Dès qu’un document est déposé (par vous ou en agence), il apparaît ici avec son statut de vérification.</p>
         </div>
       ) : (
         <ul className="mt-4 divide-y">
           {documents.map((document) => {
             const status = STATUS_FR[String(document.reviewStatus)] ?? STATUS_FR.received;
+            const origin = originLabel(document.uploadedByRole);
+            const OriginIcon = origin.Icon;
             return (
               <li key={document.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /><span className="truncate">{document.documentType}</span></p>
                   <p className="mt-0.5 truncate text-xs text-slate-600">{document.fileName}{document.uploadedAt ? ` · ${new Date(document.uploadedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}` : ""}</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500"><OriginIcon className="h-3 w-3" aria-hidden="true" />{origin.label}</p>
                   {String(document.reviewStatus).includes("reject") || document.reviewStatus === "correction_required" ? (document.reviewNote ? <p className="mt-1 text-xs font-medium text-rose-800">{document.reviewNote}</p> : null) : null}
                 </div>
                 <div className="flex items-center gap-2">

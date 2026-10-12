@@ -10,6 +10,8 @@ export type EvaluationDocumentRequirement = {
 const CORE_REQUIREMENTS: EvaluationDocumentRequirement[] = [
   { category: "Identité", label: "Passeport en cours de validité", detail: "Page d’identité lisible ; la durée minimale dépend du pays.", priority: "à préparer" },
   { category: "Identité", label: "Photo d’identité récente", detail: "Format et dimensions à confirmer lors du dépôt officiel.", priority: "selon le cas" },
+  { category: "Identité", label: "Pièce d’identité nationale", detail: "CNI ou document d’identité en cours de validité, recto-verso lisible.", priority: "selon le cas" },
+  { category: "Financier", label: "Justificatifs de ressources", detail: "Relevés ou preuves de moyens adaptés à la procédure visée.", priority: "à préparer" },
   { category: "Projet", label: "Coordonnées et résumé du projet", detail: "Conservez un résumé cohérent de votre destination et de votre objectif.", priority: "à préparer" },
 ];
 
@@ -18,16 +20,22 @@ const PROJECT_REQUIREMENTS: Record<EvaluationProjectType, EvaluationDocumentRequ
     { category: "Profil", label: "CV à jour", detail: "Inclure expériences, compétences, dates et coordonnées professionnelles.", priority: "à préparer" },
     { category: "Profil", label: "Diplômes et attestations", detail: "Préparer les copies lisibles et, si nécessaire, leurs traductions.", priority: "selon le cas" },
     { category: "Profil", label: "Justificatifs d’expérience", detail: "Attestations d’emploi, certificats de travail ou références.", priority: "selon le cas" },
+    { category: "Voyage", label: "Justificatif de domicile", detail: "Adresse actuelle ; facture, bail ou attestation d’hébergement.", priority: "selon le cas" },
+    { category: "Voyage", label: "Acte de naissance", detail: "Copie lisible ; traduction si exigée pour la procédure.", priority: "selon le cas" },
   ],
   etudes: [
     { category: "Études", label: "Diplômes et relevés de notes", detail: "Préparer les copies complètes du dernier niveau obtenu.", priority: "à préparer" },
     { category: "Études", label: "Lettre d’admission ou preuve de candidature", detail: "Selon l’avancement auprès de l’établissement.", priority: "selon le cas" },
     { category: "Financier", label: "Preuve de financement", detail: "Épargne, garant, bourse ou autre source à documenter.", priority: "à préparer" },
+    { category: "Voyage", label: "Justificatif de domicile", detail: "Adresse actuelle pour le dossier scolaire / consulaire.", priority: "selon le cas" },
+    { category: "Voyage", label: "Acte de naissance", detail: "Souvent demandé pour l’inscription ou le visa études.", priority: "selon le cas" },
   ],
   tourisme: [
     { category: "Voyage", label: "Itinéraire et motif de séjour", detail: "Préparer un calendrier réaliste et les éléments qui expliquent le voyage.", priority: "à préparer" },
-    { category: "Financier", label: "Justificatifs de ressources", detail: "Les montants et formats dépendent de la procédure visée.", priority: "selon le cas" },
+    { category: "Financier", label: "Relevés bancaires récents", detail: "Généralement les 3 derniers mois ; formats confirmés selon la procédure.", priority: "selon le cas" },
     { category: "Voyage", label: "Justificatifs d’attaches", detail: "Emploi, études, famille ou obligations dans le pays de résidence.", priority: "selon le cas" },
+    { category: "Voyage", label: "Justificatif de domicile", detail: "Preuve d’adresse dans le pays de résidence.", priority: "selon le cas" },
+    { category: "Voyage", label: "Assurance voyage", detail: "Couverture médicale Schengen ou équivalente lorsque exigée.", priority: "selon le cas" },
   ],
 };
 
@@ -90,5 +98,6 @@ const COUNTRY_REQUIREMENTS: Partial<Record<string, Partial<Record<EvaluationProj
 };
 
 export function getEvaluationDocumentRequirements(country: string, project: EvaluationProjectType): EvaluationDocumentRequirement[] {
+  // Capacité documentaire partagée (16) appliquée ensuite dans documentChecklist.getRequirements.
   return [...CORE_REQUIREMENTS, ...PROJECT_REQUIREMENTS[project], ...(COUNTRY_REQUIREMENTS[country]?.[project] ?? [])];
 }

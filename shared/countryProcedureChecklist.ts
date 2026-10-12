@@ -5,6 +5,7 @@
  */
 
 import { getEnrichedCandidateJourney } from "./candidateJourneyCatalog";
+import { MAX_CHECKLIST_DOCUMENTS, capDocumentList } from "./documentLimits";
 
 export type ChecklistDocumentLine = {
   documentType: string;
@@ -206,9 +207,15 @@ export function buildCountryProcedureDocumentChecklist(input: {
     if (!key || merged.has(key)) continue;
     merged.set(key, line);
   }
+  const all = Array.from(merged.values());
+  const customs = all.filter((line) => line.source === "custom");
+  const country = all.filter((line) => line.source === "country");
+  const procedureLines = all.filter((line) => line.source === "procedure");
+  const journey = all.filter((line) => line.source === "journey");
+  // Priorité : demandes admin → pays → procédure → parcours (jamais plus de 16).
   return {
     label: procedure?.label ?? (input.procedureType?.trim() || "Procédure standard"),
-    documents: Array.from(merged.values()),
+    documents: capDocumentList([...customs, ...country, ...procedureLines, ...journey], MAX_CHECKLIST_DOCUMENTS),
   };
 }
 
