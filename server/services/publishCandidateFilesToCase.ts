@@ -105,6 +105,8 @@ export type PublishCandidateFilesResult = {
   caseNumber: string | null;
   candidateId: number;
   published: number;
+  /** Pièces déjà présentes dont le reviewStatus / exigence a été rafraîchi. */
+  updated: number;
   skipped: number;
   totalSelected: number;
   reason?: "no_case" | "no_files" | "ok";
@@ -134,6 +136,7 @@ export async function publishCandidateFilesToCase(
       caseNumber: null,
       candidateId: input.candidateId,
       published: 0,
+      updated: 0,
       skipped: 0,
       totalSelected: 0,
       reason: "no_files",
@@ -160,6 +163,7 @@ export async function publishCandidateFilesToCase(
       caseNumber: null,
       candidateId: input.candidateId,
       published: 0,
+      updated: 0,
       skipped: 0,
       totalSelected: 0,
       reason: "no_case",
@@ -182,6 +186,7 @@ export async function publishCandidateFilesToCase(
       caseNumber: operational.caseNumber,
       candidateId: input.candidateId,
       published: 0,
+      updated: 0,
       skipped: 0,
       totalSelected: 0,
       reason: "no_files",
@@ -194,13 +199,18 @@ export async function publishCandidateFilesToCase(
       fileName: caseDocuments.fileName,
       fileKey: caseDocuments.fileKey,
       documentType: caseDocuments.documentType,
+      reviewStatus: caseDocuments.reviewStatus,
     })
     .from(caseDocuments)
     .where(eq(caseDocuments.caseId, operational.id));
 
-  const existingKeys = new Set(existing.map((item) => String(item.fileKey || "").trim()).filter(Boolean));
-  const existingNames = new Set(
-    existing.map((item) => `${fold(item.documentType)}::${fold(item.fileName)}`),
+  const existingKeys = new Map<string, (typeof existing)[number]>();
+  for (const item of existing) {
+    const key = String(item.fileKey || "").trim();
+    if (key) existingKeys.set(key, item);
+  }
+  const existingNames = new Map<string, (typeof existing)[number]>(
+    existing.map((item) => [`${fold(item.documentType)}::${fold(item.fileName)}`, item] as const),
   );
 
   const requirements = await db
@@ -209,18 +219,69 @@ export async function publishCandidateFilesToCase(
     .where(eq(documentRequirements.caseId, operational.id));
 
   let published = 0;
+  let updated = 0;
   let skipped = 0;
 
   for (const file of files) {
     const displayType = candidateFileDisplayType(file.fileType, file.fileName);
     const fileKey = (file.fileKey && String(file.fileKey).trim()) || fileKeyFromDocumentUrl(file.fileUrl);
     const nameKey = `${fold(displayType)}::${fold(file.fileName)}`;
-    if ((fileKey && existingKeys.has(fileKey)) || existingNames.has(nameKey)) {
-      skipped += 1;
+    const matchedExisting = (fileKey && existingKeys.get(fileKey)) || existingNames.get(nameKey) || null;
+    const reviewStatus = mapCandidateFileStatusToReviewStatus(file.status);
+
+    if (matchedExisting) {
+      const needsReviewRefresh = matchedExisting.reviewStatus !== reviewStatus
+        && (reviewStatus === "approved" || reviewStatus === "rejected" || reviewStatus === "pending");
+      if (needsReviewRefresh && matchedExisting.id > 0) {
+        const statusNote = file.rejectionReason
+          || file.correctionComment
+          || (reviewStatus === "approved"
+            ? "Document validé côté candidat et aligné dans le coffre."
+            : reviewStatus === "rejected"
+              ? "Document refusé côté candidat et aligné dans le coffre."
+              : "Statut documentaire aligné depuis la pièce candidat.");
+        await db
+          .update(caseDocuments)
+          .set({
+            reviewStatus,
+            reviewNote: statusNote,
+            reviewedAt: reviewStatus === "approved" || reviewStatus === "rejected" ? new Date() : null,
+          })
+          .where(eq(caseDocuments.id, matchedExisting.id));
+        matchedExisting.reviewStatus = reviewStatus;
+        updated += 1;
+
+        const matchedRequirement = requirements.find(
+          (requirement) =>
+            requirement.status !== "waived"
+            && requirementMatchesDocument(requirement.documentType, displayType),
+        );
+        if (matchedRequirement) {
+          const nextStatus = reviewStatus === "approved"
+            ? "approved"
+            : reviewStatus === "rejected"
+              ? "rejected"
+              : reviewStatus === "pending"
+                ? "pending"
+                : "received";
+          if (matchedRequirement.status !== nextStatus) {
+            await db
+              .update(documentRequirements)
+              .set({
+                status: nextStatus,
+                validatedAt: nextStatus === "approved" ? new Date() : null,
+                rejectedAt: nextStatus === "rejected" ? new Date() : null,
+              })
+              .where(eq(documentRequirements.id, matchedRequirement.id));
+            matchedRequirement.status = nextStatus;
+          }
+        }
+      } else {
+        skipped += 1;
+      }
       continue;
     }
 
-    const reviewStatus = mapCandidateFileStatusToReviewStatus(file.status);
     const versionRows = existing.filter((item) => fold(item.documentType) === fold(displayType));
     await db.insert(caseDocuments).values({
       caseId: operational.id,
@@ -239,9 +300,16 @@ export async function publishCandidateFilesToCase(
       reviewedAt: reviewStatus === "approved" || reviewStatus === "rejected" ? new Date() : null,
     });
 
-    if (fileKey) existingKeys.add(fileKey);
-    existingNames.add(nameKey);
-    existing.push({ id: 0, fileName: file.fileName, fileKey, documentType: displayType });
+    const inserted = {
+      id: 0,
+      fileName: file.fileName,
+      fileKey,
+      documentType: displayType,
+      reviewStatus,
+    };
+    if (fileKey) existingKeys.set(fileKey, inserted);
+    existingNames.set(nameKey, inserted);
+    existing.push(inserted);
     published += 1;
 
     const matchedRequirement = requirements.find(
@@ -264,15 +332,20 @@ export async function publishCandidateFilesToCase(
     }
   }
 
-  if (published > 0) {
+  if (published > 0 || updated > 0) {
+    const parts: string[] = [];
+    if (published > 0) parts.push(`${published} publié(s)`);
+    if (updated > 0) parts.push(`${updated} statut(s) aligné(s)`);
     await db.insert(caseActivityLogs).values({
       caseId: operational.id,
       actorRole: input.actorRole === "admin" ? "admin" : input.actorRole === "system" ? "system" : "candidate",
       actorId: input.actorAdminId ?? null,
-      actionType: "candidate_files_published_to_case",
+      actionType: updated > 0 && published === 0
+        ? "candidate_files_status_synced_to_case"
+        : "candidate_files_published_to_case",
       entityType: "candidate_file",
       entityId: input.fileIds?.length === 1 ? String(input.fileIds[0]) : String(input.candidateId),
-      description: `${published} document(s) candidat synchronisé(s) vers le coffre (${operational.caseNumber}).`,
+      description: `Coffre ${operational.caseNumber} : ${parts.join(", ")}.`,
     });
   }
 
@@ -281,6 +354,7 @@ export async function publishCandidateFilesToCase(
     caseNumber: operational.caseNumber,
     candidateId: input.candidateId,
     published,
+    updated,
     skipped,
     totalSelected: files.length,
     reason: "ok",

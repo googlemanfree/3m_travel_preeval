@@ -2562,6 +2562,22 @@ export const adminRouter = router({
           candidateEmail = cand?.email || "";
           candidateName = cand?.fullName || "Candidat";
           candidateId = cand?.id ?? fileRec.candidateId;
+
+          // Automatisation : aligner le coffre (case_documents) sur la validation admin.
+          // Ne crée pas de dossier ; n’échoue jamais la validation si la sync échoue.
+          try {
+            await publishCandidateFilesToCase(db, {
+              candidateId: fileRec.candidateId,
+              fileIds: [input.documentId],
+              actorAdminId: admin.id ?? null,
+              actorRole: "admin",
+            });
+          } catch (syncErr) {
+            console.warn(
+              "[Admin updateDocumentStatus] sync case_documents:",
+              syncErr instanceof Error ? syncErr.message.slice(0, 300) : syncErr,
+            );
+          }
         }
 
         if (input.status === "approved" && candidateId) {
@@ -2969,9 +2985,12 @@ export const adminRouter = router({
           ? "Aucun dossier opérationnel lié à ce candidat : rien à synchroniser (aucun dossier créé)."
           : result.reason === "no_files"
             ? "Aucune pièce candidate à synchroniser."
-            : result.published === 0
+            : result.published === 0 && result.updated === 0
               ? "Toutes les pièces candidate sont déjà présentes dans le coffre du dossier."
-              : `${result.published} pièce(s) synchronisée(s) vers ${result.caseNumber}.`;
+              : [
+                  result.published > 0 ? `${result.published} pièce(s) synchronisée(s)` : null,
+                  result.updated > 0 ? `${result.updated} statut(s) aligné(s)` : null,
+                ].filter(Boolean).join(", ") + ` vers ${result.caseNumber}.`;
         return { success: true, ...result, message };
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -3469,9 +3488,26 @@ export const adminRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const [file] = await db.select({ id: candidateFiles.id }).from(candidateFiles).where(eq(candidateFiles.id, input.fileId)).limit(1);
+      const [file] = await db
+        .select({ id: candidateFiles.id, candidateId: candidateFiles.candidateId })
+        .from(candidateFiles)
+        .where(eq(candidateFiles.id, input.fileId))
+        .limit(1);
       if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "Document candidat introuvable" });
       await db.update(candidateFiles).set({ status: "verified", rejectionReason: input.comment?.trim() || null }).where(eq(candidateFiles.id, input.fileId));
+      try {
+        await publishCandidateFilesToCase(db, {
+          candidateId: file.candidateId,
+          fileIds: [input.fileId],
+          actorAdminId: admin.id ?? null,
+          actorRole: "admin",
+        });
+      } catch (syncErr) {
+        console.warn(
+          "[Admin approveCandidateFile] sync case_documents:",
+          syncErr instanceof Error ? syncErr.message.slice(0, 300) : syncErr,
+        );
+      }
       return { success: true, verifiedBy: admin.email };
     }),
 
@@ -3482,9 +3518,24 @@ export const adminRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const [file] = await db.select({ id: candidateFiles.id, fileName: candidateFiles.fileName, candidateEmail: candidates.email }).from(candidateFiles).leftJoin(candidates, eq(candidateFiles.candidateId, candidates.id)).where(eq(candidateFiles.id, input.fileId)).limit(1);
+      const [file] = await db.select({ id: candidateFiles.id, candidateId: candidateFiles.candidateId, fileName: candidateFiles.fileName, candidateEmail: candidates.email }).from(candidateFiles).leftJoin(candidates, eq(candidateFiles.candidateId, candidates.id)).where(eq(candidateFiles.id, input.fileId)).limit(1);
       if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "Document candidat introuvable" });
       await db.update(candidateFiles).set({ status: "rejected", rejectionReason: input.comment.trim() }).where(eq(candidateFiles.id, input.fileId));
+      if (file.candidateId) {
+        try {
+          await publishCandidateFilesToCase(db, {
+            candidateId: file.candidateId,
+            fileIds: [input.fileId],
+            actorAdminId: admin.id ?? null,
+            actorRole: "admin",
+          });
+        } catch (syncErr) {
+          console.warn(
+            "[Admin rejectCandidateFile] sync case_documents:",
+            syncErr instanceof Error ? syncErr.message.slice(0, 300) : syncErr,
+          );
+        }
+      }
       let notificationSent = false;
       if (input.notifyCandidate && file.candidateEmail) {
         try {
