@@ -36,6 +36,7 @@ import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../
 import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/talentCorridor";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { buildPlacementSummaryDraft, buildPlacementSummaryPdf, detectPortrait, fingerprintPlacementSources, normalizePlacementSummaryDraft, summaryFieldsFromCvDraft } from "../services/placementProfileSummary";
+import { CV_STYLES, styleForCountry } from "../../shared/cvDraft";
 import { generateCvDraft } from "../services/cvDraftGenerator";
 import { CV_DRAFT_MAX_PER_HOUR, createCvDraftLimiter } from "./cvDraft";
 
@@ -281,7 +282,9 @@ export const placementPortalRouter = router({
     if (!evaluation) {
       return { ok: false as const, reason: "no_evaluation" as const, error: "Aucune évaluation avec CV n’est rattachée à ce candidat : le résumé ne peut pas être tiré d’un CV." };
     }
-    const outcome = await generateCvDraft(evaluation, { style: "international", language: "fr" });
+    const style = styleForCountry(evaluation.destinationCountry || candidate.destination || null);
+    const language = CV_STYLES[style].defaultLanguage;
+    const outcome = await generateCvDraft(evaluation, { style, language });
     logger.info("[placementSummary] résumé depuis le CV", { candidateId: input.candidateId, admin: admin.email, ok: outcome.ok, ...(outcome.ok === false ? { reason: outcome.reason } : {}) });
     if (outcome.ok === false) return { ok: false as const, reason: outcome.reason, error: outcome.error };
     return { ok: true as const, fields: summaryFieldsFromCvDraft(outcome.draft), unverified: outcome.unverified, missing: outcome.draft.missing };
