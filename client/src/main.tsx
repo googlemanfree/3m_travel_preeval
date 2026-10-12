@@ -217,3 +217,10 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </trpc.Provider>
 );
+
+// Signale que React a pris la main : le CSS peut alors masquer le pré-rendu SEO
+// sans laisser une page blanche pendant le téléchargement du bundle.
+requestAnimationFrame(() => {
+  document.documentElement.classList.add("app-ready");
+  document.documentElement.classList.remove("app-boot-slow");
+});

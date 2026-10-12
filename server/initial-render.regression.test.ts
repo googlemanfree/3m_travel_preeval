@@ -10,6 +10,9 @@ describe("initial render order", () => {
     expect(html).not.toContain("boot-fallback");
     expect(html).not.toContain("BOOT_TIMEOUT_MS");
     expect(html.match(/<script type=\"module\" src=\"\/src\/main\.tsx\"><\/script>/g)).toHaveLength(1);
+    // Le pré-rendu reste visible jusqu’à app-ready pour éviter une page blanche.
+    expect(html).toContain("html.app-ready .seo-prerender");
+    expect(html).not.toContain("html.js-enabled .seo-prerender");
   });
 
   it("keeps prerender content-only so React owns header and footer order", () => {

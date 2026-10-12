@@ -51,7 +51,7 @@ describe("balise de build posée à la compilation", () => {
     expect(extractBuildMarker(injected)).toBe("abcdef12");
     expect(injected.replace("abcdef12", original ?? "")).toBe(indexHtml);
     // La révision du service worker est une autre valeur : elle ne doit pas bouger.
-    expect(injected).toContain("2026-09-04-admin-bilan-online-reference-v1");
+    expect(injected).toContain("2026-10-12-canada-blank-guard-v1");
     expect(injectBuildMarker("<html><head></head></html>", "abcdef12")).toBe("<html><head></head></html>");
   });
 

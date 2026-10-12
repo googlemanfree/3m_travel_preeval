@@ -1,8 +1,12 @@
-const CACHE_NAME = '3m-travel-pwa-v40-candidate360-documents';
+const CACHE_NAME = '3m-travel-pwa-v41-canada-blank-guard';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
 ];
+
+function isCacheableResponse(response) {
+  return Boolean(response && response.ok && response.status === 200 && response.type !== 'opaque');
+}
 
 self.addEventListener('install', (event) => {
   if (IS_PREVIEW_HOST) {
@@ -91,10 +95,32 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+          if (isCacheableResponse(networkResponse)) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+          }
           return networkResponse;
         })
         .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/')))
+    );
+    return;
+  }
+
+  // Assets hashés : réseau d’abord, cache seulement si la réponse est OK.
+  // Évite de mémoriser un 404 de chunk (ex. Canada-*.js) après un déploiement
+  // et de laisser /canada en page blanche.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (isCacheableResponse(networkResponse)) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          throw new Error('Asset unavailable offline');
+        }))
     );
     return;
   }
@@ -104,7 +130,9 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.url.startsWith('http')) cache.put(event.request, networkResponse.clone());
+          if (event.request.url.startsWith('http') && isCacheableResponse(networkResponse)) {
+            cache.put(event.request, networkResponse.clone());
+          }
           return networkResponse;
         });
       });

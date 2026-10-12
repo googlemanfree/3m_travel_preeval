@@ -58,6 +58,8 @@ describe("pré-rendu public indexable", () => {
   it("préserve des CTA Canada exploitables dans le fallback public", () => {
     const rendered = composePublicPrerender(template, "/canada");
     expect(rendered.html).toContain('/?project=travail&amp;destination=canada#evaluation-multi');
+    expect(rendered.html).toContain("/evaluation?destination=canada");
+    expect(rendered.html).toContain("/canada/crs");
     expect(rendered.html).toContain("Consulter les programmes IRCC");
   });
 

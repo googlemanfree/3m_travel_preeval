@@ -12,7 +12,17 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="preload" as="image" href="/manus-storage/3m-hero-real-woman-man-mobile_335e606e.webp" media="(max-width: 767px)" type="image/webp" fetchpriority="high" />
     <link rel="preload" as="image" href="/manus-storage/3m-hero-real-woman-man_f9790b0e.webp" media="(min-width: 768px)" type="image/webp" fetchpriority="high" />
-    <script>document.documentElement.classList.add('js-enabled');</script>
+    <script>
+      // js-enabled = le navigateur exécute JS. Ne sert PAS à masquer le pré-rendu :
+      // le masquer trop tôt laisse une page blanche si le bundle principal est lent
+      // ou échoue (cas fréquent sur /canada après un déploiement / cache SW).
+      document.documentElement.classList.add('js-enabled');
+      window.setTimeout(function () {
+        if (!document.documentElement.classList.contains('app-ready')) {
+          document.documentElement.classList.add('app-boot-slow');
+        }
+      }, 8000);
+    </script>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1E3A8A" />
     <script>
@@ -32,7 +42,7 @@
             return;
           }
 
-          const SW_REVISION = '2026-09-04-admin-bilan-online-reference-v1';
+          const SW_REVISION = '2026-10-12-canada-blank-guard-v1';
           navigator.serviceWorker.register('/sw.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.
@@ -65,7 +75,9 @@
     <style>
       html, body, #root { min-height: 100%; margin: 0; }
       body { background: #f8fafc; }
-      html.js-enabled .seo-prerender { display: none !important; }
+      /* Masquer le pré-rendu seulement après le premier rendu React (app-ready). */
+      html.app-ready .seo-prerender { display: none !important; }
+      html.app-boot-slow:not(.app-ready) .seo-prerender { display: block !important; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
