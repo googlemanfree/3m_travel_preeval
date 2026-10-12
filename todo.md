@@ -5,4 +5,4 @@
 - [x] WebDev synchronisé et redémarré sur `d9589c82`.
 - [x] Vérification du rendu admin : bouton à couleur solide, texte « Réinitialiser mon mot de passe », lien texte de secours et URL `/admin/reset-password?token=…`; smoke template 4/4 contrôles verts. Aucun token réel utilisé et aucun e-mail envoyé.
 - [x] Fournisseur d’envoi vérifié : service SMTP configuré avec expéditeur par défaut `hello@3mtravelagency.com`; aucun secret affiché.
-- [ ] Redemander un e-mail réel de réinitialisation après identification explicite du compte administrateur cible.
+- [x] Reset redemandé pour le compte administrateur Gmail confirmé; message reçu et vérifié dans la boîte : bouton « Réinitialiser mon mot de passe », lien texte de secours, expiration 1 heure et adresse de réinitialisation `/admin/reset-password` présents. Aucun token n’est recopié dans le suivi.
