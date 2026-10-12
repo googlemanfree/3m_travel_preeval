@@ -19,6 +19,8 @@ export type CandidateDocumentGroup<T extends GroupableDocument> = {
   dossierNumber: string;
   candidateName: string;
   candidateEmail: string | null;
+  /** Identifiant numérique candidat lorsqu’il est connu (nécessaire pour sync coffre). */
+  candidateId: number | null;
   documents: T[];
   total: number;
   approved: number;
@@ -26,6 +28,8 @@ export type CandidateDocumentGroup<T extends GroupableDocument> = {
   rejected: number;
   /** Pièces remises en agence (dépôt manuel de l'administrateur ou décharge de remise en main propre). */
   agencyCount: number;
+  /** Pièces déposées en ligne (candidate_files / client) — candidates au miroir case_documents. */
+  onlineCount: number;
   latestAt: Date;
 };
 
@@ -58,12 +62,14 @@ export function groupDocumentsByCandidate<T extends GroupableDocument>(documents
         dossierNumber: document.dossierNumber || UNKNOWN,
         candidateName: document.candidateName || UNKNOWN,
         candidateEmail: document.candidateEmail ?? null,
+        candidateId: typeof document.candidateId === "number" && document.candidateId > 0 ? document.candidateId : null,
         documents: [],
         total: 0,
         approved: 0,
         pending: 0,
         rejected: 0,
         agencyCount: 0,
+        onlineCount: 0,
         latestAt: document.submittedAt,
       };
       groups.set(key, group);
@@ -74,8 +80,12 @@ export function groupDocumentsByCandidate<T extends GroupableDocument>(documents
     else if (document.verificationStatus === "rejected") group.rejected += 1;
     else group.pending += 1;
     if (isAgencyHandedDocument(document)) group.agencyCount += 1;
+    else if (document.source === "candidate" || document.source === "client") group.onlineCount += 1;
     if (document.submittedAt > group.latestAt) group.latestAt = document.submittedAt;
     if (!group.candidateEmail && document.candidateEmail) group.candidateEmail = document.candidateEmail;
+    if (!group.candidateId && typeof document.candidateId === "number" && document.candidateId > 0) {
+      group.candidateId = document.candidateId;
+    }
   }
   for (const group of Array.from(groups.values())) {
     // Type puis date décroissante : les versions d'une même pièce restent côte à côte, la plus récente en premier.
