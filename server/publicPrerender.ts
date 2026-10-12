@@ -10,7 +10,11 @@ import { getStudyDestinationArticle, studyDestinationArticles } from "../client/
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
-import { getCountryResourcePage, listCountryResourcePages } from "@shared/countryResourceCatalog";
+import {
+  countryResourceLead,
+  getCountryResourcePage,
+  listCountryResourcePages,
+} from "@shared/countryResourceCatalog";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
@@ -320,7 +324,6 @@ const routeSpecificPrerender = (path: string) => {
   }
   if (path === "/ressources") {
     const countries = listCountryResourcePages()
-      .slice(0, 24)
       .map((page) => `<li><a href="${esc(page.path)}">${esc(page.flag)} ${esc(page.country)} — ${page.resources.length} guide(s)</a></li>`)
       .join("");
     return `<section aria-label="Bibliothèque de ressources par pays"><h2>Guides PDF par destination</h2><p>Chaque pays regroupe les fiches travail, études et visite publiées par 3M TRAVEL AGENCY.</p><ul>${countries}</ul><p><a href="/guide-procedures">Ouvrir le guide des procédures</a> · <a href="/?project=travail#evaluation-multi">Commencer l’évaluation</a></p></section>`;
@@ -332,10 +335,11 @@ const routeSpecificPrerender = (path: string) => {
       try { slug = decodeURIComponent(slug); } catch { /* keep */ }
       const page = getCountryResourcePage(slug);
       if (page) {
+        const lead = countryResourceLead(page, "fr");
         const docs = page.resources
           .map((resource) => `<li><a href="${esc(resource.url)}">${esc(resource.title)}</a></li>`)
           .join("");
-        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides & procédures ${esc(page.country)}</h2><p>${page.resources.length} document(s) publié(s) pour préparer votre projet.</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/evaluation">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
+        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=travail&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
       }
     }
   }
@@ -446,11 +450,12 @@ export function composePublicPrerender(template: string, url: string) {
     try { slug = decodeURIComponent(slug); } catch { /* keep */ }
     const resourcePage = getCountryResourcePage(slug);
     if (resourcePage) {
+      const lead = countryResourceLead(resourcePage, "fr");
       resourceCountryMeta = {
         title: `Guides ${resourcePage.country} | ${SITE}`,
-        description: `Fiches PDF travail, études et visite pour ${resourcePage.country} — bibliothèque 3M TRAVEL AGENCY, à vérifier auprès des autorités compétentes.`,
-        heading: `Guides & procédures ${resourcePage.country}`,
-        lead: `${resourcePage.resources.length} document(s) publié(s) pour préparer votre projet — sans promesse d’admission, d’emploi ou de visa.`,
+        description: lead,
+        heading: `Guides ${resourcePage.country}`,
+        lead,
       };
     }
   }

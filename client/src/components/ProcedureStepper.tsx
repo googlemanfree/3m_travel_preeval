@@ -14,6 +14,8 @@ type PublishedGuideProp = {
   summaryHeadline?: string | null;
   summaryOverview?: string | null;
   summaryStepHighlights?: string[] | null;
+  officialPortalUrl?: string | null;
+  officialPortalLabel?: string | null;
 };
 
 type Props = {
@@ -161,6 +163,8 @@ export default function ProcedureStepper({
               programLabel={publishedGuide?.programLabel}
               pdfUrl={publishedGuide?.pdfUrl}
               pdfTitle={publishedGuide?.title}
+              officialPortalUrl={publishedGuide?.officialPortalUrl}
+              officialPortalLabel={publishedGuide?.officialPortalLabel}
               resourceLibraryHref={resourceLibraryPathForCountry(country)}
               resourceLibraryLabel={country ? `Bibliothèque ${country}` : "Bibliothèque pays"}
             />

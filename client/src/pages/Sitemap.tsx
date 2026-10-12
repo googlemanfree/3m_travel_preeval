@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, BookOpen, Compass, FileText, Landmark, Search, ShieldCheck, UserRound, X } from "lucide-react";
+import { listCountryResourcePages } from "@shared/countryResourceCatalog";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -50,10 +51,21 @@ const SITE_SECTIONS: SitemapSection[] = [
   {
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
-      { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir les ressources et informations pratiques.", en: "Browse practical resources and information." } },
-      { key: "resources_canada", label: { fr: "Guides Canada", en: "Canada guides" }, href: "/ressources/canada", description: { fr: "Tous les PDF Canada (travail, études, visite).", en: "All Canada PDFs (work, study, visit)." } },
-      { key: "resources_luxembourg", label: { fr: "Guides Luxembourg", en: "Luxembourg guides" }, href: "/ressources/luxembourg", description: { fr: "Tous les PDF Luxembourg publiés par 3M.", en: "All Luxembourg PDFs published by 3M." } },
-      { key: "resources_france", label: { fr: "Guides France", en: "France guides" }, href: "/ressources/france", description: { fr: "Fiches France travail et visite.", en: "France work and visit sheets." } },
+      { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
+      ...listCountryResourcePages()
+        .filter((page) => ["canada", "luxembourg", "france", "allemagne", "belgique", "emirats", "etats-unis", "royaume-uni"].includes(page.slug))
+        .map((page) => ({
+          key: `resources_${page.slug}`,
+          label: {
+            fr: `Guides ${page.country}`,
+            en: `${page.countryEn || page.country} guides`,
+          },
+          href: page.path,
+          description: {
+            fr: `${page.resources.length} fiche(s) PDF — travail, études ou visite.`,
+            en: `${page.resources.length} PDF sheet(s) — work, study or visit.`,
+          },
+        })),
       { key: "procedure_guide", label: { fr: "Guide des procédures", en: "Procedure guide" }, href: "/guide-procedures", description: { fr: "Accéder à un guide structuré des démarches.", en: "Access a structured guide to procedures." } },
       { key: "official_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les liens gouvernementaux par destination.", en: "Check government links by destination." } },
       { key: "blog", label: { fr: "Blog", en: "Blog" }, href: "/blog", description: { fr: "Lire les articles et mises à jour publiés par l’agence.", en: "Read articles and updates published by the agency." } },

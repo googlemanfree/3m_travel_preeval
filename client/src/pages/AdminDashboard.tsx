@@ -3233,6 +3233,19 @@ export default function AdminDashboard() {
                                   Bibliothèque · {journey?.country}
                                 </a>
                               )}
+                              {journey?.publishedGuide?.officialPortalUrl && (
+                                <a
+                                  href={journey.publishedGuide.officialPortalUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="max-w-[200px] truncate text-[10px] font-semibold text-emerald-800 underline underline-offset-2"
+                                  data-testid="admin-official-portal-link"
+                                  onClick={(event) => event.stopPropagation()}
+                                  title={journey.publishedGuide.officialPortalLabel || "Portail officiel"}
+                                >
+                                  Portail officiel
+                                </a>
+                              )}
                               {journey?.publishedGuide?.summaryOverview && (
                                 <span className="max-w-[220px] line-clamp-2 text-[9px] leading-snug text-slate-500" data-testid="admin-guide-summary">
                                   {journey.publishedGuide.summaryOverview}

@@ -203,6 +203,8 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
               programLabel={journey.publishedGuide?.programLabel}
               pdfUrl={journey.publishedGuide?.pdfUrl}
               pdfTitle={journey.publishedGuide?.title}
+              officialPortalUrl={journey.publishedGuide?.officialPortalUrl}
+              officialPortalLabel={journey.publishedGuide?.officialPortalLabel}
               resourceLibraryHref={resourceLibraryPathForCountry(destination || phase.country)}
               resourceLibraryLabel={`Guides ${phase.country || destination || "pays"}`}
             />

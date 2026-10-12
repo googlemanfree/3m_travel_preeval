@@ -38,20 +38,20 @@ export function countryNameToSlug(country: string): string {
   return key.replace(/\s+/g, "-");
 }
 
-/** Slug visuel premium (photos / manus) — peut différer légèrement du slug URL. */
+/** Slug visuel premium (photos / manus) — proxy régional quand l’asset pays manque. */
 export function visualSlugForCountry(country: string): string {
   const slug = countryNameToSlug(country);
   const visualAliases: Record<string, string> = {
-    "republique-tcheque": "allemagne",
+    "republique-tcheque": "pologne",
     schengen: "france",
-    hongrie: "allemagne",
-    estonie: "allemagne",
-    lettonie: "allemagne",
-    lituanie: "allemagne",
-    bulgarie: "allemagne",
-    roumanie: "allemagne",
-    slovaquie: "allemagne",
-    slovenie: "allemagne",
+    hongrie: "pologne",
+    estonie: "norvege",
+    lettonie: "norvege",
+    lituanie: "pologne",
+    bulgarie: "pologne",
+    roumanie: "pologne",
+    slovaquie: "pologne",
+    slovenie: "italie",
     croatie: "italie",
     chypre: "malte",
     grece: "italie",
@@ -60,12 +60,16 @@ export function visualSlugForCountry(country: string): string {
     suede: "norvege",
     islande: "norvege",
     liechtenstein: "suisse",
-    armenie: "france",
+    armenie: "emirats",
+    azerbaidjan: "emirats",
+    georgie: "emirats",
+    turquie: "emirats",
     kenya: "maroc",
     senegal: "maroc",
     gabon: "maroc",
     maurice: "maroc",
     malaisie: "japon",
+    "multi-destinations": "france",
   };
   return visualAliases[slug] ?? slug;
 }
@@ -155,4 +159,91 @@ export function countCountryResourcePages(): number {
 
 export function countAllPdfResources(): number {
   return getAllResources().length;
+}
+
+const PROJECT_CATEGORIES = ["travail", "etudes", "visiteur"] as const;
+export type ResourceEvalProject = (typeof PROJECT_CATEGORIES)[number];
+
+/** Projet d’évaluation prioritaire selon les PDF disponibles sur la page pays. */
+export function primaryEvalProjectForPage(page: CountryResourcePage): ResourceEvalProject {
+  for (const category of PROJECT_CATEGORIES) {
+    if (page.categories.includes(category)) return category;
+  }
+  return "travail";
+}
+
+/** Accroche courte et honnête pour le hero / SEO d’une page pays. */
+export function countryResourceLead(
+  page: CountryResourcePage,
+  language: "fr" | "en" = "fr",
+): string {
+  const name = language === "en" && page.countryEn ? page.countryEn : page.country;
+  const projects = PROJECT_CATEGORIES.filter((category) => page.categories.includes(category));
+  const projectLabelsFr: Record<ResourceEvalProject, string> = {
+    travail: "travail",
+    etudes: "études",
+    visiteur: "visite",
+  };
+  const projectLabelsEn: Record<ResourceEvalProject, string> = {
+    travail: "work",
+    etudes: "study",
+    visiteur: "visit",
+  };
+  const labels = projects.map((category) =>
+    language === "en" ? projectLabelsEn[category] : projectLabelsFr[category],
+  );
+  const projectLine =
+    labels.length === 0
+      ? language === "en"
+        ? "published procedure sheets"
+        : "fiches de procédure publiées"
+      : language === "en"
+        ? labels.join(", ")
+        : labels.join(", ");
+
+  if (page.slug === "canada") {
+    return language === "en"
+      ? `${page.resources.length} Canada sheets (${projectLine}) — IRCC-aligned preparation, no admission or visa promise.`
+      : `${page.resources.length} fiches Canada (${projectLine}) — préparation alignée IRCC, sans promesse d’admission ou de visa.`;
+  }
+  if (page.slug === "luxembourg") {
+    return language === "en"
+      ? `${page.resources.length} Luxembourg sheets (${projectLine}) — ADEM / Guichet.lu references to verify before filing.`
+      : `${page.resources.length} fiches Luxembourg (${projectLine}) — références ADEM / Guichet.lu à confirmer avant dépôt.`;
+  }
+  if (page.slug === "france") {
+    return language === "en"
+      ? `${page.resources.length} France sheets (${projectLine}) — cross-check every requirement on France-Visas.`
+      : `${page.resources.length} fiches France (${projectLine}) — chaque exigence reste à confirmer sur France-Visas.`;
+  }
+
+  if (projects.length === 1) {
+    return language === "en"
+      ? `${page.resources.length} published guide(s) for ${name} — ${projectLine} track. Confirm every requirement with the competent authorities.`
+      : `${page.resources.length} guide(s) publié(s) pour ${name} — parcours ${projectLine}. Chaque exigence reste à confirmer auprès des autorités compétentes.`;
+  }
+
+  return language === "en"
+    ? `${page.resources.length} published sheets for ${name} (${projectLine}). Structured preparation with 3M — no admission, job or visa promise.`
+    : `${page.resources.length} fiches publiées pour ${name} (${projectLine}). Préparation structurée avec 3M — sans promesse d’admission, d’emploi ou de visa.`;
+}
+
+/** Libellés des parcours disponibles (travail / études / visite). */
+export function availableProjectLabels(
+  page: CountryResourcePage,
+  language: "fr" | "en" = "fr",
+): string[] {
+  const labelsFr: Record<ResourceEvalProject, string> = {
+    travail: "Visa travail",
+    etudes: "Visa études",
+    visiteur: "Visa visiteur",
+  };
+  const labelsEn: Record<ResourceEvalProject, string> = {
+    travail: "Work visa",
+    etudes: "Study visa",
+    visiteur: "Visitor visa",
+  };
+  return PROJECT_CATEGORIES.filter((category) => page.categories.includes(category)).map((category) =>
+    language === "en" ? labelsEn[category] : labelsFr[category],
+  );
 }

@@ -1243,7 +1243,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               officialSources={data.candidateJourney.officialSources}
               country={data.candidateJourney.country || candidate.destinationCountry}
               visaType={data.candidateJourney.visaType || candidate.projectType}
-              publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[] } | null }).publishedGuide}
+              publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[]; officialPortalUrl?: string; officialPortalLabel?: string } | null }).publishedGuide}
               busy={journeyStepMutation.isPending || actionLocks.journeyStep}
               onValidate={(step) => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}
               onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}
