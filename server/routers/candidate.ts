@@ -48,6 +48,7 @@ import { buildCandidateMessageAlert } from "../services/candidateMessageAlert";
 const candidateMessageGuard = createSubmissionGuard({ perClient: { limit: 20, windowMs: 60 * 60_000 }, perEmail: { limit: 20, windowMs: 60 * 60_000 }, global: { limit: 300, windowMs: 60 * 60_000 } });
 import { getDb } from "../db";
 import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
+import { publishCandidateFilesToCase } from "../services/publishCandidateFilesToCase";
 import { publicProcedure, router } from "../_core/trpc";
 import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendEmailChangeConfirmation } from "../emailService";
@@ -1014,6 +1015,8 @@ export const candidateRouter = router({
         extractedData: extractionJson,
       });
 
+      const documentId = Number((insertResult as any)[0]?.insertId || 0);
+
       // Si le dossier est encore "nouveau", passer à "documents"
       if (ctx.candidate.dossierStatus === "nouveau") {
         await db.update(candidates)
@@ -1021,7 +1024,24 @@ export const candidateRouter = router({
           .where(eq(candidates.id, ctx.candidate.id));
       }
 
-      return { success: true, documentId: Number((insertResult as any)[0]?.insertId || 0) };
+      // Automatisation : miroir vers case_documents si un dossier opérationnel existe déjà.
+      // Ne crée pas de dossier ; n’échoue jamais le dépôt candidat en cas d’écart de sync.
+      if (documentId > 0) {
+        try {
+          await publishCandidateFilesToCase(db, {
+            candidateId: ctx.candidate.id,
+            fileIds: [documentId],
+            actorRole: "candidate",
+          });
+        } catch (error) {
+          console.warn(
+            "[candidate.saveDocument] sync case_documents:",
+            error instanceof Error ? error.message.slice(0, 300) : error,
+          );
+        }
+      }
+
+      return { success: true, documentId };
     }),
 
   // ── Supprimer une pièce récente non validée ─────────────────────────────────
