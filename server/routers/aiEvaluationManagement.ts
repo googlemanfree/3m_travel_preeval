@@ -27,6 +27,7 @@ import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from 
 import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "../geminiEvaluationDraftService";
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { parseApplicationPack } from "../../shared/applicationPack";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -96,6 +97,16 @@ interface UnifiedItem {
     label: string;
     detail: string;
   } | null;
+  /** Résumé pack candidature admin (CV international) — jamais exposé au candidat. */
+  applicationPackSummary?: {
+    saved: boolean;
+    hasLetter: boolean;
+    hasCvFile: boolean;
+    readyToApply: boolean;
+    style: string | null;
+    language: string | null;
+    savedAt: string | null;
+  } | null;
 }
 
 function preparationTextList(value: unknown, maximum: number): string[] {
@@ -144,9 +155,34 @@ function internalLuxembourgReview(evaluation: typeof evaluations.$inferSelect): 
   return { state: "needs_human_review", label: "Analyse humaine requise avant orientation", detail: `Grille interne : ${educationDetail} et/ou ${experienceDetail}. Le conseiller examine les possibilités au cas par cas ; aucune exclusion ni réorientation n’est automatique.` };
 }
 
-function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
+function computePriority(args: {
+  score: number | null;
+  hasConverted: boolean;
+  ageHours: number;
+  needsAdminAction: boolean;
+  pack?: { saved: boolean; hasLetter: boolean; hasCvFile: boolean; readyToApply: boolean } | null;
+}): { priority: Priority; suggestedAction: string } {
   if (args.hasConverted) return { priority: "basse", suggestedAction: "Déjà converti en dossier — suivi normal" };
   if (args.needsAdminAction) return { priority: "haute", suggestedAction: "Action admin requise (validation en attente)" };
+  if (args.pack?.readyToApply) {
+    return {
+      priority: "moyenne",
+      suggestedAction: args.pack.hasLetter
+        ? "Pack candidature prêt (CV + lettre) — postuler au nom du client"
+        : "Pack CV prêt — postuler au nom du client (lettre optionnelle)",
+    };
+  }
+  if (args.pack?.saved) {
+    return {
+      priority: "moyenne",
+      suggestedAction: args.pack.hasCvFile
+        ? "Pack CV enregistré — compléter avant de postuler"
+        : "Pack enregistré — joindre le CV source d’évaluation avant de postuler",
+    };
+  }
+  if (args.pack?.hasCvFile) {
+    return { priority: "moyenne", suggestedAction: "Préparer le pack CV international pour postuler au nom du client" };
+  }
   if (args.score !== null && args.score >= 70 && args.ageHours > 24) return { priority: "haute", suggestedAction: "Profil très favorable non recontacté depuis 24h — relancer en priorité" };
   if (args.score !== null && args.score >= 70) return { priority: "moyenne", suggestedAction: "Profil favorable — prévoir un contact rapide" };
   if (args.score !== null && args.score < 45) return { priority: "basse", suggestedAction: "Profil à renforcer — orientation ou formation complémentaire à proposer" };
@@ -386,7 +422,25 @@ export const aiEvaluationManagementRouter = router({
         const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
         const preparationDraft = parsePreparationDraft(e.aiReportContent);
         const luxembourgReview = internalLuxembourgReview(e);
-        const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue || Boolean(e.secondReviewRequired && !e.secondReviewedAt) });
+        const pack = parseApplicationPack(e.projectDetailsJson);
+        const hasCvFile = Boolean(e.cvFileUrl);
+        const applicationPackSummary = {
+          saved: Boolean(pack),
+          hasLetter: Boolean(pack?.motivationLetter?.trim()),
+          hasCvFile,
+          readyToApply: hasCvFile && Boolean(pack?.draft),
+          style: pack?.style ?? null,
+          language: pack?.language ?? null,
+          savedAt: pack?.savedAt ?? null,
+        };
+        const needsAdminAction = !e.reviewedAt || reviewOverdue || Boolean(e.secondReviewRequired && !e.secondReviewedAt);
+        const { priority, suggestedAction } = computePriority({
+          score: null,
+          hasConverted,
+          ageHours: ageHours(e.createdAt),
+          needsAdminAction,
+          pack: hasConverted ? null : applicationPackSummary,
+        });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
@@ -398,6 +452,7 @@ export const aiEvaluationManagementRouter = router({
           preparationState: preparationDraft ? "ready" : e.aiProcessingError ? "unavailable" : "not_requested",
           preparationDraft,
           luxembourgReview,
+          applicationPackSummary,
         });
       }
 

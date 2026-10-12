@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { AlertTriangle, Download, FileText, Loader2, Plus, Send, Sparkles, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, Plus, Send, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { downloadCvPdf } from "@/lib/cvPdf";
+import { downloadCvPdf, downloadMotivationLetterPdf } from "@/lib/cvPdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,11 +39,56 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
   const [motivationLetter, setMotivationLetter] = useState("");
   const [failure, setFailure] = useState<string | null>(null);
   const [includeContact, setIncludeContact] = useState(true);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<"cv" | "letter" | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  const utils = trpc.useUtils();
+  const packQuery = trpc.cvDraft.getApplicationPack.useQuery(
+    { sessionToken, evaluationId },
+    { enabled: Boolean(sessionToken) && Number.isInteger(evaluationId) && evaluationId > 0, refetchOnWindowFocus: false },
+  );
+
+  useEffect(() => {
+    if (hydrated || !packQuery.data) return;
+    const { pack, identity: loadedIdentity, supportingFacts: facts, readiness } = packQuery.data;
+    setIdentity(loadedIdentity);
+    setSupportingFacts(facts ?? []);
+    if (pack) {
+      setDraft(pack.draft);
+      setStyle(pack.style);
+      setLanguage(pack.language);
+      setIncludeContact(pack.includeContact);
+      setTargetRole(pack.targetRole ?? "");
+      setMotivationLetter(pack.motivationLetter ?? "");
+      setUnverified([]);
+      setFailure(null);
+    } else if (readiness?.recommendedStyle) {
+      // Automatisation douce : pré-sélectionne le format/langue recommandés tant qu’aucun pack n’est enregistré.
+      setStyle(readiness.recommendedStyle);
+      setLanguage(readiness.recommendedLanguage);
+    }
+    setHydrated(true);
+  }, [packQuery.data, hydrated]);
 
   const logExport = trpc.cvDraft.logExport.useMutation();
   const savePack = trpc.cvDraft.saveApplicationPack.useMutation({
-    onSuccess: () => toast.success("Pack candidature enregistré (usage admin pour postuler)."),
+    onSuccess: async () => {
+      toast.success("Pack candidature enregistré (usage admin pour postuler).");
+      await utils.cvDraft.getApplicationPack.invalidate({ sessionToken, evaluationId });
+      await utils.aiEvaluationManagement.getUnifiedDashboard.invalidate();
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  });
+  const clearPack = trpc.cvDraft.clearApplicationPack.useMutation({
+    onSuccess: async () => {
+      toast.success("Pack candidature retiré.");
+      setDraft(null);
+      setMotivationLetter("");
+      setUnverified([]);
+      setHydrated(false);
+      await utils.cvDraft.getApplicationPack.invalidate({ sessionToken, evaluationId });
+      await utils.aiEvaluationManagement.getUnifiedDashboard.invalidate();
+    },
     onError: (error) => toast.error(errorMessage(error)),
   });
   const generateMotivation = trpc.cvDraft.generateMotivation.useMutation({
@@ -83,7 +128,7 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
 
   const download = async () => {
     if (!draft || !identity) return;
-    setExporting(true);
+    setExporting("cv");
     try {
       await downloadCvPdf({ identity, draft, language, includeContact });
       logExport.mutate({ sessionToken, evaluationId, style });
@@ -91,9 +136,31 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
+
+  const downloadLetter = async () => {
+    if (!identity || !motivationLetter.trim()) return;
+    setExporting("letter");
+    try {
+      await downloadMotivationLetterPdf({
+        identity,
+        letter: motivationLetter,
+        language,
+        includeContact,
+        targetRole: targetRole.trim() || null,
+      });
+      toast.success("Lettre exportée en PDF.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const readiness = packQuery.data?.readiness;
+  const savedPack = packQuery.data?.pack;
 
   return (
     <section className="mt-3 space-y-4 rounded-xl border border-sky-200 bg-sky-50/50 p-4" aria-label="CV assisté par IA" data-testid="cv-draft-panel">
@@ -104,6 +171,38 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
           Relisez, ajoutez une lettre si besoin, exportez le PDF, puis enregistrez le pack pour candidater au nom du client. Aucun accès candidat.
         </p>
       </div>
+
+      {packQuery.isLoading && !hydrated && (
+        <p className="flex items-center gap-2 text-xs text-slate-600" data-testid="cv-pack-loading">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Chargement du pack enregistré…
+        </p>
+      )}
+
+      {readiness && (
+        <div className="rounded-lg border border-sky-200 bg-white/90 p-3" data-testid="cv-application-readiness" role="status">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-bold text-sky-950">Préparation candidature — {readiness.score}%</p>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${readiness.readyToApply ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-950"}`}>
+              {readiness.readyToApply ? <><CheckCircle2 className="h-3 w-3" aria-hidden="true" /> Prêt à postuler</> : "Compléter avant de postuler"}
+            </span>
+          </div>
+          {savedPack && (
+            <p className="mt-1 text-[11px] text-slate-600">
+              Pack enregistré le {new Date(savedPack.savedAt).toLocaleString("fr-FR")} · {savedPack.style} · {savedPack.language.toUpperCase()}
+              {savedPack.savedBy ? ` · ${savedPack.savedBy}` : ""}
+            </p>
+          )}
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+            {readiness.checks.map((check) => (
+              <li key={check.key} className={`text-[11px] leading-4 ${check.done ? "text-emerald-800" : "text-slate-600"}`}>
+                <span aria-hidden="true">{check.done ? "✓" : "○"} </span>
+                <span className="font-semibold">{check.label}</span>
+                <span className="text-slate-500"> — {check.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid gap-3 lg:grid-cols-[1fr_9rem_1fr_auto] lg:items-end">
         <label className="text-xs font-semibold text-slate-800">
@@ -230,9 +329,14 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
           <fieldset className="space-y-2 rounded-lg border border-indigo-200 bg-white p-3">
             <legend className="px-1 text-xs font-bold text-indigo-950">Lettre de motivation (optionnelle)</legend>
             <Textarea className="min-h-[120px]" value={motivationLetter} onChange={(event) => setMotivationLetter(event.target.value.slice(0, 4000))} placeholder="Générez une proposition puis relisez, ou rédigez manuellement." />
-            <Button type="button" variant="outline" size="sm" className="gap-1" disabled={generateMotivation.isPending} onClick={() => generateMotivation.mutate({ sessionToken, evaluationId, language, targetRole: targetRole.trim() || undefined, draft })}>
-              {generateMotivation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Proposer une lettre
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" className="gap-1" disabled={generateMotivation.isPending} onClick={() => generateMotivation.mutate({ sessionToken, evaluationId, language, targetRole: targetRole.trim() || undefined, draft })}>
+                {generateMotivation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} Proposer une lettre
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="gap-1" disabled={!motivationLetter.trim() || exporting === "letter"} onClick={downloadLetter} data-testid="cv-download-letter-pdf">
+                {exporting === "letter" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />} PDF lettre
+              </Button>
+            </div>
           </fieldset>
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sky-200 pt-3">
@@ -241,8 +345,13 @@ export default function CvDraftPanel({ evaluationId, sessionToken, defaultCountr
               Inclure ville, e-mail et téléphone dans le PDF / pack publié
             </label>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="gap-2" disabled={exporting} onClick={download}>
-                {exporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />} PDF admin
+              {savedPack && (
+                <Button type="button" variant="ghost" size="sm" className="gap-1 text-red-700" disabled={clearPack.isPending} onClick={() => clearPack.mutate({ sessionToken, evaluationId })} data-testid="cv-clear-application-pack">
+                  {clearPack.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Retirer le pack
+                </Button>
+              )}
+              <Button type="button" variant="outline" className="gap-2" disabled={exporting === "cv"} onClick={download}>
+                {exporting === "cv" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />} PDF admin
               </Button>
               <Button
                 type="button"

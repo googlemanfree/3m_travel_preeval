@@ -165,4 +165,53 @@ describe("routeur cvDraft : pack candidature admin", () => {
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(saveProjectDetails).not.toHaveBeenCalled();
   });
+
+  it("recharge le pack enregistré avec le score de préparation", async () => {
+    const packJson = JSON.stringify({
+      preparatoryAnalysisConsent: true,
+      applicationPack: {
+        savedAt: "2026-10-12T12:00:00.000Z",
+        savedBy: "agent@3mtravelagency.com",
+        style: "canada",
+        language: "fr",
+        includeContact: true,
+        targetRole: "Logisticien",
+        draft: richDraft,
+        motivationLetter: "Madame, Monsieur…",
+      },
+    });
+    const { caller, loadSupportingFacts } = setup({
+      loadRow: async () => row({ projectDetailsJson: packJson, cvFileUrl: "/manus-storage/cv.pdf" }),
+    });
+    const result = await caller.getApplicationPack({ sessionToken: "valid", evaluationId: 7 });
+    expect(result.pack?.style).toBe("canada");
+    expect(result.pack?.motivationLetter).toContain("Madame");
+    expect(result.readiness.readyToApply).toBe(true);
+    expect(result.readiness.score).toBeGreaterThanOrEqual(50);
+    expect(result.identity.fullName).toBe("Aïcha Nkolo");
+    expect(loadSupportingFacts).toHaveBeenCalled();
+  });
+
+  it("retire le pack sans toucher aux autres clés projectDetailsJson", async () => {
+    const packJson = JSON.stringify({
+      preparatoryCvAnalysisConsent: true,
+      applicationPack: {
+        savedAt: "2026-10-12T12:00:00.000Z",
+        savedBy: "agent@3mtravelagency.com",
+        style: "europe",
+        language: "fr",
+        includeContact: false,
+        draft: richDraft,
+        motivationLetter: null,
+      },
+    });
+    const { caller, saveProjectDetails, logRelease } = setup({
+      loadRow: async () => row({ projectDetailsJson: packJson }),
+    });
+    await expect(caller.clearApplicationPack({ sessionToken: "valid", evaluationId: 7 })).resolves.toEqual({ ok: true });
+    const next = JSON.parse(saveProjectDetails.mock.calls[0][1] as string);
+    expect(next.applicationPack).toBeUndefined();
+    expect(next.preparatoryCvAnalysisConsent).toBe(true);
+    expect(logRelease).toHaveBeenCalledWith(expect.objectContaining({ action: "cleared" }));
+  });
 });

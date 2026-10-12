@@ -9,6 +9,7 @@ import {
   writeApplicationPackJson,
 } from "../shared/applicationPack";
 import type { CvDraft } from "../shared/cvDraft";
+import { packSuggestedAction } from "../client/src/lib/adminPackWorkQueue";
 import { buildCvPrompt } from "./services/cvDraftGenerator";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -102,9 +103,31 @@ describe("application pack — documents fournis + candidature", () => {
     const read = (path: string) => readFileSync(resolve(root, path), "utf8");
     expect(read("client/src/components/CvDraftPanel.tsx")).toContain("faire postuler le client");
     expect(read("client/src/components/CvDraftPanel.tsx")).toContain("Enregistrer le pack (admin)");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("getApplicationPack");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("cv-application-readiness");
+    expect(read("client/src/components/CvDraftPanel.tsx")).toContain("downloadMotivationLetterPdf");
+    expect(read("client/src/pages/AdminAIEvaluationDashboard.tsx")).toContain("cv-pack-dashboard-badge");
+    expect(read("client/src/pages/AdminAIEvaluationDashboard.tsx")).toContain("applicationPackSummary");
+    expect(read("client/src/pages/AdminAIEvaluationDashboard.tsx")).toContain("ApplicationPackWorkQueue");
+    expect(read("client/src/lib/adminPackWorkQueue.ts")).toContain("computePackWorkQueue");
+    expect(read("server/routers/aiEvaluationManagement.ts")).toContain("applicationPackSummary");
+    expect(read("server/routers/aiEvaluationManagement.ts")).toContain("Préparer le pack CV international");
     expect(read("client/src/pages/EvaluationSpace.tsx")).not.toContain("ClientApplicationPackPanel");
     expect(read("server/routers/candidate.ts")).not.toContain("getApplicationPack");
     expect(read("server/routers/cvDraft.ts")).toContain("saveApplicationPack");
     expect(read("server/routers/placementPortal.ts")).toContain("styleForCountry(evaluation.destinationCountry");
   });
 });
+
+describe("application pack — actions conseillées dashboard", () => {
+  it("n’expose aucune candidature automatique dans les libellés de priorisation", () => {
+    const labels = [
+      packSuggestedAction({ saved: false, hasLetter: false, hasCvFile: true, readyToApply: false }),
+      packSuggestedAction({ saved: true, hasLetter: false, hasCvFile: true, readyToApply: false }),
+      packSuggestedAction({ saved: true, hasLetter: true, hasCvFile: true, readyToApply: true }),
+    ].join(" | ");
+    expect(labels).toContain("postuler au nom du client");
+    expect(labels).not.toMatch(/envoy(é|er) automatiquement|garanti/i);
+  });
+});
+
