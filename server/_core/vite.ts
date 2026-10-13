@@ -196,6 +196,9 @@ export function serveStatic(app: Express) {
   app.get("/traduction/order", renderExplicitShell);
   app.get("/hotels", renderExplicitShell);
   app.get("/visa-etudes", renderExplicitShell);
+  app.get("/etudes", renderExplicitShell);
+  app.get("/visa-travail", renderExplicitShell);
+  app.get("/travail", renderExplicitShell);
   app.get("/mon-dossier", renderExplicitShell);
   app.get("/document-upload", renderExplicitShell);
   app.get("/mes-vols-favoris", renderExplicitShell);

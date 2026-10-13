@@ -23,7 +23,7 @@ export const NavbarSearchBar: React.FC<NavbarSearchBarProps> = ({ compact = true
   // Données de recherche rapide avec mots-clés
   const searchItems: SearchItem[] = [
     { title: 'Visa Étudiant', icon: '🎓', path: '/procedures', keywords: ['etudiant', 'student', 'study', 'education', 'ecole'] },
-    { title: 'Permis de Travail', icon: '💼', path: '/procedures', keywords: ['travail', 'work', 'emploi', 'job', 'permit', 'professionnel'] },
+    { title: 'Permis de Travail', icon: '💼', path: '/travail', keywords: ['travail', 'work', 'emploi', 'job', 'permit', 'professionnel'] },
     { title: 'Résidence Permanente', icon: '🏠', path: '/procedures', keywords: ['residence', 'permanent', 'pr', 'immigration', 'habiter'] },
     { title: 'Destinations', icon: '🌍', path: '/destinations', keywords: ['destination', 'pays', 'country', 'voyage', 'travel', 'aller'] },
     { title: 'Types de Visa', icon: '📄', path: '/visa-types', keywords: ['visa', 'type', 'categorie', 'category', 'classification'] },

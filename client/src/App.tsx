@@ -45,6 +45,7 @@ const AdminDestinationMedia = lazyWithTimeout(() => import("./pages/AdminDestina
 const AdminMediaLibrary = lazyWithTimeout(() => import("./pages/AdminMediaLibrary"));
 const AdminUserDetails = lazyWithTimeout(() => import("./pages/AdminUserDetails"));
 import VisaEtudes from "./pages/VisaEtudes";
+import VisaTravail from "./pages/VisaTravail";
 // Canada est chargé de façon synchrone : page publique critique — un chunk lazy
 // manquant (cache SW / déploiement) laissait /canada en écran blanc.
 import Canada from "./pages/Canada";
@@ -261,6 +262,8 @@ function Router() {
       <Route path={"/schengen"} component={Schengen} />
       <Route path={"/etudes"} component={VisaEtudes} />
       <Route path={"/visa-etudes"}>{() => <Redirect to="/etudes" />}</Route>
+      <Route path={"/travail"} component={VisaTravail} />
+      <Route path={"/visa-travail"}>{() => <Redirect to="/travail" />}</Route>
       <Route path={"/formation"} component={Formation} />
       <Route path={"/cni-passeport"} component={CniPasseport} />
       <Route path={"/services"} component={Services} />
