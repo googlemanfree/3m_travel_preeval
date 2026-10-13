@@ -17,6 +17,7 @@ import { candidates, candidateFiles, candidateMessages, Candidate, CandidateFile
 import { eq, and, desc } from "drizzle-orm";
 import { getOrCreateCandidateForPlatformUser } from "./candidate";
 import { publishCandidateFilesToCase } from "../services/publishCandidateFilesToCase";
+import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 export const oauthUserDashboardRouter = router({
   // ── Profil utilisateur OAuth (lié à un vrai dossier candidat) ──────────────
@@ -102,7 +103,7 @@ export const oauthUserDashboardRouter = router({
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
         ]),
         fileName: z.string().max(255),
-        fileUrl: z.string().url().max(500),
+        fileUrl: storedUploadUrlSchema,
         fileKey: z.string().max(512),
         fileSizeBytes: z.number().int().min(0).optional(),
         mimeType: z.string().max(100).optional(),

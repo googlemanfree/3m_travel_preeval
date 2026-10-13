@@ -314,7 +314,17 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                     setSelectedFile(null);
                     setReuploadComment("");
                   } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Erreur lors du réupload");
+                    const raw = error instanceof Error ? error.message : "";
+                    let readable = raw || "Erreur lors du réupload";
+                    if (raw.trim().startsWith("[")) {
+                      try {
+                        const issues = JSON.parse(raw) as Array<{ message?: string }>;
+                        if (issues[0]?.message) readable = issues[0].message;
+                      } catch { /* message non JSON */ }
+                    } else if (/invalid_format|too_big/i.test(raw)) {
+                      readable = "Le fichier n’a pas pu être enregistré. Renvoyez-le depuis le formulaire de dépôt.";
+                    }
+                    toast.error(readable);
                   } finally {
                     setIsUploading(false);
                   }

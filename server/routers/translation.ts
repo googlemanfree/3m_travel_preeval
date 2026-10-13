@@ -6,6 +6,7 @@ import * as drizzleSchema from "../../drizzle/schema";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
 import { candidateProcedure } from "./candidate";
+import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
@@ -28,7 +29,7 @@ export const translationRouter = router({
       ]),
       sourceLanguage: z.string().max(10),
       targetLanguage: z.string().max(10),
-      fileUrl: z.string().url().max(500),
+      fileUrl: storedUploadUrlSchema,
       fileName: z.string().max(255),
       fileSize: z.number().positive(),
       numberOfPages: z.number().int().positive(),
