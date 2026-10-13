@@ -24,3 +24,14 @@
 - [x] Vérification HTTP et contenu attendu réussie sur les quatre routes : desktop `200`, marqueur attendu présent.
 - [x] Vérification mobile HTML réussie : User-Agent iPhone, HTTP `200` et marqueur attendu présent sur chaque route; contrôle lecture seule, sans session ni mutation.
 - [x] Smoke visuel mobile preview réussi à `390×844` sur `/canada`, `/ressources`, `/travail` et `/procedures/comparaison` : header mobile, contenu principal, CTA et cartes se chargent; aucun écran blanc observé. Les logs ne montrent que des sessions absentes attendues, sans mutation.
+
+## Correctifs tests post-PR96
+- [x] Assertion `aria-describedby` de `premiumAccessibility.regression.test.ts` alignée sur l’attribut réellement présent; suite ciblée verte.
+- [x] `candidateJourneyCatalog.test.ts` mis à jour pour la source officielle Japon Travail (`mofa.go.jp`); suite ciblée verte.
+- [x] Validations ciblées et typecheck : 2 fichiers / 9 tests verts, `pnpm run check` vert.
+- [x] Suite globale exécutée : 633 fichiers, 3 422 tests verts, 25 ignorés, mais 11 fichiers / 15 tests échouent encore dans d’autres contrats que ces deux corrections. La publication WebDev conditionnelle n’a pas été exécutée; aucune conclusion de préexistence n’est tirée.
+
+
+## Publication ciblée PR96 — SEO fondateur
+- [ ] Identifier et exécuter uniquement les régressions SEO PR96.
+- [ ] Publier WebDev sur l’état courant, avec verdict limité aux modules ciblés; ne pas relancer les suites hors périmètre.

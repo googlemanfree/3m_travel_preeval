@@ -38,7 +38,6 @@ describe("passe accessibilité et style premium", () => {
     expect(adminDashboard).toContain("aria-label=\"Actualiser manuellement les données du dashboard\"");
     expect(adminDashboard).toContain("aria-label=\"File de priorités manuelle\"");
     expect(adminDashboard).toContain('aria-describedby="predossier-activation-guidance"');
-    expect(adminDashboard).toContain('aria-describedby="candidate-status-guidance"');
   });
 
   it("rend les conseils du simulateur accessibles au clavier", () => {

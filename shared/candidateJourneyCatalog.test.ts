@@ -30,9 +30,9 @@ describe("candidate journey official sources", () => {
     expect(journey.officialSources).toContain("https://adem.public.lu/fr/employeurs/recruter/recruter-international/Embauche-ressortissant-pays-tiers.html");
   });
 
-  it("does not invent an official source for an uncovered destination", () => {
+  it("uses the official Japan work source when the catalog provides it", () => {
     const journey = getCandidateJourney("Japon", "Travail");
-    expect(journey.officialSources).toEqual([]);
-    expect(journey.disclaimer).toContain("Aucune source institutionnelle fiable");
+    expect(journey.officialSources).toContain("https://www.mofa.go.jp/j_info/visit/visa/long/index.html");
+    expect(journey.disclaimer).toContain("source institutionnelle");
   });
 });
