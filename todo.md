@@ -117,12 +117,12 @@
 
 
 ## PR91 — bibliothèque ressources par pays
-- [ ] Auditer et valider PR91 sans modifier son contenu.
-- [ ] Fusionner PR91 si les contrôles sont verts.
-- [ ] Synchroniser WebDev et créer le checkpoint final.
-- [ ] Vérifier `/ressources`, `/ressources/canada` et `/ressources/luxembourg` en lecture seule.
+- [x] Auditer et valider PR91 sans modifier son contenu; résultat détaillé ci-dessous.
+- [x] Fusionner PR91 si les contrôles sont verts; squash-merge confirmé ci-dessous.
+- [x] Synchroniser WebDev et créer le checkpoint final; synchronisation confirmée ci-dessous.
+- [x] Vérifier `/ressources`, `/ressources/canada` et `/ressources/luxembourg` en lecture seule; preview 200 sur les trois.
 - [x] Audit et validation exacts terminés : régression pays verte, `pnpm run check` vert et build production vert; garde-fous confirmés, aucun statut de dossier, e-mail ou notification modifié.
 - [x] PR91 sortie du brouillon et squash-mergée sur `main` au commit `f46b4910`.
 - [x] Checkout local et WebDev synchronisés sur `f46b4910`; serveur actif, LSP et TypeScript sans erreur.
-- [x] Smoke preview lecture seule : `/ressources`, `/ressources/canada` et `/ressources/luxembourg` répondent 200 avec contenu attendu. Le hub public répond 200; les deux pages pays du domaine public répondent encore 404, donc propagation/déploiement du domaine public à surveiller après checkpoint.
-- [ ] Créer le checkpoint WebDev final PR91 et recontrôler la propagation publique.
+- [x] Smoke lecture seule après déploiement : preview et domaine public répondent 200 sur `/ressources`, `/ressources/canada` et `/ressources/luxembourg`; le domaine `.click` redirige en 301 vers la version canonique. Contenu attendu présent.
+- [x] Checkpoint WebDev final PR91 créé : version `8dfd4bad`; recontrôle après propagation réussi sur les trois routes publiques, toutes en 200. Aucun contournement code, dossier actif ou donnée métier modifié.
