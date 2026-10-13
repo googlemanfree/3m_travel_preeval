@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { ChecklistSection, FaqSection } from "@/components/PageEnrichment";
+import { DESTINATIONS_CRITERIA, DESTINATIONS_FAQ } from "@/data/pageEnrichment";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { DESTINATIONS_20, REGION_ORDER, type Destination20 } from "@/data/destinations20";
@@ -137,6 +139,8 @@ export default function DestinationsHub() {
           </Link>
         </section>
       </div>
+      <ChecklistSection title="Ce qui compte pour choisir une destination" introduction="Six points à examiner avec votre conseiller avant de vous engager dans une procédure." items={DESTINATIONS_CRITERIA} tone="white" testId="destinations-criteria" />
+      <FaqSection items={DESTINATIONS_FAQ} tone="slate" testId="destinations-faq" />
     </main>
   );
 }

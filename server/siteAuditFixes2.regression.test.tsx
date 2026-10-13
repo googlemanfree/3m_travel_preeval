@@ -82,7 +82,7 @@ describe("champs de formulaire nommés", () => {
   it("/fiches, /ressources et /conformite-documents : recherche et filtre nommés", () => {
     expect(read("client/src/pages/Fiches.tsx")).toContain('aria-label="Rechercher une fiche pays"');
     expect(read("client/src/pages/Fiches.tsx")).toContain('aria-label="Filtrer les fiches par pays"');
-    expect(read("client/src/pages/Ressources.tsx")).toContain("aria-label={language === 'en' ?");
+    expect(read("client/src/pages/Ressources.tsx")).toContain('aria-label={language === "en" ?');
     expect(read("client/src/pages/DocumentCompliancePage.tsx")).toContain('<Input aria-label="Pays ou région"');
   });
 });

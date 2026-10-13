@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { CommitmentsSection } from "@/components/PageEnrichment";
+import { TARIFS_COST_PARTS } from "@/data/pageEnrichment";
 import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -137,6 +139,7 @@ export default function Tarifs() {
           </section>
         </PremiumReveal>
       </div>
+      <CommitmentsSection title="Comment se décompose le coût total" introduction="Trois postes distincts, annoncés séparément, pour que vous sachiez toujours qui perçoit quoi." items={TARIFS_COST_PARTS} tone="blue" testId="tarifs-cost-parts" />
     </main>
     </TooltipProvider>
   );

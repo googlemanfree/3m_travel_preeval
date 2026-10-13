@@ -13,9 +13,12 @@ import {
   CONSULTATION_FAQ,
   CONSULTATION_PREPARE,
   CONSULTATION_STEPS,
+  DESTINATIONS_CRITERIA,
+  DESTINATIONS_FAQ,
   PARCOURS_DELIVERABLES,
   PARCOURS_FAQ,
   PARTNERS_FAQ,
+  TARIFS_COST_PARTS,
   TOURISM_FAQ,
   TOURISM_STEPS,
 } from "../client/src/data/pageEnrichment";
@@ -41,6 +44,9 @@ const ALL_TEXTS: string[] = [
   ...CONSULTATION_FAQ.flatMap((item) => [item.question, item.answer]),
   ...PARTNERS_FAQ.fr.flatMap((item) => [item.question, item.answer]),
   ...PARTNERS_FAQ.en.flatMap((item) => [item.question, item.answer]),
+  ...DESTINATIONS_CRITERIA,
+  ...DESTINATIONS_FAQ.flatMap((item) => [item.question, item.answer]),
+  ...TARIFS_COST_PARTS.flatMap((item) => [item.title, item.text]),
 ];
 
 afterEach(() => cleanup());
@@ -56,7 +62,7 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
   });
 
   it("les questions fréquentes ont de vraies réponses (au moins une phrase complète) et sont toutes différentes", () => {
-    const faqs = [PARCOURS_FAQ, CNI_FAQ, ASSURANCE_FAQ, TOURISM_FAQ, CONSULTATION_FAQ, PARTNERS_FAQ.fr, PARTNERS_FAQ.en];
+    const faqs = [PARCOURS_FAQ, CNI_FAQ, ASSURANCE_FAQ, TOURISM_FAQ, CONSULTATION_FAQ, DESTINATIONS_FAQ, PARTNERS_FAQ.fr, PARTNERS_FAQ.en];
     for (const faq of faqs) {
       expect(faq.length).toBeGreaterThanOrEqual(4);
       expect(new Set(faq.map((item) => item.question)).size).toBe(faq.length);
@@ -73,6 +79,9 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
     expect(COMMITMENTS).toHaveLength(5);
     expect(PARCOURS_DELIVERABLES).toHaveLength(5);
     expect(PARTNERS_FAQ.fr[0].answer).toContain("validée par un administrateur");
+    expect(TARIFS_COST_PARTS).toHaveLength(3);
+    expect(TARIFS_COST_PARTS[0].text).toContain("confirmé par écrit avant tout paiement");
+    expect(DESTINATIONS_CRITERIA).toHaveLength(6);
   });
 
   it("l'ancien nom « Prime Travel » n'apparaît plus dans le code vu par les clients", () => {
@@ -112,6 +121,8 @@ describe("pages enrichies : sections branchées", () => {
     ["client/src/pages/ConsultationBooking.tsx", ["consultation-steps", "consultation-prepare", "consultation-faq"]],
     ["client/src/pages/AssuranceInscription.tsx", ["assurance-prepare", "assurance-faq"]],
     ["client/src/pages/PartnersHub.tsx", ["partners-faq", "PARTNERS_FAQ.en"]],
+    ["client/src/pages/DestinationsHub.tsx", ["destinations-criteria", "destinations-faq"]],
+    ["client/src/pages/Tarifs.tsx", ["tarifs-cost-parts"]],
   ])("%s affiche ses nouvelles sections", (file, markers) => {
     const source = read(file);
     for (const marker of markers) expect(source, `${file} : ${marker}`).toContain(marker);

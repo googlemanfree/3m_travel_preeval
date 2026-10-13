@@ -161,6 +161,44 @@ export const CONSULTATION_FAQ: FaqItem[] = [
   },
 ];
 
+// ---- /destinations ---------------------------------------------------------------------------------------------------
+
+export const DESTINATIONS_CRITERIA: string[] = [
+  "Votre objectif : études, travail, visite ou installation durable déterminent les voies réellement ouvertes",
+  "Votre profil : diplômes, expérience, langues parlées et niveau d’autonomie financière",
+  "Les conditions d’entrée du pays : documents exigés, preuves de ressources, assurance, examens de langue",
+  "Les frais à prévoir, y compris ceux payés à des tiers : autorités, centres de visa, traductions, assurance",
+  "Votre calendrier : certaines démarches demandent une longue préparation, d’autres des rendez-vous à prendre tôt",
+  "Les sources officielles du pays : la page de chaque destination renvoie vers elles et indique la date de leur dernière vérification",
+];
+
+export const DESTINATIONS_FAQ: FaqItem[] = [
+  {
+    question: "Comment choisir entre plusieurs destinations ?",
+    answer: "Partez de votre objectif et de votre profil, puis comparez les conditions d’entrée et les frais. L’évaluation gratuite le fait pour vous : elle rapproche votre parcours de plusieurs destinations accompagnées et vous explique les écarts.",
+  },
+  {
+    question: "Une destination est-elle plus facile qu’une autre ?",
+    answer: "Cela dépend de votre profil. Une même destination peut être accessible pour un parcours et très exigeante pour un autre ; aucun classement universel n’a de sens et aucun résultat n’est promis.",
+  },
+  {
+    question: "Les informations des pages destinations sont-elles à jour ?",
+    answer: "Elles s’appuient sur les sources officielles de chaque pays, avec leur date de dernière vérification. Les règles évoluent : confirmez toujours les conditions auprès de votre conseiller et du portail officiel avant de payer ou de déposer.",
+  },
+  {
+    question: "Puis-je viser plusieurs pays en parallèle ?",
+    answer: "Oui, tant que chaque dossier reste cohérent. Votre conseiller vous aide à prioriser pour éviter de multiplier des démarches payantes qui ne vous correspondent pas.",
+  },
+];
+
+// ---- /tarifs : décomposition du coût total ----------------------------------------------------------------------------
+
+export const TARIFS_COST_PARTS: CommitmentItem[] = [
+  { title: "Frais d’ouverture de dossier", text: "Ils lancent le traitement de votre dossier. Leur montant dépend de votre profil et vous est confirmé par écrit avant tout paiement ; un reçu vous est remis." },
+  { title: "Honoraires de l’accompagnement", text: "Ils rémunèrent le service demandé (préparation, vérification, suivi). Ils sont communiqués pour le service précis que vous choisissez, avant tout règlement." },
+  { title: "Frais payés à des tiers", text: "Autorités, consulats, centres de visa ou biométriques, assureurs, traducteurs : ces frais sont facturés par ces organismes, indiqués séparément et jamais présumés inclus." },
+];
+
 // ---- /partenaires (français et anglais) ------------------------------------------------------------------------------
 
 export const PARTNERS_FAQ: { fr: FaqItem[]; en: FaqItem[] } = {
