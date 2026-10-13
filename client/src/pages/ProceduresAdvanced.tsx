@@ -245,18 +245,19 @@ export default function ProceduresAdvanced() {
             <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
               {BRAND_PUBLIC_NAME}
             </p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Procédures — {PUBLIC_PROCEDURES.length} destinations
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">Yaoundé · Ottawa · partenaires internationaux</p>
+            <h1 className="mt-4 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Procédures internationales — {PUBLIC_PROCEDURES.length} destinations
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-blue-50 sm:text-lg">
-              Filtres, comparaison de corridors et repères documentaires pour orienter votre projet — chaque exigence reste à confirmer auprès des autorités compétentes.
+              Filtres, comparaison de corridors et checklists documentaires pour orienter votre projet. Chaque exigence reste à confirmer auprès des autorités compétentes — aucun visa ni emploi n’est promis.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a
                 href="/?project=travail#evaluation-multi"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50"
               >
-                Évaluer mon profil
+                Évaluer mon projet — gratuit
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
               <Link

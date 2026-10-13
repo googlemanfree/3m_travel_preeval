@@ -33,16 +33,16 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight !text-white md:text-4xl">{data.title}</h1>
           <p className="mt-2 text-blue-100">{data.subtitle} — édition {data.editionYear}</p>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-50/95">{INTERNATIONAL_BRAND.promiseLine.fr}</p>
-          <div className="mx-auto mt-8 max-w-sm">
-            <DocumentProcessIllustration className="h-auto w-full opacity-95" />
-          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
-        {/* 01 — Introduction */}
+      <div className="mx-auto max-w-4xl space-y-10 px-4 py-10">
+        <section aria-label="Illustration parcours documentaire" className="mx-auto max-w-sm">
+          <DocumentProcessIllustration className="h-auto w-full opacity-95" />
+        </section>
+
         <section>
-          <h2 className="text-xl font-bold text-blue-900 mb-4">01 — Introduction & Vision Globale</h2>
+          <h2 className="mb-4 text-xl font-bold text-blue-900">01 — Introduction & Vision Globale</h2>
           <Card className="p-6">
             <p className="text-gray-700 mb-4">{data.intro.vision}</p>
             <dl className="space-y-3 text-sm">

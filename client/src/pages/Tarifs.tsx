@@ -12,6 +12,7 @@ import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { setPageSeo } from "@/lib/pageSeo";
 
 const SERVICE_OPTIONS = [
@@ -72,12 +73,16 @@ export default function Tarifs() {
           className="absolute inset-0"
           imgClassName="h-full w-full object-cover object-center opacity-90"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/94 via-[#0a3264]/82 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/60 via-transparent to-[#061a36]/25" />
         <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY · Information tarifaire</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Comprendre les tarifs avant de vous engager</h1>
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
+            {INTERNATIONAL_BRAND.publicName}
+          </p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
+          <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">Comprendre les tarifs avant de vous engager</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
-            Les prestations, frais tiers et modalités applicables dépendent du service choisi et de votre situation. Une confirmation écrite est donnée avant tout règlement.
+            Honoraires d’agence, frais tiers et modalités : tout dépend du service et de votre situation. Une confirmation écrite est donnée avant tout règlement — aucun résultat de visa ou d’emploi n’est vendu.
           </p>
         </div>
       </section>

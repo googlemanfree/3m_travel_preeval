@@ -12,17 +12,16 @@ import {
   Clock3,
   FileCheck2,
   Globe2,
-  MapPinned,
   MessageCircle,
   PhoneCall,
   Route,
   Send,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
+import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 
 const journeyStages = [
   {
@@ -123,56 +122,49 @@ export default function PrimeJourney() {
   const CurrentIcon = currentStage.icon;
   const progress = ((activeStage + 1) / journeyStages.length) * 100;
 
-  const evaluationHref = `/evaluation?source=${encodeURIComponent(source.key)}`;
+  const evaluationHref =
+    source.key === "direct"
+      ? buildFreeEvaluationHref("travail")
+      : `/?project=travail&source=${encodeURIComponent(source.key)}#evaluation-multi`;
 
   return (
-    <div className="min-h-screen bg-[#f6f9ff] text-slate-950">
+    <div className="premium-page-shell min-h-screen text-slate-950">
       <main>
-        <section className="relative overflow-hidden border-b border-blue-100 bg-[radial-gradient(circle_at_85%_10%,rgba(59,130,246,0.28),transparent_32%),linear-gradient(135deg,#071d49_0%,#0b2f70_52%,#0e7490_100%)] text-white">
-          <div className="absolute -right-24 top-16 h-80 w-80 rounded-full border border-white/10" aria-hidden="true" />
-          <div className="absolute -right-8 top-28 h-64 w-64 rounded-full border border-white/10" aria-hidden="true" />
-          <div className="absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-cyan-300/10 blur-3xl" aria-hidden="true" />
-
+        <section className="relative overflow-hidden border-b border-blue-900/30 bg-gradient-to-br from-[#061a36] via-[#0a3264] to-[#0e5b9f] text-white">
           <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
             <div className="flex flex-col justify-center">
-              <div className="mb-5 flex flex-wrap items-center gap-3">
-                <Badge className="border border-cyan-200/30 bg-white/10 px-3 py-1.5 text-cyan-100 hover:bg-white/10">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                  Parcours mondial 3M TRAVEL AGENCY
-                </Badge>
-                <span className="inline-flex items-center gap-1.5 text-sm text-blue-100">
-                  <MapPinned className="h-4 w-4" aria-hidden="true" />
-                  Destinations du monde entier
-                </span>
-              </div>
+              <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
+                {INTERNATIONAL_BRAND.publicName}
+              </p>
+              <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
 
               <motion.h1
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45 }}
-                className="max-w-3xl text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
+                className="mt-5 max-w-3xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl"
               >
-                De votre premier message à une <span className="text-cyan-300">opportunité mondiale.</span>
+                Du premier message à un dossier international structuré
               </motion.h1>
-              <p className="mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-lg">
-                3M TRAVEL AGENCY structure votre demande, étudie votre profil et vous accompagne vers la destination qui correspond le mieux à votre projet, selon les opportunités disponibles.
+              <p className="mt-6 max-w-2xl text-base leading-7 text-blue-50 sm:text-lg">
+                {INTERNATIONAL_BRAND.pageLead.fr}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href={evaluationHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-lg shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200">
-                  Commencer mon évaluation
+                <a href={evaluationHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-lg transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  {INTERNATIONAL_BRAND.cta.evaluate.fr}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </a>
-                <a href="https://wa.me/237698104832?text=Bonjour%20Prime%20Travel%20Service%2C%20je%20souhaite%20%C3%AAtre%20orient%C3%A9" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200">
+                <a href="https://wa.me/237698104832?text=Bonjour%203M%20TRAVEL%20AGENCY%2C%20je%20souhaite%20%C3%AAtre%20orient%C3%A9" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200">
                   <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Parler sur WhatsApp
+                  {INTERNATIONAL_BRAND.cta.advisor.fr}
                 </a>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-blue-100">
-                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-cyan-300" aria-hidden="true" /> Données protégées</span>
-                <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-cyan-300" aria-hidden="true" /> Réponse annoncée clairement</span>
-                <span className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-cyan-300" aria-hidden="true" /> Orientation internationale</span>
+                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-amber-200" aria-hidden="true" /> Données protégées</span>
+                <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-amber-200" aria-hidden="true" /> Délai confirmé par l’équipe</span>
+                <span className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-amber-200" aria-hidden="true" /> Orientation internationale</span>
               </div>
             </div>
 
@@ -205,7 +197,7 @@ export default function PrimeJourney() {
                     </div>
                   </div>
                 </div>
-                <p className="mt-5 text-xs leading-5 text-blue-100">Aucune destination n’est imposée avant l’analyse de votre profil et votre accord.</p>
+                <p className="mt-5 text-xs leading-5 text-blue-100">Aucune destination n’est imposée avant l’analyse de votre profil et votre accord. Aucun visa ni emploi n’est promis.</p>
               </div>
             </Card>
           </div>
@@ -215,8 +207,9 @@ export default function PrimeJourney() {
           <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr]">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Un parcours lisible</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Chaque étape a un objectif précis.</h2>
-              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Vous savez où vous en êtes, ce que 3M TRAVEL AGENCY attend de vous et quelle action vient ensuite. Sélectionnez une étape pour voir son écran principal.</p>
+              <div className="premium-gold-rule mt-3" aria-hidden="true" />
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Chaque étape a un objectif précis</h2>
+              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Vous savez où vous en êtes, ce que 3M TRAVEL AGENCY attend de vous et quelle action vient ensuite. Sélectionnez une étape pour voir le détail.</p>
 
               <div className="mt-8 space-y-2" role="tablist" aria-label="Étapes du parcours utilisateur">
                 {journeyStages.map((stage, index) => {
